@@ -39,19 +39,78 @@
 #include <strings.h>
 #include <math.h>
 #include <stdarg.h>
+#include <sys/queue.h> //contains double linked list implementation
+#include <stdbool.h>
 
 #include "ops_util.h"
+
+/*
+* essential typedefs
+*/
+
+typedef unsigned int uint;
+typedef long long ll;
+typedef unsigned long long ull;
+
+/*
+* structures
+*/
+
+typedef struct
+{
+  int         index; /* index */
+  int         dims; /*dimension of block, 2D,3D .. etc*/
+  int         *size; /* size of block in each dimension */
+  char const  *name; /* name of block */
+} ops_block_core;
+
+typedef ops_block_core * ops_block;
+
+typedef struct
+{
+  int         index; /* index */
+  ops_block   block; /* block on which data is defined */
+  int         data_size; /* number of data items per grid point*/
+  char        *data; /* data on host */
+  char const  *name; /* name of dataset */
+  char const *type;   /* datatype */
+  int         user_managed; /* indicates whether the user is managing memory */
+} ops_dat_core;
+
+typedef ops_dat_core * ops_dat;
+
+//struct definition for a double linked list entry to hold an ops_dat
+struct ops_dat_entry_core{
+  ops_dat dat;
+  TAILQ_ENTRY(ops_dat_entry_core) entries; /*holds pointers to next and
+                                             previous entries in the list*/
+};
+
+typedef struct ops_dat_entry_core ops_dat_entry;
+
+typedef TAILQ_HEAD(, ops_dat_entry_core) Double_linked_list;
+
+
 
 
 /*******************************************************************************
 * Core lib function prototypes
 *******************************************************************************/
 
-void ops_init_core( int argc, char **argv, int diags_level );
+void ops_init( int argc, char **argv, int diags_level );
 
-void ops_exit_core( void );
+void ops_exit( void );
+
+ops_block ops_decl_block(int dims, int *size, char *name);
+
+ops_dat ops_decl_dat_core( ops_block block, int data_size,
+                      int *block_size, int* offset, char *data,
+                      char const * type,
+                      char const * name );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
+
+
 
 #endif /* __OP_LIB_CORE_H */

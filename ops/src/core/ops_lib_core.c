@@ -33,15 +33,141 @@
 #include <sys/time.h>
 #include "ops_lib_core.h"
 
-void ops_init_core( int argc, char ** argv, int diags )
+int OP_diags = 0;
+
+int OPS_block_index = 0, OPS_block_max = 0;
+int OPS_dat_index = 0;
+
+
+/*
+* Lists of blocks and dats declared in an OPS programs
+*/
+
+ops_block * OPS_block_list;
+Double_linked_list OPS_dat_list; //Head of the double linked list
+
+
+/*
+* Utility functions
+*/
+static char * copy_str( char const * src )
 {
+  const size_t len = strlen( src ) + 1;
+  char * dest = (char *) calloc ( len, sizeof ( char ) );
+  return strncpy ( dest, src, len );
+}
+
+/*
+* OPS core functions
+*/
+void ops_init( int argc, char ** argv, int diags )
+{
+  OP_diags = diags;
+
+  /*Initialize the double linked list to hold ops_dats*/
+  TAILQ_INIT(&OPS_dat_list);
 
 }
 
-void ops_exit_core( )
+void ops_exit( )
 {
+  // free storage and pointers for blocks
+  for ( int i = 0; i < OPS_block_index; i++ ) {
+    free((char*)OPS_block_list[i]->name);
+    free(OPS_block_list[i]);
+  }
+  free(OPS_block_list);
+  OPS_block_list = NULL;
 
+  /*free doubl linked list holding the ops_dats */
+  ops_dat_entry *item;
+  while ((item = TAILQ_FIRST(&OPS_dat_list))) {
+    if (!(item->dat)->user_managed)
+      free((item->dat)->data);
+    free((char*)(item->dat)->name);
+    free((char*)(item->dat)->type);
+    TAILQ_REMOVE(&OPS_dat_list, item, entries);
+    free(item);
+  }
+
+  // reset initial values
+  OPS_block_index = 0;
+  OPS_dat_index = 0;
+  OPS_block_max = 0;
 }
+
+ops_block ops_decl_block(int dims, int *size, char *name)
+{
+  if ( dims < 0 ) {
+    printf ( " ops_decl_block error -- negative/zero dimension size for block: %s\n", name );
+    exit ( -1 );
+  }
+
+  if ( OPS_block_index == OPS_block_max ) {
+    OPS_block_max += 10;
+    OPS_block_list = (ops_block *) realloc(OPS_block_list,OPS_block_max * sizeof(ops_block));
+
+    if ( OPS_block_list == NULL ) {
+      printf ( " ops_decl_block error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_block block = (ops_block)malloc(sizeof(ops_block_core));
+  block->index = OPS_block_index;
+  block->dims = dims;
+  block->size = size;
+  block->name = copy_str(name);
+  OPS_block_list[OPS_block_index++] = block;
+
+  return block;
+}
+
+ops_dat ops_decl_dat_core( ops_block block, int data_size,
+                      int *block_size, int* offset, char *data,
+                      char const * type,
+                      char const * name )
+{
+  if ( block == NULL )
+  {
+    printf ( "ops_decl_dat error -- invalid block for data: %s\n", name );
+    exit ( -1 );
+  }
+
+  if ( data_size <= 0 )
+  {
+    printf ( "ops_decl_dat error -- negative/zero number of items per grid point in data: %s\n", name );
+    exit ( -1 );
+  }
+
+  ops_dat dat = ( ops_dat ) malloc ( sizeof ( ops_dat_core ) );
+  dat->index = OPS_dat_index;
+  dat->block = block;
+  dat->data_size = data_size;
+  dat->data = (char *)data;
+  dat->user_managed = 1;
+  dat->type = copy_str( type );
+  dat->name = copy_str(name);
+
+  /* Create a pointer to an item in the ops_dats doubly linked list */
+  ops_dat_entry* item;
+
+  //add the newly created ops_dat to list
+  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  if (item == NULL) {
+    printf ( " op_decl_dat error -- error allocating memory to double linked list entry\n" );
+    exit ( -1 );
+  }
+  item->dat = dat;
+  Double_linked_list test; //Head of the double linked list
+  //add item to the end of the list
+  TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
+  OPS_dat_index++;
+
+  return dat;
+}
+
+
 
 void ops_printf(const char* format, ...)
 {

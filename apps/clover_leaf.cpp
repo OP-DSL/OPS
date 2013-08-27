@@ -56,6 +56,7 @@
 void read_input();
 void initialise();
 
+
 /******************************************************************************
 * Initialize Global constants and variables
 /******************************************************************************/
@@ -107,21 +108,75 @@ state_type * states;
 int main(int argc, char **argv)
 {
   // OPS initialisation
-  ops_init_core(argc,argv,5);
+  ops_init(argc,argv,5);
   ops_printf("Clover version %f\n", g_version);
 
-  //initialise
-  initialise();
+  //declare blocks
+  int x_cells = 10;
+  int y_cells = 2;
+  int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
+  ops_block clover_grid = ops_decl_block(2, dims, "Cloverleaf Grid");
 
-  //read input
-  //read_input();
+  //declare data on blocks
+/*
+     TYPE field_type
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: density0,density1
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: energy0,energy1
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: pressure
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: viscosity
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: soundspeed
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: xvel0,xvel1
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: yvel0,yvel1
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: vol_flux_x,mass_flux_x
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: vol_flux_y,mass_flux_y
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array1 !node_flux, stepbymass, volume_change, pre_vol
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array2 !node_mass_post, post_vol
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array3 !node_mass_pre,pre_mass
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array4 !advec_vel, post_mass
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array5 !mom_flux, advec_vol
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array6 !pre_vol, post_ener
+     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array7 !post_vol, ener_flux
 
-  int dims[2] = {x_cells, y_cells};
-  ops_block grid = ops_decl_block(2, dims, "Cloverleaf Grid");
+     INTEGER         :: left            &
+                       ,right           &
+                       ,bottom          &
+                       ,top             &
+                       ,left_boundary   &
+                       ,right_boundary  &
+                       ,bottom_boundary &
+                       ,top_boundary
 
-  fclose(g_in);
-  fclose(g_out);
-  ops_exit_core();
+     INTEGER         :: x_min  &
+                       ,y_min  &
+                       ,x_max  &
+                       ,y_max
+
+     REAL(KIND=8), DIMENSION(:),   ALLOCATABLE :: cellx    &
+                                                 ,celly    &
+                                                 ,vertexx  &
+                                                 ,vertexy  &
+                                                 ,celldx   &
+                                                 ,celldy   &
+                                                 ,vertexdx &
+                                                 ,vertexdy
+
+     REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE :: volume  &
+                                                 ,xarea   &
+                                                 ,yarea
+
+   END TYPE field_type
+*/
+  int x_min = 1;
+  int y_min = 1;
+  int x_max = x_cells;
+  int y_max = y_cells;
+  int offset[2] = {-2,-2};  //cloverleaf 2D block dimensions
+  int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
+  double* dens0 = (double *)xmalloc(size[0]*size[1]*sizeof(double));
+  ops_dat dencity0 = ops_decl_dat(clover_grid, 1, size, offset, dens0, "double", "density0");
+
+
+  ops_exit();
 }
 
 

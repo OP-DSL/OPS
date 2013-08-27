@@ -45,8 +45,8 @@ all: clean cloverleaf_seq
 # simple sequential version
 #
 
-cloverleaf_seq:	clover_leaf.cpp read_input.cpp initialise.cpp
-		$(CPP) $(CPPFLAGS) read_input.cpp initialise.cpp clover_leaf.cpp $(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
+cloverleaf_seq:	clover_leaf.cpp 
+		$(CPP) $(CPPFLAGS) clover_leaf.cpp $(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
 #
 # cleanup
 #
