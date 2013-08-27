@@ -115,7 +115,7 @@ int main(int argc, char **argv)
   int x_cells = 10;
   int y_cells = 2;
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
-  ops_block clover_grid = ops_decl_block(2, dims, "Cloverleaf Grid");
+  ops_block clover_grid = ops_decl_block(2, dims, "Cloverleaf_Grid");
 
   //declare data on blocks
 /*
@@ -166,15 +166,18 @@ int main(int argc, char **argv)
 
    END TYPE field_type
 */
+
   int x_min = 1;
   int y_min = 1;
   int x_max = x_cells;
   int y_max = y_cells;
-  int offset[2] = {-2,-2};  //cloverleaf 2D block dimensions
+  int offset[2] = {-2,-2};
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
-  double* dens0 = (double *)xmalloc(size[0]*size[1]*sizeof(double));
-  ops_dat dencity0 = ops_decl_dat(clover_grid, 1, size, offset, dens0, "double", "density0");
+  double* temp = NULL;
 
+  ops_dat dencity0 = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+
+  ops_diagnostic_output();
 
   ops_exit();
 }

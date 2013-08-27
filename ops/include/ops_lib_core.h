@@ -30,6 +30,12 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/** @brief ops core library function declarations
+  * @author Gihan Mudalige
+  * @details function declarations headder file for the core library functions
+  * utilized by all OPS backends
+  */
+
 #ifndef __OPS_LIB_CORE_H
 #define __OPS_LIB_CORE_H
 
@@ -71,6 +77,8 @@ typedef struct
   int         index; /* index */
   ops_block   block; /* block on which data is defined */
   int         data_size; /* number of data items per grid point*/
+  int         *block_size; /* size of the array in each block dimension*/
+  int         *offset; /* starting index for each dimention*/
   char        *data; /* data on host */
   char const  *name; /* name of dataset */
   char const *type;   /* datatype */
@@ -108,9 +116,14 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
                       char const * type,
                       char const * name );
 
+ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
+                      int *block_size, int* offset,  char * data,
+                      char const * type, char const * name );
+
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
 
+void ops_diagnostic_output( );
 
 
 #endif /* __OP_LIB_CORE_H */

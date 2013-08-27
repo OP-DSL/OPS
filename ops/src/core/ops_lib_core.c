@@ -30,10 +30,15 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/** @brief ops core library functions
+  * @author Gihan Mudalige
+  * @details Implementations of the core library functions utilized by all OPS backends
+  */
+
 #include <sys/time.h>
 #include "ops_lib_core.h"
 
-int OP_diags = 0;
+int OPS_diags = 0;
 
 int OPS_block_index = 0, OPS_block_max = 0;
 int OPS_dat_index = 0;
@@ -57,12 +62,41 @@ static char * copy_str( char const * src )
   return strncpy ( dest, src, len );
 }
 
+int compare_blocks(ops_block block1, ops_block block2)
+{
+  if(block1->dims == block2->dims && block1->index == block2->index &&
+      strcmp(block1->name,block2->name)==0 )
+    return 1;
+  else return 0;
+}
+
+ops_dat search_dat(ops_block block, int data_size, int *block_size, int* offset,
+  char const * type, char const * name)
+{
+  ops_dat_entry* item;
+  ops_dat_entry* tmp_item;
+  for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item)
+  {
+    tmp_item = TAILQ_NEXT(item, entries);
+    ops_dat item_dat = item->dat;
+
+    if (strcmp(item_dat->name,name) == 0 && /* there are other components to compare*/
+      (item_dat->data_size) == data_size && compare_blocks(item_dat->block, block) == 1 &&
+    strcmp(item_dat->type,type) == 0 )
+    {
+      return item_dat;
+    }
+  }
+
+  return NULL;
+}
+
 /*
 * OPS core functions
 */
 void ops_init( int argc, char ** argv, int diags )
 {
-  OP_diags = diags;
+  OPS_diags = diags;
 
   /*Initialize the double linked list to hold ops_dats*/
   TAILQ_INIT(&OPS_dat_list);
@@ -144,6 +178,8 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->data_size = data_size;
+  dat->block_size = block_size;
+  dat->offset = offset;
   dat->data = (char *)data;
   dat->user_managed = 1;
   dat->type = copy_str( type );
@@ -165,6 +201,57 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   OPS_dat_index++;
 
   return dat;
+}
+
+
+ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
+  int *block_size, int* offset,  char * data, char const * type, char const * name )
+{
+  //Check if this dat already exists in the double linked list
+  ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
+  if ( found_dat != NULL)
+  {
+    printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
+    exit(2);
+  }
+  //if not found ...
+  return ops_decl_dat_core ( block, data_size, block_size, offset, data, type, name );
+}
+
+
+void ops_diagnostic_output ( )
+{
+  if ( OPS_diags > 1 )
+  {
+    printf ( "\n OPS diagnostic output\n" );
+    printf ( " --------------------\n" );
+
+    printf ( "\n block dimension [dims]\n" );
+    printf ( " -------------------\n" );
+    for ( int n = 0; n < OPS_block_index; n++ )
+    {
+      printf ( " %10s %10dD ", OPS_block_list[n]->name, OPS_block_list[n]->dims );
+      for (int i=0; i<OPS_block_list[n]->dims; i++)
+        printf ( "[%d]",OPS_block_list[n]->size[i] );
+      printf("\n");
+    }
+
+    printf ( "\n dats item/point [block_size] [offset]  block\n" );
+    printf ( " ------------------------------\n" );
+    ops_dat_entry *item;
+    TAILQ_FOREACH(item, &OPS_dat_list, entries)
+    {
+      printf ( " %10s %10d ", (item->dat)->name, (item->dat)->data_size );
+      for (int i=0; i<(item->dat)->block->dims; i++)
+        printf ( "[%d]",(item->dat)->block_size[i] );
+      printf ( " " );
+      for (int i=0; i<(item->dat)->block->dims; i++)
+        printf ( "[%d]",(item->dat)->offset[i] );
+
+      printf ( " %10s\n", (item->dat)->block->name );
+    }
+    printf ( "\n" );
+  }
 }
 
 
