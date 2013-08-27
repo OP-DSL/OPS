@@ -1,0 +1,2 @@
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/home/gihan/CloverLeaf/Cloverleaf-Oxford/OPS/ops
