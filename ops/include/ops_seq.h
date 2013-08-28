@@ -37,13 +37,31 @@
 
 #include "ops_lib_cpp.h"
 
+inline void ops_arg_set(int n, ops_arg arg, char **p_arg){
+        if (arg.stencil!=NULL) {
+          for (int i = 0; i < arg.stencil->points; i++){
+            p_arg[i] = arg.data + sizeof(double)*(n * arg.stencil->stride[0]  +
+            arg.stencil->stencil[i*arg.stencil->dims + 0]);
+          }
+        } else {
+          *p_arg = arg.data;
+        }
+}
+
+inline void ops_args_set(int iter_x, int nargs, ops_arg *args, char ***p_a){
+        for (int n=0; n<nargs; n++) {
+          ops_arg_set(iter_x, args[n], p_a[n]);
+        }
+}
+
+
 
 template < class T0 >
 void ops_par_loop(void (*kernel)( T0* ),
   char const * name, int dim, int *range,
   ops_arg arg0 ) {
 
-  char **p_a[1];
+  char** p_a[1];
   ops_arg args[1] = {arg0};
 
   // consistency checks
@@ -56,23 +74,17 @@ void ops_par_loop(void (*kernel)( T0* ),
 
   // loop over set elements
 
-  /*if (dim == 2) {
-    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+  if (dim == 1) {
       for (int n_x = range[0]; n_x < range[1]; n_x++) {
-        //ops_args_set(n_x, n_y,1,args,p_a);
-
+        ops_args_set(n_x, 1,args,p_a);
         // call kernel function, passing in pointers to data
         kernel( (T0 *)p_a[0] );
       }
     }
-  }*/
+
 
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       free(p_a[i]);
   }
-
-
-  printf("%s\n",name);
-
 }
