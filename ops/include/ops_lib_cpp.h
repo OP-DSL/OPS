@@ -79,6 +79,7 @@ extern Double_linked_list OPS_dat_list; //Head of the double linked list
 
 
 ops_dat ops_decl_dat_char (ops_block, int, int*, int*, char *, int, char const*, char const* );
+ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, ops_access acc );
 
 template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,

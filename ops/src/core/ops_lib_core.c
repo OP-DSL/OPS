@@ -31,7 +31,7 @@
 */
 
 /** @brief OPS core library functions
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the core library functions utilized by all OPS backends
   */
 
@@ -253,6 +253,19 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
 }
 
 
+ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
+  ops_arg arg;
+  arg.argtype = OPS_ARG_DAT;
+  arg.dat = dat;
+  arg.stencil = stencil;
+  if ( dat != NULL ) {
+    arg.data = dat->data;
+  } else {
+    arg.data = NULL;
+  }
+  arg.acc = acc;
+  return arg;
+}
 
 void ops_diagnostic_output ( )
 {

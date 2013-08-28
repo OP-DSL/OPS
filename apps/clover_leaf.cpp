@@ -189,8 +189,8 @@ int main(int argc, char **argv)
   int self[] = {0,0,0};
   ops_stencil sten1 = ops_decl_stencil( 3, 1, self, "self");
   int range[] = {0, x_max-1, 0, y_max-1};
-  //ops_par_loop(kernel, "kernel", 2, range,
-  //             ops_arg_dat(dencity, sten1, OPS_WRITE));
+  ops_par_loop(test_kernel, "test_kernel", 2, range,
+               ops_arg_dat(dencity0, sten1, OPS_WRITE));
 
   ops_exit();
 }

@@ -31,7 +31,7 @@
 */
 
 /** @brief headder file declaring the functions for the ops sequential backend
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS API calls for the sequential backend
   */
 
@@ -40,8 +40,39 @@
 
 template < class T0 >
 void ops_par_loop(void (*kernel)( T0* ),
-    char const * name, int dim, int *range,
-    ops_arg arg0 ) {
+  char const * name, int dim, int *range,
+  ops_arg arg0 ) {
 
-    printf("%s\n",name);
+  char **p_a[1];
+  ops_arg args[1] = {arg0};
+
+  // consistency checks
+  // ops_args_check(1,args,name);
+
+  for (int i = 0; i < 1; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  /*if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        //ops_args_set(n_x, n_y,1,args,p_a);
+
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0] );
+      }
+    }
+  }*/
+
+  for (int i = 0; i < 1; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+
+
+  printf("%s\n",name);
+
 }
