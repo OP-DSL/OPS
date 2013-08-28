@@ -45,7 +45,7 @@ all: clean cloverleaf_seq
 # simple sequential version
 #
 
-cloverleaf_seq:	clover_leaf.cpp 
+cloverleaf_seq:	clover_leaf.cpp test_kernel.h
 		$(CPP) $(CPPFLAGS) clover_leaf.cpp $(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
 #
 # cleanup

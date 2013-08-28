@@ -58,31 +58,50 @@ typedef unsigned int uint;
 typedef long long ll;
 typedef unsigned long long ull;
 
+
+/*
+* enum list for ops_par_loop
+*/
+
+#define OPS_READ 0
+#define OPS_WRITE 1
+#define OPS_RW 2
+#define OPS_INC 3
+#define OPS_MIN 4
+#define OPS_MAX 5
+
+#define OPS_ARG_GBL 0
+#define OPS_ARG_DAT 1
+
+typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
+typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
+
+
 /*
 * structures
 */
 
 typedef struct
 {
-  int         index; /* index */
-  int         dims; /*dimension of block, 2D,3D .. etc*/
-  int         *size; /* size of block in each dimension */
-  char const  *name; /* name of block */
+  int         index;  /* index */
+  int         dims;   /* dimension of block, 2D,3D .. etc*/
+  int         *size;  /* size of block in each dimension */
+  char const  *name;  /* name of block */
 } ops_block_core;
 
 typedef ops_block_core * ops_block;
 
 typedef struct
 {
-  int         index; /* index */
-  ops_block   block; /* block on which data is defined */
-  int         data_size; /* number of data items per grid point*/
+  int         index;       /* index */
+  ops_block   block;       /* block on which data is defined */
+  int         data_size;   /* number of data items per grid point*/
   int         *block_size; /* size of the array in each block dimension*/
-  int         *offset; /* starting index for each dimention*/
-  char        *data; /* data on host */
-  char const  *name; /* name of dataset */
-  char const *type;   /* datatype */
-  int         user_managed; /* indicates whether the user is managing memory */
+  int         *offset;     /* starting index for each dimention*/
+  char        *data;       /* data on host */
+  char const  *name;       /* name of dataset */
+  char const *type;        /* datatype */
+  int         user_managed;/* indicates whether the user is managing memory */
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
@@ -98,7 +117,27 @@ typedef struct ops_dat_entry_core ops_dat_entry;
 
 typedef TAILQ_HEAD(, ops_dat_entry_core) Double_linked_list;
 
+typedef struct
+{
+        int         index;     /* index */
+        int         dims;      /* dimensionality of the stencil */
+        int         points;    /* number of stencil elements */
+        char const  *name;     /* name of pointer */
+        int         *stencil;  /* elements in the stencil */
+        int         *stride;   /* stride of the stencil */
+} ops_stencil_core;
 
+typedef ops_stencil_core * ops_stencil;
+
+typedef struct
+{
+  ops_dat     dat;     /* dataset */
+  ops_stencil stencil; /* the stencil */
+  int         dim;     /* dimension of data */
+  char        *data;   /* data on host */
+  ops_access   acc;    /* access type */
+  ops_arg_type argtype;/* arg type */
+} ops_arg;
 
 
 /*******************************************************************************
@@ -119,6 +158,8 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
                       int *block_size, int* offset,  char * data,
                       char const * type, char const * name );
+
+ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);

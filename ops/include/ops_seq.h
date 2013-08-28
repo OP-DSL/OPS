@@ -38,3 +38,10 @@
 #include "ops_lib_cpp.h"
 
 
+template < class T0 >
+void ops_par_loop(void (*kernel)( T0* ),
+    char const * name, int dim, int *range,
+    ops_arg arg0 ) {
+
+    printf("%s\n",name);
+}

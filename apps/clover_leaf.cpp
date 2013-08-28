@@ -52,9 +52,13 @@
 // Cloverleaf definitions
 #include "definitions.h"
 
+//Cloverleaf kernels
+#include "test_kernel.h"
+
 // Cloverleaf functions
 void read_input();
 void initialise();
+
 
 
 /******************************************************************************
@@ -115,58 +119,13 @@ int main(int argc, char **argv)
   int x_cells = 10;
   int y_cells = 2;
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
-  ops_block clover_grid = ops_decl_block(2, dims, "Cloverleaf_Grid");
+  ops_block clover_grid = ops_decl_block(2, dims, "grid");
+
+  //declare edges of block
+  ops_block clover_xedge = ops_decl_block(1, &dims[0], "xedge");
+  ops_block clover_yedge = ops_decl_block(1, &dims[1], "yedge");
 
   //declare data on blocks
-/*
-     TYPE field_type
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: density0,density1
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: energy0,energy1
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: pressure
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: viscosity
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: soundspeed
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: xvel0,xvel1
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: yvel0,yvel1
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: vol_flux_x,mass_flux_x
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: vol_flux_y,mass_flux_y
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array1 !node_flux, stepbymass, volume_change, pre_vol
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array2 !node_mass_post, post_vol
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array3 !node_mass_pre,pre_mass
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array4 !advec_vel, post_mass
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array5 !mom_flux, advec_vol
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array6 !pre_vol, post_ener
-     REAL(KIND=8),    DIMENSION(:,:), ALLOCATABLE :: work_array7 !post_vol, ener_flux
-
-     INTEGER         :: left            &
-                       ,right           &
-                       ,bottom          &
-                       ,top             &
-                       ,left_boundary   &
-                       ,right_boundary  &
-                       ,bottom_boundary &
-                       ,top_boundary
-
-     INTEGER         :: x_min  &
-                       ,y_min  &
-                       ,x_max  &
-                       ,y_max
-
-     REAL(KIND=8), DIMENSION(:),   ALLOCATABLE :: cellx    &
-                                                 ,celly    &
-                                                 ,vertexx  &
-                                                 ,vertexy  &
-                                                 ,celldx   &
-                                                 ,celldy   &
-                                                 ,vertexdx &
-                                                 ,vertexdy
-
-     REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE :: volume  &
-                                                 ,xarea   &
-                                                 ,yarea
-
-   END TYPE field_type
-*/
-
   int x_min = 1;
   int y_min = 1;
   int x_max = x_cells;
@@ -175,9 +134,63 @@ int main(int argc, char **argv)
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
 
-  ops_dat dencity0 = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+  ops_dat dencity0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+  ops_dat dencity1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
+  ops_dat energy0     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy0");
+  ops_dat energy1     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy1");
+  ops_dat pressure    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "pressure");
+  ops_dat viscosity   = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "viscosity");
+  ops_dat soundspeed  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "soundspeed");
+  ops_dat volume      = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "volume");
+
+  size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
+  ops_dat xvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel0");
+  ops_dat xvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel1");
+  ops_dat yvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel0");
+  ops_dat yvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel1");
+
+  size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+2)-(y_min-2);
+  ops_dat vol_flux_x  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_x");
+  ops_dat mass_flux_x = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_x");
+  ops_dat xarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xarea");
+
+
+  size[0] = (x_max+2)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
+  ops_dat vol_flux_y  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_y");
+  ops_dat mass_flux_y = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_y");
+  ops_dat yarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yarea");
+
+  size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
+  ops_dat work_array1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array1");
+  ops_dat work_array2    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array2");
+  ops_dat work_array3    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array3");
+  ops_dat work_array4    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array4");
+  ops_dat work_array5    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array5");
+  ops_dat work_array6    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array6");
+  ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
+
+
+  int size2[1] = {(x_max+2)-(x_min-2)};
+  int size3[1] = {(y_max+2)-(y_min-2)};
+  int size4[1] = {(x_max+3)-(x_min-2)};
+  int size5[1] = {(y_max+3)-(y_min-2)};
+  int offset4[2] = {-2};
+  ops_dat cellx    = ops_decl_dat(clover_xedge, 1, size2, offset4, temp, "double", "cellx");
+  ops_dat celly    = ops_decl_dat(clover_yedge, 1, size3, offset4, temp, "double", "celly");
+  ops_dat vertexx  = ops_decl_dat(clover_xedge, 1, size4, offset4, temp, "double", "vertexx");
+  ops_dat vertexy  = ops_decl_dat(clover_yedge, 1, size5, offset4, temp, "double", "vertexy");
+  ops_dat celldx   = ops_decl_dat(clover_xedge, 1, size2, offset4, temp, "double", "celldx");
+  ops_dat celldy   = ops_decl_dat(clover_yedge, 1, size3, offset4, temp, "double", "celldy");
+  ops_dat vertexdx = ops_decl_dat(clover_xedge, 1, size4, offset4, temp, "double", "vertexdx");
+  ops_dat vertexdy = ops_decl_dat(clover_yedge, 1, size5, offset4, temp, "double", "vertexdy");
 
   ops_diagnostic_output();
+
+  int self[] = {0,0,0};
+  ops_stencil sten1 = ops_decl_stencil( 3, 1, self, "self");
+  int range[] = {0, x_max-1, 0, y_max-1};
+  //ops_par_loop(kernel, "kernel", 2, range,
+  //             ops_arg_dat(dencity, sten1, OPS_WRITE));
 
   ops_exit();
 }

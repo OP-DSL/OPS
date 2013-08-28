@@ -30,7 +30,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops core library functions
+/** @brief OPS core library functions
   * @author Gihan Mudalige
   * @details Implementations of the core library functions utilized by all OPS backends
   */
@@ -41,6 +41,7 @@
 int OPS_diags = 0;
 
 int OPS_block_index = 0, OPS_block_max = 0;
+int OPS_stencil_index = 0, OPS_stencil_max = 0;
 int OPS_dat_index = 0;
 
 
@@ -49,6 +50,7 @@ int OPS_dat_index = 0;
 */
 
 ops_block * OPS_block_list;
+ops_stencil * OPS_stencil_list;
 Double_linked_list OPS_dat_list; //Head of the double linked list
 
 
@@ -75,16 +77,14 @@ ops_dat search_dat(ops_block block, int data_size, int *block_size, int* offset,
 {
   ops_dat_entry* item;
   ops_dat_entry* tmp_item;
-  for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item)
-  {
+  for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
     tmp_item = TAILQ_NEXT(item, entries);
     ops_dat item_dat = item->dat;
 
     if (strcmp(item_dat->name,name) == 0 && /* there are other components to compare*/
-      (item_dat->data_size) == data_size && compare_blocks(item_dat->block, block) == 1 &&
-    strcmp(item_dat->type,type) == 0 )
-    {
-      return item_dat;
+       (item_dat->data_size) == data_size && compare_blocks(item_dat->block, block) == 1 &&
+       strcmp(item_dat->type,type) == 0 ) {
+       return item_dat;
     }
   }
 
@@ -108,6 +108,7 @@ void ops_exit( )
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
     free((char*)OPS_block_list[i]->name);
+    free((char*)OPS_block_list[i]->size);
     free(OPS_block_list[i]);
   }
   free(OPS_block_list);
@@ -118,6 +119,8 @@ void ops_exit( )
   while ((item = TAILQ_FIRST(&OPS_dat_list))) {
     if (!(item->dat)->user_managed)
       free((item->dat)->data);
+    free((item->dat)->block_size);
+    free((item->dat)->offset);
     free((char*)(item->dat)->name);
     free((char*)(item->dat)->type);
     TAILQ_REMOVE(&OPS_dat_list, item, entries);
@@ -147,10 +150,11 @@ ops_block ops_decl_block(int dims, int *size, char *name)
     }
   }
 
-  ops_block block = (ops_block)malloc(sizeof(ops_block_core));
+  ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
   block->index = OPS_block_index;
   block->dims = dims;
-  block->size = size;
+  block->size =(int *)xmalloc(sizeof(int)*dims);
+  memcpy(block->size,size,sizeof(int)*dims);
   block->name = copy_str(name);
   OPS_block_list[OPS_block_index++] = block;
 
@@ -162,14 +166,12 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
                       char const * type,
                       char const * name )
 {
-  if ( block == NULL )
-  {
+  if ( block == NULL ) {
     printf ( "ops_decl_dat error -- invalid block for data: %s\n", name );
     exit ( -1 );
   }
 
-  if ( data_size <= 0 )
-  {
+  if ( data_size <= 0 ) {
     printf ( "ops_decl_dat error -- negative/zero number of items per grid point in data: %s\n", name );
     exit ( -1 );
   }
@@ -177,9 +179,15 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   ops_dat dat = ( ops_dat ) malloc ( sizeof ( ops_dat_core ) );
   dat->index = OPS_dat_index;
   dat->block = block;
+
   dat->data_size = data_size;
-  dat->block_size = block_size;
-  dat->offset = offset;
+
+  dat->block_size =(int *)xmalloc(sizeof(int)*block->dims);
+  memcpy(dat->block_size,block_size,sizeof(int)*block->dims);
+
+  dat->offset =( int *)xmalloc(sizeof(int)*block->dims);
+  memcpy(dat->offset,offset,sizeof(int)*block->dims);
+
   dat->data = (char *)data;
   dat->user_managed = 1;
   dat->type = copy_str( type );
@@ -209,8 +217,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
 {
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
-  if ( found_dat != NULL)
-  {
+  if ( found_dat != NULL) {
     printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
     exit(2);
   }
@@ -219,18 +226,44 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
 }
 
 
+ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);;
+  stencil->stencil = sten;
+  stencil->stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  return stencil;
+}
+
+
+
 void ops_diagnostic_output ( )
 {
-  if ( OPS_diags > 1 )
-  {
+  if ( OPS_diags > 1 ) {
     printf ( "\n OPS diagnostic output\n" );
     printf ( " --------------------\n" );
 
     printf ( "\n block dimension [dims]\n" );
     printf ( " -------------------\n" );
-    for ( int n = 0; n < OPS_block_index; n++ )
-    {
-      printf ( " %10s %10dD ", OPS_block_list[n]->name, OPS_block_list[n]->dims );
+    for ( int n = 0; n < OPS_block_index; n++ ) {
+      printf ( " %15s %15dD ", OPS_block_list[n]->name, OPS_block_list[n]->dims );
       for (int i=0; i<OPS_block_list[n]->dims; i++)
         printf ( "[%d]",OPS_block_list[n]->size[i] );
       printf("\n");
@@ -239,16 +272,15 @@ void ops_diagnostic_output ( )
     printf ( "\n dats item/point [block_size] [offset]  block\n" );
     printf ( " ------------------------------\n" );
     ops_dat_entry *item;
-    TAILQ_FOREACH(item, &OPS_dat_list, entries)
-    {
-      printf ( " %10s %10d ", (item->dat)->name, (item->dat)->data_size );
+    TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+      printf ( " %15s %15d ", (item->dat)->name, (item->dat)->data_size );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->block_size[i] );
       printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->offset[i] );
 
-      printf ( " %10s\n", (item->dat)->block->name );
+      printf ( " %15s\n", (item->dat)->block->name );
     }
     printf ( "\n" );
   }
