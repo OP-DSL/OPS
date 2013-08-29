@@ -40,7 +40,8 @@
 inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
   if (arg.stencil!=NULL) {
     for (int i = 0; i < arg.stencil->points; i++){
-      p_arg[i] = arg.data + arg.dat->size * (n_x * arg.stencil->stride[0]  +
+      p_arg[i] = arg.data +
+      arg.dat->size * ((n_x - arg.dat->offset[0]) * arg.stencil->stride[0]  +
       arg.stencil->stencil[i * arg.stencil->dims + 0]);
     }
   } else {
@@ -53,8 +54,8 @@ inline void ops_arg_set(int n_x,
   if (arg.stencil!=NULL) {
     for (int i = 0; i < arg.stencil->points; i++)
       p_arg[i] = arg.data + arg.dat->size * arg.dat->block->size[0] *
-      (n_y * arg.stencil->stride[1] + arg.stencil->stencil[i*arg.stencil->dims + 1]) +
-      arg.dat->size * (n_x * arg.stencil->stride[0] +
+      ((n_y - arg.dat->offset[1])* arg.stencil->stride[1] + arg.stencil->stencil[i*arg.stencil->dims + 1]) +
+      arg.dat->size * ((n_x - arg.dat->offset[0])* arg.stencil->stride[0] +
       arg.stencil->stencil[i*arg.stencil->dims + 0]);
   } else {
     *p_arg = arg.data;
@@ -147,10 +148,61 @@ void ops_par_loop(void (*kernel)( T0* ),
     }
   }
 
-
-
-
   for (int i = 0; i < 1; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+}
+
+
+template < class T0, class T1 >
+void ops_par_loop(void (*kernel)( T0*, T1* ),
+  char const * name, int dim, int *range,
+  ops_arg arg0,
+  ops_arg arg1) {
+
+  char** p_a[2];
+  ops_arg args[2] = {arg0, arg1};
+
+  // consistency checks
+  // ops_args_check(2,args,name);
+
+  for (int i = 0; i < 2; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 2, args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0], (T1 *)p_a[1]);
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        ops_args_set(n_x, n_y, 2, args,p_a);
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0], (T1 *)p_a[1] );
+      }
+    }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z, 2, args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0], (T1 *)p_a[1] );
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       free(p_a[i]);
   }

@@ -210,27 +210,36 @@ int main(int argc, char **argv)
 
   int self[] = {0};
   ops_stencil sten1 = ops_decl_stencil( 1, 1, self, "self");
-  int range[] = {0, x_max + 3 + 2};
-  ops_par_loop(initialise_chunk_kernel, "initialise_chunk_kernel", 1, range,
-               ops_arg_dat(vertexx, sten1, OPS_WRITE));
 
+  int range[] = {x_min-2, x_max+3};
+  ops_par_loop(initialise_chunk_kernel, "initialise_chunk_kernel", 1, range,
+               ops_arg_dat(vertexx, sten1, OPS_WRITE),
+               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
 
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 1, range,
                ops_arg_dat(vertexx, sten1, OPS_READ));
+  ops_par_loop(test_kernel2, "test_kernel2", 1, range,
+               ops_arg_dat(vertexdx, sten1, OPS_READ));
   printf("\n\n");
 
+  int range2[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  //need to declare a 2D loop that accesses vertexx with x_range and vertexy with yrange
+  //need a strided stencil
+  //int stridex[] = {1,0};
+  //int stridey[] = {0,1}
 
-  /*int self2[] = {0,0};
+/*
+  int self2[] = {0,0};
   ops_stencil sten2 = ops_decl_stencil( 2, 1, self2, "self");
-  int range2[] = {0, x_max, 0, y_max};
+  int range2[] = {x_min-2, x_max+2, y_min-2, y_max+2};
   ops_par_loop(test_kernel, "test_kernel", 2, range2,
                ops_arg_dat(dencity0, sten2, OPS_WRITE));
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 2, range2,
                ops_arg_dat(dencity0, sten2, OPS_WRITE));
-  printf("\n\n");*/
-
+  printf("\n\n");
+*/
 
   //initialize chunk
 
