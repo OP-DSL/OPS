@@ -117,7 +117,7 @@ void ops_exit( )
   /*free doubl linked list holding the ops_dats */
   ops_dat_entry *item;
   while ((item = TAILQ_FIRST(&OPS_dat_list))) {
-    if (!((item->dat)->user_managed))
+    if ((item->dat)->user_managed == 0)
       free((item->dat)->data);
     free((item->dat)->block_size);
     free((item->dat)->offset);

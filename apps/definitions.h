@@ -46,6 +46,28 @@ typedef struct
 } state_type_core;
 typedef state_type_core * state_type;
 
-extern state_type * states;
+extern state_type states;
+
+typedef struct
+{
+  double  xmin, ymin, xmax, ymax;
+  int x_cells, y_cells;
+} grid_type_core;
+typedef grid_type_core * grid_type;
+
+extern grid_type grid;
+
+
+typedef struct
+{
+  int left, right, bottom, top ,left_boundary, right_boundary,
+      bottom_boundary, top_boundary;
+  int x_min, y_min, x_max ,y_max;
+} field_type_core;
+typedef field_type_core * field_type;
+
+extern field_type field;
+
+
 
 #endif /* __CLOVER_LEAF_DEFINITIONS_H */

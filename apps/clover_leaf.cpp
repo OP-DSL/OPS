@@ -103,8 +103,11 @@ int     g_rect=1,
         g_circ=2,
         g_point=3;
 
-state_type * states;
+state_type states; //global variable holding state info
 
+grid_type grid; //global variable holding global grid info
+
+field_type field; //global variable holding info of fields
 
 
 /******************************************************************************
@@ -112,13 +115,32 @@ state_type * states;
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+  //set up CLoverleaf problem -- need to fill in through I/O
+  grid = (grid_type ) xmalloc(sizeof(grid_type_core));
+  grid->x_cells = 10;
+  grid->y_cells = 2;
+  grid->xmin = 0;
+  grid->xmax = grid->x_cells;
+  grid->ymin = 0;
+  grid->ymax = grid->y_cells;
+
+  field = (field_type ) xmalloc(sizeof(field_type_core));
+  field->x_min = 1;
+  field->y_min = 1;
+  field->x_max = grid->x_cells;
+  field->y_max = grid->y_cells;
+
   // OPS initialisation
   ops_init(argc,argv,5);
   ops_printf("Clover version %f\n", g_version);
 
   //declare blocks
-  int x_cells = 10;
-  int y_cells = 2;
+  int x_cells = grid->x_cells;
+  int y_cells = grid->y_cells;
+  int x_min = grid->xmin;
+  int x_max = grid->xmax;
+  int y_min = grid->ymin;
+  int y_max = grid->ymax;
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
   ops_block clover_grid = ops_decl_block(2, dims, "grid");
 
@@ -127,10 +149,6 @@ int main(int argc, char **argv)
   ops_block clover_yedge = ops_decl_block(1, &dims[1], "yedge");
 
   //declare data on blocks
-  int x_min = 1;
-  int y_min = 1;
-  int x_max = x_cells;
-  int y_max = y_cells;
   int offset[2] = {-2,-2};
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
@@ -187,9 +205,12 @@ int main(int argc, char **argv)
 
   ops_diagnostic_output();
 
+  //initialize chunk
+
+
   int self[] = {0};
   ops_stencil sten1 = ops_decl_stencil( 1, 1, self, "self");
-  int range[] = {x_min-2, x_max+3};
+  int range[] = {0, x_max + 3 + 2};
   ops_par_loop(initialise_chunk_kernel, "initialise_chunk_kernel", 1, range,
                ops_arg_dat(vertexx, sten1, OPS_WRITE));
 
