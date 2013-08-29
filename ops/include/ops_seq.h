@@ -37,23 +37,68 @@
 
 #include "ops_lib_cpp.h"
 
-inline void ops_arg_set(int n, ops_arg arg, char **p_arg){
-        if (arg.stencil!=NULL) {
-          for (int i = 0; i < arg.stencil->points; i++){
-            p_arg[i] = arg.data + sizeof(double)*(n * arg.stencil->stride[0]  +
-            arg.stencil->stencil[i*arg.stencil->dims + 0]);
-          }
-        } else {
-          *p_arg = arg.data;
-        }
+inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+    for (int i = 0; i < arg.stencil->points; i++){
+      p_arg[i] = arg.data + arg.dat->size * (n_x * arg.stencil->stride[0]  +
+      arg.stencil->stencil[i * arg.stencil->dims + 0]);
+    }
+  } else {
+    *p_arg = arg.data;
+  }
 }
 
-inline void ops_args_set(int iter_x, int nargs, ops_arg *args, char ***p_a){
-        for (int n=0; n<nargs; n++) {
-          ops_arg_set(iter_x, args[n], p_a[n]);
-        }
+inline void ops_arg_set(int n_x,
+                        int n_y, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+    for (int i = 0; i < arg.stencil->points; i++)
+      p_arg[i] = arg.data + arg.dat->size * arg.dat->block->size[0] *
+      (n_y * arg.stencil->stride[1] + arg.stencil->stencil[i*arg.stencil->dims + 1]) +
+      arg.dat->size * (n_x * arg.stencil->stride[0] +
+      arg.stencil->stencil[i*arg.stencil->dims + 0]);
+  } else {
+    *p_arg = arg.data;
+  }
 }
 
+inline void ops_arg_set(int n_x,
+                        int n_y,
+                        int n_z, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+    for (int i = 0; i < arg.stencil->points; i++)
+      p_arg[i] = arg.data + arg.dat->size * arg.dat->block->size[1] *
+      arg.dat->block->size[0] * (n_z * arg.stencil->stride[2] + arg.stencil->stencil[i*arg.stencil->dims + 2]) +
+      arg.dat->size * arg.dat->block->size[0] * (n_y * arg.stencil->stride[1] + arg.stencil->stencil[i*arg.stencil->dims + 1]) +
+      arg.dat->size * (n_x * arg.stencil->stride[0] + arg.stencil->stencil[i*arg.stencil->dims + 0]);
+  } else {
+    *p_arg = arg.data;
+  }
+}
+
+
+
+inline void ops_args_set(int iter_x,
+                         int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, args[n], p_a[n]);
+  }
+}
+
+inline void ops_args_set(int iter_x,
+                         int iter_y,
+                         int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, iter_y, args[n], p_a[n]);
+  }
+}
+
+inline void ops_args_set(int iter_x,
+                         int iter_y,
+                         int iter_z, int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, iter_y, iter_z, args[n], p_a[n]);
+  }
+}
 
 
 template < class T0 >
@@ -75,12 +120,34 @@ void ops_par_loop(void (*kernel)( T0* ),
   // loop over set elements
 
   if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 1,args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0] );
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
       for (int n_x = range[0]; n_x < range[1]; n_x++) {
-        ops_args_set(n_x, 1,args,p_a);
+        ops_args_set(n_x, n_y,1,args,p_a);
         // call kernel function, passing in pointers to data
         kernel( (T0 *)p_a[0] );
       }
     }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z,1,args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0] );
+        }
+      }
+    }
+  }
+
+
 
 
   for (int i = 0; i < 1; i++) {

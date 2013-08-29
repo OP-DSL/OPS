@@ -72,7 +72,7 @@ int compare_blocks(ops_block block1, ops_block block2)
   else return 0;
 }
 
-ops_dat search_dat(ops_block block, int data_size, int *block_size, int* offset,
+ops_dat search_dat(ops_block block, int size, int *block_size, int* offset,
   char const * type, char const * name)
 {
   ops_dat_entry* item;
@@ -82,7 +82,7 @@ ops_dat search_dat(ops_block block, int data_size, int *block_size, int* offset,
     ops_dat item_dat = item->dat;
 
     if (strcmp(item_dat->name,name) == 0 && /* there are other components to compare*/
-       (item_dat->data_size) == data_size && compare_blocks(item_dat->block, block) == 1 &&
+       (item_dat->size) == size && compare_blocks(item_dat->block, block) == 1 &&
        strcmp(item_dat->type,type) == 0 ) {
        return item_dat;
     }
@@ -162,7 +162,7 @@ ops_block ops_decl_block(int dims, int *size, char *name)
 }
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, char *data,
+                      int *block_size, int* offset, char *data, int type_size,
                       char const * type,
                       char const * name )
 {
@@ -180,7 +180,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   dat->index = OPS_dat_index;
   dat->block = block;
 
-  dat->data_size = data_size;
+  dat->size = type_size*data_size;
 
   dat->block_size =(int *)xmalloc(sizeof(int)*block->dims);
   memcpy(dat->block_size,block_size,sizeof(int)*block->dims);
@@ -213,7 +213,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 
 
 ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
-  int *block_size, int* offset,  char * data, char const * type, char const * name )
+  int *block_size, int* offset,  char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
@@ -222,7 +222,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, data_size, block_size, offset, data, type, name );
+  return ops_decl_dat_core ( block, data_size, block_size, offset, data, type_size, type, name );
 }
 
 
@@ -286,7 +286,7 @@ void ops_diagnostic_output ( )
     printf ( " ------------------------------\n" );
     ops_dat_entry *item;
     TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-      printf ( " %15s %15d ", (item->dat)->name, (item->dat)->data_size );
+      printf ( " %15s %15d ", (item->dat)->name, (item->dat)->size );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->block_size[i] );
       printf ( " " );

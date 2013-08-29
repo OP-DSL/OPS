@@ -95,7 +95,7 @@ typedef struct
 {
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
-  int         data_size;   /* number of data items per grid point*/
+  int         size;        /* number of data items per grid point*/
   int         *block_size; /* size of the array in each block dimension*/
   int         *offset;     /* starting index for each dimention*/
   char        *data;       /* data on host */
@@ -151,12 +151,12 @@ void ops_exit( void );
 ops_block ops_decl_block(int dims, int *size, char *name);
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, char *data,
+                      int *block_size, int* offset, char *data, int type_size,
                       char const * type,
                       char const * name );
 
 ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
-                      int *block_size, int* offset,  char * data,
+                      int *block_size, int* offset,  char * data, int type_size,
                       char const * type, char const * name );
 
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);

@@ -194,8 +194,18 @@ int main(int argc, char **argv)
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 1, range,
                ops_arg_dat(cellx, sten1, OPS_WRITE));
+  printf("\n\n");
 
 
+  int self2[] = {0,0};
+  ops_stencil sten2 = ops_decl_stencil( 2, 1, self2, "self");
+  int range2[] = {0, x_max, 0, y_max};
+  ops_par_loop(test_kernel, "test_kernel", 2, range2,
+               ops_arg_dat(dencity0, sten2, OPS_WRITE));
+  printf("\n\n");
+  ops_par_loop(test_kernel2, "test_kernel2", 2, range2,
+               ops_arg_dat(dencity0, sten2, OPS_WRITE));
+  printf("\n\n");
   ops_exit();
 }
 
