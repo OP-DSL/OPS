@@ -92,6 +92,12 @@ void initialise_chunk_kernel_volume(double **volume) {
   **volume = d_x*d_y;
 }
 
+void initialise_chunk_kernel_xarea(double **celldy, double **xarea) {
+  **xarea=**celldy;
+}
 
+void initialise_chunk_kernel_yarea(double **celldx, double **yarea) {
+  **yarea=**celldx;
+}
 
 #endif

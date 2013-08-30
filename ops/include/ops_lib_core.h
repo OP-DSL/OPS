@@ -160,6 +160,7 @@ ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
                       char const * type, char const * name );
 
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
+ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 

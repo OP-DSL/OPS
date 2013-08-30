@@ -253,6 +253,35 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
 }
 
 
+
+ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *stride, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);;
+  stencil->stencil = sten;
+  stencil->stride = stride;
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  return stencil;
+}
+
+
+
 ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   ops_arg arg;
   arg.argtype = OPS_ARG_DAT;

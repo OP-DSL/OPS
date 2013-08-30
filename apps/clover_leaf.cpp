@@ -258,6 +258,20 @@ int main(int argc, char **argv)
   ops_par_loop(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_WRITE));
 
+
+  int stride1[] = {0,1};
+  ops_stencil sten2D_1Dstride1 = ops_decl_strided_stencil( 2, 2, self2d, stride1, "self2d");
+  ops_par_loop(initialise_chunk_kernel_xarea, "initialise_chunk_kernel_xarea", 2, rangexy,
+    ops_arg_dat(celldy, sten2D_1Dstride1, OPS_READ),
+    ops_arg_dat(xarea, sten2D, OPS_WRITE));
+
+  int stride2[] = {1,0};
+  ops_stencil sten2D_1Dstride2 = ops_decl_strided_stencil( 2, 2, self2d, stride2, "self2d");
+  ops_par_loop(initialise_chunk_kernel_yarea, "initialise_chunk_kernel_yarea", 2, rangexy,
+    ops_arg_dat(celldx, sten2D_1Dstride2, OPS_READ),
+    ops_arg_dat(yarea, sten2D, OPS_WRITE));
+
+
   printf("\n\n");
   ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
                ops_arg_dat(vertexx, sten1, OPS_READ),
@@ -282,6 +296,15 @@ int main(int argc, char **argv)
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_READ));
 
+  printf("\n\n");
+  ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
+               ops_arg_dat(xarea, sten2D, OPS_READ));
+
+  printf("\n\n");
+  ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
+               ops_arg_dat(yarea, sten2D, OPS_READ));
+
+  printf("\n\n");
 
 
 /*
