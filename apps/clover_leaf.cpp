@@ -119,9 +119,10 @@ int main(int argc, char **argv)
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
   grid->x_cells = 10;
   grid->y_cells = 2;
+
   grid->xmin = 0;
-  grid->xmax = grid->x_cells;
   grid->ymin = 0;
+  grid->xmax = grid->x_cells;
   grid->ymax = grid->y_cells;
 
   field = (field_type ) xmalloc(sizeof(field_type_core));
@@ -189,10 +190,10 @@ int main(int argc, char **argv)
   ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
 
 
-  int size2[1] = {(x_max+2)-(x_min-2)}; //need to add 1 to account for equivalance with CLoverleaf's Fortran allocate
-  int size3[1] = {(y_max+2)-(y_min-2)};
-  int size4[1] = {(x_max+3)-(x_min-2)};
-  int size5[1] = {(y_max+3)-(y_min-2)};
+  int size2[1] = {(x_max+2)-(x_min-2)+1}; //need to add 1 to account for
+  int size3[1] = {(y_max+2)-(y_min-2)+1}; //equivalance with CLoverleaf's Fortran allocate
+  int size4[1] = {(x_max+3)-(x_min-2)+1};
+  int size5[1] = {(y_max+3)-(y_min-2)+1};
   int offset4[2] = {-2};
   ops_dat cellx    = ops_decl_dat(clover_xedge, 1, size2, offset4, temp, "double", "cellx");
   ops_dat celly    = ops_decl_dat(clover_yedge, 1, size3, offset4, temp, "double", "celly");
@@ -203,27 +204,52 @@ int main(int argc, char **argv)
   ops_dat vertexdx = ops_decl_dat(clover_xedge, 1, size4, offset4, temp, "double", "vertexdx");
   ops_dat vertexdy = ops_decl_dat(clover_yedge, 1, size5, offset4, temp, "double", "vertexdy");
 
+
+  //contains x indicies from 0 to xmax+3 -- needed for initialization
+  int* xindex = (int *)xmalloc(sizeof(int)*size4[0]);
+  for(int i=x_min-2; i<size4[0]; i++) xindex[i-offset4[0]] = i - x_min;
+  ops_dat xx  = ops_decl_dat(clover_xedge, 1, size4, offset4, xindex, "int", "xx");
+
+  //contains y indicies from 0 to ymax+3 -- needed for initialization
+  int* yindex = (int *)xmalloc(sizeof(int)*size5[0]);
+  for(int i=y_min-2; i<size5[0]; i++) yindex[i-offset4[0]] = i - y_min;
+  ops_dat yy  = ops_decl_dat(clover_yedge, 1, size5, offset4, yindex, "int", "yy");
+
   ops_diagnostic_output();
 
-  //initialize chunk
-
+  /**---------------------------initialize chunk-----------------------------**/
 
   int self[] = {0};
   ops_stencil sten1 = ops_decl_stencil( 1, 1, self, "self");
+  int self_minus2[] = {-2};
+  ops_stencil sten2 = ops_decl_stencil( 1, 1, self_minus2, "self_minus2");
 
-  int range[] = {x_min-2, x_max+3};
-  ops_par_loop(initialise_chunk_kernel, "initialise_chunk_kernel", 1, range,
-               ops_arg_dat(vertexx, sten1, OPS_WRITE),
-               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
+  int rangex[] = {0, x_max+3+1};
+  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 1, rangex,
+               ops_arg_dat(vertexx, sten2, OPS_WRITE),
+               ops_arg_dat(xx, sten1, OPS_READ),
+               ops_arg_dat(vertexdx, sten2, OPS_WRITE));
 
-  printf("\n\n");
-  ops_par_loop(test_kernel2, "test_kernel2", 1, range,
-               ops_arg_dat(vertexx, sten1, OPS_READ));
-  ops_par_loop(test_kernel2, "test_kernel2", 1, range,
+  int rangey[] = {0, y_max+3+1};
+  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 1, rangey,
+               ops_arg_dat(vertexy, sten2, OPS_WRITE),
+               ops_arg_dat(yy, sten1, OPS_READ),
+               ops_arg_dat(vertexdy, sten2, OPS_WRITE));
+
+
+  ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
+               ops_arg_dat(vertexx, sten1, OPS_READ),
                ops_arg_dat(vertexdx, sten1, OPS_READ));
+
+  printf("\n\n");
+  ops_par_loop(test_kernel3, "test_kernel3", 1, rangey,
+               ops_arg_dat(vertexy, sten1, OPS_READ),
+               ops_arg_dat(vertexdy, sten1, OPS_READ));
+
+
   printf("\n\n");
 
-  int range2[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  //int range2[] = {x_min-2, x_max+3, y_min-2, y_max+3};
   //need to declare a 2D loop that accesses vertexx with x_range and vertexy with yrange
   //need a strided stencil
   //int stridex[] = {1,0};

@@ -176,7 +176,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
     exit ( -1 );
   }
 
-  ops_dat dat = ( ops_dat ) malloc ( sizeof ( ops_dat_core ) );
+  ops_dat dat = ( ops_dat ) xmalloc ( sizeof ( ops_dat_core ) );
   dat->index = OPS_dat_index;
   dat->block = block;
 
