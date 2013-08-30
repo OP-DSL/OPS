@@ -189,7 +189,7 @@ int main(int argc, char **argv)
   ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
 
 
-  int size2[1] = {(x_max+2)-(x_min-2)};
+  int size2[1] = {(x_max+2)-(x_min-2)}; //need to add 1 to account for equivalance with CLoverleaf's Fortran allocate
   int size3[1] = {(y_max+2)-(y_min-2)};
   int size4[1] = {(x_max+3)-(x_min-2)};
   int size5[1] = {(y_max+3)-(y_min-2)};
