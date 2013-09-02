@@ -39,6 +39,7 @@
 
 inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
   if (arg.stencil!=NULL) {
+
     for (int i = 0; i < arg.stencil->points; i++){
       p_arg[i] =
          arg.data + //base of 1D array
@@ -56,8 +57,7 @@ inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
 inline void ops_arg_set(int n_x,
                         int n_y, ops_arg arg, char **p_arg){
   if (arg.stencil!=NULL) {
-    for (int i = 0; i < arg.stencil->points; i++)
-
+    for (int i = 0; i < arg.stencil->points; i++){
       p_arg[i] =
         arg.data + //base of 2D array
         //y dimension -- get to the correct y line
@@ -75,6 +75,7 @@ inline void ops_arg_set(int n_x,
         arg.stencil->stencil[i*arg.stencil->dims + 0] //get the value at the ith
                                                       //stencil point "+ 0" is the x dim
       );
+    }
   } else {
     *p_arg = arg.data;
   }

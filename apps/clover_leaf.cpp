@@ -126,8 +126,8 @@ int main(int argc, char **argv)
   grid->ymax = grid->y_cells;
 
   field = (field_type ) xmalloc(sizeof(field_type_core));
-  field->x_min = 1;
-  field->y_min = 1;
+  field->x_min = 0;
+  field->y_min = 0;
   field->x_max = grid->x_cells;
   field->y_max = grid->y_cells;
 
@@ -146,8 +146,13 @@ int main(int argc, char **argv)
   ops_block clover_grid = ops_decl_block(2, dims, "grid");
 
   //declare edges of block
-  ops_block clover_xedge = ops_decl_block(1, &dims[0], "xedge");
-  ops_block clover_yedge = ops_decl_block(1, &dims[1], "yedge");
+  //ops_block clover_xedge = ops_decl_block(1, &dims[0], "xedge");
+  //ops_block clover_yedge = ops_decl_block(1, &dims[1], "yedge");
+
+  dims[0] = x_cells; dims[1] = 0;
+  ops_block clover_xedge = ops_decl_block(2, dims, "xedge");
+  dims[0] = 0; dims[1] = y_cells;
+  ops_block clover_yedge = ops_decl_block(2, dims, "yedge");
 
   //declare data on blocks
   int offset[2] = {-2,-2};
@@ -190,88 +195,98 @@ int main(int argc, char **argv)
   ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
 
 
-  int size2[1] = {(x_max+2)-(x_min-2)+1}; //need to add 1 to account for
-  int size3[1] = {(y_max+2)-(y_min-2)+1}; //equivalance with CLoverleaf's Fortran allocate
-  int size4[1] = {(x_max+3)-(x_min-2)+1};
-  int size5[1] = {(y_max+3)-(y_min-2)+1};
-  int offset4[2] = {-2};
-  ops_dat cellx    = ops_decl_dat(clover_xedge, 1, size2, offset4, temp, "double", "cellx");
-  ops_dat celly    = ops_decl_dat(clover_yedge, 1, size3, offset4, temp, "double", "celly");
-  ops_dat vertexx  = ops_decl_dat(clover_xedge, 1, size4, offset4, temp, "double", "vertexx");
-  ops_dat vertexy  = ops_decl_dat(clover_yedge, 1, size5, offset4, temp, "double", "vertexy");
-  ops_dat celldx   = ops_decl_dat(clover_xedge, 1, size2, offset4, temp, "double", "celldx");
-  ops_dat celldy   = ops_decl_dat(clover_yedge, 1, size3, offset4, temp, "double", "celldy");
-  ops_dat vertexdx = ops_decl_dat(clover_xedge, 1, size4, offset4, temp, "double", "vertexdx");
-  ops_dat vertexdy = ops_decl_dat(clover_yedge, 1, size5, offset4, temp, "double", "vertexdy");
+  int size2[2] = {(x_max+2)-(x_min-2),1};
+  int size3[2] = {1, (y_max+2)-(y_min-2)};
+  int size4[2] = {(x_max+3)-(x_min-2),1};
+  int size5[2] = {1,(y_max+3)-(y_min-2)};
+  int offsetx[2] = {-2,0};
+  int offsety[2] = {0,-2};
+  ops_dat cellx    = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "cellx");
+  ops_dat celly    = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celly");
+  ops_dat vertexx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexx");
+  ops_dat vertexy  = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexy");
+  ops_dat celldx   = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "celldx");
+  ops_dat celldy   = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celldy");
+  ops_dat vertexdx = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexdx");
+  ops_dat vertexdy = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexdy");
 
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   int* xindex = (int *)xmalloc(sizeof(int)*size4[0]);
-  for(int i=x_min-2; i<size4[0]; i++) xindex[i-offset4[0]] = i - x_min;
-  ops_dat xx  = ops_decl_dat(clover_xedge, 1, size4, offset4, xindex, "int", "xx");
+  for(int i=x_min-2; i<x_max+3; i++) xindex[i-offsetx[0]] = i - x_min;
+  ops_dat xx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, xindex, "int", "xx");
 
   //contains y indicies from 0 to ymax+3 -- needed for initialization
-  int* yindex = (int *)xmalloc(sizeof(int)*size5[0]);
-  for(int i=y_min-2; i<size5[0]; i++) yindex[i-offset4[0]] = i - y_min;
-  ops_dat yy  = ops_decl_dat(clover_yedge, 1, size5, offset4, yindex, "int", "yy");
+  int* yindex = (int *)xmalloc(sizeof(int)*size5[1]);
+  for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
+  ops_dat yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
 
   ops_diagnostic_output();
 
   /**---------------------------initialize chunk-----------------------------**/
 
-  int self[] = {0};
-  ops_stencil sten1 = ops_decl_stencil( 1, 1, self, "self");
-  int self_minus2[] = {-2};
-  ops_stencil sten2 = ops_decl_stencil( 1, 1, self_minus2, "self_minus2");
+  int self[] = {0,0};
+  ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
+  int self_minus2[] = {-2,0};
+  ops_stencil sten2 = ops_decl_stencil( 2, 1, self_minus2, "self_minus2");
 
-  int rangex[] = {x_min, x_max+3+1};
-  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 1, rangex,
-               ops_arg_dat(vertexx, sten2, OPS_WRITE),
+  int rangex[] = {x_min-2, x_max+3, 0, 1};
+  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+               ops_arg_dat(vertexx, sten1, OPS_WRITE),
                ops_arg_dat(xx, sten1, OPS_READ),
-               ops_arg_dat(vertexdx, sten2, OPS_WRITE));
+               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
 
-  int rangey[] = {x_min, y_max+3+1};
-  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 1, rangey,
-               ops_arg_dat(vertexy, sten2, OPS_WRITE),
+  printf("\n\n");
+
+  int rangey[] = {0, 1, y_min-2, y_max+3};
+  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+               ops_arg_dat(vertexy, sten1, OPS_WRITE),
                ops_arg_dat(yy, sten1, OPS_READ),
-               ops_arg_dat(vertexdy, sten2, OPS_WRITE));
+               ops_arg_dat(vertexdy, sten1, OPS_WRITE));
 
+  printf("\n\n");
 
-  int self_plus1[] = {0,1};
-  ops_stencil sten3 = ops_decl_stencil( 1, 2, self_plus1, "self_plus1");
+  int self_plus1[] = {0,0,1,0};
+  ops_stencil sten3 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
 
-  rangex[0] = x_min; rangex[1] = x_max+2+1 ;
-  ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 1, rangex,
+  rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
+  ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
                ops_arg_dat(vertexx, sten3, OPS_READ),
                ops_arg_dat(cellx, sten1, OPS_WRITE),
                ops_arg_dat(celldx, sten1, OPS_WRITE));
 
-  rangey[0] = y_min; rangey[1] = y_max+2+1 ;
-  ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 1, rangey,
+  printf("\n\n");
+
+  rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
+  ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
                ops_arg_dat(vertexy, sten3, OPS_READ),
                ops_arg_dat(celly, sten1, OPS_WRITE),
                ops_arg_dat(celldy, sten1, OPS_WRITE));
 
-  int rangexy[] = {x_min,x_max+2,y_min,y_max+2};
+  printf("\n\n");
+
+  int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
   int self2d[] = {0,0};
-  ops_stencil sten2D = ops_decl_stencil( 2, 2, self2d, "self2d");
+  ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
   ops_par_loop(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_WRITE));
 
 
   int stride1[] = {0,1};
-  ops_stencil sten2D_1Dstride1 = ops_decl_strided_stencil( 2, 2, self2d, stride1, "self2d");
+  ops_stencil sten2D_1Dstride1 = ops_decl_strided_stencil( 2, 1, self2d, stride1, "self2d");
   ops_par_loop(initialise_chunk_kernel_xarea, "initialise_chunk_kernel_xarea", 2, rangexy,
     ops_arg_dat(celldy, sten2D_1Dstride1, OPS_READ),
     ops_arg_dat(xarea, sten2D, OPS_WRITE));
 
+
   int stride2[] = {1,0};
-  ops_stencil sten2D_1Dstride2 = ops_decl_strided_stencil( 2, 2, self2d, stride2, "self2d");
+  ops_stencil sten2D_1Dstride2 = ops_decl_strided_stencil( 2, 1, self2d, stride2, "self2d");
   ops_par_loop(initialise_chunk_kernel_yarea, "initialise_chunk_kernel_yarea", 2, rangexy,
     ops_arg_dat(celldx, sten2D_1Dstride2, OPS_READ),
     ops_arg_dat(yarea, sten2D, OPS_WRITE));
 
 
+/*
   printf("\n\n");
   ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
                ops_arg_dat(vertexx, sten1, OPS_READ),
@@ -295,7 +310,7 @@ int main(int argc, char **argv)
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_READ));
-
+*/
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(xarea, sten2D, OPS_READ));
@@ -305,6 +320,8 @@ int main(int argc, char **argv)
                ops_arg_dat(yarea, sten2D, OPS_READ));
 
   printf("\n\n");
+
+
 
 
 /*
