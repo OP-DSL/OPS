@@ -86,20 +86,22 @@ void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **ce
 
 void initialise_chunk_kernel_volume(double **volume) {
 
+
+}
+
+void initialise_volume_xarea_yarea(double **volume, double **celldy, double **xarea,
+                                         double **celldx, double **yarea) {
+
   double d_x, d_y;
 
   d_x = (grid->xmax - grid->xmin)/(double)grid->x_cells;
   d_y = (grid->ymax - grid->ymin)/(double)grid->y_cells;
 
   **volume = d_x*d_y;
-}
-
-void initialise_chunk_kernel_xarea(double **celldy, double **xarea) {
   **xarea=**celldy;
+  **yarea=**celldx;
+  //printf("%lf ", (double)**volume);
 }
 
-void initialise_chunk_kernel_yarea(double **celldx, double **yarea) {
-  **yarea=**celldx;
-}
 
 #endif
