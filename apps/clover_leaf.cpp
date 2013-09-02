@@ -227,20 +227,16 @@ int main(int argc, char **argv)
   ops_stencil sten2 = ops_decl_stencil( 2, 1, self_minus2, "self_minus2");
 
   int rangex[] = {x_min-2, x_max+3, 0, 1};
-  //ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
-  //             ops_arg_dat(vertexx, sten1, OPS_WRITE),
-  //             ops_arg_dat(xx, sten1, OPS_READ),
-  //             ops_arg_dat(vertexdx, sten1, OPS_WRITE));
-
-  printf("\n\n");
+  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+               ops_arg_dat(vertexx, sten1, OPS_WRITE),
+               ops_arg_dat(xx, sten1, OPS_READ),
+               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
 
   int rangey[] = {0, 1, y_min-2, y_max+3};
-  //ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
-  //             ops_arg_dat(vertexy, sten1, OPS_WRITE),
-  //             ops_arg_dat(yy, sten1, OPS_READ),
-  //             ops_arg_dat(vertexdy, sten1, OPS_WRITE));
-
-  printf("\n\n");
+  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+               ops_arg_dat(vertexy, sten1, OPS_WRITE),
+               ops_arg_dat(yy, sten1, OPS_READ),
+               ops_arg_dat(vertexdy, sten1, OPS_WRITE));
 
   int self_plus1[] = {0,0, 1,0};
   ops_stencil sten3 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
@@ -251,8 +247,6 @@ int main(int argc, char **argv)
                ops_arg_dat(cellx, sten1, OPS_WRITE),
                ops_arg_dat(celldx, sten1, OPS_WRITE));
 
-  printf("\n\n");
-/*
   self_plus1[0] = 1;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 0;
   rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
   ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
@@ -260,21 +254,17 @@ int main(int argc, char **argv)
                ops_arg_dat(celly, sten1, OPS_WRITE),
                ops_arg_dat(celldy, sten1, OPS_WRITE));
 
-  printf("\n\n");
-
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
   int self2d[] = {0,0};
   ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
   ops_par_loop(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_WRITE));
 
-
   int stride1[] = {0,1};
   ops_stencil sten2D_1Dstride1 = ops_decl_strided_stencil( 2, 1, self2d, stride1, "self2d");
   ops_par_loop(initialise_chunk_kernel_xarea, "initialise_chunk_kernel_xarea", 2, rangexy,
     ops_arg_dat(celldy, sten2D_1Dstride1, OPS_READ),
     ops_arg_dat(xarea, sten2D, OPS_WRITE));
-
 
   int stride2[] = {1,0};
   ops_stencil sten2D_1Dstride2 = ops_decl_strided_stencil( 2, 1, self2d, stride2, "self2d");
@@ -283,7 +273,7 @@ int main(int argc, char **argv)
     ops_arg_dat(yarea, sten2D, OPS_WRITE));
 
 
-
+/*
   printf("\n\n");
   ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
                ops_arg_dat(vertexx, sten1, OPS_READ),

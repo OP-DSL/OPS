@@ -80,7 +80,7 @@ void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **ce
 
   **celly = 0.5*( *vertexy[0] + *vertexy[1] );
   **celldy = d_y;
-  printf("%lf ", (double)**celldy);
+  //printf("%lf ", (double)**celldy);
 
 }
 
@@ -96,12 +96,10 @@ void initialise_chunk_kernel_volume(double **volume) {
 
 void initialise_chunk_kernel_xarea(double **celldy, double **xarea) {
   **xarea=**celldy;
-  //printf("%lf ", (double)**xarea);
 }
 
 void initialise_chunk_kernel_yarea(double **celldx, double **yarea) {
   **yarea=**celldx;
-  //printf("%lf ", (double)**yarea);
 }
 
 #endif
