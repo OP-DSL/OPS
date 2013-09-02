@@ -146,9 +146,6 @@ int main(int argc, char **argv)
   ops_block clover_grid = ops_decl_block(2, dims, "grid");
 
   //declare edges of block
-  //ops_block clover_xedge = ops_decl_block(1, &dims[0], "xedge");
-  //ops_block clover_yedge = ops_decl_block(1, &dims[1], "yedge");
-
   dims[0] = x_cells; dims[1] = 0;
   ops_block clover_xedge = ops_decl_block(2, dims, "xedge");
   dims[0] = 0; dims[1] = y_cells;
@@ -194,7 +191,6 @@ int main(int argc, char **argv)
   ops_dat work_array6    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array6");
   ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
 
-
   int size2[2] = {(x_max+2)-(x_min-2),1};
   int size3[2] = {1, (y_max+2)-(y_min-2)};
   int size4[2] = {(x_max+3)-(x_min-2),1};
@@ -231,22 +227,22 @@ int main(int argc, char **argv)
   ops_stencil sten2 = ops_decl_stencil( 2, 1, self_minus2, "self_minus2");
 
   int rangex[] = {x_min-2, x_max+3, 0, 1};
-  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
-               ops_arg_dat(vertexx, sten1, OPS_WRITE),
-               ops_arg_dat(xx, sten1, OPS_READ),
-               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
+  //ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+  //             ops_arg_dat(vertexx, sten1, OPS_WRITE),
+  //             ops_arg_dat(xx, sten1, OPS_READ),
+  //             ops_arg_dat(vertexdx, sten1, OPS_WRITE));
 
   printf("\n\n");
 
   int rangey[] = {0, 1, y_min-2, y_max+3};
-  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
-               ops_arg_dat(vertexy, sten1, OPS_WRITE),
-               ops_arg_dat(yy, sten1, OPS_READ),
-               ops_arg_dat(vertexdy, sten1, OPS_WRITE));
+  //ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+  //             ops_arg_dat(vertexy, sten1, OPS_WRITE),
+  //             ops_arg_dat(yy, sten1, OPS_READ),
+  //             ops_arg_dat(vertexdy, sten1, OPS_WRITE));
 
   printf("\n\n");
 
-  int self_plus1[] = {0,0,1,0};
+  int self_plus1[] = {0,0, 1,0};
   ops_stencil sten3 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
 
   rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
@@ -256,7 +252,8 @@ int main(int argc, char **argv)
                ops_arg_dat(celldx, sten1, OPS_WRITE));
 
   printf("\n\n");
-
+/*
+  self_plus1[0] = 1;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 0;
   rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
   ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
                ops_arg_dat(vertexy, sten3, OPS_READ),
@@ -286,7 +283,7 @@ int main(int argc, char **argv)
     ops_arg_dat(yarea, sten2D, OPS_WRITE));
 
 
-/*
+
   printf("\n\n");
   ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
                ops_arg_dat(vertexx, sten1, OPS_READ),
@@ -310,7 +307,7 @@ int main(int argc, char **argv)
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(volume, sten2D, OPS_READ));
-*/
+
   printf("\n\n");
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(xarea, sten2D, OPS_READ));
@@ -319,32 +316,7 @@ int main(int argc, char **argv)
   ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
                ops_arg_dat(yarea, sten2D, OPS_READ));
 
-  printf("\n\n");
-
-
-
-
-/*
-  //int range2[] = {x_min-2, x_max+3, y_min-2, y_max+3};
-  //need to declare a 2D loop that accesses vertexx with x_range and vertexy with yrange
-  //need a strided stencil
-  //int stridex[] = {1,0};
-  //int stridey[] = {0,1}
-
-
-  int self2[] = {0,0};
-  ops_stencil sten2 = ops_decl_stencil( 2, 1, self2, "self");
-  int range2[] = {x_min-2, x_max+2, y_min-2, y_max+2};
-  ops_par_loop(test_kernel, "test_kernel", 2, range2,
-               ops_arg_dat(dencity0, sten2, OPS_WRITE));
-  printf("\n\n");
-  ops_par_loop(test_kernel2, "test_kernel2", 2, range2,
-               ops_arg_dat(dencity0, sten2, OPS_WRITE));
-  printf("\n\n");
-*/
-
-  //initialize chunk
-
+  printf("\n\n");*/
 
   ops_exit();
 }

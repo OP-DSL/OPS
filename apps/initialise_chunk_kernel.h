@@ -59,7 +59,7 @@ void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, double **ce
 
   **cellx = 0.5*( *vertexx[0] + *vertexx[1] );
   **celldx = d_x;
-  printf("%lf ", (double)**celldx);
+  //printf("%lf %lf\n", *vertexx[0], *vertexx[1]);
 
 }
 

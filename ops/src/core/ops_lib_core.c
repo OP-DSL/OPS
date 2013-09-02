@@ -127,6 +127,16 @@ void ops_exit( )
     free(item);
   }
 
+  // free stencills
+  for ( int i = 0; i < OPS_block_index; i++ ) {
+    free((char*)OPS_stencil_list[i]->name);
+    free(OPS_stencil_list[i]->stencil);
+    free(OPS_stencil_list[i]->stride);
+    free(OPS_stencil_list[i]);
+  }
+  free(OPS_stencil_list);
+  OPS_stencil_list = NULL;
+
   // reset initial values
   OPS_block_index = 0;
   OPS_dat_index = 0;
@@ -245,8 +255,8 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
   stencil->dims = dims;
   stencil->name = copy_str(name);;
 
-  stencil->stencil = (int *)xmalloc(dims*sizeof(int));
-  memcpy(stencil->stencil,sten,sizeof(int)*dims);
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
@@ -276,8 +286,8 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
   stencil->dims = dims;
   stencil->name = copy_str(name);;
 
-  stencil->stencil = (int *)xmalloc(dims*sizeof(int));
-  memcpy(stencil->stencil,sten,sizeof(int)*dims);
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   memcpy(stencil->stride,stride,sizeof(int)*dims);
