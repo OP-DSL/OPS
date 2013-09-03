@@ -130,6 +130,8 @@ int main(int argc, char **argv)
   field->y_min = 0;
   field->x_max = grid->x_cells;
   field->y_max = grid->y_cells;
+  field->left = 0;
+  field->bottom = 0;
 
   // OPS initialisation
   ops_init(argc,argv,5);
@@ -271,9 +273,19 @@ int main(int argc, char **argv)
     ops_arg_dat(yarea, sten2D, OPS_WRITE));
 
 
-  ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexdy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(celly, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
 
+  printf("\n\n");
 
 /*
   ops_print_dat_to_txtfile_core(volume, "volume.dat");

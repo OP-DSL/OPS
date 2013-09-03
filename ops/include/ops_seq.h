@@ -61,7 +61,7 @@ inline void ops_arg_set(int n_x,
       p_arg[i] =
         arg.data + //base of 2D array
         //y dimension -- get to the correct y line
-        arg.dat->size * arg.dat->block->size[0] * ( //multiply by the number of
+        arg.dat->size * arg.dat->block_size[0] * ( //multiply by the number of
                                                     //bytes per element and xdim block size
         (n_y - arg.dat->offset[1]) * // calculate the offset from index 0 for y dim
         arg.stencil->stride[1] + // jump in strides in y dim ??
@@ -89,13 +89,13 @@ inline void ops_arg_set(int n_x,
       p_arg[i] =
       arg.data +
       //z dimension - get to the correct z plane
-      arg.dat->size * arg.dat->block->size[1] * arg.dat->block->size[0] * (
+      arg.dat->size * arg.dat->block_size[1] * arg.dat->block_size[0] * (
       (n_z - arg.dat->offset[2]) *
       arg.stencil->stride[2] +
       arg.stencil->stencil[i*arg.stencil->dims + 2])
       +
       //y dimension -- get to the correct y line on the z plane
-      arg.dat->size * arg.dat->block->size[0] * (
+      arg.dat->size * arg.dat->block_size[0] * (
       (n_y - arg.dat->offset[1]) *
       arg.stencil->stride[1] +
       arg.stencil->stencil[i*arg.stencil->dims + 1])
