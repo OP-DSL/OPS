@@ -96,7 +96,7 @@ void initialise_volume_xarea_yarea(double **volume, double **celldy, double **xa
   **volume = d_x*d_y;
   **xarea=**celldy;
   **yarea=**celldx;
-  printf("%lf ", (double)**xarea);
+  //printf("%lf ", (double)**xarea);
 }
 
 

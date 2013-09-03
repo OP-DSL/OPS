@@ -55,6 +55,7 @@
 //Cloverleaf kernels
 #include "test_kernel.h"
 #include "initialise_chunk_kernel.h"
+#include "generate_chunk_kernel.h"
 
 // Cloverleaf functions
 void read_input();
@@ -65,13 +66,15 @@ void initialise();
 /******************************************************************************
 * Initialize Global constants and variables
 /******************************************************************************/
-float   g_version;
+float   g_version = 1.0;
 int     g_ibig = 640000;
 double  g_small = 1.0e-16;
 double  g_big  = 1.0e+21;
 int     g_name_len_max = 255 ,
         g_xdir = 1,
         g_ydir = 2;
+
+int     number_of_states;
 
         //These two need to be kept consistent with update_halo
 int     CHUNK_LEFT    = 1,
@@ -103,7 +106,7 @@ int     g_rect=1,
         g_circ=2,
         g_point=3;
 
-state_type states; //global variable holding state info
+state_type * states; //global variable holding state info
 
 grid_type grid; //global variable holding global grid info
 
@@ -115,7 +118,8 @@ field_type field; //global variable holding info of fields
 /******************************************************************************/
 int main(int argc, char **argv)
 {
-  //set up CLoverleaf problem -- need to fill in through I/O
+  /**--------------------Set up Cloverleaf default problem-------------------**/
+  //need to fill these in through I/O
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
   grid->x_cells = 10;
   grid->y_cells = 2;
@@ -132,6 +136,34 @@ int main(int argc, char **argv)
   field->y_max = grid->y_cells;
   field->left = 0;
   field->bottom = 0;
+
+  number_of_states = 2;
+  states =  (state_type *) xmalloc(sizeof(state_type) * number_of_states);
+
+  //state 1
+  states[0] = (state_type ) xmalloc(sizeof(state_type_core));
+  states[0]->density = 0.2;
+  states[0]->energy = 1.0;
+  states[0]->xvel = 0.0;
+  states[0]->yvel = 0.0;
+
+  //state 2
+  states[1] = (state_type ) xmalloc(sizeof(state_type_core));
+  states[1]->density=1.0;
+  states[1]->energy=2.5;
+  states[1]->xvel = 0.0;
+  states[1]->yvel = 0.0;
+  states[1]->geometry=g_rect;
+  states[1]->xmin=0.0;
+  states[1]->xmax=5.0;
+  states[1]->ymin=0.0;
+  states[1]->ymax=2.0;
+
+
+
+
+
+  /**-------------------OPS Initialisation and Declarations------------------**/
 
   // OPS initialisation
   ops_init(argc,argv,5);
@@ -158,8 +190,8 @@ int main(int argc, char **argv)
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
 
-  ops_dat dencity0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
-  ops_dat dencity1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
+  ops_dat density0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+  ops_dat density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
   ops_dat energy0     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy0");
   ops_dat energy1     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy1");
   ops_dat pressure    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "pressure");
@@ -221,6 +253,7 @@ int main(int argc, char **argv)
 
   ops_diagnostic_output();
 
+
   /**---------------------------initialize chunk-----------------------------**/
 
   int self[] = {0,0};
@@ -249,7 +282,8 @@ int main(int argc, char **argv)
                ops_arg_dat(cellx, sten1, OPS_WRITE),
                ops_arg_dat(celldx, sten1, OPS_WRITE));
 
-  self_plus1[0] = 1;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 0;
+  //self_plus1[0] = 1;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 0;
+  self_plus1[0] = 0;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 1;
   ops_stencil sten4 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
   rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
   ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
@@ -272,60 +306,51 @@ int main(int argc, char **argv)
     ops_arg_dat(celldx, sten2D_1Dstridex, OPS_READ),
     ops_arg_dat(yarea, sten2D, OPS_WRITE));
 
+  /**---------------------------generate chunk-----------------------------**/
+
+  int self_plus1x[] = {0,0, 1,0};
+  int self_plus1y[] = {0,0, 0,1};
+
+  int strideplus1x[] = {1,0};
+  int strideplus1y[] = {0,1};
+  ops_stencil sten1x = ops_decl_strided_stencil( 2, 2, self_plus1x, stridex, "self_plus1x");
+  ops_stencil sten1y = ops_decl_strided_stencil( 2, 2, self_plus1y, stridey, "self_plus1y");
+
+  int four_point[]  = {0,0, 1,0, 0,1, 1,1};
+  ops_stencil sten2D_4point = ops_decl_stencil( 2, 4, four_point, "sten2D_4point");
+  ops_par_loop(generate_kernel, "generate_kernel", 2, rangexy,
+    ops_arg_dat(vertexx, sten1x, OPS_READ),
+    ops_arg_dat(vertexy, sten1y, OPS_READ),
+    ops_arg_dat(energy0, sten2D, OPS_WRITE),
+    ops_arg_dat(density0, sten2D, OPS_WRITE),
+    ops_arg_dat(xvel0, sten2D_4point, OPS_WRITE),
+    ops_arg_dat(yvel0, sten2D_4point, OPS_WRITE));
+
+  //rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
+  //ops_par_loop(generate_kernel_test, "generate_kernel_test", 2, rangexy,
+  //  ops_arg_dat(vertexx, sten1x, OPS_READ));
+
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdy, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(celly, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
+
+  ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
 
   printf("\n\n");
-
-/*
-  ops_print_dat_to_txtfile_core(volume, "volume.dat");
-  ops_print_dat_to_txtfile_core(cellx, "cellx.dat");
-  ops_print_dat_to_txtfile_core(celly, "celly.dat");
-
-
-  printf("\n\n");
-  ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
-               ops_arg_dat(vertexx, sten1, OPS_READ),
-               ops_arg_dat(vertexdx, sten1, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel3, "test_kernel3", 1, rangey,
-               ops_arg_dat(vertexy, sten1, OPS_READ),
-               ops_arg_dat(vertexdy, sten1, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel3, "test_kernel3", 1, rangex,
-               ops_arg_dat(cellx, sten1, OPS_READ),
-               ops_arg_dat(celldx, sten1, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel3, "test_kernel3", 1, rangey,
-               ops_arg_dat(celly, sten1, OPS_READ),
-               ops_arg_dat(celldy, sten1, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
-               ops_arg_dat(volume, sten2D, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
-               ops_arg_dat(xarea, sten2D, OPS_READ));
-
-  printf("\n\n");
-  ops_par_loop(test_kernel2, "test_kernel2", 2, rangexy,
-               ops_arg_dat(yarea, sten2D, OPS_READ));
-
-  printf("\n\n");*/
 
   ops_exit();
 }

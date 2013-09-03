@@ -46,7 +46,7 @@ typedef struct
 } state_type_core;
 typedef state_type_core * state_type;
 
-extern state_type states;
+extern state_type * states;
 
 typedef struct
 {
