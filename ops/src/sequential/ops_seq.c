@@ -62,3 +62,8 @@ ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );
 }
+
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
+{
+  ops_print_dat_to_txtfile_core(dat, file_name);
+}

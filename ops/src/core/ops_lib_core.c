@@ -362,3 +362,112 @@ void ops_fprintf(FILE *stream, const char *format, ...)
   vfprintf(stream, format, argptr);
   va_end(argptr);
 }
+
+
+void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
+{
+  FILE *fp;
+  if ( (fp = fopen(file_name,"a")) == NULL) {
+    printf("can't open file %s\n",file_name);
+    exit(2);
+  }
+
+  if (fprintf(fp,"ops_dat:  %s \n", dat->name)<0) {
+    printf("error writing to %s\n",file_name);
+    exit(2);
+  }
+  if (fprintf(fp,"Dims : %d ", dat->block->dims)<0) {
+      printf("error writing to %s\n",file_name);
+      exit(2);
+    }
+
+  for(int i = 0; i < dat->block->dims; i++) {
+    if (fprintf(fp,"[%d]", dat->block_size[i])<0) {
+      printf("error writing to %s\n",file_name);
+      exit(2);
+    }
+  }
+  fprintf(fp,"\n");
+
+  if (fprintf(fp,"size %d \n", dat->size)<0) {
+    printf("error writing to %s\n",file_name);
+    exit(2);
+  }
+
+  if(dat->block->dims == 2) {
+    if( strcmp(dat->type,"double") == 0 ) {
+      for(int i = 0; i < dat->block_size[1]; i++ ) {
+        for(int j = 0; j < dat->block_size[0]; j++ ) {
+          if (fprintf(fp, "%lf ",
+            ((double *)dat->data)[i*dat->block_size[0]+j])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else if( strcmp(dat->type,"float") == 0 ) {
+      for(int i = 0; i < dat->block_size[1]; i++ ) {
+        for(int j = 0; j < dat->block_size[0]; j++ ) {
+          if (fprintf(fp, "%f ", ((float *)dat->data)[i*dat->block_size[0]+j])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else if( strcmp(dat->type,"int") == 0 ) {
+      for(int i = 0; i < dat->block_size[1]; i++ ) {
+        for(int j = 0; j < dat->block_size[0]; j++ ) {
+          if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->block_size[0]+j])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else {
+      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      exit(2);
+    }
+    fprintf(fp,"\n");
+  }
+  else if(dat->block->dims == 1) {
+    if( strcmp(dat->type,"double") == 0 ) {
+      for(int j = 0; j < dat->block_size[0]; j++ ) {
+        if (fprintf(fp, "%lf ", ((double *)dat->data)[j])<0) {
+          printf("error writing to %s\n",file_name);
+          exit(2);
+        }
+      }
+      fprintf(fp,"\n");
+    }
+    else if( strcmp(dat->type,"float") == 0 ) {
+      for(int j = 0; j < dat->block_size[0]; j++ ) {
+        if (fprintf(fp, "%f ", ((float *)dat->data)[j])<0) {
+          printf("error writing to %s\n",file_name);
+          exit(2);
+        }
+      }
+      fprintf(fp,"\n");
+    }
+    else if( strcmp(dat->type,"int") == 0 ) {
+      for(int j = 0; j < dat->block_size[0]; j++ ) {
+        if (fprintf(fp, "%d ", ((int *)dat->data)[j])<0) {
+          printf("error writing to %s\n",file_name);
+          exit(2);
+        }
+      }
+      fprintf(fp,"\n");
+    }
+    else {
+      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      exit(2);
+    }
+    fprintf(fp,"\n");
+  }
+  fclose(fp);
+}

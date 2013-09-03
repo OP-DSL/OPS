@@ -169,5 +169,7 @@ void ops_fprintf(FILE *stream, const char *format, ...);
 
 void ops_diagnostic_output( );
 
+void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
+
 
 #endif /* __OP_LIB_CORE_H */
