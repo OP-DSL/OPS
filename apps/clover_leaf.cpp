@@ -56,6 +56,8 @@
 #include "test_kernel.h"
 #include "initialise_chunk_kernel.h"
 #include "generate_chunk_kernel.h"
+#include "ideal_gas_kernel.h"
+#include "field_summary_kernel.h"
 
 // Cloverleaf functions
 void read_input();
@@ -112,6 +114,11 @@ grid_type grid; //global variable holding global grid info
 
 field_type field; //global variable holding info of fields
 
+int advect_x; //logical
+int error_condition;
+int test_problem;
+int complete; //logical
+
 
 /******************************************************************************
 * Main program
@@ -166,8 +173,8 @@ int main(int argc, char **argv)
   {
     states[i]->xmin = states[i]->xmin + (dx/100.00);
     states[i]->ymin = states[i]->ymin + (dy/100.00);
-    states[i]->xmax = states[i]->xmax + (dx/100.00);
-    states[i]->xmax = states[i]->xmax + (dy/100.00);
+    states[i]->xmax = states[i]->xmax - (dx/100.00);
+    states[i]->ymax = states[i]->ymax - (dy/100.00);
   }
 
 
@@ -337,7 +344,61 @@ int main(int argc, char **argv)
     ops_arg_dat(celly, sten1y, OPS_READ));
 
 
-  /**---------------------------generate chunk-----------------------------**/
+  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+
+  /**------------------------------ideal_gas---------------------------------**/
+
+  advect_x = TRUE;
+  int predict = FALSE;
+  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
+
+  if(!predict) {
+    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+      ops_arg_dat(density0, sten2D, OPS_READ),
+      ops_arg_dat(energy0, sten2D, OPS_READ),
+      ops_arg_dat(pressure, sten2D, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+  }
+  else {
+    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+      ops_arg_dat(density1, sten2D, OPS_READ),
+      ops_arg_dat(energy1, sten2D, OPS_READ),
+      ops_arg_dat(pressure, sten2D, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+  }
+
+  /**-----------------------------update_halo--------------------------------**/
+  // a bit complicated .. to do ..
+
+
+  /**----------------------------field_summary-------------------------------**/
+
+  //call ideal_gas again here
+
+  ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+      ops_arg_dat(density0, sten2D, OPS_READ),
+      ops_arg_dat(energy0, sten2D, OPS_READ),
+      ops_arg_dat(pressure, sten2D, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+
+  double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
+
+  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
+      ops_arg_dat(volume, sten2D, OPS_READ),
+      ops_arg_dat(density0, sten2D, OPS_READ),
+      ops_arg_dat(energy0, sten2D, OPS_READ),
+      ops_arg_dat(pressure, sten2D, OPS_READ),
+      ops_arg_dat(xvel0, sten2D_4point, OPS_READ),
+      ops_arg_dat(yvel0, sten2D_4point, OPS_READ),
+      ops_arg_gbl(&vol, 1, OPS_WRITE),
+      ops_arg_gbl(&mass, 1, OPS_WRITE),
+      ops_arg_gbl(&ie, 1, OPS_WRITE),
+      ops_arg_gbl(&ke, 1, OPS_WRITE),
+      ops_arg_gbl(&press, 1, OPS_WRITE));
+
+  printf("vol = %lf , mass = %lf, ie = %lf, ke = %lf, press = %lf\n",
+         vol, mass, ie, ke, press);
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -351,12 +412,16 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
 
-  ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+
+  ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+
 
   printf("\n\n");
 

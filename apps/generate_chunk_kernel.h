@@ -23,9 +23,9 @@ void generate_kernel( double **vertexx, double **vertexy,
     y_cent=states[i]->ymin;
 
     if (states[i]->geometry == g_rect) {
-
       if(*vertexx[1] >= states[i]->xmin  && *vertexx[0] < states[i]->xmax) {
         if(*vertexy[1] >= states[i]->ymin && *vertexy[0] < states[i]->ymax) {
+
           **energy0 = states[i]->energy;
           **density0 = states[i]->density;
 

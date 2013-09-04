@@ -80,6 +80,15 @@ extern Double_linked_list OPS_dat_list; //Head of the double linked list
 
 ops_dat ops_decl_dat_char (ops_block, int, int*, int*, char *, int, char const*, char const* );
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, ops_access acc );
+ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
+
+
+template < class T >
+ops_arg ops_arg_gbl ( T * data, int dim, ops_access acc )
+{
+  return ops_arg_gbl_char ( ( char * ) data, dim, sizeof(T), acc );
+}
+
 
 template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,

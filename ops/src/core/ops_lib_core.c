@@ -313,6 +313,18 @@ ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   return arg;
 }
 
+ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
+  ops_arg arg;
+  arg.argtype = OPS_ARG_GBL;
+  arg.dat = NULL;
+  arg.stencil = NULL;
+  arg.dim = dim;
+  arg.data = data;
+  arg.acc = acc;
+  return arg;
+}
+
+
 void ops_diagnostic_output ( )
 {
   if ( OPS_diags > 1 ) {

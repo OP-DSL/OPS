@@ -163,6 +163,7 @@ ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * n
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
+ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
