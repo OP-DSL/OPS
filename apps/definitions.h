@@ -67,9 +67,13 @@ typedef field_type_core * field_type;
 
 extern field_type field;
 
+extern int step;
+
 extern int advect_x;
 extern int error_condition;
 extern int test_problem;
 extern int complete;
+
+
 
 #endif /* __CLOVER_LEAF_DEFINITIONS_H */

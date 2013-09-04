@@ -11,11 +11,22 @@ void field_summary_kernel( double **volume, double **density0,
                      double **ke,
                      double **press) {
 
-    **vol = 5876895.54965;
-    **mass = 5876895.54965;
-    **ie = 5876895.54965;
-    **ke = 5876895.54965;
-    **press = 5876895.54965;
+  double vsqrd, cell_vol, cell_mass;
+
+  vsqrd = 0.0;
+  vsqrd = vsqrd + 0.25* ( *xvel0[0]*(*xvel0[0]) + (*yvel0[0])*(*yvel0[0]));
+  vsqrd = vsqrd + 0.25* ( *xvel0[2]*(*xvel0[2]) + (*yvel0[2])*(*yvel0[2]));
+  vsqrd = vsqrd + 0.25* ( *xvel0[1]*(*xvel0[1]) + (*yvel0[1])*(*yvel0[1]));
+  vsqrd = vsqrd + 0.25* ( *xvel0[3]*(*xvel0[3]) + (*yvel0[3])*(*yvel0[3]));
+
+  cell_vol = **volume;
+  cell_mass = cell_vol * (**density0);
+  **vol = **vol + cell_vol;
+  **mass = **mass + cell_mass;
+  **ie = **ie + cell_mass * (**energy0);
+  **ke = **ke + cell_mass * 0.5 * vsqrd;
+  **press = **press + cell_vol * (**pressure);
+
 }
 
 #endif

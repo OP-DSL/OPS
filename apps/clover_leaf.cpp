@@ -114,6 +114,7 @@ grid_type grid; //global variable holding global grid info
 
 field_type field; //global variable holding info of fields
 
+int step = 0;
 int advect_x; //logical
 int error_condition;
 int test_problem;
@@ -397,8 +398,12 @@ int main(int argc, char **argv)
       ops_arg_gbl(&ke, 1, OPS_WRITE),
       ops_arg_gbl(&press, 1, OPS_WRITE));
 
-  printf("vol = %lf , mass = %lf, ie = %lf, ke = %lf, press = %lf\n",
-         vol, mass, ie, ke, press);
+  ops_printf("Problem initialised and generated\n\n");
+
+  printf("              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-15s\n",
+  "Volume","Mass","Density","Pressure","Internal Energy","Kinetic Energy","Total Energy");
+  printf("step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-15.3E\n\n",
+          step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
