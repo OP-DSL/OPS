@@ -466,3 +466,129 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5* ),
       free(p_a[i]);
   }
 }
+
+
+template < class T0, class T1, class T2, class T3, class T4, class T5, class T6  >
+void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6* ),
+  char const * name, int dim, int *range,
+  ops_arg arg0,
+  ops_arg arg1,
+  ops_arg arg2,
+  ops_arg arg3,
+  ops_arg arg4,
+  ops_arg arg5,
+  ops_arg arg6) {
+
+  char** p_a[7];
+  ops_arg args[7] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6};
+
+  // consistency checks
+  // ops_args_check(3,args,name);
+
+  for (int i = 0; i < 7; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 7, args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6]);
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        ops_args_set(n_x, n_y, 7, args,p_a);
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+                (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6]);
+      }
+    }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z, 7, args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+                  (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6]);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 7; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+}
+
+
+template < class T0, class T1, class T2, class T3, class T4, class T5,
+           class T6, class T7  >
+void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6*, T7* ),
+  char const * name, int dim, int *range,
+  ops_arg arg0,
+  ops_arg arg1,
+  ops_arg arg2,
+  ops_arg arg3,
+  ops_arg arg4,
+  ops_arg arg5,
+  ops_arg arg6,
+  ops_arg arg7) {
+
+  char** p_a[8];
+  ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
+
+  // consistency checks
+  // ops_args_check(3,args,name);
+
+  for (int i = 0; i < 8; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 8, args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6], (T5 *)p_a[7]);
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        ops_args_set(n_x, n_y, 8, args,p_a);
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+                (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6], (T5 *)p_a[7]);
+      }
+    }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z, 8, args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+                  (T4 *)p_a[4], (T5 *)p_a[5], (T5 *)p_a[6], (T5 *)p_a[7]);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 8; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+}

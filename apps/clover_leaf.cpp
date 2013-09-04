@@ -159,7 +159,16 @@ int main(int argc, char **argv)
   states[1]->ymin=0.0;
   states[1]->ymax=2.0;
 
+  float dx= (grid->xmax-grid->xmin)/(float)(grid->x_cells);
+  float dy= (grid->ymax-grid->ymin)/(float)(grid->y_cells);
 
+  for(int i = 0; i < number_of_states; i++)
+  {
+    states[i]->xmin = states[i]->xmin + (dx/100.00);
+    states[i]->ymin = states[i]->ymin + (dy/100.00);
+    states[i]->xmax = states[i]->xmax + (dx/100.00);
+    states[i]->xmax = states[i]->xmax + (dy/100.00);
+  }
 
 
 
@@ -282,7 +291,6 @@ int main(int argc, char **argv)
                ops_arg_dat(cellx, sten1, OPS_WRITE),
                ops_arg_dat(celldx, sten1, OPS_WRITE));
 
-  //self_plus1[0] = 1;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 0;
   self_plus1[0] = 0;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 1;
   ops_stencil sten4 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
   rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
@@ -324,12 +332,12 @@ int main(int argc, char **argv)
     ops_arg_dat(energy0, sten2D, OPS_WRITE),
     ops_arg_dat(density0, sten2D, OPS_WRITE),
     ops_arg_dat(xvel0, sten2D_4point, OPS_WRITE),
-    ops_arg_dat(yvel0, sten2D_4point, OPS_WRITE));
+    ops_arg_dat(yvel0, sten2D_4point, OPS_WRITE),
+    ops_arg_dat(cellx, sten1x, OPS_READ),
+    ops_arg_dat(celly, sten1y, OPS_READ));
 
-  //rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
-  //ops_par_loop(generate_kernel_test, "generate_kernel_test", 2, rangexy,
-  //  ops_arg_dat(vertexx, sten1x, OPS_READ));
 
+  /**---------------------------generate chunk-----------------------------**/
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -357,19 +365,27 @@ int main(int argc, char **argv)
 
 
 /*
-accelerate_kernel.f90 - strightforward
+initialise -
 initialise_chunk_kernel.f90 - strightforward
 generate_chunk_kernel.f90 - initialization .. complex
-advec_cell_kernel.f90
+ideal_gas_kernel.f90 - somewhat ok
+field_summary_kernel.f90 - complex
+
+hydro -
 PdV_kernel.f90
+revert_kernel.f90 - strightforward
+accelerate_kernel.f90 - strightforward
+flux_calc_kernel.f90 - strightforward
+advec_cell_kernel.f90
 advec_mom_kernel.f90 - complex
+reset_field_kernel.f90 - strightforward
+
+
+timestep -
 calc_dt_kernel.f90 - complex
 viscosity_kernel.f90
-revert_kernel.f90 - strightforward
-reset_field_kernel.f90 - strightforward
-ideal_gas_kernel.f90 - somewhat ok
-flux_calc_kernel.f90 - strightforward
-field_summary_kernel.f90 - complex
+
+
 update_halo_kernel.f90 - mpi halo updating
 pack_kernel.f90 - mpi buffer packing
 */
