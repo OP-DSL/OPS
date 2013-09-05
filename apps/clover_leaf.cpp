@@ -57,7 +57,9 @@
 #include "initialise_chunk_kernel.h"
 #include "generate_chunk_kernel.h"
 #include "ideal_gas_kernel.h"
+#include  "update_halo_kernel.h"
 #include "field_summary_kernel.h"
+
 
 // Cloverleaf functions
 void read_input();
@@ -85,21 +87,21 @@ int     CHUNK_LEFT    = 1,
         CHUNK_TOP     = 4,
         EXTERNAL_FACE = -1;
 
-int     FIELD_DENSITY0   = 1,
-        FIELD_DENSITY1   = 2,
-        FIELD_ENERGY0    = 3,
-        FIELD_ENERGY1    = 4,
-        FIELD_PRESSURE   = 5,
-        FIELD_VISCOSITY  = 6,
-        FIELD_SOUNDSPEED = 7,
-        FIELD_XVEL0      = 8,
-        FIELD_XVEL1      = 9,
-        FIELD_YVEL0      =10,
-        FIELD_YVEL1      =11,
-        FIELD_VOL_FLUX_X =12,
-        FIELD_VOL_FLUX_Y =13,
-        FIELD_MASS_FLUX_X=14,
-        FIELD_MASS_FLUX_Y=15,
+int     FIELD_DENSITY0   = 0,
+        FIELD_DENSITY1   = 1,
+        FIELD_ENERGY0    = 2,
+        FIELD_ENERGY1    = 3,
+        FIELD_PRESSURE   = 4,
+        FIELD_VISCOSITY  = 5,
+        FIELD_SOUNDSPEED = 6,
+        FIELD_XVEL0      = 7,
+        FIELD_XVEL1      = 8,
+        FIELD_YVEL0      = 9,
+        FIELD_YVEL1      =10,
+        FIELD_VOL_FLUX_X =11,
+        FIELD_VOL_FLUX_Y =12,
+        FIELD_MASS_FLUX_X=13,
+        FIELD_MASS_FLUX_Y=14,
         NUM_FIELDS       =15;
 
 FILE    *g_out, *g_in;  //Files for input and output
@@ -126,6 +128,7 @@ int complete; //logical
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+
   /**--------------------Set up Cloverleaf default problem-------------------**/
   //need to fill these in through I/O
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
@@ -177,7 +180,6 @@ int main(int argc, char **argv)
     states[i]->xmax = states[i]->xmax - (dx/100.00);
     states[i]->ymax = states[i]->ymax - (dy/100.00);
   }
-
 
 
   /**-------------------OPS Initialisation and Declarations------------------**/
@@ -275,8 +277,6 @@ int main(int argc, char **argv)
 
   int self[] = {0,0};
   ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
-  int self_minus2[] = {-2,0};
-  ops_stencil sten2 = ops_decl_stencil( 2, 1, self_minus2, "self_minus2");
 
   int rangex[] = {x_min-2, x_max+3, 0, 1};
   ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
@@ -345,8 +345,8 @@ int main(int argc, char **argv)
     ops_arg_dat(celly, sten1y, OPS_READ));
 
 
-  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
 
   /**------------------------------ideal_gas---------------------------------**/
 
@@ -369,8 +369,149 @@ int main(int argc, char **argv)
       ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
   }
 
+  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+
   /**-----------------------------update_halo--------------------------------**/
-  // a bit complicated .. to do ..
+  // a bit complicated .. is there a better way to do this?? ..
+
+  int* fields = (int* )xmalloc(sizeof(int)*NUM_FIELDS);
+  for(int i = 0; i<NUM_FIELDS; i++) fields[i] = 0;
+
+  //Prime all halo data for the first step
+  fields[FIELD_DENSITY0]  = 1;
+  fields[FIELD_ENERGY0]   = 1;
+  fields[FIELD_PRESSURE]  = 1;
+  fields[FIELD_VISCOSITY] = 1;
+  fields[FIELD_DENSITY1]  = 1;
+  fields[FIELD_ENERGY1]   = 1;
+  fields[FIELD_XVEL0]     = 1;
+  fields[FIELD_YVEL0]     = 1;
+  fields[FIELD_XVEL1]     = 1;
+  fields[FIELD_YVEL1]     = 1;
+
+  int rangexy_bottom1[] = {x_min-2,x_max+2,y_min-2,y_min-1};
+  int self_bottom1[] = {0,0, 0,2};
+  ops_stencil sten2D_bottom1 = ops_decl_stencil( 2, 2, self_bottom1, "sten2D_bottom1");
+
+  int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
+  int self_bottom2[] = {0,0, 0,1};
+  ops_stencil sten2D_bottom2 = ops_decl_stencil( 2, 2, self_bottom2, "sten2D_bottom2");
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom2,
+      ops_arg_dat(density0, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(density1, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(energy0, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(energy1, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(pressure, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_bottom2, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_bottom2, OPS_RW),
+      ops_arg_gbl(fields, 2, OPS_READ));
+
+  /*ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom1,
+      ops_arg_dat(density0, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(density1, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(energy0, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(energy1, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(pressure, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_bottom1, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_bottom1, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
+  int self_top1[] = {0,0, 0,-2};
+  ops_stencil sten2D_top1 = ops_decl_stencil( 2, 2, self_top1, "sten2D_top1");
+
+  int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
+  int self_top2[] = {0,0, 0,-1};
+  ops_stencil sten2D_top2 = ops_decl_stencil( 2, 2, self_top2, "sten2D_top2");
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top2,
+      ops_arg_dat(density0, sten2D_top2, OPS_RW),
+      ops_arg_dat(density1, sten2D_top2, OPS_RW),
+      ops_arg_dat(energy0, sten2D_top2, OPS_RW),
+      ops_arg_dat(energy1, sten2D_top2, OPS_RW),
+      ops_arg_dat(pressure, sten2D_top2, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_top2, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_top2, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top1,
+      ops_arg_dat(density0, sten2D_top1, OPS_RW),
+      ops_arg_dat(density1, sten2D_top1, OPS_RW),
+      ops_arg_dat(energy0, sten2D_top1, OPS_RW),
+      ops_arg_dat(energy1, sten2D_top1, OPS_RW),
+      ops_arg_dat(pressure, sten2D_top1, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_top1, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_top1, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
+  int self_left1[] = {0,0, 2,0};
+  ops_stencil sten2D_left1 = ops_decl_stencil( 2, 2, self_left1, "sten2D_left1");
+
+  int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
+  int self_left2[] = {0,0, 1,0};
+  ops_stencil sten2D_left2 = ops_decl_stencil( 2, 2, self_left2, "sten2D_left2");
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left2,
+      ops_arg_dat(density0, sten2D_left2, OPS_RW),
+      ops_arg_dat(density1, sten2D_left2, OPS_RW),
+      ops_arg_dat(energy0, sten2D_left2, OPS_RW),
+      ops_arg_dat(energy1, sten2D_left2, OPS_RW),
+      ops_arg_dat(pressure, sten2D_left2, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_left2, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_left2, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left1,
+      ops_arg_dat(density0, sten2D_left1, OPS_RW),
+      ops_arg_dat(density1, sten2D_left1, OPS_RW),
+      ops_arg_dat(energy0, sten2D_left1, OPS_RW),
+      ops_arg_dat(energy1, sten2D_left1, OPS_RW),
+      ops_arg_dat(pressure, sten2D_left1, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_left1, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_left1, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
+  int self_right1[] = {0,0, -2,0};
+  ops_stencil sten2D_right1 = ops_decl_stencil( 2, 2, self_right1, "sten2D_right1");
+
+  int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
+  int self_right2[] = {0,0, -1,0};
+  ops_stencil sten2D_right2 = ops_decl_stencil( 2, 2, self_right2, "sten2D_right2");
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right2,
+      ops_arg_dat(density0, sten2D_right2, OPS_RW),
+      ops_arg_dat(density1, sten2D_right2, OPS_RW),
+      ops_arg_dat(energy0, sten2D_right2, OPS_RW),
+      ops_arg_dat(energy1, sten2D_right2, OPS_RW),
+      ops_arg_dat(pressure, sten2D_right2, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_right2, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_right2, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right1,
+      ops_arg_dat(density0, sten2D_right1, OPS_RW),
+      ops_arg_dat(density1, sten2D_right1, OPS_RW),
+      ops_arg_dat(energy0, sten2D_right1, OPS_RW),
+      ops_arg_dat(energy1, sten2D_right1, OPS_RW),
+      ops_arg_dat(pressure, sten2D_right1, OPS_RW),
+      ops_arg_dat(viscosity, sten2D_right1, OPS_RW),
+      ops_arg_dat(soundspeed, sten2D_right1, OPS_RW),
+      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));*/
+
+  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+
+
+
+
 
 
   /**----------------------------field_summary-------------------------------**/
@@ -405,6 +546,18 @@ int main(int argc, char **argv)
   printf("step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-15.3E\n\n",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
+
+
+  /***************************************************************************
+  **-----------------------------hydro loop---------------------------------**
+  /**************************************************************************/
+
+  step = step + 1;
+
+
+
+
+
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
@@ -424,8 +577,8 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
 
-  ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
 
 
   printf("\n\n");

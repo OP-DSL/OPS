@@ -151,6 +151,8 @@ void ops_par_loop(void (*kernel)( T0* ),
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -205,6 +207,8 @@ void ops_par_loop(void (*kernel)( T0*, T1* ),
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -260,6 +264,8 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2* ),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -315,6 +321,8 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3* ),
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -371,6 +379,8 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4* ),
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -432,6 +442,8 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5* ),
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
@@ -560,6 +572,8 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6*, T7* ),
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
 
   // loop over set elements
