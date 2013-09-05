@@ -122,6 +122,7 @@ int error_condition;
 int test_problem;
 int complete; //logical
 
+int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /******************************************************************************
 * Main program
@@ -181,6 +182,7 @@ int main(int argc, char **argv)
     states[i]->ymax = states[i]->ymax - (dy/100.00);
   }
 
+  NUM_FIELDS = 15;
 
   /**-------------------OPS Initialisation and Declarations------------------**/
 
@@ -369,13 +371,9 @@ int main(int argc, char **argv)
       ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
   }
 
-  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
 
   /**-----------------------------update_halo--------------------------------**/
   // a bit complicated .. is there a better way to do this?? ..
-
-  int* fields = (int* )xmalloc(sizeof(int)*NUM_FIELDS);
-  for(int i = 0; i<NUM_FIELDS; i++) fields[i] = 0;
 
   //Prime all halo data for the first step
   fields[FIELD_DENSITY0]  = 1;
@@ -404,18 +402,16 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_bottom2, OPS_RW),
       ops_arg_dat(pressure, sten2D_bottom2, OPS_RW),
       ops_arg_dat(viscosity, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_bottom2, OPS_RW),
-      ops_arg_gbl(fields, 2, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_bottom2, OPS_RW));
 
-  /*ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom1,
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom1,
       ops_arg_dat(density0, sten2D_bottom1, OPS_RW),
       ops_arg_dat(density1, sten2D_bottom1, OPS_RW),
       ops_arg_dat(energy0, sten2D_bottom1, OPS_RW),
       ops_arg_dat(energy1, sten2D_bottom1, OPS_RW),
       ops_arg_dat(pressure, sten2D_bottom1, OPS_RW),
       ops_arg_dat(viscosity, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_bottom1, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_bottom1, OPS_RW));
 
   int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
   int self_top1[] = {0,0, 0,-2};
@@ -432,8 +428,7 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_top2, OPS_RW),
       ops_arg_dat(pressure, sten2D_top2, OPS_RW),
       ops_arg_dat(viscosity, sten2D_top2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_top2, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_top2, OPS_RW));
 
   ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top1,
       ops_arg_dat(density0, sten2D_top1, OPS_RW),
@@ -442,8 +437,7 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_top1, OPS_RW),
       ops_arg_dat(pressure, sten2D_top1, OPS_RW),
       ops_arg_dat(viscosity, sten2D_top1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_top1, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_top1, OPS_RW));
 
   int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
   int self_left1[] = {0,0, 2,0};
@@ -460,8 +454,7 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_left2, OPS_RW),
       ops_arg_dat(pressure, sten2D_left2, OPS_RW),
       ops_arg_dat(viscosity, sten2D_left2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_left2, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_left2, OPS_RW));
 
   ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left1,
       ops_arg_dat(density0, sten2D_left1, OPS_RW),
@@ -470,8 +463,7 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_left1, OPS_RW),
       ops_arg_dat(pressure, sten2D_left1, OPS_RW),
       ops_arg_dat(viscosity, sten2D_left1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_left1, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_left1, OPS_RW));
 
   int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
   int self_right1[] = {0,0, -2,0};
@@ -488,8 +480,7 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_right2, OPS_RW),
       ops_arg_dat(pressure, sten2D_right2, OPS_RW),
       ops_arg_dat(viscosity, sten2D_right2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_right2, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));
+      ops_arg_dat(soundspeed, sten2D_right2, OPS_RW));
 
   ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right1,
       ops_arg_dat(density0, sten2D_right1, OPS_RW),
@@ -498,26 +489,142 @@ int main(int argc, char **argv)
       ops_arg_dat(energy1, sten2D_right1, OPS_RW),
       ops_arg_dat(pressure, sten2D_right1, OPS_RW),
       ops_arg_dat(viscosity, sten2D_right1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_right1, OPS_RW),
-      ops_arg_gbl(fields, NUM_FIELDS, OPS_READ));*/
+      ops_arg_dat(soundspeed, sten2D_right1, OPS_RW));
 
-  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+
+  //int rangexy_bottom1[] = {x_min-2,x_max+2,y_min-2,y_min-1};
+  int bottom1[] = {0,0, 0,3};
+  ops_stencil s2D_bottom1 = ops_decl_stencil( 2, 2, bottom1, "s2D_bottom1");
+  //int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
+  int bottom2[] = {0,0, 0,2};
+  ops_stencil s2D_bottom2 = ops_decl_stencil( 2, 2, bottom2, "s2D_bottom2");
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom2,
+      ops_arg_dat(xvel0, s2D_bottom2, OPS_RW),
+      ops_arg_dat(xvel1, s2D_bottom2, OPS_RW),
+      ops_arg_dat(yvel0, s2D_bottom2, OPS_RW),
+      ops_arg_dat(yvel1, s2D_bottom2, OPS_RW),
+      ops_arg_dat(vol_flux_x,  s2D_bottom2, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_bottom2, OPS_RW),
+      ops_arg_dat(vol_flux_y,  s2D_bottom2, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_bottom2, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom1,
+      ops_arg_dat(xvel0, s2D_bottom1, OPS_RW),
+      ops_arg_dat(xvel1, s2D_bottom1, OPS_RW),
+      ops_arg_dat(yvel0, s2D_bottom1, OPS_RW),
+      ops_arg_dat(yvel1, s2D_bottom1, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_bottom1, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_bottom1, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_bottom1, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_bottom1, OPS_RW));
 
 
+  //int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
+  int top1[] = {0,0, 0,-3};
+  ops_stencil s2D_top1 = ops_decl_stencil( 2, 2, top1, "s2D_top1");
+  //int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
+  int top2[] = {0,0, 0,-2};
+  ops_stencil s2D_top2 = ops_decl_stencil( 2, 2, top2, "s2D_top2");
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top1,
+      ops_arg_dat(xvel0, s2D_top1, OPS_RW),
+      ops_arg_dat(xvel1, s2D_top1, OPS_RW),
+      ops_arg_dat(yvel0, s2D_top1, OPS_RW),
+      ops_arg_dat(yvel1, s2D_top1, OPS_RW),
+      ops_arg_dat(vol_flux_x,  s2D_top1, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_top1, OPS_RW),
+      ops_arg_dat(vol_flux_y,  s2D_top1, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_top1, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top2,
+      ops_arg_dat(xvel0, s2D_top2, OPS_RW),
+      ops_arg_dat(xvel1, s2D_top2, OPS_RW),
+      ops_arg_dat(yvel0, s2D_top2, OPS_RW),
+      ops_arg_dat(yvel1, s2D_top2, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_top2, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_top2, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_top2, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_top2, OPS_RW));
 
 
+  //int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
+  int left1[] = {0,0, 3,0};
+  ops_stencil s2D_left1 = ops_decl_stencil( 2, 2, left1, "s2D_left1");
+
+  //int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
+  int left2[] = {0,0, 2,0};
+  ops_stencil s2D_left2 = ops_decl_stencil( 2, 2, left2, "s2D_left2");
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left2,
+      ops_arg_dat(xvel0, s2D_left2, OPS_RW),
+      ops_arg_dat(xvel1, s2D_left2, OPS_RW),
+      ops_arg_dat(yvel0, s2D_left2, OPS_RW),
+      ops_arg_dat(yvel1, s2D_left2, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_left2, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_left2, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_left2, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_left2, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left1,
+      ops_arg_dat(xvel0, s2D_left1, OPS_RW),
+      ops_arg_dat(xvel1, s2D_left1, OPS_RW),
+      ops_arg_dat(yvel0, s2D_left1, OPS_RW),
+      ops_arg_dat(yvel1, s2D_left1, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_left1, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_left1, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_left1, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_left1, OPS_RW));
+
+  //int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
+  int right1[] = {0,0, -3,0};
+  ops_stencil s2D_right1 = ops_decl_stencil( 2, 2, right1, "s2D_right1");
+
+  //int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
+  int right2[] = {0,0, -2,0};
+  ops_stencil s2D_right2 = ops_decl_stencil( 2, 2, right2, "s2D_right2");
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right2,
+      ops_arg_dat(xvel0, s2D_right2, OPS_RW),
+      ops_arg_dat(xvel1, s2D_right2, OPS_RW),
+      ops_arg_dat(yvel0, s2D_right2, OPS_RW),
+      ops_arg_dat(yvel1, s2D_right2, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_right2, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_right2, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_right2, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_right2, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right1,
+      ops_arg_dat(xvel0, s2D_right1, OPS_RW),
+      ops_arg_dat(xvel1, s2D_right1, OPS_RW),
+      ops_arg_dat(yvel0, s2D_right1, OPS_RW),
+      ops_arg_dat(yvel1, s2D_right1, OPS_RW),
+      ops_arg_dat(vol_flux_x, s2D_right1, OPS_RW),
+      ops_arg_dat(mass_flux_x, s2D_right1, OPS_RW),
+      ops_arg_dat(vol_flux_y, s2D_right1, OPS_RW),
+      ops_arg_dat(mass_flux_y, s2D_right1, OPS_RW));
+
+
+  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
 
 
   /**----------------------------field_summary-------------------------------**/
 
   //call ideal_gas again here
-
   ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
       ops_arg_dat(density0, sten2D, OPS_READ),
       ops_arg_dat(energy0, sten2D, OPS_READ),
@@ -554,7 +661,7 @@ int main(int argc, char **argv)
 
   step = step + 1;
 
-
+  //CALL timestep() - > calls viscosity kernel and calc_dt kernel
 
 
 
@@ -592,7 +699,9 @@ initialise -
 initialise_chunk_kernel.f90 - strightforward
 generate_chunk_kernel.f90 - initialization .. complex
 ideal_gas_kernel.f90 - somewhat ok
+update_halo_kernel.f90 - boundary updating
 field_summary_kernel.f90 - complex
+
 
 hydro -
 PdV_kernel.f90
@@ -609,6 +718,5 @@ calc_dt_kernel.f90 - complex
 viscosity_kernel.f90
 
 
-update_halo_kernel.f90 - mpi halo updating
 pack_kernel.f90 - mpi buffer packing
 */
