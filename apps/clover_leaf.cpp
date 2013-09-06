@@ -326,9 +326,11 @@ int main(int argc, char **argv)
 
   sten_self2D_plus1xy = ops_decl_stencil( 2, 4, self2D_plus1xy, "self2D_plus1xy");
 
-  sten2D_self_stride2D_x = ops_decl_strided_stencil( 2, 1, self2D, stride2D_x, "self_stride2D_x");
-  sten2D_self_stride2D_y = ops_decl_strided_stencil( 2, 1, self2D, stride2D_y, "self_stride2D_y");
+  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, self2D, stride2D_x, "self_stride2D_x");
+  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, self2D, stride2D_y, "self_stride2D_y");
 
+  sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_plus1x, stride2D_x, "self_stride2D_x");
+  sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_plus1y, stride2D_y, "self_stride2D_y");
 
   //print ops blocks and dats details
   ops_diagnostic_output();
@@ -378,6 +380,11 @@ int main(int argc, char **argv)
 
 
 
+
+
+
+
+
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
@@ -394,14 +401,23 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+
   //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
 
-  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
 
+  fclose(g_out);
 
-  printf("\n\n");
 
   ops_exit();
 }

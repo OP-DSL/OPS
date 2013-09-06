@@ -49,24 +49,21 @@ void ideal_gas(int predict)
 
   advect_x = TRUE;
 
-  int self2d[]  = {0,0};
-  ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
-
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   if(!predict) {
     ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
-      ops_arg_dat(density0, sten2D, OPS_READ),
-      ops_arg_dat(energy0, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+      ops_arg_dat(density0, sten_self_2D, OPS_READ),
+      ops_arg_dat(energy0, sten_self_2D, OPS_READ),
+      ops_arg_dat(pressure, sten_self_2D, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self_2D, OPS_WRITE));
   }
   else {
     ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
-      ops_arg_dat(density1, sten2D, OPS_READ),
-      ops_arg_dat(energy1, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+      ops_arg_dat(density1, sten_self_2D, OPS_READ),
+      ops_arg_dat(energy1, sten_self_2D, OPS_READ),
+      ops_arg_dat(pressure, sten_self_2D, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self_2D, OPS_WRITE));
   }
 
 }

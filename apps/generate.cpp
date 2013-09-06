@@ -48,34 +48,14 @@ void generate()
   int y_max = field->y_max;
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  int self2d[]  = {0,0};
-  int stridey[] = {0,1};
-  int stridex[] = {1,0};
-  ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
-  ops_stencil sten2D_1Dstridey = ops_decl_strided_stencil( 2, 1, self2d, stridey, "self2d");
-  ops_stencil sten2D_1Dstridex = ops_decl_strided_stencil( 2, 1, self2d, stridex, "self2d");
-
-  int self_plus1x[] = {0,0, 1,0};
-  int self_plus1y[] = {0,0, 0,1};
-
-  int strideplus1x[] = {1,0};
-  int strideplus1y[] = {0,1};
-  ops_stencil sten1x = ops_decl_strided_stencil( 2, 2, self_plus1x, stridex, "self_plus1x");
-  ops_stencil sten1y = ops_decl_strided_stencil( 2, 2, self_plus1y, stridey, "self_plus1y");
-
-  int four_point[]  = {0,0, 1,0, 0,1, 1,1};
-  ops_stencil sten2D_4point = ops_decl_stencil( 2, 4, four_point, "sten2D_4point");
   ops_par_loop(generate_kernel, "generate_kernel", 2, rangexy,
-    ops_arg_dat(vertexx, sten1x, OPS_READ),
-    ops_arg_dat(vertexy, sten1y, OPS_READ),
-    ops_arg_dat(energy0, sten2D, OPS_WRITE),
-    ops_arg_dat(density0, sten2D, OPS_WRITE),
-    ops_arg_dat(xvel0, sten2D_4point, OPS_WRITE),
-    ops_arg_dat(yvel0, sten2D_4point, OPS_WRITE),
-    ops_arg_dat(cellx, sten1x, OPS_READ),
-    ops_arg_dat(celly, sten1y, OPS_READ));
-
-  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+    ops_arg_dat(vertexx,  sten_self_plus1_stride2D_x, OPS_READ),
+    ops_arg_dat(vertexy,  sten_self_plus1_stride2D_y, OPS_READ),
+    ops_arg_dat(energy0,  sten_self_2D, OPS_WRITE),
+    ops_arg_dat(density0, sten_self_2D, OPS_WRITE),
+    ops_arg_dat(xvel0,    sten_self2D_plus1xy, OPS_WRITE),
+    ops_arg_dat(yvel0,    sten_self2D_plus1xy, OPS_WRITE),
+    ops_arg_dat(cellx,    sten_self_plus1_stride2D_x, OPS_READ),
+    ops_arg_dat(celly,    sten_self_plus1_stride2D_y, OPS_READ));
 
 }
