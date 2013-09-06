@@ -34,12 +34,9 @@
 #include "data.h"
 #include "definitions.h"
 
-//Cloverleaf kernels
-#include "field_summary_kernel.h"
+#include "viscosity_kernel.h"
 
-void ideal_gas(int predict);
-
-void field_summary()
+void viscosity_func()
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;
@@ -51,30 +48,18 @@ void field_summary()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  //call ideal_gas again here
-  ideal_gas(FALSE);
+  ops_par_loop(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
+      ops_arg_dat(xvel0, sten_self_2D, OPS_READ)
+      //ops_arg_dat(energy0, sten_self_2D, OPS_READ),
+      //ops_arg_dat(pressure, sten_self_2D, OPS_RW),
+      //ops_arg_dat(soundspeed, sten_self_2D, OPS_WRITE)
+      );
 
-  double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
+  //xvel0, yvel0, celldx, celldy, pressure, viscosity, density
 
-  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
-      ops_arg_dat(volume, sten_self_2D, OPS_READ),
-      ops_arg_dat(density0, sten_self_2D, OPS_READ),
-      ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-      ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-      ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_gbl(&vol, 1, OPS_WRITE),
-      ops_arg_gbl(&mass, 1, OPS_WRITE),
-      ops_arg_gbl(&ie, 1, OPS_WRITE),
-      ops_arg_gbl(&ke, 1, OPS_WRITE),
-      ops_arg_gbl(&press, 1, OPS_WRITE));
 
-  ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out," Problem initialised and generated\n");
-  ops_fprintf(g_out,"\n");
 
-  ops_fprintf(g_out,"              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-15s\n",
-  "Volume","Mass","Density","Pressure","Internal Energy","Kinetic Energy","Total Energy");
-  ops_fprintf(g_out,"step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-15.3E\n\n",
-          step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
+
+
+
 }

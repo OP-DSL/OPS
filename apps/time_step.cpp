@@ -34,12 +34,11 @@
 #include "data.h"
 #include "definitions.h"
 
-//Cloverleaf kernels
-#include "field_summary_kernel.h"
-
 void ideal_gas(int predict);
+void update_halo(int* fields, int depth);
+void viscosity_func();
 
-void field_summary()
+void timestep()
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;
@@ -49,32 +48,17 @@ void field_summary()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
-
-  //call ideal_gas again here
   ideal_gas(FALSE);
 
-  double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
+  fields[FIELD_PRESSURE] = 1;
+  fields[FIELD_ENERGY0] = 1;
+  fields[FIELD_DENSITY0] = 1;
+  fields[FIELD_XVEL0] = 1;
+  fields[FIELD_YVEL0] = 1;
 
-  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
-      ops_arg_dat(volume, sten_self_2D, OPS_READ),
-      ops_arg_dat(density0, sten_self_2D, OPS_READ),
-      ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-      ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-      ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_gbl(&vol, 1, OPS_WRITE),
-      ops_arg_gbl(&mass, 1, OPS_WRITE),
-      ops_arg_gbl(&ie, 1, OPS_WRITE),
-      ops_arg_gbl(&ke, 1, OPS_WRITE),
-      ops_arg_gbl(&press, 1, OPS_WRITE));
+  update_halo(fields,1);
 
-  ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out," Problem initialised and generated\n");
-  ops_fprintf(g_out,"\n");
+  viscosity_func();
 
-  ops_fprintf(g_out,"              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-15s\n",
-  "Volume","Mass","Density","Pressure","Internal Energy","Kinetic Energy","Total Energy");
-  ops_fprintf(g_out,"step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-15.3E\n\n",
-          step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
+  //fields[FIELD_VISCOSITY] = 1;
 }
