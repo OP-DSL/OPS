@@ -45,8 +45,13 @@ all: clean cloverleaf_seq
 # simple sequential version
 #
 
-cloverleaf_seq:	clover_leaf.cpp initialise_chunk_kernel.h generate_chunk_kernel.h test_kernel.h
-		$(CPP) $(CPPFLAGS) clover_leaf.cpp initialise.cpp $(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
+cloverleaf_seq:	clover_leaf.cpp initialise.cpp generate.cpp ideal_gas.cpp \
+		update_halo.cpp field_summary.cpp\
+		initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+		update_halo_kernel.h field_summary_kernel.h
+		$(CPP) $(CPPFLAGS) clover_leaf.cpp initialise.cpp generate.cpp \
+		ideal_gas.cpp update_halo.cpp field_summary.cpp \
+		$(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
 #
 # cleanup
 #

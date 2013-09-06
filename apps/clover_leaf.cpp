@@ -53,23 +53,25 @@
 #include "definitions.h"
 
 //Cloverleaf kernels
-#include "test_kernel.h"
-#include "initialise_chunk_kernel.h"
-#include "generate_chunk_kernel.h"
-#include "ideal_gas_kernel.h"
-#include  "update_halo_kernel.h"
-#include "field_summary_kernel.h"
+
 
 
 // Cloverleaf functions
-void read_input();
 void initialise();
+void generate();
+void ideal_gas(int predict);
+void update_halo(int* fields, int depth);
+void field_summary();
 
 
 
 /******************************************************************************
 * Initialize Global constants and variables
 /******************************************************************************/
+
+
+/**----------Cloverleaf Vars/Consts--------------**/
+
 float   g_version = 1.0;
 int     g_ibig = 640000;
 double  g_small = 1.0e-16;
@@ -123,6 +125,57 @@ int test_problem;
 int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+
+/**----------OPS Vars--------------**/
+
+//ops blocks
+
+ops_block clover_grid;
+ops_block clover_xedge;
+ops_block clover_yedge;
+
+//ops dats
+ops_dat density0;
+ops_dat density1;
+ops_dat energy0;
+ops_dat energy1;
+ops_dat pressure;
+ops_dat viscosity;
+ops_dat soundspeed;
+ops_dat volume;
+
+ops_dat xvel0;
+ops_dat xvel1;
+ops_dat yvel0;
+ops_dat yvel1;
+ops_dat vol_flux_x;
+ops_dat vol_flux_y;
+ops_dat mass_flux_x;
+ops_dat mass_flux_y;
+ops_dat xarea;
+ops_dat yarea;
+
+ops_dat work_array1;
+ops_dat work_array2;
+ops_dat work_array3;
+ops_dat work_array4;
+ops_dat work_array5;
+ops_dat work_array6;
+ops_dat work_array7;
+
+ops_dat cellx;
+ops_dat celly;
+ops_dat vertexx;
+ops_dat vertexy;
+ops_dat celldx;
+ops_dat celldy;
+ops_dat vertexdx;
+ops_dat vertexdy;
+
+ops_dat xx;
+ops_dat yy;
+
 
 /******************************************************************************
 * Main program
@@ -202,49 +255,50 @@ int main(int argc, char **argv)
 
   //declare edges of block
   dims[0] = x_cells; dims[1] = 1;
-  ops_block clover_xedge = ops_decl_block(2, dims, "xedge");
+  clover_xedge = ops_decl_block(2, dims, "xedge");
+
   dims[0] = 1; dims[1] = y_cells;
-  ops_block clover_yedge = ops_decl_block(2, dims, "yedge");
+  clover_yedge = ops_decl_block(2, dims, "yedge");
 
   //declare data on blocks
   int offset[2] = {-2,-2};
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
 
-  ops_dat density0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
-  ops_dat density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
-  ops_dat energy0     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy0");
-  ops_dat energy1     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy1");
-  ops_dat pressure    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "pressure");
-  ops_dat viscosity   = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "viscosity");
-  ops_dat soundspeed  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "soundspeed");
-  ops_dat volume      = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "volume");
+  density0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+  density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
+  energy0     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy0");
+  energy1     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy1");
+  pressure    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "pressure");
+  viscosity   = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "viscosity");
+  soundspeed  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "soundspeed");
+  volume      = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "volume");
 
   size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
-  ops_dat xvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel0");
-  ops_dat xvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel1");
-  ops_dat yvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel0");
-  ops_dat yvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel1");
+  xvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel0");
+  xvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xvel1");
+  yvel0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel0");
+  yvel1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yvel1");
 
   size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+2)-(y_min-2);
-  ops_dat vol_flux_x  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_x");
-  ops_dat mass_flux_x = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_x");
-  ops_dat xarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xarea");
+  vol_flux_x  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_x");
+  mass_flux_x = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_x");
+  xarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xarea");
 
 
   size[0] = (x_max+2)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
-  ops_dat vol_flux_y  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_y");
-  ops_dat mass_flux_y = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_y");
-  ops_dat yarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yarea");
+  vol_flux_y  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_y");
+  mass_flux_y = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_y");
+  yarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "yarea");
 
   size[0] = (x_max+3)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
-  ops_dat work_array1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array1");
-  ops_dat work_array2    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array2");
-  ops_dat work_array3    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array3");
-  ops_dat work_array4    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array4");
-  ops_dat work_array5    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array5");
-  ops_dat work_array6    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array6");
-  ops_dat work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
+  work_array1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array1");
+  work_array2    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array2");
+  work_array3    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array3");
+  work_array4    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array4");
+  work_array5    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array5");
+  work_array6    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array6");
+  work_array7    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "work_array7");
 
   int size2[2] = {(x_max+2)-(x_min-2),1};
   int size3[2] = {1, (y_max+2)-(y_min-2)};
@@ -252,128 +306,39 @@ int main(int argc, char **argv)
   int size5[2] = {1,(y_max+3)-(y_min-2)};
   int offsetx[2] = {-2,0};
   int offsety[2] = {0,-2};
-  ops_dat cellx    = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "cellx");
-  ops_dat celly    = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celly");
-  ops_dat vertexx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexx");
-  ops_dat vertexy  = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexy");
-  ops_dat celldx   = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "celldx");
-  ops_dat celldy   = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celldy");
-  ops_dat vertexdx = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexdx");
-  ops_dat vertexdy = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexdy");
+  cellx    = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "cellx");
+  celly    = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celly");
+  vertexx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexx");
+  vertexy  = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexy");
+  celldx   = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "celldx");
+  celldy   = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celldy");
+  vertexdx = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexdx");
+  vertexdy = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexdy");
 
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   int* xindex = (int *)xmalloc(sizeof(int)*size4[0]);
   for(int i=x_min-2; i<x_max+3; i++) xindex[i-offsetx[0]] = i - x_min;
-  ops_dat xx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, xindex, "int", "xx");
+  xx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, xindex, "int", "xx");
 
   //contains y indicies from 0 to ymax+3 -- needed for initialization
   int* yindex = (int *)xmalloc(sizeof(int)*size5[1]);
   for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
-  ops_dat yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
+  yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
 
   ops_diagnostic_output();
 
+  /**---------------------initialize and generate chunk----------------------**/
 
-  /**---------------------------initialize chunk-----------------------------**/
-
-  int self[] = {0,0};
-  ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
-
-  int rangex[] = {x_min-2, x_max+3, 0, 1};
-  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
-               ops_arg_dat(vertexx, sten1, OPS_WRITE),
-               ops_arg_dat(xx, sten1, OPS_READ),
-               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
-
-  int rangey[] = {0, 1, y_min-2, y_max+3};
-  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
-               ops_arg_dat(vertexy, sten1, OPS_WRITE),
-               ops_arg_dat(yy, sten1, OPS_READ),
-               ops_arg_dat(vertexdy, sten1, OPS_WRITE));
-
-
-  int self_plus1[] = {0,0, 1,0};
-  ops_stencil sten3 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
-  rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
-  ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
-               ops_arg_dat(vertexx, sten3, OPS_READ),
-               ops_arg_dat(cellx, sten1, OPS_WRITE),
-               ops_arg_dat(celldx, sten1, OPS_WRITE));
-
-  self_plus1[0] = 0;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 1;
-  ops_stencil sten4 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
-  rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
-  ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
-               ops_arg_dat(vertexy, sten4, OPS_READ),
-               ops_arg_dat(celly, sten1, OPS_WRITE),
-               ops_arg_dat(celldy, sten1, OPS_WRITE));
-
-  int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  int self2d[]  = {0,0};
-  int stridey[] = {0,1};
-  int stridex[] = {1,0};
-  ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
-  ops_stencil sten2D_1Dstridey = ops_decl_strided_stencil( 2, 1, self2d, stridey, "self2d");
-  ops_stencil sten2D_1Dstridex = ops_decl_strided_stencil( 2, 1, self2d, stridex, "self2d");
-
-  ops_par_loop(initialise_volume_xarea_yarea, "initialise_volume_xarea_yarea", 2, rangexy,
-    ops_arg_dat(volume, sten2D, OPS_WRITE),
-    ops_arg_dat(celldy, sten2D_1Dstridey, OPS_READ),
-    ops_arg_dat(xarea, sten2D, OPS_WRITE),
-    ops_arg_dat(celldx, sten2D_1Dstridex, OPS_READ),
-    ops_arg_dat(yarea, sten2D, OPS_WRITE));
-
-  /**---------------------------generate chunk-----------------------------**/
-
-  int self_plus1x[] = {0,0, 1,0};
-  int self_plus1y[] = {0,0, 0,1};
-
-  int strideplus1x[] = {1,0};
-  int strideplus1y[] = {0,1};
-  ops_stencil sten1x = ops_decl_strided_stencil( 2, 2, self_plus1x, stridex, "self_plus1x");
-  ops_stencil sten1y = ops_decl_strided_stencil( 2, 2, self_plus1y, stridey, "self_plus1y");
-
-  int four_point[]  = {0,0, 1,0, 0,1, 1,1};
-  ops_stencil sten2D_4point = ops_decl_stencil( 2, 4, four_point, "sten2D_4point");
-  ops_par_loop(generate_kernel, "generate_kernel", 2, rangexy,
-    ops_arg_dat(vertexx, sten1x, OPS_READ),
-    ops_arg_dat(vertexy, sten1y, OPS_READ),
-    ops_arg_dat(energy0, sten2D, OPS_WRITE),
-    ops_arg_dat(density0, sten2D, OPS_WRITE),
-    ops_arg_dat(xvel0, sten2D_4point, OPS_WRITE),
-    ops_arg_dat(yvel0, sten2D_4point, OPS_WRITE),
-    ops_arg_dat(cellx, sten1x, OPS_READ),
-    ops_arg_dat(celly, sten1y, OPS_READ));
-
-
-  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  initialise();
+  generate();
 
   /**------------------------------ideal_gas---------------------------------**/
 
-  advect_x = TRUE;
-  int predict = FALSE;
-  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
-
-  if(!predict) {
-    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
-      ops_arg_dat(density0, sten2D, OPS_READ),
-      ops_arg_dat(energy0, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
-  }
-  else {
-    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
-      ops_arg_dat(density1, sten2D, OPS_READ),
-      ops_arg_dat(energy1, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
-  }
+  ideal_gas(FALSE);
 
 
   /**-----------------------------update_halo--------------------------------**/
-  // a bit complicated .. is there a better way to do this?? ..
 
   //Prime all halo data for the first step
   fields[FIELD_DENSITY0]  = 1;
@@ -387,272 +352,14 @@ int main(int argc, char **argv)
   fields[FIELD_XVEL1]     = 1;
   fields[FIELD_YVEL1]     = 1;
 
-  int rangexy_bottom1[] = {x_min-2,x_max+2,y_min-2,y_min-1};
-  int self_bottom1[] = {0,0, 0,2};
-  ops_stencil sten2D_bottom1 = ops_decl_stencil( 2, 2, self_bottom1, "sten2D_bottom1");
-
-  int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
-  int self_bottom2[] = {0,0, 0,1};
-  ops_stencil sten2D_bottom2 = ops_decl_stencil( 2, 2, self_bottom2, "sten2D_bottom2");
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom2,
-      ops_arg_dat(density0, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(density1, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(energy0, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(energy1, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(pressure, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_bottom2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_bottom2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom1,
-      ops_arg_dat(density0, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(density1, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(energy0, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(energy1, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(pressure, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_bottom1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_bottom1, OPS_RW));
-
-  int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
-  int self_top1[] = {0,0, 0,-2};
-  ops_stencil sten2D_top1 = ops_decl_stencil( 2, 2, self_top1, "sten2D_top1");
-
-  int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
-  int self_top2[] = {0,0, 0,-1};
-  ops_stencil sten2D_top2 = ops_decl_stencil( 2, 2, self_top2, "sten2D_top2");
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top2,
-      ops_arg_dat(density0, sten2D_top2, OPS_RW),
-      ops_arg_dat(density1, sten2D_top2, OPS_RW),
-      ops_arg_dat(energy0, sten2D_top2, OPS_RW),
-      ops_arg_dat(energy1, sten2D_top2, OPS_RW),
-      ops_arg_dat(pressure, sten2D_top2, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_top2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_top2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top1,
-      ops_arg_dat(density0, sten2D_top1, OPS_RW),
-      ops_arg_dat(density1, sten2D_top1, OPS_RW),
-      ops_arg_dat(energy0, sten2D_top1, OPS_RW),
-      ops_arg_dat(energy1, sten2D_top1, OPS_RW),
-      ops_arg_dat(pressure, sten2D_top1, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_top1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_top1, OPS_RW));
-
-  int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
-  int self_left1[] = {0,0, 2,0};
-  ops_stencil sten2D_left1 = ops_decl_stencil( 2, 2, self_left1, "sten2D_left1");
-
-  int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
-  int self_left2[] = {0,0, 1,0};
-  ops_stencil sten2D_left2 = ops_decl_stencil( 2, 2, self_left2, "sten2D_left2");
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left2,
-      ops_arg_dat(density0, sten2D_left2, OPS_RW),
-      ops_arg_dat(density1, sten2D_left2, OPS_RW),
-      ops_arg_dat(energy0, sten2D_left2, OPS_RW),
-      ops_arg_dat(energy1, sten2D_left2, OPS_RW),
-      ops_arg_dat(pressure, sten2D_left2, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_left2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_left2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left1,
-      ops_arg_dat(density0, sten2D_left1, OPS_RW),
-      ops_arg_dat(density1, sten2D_left1, OPS_RW),
-      ops_arg_dat(energy0, sten2D_left1, OPS_RW),
-      ops_arg_dat(energy1, sten2D_left1, OPS_RW),
-      ops_arg_dat(pressure, sten2D_left1, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_left1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_left1, OPS_RW));
-
-  int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
-  int self_right1[] = {0,0, -2,0};
-  ops_stencil sten2D_right1 = ops_decl_stencil( 2, 2, self_right1, "sten2D_right1");
-
-  int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
-  int self_right2[] = {0,0, -1,0};
-  ops_stencil sten2D_right2 = ops_decl_stencil( 2, 2, self_right2, "sten2D_right2");
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right2,
-      ops_arg_dat(density0, sten2D_right2, OPS_RW),
-      ops_arg_dat(density1, sten2D_right2, OPS_RW),
-      ops_arg_dat(energy0, sten2D_right2, OPS_RW),
-      ops_arg_dat(energy1, sten2D_right2, OPS_RW),
-      ops_arg_dat(pressure, sten2D_right2, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_right2, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_right2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right1,
-      ops_arg_dat(density0, sten2D_right1, OPS_RW),
-      ops_arg_dat(density1, sten2D_right1, OPS_RW),
-      ops_arg_dat(energy0, sten2D_right1, OPS_RW),
-      ops_arg_dat(energy1, sten2D_right1, OPS_RW),
-      ops_arg_dat(pressure, sten2D_right1, OPS_RW),
-      ops_arg_dat(viscosity, sten2D_right1, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D_right1, OPS_RW));
-
-  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-
-  //int rangexy_bottom1[] = {x_min-2,x_max+2,y_min-2,y_min-1};
-  int bottom1[] = {0,0, 0,3};
-  ops_stencil s2D_bottom1 = ops_decl_stencil( 2, 2, bottom1, "s2D_bottom1");
-  //int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
-  int bottom2[] = {0,0, 0,2};
-  ops_stencil s2D_bottom2 = ops_decl_stencil( 2, 2, bottom2, "s2D_bottom2");
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom2,
-      ops_arg_dat(xvel0, s2D_bottom2, OPS_RW),
-      ops_arg_dat(xvel1, s2D_bottom2, OPS_RW),
-      ops_arg_dat(yvel0, s2D_bottom2, OPS_RW),
-      ops_arg_dat(yvel1, s2D_bottom2, OPS_RW),
-      ops_arg_dat(vol_flux_x,  s2D_bottom2, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_bottom2, OPS_RW),
-      ops_arg_dat(vol_flux_y,  s2D_bottom2, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_bottom2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom1,
-      ops_arg_dat(xvel0, s2D_bottom1, OPS_RW),
-      ops_arg_dat(xvel1, s2D_bottom1, OPS_RW),
-      ops_arg_dat(yvel0, s2D_bottom1, OPS_RW),
-      ops_arg_dat(yvel1, s2D_bottom1, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_bottom1, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_bottom1, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_bottom1, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_bottom1, OPS_RW));
-
-
-  //int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
-  int top1[] = {0,0, 0,-3};
-  ops_stencil s2D_top1 = ops_decl_stencil( 2, 2, top1, "s2D_top1");
-  //int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
-  int top2[] = {0,0, 0,-2};
-  ops_stencil s2D_top2 = ops_decl_stencil( 2, 2, top2, "s2D_top2");
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top1,
-      ops_arg_dat(xvel0, s2D_top1, OPS_RW),
-      ops_arg_dat(xvel1, s2D_top1, OPS_RW),
-      ops_arg_dat(yvel0, s2D_top1, OPS_RW),
-      ops_arg_dat(yvel1, s2D_top1, OPS_RW),
-      ops_arg_dat(vol_flux_x,  s2D_top1, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_top1, OPS_RW),
-      ops_arg_dat(vol_flux_y,  s2D_top1, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_top1, OPS_RW));
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top2,
-      ops_arg_dat(xvel0, s2D_top2, OPS_RW),
-      ops_arg_dat(xvel1, s2D_top2, OPS_RW),
-      ops_arg_dat(yvel0, s2D_top2, OPS_RW),
-      ops_arg_dat(yvel1, s2D_top2, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_top2, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_top2, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_top2, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_top2, OPS_RW));
-
-
-  //int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
-  int left1[] = {0,0, 3,0};
-  ops_stencil s2D_left1 = ops_decl_stencil( 2, 2, left1, "s2D_left1");
-
-  //int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
-  int left2[] = {0,0, 2,0};
-  ops_stencil s2D_left2 = ops_decl_stencil( 2, 2, left2, "s2D_left2");
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left2,
-      ops_arg_dat(xvel0, s2D_left2, OPS_RW),
-      ops_arg_dat(xvel1, s2D_left2, OPS_RW),
-      ops_arg_dat(yvel0, s2D_left2, OPS_RW),
-      ops_arg_dat(yvel1, s2D_left2, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_left2, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_left2, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_left2, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_left2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left1,
-      ops_arg_dat(xvel0, s2D_left1, OPS_RW),
-      ops_arg_dat(xvel1, s2D_left1, OPS_RW),
-      ops_arg_dat(yvel0, s2D_left1, OPS_RW),
-      ops_arg_dat(yvel1, s2D_left1, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_left1, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_left1, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_left1, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_left1, OPS_RW));
-
-  //int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
-  int right1[] = {0,0, -3,0};
-  ops_stencil s2D_right1 = ops_decl_stencil( 2, 2, right1, "s2D_right1");
-
-  //int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
-  int right2[] = {0,0, -2,0};
-  ops_stencil s2D_right2 = ops_decl_stencil( 2, 2, right2, "s2D_right2");
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right2,
-      ops_arg_dat(xvel0, s2D_right2, OPS_RW),
-      ops_arg_dat(xvel1, s2D_right2, OPS_RW),
-      ops_arg_dat(yvel0, s2D_right2, OPS_RW),
-      ops_arg_dat(yvel1, s2D_right2, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_right2, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_right2, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_right2, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_right2, OPS_RW));
-
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right1,
-      ops_arg_dat(xvel0, s2D_right1, OPS_RW),
-      ops_arg_dat(xvel1, s2D_right1, OPS_RW),
-      ops_arg_dat(yvel0, s2D_right1, OPS_RW),
-      ops_arg_dat(yvel1, s2D_right1, OPS_RW),
-      ops_arg_dat(vol_flux_x, s2D_right1, OPS_RW),
-      ops_arg_dat(mass_flux_x, s2D_right1, OPS_RW),
-      ops_arg_dat(vol_flux_y, s2D_right1, OPS_RW),
-      ops_arg_dat(mass_flux_y, s2D_right1, OPS_RW));
-
-
-  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
-
+  update_halo(fields, 2);
 
   /**----------------------------field_summary-------------------------------**/
 
-  //call ideal_gas again here
-  ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
-      ops_arg_dat(density0, sten2D, OPS_READ),
-      ops_arg_dat(energy0, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_RW),
-      ops_arg_dat(soundspeed, sten2D, OPS_WRITE));
+  field_summary();
 
-  double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
-
-  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
-      ops_arg_dat(volume, sten2D, OPS_READ),
-      ops_arg_dat(density0, sten2D, OPS_READ),
-      ops_arg_dat(energy0, sten2D, OPS_READ),
-      ops_arg_dat(pressure, sten2D, OPS_READ),
-      ops_arg_dat(xvel0, sten2D_4point, OPS_READ),
-      ops_arg_dat(yvel0, sten2D_4point, OPS_READ),
-      ops_arg_gbl(&vol, 1, OPS_WRITE),
-      ops_arg_gbl(&mass, 1, OPS_WRITE),
-      ops_arg_gbl(&ie, 1, OPS_WRITE),
-      ops_arg_gbl(&ke, 1, OPS_WRITE),
-      ops_arg_gbl(&press, 1, OPS_WRITE));
-
-  ops_printf("Problem initialised and generated\n\n");
-
-  printf("              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-15s\n",
-  "Volume","Mass","Density","Pressure","Internal Energy","Kinetic Energy","Total Energy");
-  printf("step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-15.3E\n\n",
-          step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
-
+  ops_fprintf(g_out," Starting the calculation\n");
+  fclose(g_in);
 
 
   /***************************************************************************

@@ -34,6 +34,9 @@
 #include "data.h"
 #include "definitions.h"
 
+//Cloverleaf kernels
+#include "initialise_chunk_kernel.h"
+
 void initialise()
 {
 
@@ -81,4 +84,61 @@ void initialise()
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Initialising and generating\n");
   ops_fprintf(g_out,"\n");
+
+
+  //initialize sizes using global values
+  int x_cells = grid->x_cells;
+  int y_cells = grid->y_cells;
+  int x_min = field->x_min;
+  int x_max = field->x_max;
+  int y_min = field->y_min;
+  int y_max = field->y_max;
+
+  int self[] = {0,0};
+  ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
+
+  int rangex[] = {x_min-2, x_max+3, 0, 1};
+  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+               ops_arg_dat(vertexx, sten1, OPS_WRITE),
+               ops_arg_dat(xx, sten1, OPS_READ),
+               ops_arg_dat(vertexdx, sten1, OPS_WRITE));
+
+  int rangey[] = {0, 1, y_min-2, y_max+3};
+  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+               ops_arg_dat(vertexy, sten1, OPS_WRITE),
+               ops_arg_dat(yy, sten1, OPS_READ),
+               ops_arg_dat(vertexdy, sten1, OPS_WRITE));
+
+
+  int self_plus1[] = {0,0, 1,0};
+  ops_stencil sten3 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
+  rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
+  ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
+               ops_arg_dat(vertexx, sten3, OPS_READ),
+               ops_arg_dat(cellx, sten1, OPS_WRITE),
+               ops_arg_dat(celldx, sten1, OPS_WRITE));
+
+  self_plus1[0] = 0;self_plus1[1] = 0; self_plus1[2] = 0; self_plus1[2] = 1;
+  ops_stencil sten4 = ops_decl_stencil( 2, 2, self_plus1, "self_plus1");
+  rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
+  ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
+               ops_arg_dat(vertexy, sten4, OPS_READ),
+               ops_arg_dat(celly, sten1, OPS_WRITE),
+               ops_arg_dat(celldy, sten1, OPS_WRITE));
+
+  int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
+  int self2d[]  = {0,0};
+  int stridey[] = {0,1};
+  int stridex[] = {1,0};
+  ops_stencil sten2D = ops_decl_stencil( 2, 1, self2d, "self2d");
+  ops_stencil sten2D_1Dstridey = ops_decl_strided_stencil( 2, 1, self2d, stridey, "self2d");
+  ops_stencil sten2D_1Dstridex = ops_decl_strided_stencil( 2, 1, self2d, stridex, "self2d");
+
+  ops_par_loop(initialise_volume_xarea_yarea, "initialise_volume_xarea_yarea", 2, rangexy,
+    ops_arg_dat(volume, sten2D, OPS_WRITE),
+    ops_arg_dat(celldy, sten2D_1Dstridey, OPS_READ),
+    ops_arg_dat(xarea, sten2D, OPS_WRITE),
+    ops_arg_dat(celldx, sten2D_1Dstridex, OPS_READ),
+    ops_arg_dat(yarea, sten2D, OPS_WRITE));
+
 }

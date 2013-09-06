@@ -24,6 +24,8 @@
 #ifndef __CLOVER_LEAF_DATA_H
 #define __CLOVER_LEAF_DATA_H
 
+/**----------Cloverleaf Vars/Consts--------------**/
+
 extern float   g_version;
 extern int     g_ibig;
 extern double  g_small;
@@ -54,5 +56,55 @@ extern int     g_rect, g_circ, g_point; //geometry of block
 
 extern int     number_of_states;
 extern int     fields[];
+
+
+/**----------OPS Vars--------------**/
+
+//ops blocks
+
+extern ops_block clover_grid;
+extern ops_block clover_xedge;
+extern ops_block clover_yedge;
+
+//ops dats
+extern ops_dat density0;
+extern ops_dat density1;
+extern ops_dat energy0;
+extern ops_dat energy1;
+extern ops_dat pressure;
+extern ops_dat viscosity;
+extern ops_dat soundspeed;
+extern ops_dat volume;
+
+extern ops_dat xvel0;
+extern ops_dat xvel1;
+extern ops_dat yvel0;
+extern ops_dat yvel1;
+extern ops_dat vol_flux_x;
+extern ops_dat vol_flux_y;
+extern ops_dat mass_flux_x;
+extern ops_dat mass_flux_y;
+extern ops_dat xarea;
+extern ops_dat yarea;
+
+extern ops_dat work_array1;
+extern ops_dat work_array2;
+extern ops_dat work_array3;
+extern ops_dat work_array4;
+extern ops_dat work_array5;
+extern ops_dat work_array6;
+extern ops_dat work_array7;
+
+extern ops_dat cellx;
+extern ops_dat celly;
+extern ops_dat vertexx;
+extern ops_dat vertexy;
+extern ops_dat celldx;
+extern ops_dat celldy;
+extern ops_dat vertexdx;
+extern ops_dat vertexdy;
+
+extern ops_dat xx;
+extern ops_dat yy;
 
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/
