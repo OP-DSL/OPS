@@ -107,4 +107,30 @@ extern ops_dat vertexdy;
 extern ops_dat xx;
 extern ops_dat yy;
 
+
+
+//commonly used stencils
+extern ops_stencil sten_self_2D;
+
+extern ops_stencil sten_self2D_plus1x;
+extern ops_stencil sten_self2D_plus1y;
+extern ops_stencil sten_self2D_minus1x;
+extern ops_stencil sten_self2D_minus1y;
+
+extern ops_stencil sten_self2D_plus2x;
+extern ops_stencil sten_self2D_plus2y;
+extern ops_stencil sten_self2D_minus2x;
+extern ops_stencil sten_self2D_minus2y;
+
+extern ops_stencil sten_self2D_plus3x;
+extern ops_stencil sten_self2D_plus3y;
+extern ops_stencil sten_self2D_minus3x;
+extern ops_stencil sten_self2D_minus3y;
+
+extern ops_stencil sten_self2D_plus1xy;
+
+extern ops_stencil sten2D_self_stride2D_x;
+extern ops_stencil sten2D_self_stride2D_y;
+
+
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/

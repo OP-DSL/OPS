@@ -127,54 +127,7 @@ int complete; //logical
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 
-/**----------OPS Vars--------------**/
-
-//ops blocks
-
-ops_block clover_grid;
-ops_block clover_xedge;
-ops_block clover_yedge;
-
-//ops dats
-ops_dat density0;
-ops_dat density1;
-ops_dat energy0;
-ops_dat energy1;
-ops_dat pressure;
-ops_dat viscosity;
-ops_dat soundspeed;
-ops_dat volume;
-
-ops_dat xvel0;
-ops_dat xvel1;
-ops_dat yvel0;
-ops_dat yvel1;
-ops_dat vol_flux_x;
-ops_dat vol_flux_y;
-ops_dat mass_flux_x;
-ops_dat mass_flux_y;
-ops_dat xarea;
-ops_dat yarea;
-
-ops_dat work_array1;
-ops_dat work_array2;
-ops_dat work_array3;
-ops_dat work_array4;
-ops_dat work_array5;
-ops_dat work_array6;
-ops_dat work_array7;
-
-ops_dat cellx;
-ops_dat celly;
-ops_dat vertexx;
-ops_dat vertexy;
-ops_dat celldx;
-ops_dat celldy;
-ops_dat vertexdx;
-ops_dat vertexdy;
-
-ops_dat xx;
-ops_dat yy;
+#include "cloverleaf_ops_vars.h"
 
 
 /******************************************************************************
@@ -184,6 +137,7 @@ int main(int argc, char **argv)
 {
 
   /**--------------------Set up Cloverleaf default problem-------------------**/
+
   //need to fill these in through I/O
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
   grid->x_cells = 10;
@@ -237,13 +191,16 @@ int main(int argc, char **argv)
 
   NUM_FIELDS = 15;
 
+
   /**-------------------OPS Initialisation and Declarations------------------**/
 
   // OPS initialisation
   ops_init(argc,argv,5);
   ops_printf("Clover version %f\n", g_version);
 
+  //
   //declare blocks
+  //
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
   int x_min = field->x_min;
@@ -260,7 +217,9 @@ int main(int argc, char **argv)
   dims[0] = 1; dims[1] = y_cells;
   clover_yedge = ops_decl_block(2, dims, "yedge");
 
+  //
   //declare data on blocks
+  //
   int offset[2] = {-2,-2};
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
@@ -284,7 +243,6 @@ int main(int argc, char **argv)
   vol_flux_x  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_x");
   mass_flux_x = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "mass_flux_x");
   xarea       = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "xarea");
-
 
   size[0] = (x_max+2)-(x_min-2); size[1] = (y_max+3)-(y_min-2);
   vol_flux_y  = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "vol_flux_y");
@@ -315,7 +273,6 @@ int main(int argc, char **argv)
   vertexdx = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexdx");
   vertexdy = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexdy");
 
-
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   int* xindex = (int *)xmalloc(sizeof(int)*size4[0]);
   for(int i=x_min-2; i<x_max+3; i++) xindex[i-offsetx[0]] = i - x_min;
@@ -326,7 +283,57 @@ int main(int argc, char **argv)
   for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
   yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
 
+  //
+  //Declare commonly used stencils
+  //
+  int self2D[] = {0,0};
+  int self2D_plus1x[] = {0,0, 1,0};
+  int self2D_plus1y[] = {0,0, 0,1};
+  int self2D_minus1x[] = {0,0, -1,0};
+  int self2D_minus1y[] = {0,0, 0,-1};
+
+  int self2D_plus2x[] = {0,0, 2,0};
+  int self2D_plus2y[] = {0,0, 0,2};
+  int self2D_minus2x[] = {0,0, -2,0};
+  int self2D_minus2y[] = {0,0, 0,-2};
+
+  int self2D_plus3x[] = {0,0, 3,0};
+  int self2D_plus3y[] = {0,0, 0,3};
+  int self2D_minus3x[] = {0,0, -3,0};
+  int self2D_minus3y[] = {0,0, 0,-3};
+
+  int self2D_plus1xy[]  = {0,0, 1,0, 0,1, 1,1};
+
+  int stride2D_x[] = {1,0};
+  int stride2D_y[] = {0,1};
+
+  sten_self_2D = ops_decl_stencil( 2, 1, self2D, "self1D");
+
+  sten_self2D_plus1x = ops_decl_stencil( 2, 2, self2D_plus1x, "self2D_plus1x");
+  sten_self2D_plus1y = ops_decl_stencil( 2, 2, self2D_plus1y, "self2D_plus1y");
+  sten_self2D_minus1x = ops_decl_stencil( 2, 2, self2D_minus1x, "self2D_minus1x");
+  sten_self2D_minus1y = ops_decl_stencil( 2, 2, self2D_minus1y, "self2D_minus1y");
+
+  sten_self2D_plus2x = ops_decl_stencil( 2, 2, self2D_plus2x, "self2D_plus2x");
+  sten_self2D_plus2y = ops_decl_stencil( 2, 2, self2D_plus2y, "self2D_plus2y");
+  sten_self2D_minus2x = ops_decl_stencil( 2, 2, self2D_minus2x, "self2D_minus2x");
+  sten_self2D_minus2y = ops_decl_stencil( 2, 2, self2D_minus2y, "self2D_minus2y");
+
+  sten_self2D_plus3x = ops_decl_stencil( 2, 2, self2D_plus3x, "self2D_plus3x");
+  sten_self2D_plus3y = ops_decl_stencil( 2, 2, self2D_plus3y, "self2D_plus3y");
+  sten_self2D_minus3x = ops_decl_stencil( 2, 2, self2D_minus3x, "self2D_minus3x");
+  sten_self2D_minus3y = ops_decl_stencil( 2, 2, self2D_minus3y, "self2D_minus3y");
+
+  sten_self2D_plus1xy = ops_decl_stencil( 2, 4, self2D_plus1xy, "self2D_plus1xy");
+
+  sten2D_self_stride2D_x = ops_decl_strided_stencil( 2, 1, self2D, stride2D_x, "self_stride2D_x");
+  sten2D_self_stride2D_y = ops_decl_strided_stencil( 2, 1, self2D, stride2D_y, "self_stride2D_y");
+
+
+  //print ops blocks and dats details
   ops_diagnostic_output();
+
+
 
   /**---------------------initialize and generate chunk----------------------**/
 
@@ -336,7 +343,6 @@ int main(int argc, char **argv)
   /**------------------------------ideal_gas---------------------------------**/
 
   ideal_gas(FALSE);
-
 
   /**-----------------------------update_halo--------------------------------**/
 
