@@ -6,7 +6,11 @@
 void update_halo_kernel( double **density0, double **density1,
                          double **energy0, double **energy1,
                          double **pressure,double **viscosity,
-                         double **soundspeed) {
+                         double **soundspeed,
+                         double **xvel0, double **xvel1,
+                         double **yvel0, double **yvel1,
+                         double **vol_flux_x,double **vol_flux_y,
+                         double **mass_flux_x, double **mass_flux_y) {
 
   if(fields[FIELD_DENSITY0] == 1) *density0[0] = *density0[1];
   if(fields[FIELD_DENSITY1] == 1) *density1[0] = *density1[1];
@@ -15,14 +19,6 @@ void update_halo_kernel( double **density0, double **density1,
   if(fields[FIELD_PRESSURE] == 1) *pressure[0] = *pressure[1];
   if(fields[FIELD_VISCOSITY] == 1) *viscosity[0] = *viscosity[1];
   if(fields[FIELD_SOUNDSPEED] == 1) *soundspeed[0] = *soundspeed[1];
-}
-
-
-
-void update_halo_kernel2( double **xvel0, double **xvel1,
-                         double **yvel0, double **yvel1,
-                         double **vol_flux_x,double **vol_flux_y,
-                         double **mass_flux_x, double **mass_flux_y) {
 
   if(fields[FIELD_XVEL0] == 1) *xvel0[0] = *xvel0[1];
   if(fields[FIELD_XVEL1] == 1) *xvel1[0] = *xvel1[1];

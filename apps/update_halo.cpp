@@ -55,80 +55,7 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(energy1, sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(pressure, sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(viscosity, sten_self2D_plus2y, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_plus2y, OPS_RW));
-
-  int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom2,
-      ops_arg_dat(density0, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_plus1y, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_plus1y, OPS_RW));
-
-  int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top1,
-      ops_arg_dat(density0, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_minus2y, OPS_RW));
-
-  int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top2,
-      ops_arg_dat(density0, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_minus1y, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_minus1y, OPS_RW));
-
-  int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left1,
-      ops_arg_dat(density0, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_plus2x, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_plus2x, OPS_RW));
-
-  int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left2,
-      ops_arg_dat(density0, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_plus1x, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_plus1x, OPS_RW));
-
-  int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right2,
-      ops_arg_dat(density0, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_minus1x, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_minus1x, OPS_RW));
-
-  int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right1,
-      ops_arg_dat(density0, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(density1, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(energy0, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(energy1, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(pressure, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(viscosity, sten_self2D_minus2x, OPS_RW),
-      ops_arg_dat(soundspeed, sten_self2D_minus2x, OPS_RW));
-
-  //int rangexy_bottom1[] = {x_min-2,x_max+2,y_min-2,y_min-1};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom1,
+      ops_arg_dat(soundspeed, sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_plus3y, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_plus3y, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_plus3y, OPS_RW),
@@ -138,8 +65,15 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y, sten_self2D_plus3y, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_plus3y, OPS_RW));
 
-  //int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_bottom2,
+  int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-1,y_min};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom2,
+      ops_arg_dat(density0, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_plus1y, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_plus1y, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_plus2y, OPS_RW),
@@ -149,19 +83,15 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y,  sten_self2D_plus2y, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_plus2y, OPS_RW));
 
-  //int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top2,
-      ops_arg_dat(xvel0, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(xvel1, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(yvel0, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(yvel1, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(vol_flux_x, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(mass_flux_x, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(vol_flux_y, sten_self2D_minus2y, OPS_RW),
-      ops_arg_dat(mass_flux_y, sten_self2D_minus2y, OPS_RW));
-
-  //int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_top1,
+  int rangexy_top1[] = {x_min-2,x_max+2,y_max+1,y_max+2};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top1,
+      ops_arg_dat(density0, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_minus2y, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_minus3y, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_minus3y, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_minus3y, OPS_RW),
@@ -171,8 +101,33 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y,  sten_self2D_minus3y, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_minus3y, OPS_RW));
 
-  //int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left1,
+  int rangexy_top2[] = {x_min-2,x_max+2,y_max,y_max+1};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_top2,
+      ops_arg_dat(density0, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_minus1y, OPS_RW),
+      ops_arg_dat(xvel0, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(xvel1, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(yvel0, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(yvel1, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(vol_flux_x, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(mass_flux_x, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(vol_flux_y, sten_self2D_minus2y, OPS_RW),
+      ops_arg_dat(mass_flux_y, sten_self2D_minus2y, OPS_RW));
+
+  int rangexy_left1[] = {x_min-2,x_min-1,y_min-2,y_max+2};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left1,
+      ops_arg_dat(density0, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_plus2x, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_plus2x, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_plus3x, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_plus3x, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_plus3x, OPS_RW),
@@ -182,8 +137,15 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y, sten_self2D_plus3x, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_plus3x, OPS_RW));
 
-  //int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_left2,
+  int rangexy_left2[] = {x_min-1,x_min,y_min-2,y_max+2};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_left2,
+      ops_arg_dat(density0, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_plus1x, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_plus1x, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_plus2x, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_plus2x, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_plus2x, OPS_RW),
@@ -193,8 +155,15 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y, sten_self2D_plus2x, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_plus2x, OPS_RW));
 
-  //int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right1,
+  int rangexy_right1[] = {x_max+1,x_max+2,y_min-2,y_max+2};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right1,
+      ops_arg_dat(density0, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_minus2x, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_minus2x, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_minus3x, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_minus3x, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_minus3x, OPS_RW),
@@ -204,8 +173,15 @@ void update_halo(int* fields, int depth)
       ops_arg_dat(vol_flux_y,  sten_self2D_minus3x, OPS_RW),
       ops_arg_dat(mass_flux_y, sten_self2D_minus3x, OPS_RW));
 
-  //int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_right2,
+    int rangexy_right2[] = {x_max,x_max+1,y_min-2,y_max+2};
+  ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_right2,
+      ops_arg_dat(density0, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(density1, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(energy0, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(energy1, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(pressure, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(viscosity, sten_self2D_minus1x, OPS_RW),
+      ops_arg_dat(soundspeed, sten_self2D_minus1x, OPS_RW),
       ops_arg_dat(xvel0, sten_self2D_minus2x, OPS_RW),
       ops_arg_dat(xvel1, sten_self2D_minus2x, OPS_RW),
       ops_arg_dat(yvel0, sten_self2D_minus2x, OPS_RW),

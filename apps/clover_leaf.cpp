@@ -336,7 +336,6 @@ int main(int argc, char **argv)
   ops_diagnostic_output();
 
 
-
   /**---------------------initialize and generate chunk----------------------**/
 
   initialise();
