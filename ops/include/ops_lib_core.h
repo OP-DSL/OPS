@@ -140,6 +140,21 @@ typedef struct
 } ops_arg;
 
 
+/*
+* min / max definitions
+*/
+
+#ifndef MIN
+#define MIN(a,b) ((a<b) ? (a) : (b))
+#endif
+#ifndef MAX
+#define MAX(a,b) ((a>b) ? (a) : (b))
+#endif
+#ifndef SIGN
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#endif
+
+
 /*******************************************************************************
 * Core lib function prototypes
 *******************************************************************************/

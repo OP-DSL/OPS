@@ -59,6 +59,10 @@ void timestep()
   update_halo(fields,1);
 
   viscosity_func();
+  ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
 
-  //fields[FIELD_VISCOSITY] = 1;
+  fields[FIELD_VISCOSITY] = 1;
+
+  update_halo(fields,1);
+
 }

@@ -49,17 +49,12 @@ void viscosity_func()
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
-      ops_arg_dat(xvel0, sten_self_2D, OPS_READ)
-      //ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-      //ops_arg_dat(pressure, sten_self_2D, OPS_RW),
-      //ops_arg_dat(soundspeed, sten_self_2D, OPS_WRITE)
+      ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
+      ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
+      ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
+      ops_arg_dat(celldy, sten_self_plus1_stride2D_x, OPS_READ),
+      ops_arg_dat(pressure, sten_self2D_4point1xy, OPS_READ),
+      ops_arg_dat(density0, sten_self_2D, OPS_READ),
+      ops_arg_dat(viscosity, sten_self_2D, OPS_WRITE)
       );
-
-  //xvel0, yvel0, celldx, celldy, pressure, viscosity, density
-
-
-
-
-
-
 }
