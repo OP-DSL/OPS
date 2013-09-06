@@ -37,9 +37,19 @@
 void ideal_gas(int predict);
 void update_halo(int* fields, int depth);
 void viscosity_func();
+void calc_dt(double*, char*,
+             double*, double*, int*, int*);
 
 void timestep()
 {
+  int jldt, kldt;
+  double dtlp;
+  double x_pos, y_pos, xl_pos, yl_pos;
+  char dt_control[8], dtl_control[8];
+
+  dt = g_big;
+  int small = 0;
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
@@ -59,10 +69,21 @@ void timestep()
   update_halo(fields,1);
 
   viscosity_func();
-  ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
 
   fields[FIELD_VISCOSITY] = 1;
 
   update_halo(fields,1);
+
+  calc_dt(&dtlp, dtl_control, &xl_pos, &yl_pos, &jldt, &kldt);
+
+  if (dtlp <= dt) {
+      dt = dtlp;
+      memcpy(dt_control, dtl_control, sizeof(char)*8);
+      x_pos = xl_pos;
+      y_pos = yl_pos;
+      jdt = jldt;
+      kdt = kldt;
+  }
 
 }

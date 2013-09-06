@@ -76,4 +76,10 @@ extern int complete;
 
 
 
+extern double dtold, dt, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+       dtdiv_safe, dtc, dtu, dtv, dtdiv;
+
+extern int jdt, kdt;
+
+
 #endif /* __CLOVER_LEAF_DEFINITIONS_H */

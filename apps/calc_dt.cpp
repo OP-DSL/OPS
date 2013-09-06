@@ -34,10 +34,17 @@
 #include "data.h"
 #include "definitions.h"
 
-#include "viscosity_kernel.h"
 
-void viscosity_func()
+void calc_dt(double* dtlp, char dtl_control[],
+             double* xl_pos, double* yl_pos, int* jldt, int* kldt)
 {
+  int l_control;
+  int small;
+
+  local_dt = g_big;
+  small = 0;
+
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
@@ -48,12 +55,10 @@ void viscosity_func()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  ops_par_loop(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
-      ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
-      ops_arg_dat(celldy, sten_self_plus1_stride2D_x, OPS_READ),
-      ops_arg_dat(pressure, sten_self2D_4point1xy, OPS_READ),
-      ops_arg_dat(density0, sten_self_2D, OPS_READ),
-      ops_arg_dat(viscosity, sten_self_2D, OPS_WRITE));
+
+  if(l_control == 1) local_control = "sound";
+  if(l_control == 2) local_control = "xvel";
+  if(l_control == 3) local_control = "yvel";
+  if(l_control == 4) local_control = "div";
+
 }

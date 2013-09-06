@@ -127,6 +127,10 @@ int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+double dtold, dt, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+       dtdiv_safe, dtc, dtu, dtv, dtdiv;
+
+int jdt, kdt;
 
 #include "cloverleaf_ops_vars.h"
 
