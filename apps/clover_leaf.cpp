@@ -196,6 +196,14 @@ int main(int argc, char **argv)
 
   NUM_FIELDS = 15;
 
+  dtinit = 0.1;
+  dtmax = 1.0;
+  dtmin = 0.0000001;
+  dtrise = 1.5;
+  dtc_safe = 0.7;
+  dtu_safe = 0.5;
+  dtv_safe = 0.5;
+  dtdiv_safe = 0.7;
 
   /**-------------------OPS Initialisation and Declarations------------------**/
 

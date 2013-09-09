@@ -52,7 +52,7 @@ void viscosity_func()
       ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
-      ops_arg_dat(celldy, sten_self_plus1_stride2D_x, OPS_READ),
+      ops_arg_dat(celldy, sten_self_plus1_stride2D_y, OPS_READ),
       ops_arg_dat(pressure, sten_self2D_4point1xy, OPS_READ),
       ops_arg_dat(density0, sten_self_2D, OPS_READ),
       ops_arg_dat(viscosity, sten_self_2D, OPS_WRITE));
