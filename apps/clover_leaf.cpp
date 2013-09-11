@@ -127,8 +127,11 @@ int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-double dtold, dt, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
+
+double end_time;
+int end_step;
 
 int jdt, kdt;
 
@@ -140,6 +143,15 @@ int jdt, kdt;
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+
+  dtinit = 0.1;
+  dtmax = 1.0;
+  dtmin = 0.0000001;
+  dtrise = 1.5;
+  dtc_safe = 0.7;
+  dtu_safe = 0.5;
+  dtv_safe = 0.5;
+  dtdiv_safe = 0.7;
 
   /**--------------------Set up Cloverleaf default problem-------------------**/
 
@@ -196,14 +208,19 @@ int main(int argc, char **argv)
 
   NUM_FIELDS = 15;
 
-  dtinit = 0.1;
-  dtmax = 1.0;
+  dtinit = 0.04; //initial_timestep
+  dtmax = 0.04; //max_timestep
   dtmin = 0.0000001;
-  dtrise = 1.5;
-  dtc_safe = 0.7;
-  dtu_safe = 0.5;
-  dtv_safe = 0.5;
-  dtdiv_safe = 0.7;
+  dtrise = 1.5; //timestep_rise
+  end_time = 3.0; // end_time
+  //end_step = 0.5; //end_step
+
+
+  time  = 0.0;
+  step  = 0;
+  dtold = dtinit;
+  dt    = dtinit;
+
 
   /**-------------------OPS Initialisation and Declarations------------------**/
 

@@ -74,9 +74,10 @@ extern int error_condition;
 extern int test_problem;
 extern int complete;
 
+extern double end_time;
+extern int end_step;
 
-
-extern double dtold, dt, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+extern double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
 
 extern int jdt, kdt;

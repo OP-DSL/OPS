@@ -36,7 +36,7 @@
 
 #include "calc_dt_kernel.h"
 
-void calc_dt(double* local_dt, char local_control[],
+void calc_dt(double* local_dt, char* local_control,
              double* xl_pos, double* yl_pos, int* jldt, int* kldt)
 {
   int small;
@@ -75,7 +75,6 @@ void calc_dt(double* local_dt, char local_control[],
 
 
 
-
   ops_par_loop(calc_dt_min_kernel, "calc_dt_min_kernel", 2, rangexy_inner,
     ops_arg_dat(work_array1, sten_self_2D, OPS_READ),
     ops_arg_gbl(local_dt, 1, OPS_WRITE));
@@ -86,28 +85,39 @@ void calc_dt(double* local_dt, char local_control[],
   jk_control = jk_control - (jk_control - (int)(jk_control));
   *jldt = (int)jk_control%x_max;
   *kldt = 1 + (jk_control/x_max);
-  //*xl_pos = cellx(jldt)
-  //*yl_pos = celly(kldt)
+
+  int rangexy_getpoint[] = {*jldt-1,*jldt,*kldt-1,*kldt}; // inner range without border
 
   if(*local_dt < dtmin) small = 1;
 
-  //if(small != 0) {
+  ops_par_loop(calc_dt_get_kernel, "calc_dt_get_kernel", 2, rangexy_getpoint,
+    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
+    ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
+    ops_arg_gbl(xl_pos, 1, OPS_WRITE),
+    ops_arg_gbl(yl_pos, 1, OPS_WRITE)
+    );
+
+  if(small != 0) {
     ops_printf("Timestep information:\n");
-    ops_printf("j, k                 : %d, %d\n",*jldt,*kldt);
-    //ops_printf(0,*) 'x, y                 : ',cellx(jldt),celly(kldt)
     ops_printf("timestep : %lf\n",*local_dt);
+    ops_printf("j, k                 : %d, %d\n",*jldt,*kldt);
+      ops_par_loop(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
+    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
+    ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
+    ops_arg_dat(xvel0, sten_self2D_4point1xy, OPS_READ),
+    ops_arg_dat(yvel0, sten_self2D_4point1xy, OPS_READ),
+    ops_arg_dat(density0, sten_self_2D, OPS_READ),
+    ops_arg_dat(energy0, sten_self_2D, OPS_READ),
+    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
+    ops_arg_dat(soundspeed, sten_self_2D, OPS_READ),
+    ops_arg_gbl(xl_pos, 1, OPS_READ),
+    ops_arg_gbl(yl_pos, 1, OPS_READ)
+    );
+  }
 
-
-
-  //}
-
-
-
-  if(dtl_control == 1) local_control = "sound";
-  if(dtl_control == 2) local_control = "xvel";
-  if(dtl_control == 3) local_control = "yvel";
-  if(dtl_control == 4) local_control = "div";
-
-  ops_printf("local_control : %s\n",local_control);
+  if(dtl_control == 1) sprintf(local_control, "sound");
+  if(dtl_control == 2) sprintf(local_control, "xvel");
+  if(dtl_control == 3) sprintf(local_control, "yvel");
+  if(dtl_control == 4) sprintf(local_control, "div");
 
 }

@@ -58,4 +58,6 @@ void generate()
     ops_arg_dat(cellx,    sten_self_plus1_stride2D_x, OPS_READ),
     ops_arg_dat(celly,    sten_self_plus1_stride2D_y, OPS_READ));
 
+
+
 }

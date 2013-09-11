@@ -25,6 +25,7 @@ Clover version 1.000000
  Problem initialised and generated
 
               Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
-step:     0   2.000E+01   1.200E+01   6.000E-01   5.400E-01   2.700E+01        0.000E+00        2.700E+01
+ step:     0   2.000E+01   1.200E+01   6.000E-01   5.400E-01   2.700E+01        0.000E+00        2.700E+01
 
  Starting the calculation
+ Step 1 time 0.000000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
