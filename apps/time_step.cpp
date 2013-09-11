@@ -99,4 +99,10 @@ void timestep()
   " Step %d time %lf control %s timestep  %E  %d, %d x  %E  y %E\n",
     step,   time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
 
+  if(small == 1) {
+    ops_printf("timestep :small timestep\n");
+    exit(-2);
+  }
+
+  dtold = dt;
 }

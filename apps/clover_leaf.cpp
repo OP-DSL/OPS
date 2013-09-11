@@ -119,7 +119,7 @@ grid_type grid; //global variable holding global grid info
 
 field_type field; //global variable holding info of fields
 
-int step = 0;
+int step ;
 int advect_x; //logical
 int error_condition;
 int test_problem;
@@ -144,6 +144,9 @@ int jdt, kdt;
 int main(int argc, char **argv)
 {
 
+  /**--------------------Set up Cloverleaf default problem-------------------**/
+
+  //some defailt values before read input
   dtinit = 0.1;
   dtmax = 1.0;
   dtmin = 0.0000001;
@@ -153,9 +156,7 @@ int main(int argc, char **argv)
   dtv_safe = 0.5;
   dtdiv_safe = 0.7;
 
-  /**--------------------Set up Cloverleaf default problem-------------------**/
-
-  //need to fill these in through I/O
+  //need to read in the following through I/O
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
   grid->x_cells = 10;
   grid->y_cells = 2;
@@ -214,12 +215,6 @@ int main(int argc, char **argv)
   dtrise = 1.5; //timestep_rise
   end_time = 3.0; // end_time
   //end_step = 0.5; //end_step
-
-
-  time  = 0.0;
-  step  = 0;
-  dtold = dtinit;
-  dt    = dtinit;
 
 
   /**-------------------OPS Initialisation and Declarations------------------**/
@@ -371,6 +366,12 @@ int main(int argc, char **argv)
   /**---------------------initialize and generate chunk----------------------**/
 
   initialise();
+
+  time  = 0.0;
+  step  = 0;
+  dtold = dtinit;
+  dt    = dtinit;
+
   generate();
 
   /**------------------------------ideal_gas---------------------------------**/

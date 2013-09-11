@@ -70,10 +70,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(volume, sten_self_2D, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yarea, sten_self2D_plus1y, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE)
-    );
-
-
+    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE) );
 
   ops_par_loop(calc_dt_min_kernel, "calc_dt_min_kernel", 2, rangexy_inner,
     ops_arg_dat(work_array1, sten_self_2D, OPS_READ),
@@ -94,13 +91,13 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
     ops_arg_gbl(xl_pos, 1, OPS_WRITE),
-    ops_arg_gbl(yl_pos, 1, OPS_WRITE)
-    );
+    ops_arg_gbl(yl_pos, 1, OPS_WRITE));
 
   if(small != 0) {
     ops_printf("Timestep information:\n");
-    ops_printf("timestep : %lf\n",*local_dt);
     ops_printf("j, k                 : %d, %d\n",*jldt,*kldt);
+    ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
+    ops_printf("timestep : %lf\n",*local_dt);
       ops_par_loop(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
     ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
@@ -109,10 +106,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(density0, sten_self_2D, OPS_READ),
     ops_arg_dat(energy0, sten_self_2D, OPS_READ),
     ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-    ops_arg_dat(soundspeed, sten_self_2D, OPS_READ),
-    ops_arg_gbl(xl_pos, 1, OPS_READ),
-    ops_arg_gbl(yl_pos, 1, OPS_READ)
-    );
+    ops_arg_dat(soundspeed, sten_self_2D, OPS_READ));
   }
 
   if(dtl_control == 1) sprintf(local_control, "sound");
