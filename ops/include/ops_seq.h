@@ -761,6 +761,164 @@ void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6*, T7*,
 }
 
 
+template < class T0, class T1, class T2, class T3, class T4, class T5,
+           class T6, class T7, class T8 , class T9 , class T10, class T11>
+void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6*, T7*,
+                                  T8*, T9*, T10*, T11*),
+  char const * name, int dim, int *range,
+  ops_arg arg0,
+  ops_arg arg1,
+  ops_arg arg2,
+  ops_arg arg3,
+  ops_arg arg4,
+  ops_arg arg5,
+  ops_arg arg6,
+  ops_arg arg7,
+  ops_arg arg8,
+  ops_arg arg9,
+  ops_arg arg10,
+  ops_arg arg11) {
+
+  char** p_a[12];
+  ops_arg args[12] = {arg0, arg1, arg2, arg3, arg4,
+                      arg5, arg6, arg7, arg8, arg9,
+                      arg10, arg11};
+
+  // consistency checks
+  // ops_args_check(16,args,name);
+
+  for (int i = 0; i < 12; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 12, args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11]);
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        ops_args_set(n_x, n_y, 12, args,p_a);
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11]);
+      }
+    }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z, 12, args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11]);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 12; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+}
+
+
+template < class T0, class T1, class T2, class T3, class T4, class T5,
+           class T6, class T7, class T8 , class T9 , class T10, class T11,
+           class T12, class T13>
+void ops_par_loop(void (*kernel)( T0*, T1*, T2*, T3*, T4*, T5*, T6*, T7*,
+                                  T8*, T9*, T10*, T11*, T12*, T13*),
+  char const * name, int dim, int *range,
+  ops_arg arg0,
+  ops_arg arg1,
+  ops_arg arg2,
+  ops_arg arg3,
+  ops_arg arg4,
+  ops_arg arg5,
+  ops_arg arg6,
+  ops_arg arg7,
+  ops_arg arg8,
+  ops_arg arg9,
+  ops_arg arg10,
+  ops_arg arg11,
+  ops_arg arg12,
+  ops_arg arg13) {
+
+  char** p_a[14];
+  ops_arg args[14] = {arg0, arg1, arg2, arg3, arg4,
+                      arg5, arg6, arg7, arg8, arg9,
+                      arg10, arg11, arg12, arg13};
+
+  // consistency checks
+  // ops_args_check(14,args,name);
+
+  for (int i = 0; i < 14; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+  }
+
+  // loop over set elements
+
+  if (dim == 1) {
+    for (int n_x = range[0]; n_x < range[1]; n_x++) {
+      ops_args_set(n_x, 14, args,p_a);
+      // call kernel function, passing in pointers to data
+      kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11],
+              (T12 *)p_a[12], (T13 *)p_a[13]);
+    }
+  }
+  else if (dim == 2) {
+    for (int n_y = range[2]; n_y < range[3]; n_y++) {
+      for (int n_x = range[0]; n_x < range[1]; n_x++) {
+        ops_args_set(n_x, n_y, 14, args,p_a);
+        // call kernel function, passing in pointers to data
+        kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11],
+              (T12 *)p_a[12], (T13 *)p_a[13]);
+      }
+    }
+  }
+  else if (dim == 3) {
+    for (int n_z = range[4]; n_z < range[5]; n_z++) {
+      for (int n_y = range[2]; n_y < range[3]; n_y++) {
+        for (int n_x = range[0]; n_x < range[1]; n_x++) {
+          ops_args_set(n_x, n_y, n_z, 14, args,p_a);
+          // call kernel function, passing in pointers to data
+          kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3],
+              (T4 *)p_a[4], (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7],
+              (T8 *)p_a[8], (T9 *)p_a[9], (T10 *)p_a[10], (T11 *)p_a[11],
+              (T12 *)p_a[12], (T13 *)p_a[13]);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 14; i++) {
+    if (args[i].argtype == OPS_ARG_DAT)
+      free(p_a[i]);
+  }
+}
+
+
 
 template < class T0, class T1, class T2, class T3, class T4, class T5,
            class T6, class T7, class T8 , class T9 , class T10, class T11,

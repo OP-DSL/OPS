@@ -63,6 +63,7 @@ void ideal_gas(int predict);
 void update_halo(int* fields, int depth);
 void field_summary();
 void timestep();
+void PdV(int predict);
 
 
 
@@ -408,8 +409,9 @@ int main(int argc, char **argv)
 
   step = step + 1;
 
-  timestep();
-  //CALL timestep() - > calls viscosity kernel and calc_dt kernel
+  timestep(); //CALL timestep() - > calls viscosity kernel and calc_dt kernel
+
+  PdV(TRUE);
 
 
 
@@ -438,14 +440,13 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
 
-
-
-
   //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
 
   //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
 

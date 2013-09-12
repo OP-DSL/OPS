@@ -47,12 +47,13 @@ all: clean cloverleaf_seq
 
 cloverleaf_seq:	clover_leaf.cpp initialise.cpp generate.cpp ideal_gas.cpp \
 		update_halo.cpp field_summary.cpp time_step.cpp viscosity.cpp \
-		calc_dt.cpp \
+		calc_dt.cpp PdV.cpp \
 		initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
-		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h
+		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+		PdV_kernel.h
 		$(CPP) $(CPPFLAGS) clover_leaf.cpp initialise.cpp generate.cpp \
 		ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
-		viscosity.cpp calc_dt.cpp \
+		viscosity.cpp calc_dt.cpp PdV.cpp \
 		$(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
 #
 # cleanup
