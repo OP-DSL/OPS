@@ -34,14 +34,9 @@
 #include "data.h"
 #include "definitions.h"
 
-#include "PdV_kernel.h"
+#include "revert_kernel.h"
 
-// Cloverleaf functions
-void ideal_gas(int predict);
-void update_halo(int* fields, int depth);
-void revert();
-
-void PdV(int predict)
+void revert()
 {
   error_condition = 0; // Not used yet due to issue with OpenA reduction
 
@@ -55,52 +50,9 @@ void PdV(int predict)
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  if(predict) {
-  ops_par_loop(PdV_kernel_predict, "PdV_kernel_predict", 2, rangexy_inner,
-    ops_arg_dat(xarea, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yarea, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(volume, sten_self_2D, OPS_READ),
-    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
+  ops_par_loop(revert_kernel, "PdV_kernel_predict", 2, rangexy_inner,
     ops_arg_dat(density0, sten_self_2D, OPS_READ),
     ops_arg_dat(density1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(viscosity, sten_self_2D, OPS_READ),
     ops_arg_dat(energy0, sten_self_2D, OPS_READ),
     ops_arg_dat(energy1, sten_self_2D, OPS_WRITE));
-  }
-  else {
-  ops_par_loop(PdV_kernel_nopredict, "PdV_kernel_nopredict", 2, rangexy_inner,
-    ops_arg_dat(xarea, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(xvel1, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yarea, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yvel1, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(volume, sten_self_2D, OPS_READ),
-    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-    ops_arg_dat(density0, sten_self_2D, OPS_READ),
-    ops_arg_dat(density1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(viscosity, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy1, sten_self_2D, OPS_WRITE));
-  }
-
-  if(error_condition == 1) {
-    ops_printf("PdV: error in PdV\n");
-    exit(-2);
-  }
-
-  if(predict) {
-    ideal_gas(TRUE);
-    fields[FIELD_PRESSURE] = 1;
-    update_halo(fields,1);
-  }
-
-  if(predict) {
-    revert();
-  }
-
 }
