@@ -66,6 +66,7 @@ void timestep();
 void PdV(int predict);
 void accelerate();
 void flux_calc();
+void advection();
 
 
 
@@ -425,6 +426,8 @@ int main(int argc, char **argv)
 
   flux_calc();
 
+  advection();
+
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
@@ -453,8 +456,8 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
 
-  ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
 
   fclose(g_out);
 

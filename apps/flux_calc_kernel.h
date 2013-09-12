@@ -1,5 +1,5 @@
-#ifndef PdV_KERNEL_H
-#define PdV_KERNEL_H
+#ifndef FLUX_CALC_KERNEL_H
+#define FLUX_CALC_KERNEL_H
 
 void flux_calc_kernelx( double **vol_flux_x, double **xarea,
                         double **xvel0, double **xvel1) {
