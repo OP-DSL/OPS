@@ -67,6 +67,7 @@ void PdV(int predict);
 void accelerate();
 void flux_calc();
 void advection();
+void reset_field();
 
 
 
@@ -426,7 +427,9 @@ int main(int argc, char **argv)
 
   flux_calc();
 
-  advection();
+  //advection();
+
+  reset_field();
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -445,11 +448,12 @@ int main(int argc, char **argv)
 
   //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
 
-  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+
+  ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
 
