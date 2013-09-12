@@ -65,6 +65,7 @@ void field_summary();
 void timestep();
 void PdV(int predict);
 void accelerate();
+void flux_calc();
 
 
 
@@ -414,13 +415,15 @@ int main(int argc, char **argv)
 
   step = step + 1;
 
-  timestep(); //CALL timestep() - > calls viscosity kernel and calc_dt kernel
+  timestep();
 
   PdV(TRUE);
 
   accelerate();
 
   PdV(FALSE);
+
+  flux_calc();
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -434,21 +437,10 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
 
-  //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-
-  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
 
   //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-
   //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
@@ -458,8 +450,11 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
 
-  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+
+  ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
 
   fclose(g_out);
 
