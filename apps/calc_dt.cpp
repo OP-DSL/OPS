@@ -47,8 +47,6 @@ void calc_dt(double* local_dt, char* local_control,
 
   int dtl_control;
 
-  ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;

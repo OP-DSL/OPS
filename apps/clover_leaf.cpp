@@ -64,6 +64,7 @@ void update_halo(int* fields, int depth);
 void field_summary();
 void timestep();
 void PdV(int predict);
+void accelerate();
 
 
 
@@ -329,7 +330,10 @@ int main(int argc, char **argv)
   int self2D_minus3y[] = {0,0, 0,-3};
 
   int self2D_plus1xy[]  = {0,0, 1,0, 0,1, 1,1};
+  int self2D_minus1xy[]  = {0,0, -1,0, 0,-1, -1,-1};
+
   int self2D_4point1xy[]  = {1,0, -1,0, 0,1, 0,-1};
+
 
   int stride2D_x[] = {1,0};
   int stride2D_y[] = {0,1};
@@ -352,6 +356,7 @@ int main(int argc, char **argv)
   sten_self2D_minus3y = ops_decl_stencil( 2, 2, self2D_minus3y, "self2D_minus3y");
 
   sten_self2D_plus1xy = ops_decl_stencil( 2, 4, self2D_plus1xy, "self2D_plus1xy");
+  sten_self2D_minus1xy = ops_decl_stencil( 2, 4, self2D_minus1xy, "self2D_plus1xy");
   sten_self2D_4point1xy = ops_decl_stencil( 2, 4, self2D_4point1xy, "self2D_4point1xy");
 
   sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, self2D, stride2D_x, "self_stride2D_x");
@@ -413,7 +418,9 @@ int main(int argc, char **argv)
 
   PdV(TRUE);
 
+  accelerate();
 
+  PdV(FALSE);
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -445,13 +452,16 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+
   //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+
+  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
 
   fclose(g_out);
-
 
   ops_exit();
 }

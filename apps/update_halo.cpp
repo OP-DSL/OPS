@@ -48,7 +48,7 @@ void update_halo(int* fields, int depth)
   int y_max = field->y_max;
 
 
-  if(depth > 1) {
+  if(depth == 2) {
   int rangexy_bottom2[] = {x_min-2,x_max+2,y_min-2,y_min-1};
   ops_par_loop(update_halo_kernel, "update_halo_kernel", 2, rangexy_bottom2,
       ops_arg_dat(density0, sten_self2D_plus2y, OPS_RW),

@@ -56,7 +56,7 @@ void PdV_kernel_nopredict(double **xarea, double **xvel0, double **xvel1,
                                  (*xvel1[1]) + (*xvel1[3]) ) ) * 0.25 * dt;
 
   bottom_flux = ( (*yarea[0]) * ( (*yvel0[0]) + (*yvel0[1]) +
-                                  (*yvel1[0]) + (*yvel1[1]) ) ) * 0.25* dt;
+                                  (*yvel1[0]) + (*yvel1[1]) ) ) * 0.25 * dt;
   top_flux = ( (*yarea[2]) * ( (*yvel0[2]) + (*yvel0[3]) +
                                (*yvel1[2]) + (*yvel1[3]) ) ) * 0.25 * dt;
 

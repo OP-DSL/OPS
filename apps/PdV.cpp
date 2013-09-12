@@ -95,7 +95,16 @@ void PdV(int predict)
 
   if(predict) {
     ideal_gas(TRUE);
-    fields[FIELD_PRESSURE] = 1;
+    fields[FIELD_DENSITY0]  = 0;
+    fields[FIELD_ENERGY0]   = 0;
+    fields[FIELD_PRESSURE]  = 1;
+    fields[FIELD_VISCOSITY] = 0;
+    fields[FIELD_DENSITY1]  = 0;
+    fields[FIELD_ENERGY1]   = 0;
+    fields[FIELD_XVEL0]     = 0;
+    fields[FIELD_YVEL0]     = 0;
+    fields[FIELD_XVEL1]     = 0;
+    fields[FIELD_YVEL1]     = 0;
     update_halo(fields,1);
   }
 

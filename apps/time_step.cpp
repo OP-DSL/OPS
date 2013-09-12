@@ -61,16 +61,20 @@ void timestep()
 
   ideal_gas(FALSE);
 
-  fields[FIELD_PRESSURE] = 1;
-  fields[FIELD_ENERGY0] = 1;
-  fields[FIELD_DENSITY0] = 1;
-  fields[FIELD_XVEL0] = 1;
-  fields[FIELD_YVEL0] = 1;
+  fields[FIELD_DENSITY0]  = 1;
+  fields[FIELD_ENERGY0]   = 1;
+  fields[FIELD_PRESSURE]  = 1;
+  fields[FIELD_VISCOSITY] = 0;
+  fields[FIELD_DENSITY1]  = 0;
+  fields[FIELD_ENERGY1]   = 0;
+  fields[FIELD_XVEL0]     = 1;
+  fields[FIELD_YVEL0]     = 1;
+  fields[FIELD_XVEL1]     = 0;
+  fields[FIELD_YVEL1]     = 0;
 
   update_halo(fields,1);
 
   viscosity_func();
-  //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
 
   fields[FIELD_VISCOSITY] = 1;
 
