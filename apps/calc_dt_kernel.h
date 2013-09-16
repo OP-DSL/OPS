@@ -26,14 +26,14 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
 
   div = div + dv2 - dv1;
 
-  dtut = dtu_safe * 2.0 * (**volume)/MAX(MAX(abs(dv1), abs(dv2)), g_small * (**volume));
+  dtut = dtu_safe * 2.0 * (**volume)/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * (**volume));
 
   dv1 = (*yvel0[0] + *yvel0[1]) * (*yarea[0]);
   dv2 = (*yvel0[2] + *yvel0[3]) * (*yarea[1]);
 
   div = div + dv2 - dv1;
 
-  dtvt = dtv_safe * 2.0 * (**volume)/MAX(MAX(abs(dv1),abs(dv2)), g_small * (**volume));
+  dtvt = dtv_safe * 2.0 * (**volume)/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * (**volume));
 
   div = div/(2.0*(**volume));
 

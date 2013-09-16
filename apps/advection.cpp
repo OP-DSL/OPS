@@ -35,6 +35,7 @@
 #include "definitions.h"
 
 void update_halo(int* fields, int depth);
+void advec_cell(int sweep_number, int direction);
 
 void advection()
 {
@@ -62,7 +63,7 @@ void advection()
   fields[FIELD_VOL_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  //advec_cell_driver(sweep_number,direction)
+  advec_cell(sweep_number,direction);
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;

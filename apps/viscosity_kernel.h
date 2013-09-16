@@ -43,11 +43,11 @@ void viscosity_kernel( double **xvel0, double **yvel0,
         **viscosity = 0.0;
   }
   else {
-    pgradx = SIGN( MAX(1.0e-16, abs(pgradx)), pgradx);
-    pgrady = SIGN( MAX(1.0e-16, abs(pgrady)), pgrady);
+    pgradx = SIGN( MAX(1.0e-16, fabs(pgradx)), pgradx);
+    pgrady = SIGN( MAX(1.0e-16, fabs(pgrady)), pgrady);
     pgrad = sqrt(pgradx*pgradx + pgrady*pgrady);
-    xgrad = abs(*celldx[0] * pgrad/pgradx);
-    ygrad = abs(*celldy[0] * pgrad/pgrady);
+    xgrad = fabs(*celldx[0] * pgrad/pgradx);
+    ygrad = fabs(*celldy[0] * pgrad/pgrady);
     grad  = MIN(xgrad,ygrad);
     grad2 = grad*grad;
 

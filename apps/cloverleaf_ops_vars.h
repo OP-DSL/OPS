@@ -60,6 +60,9 @@
   ops_stencil sten_self2D_minus1x;
   ops_stencil sten_self2D_minus1y;
 
+  ops_stencil sten_self2D_minus_1_2x;
+  ops_stencil sten_self_stride2D_xmax;
+
   ops_stencil sten_self2D_plus2x;
   ops_stencil sten_self2D_plus2y;
   ops_stencil sten_self2D_minus2x;

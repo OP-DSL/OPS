@@ -117,6 +117,9 @@ extern ops_stencil sten_self2D_plus1y;
 extern ops_stencil sten_self2D_minus1x;
 extern ops_stencil sten_self2D_minus1y;
 
+extern ops_stencil sten_self2D_minus_1_2x;
+extern ops_stencil sten_self_stride2D_xmax;
+
 extern ops_stencil sten_self2D_plus2x;
 extern ops_stencil sten_self2D_plus2y;
 extern ops_stencil sten_self2D_minus2x;

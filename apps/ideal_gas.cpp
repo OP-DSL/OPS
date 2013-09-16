@@ -47,8 +47,6 @@ void ideal_gas(int predict)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  advect_x = TRUE;
-
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   if(!predict) {
