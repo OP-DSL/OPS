@@ -324,6 +324,8 @@ int main(int argc, char **argv)
 
   int self2D_minus_1_2x[] = {0,0, -1,0, -2,0};
   int self2D_xmax[] = {0,0, -1,0, 1,0, x_max+2,0};
+  int self2D_minus_1_2y[] = {0,0, 0,-1, 0,-2};
+  int self2D_ymax[] = {0,0, 0,-1, 0,1, 0,y_max+2};
 
   int self2D_plus2x[] = {0,0, 2,0};
   int self2D_plus2y[] = {0,0, 0,2};
@@ -353,6 +355,9 @@ int main(int argc, char **argv)
 
   sten_self2D_minus_1_2x = ops_decl_stencil( 2, 3, self2D_minus_1_2x, "self2D_minus_1_2x");
   sten_self_stride2D_xmax = ops_decl_strided_stencil( 2, 4,  self2D_xmax, stride2D_x, "self2D_xmax");
+
+  sten_self2D_minus_1_2y = ops_decl_stencil( 2, 3, self2D_minus_1_2y, "self2D_minus_1_2y");
+  sten_self_stride2D_ymax = ops_decl_strided_stencil( 2, 4,  self2D_ymax, stride2D_y, "self2D_ymax");
 
   sten_self2D_plus2x = ops_decl_stencil( 2, 2, self2D_plus2x, "self2D_plus2x");
   sten_self2D_plus2y = ops_decl_stencil( 2, 2, self2D_plus2y, "self2D_plus2y");
@@ -435,11 +440,7 @@ int main(int argc, char **argv)
 
   flux_calc();
 
-
-
   advection();
-
-  reset_field();
 
   //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
@@ -472,6 +473,14 @@ int main(int argc, char **argv)
 
   //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+
+  reset_field();
+
+  /*advect_x = .NOT. advect_x;
+  time = time + dt;
+
+  if(summary_frequency != 0)
+    if((step%summary_frequency) == 0) field_summary();*/
 
   fclose(g_out);
 

@@ -64,8 +64,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ)
         );
     }
-    else
-    {
+    else {
       ops_par_loop(advec_cell_xdir_kernel2, "advec_cell_xdir_kernel2", 2, rangexy,
         ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
         ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
@@ -73,7 +72,6 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ)
         );
     }
-
 
     ops_par_loop(advec_cell_xdir_kernel3, "advec_cell_xdir_kernel3", 2, rangexy_inner_plus2x,
       ops_arg_dat(vol_flux_x, sten_self_2D, OPS_READ),
@@ -106,8 +104,51 @@ void advec_cell(int sweep_number, int dir)
   }
   else {
 
+    if(sweep_number == 1) {
+      ops_par_loop(advec_cell_ydir_kernel1, "advec_cell_ydir_kernel1", 2, rangexy,
+        ops_arg_dat(work_array1, sten_self_2D, OPS_RW),
+        ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
+        ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ)
+        );
+    }
+    else {
+      ops_par_loop(advec_cell_ydir_kernel2, "advec_cell_ydir_kernel2", 2, rangexy,
+        ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(vol_flux_y, sten_self2D_plus1x, OPS_READ)
+        );
+    }
 
+    ops_par_loop(advec_cell_ydir_kernel3, "advec_cell_ydir_kernel3", 2, rangexy_inner_plus2y,
+      ops_arg_dat(vol_flux_y, sten_self_2D, OPS_READ),
+      ops_arg_dat(yy, sten_self_stride2D_ymax, OPS_WRITE),
+      ops_arg_gbl(&y_max, 1, OPS_READ),
+      ops_arg_dat(work_array1, sten_self2D_minus1y, OPS_WRITE),
+      ops_arg_dat(vertexdy, sten_self_stride2D_ymax, OPS_READ),
+      ops_arg_dat(density1, sten_self2D_minus_1_2y, OPS_READ),
+      ops_arg_dat(density1, sten_self_stride2D_ymax, OPS_READ),
+      ops_arg_dat(energy1, sten_self2D_minus_1_2y, OPS_READ),
+      ops_arg_dat(energy1, sten_self_stride2D_ymax, OPS_READ),
+      ops_arg_dat(mass_flux_y, sten_self_2D, OPS_WRITE),
+      ops_arg_dat(work_array7, sten_self_2D, OPS_WRITE)
+      );
 
+    ops_par_loop(advec_cell_ydir_kernel4, "advec_cell_ydir_kernel4", 2, rangexy_inner,
+      ops_arg_dat(density1, sten_self_2D, OPS_RW),
+      ops_arg_dat(energy1, sten_self_2D, OPS_RW),
+      ops_arg_dat(mass_flux_y, sten_self2D_plus1y, OPS_READ),
+      ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ),
+      ops_arg_dat(work_array1, sten_self_2D, OPS_READ),
+      ops_arg_dat(work_array2, sten_self_2D, OPS_READ),
+      ops_arg_dat(work_array3, sten_self_2D, OPS_RW),
+      ops_arg_dat(work_array4, sten_self_2D, OPS_RW),
+      ops_arg_dat(work_array5, sten_self_2D, OPS_RW),
+      ops_arg_dat(work_array6, sten_self_2D, OPS_RW),
+      ops_arg_dat(work_array7, sten_self2D_plus1y, OPS_READ)
+      );
   }
 
 

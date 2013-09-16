@@ -43,8 +43,8 @@ void advection()
   int xvel,yvel;
 
   sweep_number = 1;
-  if(advect_x) direction = g_xdir;
-  if(!advect_x) direction = g_ydir;
+  if(advect_x == TRUE) direction = g_xdir;
+  if(!(advect_x == TRUE)) direction = g_ydir;
 
   xvel = g_xdir;
   yvel = g_ydir;
@@ -85,10 +85,10 @@ void advection()
   //advec_mom_driver(c,yvel,direction,sweep_number)
 
   sweep_number = 2;
-  if(advect_x) direction = g_ydir;
-  if(!advect_x) direction = g_xdir;
+  if(advect_x == TRUE) direction = g_ydir;
+  if(!(advect_x == TRUE)) direction = g_xdir;
 
-  //advec_cell_driver(c,sweep_number,direction)
+  advec_cell(sweep_number,direction);
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
