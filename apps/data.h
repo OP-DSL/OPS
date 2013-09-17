@@ -147,6 +147,10 @@ extern ops_stencil sten_self_plus1_stride2D_y;
 extern ops_stencil sten_self_minus1_stride2D_x;
 extern ops_stencil sten_self_minus1_stride2D_y;
 
+extern ops_stencil sten_self2D_plus_1_minus1_2_x;
+extern ops_stencil sten_self_plus_1_minus1_2_x_stride2D_x;
 
+extern ops_stencil sten_self_stride2D_xmax;
+extern ops_stencil sten_self_nullstride2D_xmax;
 
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/

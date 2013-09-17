@@ -322,6 +322,8 @@ int main(int argc, char **argv)
   int self2D_minus1x[] = {0,0, -1,0};
   int self2D_minus1y[] = {0,0, 0,-1};
 
+  int xmax2D[] = {x_max+2,0};
+
   int self2D_plus1_minus1_x[] = {0,0, 1,0, -1,0};
   int self2D_plus1_minus1_y[] = {0,0, 0,1, 0,-1};
 
@@ -343,9 +345,11 @@ int main(int argc, char **argv)
 
   int self2D_4point1xy[]  = {1,0, -1,0, 0,1, 0,-1};
 
+  int self2D_plus_1_minus1_2_x[] = {0,0, 1,0, -1,0, -2,0};
 
   int stride2D_x[] = {1,0};
   int stride2D_y[] = {0,1};
+  int stride2D_null[] = {0,0};
 
   sten_self_2D = ops_decl_stencil( 2, 1, self2D, "self1D");
 
@@ -383,6 +387,12 @@ int main(int argc, char **argv)
 
   sten_self_minus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_minus1x, stride2D_x, "self_stride2D_x");
   sten_self_minus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_minus1y, stride2D_y, "self_stride2D_y");
+
+  sten_self2D_plus_1_minus1_2_x = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_x, "self2D_plus_1_2_minus1_x");
+  sten_self_plus_1_minus1_2_x_stride2D_x = ops_decl_strided_stencil( 2, 4, self2D_plus_1_minus1_2_x, stride2D_x, "self_stride2D_x");
+
+  sten_self_stride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_y, "self_stride2D_xmax");
+  sten_self_nullstride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_null, "self_nullstride2D_xmax");
 
   //print ops blocks and dats details
   ops_diagnostic_output();
