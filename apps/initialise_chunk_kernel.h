@@ -4,7 +4,7 @@
 void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
 
   int x_min=field->x_min;
-  int x_max=field->x_max;;
+  int x_max=field->x_max;
   int y_min=field->y_min;
   int y_max=field->y_max;
 
@@ -25,7 +25,7 @@ void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
 void initialise_chunk_kernel_y(double **vertexy, int **yy, double **vertexdy) {
 
   int x_min=field->x_min;
-  int x_max=field->x_max;;
+  int x_max=field->x_max;
   int y_min=field->y_min;
   int y_max=field->y_max;
 
