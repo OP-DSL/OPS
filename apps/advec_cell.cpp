@@ -77,12 +77,10 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(vol_flux_x, sten_self_2D, OPS_READ),
       ops_arg_dat(xx, sten_self_stride2D_xmax, OPS_WRITE),
       ops_arg_gbl(&x_max, 1, OPS_READ),
-      ops_arg_dat(work_array1, sten_self2D_minus1x, OPS_WRITE),
+      ops_arg_dat(work_array1, sten_self2D_plus_1_minus_1_2x, OPS_WRITE),
       ops_arg_dat(vertexdx, sten_self_stride2D_xmax, OPS_READ),
-      ops_arg_dat(density1, sten_self2D_minus_1_2x, OPS_READ),
-      ops_arg_dat(density1, sten_self_stride2D_xmax, OPS_READ),
-      ops_arg_dat(energy1, sten_self2D_minus_1_2x, OPS_READ),
-      ops_arg_dat(energy1, sten_self_stride2D_xmax, OPS_READ),
+      ops_arg_dat(density1, sten_self2D_plus_1_minus_1_2x, OPS_READ),
+      ops_arg_dat(energy1, sten_self2D_plus_1_minus_1_2x, OPS_READ),
       ops_arg_dat(mass_flux_x, sten_self_2D, OPS_WRITE),
       ops_arg_dat(work_array7, sten_self_2D, OPS_WRITE)
       );
@@ -104,7 +102,7 @@ void advec_cell(int sweep_number, int dir)
   }
   else {
 
-    if(sweep_number == 1) {
+    /*if(sweep_number == 1) {
       ops_par_loop(advec_cell_ydir_kernel1, "advec_cell_ydir_kernel1", 2, rangexy,
         ops_arg_dat(work_array1, sten_self_2D, OPS_RW),
         ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
@@ -149,6 +147,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array6, sten_self_2D, OPS_RW),
       ops_arg_dat(work_array7, sten_self2D_plus1y, OPS_READ)
       );
+      */
   }
 
 

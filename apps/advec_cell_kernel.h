@@ -19,10 +19,9 @@ void advec_cell_xdir_kernel2( double **pre_vol, double **post_vol, double **volu
 }
 
 
-void advec_cell_xdir_kernel3( double **vol_flux_x, int **xx, int **x_max,
+void advec_cell_xdir_kernel3( double **vol_flux_x, double **xx, int **x_max,
                          double **pre_vol, double** vertexdx,
-                         double** density1a, double** density1b,
-                         double** energy1a, double** energy1b,
+                         double** density1, double** energy1,
                          double **mass_flux_x, double **ener_flux) {
 
   double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
@@ -31,53 +30,40 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, int **xx, int **x_max,
 
   int upwind, donor, downwind, dif;
 
-  //xx and vertexdx is accessed with: {0,0, -1,0, 1,0, x_max+2,0} and strided
-  //pre_vol is accessed with: {0,0, -1,0}
-  //density and energy is accessed with: {0,0, -1,0, -2,0}; and {0,0, -1,0, 1,0, x_max+2,0}
+  //xx and vertexdx is accessed with: {0,0, -1,0, 1,0, x_max+2,0}
+  //vertexdx_xmax is accessed with: {1,0, x_max+2,0} and a stride of {0,0}
+  //pre_vol is accessed with: {0,0, 1,0, -1,0, -2,0};
+  //density is accessed with: {0,0, 1,0, -1,0, -2,0};
 
-  double **den, **ene;
+  double **vertdx;
 
   if(**vol_flux_x > 0.0) {
-    upwind   = 2; //j-2
-    donor    = 1; //j-1
+    upwind   = 3; //j-2
+    donor    = 2; //j-1
     downwind = 0; //j
     dif      = donor;
-    den = density1a;
-    ene = energy1a;
-
-    //diffuw = (*density1a[1]) - (*density1a[2]);
-    //diffdw = (*density1a[0]) - (*density1a[1]);
-    sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
-    sigma3 = (1.0 + sigmat) * ((*vertexdx[0])/(*vertexdx[1]));
   }
   else {
-    *xx[2] < ((**x_max)+2) ? upwind   = 2: upwind   = 3;
+    *xx[2] < (**x_max)+2 ? upwind   = 1: upwind   = 0 /*wrong*/;
     donor    = 0; //j
-    downwind = 1; //j-1
+    downwind = 2; //j-1
     dif      = upwind;
-    den = density1b;
-    ene = energy1b;
-
-    sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
-    sigma3 = (1.0 + sigmat) * ((*vertexdx[0])/(*vertexdx[upwind]));
-    //diffuw = (*density1b[0]) - (*density1b[upwind]);
-    //diffdw = (*density1b[1]) - (*density1b[0]);
   }
 
-  //sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
-  //sigma3 = (1.0 + sigmat) * ((*vertexdx[0])/(*vertexdx[dif]));
+  sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
+  sigma3 = (1.0 + sigmat) * ((*vertexdx[0])/(*vertexdx[dif]));
   sigma4 = 2.0 - sigmat;
 
   sigma = sigmat;
   sigmav = sigmat;
 
-  diffuw = (*den[donor]) - (*den[upwind]);
-  diffdw = (*den[downwind]) - (*den[donor]);
+  diffuw = (*density1[donor]) - (*density1[upwind]);
+  diffdw = (*density1[downwind]) - (*density1[donor]);
 
-  printf("sigmat : %lf sigma3 : %lf, sigma4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+  printf("sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf\n",
+    sigmat, sigma3, sigma4, diffuw, diffdw);
 
-  if( (diffuw * diffdw) > 0.0 )
+  /*if( (diffuw * diffdw) > 0.0 )
     limiter = (1.0 - sigmav) * SIGN(1.0,diffdw) *
     MIN( MIN(fabs(diffuw),fabs(diffdw)), one_by_six*(sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
   else
@@ -98,7 +84,7 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, int **xx, int **x_max,
   **ener_flux = (**mass_flux_x) * ( *ene[donor] + limiter);
 
   //printf("sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    //sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+    //sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);*/
 
 }
 
@@ -150,7 +136,7 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **yy, int **y_max,
 
   //yy and vertexdy is accessed with: {0,0, -1,0, 1,0, y_max+2,0}
   //pre_vol is accessed with: {0,0, -1,0}
-  //density and energy is accessed with: {0,0, -1,0, -2,0}; and {0,0, -1,0, 1,0, y_max+2,0}
+  //density is accessed with: {0,0, -1,0, -2,0}; and {0,0, -1,0, 1,0, y_max+2,0}
 
   double **den, **ene;
 
