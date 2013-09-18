@@ -52,26 +52,32 @@ void advection()
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 0;
   fields[FIELD_DENSITY1]  = 1;
   fields[FIELD_ENERGY1]   = 1;
+  fields[FIELD_PRESSURE]  = 0;
+  fields[FIELD_VISCOSITY] = 0;
+  fields[FIELD_SOUNDSPEED] = 0;
   fields[FIELD_XVEL0]     = 0;
   fields[FIELD_YVEL0]     = 0;
   fields[FIELD_XVEL1]     = 0;
   fields[FIELD_YVEL1]     = 0;
   fields[FIELD_VOL_FLUX_X] = 1;
   fields[FIELD_VOL_FLUX_Y] = 1;
+  fields[FIELD_MASS_FLUX_X] = 0;
+  fields[FIELD_MASS_FLUX_Y] = 0;
   update_halo(fields,2);
 
   advec_cell(sweep_number, direction);
 
+  ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 0;
   fields[FIELD_DENSITY1]  = 1;
   fields[FIELD_ENERGY1]   = 1;
+  fields[FIELD_PRESSURE]  = 0;
+  fields[FIELD_VISCOSITY] = 0;
+  fields[FIELD_SOUNDSPEED] = 0;
   fields[FIELD_XVEL0]     = 0;
   fields[FIELD_YVEL0]     = 0;
   fields[FIELD_XVEL1]     = 1;
@@ -81,6 +87,9 @@ void advection()
   fields[FIELD_MASS_FLUX_X] = 1;
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
+
+  ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+  exit(-1);
 
   advec_mom(xvel, direction, sweep_number);
   //advec_mom(yvel,direction,sweep_number)
