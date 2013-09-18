@@ -36,6 +36,7 @@
 
 void update_halo(int* fields, int depth);
 void advec_cell(int sweep_number, int direction);
+void advec_mom(int which_vel, int sweep_number, int dir);
 
 void advection()
 {
@@ -81,8 +82,8 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  advec_mom_driver(xvel, direction, sweep_number);
-  //advec_mom_driver(c,yvel,direction,sweep_number)
+  advec_mom(xvel, direction, sweep_number);
+  //advec_mom(yvel,direction,sweep_number)
 
   sweep_number = 2;
   if(advect_x == TRUE) direction = g_ydir;
@@ -106,7 +107,7 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  //advec_mom_driver(c,xvel,direction,sweep_number)
-  //advec_mom_driver(c,yvel,direction,sweep_number)
+  //advec_mom(xvel,direction,sweep_number)
+  //advec_mom(yvel,direction,sweep_number)
 
 }

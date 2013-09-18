@@ -490,13 +490,13 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
 
-  ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
 
   //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
 
-  //ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
+
 
   reset_field();
 
