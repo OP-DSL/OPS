@@ -323,6 +323,7 @@ int main(int argc, char **argv)
   int self2D_minus1y[] = {0,0, 0,-1};
 
   int xmax2D[] = {x_max+2,0};
+  int ymax2D[] = {0,y_max+2};
 
   int self2D_plus1_minus1_x[] = {0,0, 1,0, -1,0};
   int self2D_plus1_minus1_y[] = {0,0, 0,1, 0,-1};
@@ -346,6 +347,7 @@ int main(int argc, char **argv)
   int self2D_4point1xy[]  = {1,0, -1,0, 0,1, 0,-1};
 
   int self2D_plus_1_minus1_2_x[] = {0,0, 1,0, -1,0, -2,0};
+  int self2D_plus_1_minus1_2_y[] = {0,0, 0,1, 0,-1, 0,-2};
 
   int stride2D_x[] = {1,0};
   int stride2D_y[] = {0,1};
@@ -388,11 +390,16 @@ int main(int argc, char **argv)
   sten_self_minus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_minus1x, stride2D_x, "self_stride2D_x");
   sten_self_minus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_minus1y, stride2D_y, "self_stride2D_y");
 
-  sten_self2D_plus_1_minus1_2_x = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_x, "self2D_plus_1_2_minus1_x");
+  sten_self2D_plus_1_minus1_2_x = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_x, "self2D_plus_1_minus1_2_x");
   sten_self_plus_1_minus1_2_x_stride2D_x = ops_decl_strided_stencil( 2, 4, self2D_plus_1_minus1_2_x, stride2D_x, "self_stride2D_x");
+  sten_self2D_plus_1_minus1_2_y = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_y, "self2D_plus_1_minus1_2_y");
+  sten_self_plus_1_minus1_2_y_stride2D_y = ops_decl_strided_stencil( 2, 4, self2D_plus_1_minus1_2_y, stride2D_y, "self_stride2D_y");
+
 
   sten_self_stride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_y, "self_stride2D_xmax");
   sten_self_nullstride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_null, "self_nullstride2D_xmax");
+  sten_self_stride2D_ymax = ops_decl_strided_stencil( 2, 1, ymax2D, stride2D_x, "self_stride2D_ymax");
+  sten_self_nullstride2D_ymax = ops_decl_strided_stencil( 2, 1, ymax2D, stride2D_null, "self_nullstride2D_ymax");
 
   //print ops blocks and dats details
   ops_diagnostic_output();
@@ -488,6 +495,8 @@ int main(int argc, char **argv)
 
   //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+
+  //ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
 
   reset_field();
 

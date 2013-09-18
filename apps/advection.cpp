@@ -63,7 +63,7 @@ void advection()
   fields[FIELD_VOL_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  advec_cell(sweep_number,direction);
+  advec_cell(sweep_number, direction);
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
@@ -81,7 +81,7 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  //advec_mom_driver(c,xvel,direction,sweep_number)
+  advec_mom_driver(xvel, direction, sweep_number);
   //advec_mom_driver(c,yvel,direction,sweep_number)
 
   sweep_number = 2;

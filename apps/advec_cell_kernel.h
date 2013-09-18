@@ -35,6 +35,7 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
   //pre_vol accessed with: {0,0, 1,0, -1,0, -2,0};
   //vertexdx accessed with: {0,0, 1,0, -1,0, -2,0};
   //density1, energy1 accessed with: {0,0, 1,0, -1,0, -2,0};
+  //xx accessed with: {0,0 ,1,0}
 
   if(**vol_flux_x > 0.0) {
     upwind   = 3; //j-2
@@ -47,7 +48,7 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
     donor    = 0; //j
     downwind = 2; //j-1
     dif      = upwind;
-  }
+  } else return;
 
   sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
   sigma3 = (1.0 + sigmat)*((*vertexdx[0])/(*vertexdx[dif]));
@@ -81,8 +82,8 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
 
   **ener_flux = (**mass_flux_x) * ( (*energy1[donor]) + limiter );
 
-  printf("%d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    *xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+  //printf("%d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
+    //*xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
 
 }
 
@@ -126,8 +127,30 @@ void advec_cell_xdir_kernel3a( double **vol_flux_x, double **pre_vol, int** xx,
     diffuw = (*density1[donor]) - (*density1_xmax[upwind]);
     diffdw = (*density1[downwind]) - (*density1[donor]);
 
-    printf("OTHER %d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    *xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+    if( (diffuw*diffdw) > 0.0)
+      limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
+      MIN( MIN(fabs(diffuw), fabs(diffdw)),
+      one_by_six * (sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
+    else
+      limiter=0.0;
+
+    **mass_flux_x = (**vol_flux_x) * ( (*density1[donor]) + limiter );
+
+    sigmam = fabs(**mass_flux_x)/( (*density1[donor]) * (*pre_vol[donor]));
+    diffuw = (*energy1[donor]) - (*energy1_xmax[upwind]);
+    diffdw = (*energy1[downwind]) - (*energy1[donor]);
+
+    if( (diffuw*diffdw) > 0.0)
+      limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
+      MIN( MIN(fabs(diffuw), fabs(diffdw)),
+      one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
+    else
+      limiter=0.0;
+
+    **ener_flux = (**mass_flux_x) * ( (*energy1[donor]) + limiter );
+
+    //printf("OTHER %d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
+    //*xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
 
   }
 
@@ -167,40 +190,37 @@ void advec_cell_ydir_kernel2( double **pre_vol, double **post_vol, double **volu
 
 }
 
-void advec_cell_ydir_kernel3( double **vol_flux_y, double **yy, int **y_max,
-                         double **pre_vol, double** vertexdy,
-                         double** density1a, double** density1b,
-                         double** energy1a, double** energy1b,
-                         double **mass_flux_y, double **ener_flux) {
+void advec_cell_ydir_kernel3( double **vol_flux_y, double **pre_vol, int** yy,
+                              double **vertexdy,
+                              double **density1, double **energy1 ,
+                              double **mass_flux_y, double** ener_flux) {
+
 
   double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  int upwind, donor, downwind, dif;
+  int upwind = 99, donor, downwind, dif;
 
-  //yy and vertexdy is accessed with: {0,0, -1,0, 1,0, y_max+2,0}
-  //pre_vol is accessed with: {0,0, -1,0}
-  //density is accessed with: {0,0, -1,0, -2,0}; and {0,0, -1,0, 1,0, y_max+2,0}
+  //pre_vol accessed with: {0,0, 0,1, 0,-1, 0,-2};
+  //vertexdy accessed with: {0,0, 0,1, 0,-1, 0,-2};
+  //density1, energy1 accessed with: {0,0, 0,1, 0,-1, 0,-2};
+  //yy accessed with: {0,0 ,0,1}
 
-  double **den, **ene;
+  int y_max = field->y_max;
 
   if(**vol_flux_y > 0.0) {
-    upwind   = 2; //k-2
-    donor    = 1; //k-1
+    upwind   = 3; //k-2
+    donor    = 2; //k-1
     downwind = 0; //k
     dif      = donor;
-    den = density1a;
-    ene = energy1a;
   }
-  else {
-    *yy[2] < (**y_max)+2 ? upwind   = 2: upwind   = 3;
+  else if(*yy[1] < y_max+2) {
+    upwind   = 1; //k+1
     donor    = 0; //k
-    downwind = 1; //k-1
+    downwind = 2; //k-1
     dif      = upwind;
-    den = density1b;
-    ene = energy1b;
-  }
+  } else return;
 
   sigmat = fabs(**vol_flux_y)/(*pre_vol[donor]);
   sigma3 = (1.0 + sigmat) * ((*vertexdy[0])/(*vertexdy[dif]));
@@ -209,8 +229,8 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **yy, int **y_max,
   sigma = sigmat;
   sigmav = sigmat;
 
-  diffuw = (*den[donor]) - (*den[upwind]);
-  diffdw = (*den[downwind]) - (*den[donor]);
+  diffuw = (*density1[donor]) - (*density1[upwind]);
+  diffdw = (*density1[downwind]) - (*density1[donor]);
 
   if( (diffuw * diffdw) > 0.0 )
     limiter = (1.0 - sigmav) * SIGN(1.0,diffdw) *
@@ -218,11 +238,11 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **yy, int **y_max,
   else
     limiter = 0.0;
 
-  **mass_flux_y = (**vol_flux_y) * (*den[donor] + limiter);
+  **mass_flux_y = (**vol_flux_y) * (*density1[donor] + limiter);
 
-  sigmam = fabs(**mass_flux_y)/((*den[donor])* (*pre_vol[donor]));
-  diffuw = (*ene[donor]) - (*ene[upwind]);
-  diffdw = (*ene[downwind]) - (*ene[donor]);
+  sigmam = fabs(**mass_flux_y)/((*density1[donor])* (*pre_vol[donor]));
+  diffuw = (*energy1[donor]) - (*energy1[upwind]);
+  diffdw = (*energy1[downwind]) - (*energy1[donor]);
 
   if( (diffuw * diffdw) > 0.0 )
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -230,13 +250,70 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **yy, int **y_max,
   else
     limiter=0.0;
 
-  **ener_flux = (**mass_flux_y) * ( *ene[donor] + limiter);
+  **ener_flux = (**mass_flux_y) * ( *energy1[donor] + limiter);
 
-  //printf("sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-  //  sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+  //printf("%d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
+  //*yy[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
 
 }
 
+
+void advec_cell_ydir_kernel3a( double **vol_flux_y, double **pre_vol, int** yy,
+                              double **vertexdy, double **vertexdy_ymax,
+                              double **density1, double **density1_ymax,
+                              double **energy1 , double **energy1_ymax,
+                              double **mass_flux_y, double** ener_flux) {
+
+  double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
+  double diffuw, diffdw, limiter;
+  double one_by_six = 1.0/6.0;
+
+  int upwind,donor,downwind,dif;
+
+  int y_max=field->y_max;
+
+  if(**vol_flux_y <= 0.0 && (*yy[1] >= y_max+2)) {
+
+    upwind   = 0; //ymax+2
+    donor    = 0; //k
+    downwind = 2; //k-1
+    dif      = 0; //ymax+2;
+
+    sigmat = fabs(**vol_flux_y)/(*pre_vol[donor]);
+    sigma3 = (1.0 + sigmat) * ((*vertexdy[0])/(*vertexdy_ymax[dif]));
+    sigma4 = 2.0 - sigmat;
+
+    sigma = sigmat;
+    sigmav = sigmat;
+
+    diffuw = (*density1[donor]) - (*density1_ymax[upwind]);
+    diffdw = (*density1[downwind]) - (*density1[donor]);
+
+    if( (diffuw * diffdw) > 0.0 )
+      limiter = (1.0 - sigmav) * SIGN(1.0,diffdw) *
+      MIN( MIN(fabs(diffuw),fabs(diffdw)), one_by_six*(sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
+    else
+      limiter = 0.0;
+
+    **mass_flux_y = (**vol_flux_y) * (*density1[donor] + limiter);
+
+    sigmam = fabs(**mass_flux_y)/((*density1[donor])* (*pre_vol[donor]));
+    diffuw = (*energy1[donor]) - (*energy1_ymax[upwind]);
+    diffdw = (*energy1[downwind]) - (*energy1[donor]);
+
+    if( (diffuw * diffdw) > 0.0 )
+      limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
+      MIN(MIN(fabs(diffuw),fabs(diffdw)), one_by_six*(sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
+    else
+      limiter=0.0;
+
+    **ener_flux = (**mass_flux_y) * ( *energy1[donor] + limiter);
+
+    //printf("OTHER %d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
+    //*yy[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
+  }
+
+}
 
 void advec_cell_ydir_kernel4( double **density1, double **energy1,
                          double** mass_flux_y, double** vol_flux_y,
