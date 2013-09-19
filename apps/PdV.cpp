@@ -95,6 +95,9 @@ void PdV(int predict)
 
   if(predict) {
     ideal_gas(TRUE);
+
+    //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+
     fields[FIELD_DENSITY0]  = 0;
     fields[FIELD_ENERGY0]   = 0;
     fields[FIELD_PRESSURE]  = 1;
@@ -106,6 +109,9 @@ void PdV(int predict)
     fields[FIELD_XVEL1]     = 0;
     fields[FIELD_YVEL1]     = 0;
     update_halo(fields,1);
+
+    //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
+
   }
 
   if(predict) {

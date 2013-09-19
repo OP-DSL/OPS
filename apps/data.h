@@ -133,6 +133,11 @@ extern ops_stencil sten_self2D_plus3y;
 extern ops_stencil sten_self2D_minus3x;
 extern ops_stencil sten_self2D_minus3y;
 
+extern ops_stencil sten_self2D_plus4x;
+extern ops_stencil sten_self2D_plus4y;
+extern ops_stencil sten_self2D_minus4x;
+extern ops_stencil sten_self2D_minus4y;
+
 extern ops_stencil sten_self2D_plus1xy;
 extern ops_stencil sten_self2D_minus1xy;
 

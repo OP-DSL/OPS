@@ -341,6 +341,11 @@ int main(int argc, char **argv)
   int self2D_minus3x[] = {0,0, -3,0};
   int self2D_minus3y[] = {0,0, 0,-3};
 
+  int self2D_plus4x[] = {0,0, 4,0};
+  int self2D_plus4y[] = {0,0, 0,4};
+  int self2D_minus4x[] = {0,0, -4,0};
+  int self2D_minus4y[] = {0,0, 0,-4};
+
   int self2D_plus1xy[]  = {0,0, 1,0, 0,1, 1,1};
   int self2D_minus1xy[]  = {0,0, -1,0, 0,-1, -1,-1};
 
@@ -380,6 +385,11 @@ int main(int argc, char **argv)
   sten_self2D_plus3y = ops_decl_stencil( 2, 2, self2D_plus3y, "self2D_plus3y");
   sten_self2D_minus3x = ops_decl_stencil( 2, 2, self2D_minus3x, "self2D_minus3x");
   sten_self2D_minus3y = ops_decl_stencil( 2, 2, self2D_minus3y, "self2D_minus3y");
+
+  sten_self2D_plus4x = ops_decl_stencil( 2, 2, self2D_plus4x, "self2D_plus4x");
+  sten_self2D_plus4y = ops_decl_stencil( 2, 2, self2D_plus4y, "self2D_plus4y");
+  sten_self2D_minus4x = ops_decl_stencil( 2, 2, self2D_minus4x, "self2D_minus4x");
+  sten_self2D_minus4y = ops_decl_stencil( 2, 2, self2D_minus4y, "self2D_minus4y");
 
   sten_self2D_plus1xy = ops_decl_stencil( 2, 4, self2D_plus1xy, "self2D_plus1xy");
   sten_self2D_minus1xy = ops_decl_stencil( 2, 4, self2D_minus1xy, "self2D_plus1xy");
@@ -488,12 +498,6 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
 
-  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
-
-  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-
   //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
 
@@ -506,11 +510,14 @@ int main(int argc, char **argv)
   //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
 
   //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+
   //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
 
 
 
-  reset_field();
+  //reset_field();
 
   /*advect_x = .NOT. advect_x;
   time = time + dt;
