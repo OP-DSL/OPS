@@ -69,12 +69,11 @@ void field_summary()
       ops_arg_gbl(&ke, 1, OPS_WRITE),
       ops_arg_gbl(&press, 1, OPS_WRITE));
 
-  ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out," Problem initialised and generated\n");
-  ops_fprintf(g_out,"\n");
-
   ops_fprintf(g_out,"              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-s\n",
   " Volume"," Mass"," Density"," Pressure"," Internal Energy","Kinetic Energy","Total Energy");
   ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-E\n\n",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
+
+
+
 }

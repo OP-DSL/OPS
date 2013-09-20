@@ -137,6 +137,9 @@ double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_sa
 
 double end_time;
 int end_step;
+int visit_frequency;
+int summary_frequency;
+
 
 int jdt, kdt;
 
@@ -160,6 +163,13 @@ int main(int argc, char **argv)
   dtu_safe = 0.5;
   dtv_safe = 0.5;
   dtdiv_safe = 0.7;
+
+  end_time = 10.0;
+  end_step = g_ibig;
+  complete = FALSE;
+
+  visit_frequency=10;
+  summary_frequency=10;
 
   //need to read in the following through I/O
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
@@ -220,6 +230,8 @@ int main(int argc, char **argv)
   dtrise = 1.5; //timestep_rise
   end_time = 3.0; // end_time
   //end_step = 0.5; //end_step
+
+  summary_frequency = 10;
 
 
   /**-------------------OPS Initialisation and Declarations------------------**/
@@ -463,6 +475,10 @@ int main(int argc, char **argv)
 
   update_halo(fields, 2);
 
+  ops_fprintf(g_out,"\n");
+  ops_fprintf(g_out," Problem initialised and generated\n");
+  ops_fprintf(g_out,"\n");
+
   /**----------------------------field_summary-------------------------------**/
 
   field_summary();
@@ -475,61 +491,41 @@ int main(int argc, char **argv)
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
 
-  step = step + 1;
+  while(1) {
 
-  timestep();
+    step = step + 1;
 
-  PdV(TRUE);
+    timestep();
 
-  accelerate();
+    PdV(TRUE);
 
-  PdV(FALSE);
+    accelerate();
 
-  flux_calc();
+    PdV(FALSE);
 
-  advection();
+    flux_calc();
 
-  //ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vertexdx, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(vertexdy, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(celly, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
+    advection();
 
-  //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+    reset_field();
 
-  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+    if (advect_x == 1) advect_x = 0;
+    else advect_x = 1;
 
-  //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+    time = time + dt;
 
-  //ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+    if(summary_frequency != 0)
+      if((step%summary_frequency) == 0) field_summary();
 
-  //ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
+    if((time+g_small) > end_time || (step >= end_step)) {
+      complete=TRUE;
+      field_summary();
 
-
-
-  //reset_field();
-
-  /*advect_x = .NOT. advect_x;
-  time = time + dt;
-
-  if(summary_frequency != 0)
-    if((step%summary_frequency) == 0) field_summary();*/
+      break;
+    }
+  }
 
   fclose(g_out);
-
   ops_exit();
 }
 

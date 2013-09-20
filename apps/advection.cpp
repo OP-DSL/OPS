@@ -114,12 +114,4 @@ void advection()
   advec_mom(xvel, direction, sweep_number);
   advec_mom(yvel, direction, sweep_number);
 
-  ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");
-  exit(-2);
-
 }
