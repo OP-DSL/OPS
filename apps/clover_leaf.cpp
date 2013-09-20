@@ -171,7 +171,9 @@ int main(int argc, char **argv)
   visit_frequency=10;
   summary_frequency=10;
 
+  //
   //need to read in the following through I/O
+  //
   grid = (grid_type ) xmalloc(sizeof(grid_type_core));
   grid->x_cells = 10;
   grid->y_cells = 2;
@@ -233,6 +235,9 @@ int main(int argc, char **argv)
 
   summary_frequency = 10;
 
+  //
+  //end of I/O
+  //
 
   /**-------------------OPS Initialisation and Declarations------------------**/
 
@@ -520,7 +525,6 @@ int main(int argc, char **argv)
     if((time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
-
       break;
     }
   }
@@ -528,31 +532,3 @@ int main(int argc, char **argv)
   fclose(g_out);
   ops_exit();
 }
-
-
-/*
-initialise -
-initialise_chunk_kernel.f90 - strightforward
-generate_chunk_kernel.f90 - initialization .. complex
-ideal_gas_kernel.f90 - somewhat ok
-update_halo_kernel.f90 - boundary updating
-field_summary_kernel.f90 - complex
-
-
-hydro -
-PdV_kernel.f90
-revert_kernel.f90 - strightforward
-accelerate_kernel.f90 - strightforward
-flux_calc_kernel.f90 - strightforward
-advec_cell_kernel.f90
-advec_mom_kernel.f90 - complex
-reset_field_kernel.f90 - strightforward
-
-
-timestep -
-calc_dt_kernel.f90 - complex
-viscosity_kernel.f90
-
-
-pack_kernel.f90 - mpi buffer packing
-*/
