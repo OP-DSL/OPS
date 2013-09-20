@@ -85,6 +85,7 @@
   ops_stencil sten_self2D_minus1xy;
 
   ops_stencil sten_self2D_plus1x_minus1y;
+  ops_stencil sten_self2D_plus1y_minus1x;
 
   ops_stencil sten_self2D_4point1xy;
 
@@ -103,6 +104,7 @@
   ops_stencil sten_self_plus_1_minus1_2_y_stride2D_y;
 
   ops_stencil sten_self2D_plus_1_2_minus1x;
+  ops_stencil sten_self2D_plus_1_2_minus1y;
 
 
   ops_stencil sten_self_stride2D_xmax;
