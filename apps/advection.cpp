@@ -69,6 +69,8 @@ void advection()
 
   advec_cell(sweep_number, direction);
 
+
+
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
   fields[FIELD_DENSITY1]  = 1;
@@ -86,12 +88,16 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+
 
   advec_mom(xvel, direction, sweep_number);
   //advec_mom(yvel,direction,sweep_number)
 
   ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+  exit(-2);
 
   sweep_number = 2;
   if(advect_x == TRUE) direction = g_ydir;

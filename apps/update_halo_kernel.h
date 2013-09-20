@@ -8,7 +8,6 @@ void update_halo_kernel1(double **density0, double **density1,
                           double **energy0, double **energy1,
                           double **pressure, double **viscosity,
                           double **soundspeed ) {
-
   if(fields[FIELD_DENSITY0] == 1) *density0[0] = *density0[1];
   if(fields[FIELD_DENSITY1] == 1) *density1[0] = *density1[1];
   if(fields[FIELD_ENERGY0] == 1) *energy0[0] = *energy0[1];
@@ -20,28 +19,45 @@ void update_halo_kernel1(double **density0, double **density1,
 }
 
 
-void update_halo_kernel2(double **xvel0, double **xvel1,
-                         double **yvel0, double **yvel1 ){
-
+void update_halo_kernel2_xvel_plus(double **xvel0, double **xvel1){
   if(fields[FIELD_XVEL0] == 1) *xvel0[0] = *xvel0[1];
   if(fields[FIELD_XVEL1] == 1) *xvel1[0] = *xvel1[1];
+}
+void update_halo_kernel2_xvel_minus(double **xvel0, double **xvel1){
+  if(fields[FIELD_XVEL0] == 1) *xvel0[0] = -(*xvel0[1]);
+  if(fields[FIELD_XVEL1] == 1) *xvel1[0] = -(*xvel1[1]);
+}
+
+
+void update_halo_kernel2_yvel_plus( double **yvel0, double **yvel1 ){
   if(fields[FIELD_YVEL0] == 1) *yvel0[0] = *yvel0[1];
   if(fields[FIELD_YVEL1] == 1) *yvel1[0] = *yvel1[1];
 }
+void update_halo_kernel2_yvel_minus( double **yvel0, double **yvel1 ){
+  if(fields[FIELD_YVEL0] == 1) *yvel0[0] = -(*yvel0[1]);
+  if(fields[FIELD_YVEL1] == 1) *yvel1[0] = -(*yvel1[1]);
+}
 
 
-void update_halo_kernel3(double **vol_flux_x, double **mass_flux_x){
 
+void update_halo_kernel3_plus(double **vol_flux_x, double **mass_flux_x){
   if(fields[FIELD_VOL_FLUX_X] == 1) *vol_flux_x[0] = *vol_flux_x[1];
   if(fields[FIELD_MASS_FLUX_X] == 1) *mass_flux_x[0] = *mass_flux_x[1];
 }
+void update_halo_kernel3_minus(double **vol_flux_x, double **mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1) *vol_flux_x[0] = -(*vol_flux_x[1]);
+  if(fields[FIELD_MASS_FLUX_X] == 1) *mass_flux_x[0] = -(*mass_flux_x[1]);
+}
 
-void update_halo_kernel4(double **vol_flux_y, double **mass_flux_y){
 
+void update_halo_kernel4_plus(double **vol_flux_y, double **mass_flux_y){
   if(fields[FIELD_VOL_FLUX_Y] == 1) *vol_flux_y[0] = *vol_flux_y[1];
   if(fields[FIELD_MASS_FLUX_Y] == 1) *mass_flux_y[0] = *mass_flux_y[1];
 }
-
+void update_halo_kernel4_minus(double **vol_flux_y, double **mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) *vol_flux_y[0] = -(*vol_flux_y[1]);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) *mass_flux_y[0] = -(*mass_flux_y[1]);
+}
 
 
 #endif

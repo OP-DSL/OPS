@@ -57,7 +57,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   else
     vel1 = yvel1;
 
-
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_x1_kernel, "advec_mom_x1_kernel", 2, rangexy,
         ops_arg_dat(work_array6, sten_self_2D, OPS_WRITE),
@@ -113,7 +112,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
     int range_plus1xy_minus1x[] = {x_min-1,x_max+1,y_min,y_max+1}; // partial x range partial y range
     if(vector) {
-
       ops_par_loop(advec_mom_kernel1, "advec_mom_kernel1", 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, sten_self_2D, OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, sten_self2D_plus1x, OPS_WRITE),
@@ -121,7 +119,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array5/*mom_flux*/, sten_self_2D, OPS_WRITE),
         ops_arg_dat(celldx, sten_self_plus_1_minus1_2_x_stride2D_x, OPS_READ),
         ops_arg_dat(vel1, sten_self2D_plus_1_2_minus1x, OPS_READ));
-
     }
     else {
       //currently ignor this section
@@ -134,6 +131,20 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array3/*node_mass_pre*/, sten_self_2D, OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, sten_self2D_minus1x, OPS_READ)
         );
+  }
+  else if (dir == 2) {
+
+    //Find staggered mesh mass fluxes, nodal masses and volumes.
+
+    //Staggered cell mass post advection
+
+    //Stagered cell mass pre advection
+    if(vector) {
+
+    }
+    else {
+      //currently ignor this section
+    }
 
   }
 

@@ -138,71 +138,101 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(soundspeed, sten_self2D_minus1x, OPS_RW));
 
   //
-  //xvel0, xvel1, yvel0, yvel1 has the same boundary ranges
+  //xvel0, xvel1 has the same boundary ranges and assignment
   //
 
 
   int rangexy_b2b[] = {x_min-depth,x_max+1+depth,y_min-2,y_min-1};
-  if(depth ==2)
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_b2b,
+  if(depth == 2)
+  ops_par_loop(update_halo_kernel2_xvel_plus, "update_halo_kernel2_xvel_plus", 2, rangexy_b2b,
               ops_arg_dat(xvel0, sten_self2D_plus4y, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_plus4y, OPS_RW),
-              ops_arg_dat(yvel0, sten_self2D_plus4y, OPS_RW),
-              ops_arg_dat(yvel1, sten_self2D_plus4y, OPS_RW));
+              ops_arg_dat(xvel1, sten_self2D_plus4y, OPS_RW));
 
   int rangexy_b1b[] = {x_min-depth,x_max+1+depth,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_b1b,
+  ops_par_loop(update_halo_kernel2_xvel_plus, "update_halo_kernel2_xvel_plus", 2, rangexy_b1b,
               ops_arg_dat(xvel0, sten_self2D_plus2y, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_plus2y, OPS_RW),
-              ops_arg_dat(yvel0, sten_self2D_plus2y, OPS_RW),
-              ops_arg_dat(yvel1, sten_self2D_plus2y, OPS_RW));
+              ops_arg_dat(xvel1, sten_self2D_plus2y, OPS_RW));
 
-  int rangexy_t2b[] = {x_min-depth,x_max+1+depth,y_max+1,y_max+2};
-  if(depth ==2)
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_t2b,
+  //int rangexy_t2b[] = {x_min-depth,x_max+1+depth,y_max+1,y_max+2};
+  int rangexy_t2b[] = {x_min-depth,x_max+1+depth,y_max+2,y_max+3};
+  if(depth == 2)
+  ops_par_loop(update_halo_kernel2_xvel_plus, "update_halo_kernel2_xvel_plus", 2, rangexy_t2b,
               ops_arg_dat(xvel0, sten_self2D_minus4y, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_minus4y, OPS_RW),
-              ops_arg_dat(yvel0, sten_self2D_minus4y, OPS_RW),
-              ops_arg_dat(yvel1, sten_self2D_minus4y, OPS_RW));
+              ops_arg_dat(xvel1, sten_self2D_minus4y, OPS_RW));
 
-  int rangexy_t1b[] = {x_min-depth,x_max+1+depth,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_t1b,
+  //int rangexy_t1b[] = {x_min-depth,x_max+1+depth,y_max,y_max+1};
+  int rangexy_t1b[] = {x_min-depth,x_max+1+depth,y_max+1,y_max+2};
+  ops_par_loop(update_halo_kernel2_xvel_plus, "update_halo_kernel2_xvel_plus", 2, rangexy_t1b,
               ops_arg_dat(xvel0, sten_self2D_minus2y, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_minus2y, OPS_RW),
-              ops_arg_dat(yvel0, sten_self2D_minus2y, OPS_RW),
-              ops_arg_dat(yvel1, sten_self2D_minus2y, OPS_RW));
+              ops_arg_dat(xvel1, sten_self2D_minus2y, OPS_RW));
 
 
   int rangexy_l2b[] = {x_min-2,x_min-1,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_l2b,
+  ops_par_loop(update_halo_kernel2_xvel_minus, "update_halo_kernel2_xvel_minus", 2, rangexy_l2b,
               ops_arg_dat(xvel0, sten_self2D_plus4x, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_plus4x, OPS_RW),
+              ops_arg_dat(xvel1, sten_self2D_plus4x, OPS_RW));
+
+  int rangexy_l1b[] = {x_min-1,x_min,y_min-depth,y_max+1+depth};
+    ops_par_loop(update_halo_kernel2_xvel_minus, "update_halo_kernel2_xvel_minus", 2, rangexy_l1b,
+              ops_arg_dat(xvel0, sten_self2D_plus2x, OPS_RW),
+              ops_arg_dat(xvel1, sten_self2D_plus2x, OPS_RW));
+
+
+  //int rangexy_r2b[] = {x_max+1,x_max+2,y_min-depth,y_max+1+depth};
+  int rangexy_r2b[] = {x_max+2,x_max+3,y_min-depth,y_max+1+depth};
+  if(depth ==2)
+  ops_par_loop(update_halo_kernel2_xvel_minus, "update_halo_kernel2", 2, rangexy_r2b,
+              ops_arg_dat(xvel0, sten_self2D_minus4x, OPS_RW),
+              ops_arg_dat(xvel1, sten_self2D_minus4x, OPS_RW));
+
+  //int rangexy_r1b[] = {x_max,x_max+1,y_min-depth,y_max+1+depth};
+  int rangexy_r1b[] = {x_max+1,x_max+2,y_min-depth,y_max+1+depth};
+  ops_par_loop(update_halo_kernel2_xvel_minus, "update_halo_kernel2", 2, rangexy_r1b,
+              ops_arg_dat(xvel0, sten_self2D_minus2x, OPS_RW),
+              ops_arg_dat(xvel1, sten_self2D_minus2x, OPS_RW));
+
+
+  //
+  //yvel0, yvel1 has the same boundary ranges and assignment
+  //
+
+  if(depth == 2)
+  ops_par_loop(update_halo_kernel2_yvel_minus, "update_halo_kernel2_yvel_minus", 2, rangexy_b2b,
+              ops_arg_dat(yvel0, sten_self2D_plus4y, OPS_RW),
+              ops_arg_dat(yvel1, sten_self2D_plus4y, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2_yvel_minus, "update_halo_kernel2_yvel_minus", 2, rangexy_b1b,
+              ops_arg_dat(yvel0, sten_self2D_plus2y, OPS_RW),
+              ops_arg_dat(yvel1, sten_self2D_plus2y, OPS_RW));
+
+  if(depth == 2)
+  ops_par_loop(update_halo_kernel2_yvel_minus, "update_halo_kernel2_yvel_minus", 2, rangexy_t2b,
+              ops_arg_dat(yvel0, sten_self2D_minus4y, OPS_RW),
+              ops_arg_dat(yvel1, sten_self2D_minus4y, OPS_RW));
+
+  ops_par_loop(update_halo_kernel2_yvel_minus, "update_halo_kernel2_yvel_minus", 2, rangexy_t1b,
+              ops_arg_dat(yvel0, sten_self2D_minus2y, OPS_RW),
+              ops_arg_dat(yvel1, sten_self2D_minus2y, OPS_RW));
+
+  if(depth ==2)
+  ops_par_loop(update_halo_kernel2_yvel_plus, "update_halo_kernel2_yvel_plus", 2, rangexy_l2b,
               ops_arg_dat(yvel0, sten_self2D_plus4x, OPS_RW),
               ops_arg_dat(yvel1, sten_self2D_plus4x, OPS_RW));
 
-  int rangexy_l1b[] = {x_min-1,x_min,y_min-depth,y_max+1+depth};
-    ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_l1b,
-              ops_arg_dat(xvel0, sten_self2D_plus2x, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_plus2x, OPS_RW),
+  ops_par_loop(update_halo_kernel2_yvel_plus, "update_halo_kernel2_yvel_plus", 2, rangexy_l1b,
               ops_arg_dat(yvel0, sten_self2D_plus2x, OPS_RW),
               ops_arg_dat(yvel1, sten_self2D_plus2x, OPS_RW));
 
-
-  int rangexy_r2b[] = {x_max+1,x_max+2,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_r2b,
-              ops_arg_dat(xvel0, sten_self2D_minus4x, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_minus4x, OPS_RW),
+  ops_par_loop(update_halo_kernel2_yvel_plus, "update_halo_kernel2_yvel_plus", 2, rangexy_r2b,
               ops_arg_dat(yvel0, sten_self2D_minus4x, OPS_RW),
               ops_arg_dat(yvel1, sten_self2D_minus4x, OPS_RW));
 
-  int rangexy_r1b[] = {x_max,x_max+1,y_min-depth,y_max+1+depth};
-  ops_par_loop(update_halo_kernel2, "update_halo_kernel2", 2, rangexy_r1b,
-              ops_arg_dat(xvel0, sten_self2D_minus2x, OPS_RW),
-              ops_arg_dat(xvel1, sten_self2D_minus2x, OPS_RW),
+  ops_par_loop(update_halo_kernel2_yvel_plus, "update_halo_kernel2_yvel_plus", 2, rangexy_r1b,
               ops_arg_dat(yvel0, sten_self2D_minus2x, OPS_RW),
               ops_arg_dat(yvel1, sten_self2D_minus2x, OPS_RW));
+
 
 
   //
@@ -211,47 +241,47 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b2c[] = {x_min-depth,x_max+1+depth,y_min-2,y_min-1};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_b2c,
+  ops_par_loop(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_b2c,
               ops_arg_dat(vol_flux_x, sten_self2D_plus4y, OPS_RW),
               ops_arg_dat(mass_flux_x, sten_self2D_plus4y, OPS_RW));
 
   int rangexy_b1c[] = {x_min-depth,x_max+1+depth,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_b1c,
+  ops_par_loop(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_b1c,
             ops_arg_dat(vol_flux_x, sten_self2D_plus2y, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_plus2y, OPS_RW));
 
 
   int rangexy_t2c[] = {x_min-depth,x_max+1+depth,y_max+1,y_max+2};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_t2c,
+  ops_par_loop(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_t2c,
             ops_arg_dat(vol_flux_x, sten_self2D_minus4y, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_minus4y, OPS_RW));
 
   int rangexy_t1c[] = {x_min-depth,x_max+1+depth,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_t1c,
+  ops_par_loop(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_t1c,
             ops_arg_dat(vol_flux_x, sten_self2D_minus2y, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_minus2y, OPS_RW));
 
 
   int rangexy_l2c[] = {x_min-2,x_min-1,y_min-depth,y_max+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_l2c,
+  ops_par_loop(update_halo_kernel3_minus, "update_halo_kernel3", 2, rangexy_l2c,
             ops_arg_dat(vol_flux_x, sten_self2D_plus4x, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_plus4x, OPS_RW));
 
   int rangexy_l1c[] = {x_min-1,x_min,y_min-depth,y_max+depth};
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_l1c,
+  ops_par_loop(update_halo_kernel3_minus, "update_halo_kernel3", 2, rangexy_l1c,
             ops_arg_dat(vol_flux_x, sten_self2D_plus2x, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_plus2x, OPS_RW));
 
   int rangexy_r2c[] = {x_max+1,x_max+2,y_min-depth,y_max+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_r2c,
+  ops_par_loop(update_halo_kernel3_minus, "update_halo_kernel3", 2, rangexy_r2c,
             ops_arg_dat(vol_flux_x, sten_self2D_minus4x, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_minus4x, OPS_RW));
 
   int rangexy_r1c[] = {x_max,x_max+1,y_min-depth,y_max+depth};
-  ops_par_loop(update_halo_kernel3, "update_halo_kernel3", 2, rangexy_r1c,
+  ops_par_loop(update_halo_kernel3_minus, "update_halo_kernel3", 2, rangexy_r1c,
             ops_arg_dat(vol_flux_x, sten_self2D_minus2x, OPS_RW),
             ops_arg_dat(mass_flux_x, sten_self2D_minus2x, OPS_RW));
 
@@ -261,45 +291,45 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b2d[] = {x_min-depth,x_max+depth,y_min-2,y_min-1};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_b2d,
+  ops_par_loop(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_b2d,
               ops_arg_dat(vol_flux_y, sten_self2D_plus4y, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_plus4y, OPS_RW));
 
   int rangexy_b1d[] = {x_min-depth,x_max+depth,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_b1d,
+  ops_par_loop(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_b1d,
               ops_arg_dat(vol_flux_y, sten_self2D_plus2y, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_plus2y, OPS_RW));
 
   int rangexy_t2d[] = {x_min-depth,x_max+depth,y_max+1,y_max+2};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_t2d,
+  ops_par_loop(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_t2d,
               ops_arg_dat(vol_flux_y, sten_self2D_minus4y, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_minus4y, OPS_RW));
 
   int rangexy_t1d[] = {x_min-depth,x_max+depth,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_t1d,
+  ops_par_loop(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_t1d,
               ops_arg_dat(vol_flux_y, sten_self2D_minus2y, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_minus2y, OPS_RW));
 
   int rangexy_l2d[] = {x_min-2,x_min-1,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_l2d,
+  ops_par_loop(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_l2d,
               ops_arg_dat(vol_flux_y, sten_self2D_plus4x, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_plus4x, OPS_RW));
 
   int rangexy_l1d[] = {x_min-1,x_min,y_min-depth,y_max+1+depth};
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_l1d,
+  ops_par_loop(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_l1d,
               ops_arg_dat(vol_flux_y, sten_self2D_plus2x, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_plus2x, OPS_RW));
 
   int rangexy_r2d[] = {x_max+1,x_max+2,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_r2d,
+  ops_par_loop(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_r2d,
               ops_arg_dat(vol_flux_y, sten_self2D_minus4x, OPS_RW),
               ops_arg_dat(mass_flux_y, sten_self2D_minus4x, OPS_RW));
 
   int rangexy_r1d[] = {x_max,x_max+1,y_min-depth,y_max+1+depth};
-  ops_par_loop(update_halo_kernel4, "update_halo_kernel4", 2, rangexy_r1d,
+  ops_par_loop(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_r1d,
             ops_arg_dat(vol_flux_y, sten_self2D_minus2x, OPS_RW),
             ops_arg_dat(mass_flux_y, sten_self2D_minus2x, OPS_RW));
 
