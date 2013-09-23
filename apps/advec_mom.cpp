@@ -113,8 +113,10 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array2/*node_mass_post*/, sten_self_2D, OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, sten_self2D_minus1x, OPS_READ));
 
+
     int range_plus1xy_minus1x[] = {x_min-1,x_max+1,y_min,y_max+1}; // partial x range partial y range
     if(vector) {
+
       ops_par_loop(advec_mom_kernel1_x, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, sten_self_2D, OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, sten_self2D_plus1x, OPS_WRITE),
@@ -122,6 +124,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array5/*mom_flux*/, sten_self_2D, OPS_WRITE),
         ops_arg_dat(celldx, sten_self_plus_1_minus1_2_x_stride2D_x, OPS_READ),
         ops_arg_dat(vel1, sten_self2D_plus_1_2_minus1x, OPS_READ));
+
     }
     else {
       //currently ignor this section

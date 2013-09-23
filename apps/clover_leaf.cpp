@@ -510,9 +510,45 @@ int main(int argc, char **argv)
 
     flux_calc();
 
+    if(step == 3)
+    {
+      ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+    }
+
     advection();
 
+    if(step == 3)
+    {
+      ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+      exit(-2);
+    }
+
+    /*ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");*/
+
     reset_field();
+
+    /*ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(mass_flux_x, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(mass_flux_y, "cloverdats.dat");*/
+
+    //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(energy1, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(xarea, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(yarea, "cloverdats.dat");
+
+
 
     if (advect_x == 1) advect_x = 0;
     else advect_x = 1;
@@ -520,14 +556,17 @@ int main(int argc, char **argv)
     time = time + dt;
 
     if(summary_frequency != 0)
-      if((step%summary_frequency) == 0) field_summary();
+      if((step%summary_frequency) == 0)
+        field_summary();
 
     if((time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
       break;
     }
+
   }
+
 
   fclose(g_out);
   ops_exit();

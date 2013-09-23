@@ -128,7 +128,7 @@ void advec_mom_kernel1_x( double **node_flux, double **node_mass_pre,
   sigma = fabs(**node_flux)/(*node_mass_pre[1]);
   sigma2 = fabs(**node_flux)/(*node_mass_pre[0]);
 
-  width = **celldx;
+  width = *celldx[0];
   vdiffuw = (*vel1[1]) - (*vel1[2]);
   vdiffdw = (*vel1[0]) - (*vel1[1]);
   vdiffuw2 = (*vel1[0]) - (*vel1[3]);
@@ -178,7 +178,7 @@ void advec_mom_kernel1_y( double **node_flux, double **node_mass_pre,
 
   sigma = fabs(*node_flux[0])/(*node_mass_pre[1]);
   sigma2 = fabs(*node_flux[0])/(*node_mass_pre[0]);
-  width = **celldy;
+  width = *celldy[0];
   vdiffuw = (*vel1[1]) - (*vel1[2]);
   vdiffdw = (*vel1[0]) - (*vel1[1]);
   vdiffuw2 = (*vel1[0])- (*vel1[3]);

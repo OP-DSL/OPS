@@ -410,7 +410,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     if( strcmp(dat->type,"double") == 0 ) {
       for(int i = 0; i < dat->block_size[1]; i++ ) {
         for(int j = 0; j < dat->block_size[0]; j++ ) {
-          if (fprintf(fp, "%lf ",
+          if (fprintf(fp, "%e ",
             ((double *)dat->data)[i*dat->block_size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
@@ -422,7 +422,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     else if( strcmp(dat->type,"float") == 0 ) {
       for(int i = 0; i < dat->block_size[1]; i++ ) {
         for(int j = 0; j < dat->block_size[0]; j++ ) {
-          if (fprintf(fp, "%f ", ((float *)dat->data)[i*dat->block_size[0]+j])<0) {
+          if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->block_size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
           }
@@ -450,7 +450,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   else if(dat->block->dims == 1) {
     if( strcmp(dat->type,"double") == 0 ) {
       for(int j = 0; j < dat->block_size[0]; j++ ) {
-        if (fprintf(fp, "%lf ", ((double *)dat->data)[j])<0) {
+        if (fprintf(fp, "%e ", ((double *)dat->data)[j])<0) {
           printf("error writing to %s\n",file_name);
           exit(2);
         }
@@ -459,7 +459,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
     else if( strcmp(dat->type,"float") == 0 ) {
       for(int j = 0; j < dat->block_size[0]; j++ ) {
-        if (fprintf(fp, "%f ", ((float *)dat->data)[j])<0) {
+        if (fprintf(fp, "%e ", ((float *)dat->data)[j])<0) {
           printf("error writing to %s\n",file_name);
           exit(2);
         }
