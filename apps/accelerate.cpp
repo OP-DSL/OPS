@@ -49,7 +49,7 @@ void accelerate()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; // inner range without border
+  int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; // inner range plus 1
 
   ops_par_loop(accelerate_stepbymass_kernel, "accelerate_stepbymass_kernel", 2, rangexy_inner_plus1,
     ops_arg_dat(density0, sten_self2D_minus1xy, OPS_READ),

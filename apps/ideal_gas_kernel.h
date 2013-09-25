@@ -7,7 +7,7 @@ void ideal_gas_kernel( double **density, double **energy,
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
   v = 1.0 / (double)**density;
-  **pressure = (1.4 - 1.0) * (double)(**density) * (double)(**energy);
+  **pressure = (1.4 - 1.0) * (**density) * (**energy);
   pressurebyenergy = (1.4 - 1.0) * (double)(**density);
   pressurebyvolume = -1*(double)(**density) * (double)(**pressure);
   sound_speed_squared = v*v*( (double)(**pressure) * pressurebyenergy-pressurebyvolume);

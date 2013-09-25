@@ -10,7 +10,7 @@ void accelerate_stepbymass_kernel( double **density0, double **volume,
   nodal_mass = ( (*density0[3]) * (*volume[3])
     + (*density0[2]) * (*volume[2])
     + (*density0[0]) * (*volume[0])
-    + (*density0[1]) * (*volume[1]) ) * 0.25;
+    + (*density0[1]) * (*volume[1]) ) * (double)0.25;
 
   **stepbymass = 0.5*dt / nodal_mass;
 
@@ -39,10 +39,9 @@ void accelerate_kernely1( double **yvel0, double **yvel1,
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, -1,0};
-
   **yvel1 = (**yvel0) - (**stepbymass) *
-            ( (*yarea[0]) * ( (*pressure[0]) - (*pressure[2]) ) +
-              (*yarea[1]) * ( (*pressure[1]) - (*pressure[3]) ) );
+            ( (*yarea[0])  * ( (*pressure[0]) - (*pressure[2]) )  +
+              (*yarea[1])  * ( (*pressure[1]) - (*pressure[3]) )  );
 
 }
 

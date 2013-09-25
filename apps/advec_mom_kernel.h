@@ -73,7 +73,7 @@ void advec_mom_post_advec_kernel_x( double **node_mass_post, double **post_vol,
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
 
-  **node_mass_post = 0.25 * ( (*density1[2]) * (*post_vol[2]) +
+  **node_mass_post = (double)0.25 * ( (*density1[2]) * (*post_vol[2]) +
                               (*density1[0]) * (*post_vol[0]) +
                               (*density1[3]) * (*post_vol[3]) +
                               (*density1[1]) * (*post_vol[1]) );
@@ -87,7 +87,7 @@ void advec_mom_post_advec_kernel_y( double **node_mass_post, double **post_vol,
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
 
-  **node_mass_post = 0.25 * ( (*density1[2]) * (*post_vol[2]) +
+  **node_mass_post = (double)0.25 * ( (*density1[2]) * (*post_vol[2]) +
                               (*density1[0]) * (*post_vol[0]) +
                               (*density1[3]) * (*post_vol[3]) +
                               (*density1[1]) * (*post_vol[1]) );
@@ -212,7 +212,7 @@ void advec_mom_kernel2_x( double **vel1, double **node_mass_post,
                         double **node_mass_pre, double **mom_flux) {
 
   //mom_flux accessed with: {0,0, -1,0}
-  **vel1 = ( (**vel1) * (**node_mass_pre) + (*mom_flux[1]) - (*mom_flux[0]) ) / (**node_mass_post);
+  **vel1 = ( (**vel1) * (**node_mass_pre)  + (*mom_flux[1]) - (*mom_flux[0]) ) / (**node_mass_post);
 }
 
 
@@ -220,7 +220,7 @@ void advec_mom_kernel2_y( double **vel1, double **node_mass_post,
                         double **node_mass_pre, double **mom_flux) {
 
   //mom_flux accessed with: {0,0, 0,-1}
-  **vel1 = ( (**vel1) * (**node_mass_pre) + (*mom_flux[1]) - (*mom_flux[0]) ) / (**node_mass_post);
+  **vel1 = ( (**vel1) * (**node_mass_pre)  + (*mom_flux[1]) - (*mom_flux[0]) ) / (**node_mass_post);
 }
 
 

@@ -52,10 +52,12 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
   int vector = TRUE; //currently always use vector loops .. need to set this in input
 
-  if( which_vel == 1)
+  if( which_vel == 1) {
     vel1 = xvel1;
-  else
+  }
+  else {
     vel1 = yvel1;
+  }
 
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_x1_kernel, "advec_mom_x1_kernel", 2, rangexy,
