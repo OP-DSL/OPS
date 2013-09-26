@@ -22,7 +22,7 @@ void viscosity_kernel( double **xvel0, double **yvel0,
   ugrad = (*xvel0[1] + *xvel0[3]) - (*xvel0[0] + *xvel0[2]);
   vgrad = (*yvel0[2] + *yvel0[3]) - (*yvel0[0] + *yvel0[1]);
 
-  div = (**celldx)*(ugrad)+  (**celldy)*(vgrad);
+  div = (*celldx[0])*(ugrad)+  (*celldy[0])*(vgrad);
 
   strain2 = 0.5*(*xvel0[2] + *xvel0[3] - *xvel0[0] - *xvel0[1])/(*celldy[0]) +
             0.5*(*yvel0[1] + *yvel0[3] - *yvel0[0] - *yvel0[2])/(*celldx[0]);

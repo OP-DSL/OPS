@@ -47,7 +47,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2}; // full range over grid
 
-  int mom_sweep = dir + 2*(sweep_number-1);
+  int mom_sweep;
   ops_dat vel1;
 
   int vector = TRUE; //currently always use vector loops .. need to set this in input
@@ -58,6 +58,9 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   else {
     vel1 = yvel1;
   }
+
+  mom_sweep = dir + 2*(sweep_number-1);
+  printf("mom_sweep %d direction: %d sweep_number: %d\n",mom_sweep, dir, sweep_number);
 
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_x1_kernel, "advec_mom_x1_kernel", 2, rangexy,

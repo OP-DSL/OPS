@@ -63,20 +63,39 @@ void timestep()
 
   fields[FIELD_DENSITY0]  = 1;
   fields[FIELD_ENERGY0]   = 1;
-  fields[FIELD_PRESSURE]  = 1;
-  fields[FIELD_VISCOSITY] = 0;
   fields[FIELD_DENSITY1]  = 0;
   fields[FIELD_ENERGY1]   = 0;
+  fields[FIELD_SOUNDSPEED] = 0;
+  fields[FIELD_PRESSURE]  = 1;
+  fields[FIELD_VISCOSITY] = 0;
   fields[FIELD_XVEL0]     = 1;
   fields[FIELD_YVEL0]     = 1;
   fields[FIELD_XVEL1]     = 0;
   fields[FIELD_YVEL1]     = 0;
+  fields[FIELD_VOL_FLUX_X] = 0;
+  fields[FIELD_VOL_FLUX_Y] = 0;
+  fields[FIELD_MASS_FLUX_X] = 0;
+  fields[FIELD_MASS_FLUX_Y] = 0;
 
   update_halo(fields,1);
 
   viscosity_func();
 
+  fields[FIELD_DENSITY0]  = 0;
+  fields[FIELD_ENERGY0]   = 0;
+  fields[FIELD_DENSITY1]  = 0;
+  fields[FIELD_ENERGY1]   = 0;
+  fields[FIELD_SOUNDSPEED] = 0;
+  fields[FIELD_PRESSURE]  = 0;
   fields[FIELD_VISCOSITY] = 1;
+  fields[FIELD_XVEL0]     = 0;
+  fields[FIELD_YVEL0]     = 0;
+  fields[FIELD_XVEL1]     = 0;
+  fields[FIELD_YVEL1]     = 0;
+  fields[FIELD_VOL_FLUX_X] = 0;
+  fields[FIELD_VOL_FLUX_Y] = 0;
+  fields[FIELD_MASS_FLUX_X] = 0;
+  fields[FIELD_MASS_FLUX_Y] = 0;
 
   update_halo(fields,1);
 

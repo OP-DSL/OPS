@@ -38,14 +38,14 @@ void update_halo(int* fields, int depth);
 void advec_cell(int sweep_number, int direction);
 void advec_mom(int which_vel, int sweep_number, int dir);
 
-void advection()
+void advection(int step)
 {
   int sweep_number, direction;
   int xvel,yvel;
 
   sweep_number = 1;
   if(advect_x == TRUE) direction = g_xdir;
-  if(!(advect_x == TRUE)) direction = g_ydir;
+  else direction = g_ydir;
 
   xvel = g_xdir;
   yvel = g_ydir;
@@ -69,6 +69,8 @@ void advection()
 
   advec_cell(sweep_number, direction);
 
+
+
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
   fields[FIELD_DENSITY1]  = 1;
@@ -86,12 +88,25 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  advec_mom(xvel, direction, sweep_number);
-  advec_mom(yvel,direction, sweep_number);
+  if(step == 2)
+  {
+    ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
+  }
+
+  //printf("advect_x: %d\n",advect_x);
+  advec_mom(xvel, sweep_number, direction);
+
+  if(step == 2)
+  {
+    ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
+    exit(-2);
+  }
+  //printf("advect_x: %d\n",advect_x);
+  advec_mom(xvel, sweep_number, direction);
 
   sweep_number = 2;
   if(advect_x == TRUE) direction = g_ydir;
-  if(!(advect_x == TRUE)) direction = g_xdir;
+  else direction= g_xdir;
 
   advec_cell(sweep_number,direction);
 
@@ -101,6 +116,7 @@ void advection()
   fields[FIELD_VISCOSITY] = 0;
   fields[FIELD_DENSITY1]  = 1;
   fields[FIELD_ENERGY1]   = 1;
+  fields[FIELD_SOUNDSPEED] = 0;
   fields[FIELD_XVEL0]     = 0;
   fields[FIELD_YVEL0]     = 0;
   fields[FIELD_XVEL1]     = 1;
@@ -111,7 +127,9 @@ void advection()
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  advec_mom(xvel, direction, sweep_number);
-  advec_mom(yvel, direction, sweep_number);
+  //printf("advect_x: %d\n",advect_x);
+  advec_mom(xvel, sweep_number, direction);
+  //printf("advect_x: %d\n",advect_x);
+  advec_mom(xvel, sweep_number, direction);
 
 }

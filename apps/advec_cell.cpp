@@ -71,8 +71,6 @@ void advec_cell(int sweep_number, int dir)
         );
     }
 
-
-
     ops_par_loop(advec_cell_xdir_kernel3, "advec_cell_xdir_kernel3", 2, rangexy_inner_plus2x,
       ops_arg_dat(vol_flux_x, sten_self_2D, OPS_READ),
       ops_arg_dat(work_array1, sten_self2D_plus_1_minus1_2_x, OPS_READ),
@@ -115,8 +113,6 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array6, sten_self_2D, OPS_RW),
       ops_arg_dat(work_array7, sten_self2D_plus1x, OPS_READ)
       );
-
-
 
   }
   else {
@@ -182,8 +178,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array6, sten_self_2D, OPS_RW),
       ops_arg_dat(work_array7, sten_self2D_plus1y, OPS_READ)
       );
+
   }
-
-
 
 }

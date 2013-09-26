@@ -333,12 +333,4 @@ void update_halo(int* fields, int depth)
             ops_arg_dat(vol_flux_y, sten_self2D_minus2x, OPS_RW),
             ops_arg_dat(mass_flux_y, sten_self2D_minus2x, OPS_RW));
 
-
-  //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel0, "cloverdats.dat");
-  //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-
 }

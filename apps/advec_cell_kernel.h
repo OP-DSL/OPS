@@ -81,10 +81,6 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
     limiter=0.0;
 
   **ener_flux = (**mass_flux_x) * ( (*energy1[donor]) + limiter );
-
-  //printf("%d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    //*xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
-
 }
 
 
@@ -148,12 +144,7 @@ void advec_cell_xdir_kernel3a( double **vol_flux_x, double **pre_vol, int** xx,
       limiter=0.0;
 
     **ener_flux = (**mass_flux_x) * ( (*energy1[donor]) + limiter );
-
-    //printf("OTHER %d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    //*xx[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
-
   }
-
 }
 
 void advec_cell_xdir_kernel4( double **density1, double **energy1,
@@ -251,10 +242,6 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **pre_vol, int** yy,
     limiter=0.0;
 
   **ener_flux = (**mass_flux_y) * ( *energy1[donor] + limiter);
-
-  //printf("%d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-  //*yy[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
-
 }
 
 
@@ -308,9 +295,6 @@ void advec_cell_ydir_kernel3a( double **vol_flux_y, double **pre_vol, int** yy,
       limiter=0.0;
 
     **ener_flux = (**mass_flux_y) * ( *energy1[donor] + limiter);
-
-    //printf("OTHER %d sigmat : %lf sigmat3 : %lf, sigmat4 : %lf, diffuw : %lf, diffdw : %lf, sigmam :%lf\n",
-    //*yy[1], sigmat, sigma3, sigma4, diffuw, diffdw, sigmam);
   }
 
 }

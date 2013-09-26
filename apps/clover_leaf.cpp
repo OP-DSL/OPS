@@ -66,7 +66,7 @@ void timestep();
 void PdV(int predict);
 void accelerate();
 void flux_calc();
-void advection();
+void advection(int);
 void reset_field();
 
 
@@ -502,7 +502,6 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-
     timestep();
 
     PdV(TRUE);
@@ -513,20 +512,12 @@ int main(int argc, char **argv)
 
     flux_calc();
 
-    advection();
-
-    //if(step == 21)
-    //{
-    //  ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-    //  ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(pressure, "cloverdats.dat");
-    //  exit(-2);
-    //}
+    advection(step);
 
     reset_field();
 
-    if (advect_x == 1) advect_x = 0;
-    else advect_x = 1;
+    if (advect_x == TRUE) advect_x = FALSE;
+    else advect_x = TRUE;
 
     time = time + dt;
 

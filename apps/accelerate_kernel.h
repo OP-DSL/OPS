@@ -10,7 +10,7 @@ void accelerate_stepbymass_kernel( double **density0, double **volume,
   nodal_mass = ( (*density0[3]) * (*volume[3])
     + (*density0[2]) * (*volume[2])
     + (*density0[0]) * (*volume[0])
-    + (*density0[1]) * (*volume[1]) ) * (double)0.25;
+    + (*density0[1]) * (*volume[1]) ) * 0.25;
 
   **stepbymass = 0.5*dt / nodal_mass;
 
