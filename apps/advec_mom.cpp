@@ -60,7 +60,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   }
 
   mom_sweep = dir + 2*(sweep_number-1);
-  printf("mom_sweep %d direction: %d sweep_number: %d\n",mom_sweep, dir, sweep_number);
+  //printf("mom_sweep %d direction: %d sweep_number: %d\n",mom_sweep, dir, sweep_number);
 
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_x1_kernel, "advec_mom_x1_kernel", 2, rangexy,

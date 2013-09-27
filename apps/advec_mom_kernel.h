@@ -99,7 +99,7 @@ void advec_mom_pre_advec_kernel_x( double **node_mass_pre, double **node_mass_po
                                   double **node_flux) {
 
   //node_flux accessed with: {0,0, -1,0}
-  **node_mass_pre = (**node_mass_post);// - (*node_flux[1]) + (*node_flux[0]);
+  **node_mass_pre = (**node_mass_post) - (*node_flux[1]) + (*node_flux[0]);
 
 }
 void advec_mom_pre_advec_kernel_y( double **node_mass_pre, double **node_mass_post,

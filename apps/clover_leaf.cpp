@@ -514,7 +514,20 @@ int main(int argc, char **argv)
 
     advection(step);
 
+    /*if(step == 2)
+    {
+      //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+      exit(-2);
+    }*/
+
     reset_field();
+
+
+
 
     if (advect_x == TRUE) advect_x = FALSE;
     else advect_x = TRUE;
@@ -525,11 +538,16 @@ int main(int argc, char **argv)
       if((step%summary_frequency) == 0)
         field_summary();
 
+
+
+
     if((time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
       break;
     }
+
+
 
   }
 

@@ -45,10 +45,12 @@ void advection(int step)
 
   sweep_number = 1;
   if(advect_x == TRUE) direction = g_xdir;
-  else direction = g_ydir;
+  if(!(advect_x == TRUE)) direction = g_ydir;
 
   xvel = g_xdir;
   yvel = g_ydir;
+
+
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
@@ -67,9 +69,17 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 0;
   update_halo(fields,2);
 
+  /*if(step == 10)
+  {
+    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
+    ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
+    exit(-2);
+  }*/
+
   advec_cell(sweep_number, direction);
-
-
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
@@ -88,25 +98,13 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  if(step == 2)
-  {
-    ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
-  }
-
-  //printf("advect_x: %d\n",advect_x);
   advec_mom(xvel, sweep_number, direction);
+  advec_mom(yvel, sweep_number, direction);
 
-  if(step == 2)
-  {
-    ops_print_dat_to_txtfile_core(work_array7, "cloverdats.dat");
-    exit(-2);
-  }
-  //printf("advect_x: %d\n",advect_x);
-  advec_mom(xvel, sweep_number, direction);
 
   sweep_number = 2;
   if(advect_x == TRUE) direction = g_ydir;
-  else direction= g_xdir;
+  if(!(advect_x == TRUE)) direction= g_xdir;
 
   advec_cell(sweep_number,direction);
 
@@ -127,9 +125,7 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
-  //printf("advect_x: %d\n",advect_x);
   advec_mom(xvel, sweep_number, direction);
-  //printf("advect_x: %d\n",advect_x);
-  advec_mom(xvel, sweep_number, direction);
+  advec_mom(yvel, sweep_number, direction);
 
 }
