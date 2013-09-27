@@ -24,8 +24,10 @@ Clover version 1.000000
 
  Problem initialised and generated
 
+
+Time 0.000000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:     0   2.000E+01   1.200E+01   6.000E-01   5.400E-01   2.700E+01        0.000E+00        2.700000E+01
+ step:     0   2.000E+01   1.200E+01   6.000E-01   5.400E-01   2.700E+01        0.000E+00        2.700E+01
 
  Starting the calculation
  Step 1 time 0.000000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -38,8 +40,10 @@ Clover version 1.000000
  Step 8 time 0.280000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 9 time 0.320000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 10 time 0.360000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 0.400000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    10   2.000E+01   1.200E+01   6.000E-01   5.365E-01   2.682E+01        1.634E-01        2.698809E+01
+ step:    10   2.000E+01   1.200E+01   6.000E-01   5.365E-01   2.682E+01        1.634E-01        2.699E+01
 
  Step 11 time 0.400000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 12 time 0.440000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -51,8 +55,10 @@ Clover version 1.000000
  Step 18 time 0.680000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 19 time 0.720000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 20 time 0.760000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 0.800000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    20   2.000E+01   1.200E+01   6.000E-01   5.306E-01   2.653E+01        4.217E-01        2.695270E+01
+ step:    20   2.000E+01   1.200E+01   6.000E-01   5.306E-01   2.653E+01        4.217E-01        2.695E+01
 
  Step 21 time 0.800000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 22 time 0.840000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -64,8 +70,10 @@ Clover version 1.000000
  Step 28 time 1.080000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 29 time 1.120000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 30 time 1.160000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 1.200000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    30   2.000E+01   1.200E+01   6.000E-01   5.249E-01   2.625E+01        6.809E-01        2.692710E+01
+ step:    30   2.000E+01   1.200E+01   6.000E-01   5.249E-01   2.625E+01        6.809E-01        2.693E+01
 
  Step 31 time 1.200000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 32 time 1.240000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -77,8 +85,10 @@ Clover version 1.000000
  Step 38 time 1.480000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 39 time 1.520000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 40 time 1.560000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 1.600000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    40   2.000E+01   1.200E+01   6.000E-01   5.193E-01   2.597E+01        9.449E-01        2.691211E+01
+ step:    40   2.000E+01   1.200E+01   6.000E-01   5.193E-01   2.597E+01        9.449E-01        2.691E+01
 
  Step 41 time 1.600000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 42 time 1.640000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -90,8 +100,10 @@ Clover version 1.000000
  Step 48 time 1.880000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 49 time 1.920000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 50 time 1.960000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 2.000000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    50   2.000E+01   1.200E+01   6.000E-01   5.137E-01   2.568E+01        1.220E+00        2.690486E+01
+ step:    50   2.000E+01   1.200E+01   6.000E-01   5.137E-01   2.568E+01        1.220E+00        2.690E+01
 
  Step 51 time 2.000000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 52 time 2.040000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -103,8 +115,10 @@ Clover version 1.000000
  Step 58 time 2.280000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 59 time 2.320000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 60 time 2.360000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 2.400000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    60   2.000E+01   1.200E+01   6.000E-01   5.081E-01   2.540E+01        1.493E+00        2.689672E+01
+ step:    60   2.000E+01   1.200E+01   6.000E-01   5.081E-01   2.540E+01        1.493E+00        2.690E+01
 
  Step 61 time 2.400000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 62 time 2.440000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
@@ -116,13 +130,20 @@ Clover version 1.000000
  Step 68 time 2.680000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 69 time 2.720000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 70 time 2.760000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 2.800000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    70   2.000E+01   1.200E+01   6.000E-01   5.031E-01   2.516E+01        1.734E+00        2.688948E+01
+ step:    70   2.000E+01   1.200E+01   6.000E-01   5.031E-01   2.516E+01        1.734E+00        2.689E+01
 
  Step 71 time 2.800000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 72 time 2.840000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 73 time 2.880000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 74 time 2.920000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
  Step 75 time 2.960000 control sound timestep  4.000000E-02  1, 1 x  5.000000E-01  y 5.000000E-01
+
+Time 3.000000
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    75   2.000E+01   1.200E+01   6.000E-01   5.012E-01   2.506E+01        1.823E+00        2.688477E+01
+ step:    75   2.000E+01   1.200E+01   6.000E-01   5.012E-01   2.506E+01        1.823E+00        2.688E+01
+
+Test problem 1 is within 2.842170943040401e-14 37112166760f the expected solution
+This test is considered PASSED

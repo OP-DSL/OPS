@@ -50,8 +50,6 @@ void advection(int step)
   xvel = g_xdir;
   yvel = g_ydir;
 
-
-
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
   fields[FIELD_DENSITY1]  = 1;
@@ -68,16 +66,6 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_X] = 0;
   fields[FIELD_MASS_FLUX_Y] = 0;
   update_halo(fields,2);
-
-  /*if(step == 10)
-  {
-    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
-    ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-    ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-    ops_print_dat_to_txtfile_core(vol_flux_x, "cloverdats.dat");
-    ops_print_dat_to_txtfile_core(vol_flux_y, "cloverdats.dat");
-    exit(-2);
-  }*/
 
   advec_cell(sweep_number, direction);
 
