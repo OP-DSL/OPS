@@ -16,7 +16,7 @@
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
 /** @brief Top level initialisation routine
- *  @author Wayne Gaudin
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
  *  @details Checks for the user input and either invokes the input reader or
  *  switches to the internal test problem. It processes the input and strips
  *  comments before writing a final input file.

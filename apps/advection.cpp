@@ -15,12 +15,9 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Top level initialisation routine
- *  @author Wayne Gaudin
- *  @details Checks for the user input and either invokes the input reader or
- *  switches to the internal test problem. It processes the input and strips
- *  comments before writing a final input file.
- *  It then calls the start routine.
+/** @brief Top level advection driver
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
+ *  @details Controls the advection step and invokes required communications.
 **/
 
 #include <stdlib.h>

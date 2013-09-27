@@ -15,12 +15,12 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Top level initialisation routine
- *  @author Wayne Gaudin
- *  @details Checks for the user input and either invokes the input reader or
- *  switches to the internal test problem. It processes the input and strips
- *  comments before writing a final input file.
- *  It then calls the start routine.
+/** @brief momentum advection
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
+ *  @details Performs a second order advective remap on the vertex momentum
+ *  using van-Leer limiting and directional splitting.
+ *  Note that although pre_vol is only set and not used in the update, please
+ *  leave it in the method.
 **/
 
 #include <stdlib.h>

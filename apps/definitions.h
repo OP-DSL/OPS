@@ -16,7 +16,7 @@
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
 /** @brief Holds the high level data types
- *  @author Wayne Gaudin
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
  *  @details The high level data types used to store the mesh and field data
  *  are defined here.
 

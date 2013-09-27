@@ -15,12 +15,11 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Top level initialisation routine
+/** @brief call the viscosity kernels
  *  @author Wayne Gaudin
- *  @details Checks for the user input and either invokes the input reader or
- *  switches to the internal test problem. It processes the input and strips
- *  comments before writing a final input file.
- *  It then calls the start routine.
+ *  @details Calculates an artificial viscosity using the Wilkin's method to
+ *  smooth out shock front and prevent oscillations around discontinuities.
+ *  Only cells in compression will have a non-zero value.
 **/
 
 #include <stdlib.h>

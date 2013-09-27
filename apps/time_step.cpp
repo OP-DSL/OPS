@@ -15,12 +15,11 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Top level initialisation routine
- *  @author Wayne Gaudin
- *  @details Checks for the user input and either invokes the input reader or
- *  switches to the internal test problem. It processes the input and strips
- *  comments before writing a final input file.
- *  It then calls the start routine.
+/** @brief Calculate the minimum timestep
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
+ *  @details Invokes the kernels needed to calculate the timestep and finds
+ *  the minimum across all chunks. Checks if the timestep falls below the
+ *  user specified limit and outputs the timestep information.
 **/
 
 #include <stdlib.h>

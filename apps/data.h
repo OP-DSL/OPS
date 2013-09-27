@@ -16,7 +16,7 @@
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
 /**  @brief Holds parameters definitions
- *  @author Wayne Gaudin
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
  *  @details Parameters used in the CloverLeaf are defined here.
 */
 
