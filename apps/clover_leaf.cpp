@@ -336,13 +336,13 @@ int main(int argc, char **argv)
   //Declare commonly used stencils
   //
   int s2D[] = {0,0}; //self 2D
-  S2D_00 = ops_decl_stencil( 2, 1, s2D, "00");
-
-  //int self2D_plus1x[] = {0,0, 1,0};
   int s2D_00_P10[] = {0,0, 1,0};
-  S2D_00_P10 = ops_decl_stencil( 2, 2, s2D_00_P10, "00_P10");
+  int s2D_00_0P1[] = {0,0, 0,1};
 
-  int self2D_plus1y[] = {0,0, 0,1};
+  S2D_00     = ops_decl_stencil( 2, 1, s2D, "00");
+  S2D_00_P10 = ops_decl_stencil( 2, 2, s2D_00_P10, "00,10");
+  S2D_00_0P1 = ops_decl_stencil( 2, 2, s2D_00_0P1, "00,01");
+
   int self2D_minus1x[] = {0,0, -1,0};
   int self2D_minus1y[] = {0,0, 0,-1};
 
@@ -391,8 +391,8 @@ int main(int argc, char **argv)
 
 
 
-  sten_self2D_plus1y = ops_decl_stencil( 2, 2, self2D_plus1y, "self2D_plus1y");
-  sten_self2D_minus1x = ops_decl_stencil( 2, 2, self2D_minus1x, "self2D_minus1x");
+
+
   sten_self2D_minus1y = ops_decl_stencil( 2, 2, self2D_minus1y, "self2D_minus1y");
 
   sten_self2D_plus1_minus1x = ops_decl_stencil( 2, 3, self2D_plus1_minus1_x, "self2D_plus1_minus1_x");
@@ -426,11 +426,11 @@ int main(int argc, char **argv)
   sten_self2D_4point1xy = ops_decl_stencil( 2, 4, self2D_4point1xy, "self2D_4point1xy");
 
 
-  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, S2D, stride2D_x, "self_stride2D_x");
-  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, S2D, stride2D_y, "self_stride2D_y");
+  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, s2D, stride2D_x, "self_stride2D_x");
+  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, s2D, stride2D_y, "self_stride2D_y");
 
-  sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_plus1x, stride2D_x, "self_stride2D_x");
-  sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_plus1y, stride2D_y, "self_stride2D_y");
+  sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, s2D_00_P10, stride2D_x, "self_stride2D_x");
+  sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, s2D_00_0P1, stride2D_y, "self_stride2D_y");
 
   sten_self_minus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_minus1x, stride2D_x, "self_stride2D_x");
   sten_self_minus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_minus1y, stride2D_y, "self_stride2D_y");

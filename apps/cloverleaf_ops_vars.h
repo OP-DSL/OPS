@@ -55,8 +55,8 @@
   //
   ops_stencil S2D_00;
 
-  ops_stencil sten_self2D_plus1x;
-  ops_stencil sten_self2D_plus1y;
+  ops_stencil S2D_00_P10;
+  ops_stencil S2D_00_0P1;
   ops_stencil sten_self2D_minus1x;
   ops_stencil sten_self2D_minus1y;
 

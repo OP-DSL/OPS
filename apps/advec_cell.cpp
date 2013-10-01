@@ -56,8 +56,8 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array1, S2D_00, OPS_RW),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
-        ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
-        ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ)
+        ops_arg_dat(vol_flux_x, S2D_00_P10, OPS_READ),
+        ops_arg_dat(vol_flux_y, S2D_00_0P1, OPS_READ)
         );
     }
     else {
@@ -65,7 +65,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
-        ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ)
+        ops_arg_dat(vol_flux_x, S2D_00_P10, OPS_READ)
         );
     }
 
@@ -101,15 +101,15 @@ void advec_cell(int sweep_number, int dir)
     ops_par_loop(advec_cell_xdir_kernel4, "advec_cell_xdir_kernel4", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, OPS_RW),
       ops_arg_dat(energy1, S2D_00, OPS_RW),
-      ops_arg_dat(mass_flux_x, sten_self2D_plus1x, OPS_READ),
-      ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
+      ops_arg_dat(mass_flux_x, S2D_00_P10, OPS_READ),
+      ops_arg_dat(vol_flux_x, S2D_00_P10, OPS_READ),
       ops_arg_dat(work_array1, S2D_00, OPS_READ),
       ops_arg_dat(work_array2, S2D_00, OPS_READ),
       ops_arg_dat(work_array3, S2D_00, OPS_RW),
       ops_arg_dat(work_array4, S2D_00, OPS_RW),
       ops_arg_dat(work_array5, S2D_00, OPS_RW),
       ops_arg_dat(work_array6, S2D_00, OPS_RW),
-      ops_arg_dat(work_array7, sten_self2D_plus1x, OPS_READ)
+      ops_arg_dat(work_array7, S2D_00_P10, OPS_READ)
       );
 
   }
@@ -120,8 +120,8 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array1, S2D_00, OPS_RW),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
-        ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
-        ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ)
+        ops_arg_dat(vol_flux_x, S2D_00_P10, OPS_READ),
+        ops_arg_dat(vol_flux_y, S2D_00_0P1, OPS_READ)
         );
     }
     else {
@@ -129,7 +129,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
-        ops_arg_dat(vol_flux_y, sten_self2D_plus1x, OPS_READ)
+        ops_arg_dat(vol_flux_y, S2D_00_P10, OPS_READ)
         );
     }
 
@@ -166,15 +166,15 @@ void advec_cell(int sweep_number, int dir)
     ops_par_loop(advec_cell_ydir_kernel4, "advec_cell_ydir_kernel4", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, OPS_RW),
       ops_arg_dat(energy1, S2D_00, OPS_RW),
-      ops_arg_dat(mass_flux_y, sten_self2D_plus1y, OPS_READ),
-      ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ),
+      ops_arg_dat(mass_flux_y, S2D_00_0P1, OPS_READ),
+      ops_arg_dat(vol_flux_y, S2D_00_0P1, OPS_READ),
       ops_arg_dat(work_array1, S2D_00, OPS_READ),
       ops_arg_dat(work_array2, S2D_00, OPS_READ),
       ops_arg_dat(work_array3, S2D_00, OPS_RW),
       ops_arg_dat(work_array4, S2D_00, OPS_RW),
       ops_arg_dat(work_array5, S2D_00, OPS_RW),
       ops_arg_dat(work_array6, S2D_00, OPS_RW),
-      ops_arg_dat(work_array7, sten_self2D_plus1y, OPS_READ)
+      ops_arg_dat(work_array7, S2D_00_0P1, OPS_READ)
       );
 
   }

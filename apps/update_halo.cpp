@@ -65,13 +65,13 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b1a[] = {x_min-depth,x_max+depth,y_min-1,y_min};
   ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_b1a,
-              ops_arg_dat(density0, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(density1, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(energy0, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(energy1, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(pressure, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(viscosity, sten_self2D_plus1y, OPS_RW),
-              ops_arg_dat(soundspeed, sten_self2D_plus1y, OPS_RW));
+              ops_arg_dat(density0, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(density1, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(energy0, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(energy1, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(pressure, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(viscosity, S2D_00_0P1, OPS_RW),
+              ops_arg_dat(soundspeed, S2D_00_0P1, OPS_RW));
 
   int rangexy_t2a[] = {x_min-depth,x_max+depth,y_max+1,y_max+2};
   if(depth ==2)
@@ -107,13 +107,13 @@ void update_halo(int* fields, int depth)
 
   int rangexy_l1a[] = {x_min-1,x_min,y_min-depth,y_max+depth};
   ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_l1a,
-              ops_arg_dat(density0, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(density1, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(energy0, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(energy1, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(pressure, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(viscosity, sten_self2D_plus1x, OPS_RW),
-              ops_arg_dat(soundspeed, sten_self2D_plus1x, OPS_RW));
+              ops_arg_dat(density0, S2D_00_P10, OPS_RW),
+              ops_arg_dat(density1, S2D_00_P10, OPS_RW),
+              ops_arg_dat(energy0, S2D_00_P10, OPS_RW),
+              ops_arg_dat(energy1, S2D_00_P10, OPS_RW),
+              ops_arg_dat(pressure, S2D_00_P10, OPS_RW),
+              ops_arg_dat(viscosity, S2D_00_P10, OPS_RW),
+              ops_arg_dat(soundspeed, S2D_00_P10, OPS_RW));
 
   int rangexy_r2a[] = {x_max+1,x_max+2,y_min-depth,y_max+depth};
 

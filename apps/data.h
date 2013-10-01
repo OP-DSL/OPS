@@ -112,8 +112,8 @@ extern ops_dat yy;
 //commonly used stencils
 extern ops_stencil S2D_00;
 
-extern ops_stencil sten_self2D_plus1x;
-extern ops_stencil sten_self2D_plus1y;
+extern ops_stencil S2D_00_P10;
+extern ops_stencil S2D_00_0P1;
 extern ops_stencil sten_self2D_minus1x;
 extern ops_stencil sten_self2D_minus1y;
 

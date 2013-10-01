@@ -61,10 +61,10 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(viscosity, S2D_00, OPS_READ),
     ops_arg_dat(density0, S2D_00, OPS_READ),
     ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(xarea, sten_self2D_plus1x, OPS_READ),
+    ops_arg_dat(xarea, S2D_00_P10, OPS_READ),
     ops_arg_dat(volume, S2D_00, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(yarea, sten_self2D_plus1y, OPS_READ),
+    ops_arg_dat(yarea, S2D_00_0P1, OPS_READ),
     ops_arg_dat(work_array1, S2D_00, OPS_WRITE) );
 
   ops_par_loop(calc_dt_min_kernel, "calc_dt_min_kernel", 2, rangexy_inner,
