@@ -86,13 +86,13 @@ void update_halo(int* fields, int depth)
 
   int rangexy_t1a[] = {x_min-depth,x_max+depth,y_max,y_max+1};
   ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_t1a,
-              ops_arg_dat(density0, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(density1, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(energy0, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(energy1, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(pressure, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(viscosity, sten_self2D_minus1y, OPS_RW),
-              ops_arg_dat(soundspeed, sten_self2D_minus1y, OPS_RW));
+              ops_arg_dat(density0, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(density1, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(energy0, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(energy1, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(pressure, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(viscosity, S2D_00_0M1, OPS_RW),
+              ops_arg_dat(soundspeed, S2D_00_0M1, OPS_RW));
 
   int rangexy_l2a[] = {x_min-2,x_min-1,y_min-depth,y_max+depth};
   if(depth ==2)
