@@ -335,16 +335,18 @@ int main(int argc, char **argv)
   //
   //Declare commonly used stencils
   //
-  int s2D[] = {0,0}; //self 2D
+  int s2D[]        = {0,0}; //self 2D
   int s2D_00_P10[] = {0,0, 1,0};
   int s2D_00_0P1[] = {0,0, 0,1};
+  int s2D_00_M10[] = {0,0, -1,0};
 
   S2D_00     = ops_decl_stencil( 2, 1, s2D, "00");
-  S2D_00_P10 = ops_decl_stencil( 2, 2, s2D_00_P10, "00,10");
-  S2D_00_0P1 = ops_decl_stencil( 2, 2, s2D_00_0P1, "00,01");
+  S2D_00_P10 = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");
+  S2D_00_0P1 = ops_decl_stencil( 2, 2, s2D_00_0P1, "0,0:0,1");
+  S2D_00_M10 = ops_decl_stencil( 2, 2, s2D_00_M10, "0,0:-1,0");
 
-  int self2D_minus1x[] = {0,0, -1,0};
   int self2D_minus1y[] = {0,0, 0,-1};
+  sten_self2D_minus1y = ops_decl_stencil( 2, 2, self2D_minus1y, "self2D_minus1y");
 
   int xmax2D[] = {x_max+2,0};
   int ymax2D[] = {0,y_max+2};
@@ -393,7 +395,7 @@ int main(int argc, char **argv)
 
 
 
-  sten_self2D_minus1y = ops_decl_stencil( 2, 2, self2D_minus1y, "self2D_minus1y");
+
 
   sten_self2D_plus1_minus1x = ops_decl_stencil( 2, 3, self2D_plus1_minus1_x, "self2D_plus1_minus1_x");
   sten_self2D_plus1_minus1y = ops_decl_stencil( 2, 3, self2D_plus1_minus1_y, "self2D_plus1_minus1_y");
@@ -432,7 +434,7 @@ int main(int argc, char **argv)
   sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, s2D_00_P10, stride2D_x, "self_stride2D_x");
   sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, s2D_00_0P1, stride2D_y, "self_stride2D_y");
 
-  sten_self_minus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_minus1x, stride2D_x, "self_stride2D_x");
+  sten_self_minus1_stride2D_x = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "self_stride2D_x");
   sten_self_minus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_minus1y, stride2D_y, "self_stride2D_y");
 
   sten_self2D_plus_1_minus1_2_x = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_x, "self2D_plus_1_minus1_2_x");

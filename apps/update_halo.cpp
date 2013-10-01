@@ -129,13 +129,13 @@ void update_halo(int* fields, int depth)
 
   int rangexy_r1a[] = {x_max,x_max+1,y_min-depth,y_max+depth};
   ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_r1a,
-              ops_arg_dat(density0, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(density1, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(energy0, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(energy1, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(pressure, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(viscosity, sten_self2D_minus1x, OPS_RW),
-              ops_arg_dat(soundspeed, sten_self2D_minus1x, OPS_RW));
+              ops_arg_dat(density0, S2D_00_M10, OPS_RW),
+              ops_arg_dat(density1, S2D_00_M10, OPS_RW),
+              ops_arg_dat(energy0, S2D_00_M10, OPS_RW),
+              ops_arg_dat(energy1, S2D_00_M10, OPS_RW),
+              ops_arg_dat(pressure, S2D_00_M10, OPS_RW),
+              ops_arg_dat(viscosity, S2D_00_M10, OPS_RW),
+              ops_arg_dat(soundspeed, S2D_00_M10, OPS_RW));
 
   //
   //xvel0, xvel1 has the same boundary ranges and assignment

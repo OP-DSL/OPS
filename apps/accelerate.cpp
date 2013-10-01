@@ -65,7 +65,7 @@ void accelerate()
     ops_arg_dat(yvel0, S2D_00, OPS_READ),
     ops_arg_dat(yvel1, S2D_00, OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
-    ops_arg_dat(yarea, sten_self2D_minus1x, OPS_READ),
+    ops_arg_dat(yarea, S2D_00_M10, OPS_READ),
     ops_arg_dat(pressure, sten_self2D_minus1xy, OPS_READ));
 
   ops_par_loop(accelerate_kernelx2, "accelerate_kernelx2", 2, rangexy_inner_plus1,
@@ -77,7 +77,7 @@ void accelerate()
   ops_par_loop(accelerate_kernely2, "accelerate_kernely2", 2, rangexy_inner_plus1,
     ops_arg_dat(yvel1, S2D_00, OPS_RW),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
-    ops_arg_dat(yarea, sten_self2D_minus1x, OPS_READ),
+    ops_arg_dat(yarea, S2D_00_M10, OPS_READ),
     ops_arg_dat(viscosity, sten_self2D_minus1xy, OPS_READ));
 
 }
