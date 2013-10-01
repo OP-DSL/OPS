@@ -53,7 +53,7 @@
   //
   //Declare commonly used stencils
   //
-  ops_stencil sten_self_2D;
+  ops_stencil S2D_00;
 
   ops_stencil sten_self2D_plus1x;
   ops_stencil sten_self2D_plus1y;

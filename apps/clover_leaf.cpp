@@ -331,11 +331,17 @@ int main(int argc, char **argv)
   for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
   yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
 
+
   //
   //Declare commonly used stencils
   //
-  int self2D[] = {0,0};
-  int self2D_plus1x[] = {0,0, 1,0};
+  int s2D[] = {0,0}; //self 2D
+  S2D_00 = ops_decl_stencil( 2, 1, s2D, "00");
+
+  //int self2D_plus1x[] = {0,0, 1,0};
+  int s2D_00_P10[] = {0,0, 1,0};
+  S2D_00_P10 = ops_decl_stencil( 2, 2, s2D_00_P10, "00_P10");
+
   int self2D_plus1y[] = {0,0, 0,1};
   int self2D_minus1x[] = {0,0, -1,0};
   int self2D_minus1y[] = {0,0, 0,-1};
@@ -382,9 +388,9 @@ int main(int argc, char **argv)
   int stride2D_y[] = {0,1};
   int stride2D_null[] = {0,0};
 
-  sten_self_2D = ops_decl_stencil( 2, 1, self2D, "self1D");
 
-  sten_self2D_plus1x = ops_decl_stencil( 2, 2, self2D_plus1x, "self2D_plus1x");
+
+
   sten_self2D_plus1y = ops_decl_stencil( 2, 2, self2D_plus1y, "self2D_plus1y");
   sten_self2D_minus1x = ops_decl_stencil( 2, 2, self2D_minus1x, "self2D_minus1x");
   sten_self2D_minus1y = ops_decl_stencil( 2, 2, self2D_minus1y, "self2D_minus1y");
@@ -420,8 +426,8 @@ int main(int argc, char **argv)
   sten_self2D_4point1xy = ops_decl_stencil( 2, 4, self2D_4point1xy, "self2D_4point1xy");
 
 
-  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, self2D, stride2D_x, "self_stride2D_x");
-  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, self2D, stride2D_y, "self_stride2D_y");
+  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, S2D, stride2D_x, "self_stride2D_x");
+  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, S2D, stride2D_y, "self_stride2D_y");
 
   sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, self2D_plus1x, stride2D_x, "self_stride2D_x");
   sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, self2D_plus1y, stride2D_y, "self_stride2D_y");

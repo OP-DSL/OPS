@@ -64,32 +64,32 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_x1_kernel, "advec_mom_x1_kernel", 2, rangexy,
-        ops_arg_dat(work_array6, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array7, sten_self_2D, OPS_RW),
-        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array6, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, OPS_RW),
+        ops_arg_dat(volume, S2D_00, OPS_READ),
         ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
         ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ));
   }
   else if(mom_sweep == 2) { // y 1
     ops_par_loop(advec_mom_y1_kernel, "advec_mom_y1_kernel", 2, rangexy,
-        ops_arg_dat(work_array6, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array7, sten_self_2D, OPS_RW),
-        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array6, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, OPS_RW),
+        ops_arg_dat(volume, S2D_00, OPS_READ),
         ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ),
         ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ));
   }
   else if (mom_sweep == 3) { // x 2
     ops_par_loop(advec_mom_x2_kernel, "advec_mom_x2_kernel", 2, rangexy,
-        ops_arg_dat(work_array6, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array7, sten_self_2D, OPS_RW),
-        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array6, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, OPS_RW),
+        ops_arg_dat(volume, S2D_00, OPS_READ),
         ops_arg_dat(vol_flux_y, sten_self2D_plus1y, OPS_READ));
   }
   else if (mom_sweep == 4) { // y 2
     ops_par_loop(advec_mom_y2_kernel, "advec_mom_y2_kernel", 2, rangexy,
-        ops_arg_dat(work_array6, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array7, sten_self_2D, OPS_RW),
-        ops_arg_dat(volume, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array6, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, OPS_RW),
+        ops_arg_dat(volume, S2D_00, OPS_READ),
         ops_arg_dat(vol_flux_x, sten_self2D_plus1x, OPS_READ));
   }
 
@@ -103,19 +103,19 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
     //Find staggered mesh mass fluxes, nodal masses and volumes.
     ops_par_loop(advec_mom_mass_flux_kernel_x, "advec_mom_mass_flux_kernel_x", 2, range_fullx_party_1,
-        ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(mass_flux_x, sten_self2D_plus1x_minus1y, OPS_READ));
 
     //Staggered cell mass post advection
     ops_par_loop(advec_mom_post_advec_kernel_x, "advec_mom_post_advec_kernel_x", 2, range_partx_party_1,
-        ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array7, sten_self2D_minus1xy, OPS_READ),
         ops_arg_dat(density1, sten_self2D_minus1xy, OPS_READ));
 
     //Stagered cell mass pre advection
     ops_par_loop(advec_mom_pre_advec_kernel_x, "advec_mom_pre_advec_kernel_x", 2, range_partx_party_1,
-        ops_arg_dat(work_array3/*node_mass_pre*/, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array2/*node_mass_post*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, sten_self2D_minus1x, OPS_READ));
 
 
@@ -123,10 +123,10 @@ void advec_mom(int which_vel, int sweep_number, int dir)
     if(vector) {
 
       ops_par_loop(advec_mom_kernel1_x, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
-        ops_arg_dat(work_array1/*node_flux*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array1/*node_flux*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, sten_self2D_plus1x, OPS_WRITE),
-        ops_arg_dat(work_array4/*advec_vel*/, sten_self_2D, OPS_RW),
-        ops_arg_dat(work_array5/*mom_flux*/, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array4/*advec_vel*/, S2D_00, OPS_RW),
+        ops_arg_dat(work_array5/*mom_flux*/, S2D_00, OPS_WRITE),
         ops_arg_dat(celldx, sten_self_plus_1_minus1_2_x_stride2D_x, OPS_READ),
         ops_arg_dat(vel1, sten_self2D_plus_1_2_minus1x, OPS_READ));
 
@@ -137,9 +137,9 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
     ops_par_loop(advec_mom_kernel2_x, "advec_mom_kernel2_x", 2, range_partx_party_2,
-        ops_arg_dat(vel1, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array2/*node_mass_post*/, sten_self_2D, OPS_READ),
-        ops_arg_dat(work_array3/*node_mass_pre*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(vel1, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, OPS_READ),
+        ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, sten_self2D_minus1x, OPS_READ)
         );
   }
@@ -147,28 +147,28 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
     //Find staggered mesh mass fluxes, nodal masses and volumes.
     ops_par_loop(advec_mom_mass_flux_kernel_y, "advec_mom_mass_flux_kernel_y", 2, range_fully_party_1,
-        ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(mass_flux_y, sten_self2D_plus1y_minus1x, OPS_READ));
 
     //Staggered cell mass post advection
     ops_par_loop(advec_mom_post_advec_kernel_y, "advec_mom_post_advec_kernel", 2, range_partx_party_2,
-        ops_arg_dat(work_array2, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array7, sten_self2D_minus1xy, OPS_READ),
         ops_arg_dat(density1, sten_self2D_minus1xy, OPS_READ));
 
     //Stagered cell mass pre advection
     ops_par_loop(advec_mom_pre_advec_kernel_y, "advec_mom_pre_advec_kernel_y", 2, range_partx_party_2,
-        ops_arg_dat(work_array3/*node_mass_pre*/, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array2/*node_mass_post*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, sten_self2D_minus1y, OPS_READ));
 
     int range_plus1xy_minus1y[] = {x_min,x_max+1,y_min-1,y_max+1}; // partial x range partial y range
     if(vector) {
         ops_par_loop(advec_mom_kernel1_y, "advec_mom_kernel1_y", 2, range_plus1xy_minus1y,
-        ops_arg_dat(work_array1/*node_flux*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(work_array1/*node_flux*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, sten_self2D_plus1y, OPS_WRITE),
-        ops_arg_dat(work_array4/*advec_vel*/, sten_self_2D, OPS_RW),
-        ops_arg_dat(work_array5/*mom_flux*/, sten_self_2D, OPS_WRITE),
+        ops_arg_dat(work_array4/*advec_vel*/, S2D_00, OPS_RW),
+        ops_arg_dat(work_array5/*mom_flux*/, S2D_00, OPS_WRITE),
         ops_arg_dat(celldy, sten_self_plus_1_minus1_2_y_stride2D_y, OPS_READ),
         ops_arg_dat(vel1, sten_self2D_plus_1_2_minus1y, OPS_READ));
     }
@@ -178,9 +178,9 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
     ops_par_loop(advec_mom_kernel2_y, "advec_mom_kernel2_y", 2, range_partx_party_2,
-        ops_arg_dat(vel1, sten_self_2D, OPS_WRITE),
-        ops_arg_dat(work_array2/*node_mass_post*/, sten_self_2D, OPS_READ),
-        ops_arg_dat(work_array3/*node_mass_pre*/, sten_self_2D, OPS_READ),
+        ops_arg_dat(vel1, S2D_00, OPS_WRITE),
+        ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, OPS_READ),
+        ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, sten_self2D_minus1y, OPS_READ)
         );
 

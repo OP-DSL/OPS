@@ -61,10 +61,10 @@ void field_summary()
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
   ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
-      ops_arg_dat(volume, sten_self_2D, OPS_READ),
-      ops_arg_dat(density0, sten_self_2D, OPS_READ),
-      ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-      ops_arg_dat(pressure, sten_self_2D, OPS_READ),
+      ops_arg_dat(volume, S2D_00, OPS_READ),
+      ops_arg_dat(density0, S2D_00, OPS_READ),
+      ops_arg_dat(energy0, S2D_00, OPS_READ),
+      ops_arg_dat(pressure, S2D_00, OPS_READ),
       ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_gbl(&vol, 1, OPS_WRITE),

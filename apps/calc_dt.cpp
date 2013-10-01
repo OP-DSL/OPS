@@ -57,18 +57,18 @@ void calc_dt(double* local_dt, char* local_control,
   ops_par_loop(calc_dt_kernel, "calc_dt_kernel", 2, rangexy_inner,
     ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
     ops_arg_dat(celldy, sten_self_plus1_stride2D_y, OPS_READ),
-    ops_arg_dat(soundspeed, sten_self_2D, OPS_READ),
-    ops_arg_dat(viscosity, sten_self_2D, OPS_READ),
-    ops_arg_dat(density0, sten_self_2D, OPS_READ),
+    ops_arg_dat(soundspeed, S2D_00, OPS_READ),
+    ops_arg_dat(viscosity, S2D_00, OPS_READ),
+    ops_arg_dat(density0, S2D_00, OPS_READ),
     ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(xarea, sten_self2D_plus1x, OPS_READ),
-    ops_arg_dat(volume, sten_self_2D, OPS_READ),
+    ops_arg_dat(volume, S2D_00, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yarea, sten_self2D_plus1y, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE) );
+    ops_arg_dat(work_array1, S2D_00, OPS_WRITE) );
 
   ops_par_loop(calc_dt_min_kernel, "calc_dt_min_kernel", 2, rangexy_inner,
-    ops_arg_dat(work_array1, sten_self_2D, OPS_READ),
+    ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_gbl(local_dt, 1, OPS_WRITE));
 
 
@@ -98,10 +98,10 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
     ops_arg_dat(xvel0, sten_self2D_4point1xy, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_4point1xy, OPS_READ),
-    ops_arg_dat(density0, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-    ops_arg_dat(soundspeed, sten_self_2D, OPS_READ));
+    ops_arg_dat(density0, S2D_00, OPS_READ),
+    ops_arg_dat(energy0, S2D_00, OPS_READ),
+    ops_arg_dat(pressure, S2D_00, OPS_READ),
+    ops_arg_dat(soundspeed, S2D_00, OPS_READ));
   }
 
   if(dtl_control == 1) sprintf(local_control, "sound");

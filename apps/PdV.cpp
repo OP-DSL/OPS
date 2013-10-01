@@ -58,14 +58,14 @@ void PdV(int predict)
     ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yarea, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(volume, sten_self_2D, OPS_READ),
-    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-    ops_arg_dat(density0, sten_self_2D, OPS_READ),
-    ops_arg_dat(density1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(viscosity, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy1, sten_self_2D, OPS_WRITE));
+    ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
+    ops_arg_dat(volume, S2D_00, OPS_READ),
+    ops_arg_dat(pressure, S2D_00, OPS_READ),
+    ops_arg_dat(density0, S2D_00, OPS_READ),
+    ops_arg_dat(density1, S2D_00, OPS_WRITE),
+    ops_arg_dat(viscosity, S2D_00, OPS_READ),
+    ops_arg_dat(energy0, S2D_00, OPS_READ),
+    ops_arg_dat(energy1, S2D_00, OPS_WRITE));
   }
   else {
   ops_par_loop(PdV_kernel_nopredict, "PdV_kernel_nopredict", 2, rangexy_inner,
@@ -75,14 +75,14 @@ void PdV(int predict)
     ops_arg_dat(yarea, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
     ops_arg_dat(yvel1, sten_self2D_plus1xy, OPS_READ),
-    ops_arg_dat(work_array1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(volume, sten_self_2D, OPS_READ),
-    ops_arg_dat(pressure, sten_self_2D, OPS_READ),
-    ops_arg_dat(density0, sten_self_2D, OPS_READ),
-    ops_arg_dat(density1, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(viscosity, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy0, sten_self_2D, OPS_READ),
-    ops_arg_dat(energy1, sten_self_2D, OPS_WRITE));
+    ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
+    ops_arg_dat(volume, S2D_00, OPS_READ),
+    ops_arg_dat(pressure, S2D_00, OPS_READ),
+    ops_arg_dat(density0, S2D_00, OPS_READ),
+    ops_arg_dat(density1, S2D_00, OPS_WRITE),
+    ops_arg_dat(viscosity, S2D_00, OPS_READ),
+    ops_arg_dat(energy0, S2D_00, OPS_READ),
+    ops_arg_dat(energy1, S2D_00, OPS_WRITE));
   }
 
   if(error_condition == 1) {

@@ -49,16 +49,16 @@ void flux_calc()
   int rangexy_inner_plus1x[] = {x_min,x_max+1,y_min,y_max};
 
   ops_par_loop(flux_calc_kernelx, "flux_calc_kernelx", 2, rangexy_inner_plus1x,
-    ops_arg_dat(vol_flux_x, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(xarea, sten_self_2D, OPS_READ),
+    ops_arg_dat(vol_flux_x, S2D_00, OPS_WRITE),
+    ops_arg_dat(xarea, S2D_00, OPS_READ),
     ops_arg_dat(xvel0, sten_self2D_plus1y, OPS_READ),
     ops_arg_dat(xvel1, sten_self2D_plus1y, OPS_READ));
 
   int rangexy_inner_plus1y[] = {x_min,x_max,y_min,y_max+1};
 
   ops_par_loop(flux_calc_kernely, "flux_calc_kernely", 2, rangexy_inner_plus1y,
-    ops_arg_dat(vol_flux_y, sten_self_2D, OPS_WRITE),
-    ops_arg_dat(yarea, sten_self_2D, OPS_READ),
+    ops_arg_dat(vol_flux_y, S2D_00, OPS_WRITE),
+    ops_arg_dat(yarea, S2D_00, OPS_READ),
     ops_arg_dat(yvel0, sten_self2D_plus1x, OPS_READ),
     ops_arg_dat(yvel1, sten_self2D_plus1x, OPS_READ));
 
