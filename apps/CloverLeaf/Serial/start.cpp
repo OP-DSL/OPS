@@ -15,11 +15,12 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Reads the user input
+/** @brief Main set up routine
  * @author Wayne Gaudin
- * @details Reads and parses the user input from the processed file and sets
- * the variables used in the generation phase. Default values are also set
- * here.
+ * @details Invokes the mesh decomposer and sets up chunk connectivity. It then
+ * allocates the communication buffers and call the chunk initialisation and
+ * generation routines. It calls the equation of state to calculate initial
+ * pressure before priming the halo cells and writing an initial field summary.
 */
 
 #include <stdlib.h>

@@ -15,9 +15,9 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Mesh chunk generation driver
+/** @brief Allocates the data for each mesh chunk
  *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
- *  @details Invoked the users specified chunk generator.
+ *  @details The data fields for the mesh chunk are allocated based on the mesh size
 **/
 
 #include <stdlib.h>
