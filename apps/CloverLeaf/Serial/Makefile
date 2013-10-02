@@ -21,7 +21,7 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
-  CCFLAGS	= -g -O0 #-O3 -ipo -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt #-vec-report -xSSE4.2 #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -O3 -ipo -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt #-vec-report -xSSE4.2 #-DCOMM_PERF #-DDEBUG
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= mpiCC

@@ -242,6 +242,7 @@ void read_input()
     exit(-1);
   }
 
+
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Input read finished\n");
   ops_fprintf(g_out,"\n");
