@@ -66,10 +66,10 @@
   ops_stencil S2D_00_M10_M20;
   ops_stencil S2D_00_0M1_0M2;
 
-  ops_stencil sten_self2D_plus2x;
-  ops_stencil sten_self2D_plus2y;
-  ops_stencil sten_self2D_minus2x;
-  ops_stencil sten_self2D_minus2y;
+  ops_stencil S2D_00_P20;
+  ops_stencil S2D_00_0P2;
+  ops_stencil S2D_00_M20;
+  ops_stencil S2D_00_0M2;
 
   ops_stencil sten_self2D_plus3x;
   ops_stencil sten_self2D_plus3y;

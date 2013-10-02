@@ -128,6 +128,7 @@ int step ;
 int advect_x; //logical
 int error_condition;
 int test_problem;
+int state_max;
 int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -155,6 +156,27 @@ int main(int argc, char **argv)
   /**--------------------Set up Cloverleaf default problem-------------------**/
 
   //some defailt values before read input
+
+  test_problem = 0;
+  state_max = 0;
+
+  grid = (grid_type ) xmalloc(sizeof(grid_type_core));
+  grid->xmin = 0;
+  grid->ymin = 0;
+  grid->xmax = 100;
+  grid->ymax = 100;
+
+  grid->x_cells = 10;
+  grid->y_cells = 10;
+
+  end_time = 10.0;
+  end_step = g_ibig;
+  complete = FALSE;
+
+
+  visit_frequency=10;
+  summary_frequency=10;
+
   dtinit = 0.1;
   dtmax = 1.0;
   dtmin = 0.0000001;
@@ -164,17 +186,10 @@ int main(int argc, char **argv)
   dtv_safe = 0.5;
   dtdiv_safe = 0.7;
 
-  end_time = 10.0;
-  end_step = g_ibig;
-  complete = FALSE;
-
-  visit_frequency=10;
-  summary_frequency=10;
-
   //
   //need to read in the following through I/O
   //
-  grid = (grid_type ) xmalloc(sizeof(grid_type_core));
+
   grid->x_cells = 10;
   grid->y_cells = 2;
 
@@ -344,6 +359,10 @@ int main(int argc, char **argv)
   int s2D_00_0P1_0M1[] = {0,0, 0,1, 0,-1};
   int s2D_00_M10_M20[] = {0,0, -1,0, -2,0};
   int s2D_00_0M1_0M2[] = {0,0, 0,-1, 0,-2};
+  int s2D_00_P20[]     = {0,0, 2,0};
+  int s2D_00_0P2[]     = {0,0, 0,2};
+  int s2D_00_M20[]     = {0,0, -2,0};
+  int s2D_00_0M2[]     = {0,0, 0,-2};
 
   S2D_00         = ops_decl_stencil( 2, 1, s2D, "00");
 
@@ -358,18 +377,11 @@ int main(int argc, char **argv)
   S2D_00_M10_M20 = ops_decl_stencil( 2, 3, s2D_00_M10_M20, "0,0:-1,0:-2,0");
   S2D_00_0M1_0M2 = ops_decl_stencil( 2, 3, s2D_00_0M1_0M2, "0,0:0,-1:0,-2");
 
+  S2D_00_P20     = ops_decl_stencil( 2, 2, s2D_00_P20, "0,0:2,0");
+  S2D_00_0P2     = ops_decl_stencil( 2, 2, s2D_00_0P2, "0,0:0,2");
 
-  int self2D_plus2x[] = {0,0, 2,0};
-  sten_self2D_plus2x = ops_decl_stencil( 2, 2, self2D_plus2x, "self2D_plus2x");
-
-  int self2D_plus2y[] = {0,0, 0,2};
-  sten_self2D_plus2y = ops_decl_stencil( 2, 2, self2D_plus2y, "self2D_plus2y");
-
-  int self2D_minus2x[] = {0,0, -2,0};
-  sten_self2D_minus2x = ops_decl_stencil( 2, 2, self2D_minus2x, "self2D_minus2x");
-
-  int self2D_minus2y[] = {0,0, 0,-2};
-  sten_self2D_minus2y = ops_decl_stencil( 2, 2, self2D_minus2y, "self2D_minus2y");
+  S2D_00_M20     = ops_decl_stencil( 2, 2, s2D_00_M20, "0,0:-2,0");
+  S2D_00_0M2     = ops_decl_stencil( 2, 2, s2D_00_0M2, "0,0:0,-2");
 
   int self2D_plus3x[] = {0,0, 3,0};
   sten_self2D_plus3x = ops_decl_stencil( 2, 2, self2D_plus3x, "self2D_plus3x");
