@@ -65,4 +65,3 @@ cloverleaf_seq:	clover_leaf.cpp initialise.cpp generate.cpp ideal_gas.cpp \
 
 clean:
 		rm -f cloverleaf_seq *.o
-
