@@ -45,7 +45,8 @@ all: clean cloverleaf_seq
 # simple sequential version
 #
 
-cloverleaf_seq:	clover_leaf.cpp initialise.cpp generate.cpp ideal_gas.cpp \
+cloverleaf_seq:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
+		initialise.cpp generate.cpp ideal_gas.cpp \
 		update_halo.cpp field_summary.cpp time_step.cpp viscosity.cpp \
 		calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp flux_calc.cpp \
 		advection.cpp advec_cell.cpp advec_mom.cpp reset_field.cpp \
@@ -53,7 +54,8 @@ cloverleaf_seq:	clover_leaf.cpp initialise.cpp generate.cpp ideal_gas.cpp \
 		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
 		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
 		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
-		$(CPP) $(CPPFLAGS) clover_leaf.cpp initialise.cpp generate.cpp \
+		$(CPP) $(CPPFLAGS) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
+		initialise_chunk.cpp initialise.cpp generate.cpp \
 		ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
 		viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
 		flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
