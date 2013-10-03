@@ -253,13 +253,14 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
-  stencil->name = copy_str(name);;
+  stencil->name = copy_str(name);
 
   stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
   memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
   return stencil;

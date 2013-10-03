@@ -6,10 +6,14 @@ void test_kernel(double **value) {
 }
 
 void test_kernel2(double **value) {
-        printf("%lf ", (double)**value);
+        printf("%lf \n", (double)**value);
 }
 
-void test_kernel3(double **value, double **value_d) {
+void test_kernel3(double **value, double **value2) {
+        printf("%lf %lf\n", *value[0], *value[1]);
+}
+
+void test_kernel4(double **value, double **value_d) {
         printf("%lf %lf\n", (double)**value, (double)**value_d);
 }
 

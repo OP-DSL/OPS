@@ -93,7 +93,8 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("j, k                 : %d, %d\n",*jldt,*kldt);
     ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
     ops_printf("timestep : %lf\n",*local_dt);
-      ops_par_loop(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
+
+    ops_par_loop(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
     ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
     ops_arg_dat(xvel0, sten_self2D_4point1xy, OPS_READ),
