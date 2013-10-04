@@ -28,6 +28,7 @@
 
 // OPS header file
 #include "ops_seq.h"
+#include "ops_seq_opt.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -52,7 +53,7 @@ void advec_cell(int sweep_number, int dir)
   if(dir == g_xdir) {
 
     if(sweep_number == 1) {
-      ops_par_loop(advec_cell_xdir_kernel1, "advec_cell_xdir_kernel1", 2, rangexy,
+      ops_par_loop_opt(advec_cell_xdir_kernel1, "advec_cell_xdir_kernel1", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, OPS_RW),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
@@ -61,7 +62,7 @@ void advec_cell(int sweep_number, int dir)
         );
     }
     else {
-      ops_par_loop(advec_cell_xdir_kernel2, "advec_cell_xdir_kernel2", 2, rangexy,
+      ops_par_loop_opt(advec_cell_xdir_kernel2, "advec_cell_xdir_kernel2", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
@@ -98,7 +99,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
       );
 
-    ops_par_loop(advec_cell_xdir_kernel4, "advec_cell_xdir_kernel4", 2, rangexy_inner,
+    ops_par_loop_opt(advec_cell_xdir_kernel4, "advec_cell_xdir_kernel4", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, OPS_RW),
       ops_arg_dat(energy1, S2D_00, OPS_RW),
       ops_arg_dat(mass_flux_x, S2D_00_P10, OPS_READ),
@@ -116,7 +117,7 @@ void advec_cell(int sweep_number, int dir)
   else {
 
     if(sweep_number == 1) {
-      ops_par_loop(advec_cell_ydir_kernel1, "advec_cell_ydir_kernel1", 2, rangexy,
+      ops_par_loop_opt(advec_cell_ydir_kernel1, "advec_cell_ydir_kernel1", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, OPS_RW),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
@@ -125,7 +126,7 @@ void advec_cell(int sweep_number, int dir)
         );
     }
     else {
-      ops_par_loop(advec_cell_ydir_kernel2, "advec_cell_ydir_kernel2", 2, rangexy,
+      ops_par_loop_opt(advec_cell_ydir_kernel2, "advec_cell_ydir_kernel2", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
         ops_arg_dat(work_array2, S2D_00, OPS_WRITE),
         ops_arg_dat(volume, S2D_00, OPS_READ),
@@ -163,7 +164,7 @@ void advec_cell(int sweep_number, int dir)
       );
 
 
-    ops_par_loop(advec_cell_ydir_kernel4, "advec_cell_ydir_kernel4", 2, rangexy_inner,
+    ops_par_loop_opt(advec_cell_ydir_kernel4, "advec_cell_ydir_kernel4", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, OPS_RW),
       ops_arg_dat(energy1, S2D_00, OPS_RW),
       ops_arg_dat(mass_flux_y, S2D_00_0P1, OPS_READ),

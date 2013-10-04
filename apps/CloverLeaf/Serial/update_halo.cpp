@@ -55,7 +55,7 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b2a[] = {x_min-depth,x_max+depth,y_min-2,y_min-1};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_b2a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_b2a,
               ops_arg_dat(density0, S2D_00_0P3, OPS_RW),
               ops_arg_dat(density1, S2D_00_0P3, OPS_RW),
               ops_arg_dat(energy0, S2D_00_0P3, OPS_RW),
@@ -65,7 +65,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(soundspeed, S2D_00_0P3, OPS_RW));
 
   int rangexy_b1a[] = {x_min-depth,x_max+depth,y_min-1,y_min};
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_b1a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_b1a,
               ops_arg_dat(density0, S2D_00_0P1, OPS_RW),
               ops_arg_dat(density1, S2D_00_0P1, OPS_RW),
               ops_arg_dat(energy0, S2D_00_0P1, OPS_RW),
@@ -76,7 +76,7 @@ void update_halo(int* fields, int depth)
 
   int rangexy_t2a[] = {x_min-depth,x_max+depth,y_max+1,y_max+2};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_t2a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_t2a,
               ops_arg_dat(density0, sten_self2D_minus3y, OPS_RW),
               ops_arg_dat(density1, sten_self2D_minus3y, OPS_RW),
               ops_arg_dat(energy0, sten_self2D_minus3y, OPS_RW),
@@ -86,7 +86,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(soundspeed, sten_self2D_minus3y, OPS_RW));
 
   int rangexy_t1a[] = {x_min-depth,x_max+depth,y_max,y_max+1};
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_t1a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel1", 2, rangexy_t1a,
               ops_arg_dat(density0, S2D_00_0M1, OPS_RW),
               ops_arg_dat(density1, S2D_00_0M1, OPS_RW),
               ops_arg_dat(energy0, S2D_00_0M1, OPS_RW),
@@ -97,7 +97,7 @@ void update_halo(int* fields, int depth)
 
   int rangexy_l2a[] = {x_min-2,x_min-1,y_min-depth,y_max+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_l2a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel", 2, rangexy_l2a,
               ops_arg_dat(density0, S2D_00_P30, OPS_RW),
               ops_arg_dat(density1, S2D_00_P30, OPS_RW),
               ops_arg_dat(energy0, S2D_00_P30, OPS_RW),
@@ -107,7 +107,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(soundspeed, S2D_00_P30, OPS_RW));
 
   int rangexy_l1a[] = {x_min-1,x_min,y_min-depth,y_max+depth};
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_l1a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel", 2, rangexy_l1a,
               ops_arg_dat(density0, S2D_00_P10, OPS_RW),
               ops_arg_dat(density1, S2D_00_P10, OPS_RW),
               ops_arg_dat(energy0, S2D_00_P10, OPS_RW),
@@ -119,7 +119,7 @@ void update_halo(int* fields, int depth)
   int rangexy_r2a[] = {x_max+1,x_max+2,y_min-depth,y_max+depth};
 
   if(depth ==2)
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_r2a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel", 2, rangexy_r2a,
               ops_arg_dat(density0, sten_self2D_minus3x, OPS_RW),
               ops_arg_dat(density1, sten_self2D_minus3x, OPS_RW),
               ops_arg_dat(energy0, sten_self2D_minus3x, OPS_RW),
@@ -129,7 +129,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(soundspeed, sten_self2D_minus3x, OPS_RW));
 
   int rangexy_r1a[] = {x_max,x_max+1,y_min-depth,y_max+depth};
-  ops_par_loop(update_halo_kernel1, "update_halo_kernel", 2, rangexy_r1a,
+  ops_par_loop_opt(update_halo_kernel1, "update_halo_kernel", 2, rangexy_r1a,
               ops_arg_dat(density0, S2D_00_M10, OPS_RW),
               ops_arg_dat(density1, S2D_00_M10, OPS_RW),
               ops_arg_dat(energy0, S2D_00_M10, OPS_RW),

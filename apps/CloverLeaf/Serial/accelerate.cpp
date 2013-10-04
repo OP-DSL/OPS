@@ -49,33 +49,33 @@ void accelerate()
 
   int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; // inner range plus 1
 
-  ops_par_loop(accelerate_stepbymass_kernel, "accelerate_stepbymass_kernel", 2, rangexy_inner_plus1,
+  ops_par_loop_opt(accelerate_stepbymass_kernel, "accelerate_stepbymass_kernel", 2, rangexy_inner_plus1,
     ops_arg_dat(density0, sten_self2D_minus1xy, OPS_READ),
     ops_arg_dat(volume, sten_self2D_minus1xy, OPS_READ),
     ops_arg_dat(work_array1, S2D_00, OPS_WRITE),
     ops_arg_dat(pressure, sten_self2D_minus1xy, OPS_READ));
 
-  ops_par_loop(accelerate_kernelx1, "accelerate_kernelx1", 2, rangexy_inner_plus1,
+  ops_par_loop_opt(accelerate_kernelx1, "accelerate_kernelx1", 2, rangexy_inner_plus1,
     ops_arg_dat(xvel0, S2D_00, OPS_READ),
     ops_arg_dat(xvel1, S2D_00, OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_dat(xarea, S2D_00_0M1, OPS_READ),
     ops_arg_dat(pressure, sten_self2D_minus1xy, OPS_READ));
 
-  ops_par_loop(accelerate_kernely1, "accelerate_kernely1", 2, rangexy_inner_plus1,
+  ops_par_loop_opt(accelerate_kernely1, "accelerate_kernely1", 2, rangexy_inner_plus1,
     ops_arg_dat(yvel0, S2D_00, OPS_READ),
     ops_arg_dat(yvel1, S2D_00, OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_dat(yarea, S2D_00_M10, OPS_READ),
     ops_arg_dat(pressure, sten_self2D_minus1xy, OPS_READ));
 
-  ops_par_loop(accelerate_kernelx2, "accelerate_kernelx2", 2, rangexy_inner_plus1,
+  ops_par_loop_opt(accelerate_kernelx2, "accelerate_kernelx2", 2, rangexy_inner_plus1,
     ops_arg_dat(xvel1, S2D_00, OPS_RW),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_dat(xarea, S2D_00_0M1, OPS_READ),
     ops_arg_dat(viscosity, sten_self2D_minus1xy, OPS_READ));
 
-  ops_par_loop(accelerate_kernely2, "accelerate_kernely2", 2, rangexy_inner_plus1,
+  ops_par_loop_opt(accelerate_kernely2, "accelerate_kernely2", 2, rangexy_inner_plus1,
     ops_arg_dat(yvel1, S2D_00, OPS_RW),
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_dat(yarea, S2D_00_M10, OPS_READ),
