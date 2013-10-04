@@ -45,7 +45,7 @@
 
 
 // OPS header file
-//#include "ops_seq.h"
+#include "ops_seq.h"
 #include "ops_seq_opt.h"
 
 // Cloverleaf constants
@@ -170,18 +170,13 @@ int main(int argc, char **argv)
   int x_max = field->x_max;
   int y_min = field->y_min;
   int y_max = field->y_max;
-  ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
 
-  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
-  ops_par_loop_opt(test_kernel3, "test_kernel3", 2, rangexy_inner,
-      ops_arg_dat(volume, S2D_00_0P1, OPS_READ),
-      ops_arg_dat(density0, S2D_00_0M1, OPS_READ));
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
 
-  /*while(1) {
+  while(1) {
 
     step = step + 1;
 
@@ -213,7 +208,18 @@ int main(int argc, char **argv)
       field_summary();
       break;
     }
-  }*/
+
+    //if(step == 2)
+    //{
+      /*ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
+
+      int rangexy_inner[] = {x_min,x_max+1,y_min,y_max+1}; // inner range without border
+      ops_par_loop_opt(test_kernel3, "test_kernel3", 2, rangexy_inner,
+      ops_arg_dat(work_array1, S2D_00_P10, OPS_READ),
+      ops_arg_dat(density0, S2D_00_0M1, OPS_READ));*/
+    //  exit(0);
+    //}
+  }
 
 
   fclose(g_out);

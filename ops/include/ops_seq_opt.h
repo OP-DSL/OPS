@@ -37,107 +37,6 @@
 
 #include "ops_lib_cpp.h"
 
-inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
-  if (arg.stencil!=NULL) {
-
-    for (int i = 0; i < arg.stencil->points; i++){
-      p_arg[i] =
-         arg.data + //base of 1D array
-         arg.dat->size * ( //multiply by the number of bytes per element
-         (n_x - arg.dat->offset[0]) * //calculate the offset from index 0
-         arg.stencil->stride[0]  + // jump in strides ??
-         arg.stencil->stencil[i * arg.stencil->dims + 0] //get the value at the ith stencil point
-         );
-    }
-  } else {
-    *p_arg = arg.data;
-  }
-}
-
-inline void ops_arg_set(int n_x,
-                        int n_y, ops_arg arg, char **p_arg){
-  if (arg.stencil!=NULL) {
-    for (int i = 0; i < arg.stencil->points; i++){
-      p_arg[i] =
-        arg.data + //base of 2D array
-        //y dimension -- get to the correct y line
-        arg.dat->size * arg.dat->block_size[0] * ( //multiply by the number of
-                                                    //bytes per element and xdim block size
-        (n_y - arg.dat->offset[1]) * // calculate the offset from index 0 for y dim
-        arg.stencil->stride[1] + // jump in strides in y dim ??
-        arg.stencil->stencil[i*arg.stencil->dims + 1]) //get the value at the ith
-                                                       //stencil point "+ 1" is the y dim
-        +
-        //x dimension - get to the correct x point on the y line
-        arg.dat->size * ( //multiply by the number of bytes per element
-        (n_x - arg.dat->offset[0]) * //calculate the offset from index 0 for x dim
-        arg.stencil->stride[0] + // jump in strides in x dim ??
-        arg.stencil->stencil[i*arg.stencil->dims + 0] //get the value at the ith
-                                                      //stencil point "+ 0" is the x dim
-      );
-    }
-  } else {
-    *p_arg = arg.data;
-  }
-}
-
-inline void ops_arg_set(int n_x,
-                        int n_y,
-                        int n_z, ops_arg arg, char **p_arg){
-  if (arg.stencil!=NULL) {
-    for (int i = 0; i < arg.stencil->points; i++)
-      p_arg[i] =
-      arg.data +
-      //z dimension - get to the correct z plane
-      arg.dat->size * arg.dat->block_size[1] * arg.dat->block_size[0] * (
-      (n_z - arg.dat->offset[2]) *
-      arg.stencil->stride[2] +
-      arg.stencil->stencil[i*arg.stencil->dims + 2])
-      +
-      //y dimension -- get to the correct y line on the z plane
-      arg.dat->size * arg.dat->block_size[0] * (
-      (n_y - arg.dat->offset[1]) *
-      arg.stencil->stride[1] +
-      arg.stencil->stencil[i*arg.stencil->dims + 1])
-      +
-      //x dimension - get to the correct x point on the y line
-      arg.dat->size * (
-      (n_x - arg.dat->offset[0]) *
-      arg.stencil->stride[0] +
-      arg.stencil->stencil[i*arg.stencil->dims + 0]
-      );
-  } else {
-    *p_arg = arg.data;
-  }
-}
-
-
-
-inline void ops_args_set(int iter_x,
-                         int nargs, ops_arg *args, char ***p_a){
-  for (int n=0; n<nargs; n++) {
-    ops_arg_set(iter_x, args[n], p_a[n]);
-  }
-}
-
-inline void ops_args_set(int iter_x,
-                         int iter_y,
-                         int nargs, ops_arg *args, char ***p_a){
-  for (int n=0; n<nargs; n++) {
-    ops_arg_set(iter_x, iter_y, args[n], p_a[n]);
-  }
-}
-
-inline void ops_args_set(int iter_x,
-                         int iter_y,
-                         int iter_z, int nargs, ops_arg *args, char ***p_a){
-  for (int n=0; n<nargs; n++) {
-    ops_arg_set(iter_x, iter_y, iter_z, args[n], p_a[n]);
-  }
-}
-
-
-
 template < class T0 >
 void ops_par_loop_opt(void (*kernel)( T0*),
   char const * name, int dim, int *range,
@@ -166,8 +65,6 @@ void ops_par_loop_opt(void (*kernel)( T0*),
 
 
   // loop over set elements
-
-  //p_a[0][0] = args[0].data;
   ops_args_set(range[0], range[2],1,args,p_a);
 
   for (int nt=0; nt<total_range; nt++) {
@@ -198,6 +95,18 @@ void ops_par_loop_opt(void (*kernel)( T0*),
   }
 }
 
+inline int ops_offs_set(int n_x,
+                        int n_y, ops_arg arg){
+
+        return
+        arg.dat->block_size[0] * //multiply by the number of
+        (n_y - arg.dat->offset[1])  // calculate the offset from index 0 for y dim
+        +
+        (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
+
+
+}
+
 
 template < class T0, class T1 >
 void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
@@ -205,10 +114,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
                   ops_arg arg0, ops_arg arg1 ) {
 
   char  **p_a[2];
-  int   *offs[2] = {arg0.stencil->stencil, arg1.stencil->stencil};
+  int   *offs[2];
   int   count[dim];
-
   ops_arg args[2] = {arg0, arg1};
+
+  for(int i=0; i<2; i++) {
+    offs[i] = (int *)malloc(2*sizeof(int));
+    offs[i][0] = 1;  //unit step in x dimension
+    int p1 = ops_offs_set(range[0],range[2]+1, args[i]);
+    int p2 = ops_offs_set(range[1],range[2], args[i]);
+    offs[i][1] = p1 - p2 +1;
+  }
+
 
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
@@ -224,7 +141,7 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  ops_args_set(range[0], range[2],1,args,p_a);
+  ops_args_set(range[0], range[2],2,args,p_a); //set up the initial possition
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -249,8 +166,11 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
   }
 
   for (int i = 0; i < 2; i++) {
-  if (args[i].argtype == OPS_ARG_DAT)
-    free(p_a[i]);
+    if (args[i].argtype == OPS_ARG_DAT)
+    {
+      free(p_a[i]);
+      free(offs[i]);
+    }
   }
 }
 
@@ -262,11 +182,19 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*),
                   ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3  ) {
 
   char  **p_a[4];
-  int   *offs[4] = {arg0.stencil->stencil, arg1.stencil->stencil,
-                    arg2.stencil->stencil, arg3.stencil->stencil};
+  int   *offs[4];
   int   count[dim];
 
   ops_arg args[4] = {arg0, arg1, arg2, arg3};
+
+  for(int i=0; i<4; i++) {
+    offs[i] = (int *)malloc(2*sizeof(int));
+    offs[i][0] = 1;  //unit step in x dimension
+    int p1 = ops_offs_set(range[0],range[2]+1, args[i]);
+    int p2 = ops_offs_set(range[1],range[2], args[i]);
+    offs[i][1] = p1 - p2 +1;
+    //printf("name %s, test = %d\n",args[i].dat->name, offs[i][1]);
+  }
 
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
@@ -282,7 +210,7 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  ops_args_set(range[0], range[2],1,args,p_a);
+  ops_args_set(range[0], range[2],4,args,p_a);
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -301,13 +229,15 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*),
     // shift pointers to data
     for (int i=0; i<4; i++) {
       for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] += args[i].dat->size * offs[i][m];
+        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
       }
     }
   }
 
   for (int i = 0; i < 4; i++) {
-  if (args[i].argtype == OPS_ARG_DAT)
-    free(p_a[i]);
+    if (args[i].argtype == OPS_ARG_DAT) {
+      free(p_a[i]);
+      free(offs[i]);
+    }
   }
 }

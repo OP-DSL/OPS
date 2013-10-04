@@ -10,7 +10,7 @@ void test_kernel2(double **value) {
 }
 
 void test_kernel3(double **value, double **value2) {
-        printf("%lf %lf\n", *value[0], *value[1]);
+        printf("%3.10lf %3.10lf \n", *value[0], *value[1]);
 }
 
 void test_kernel4(double **value, double **value_d) {

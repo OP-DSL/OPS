@@ -71,8 +71,8 @@
   ops_stencil S2D_00_M20;
   ops_stencil S2D_00_0M2;
 
-  ops_stencil sten_self2D_plus3x;
-  ops_stencil sten_self2D_plus3y;
+  ops_stencil S2D_00_P30;
+  ops_stencil S2D_00_0P3;
   ops_stencil sten_self2D_minus3x;
   ops_stencil sten_self2D_minus3y;
 

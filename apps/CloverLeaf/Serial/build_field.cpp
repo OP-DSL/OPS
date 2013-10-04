@@ -135,6 +135,8 @@ void build_field()
   int s2D_00_0P2[]     = {0,0, 0,2};
   int s2D_00_M20[]     = {0,0, -2,0};
   int s2D_00_0M2[]     = {0,0, 0,-2};
+  int s2D_00_P30[]     = {0,0, 3,0};
+  int s2D_00_0P3[]     = {0,0, 0,3};
 
   S2D_00         = ops_decl_stencil( 2, 1, s2D, "00");
 
@@ -155,11 +157,9 @@ void build_field()
   S2D_00_M20     = ops_decl_stencil( 2, 2, s2D_00_M20, "0,0:-2,0");
   S2D_00_0M2     = ops_decl_stencil( 2, 2, s2D_00_0M2, "0,0:0,-2");
 
-  int self2D_plus3x[] = {0,0, 3,0};
-  sten_self2D_plus3x = ops_decl_stencil( 2, 2, self2D_plus3x, "self2D_plus3x");
 
-  int self2D_plus3y[] = {0,0, 0,3};
-  sten_self2D_plus3y = ops_decl_stencil( 2, 2, self2D_plus3y, "self2D_plus3y");
+  S2D_00_P30 = ops_decl_stencil( 2, 2, s2D_00_P30, "0,0:3,0");
+  S2D_00_0P3 = ops_decl_stencil( 2, 2, s2D_00_0P3, "0,0:0,3");
 
   int self2D_minus3x[] = {0,0, -3,0};
   sten_self2D_minus3x = ops_decl_stencil( 2, 2, self2D_minus3x, "self2D_minus3x");

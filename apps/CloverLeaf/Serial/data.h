@@ -128,8 +128,8 @@ extern ops_stencil S2D_00_0P2;
 extern ops_stencil S2D_00_M20;
 extern ops_stencil S2D_00_0M2;
 
-extern ops_stencil sten_self2D_plus3x;
-extern ops_stencil sten_self2D_plus3y;
+extern ops_stencil S2D_00_P30;
+extern ops_stencil S2D_00_0P3;
 extern ops_stencil sten_self2D_minus3x;
 extern ops_stencil sten_self2D_minus3y;
 

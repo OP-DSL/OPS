@@ -160,7 +160,7 @@ void read_input()
                 ops_fprintf(g_out,"\n");
 
                 token = strtok(NULL, " =");
-                states =  (state_type *) xrealloc(states, sizeof(state_type) * number_of_states+1);
+                states =  (state_type *) xrealloc(states, sizeof(state_type) * (number_of_states+1));
                 states[number_of_states] = (state_type ) xmalloc(sizeof(state_type_core));
 
                 token = strtok(NULL, " =");

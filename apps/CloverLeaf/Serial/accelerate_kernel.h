@@ -13,6 +13,7 @@ void accelerate_stepbymass_kernel( double **density0, double **volume,
     + (*density0[1]) * (*volume[1]) ) * 0.25;
 
   **stepbymass = 0.5*dt / nodal_mass;
+  //printf("stepby mass = %lf\n", **stepbymass);
 
 }
 
