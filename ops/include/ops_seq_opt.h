@@ -864,6 +864,7 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
   //set up initial pointers
   ops_args_set(range[0], range[2],20,args,p_a);
 
+
   for (int nt=0; nt<total_range; nt++) {
 
     // call kernel function, passing in pointers to data
