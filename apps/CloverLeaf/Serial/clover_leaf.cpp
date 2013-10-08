@@ -180,11 +180,11 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-    if(step == 1)
+    /*if(step == 1)
     {
       ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
       ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
-    }
+    }*/
 
     timestep();
 

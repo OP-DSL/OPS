@@ -46,7 +46,7 @@ void generate()
   int y_max = field->y_max;
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  ops_par_loop(generate_kernel, "generate_kernel", 2, rangexy,
+  ops_par_loop_opt2(generate_kernel, "generate_kernel", 2, rangexy,
     ops_arg_dat(vertexx,  sten_self_plus1_stride2D_x, OPS_READ),
     ops_arg_dat(vertexy,  sten_self_plus1_stride2D_y, OPS_READ),
     ops_arg_dat(energy0,  S2D_00, OPS_WRITE),

@@ -63,15 +63,23 @@ inline void ops_arg_set(int n_x,
         //y dimension -- get to the correct y line
         arg.dat->size * arg.dat->block_size[0] * ( //multiply by the number of
                                                     //bytes per element and xdim block size
-        (n_y - arg.dat->offset[1]) * // calculate the offset from index 0 for y dim
-        arg.stencil->stride[1] + // jump in strides in y dim ??
+
+        //(n_y - arg.dat->offset[1]) * // calculate the offset from index 0 for y dim
+        //arg.stencil->stride[1] + // jump in strides in y dim ??
+
+        n_y * arg.stencil->stride[1] - arg.dat->offset[1] +
+
+
         arg.stencil->stencil[i*arg.stencil->dims + 1]) //get the value at the ith
                                                        //stencil point "+ 1" is the y dim
         +
         //x dimension - get to the correct x point on the y line
         arg.dat->size * ( //multiply by the number of bytes per element
-        (n_x - arg.dat->offset[0]) * //calculate the offset from index 0 for x dim
-        arg.stencil->stride[0] + // jump in strides in x dim ??
+
+        //(n_x - arg.dat->offset[0]) * //calculate the offset from index 0 for x dim
+        //arg.stencil->stride[0] + // jump in strides in x dim ??
+        n_x * arg.stencil->stride[0] - arg.dat->offset[0] +
+
         arg.stencil->stencil[i*arg.stencil->dims + 0] //get the value at the ith
                                                       //stencil point "+ 0" is the x dim
       );
