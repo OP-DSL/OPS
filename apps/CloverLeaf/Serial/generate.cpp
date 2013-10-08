@@ -27,6 +27,7 @@
 
 // OPS header file
 #include "ops_seq.h"
+#include "ops_seq_opt.h"
 
 #include "data.h"
 #include "definitions.h"

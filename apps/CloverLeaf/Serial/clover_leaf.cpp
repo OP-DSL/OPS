@@ -180,9 +180,16 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
+    if(step == 1)
+    {
+      ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
+      ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
+    }
+
     timestep();
 
     PdV(TRUE);
+
 
     accelerate();
 
@@ -209,16 +216,14 @@ int main(int argc, char **argv)
       break;
     }
 
-    //if(step == 2)
-    //{
-      /*ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
-
-      int rangexy_inner[] = {x_min,x_max+1,y_min,y_max+1}; // inner range without border
-      ops_par_loop_opt(test_kernel3, "test_kernel3", 2, rangexy_inner,
-      ops_arg_dat(work_array1, S2D_00_P10, OPS_READ),
-      ops_arg_dat(density0, S2D_00_0M1, OPS_READ));*/
-    //  exit(0);
-    //}
+    /*if(step == 71)
+    {
+      ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+      int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
+      ops_par_loop_opt(test_kernel2, "test_kernel2", 2, rangexy_inner,
+      ops_arg_dat(density0, sten_self_stride2D_x, OPS_READ));
+      exit(0);
+    }*/
   }
 
 

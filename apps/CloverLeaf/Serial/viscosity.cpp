@@ -29,6 +29,7 @@
 
 // OPS header file
 #include "ops_seq.h"
+#include "ops_seq_opt.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -47,7 +48,7 @@ void viscosity_func()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  ops_par_loop(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
+  ops_par_loop_opt2(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
       ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
       ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
