@@ -473,11 +473,6 @@ void ops_par_loop_opt2(void (*kernel)( T0*, T1*, T2*, T3*, T4*),
 
   //set up initial pointers
   ops_args_set(range[0], range[2],5,args,p_a);
-  /*ops_arg_set_opt(range[0],range[2],args[0],p_a[0]);
-  ops_arg_set(range[0],range[2],args[1],p_a[1]);
-  ops_arg_set_opt(range[0],range[2],args[2],p_a[2]);
-  ops_arg_set(range[0],range[2],args[3],p_a[3]);
-  ops_arg_set_opt(range[0],range[2],args[4],p_a[4]);*/
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -629,12 +624,6 @@ void ops_par_loop_opt2(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
 
   //set up initial pointers
   ops_args_set(range[0], range[2],6,args,p_a);
-  /*ops_arg_set_opt(range[0],range[2],args[0],p_a[0]);
-  ops_arg_set_opt(range[0],range[2],args[1],p_a[1]);
-  ops_arg_set_opt(range[0],range[2],args[2],p_a[2]);
-  ops_arg_set_opt(range[0],range[2],args[3],p_a[3]);
-  ops_arg_set(range[0],range[2],args[4],p_a[4]);
-  ops_arg_set_opt(range[0],range[2],args[5],p_a[5]);*/
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -788,14 +777,6 @@ void ops_par_loop_opt2(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
 
   //set up initial pointers
   ops_args_set(range[0], range[2],7,args,p_a);
-  /*ops_arg_set_opt(range[0],range[2],args[0],p_a[0]);
-  ops_arg_set_opt(range[0],range[2],args[1],p_a[1]);
-  ops_arg_set(range[0],range[2],args[2],p_a[2]);
-  ops_arg_set(range[0],range[2],args[3],p_a[3]);
-  ops_arg_set_opt(range[0],range[2],args[4],p_a[4]);
-  ops_arg_set_opt(range[0],range[2],args[5],p_a[5]);
-  ops_arg_set_opt(range[0],range[2],args[6],p_a[6]);*/
-
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -949,16 +930,6 @@ void ops_par_loop_opt2(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
 
   //set up initial pointers
   ops_args_set(range[0], range[2],8,args,p_a);
-  /*ops_arg_set(range[0],range[2],args[0],p_a[0]);
-  ops_arg_set(range[0],range[2],args[1],p_a[1]);
-  ops_arg_set_opt(range[0],range[2],args[2],p_a[2]);
-  ops_arg_set_opt(range[0],range[2],args[3],p_a[3]);
-  ops_arg_set_opt(range[0],range[2],args[4],p_a[4]);
-  ops_arg_set_opt(range[0],range[2],args[5],p_a[5]);
-  ops_arg_set(range[0],range[2],args[6],p_a[6]);
-  ops_arg_set(range[0],range[2],args[7],p_a[7]);*/
-
-
 
   for (int nt=0; nt<total_range; nt++) {
 
@@ -990,101 +961,6 @@ void ops_par_loop_opt2(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
     }
   }
 }
-
-
-
-
-//8 args
-template < class T0, class T1, class T2, class T3 , class T4,
-           class T5, class T6, class T7>
-void ops_par_loop_opt3(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
-                                      T5*, T6*, T7*),
-                  char const * name, int dim, int *range,
-                  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4,
-                  ops_arg arg5, ops_arg arg6, ops_arg arg7) {
-
-  char  **p_a[8];
-  int   offs[8][2];
-  int   count[dim];
-
-  ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4,
-                      arg5, arg6, arg7};
-
-  for(int i=0; i<8; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
-
-    if (args[i].stencil->stride[0] == 0) //stride in y as x stride is 0
-    {
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
-    }
-    else if (args[i].stencil->stride[1] == 0) //stride in x as y stride is 0
-    {
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
-  }
-
-  for (int i = 0; i < 8; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
-      p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
-  }
-
-  int total_range = 1;
-  for (int m=0; m<dim; m++) {
-    count[m] = range[2*m+1]-range[2*m];  // number in each dimension
-    total_range *= count[m];
-  }
-  count[dim-1]++;     // extra in last to ensure correct termination
-
-  //set up initial pointers
-  ops_args_set(range[0], range[2],8,args,p_a);
-
-  /*ops_arg_set(range[0],range[2],args[0],p_a[0]);
-  ops_arg_set(range[0],range[2],args[1],p_a[1]);
-  ops_arg_set(range[0],range[2],args[2],p_a[2]);
-  ops_arg_set(range[0],range[2],args[3],p_a[3]);
-  ops_arg_set(range[0],range[2],args[4],p_a[4]);
-  ops_arg_set(range[0],range[2],args[5],p_a[5]);
-  ops_arg_set(range[0],range[2],args[6],p_a[6]);
-  ops_arg_set(range[0],range[2],args[7],p_a[7]);*/
-
-
-  for (int nt=0; nt<total_range; nt++) {
-
-    // call kernel function, passing in pointers to data
-    kernel( (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2], (T3 *)p_a[3] , (T4 *)p_a[4],
-            (T5 *)p_a[5], (T6 *)p_a[6], (T7 *)p_a[7]);
-
-    count[0]--;   // decrement counter
-    int m = 0;    // max dimension with changed index
-
-    while (count[m]==0) {
-      count[m] = range[2*m+1]-range[2*m]; // reset counter
-      m++;                                // next dimension
-      count[m]--;                         // decrement counter
-    }
-
-    // shift pointers to data
-    for (int i=0; i<8; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
-      }
-    }
-  }
-
-  for (int i = 0; i < 8; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
-}
-
 
 //11 args
 template < class T0, class T1, class T2, class T3 , class T4,
