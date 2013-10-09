@@ -61,29 +61,29 @@ void ops_par_loop_opt(void (*kernel)( T0*),
   ops_arg args[1] = {arg0};
 
   for(int i=0; i<1; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) {//stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( (range[1] - args[i].dat->offset[0]) -
-                      (range[0] - args[i].dat->offset[0]) ) +1;
-    }
-    else if (args[i].stencil->stride[0] == 0 && args[i].stencil->stride[1] == 0) {
-      //is this an error to be reported ??
-      offs[i][0] = 0;
-      offs[i][1] = 0;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 1; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -112,20 +112,18 @@ void ops_par_loop_opt(void (*kernel)( T0*),
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<1; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]) ;
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 1; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 1; i++)
+    free(p_a[i]);
 }
 
 
@@ -192,7 +190,6 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
       count[m]--;                         // decrement counter
     }
 
-
     int a = 0;
     // shift pointers to data
     for (int i=0; i<g; i++) {
@@ -208,8 +205,6 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1* ),
 }
 
 
-
-
 template < class T0, class T1, class T2>
 void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*),
                   char const * name, int dim, int *range,
@@ -222,23 +217,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*),
   ops_arg args[3] = {arg0, arg1, arg2};
 
   for(int i=0; i<3; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 3; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -267,20 +268,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*),
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<3; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 3; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 3; i++)
+    free(p_a[i]);
 }
 
 
@@ -377,23 +376,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*),
   ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
 
   for(int i=0; i<5; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 5; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -422,20 +427,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*),
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<5; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 5; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 5; i++)
+    free(p_a[i]);
 }
 
 
@@ -455,23 +458,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
   ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
 
   for(int i=0; i<6; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 6; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -501,19 +510,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<6; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 6; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-    }
-  }
+  for (int i = 0; i < 6; i++)
+    free(p_a[i]);
 }
 
 //7 args
@@ -534,23 +542,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
                       arg5, arg6};
 
   for(int i=0; i<7; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 7; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -580,19 +594,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<7; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]) ;
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 7; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-    }
-  }
+  for (int i = 0; i < 7; i++)
+    free(p_a[i]);
 }
 
 //8 args
@@ -612,23 +625,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
                       arg5, arg6, arg7};
 
   for(int i=0; i<8; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 8; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -658,20 +677,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<8; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 8; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 8; i++)
+    free(p_a[i]);
 }
 
 //11 args
@@ -710,7 +727,6 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
   }
-
 
   int non_gbl[] = {0,0,0,0,0,0,0,0,0,0,0}; //store index of non_gbl args
   int g = 0;
@@ -760,7 +776,7 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
   }
 
   for (int i = 0; i < 11; i++)
-      free(p_a[i]);
+    free(p_a[i]);
 }
 
 
@@ -786,23 +802,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
                       arg10, arg11};
 
   for(int i=0; i<12; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0,0,0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 12; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -833,20 +855,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<12; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 12; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 12; i++)
+    free(p_a[i]);
 }
 
 
@@ -872,24 +892,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
                       arg10, arg11, arg12, arg13};
 
   for(int i=0; i<14; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
-
+  int non_gbl[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 14; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -920,20 +945,18 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<14; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 14; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 2; i++)
+    free(p_a[i]);
 }
 
 
@@ -962,23 +985,29 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
                       arg15, arg16, arg17, arg19, arg19};
 
   for(int i=0; i<20; i++) {
-    offs[i][0] = 1;  //unit step in x dimension
-    offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+    if (args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
 
-    if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-      offs[i][0] = 0;
-      offs[i][1] = args[i].dat->block_size[0];
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+      //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
     }
-    else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-      offs[i][0] = 1;
-      offs[i][1] = -( range[1] - range[0] ) +1;
-    }
-    //printf("offs[i][0] = %d,  offs[i][1] = %d\n", offs[i][0], offs[i][1]);
   }
 
+  int non_gbl[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //store index of non_gbl args
+  int g = 0;
   for (int i = 0; i < 20; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
+    if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));
+      non_gbl[g++] = i;
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
   }
@@ -1011,18 +1040,16 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
       count[m]--;                         // decrement counter
     }
 
+    int a = 0;
     // shift pointers to data
-    for (int i=0; i<20; i++) {
-      for (int np=0; np<args[i].stencil->points; np++) {
-        p_a[i][np] = p_a[i][np] + (args[i].dat->size * offs[i][m]);
+    for (int i=0; i<g; i++) {
+      a = non_gbl[i];
+      for (int np=0; np<args[a].stencil->points; np++) {
+        p_a[a][np] = p_a[a][np] + (args[a].dat->size * offs[a][m]);
       }
     }
   }
 
-  for (int i = 0; i < 20; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      free(p_a[i]);
-
-    }
-  }
+  for (int i = 0; i < 2; i++)
+    free(p_a[i]);
 }
