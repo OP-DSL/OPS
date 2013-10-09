@@ -73,7 +73,7 @@ void initialise_chunk()
                ops_arg_dat(celldy, S2D_00, OPS_WRITE));
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  ops_par_loop_opt2(initialise_volume_xarea_yarea, "initialise_volume_xarea_yarea", 2, rangexy,
+  ops_par_loop_opt(initialise_volume_xarea_yarea, "initialise_volume_xarea_yarea", 2, rangexy,
     ops_arg_dat(volume, S2D_00, OPS_WRITE),
     ops_arg_dat(celldy, sten_self_stride2D_y, OPS_READ),
     ops_arg_dat(xarea, S2D_00, OPS_WRITE),
