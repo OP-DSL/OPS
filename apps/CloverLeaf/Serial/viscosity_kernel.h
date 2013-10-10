@@ -17,7 +17,7 @@ void viscosity_kernel( double **xvel0, double **yvel0,
          limiter,
          pgrad;
 
-  //int self2D_plus1xy[]  = {0,0, 1,0, 0,1, 1,1};
+  //int s2D_00_P10_0P1_P1P1[]  = {0,0, 1,0, 0,1, 1,1};
 
   ugrad = (*xvel0[1] + *xvel0[3]) - (*xvel0[0] + *xvel0[2]);
   vgrad = (*yvel0[2] + *yvel0[3]) - (*yvel0[0] + *yvel0[1]);

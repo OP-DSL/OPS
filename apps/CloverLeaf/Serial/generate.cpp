@@ -51,8 +51,8 @@ void generate()
     ops_arg_dat(vertexy,  sten_self_plus1_stride2D_y, OPS_READ),
     ops_arg_dat(energy0,  S2D_00, OPS_WRITE),
     ops_arg_dat(density0, S2D_00, OPS_WRITE),
-    ops_arg_dat(xvel0,    sten_self2D_plus1xy, OPS_WRITE),
-    ops_arg_dat(yvel0,    sten_self2D_plus1xy, OPS_WRITE),
+    ops_arg_dat(xvel0,    S2D_00_P10_0P1_P1P1, OPS_WRITE),
+    ops_arg_dat(yvel0,    S2D_00_P10_0P1_P1P1, OPS_WRITE),
     ops_arg_dat(cellx,    sten_self_plus1_stride2D_x, OPS_READ),
     ops_arg_dat(celly,    sten_self_plus1_stride2D_y, OPS_READ));
 

@@ -36,6 +36,10 @@
 
 #include "viscosity_kernel.h"
 
+
+
+
+
 void viscosity_func()
 {
   //initialize sizes using global values
@@ -49,8 +53,8 @@ void viscosity_func()
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop_opt(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
-      ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
-      ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
+      ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
+      ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
       ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
       ops_arg_dat(celldy, sten_self_plus1_stride2D_y, OPS_READ),
       ops_arg_dat(pressure, sten_self2D_4point1xy, OPS_READ),

@@ -39,14 +39,11 @@
 
 inline int ops_offs_set(int n_x,
                         int n_y, ops_arg arg){
-
         return
         arg.dat->block_size[0] * //multiply by the number of
         (n_y - arg.dat->offset[1])  // calculate the offset from index 0 for y dim
         +
         (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
-
-
 }
 
 template < class T0>
@@ -282,7 +279,7 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*),
     free(p_a[i]);
 }
 
-
+//4 args
 template < class T0, class T1, class T2, class T3  >
 void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*),
                   char const * name, int dim, int *range,
@@ -627,7 +624,8 @@ void ops_par_loop_opt(void (*kernel)( T0*, T1*, T2*, T3*, T4*,
   for(int i=0; i<8; i++) {
     if (args[i].stencil!=NULL) {
       offs[i][0] = 1;  //unit step in x dimension
-      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+      offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) -
+                   ops_offs_set(range[1],range[2], args[i]) +1;
 
       if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
         offs[i][0] = 0;

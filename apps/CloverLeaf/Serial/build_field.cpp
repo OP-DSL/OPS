@@ -137,6 +137,12 @@ void build_field()
   int s2D_00_0M2[]     = {0,0, 0,-2};
   int s2D_00_P30[]     = {0,0, 3,0};
   int s2D_00_0P3[]     = {0,0, 0,3};
+  int s2D_00_M30[]     = {0,0, -3,0};
+  int s2D_00_0M3[]     = {0,0, 0,-3};
+  int s2D_00_P40[]     = {0,0, 4,0};
+  int s2D_00_0P4[]     = {0,0, 0,4};
+  int s2D_00_M40[]     = {0,0, -4,0};
+  int s2D_00_0M4[]     = {0,0, 0,-4};
 
   S2D_00         = ops_decl_stencil( 2, 1, s2D, "00");
 
@@ -157,31 +163,23 @@ void build_field()
   S2D_00_M20     = ops_decl_stencil( 2, 2, s2D_00_M20, "0,0:-2,0");
   S2D_00_0M2     = ops_decl_stencil( 2, 2, s2D_00_0M2, "0,0:0,-2");
 
-
   S2D_00_P30 = ops_decl_stencil( 2, 2, s2D_00_P30, "0,0:3,0");
   S2D_00_0P3 = ops_decl_stencil( 2, 2, s2D_00_0P3, "0,0:0,3");
 
-  int self2D_minus3x[] = {0,0, -3,0};
-  sten_self2D_minus3x = ops_decl_stencil( 2, 2, self2D_minus3x, "self2D_minus3x");
+  S2D_00_M30 = ops_decl_stencil( 2, 2, s2D_00_M30, "0,0:-3,0");
+  S2D_00_0M3 = ops_decl_stencil( 2, 2, s2D_00_0M3, "0,0:0,-3");
 
-  int self2D_minus3y[] = {0,0, 0,-3};
-  sten_self2D_minus3y = ops_decl_stencil( 2, 2, self2D_minus3y, "self2D_minus3y");
+  S2D_00_P40 = ops_decl_stencil( 2, 2, s2D_00_P40, "0,0:4,0");
+  S2D_00_0P4 = ops_decl_stencil( 2, 2, s2D_00_0P4, "0,0,0,-4");
 
-
-  int self2D_plus4x[] = {0,0, 4,0};
-  int self2D_plus4y[] = {0,0, 0,4};
-  int self2D_minus4x[] = {0,0, -4,0};
-  int self2D_minus4y[] = {0,0, 0,-4};
-
-  sten_self2D_plus4x = ops_decl_stencil( 2, 2, self2D_plus4x, "self2D_plus4x");
-  sten_self2D_plus4y = ops_decl_stencil( 2, 2, self2D_plus4y, "self2D_plus4y");
-  sten_self2D_minus4x = ops_decl_stencil( 2, 2, self2D_minus4x, "self2D_minus4x");
-  sten_self2D_minus4y = ops_decl_stencil( 2, 2, self2D_minus4y, "self2D_minus4y");
+  S2D_00_M40 = ops_decl_stencil( 2, 2, s2D_00_M40, "0,0:=4,0");
+  S2D_00_0M4 = ops_decl_stencil( 2, 2, s2D_00_0M4, "0,0:0,-4");
 
 
-  int self2D_plus1xy[]  = {0,0, 1,0, 0,1, 1,1};
+  int s2D_00_P10_0P1_P1P1[]  = {0,0, 1,0, 0,1, 1,1};
+  S2D_00_P10_0P1_P1P1 = ops_decl_stencil( 2, 4, s2D_00_P10_0P1_P1P1, "0,0:1,0:0,1:1,1");
+
   int self2D_minus1xy[]  = {0,0, -1,0, 0,-1, -1,-1};
-  sten_self2D_plus1xy = ops_decl_stencil( 2, 4, self2D_plus1xy, "self2D_plus1xy");
   sten_self2D_minus1xy = ops_decl_stencil( 2, 4, self2D_minus1xy, "self2D_minus1xy");
 
   int self2D_plus1x_minus1y[] = {0,0, 1,0, 0,-1, 1,-1};

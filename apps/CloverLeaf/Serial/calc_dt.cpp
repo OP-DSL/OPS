@@ -61,10 +61,10 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(soundspeed, S2D_00, OPS_READ),
     ops_arg_dat(viscosity, S2D_00, OPS_READ),
     ops_arg_dat(density0, S2D_00, OPS_READ),
-    ops_arg_dat(xvel0, sten_self2D_plus1xy, OPS_READ),
+    ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
     ops_arg_dat(xarea, S2D_00_P10, OPS_READ),
     ops_arg_dat(volume, S2D_00, OPS_READ),
-    ops_arg_dat(yvel0, sten_self2D_plus1xy, OPS_READ),
+    ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
     ops_arg_dat(yarea, S2D_00_0P1, OPS_READ),
     ops_arg_dat(work_array1, S2D_00, OPS_WRITE) );
 

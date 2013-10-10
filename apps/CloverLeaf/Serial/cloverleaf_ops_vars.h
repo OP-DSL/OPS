@@ -73,15 +73,15 @@
 
   ops_stencil S2D_00_P30;
   ops_stencil S2D_00_0P3;
-  ops_stencil sten_self2D_minus3x;
-  ops_stencil sten_self2D_minus3y;
+  ops_stencil S2D_00_M30;
+  ops_stencil S2D_00_0M3;
 
-  ops_stencil sten_self2D_plus4x;
-  ops_stencil sten_self2D_plus4y;
-  ops_stencil sten_self2D_minus4x;
-  ops_stencil sten_self2D_minus4y;
+  ops_stencil S2D_00_P40;
+  ops_stencil S2D_00_0P4;
+  ops_stencil S2D_00_M40;
+  ops_stencil S2D_00_0M4;
 
-  ops_stencil sten_self2D_plus1xy;
+  ops_stencil S2D_00_P10_0P1_P1P1;
   ops_stencil sten_self2D_minus1xy;
 
   ops_stencil sten_self2D_plus1x_minus1y;

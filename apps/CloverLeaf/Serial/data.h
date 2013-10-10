@@ -130,15 +130,15 @@ extern ops_stencil S2D_00_0M2;
 
 extern ops_stencil S2D_00_P30;
 extern ops_stencil S2D_00_0P3;
-extern ops_stencil sten_self2D_minus3x;
-extern ops_stencil sten_self2D_minus3y;
+extern ops_stencil S2D_00_M30;
+extern ops_stencil S2D_00_0M3;
 
-extern ops_stencil sten_self2D_plus4x;
-extern ops_stencil sten_self2D_plus4y;
-extern ops_stencil sten_self2D_minus4x;
-extern ops_stencil sten_self2D_minus4y;
+extern ops_stencil S2D_00_P40;
+extern ops_stencil S2D_00_0P4;
+extern ops_stencil S2D_00_M40;
+extern ops_stencil S2D_00_0M4;
 
-extern ops_stencil sten_self2D_plus1xy;
+extern ops_stencil S2D_00_P10_0P1_P1P1;
 extern ops_stencil sten_self2D_minus1xy;
 
 extern ops_stencil sten_self2D_plus1x_minus1y;
