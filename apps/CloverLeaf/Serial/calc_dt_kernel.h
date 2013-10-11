@@ -13,13 +13,12 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
 
   cc = (**soundspeed) * (**soundspeed);
   cc = cc + 2.0 * (**viscosity)/(**density0);
-
   cc = MAX(sqrt(cc),g_small);
   dtct = dtc_safe * MIN(dsx,dsy)/cc;
 
   div=0.0;
 
-  //00 01 10 11
+  //00_10_01_11
 
   dv1 = (*xvel0[0] + *xvel0[2]) * (*xarea[0]);
   dv2 = (*xvel0[1] + *xvel0[3]) * (*xarea[1]);

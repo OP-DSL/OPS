@@ -64,7 +64,22 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 0;
   update_halo(fields,2);
 
+  //if(step == 12)
+  //{
+    //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
+  //}
+
   advec_cell(sweep_number, direction);
+
+  if(step == 7)
+  {
+    //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+    //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
+    exit(0);
+  }
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;

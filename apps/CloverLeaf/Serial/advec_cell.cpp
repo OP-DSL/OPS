@@ -99,6 +99,8 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
       );
 
+
+
     ops_par_loop_opt(advec_cell_xdir_kernel4, "advec_cell_xdir_kernel4", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, OPS_RW),
       ops_arg_dat(energy1, S2D_00, OPS_RW),

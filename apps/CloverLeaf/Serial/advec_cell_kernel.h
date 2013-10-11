@@ -18,7 +18,6 @@ void advec_cell_xdir_kernel2( double **pre_vol, double **post_vol, double **volu
 
 }
 
-
 void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
                               double **vertexdx,
                               double **density1, double **energy1 ,
@@ -48,7 +47,13 @@ void advec_cell_xdir_kernel3( double **vol_flux_x, double **pre_vol, int** xx,
     donor    = 0; //j
     downwind = 2; //j-1
     dif      = upwind;
-  } else return;
+  } else /*{ //*xx[1] >= x_max+2 , then need 0
+    upwind   = 0; //xmax+2
+    donor    = 0; //j
+    downwind = 2; //j-1
+    dif      = upwind;
+  }*/
+  return;
 
   sigmat = fabs(**vol_flux_x)/(*pre_vol[donor]);
   sigma3 = (1.0 + sigmat)*((*vertexdx[0])/(*vertexdx[dif]));
@@ -211,7 +216,13 @@ void advec_cell_ydir_kernel3( double **vol_flux_y, double **pre_vol, int** yy,
     donor    = 0; //k
     downwind = 2; //k-1
     dif      = upwind;
-  } else return;
+  } else /*{ //*yy[1] >= y_max+2 , then need 0
+    upwind   = 0; //y_max
+    donor    = 0; //k
+    downwind = 2; //k-1
+    dif      = upwind;
+  }*/
+  return;
 
   sigmat = fabs(**vol_flux_y)/(*pre_vol[donor]);
   sigma3 = (1.0 + sigmat) * ((*vertexdy[0])/(*vertexdy[dif]));
