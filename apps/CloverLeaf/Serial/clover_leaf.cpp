@@ -216,7 +216,7 @@ int main(int argc, char **argv)
       ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
       int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
       ops_par_loop_opt(test_kernel2, "test_kernel2", 2, rangexy_inner,
-      ops_arg_dat(density0, sten_self_stride2D_x, OPS_READ));
+      ops_arg_dat(density0, s2D_00_STRID2D_X, OPS_READ));
       exit(0);
     }*/
   }

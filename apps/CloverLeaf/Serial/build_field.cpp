@@ -122,7 +122,7 @@ void build_field()
   //
   //Declare commonly used stencils
   //
-  int s2D[]            = {0,0};
+  int s2D_00[]            = {0,0};
   int s2D_00_P10[]     = {0,0, 1,0};
   int s2D_00_0P1[]     = {0,0, 0,1};
   int s2D_00_M10[]     = {0,0, -1,0};
@@ -144,11 +144,28 @@ void build_field()
   int s2D_00_M40[]     = {0,0, -4,0};
   int s2D_00_0M4[]     = {0,0, 0,-4};
 
+  int s2D_00_P10_0P1_P1P1[]  = {0,0, 1,0, 0,1, 1,1};
+  int s2D_00_M10_0M1_M1M1[]  = {0,0, -1,0, 0,-1, -1,-1};
+  int s2D_00_P10_0M1_P1M1[] = {0,0, 1,0, 0,-1, 1,-1};
+  int s2D_00_0P1_M10_M1P1[] = {0,0, 0,1, -1,0, -1,1};
+
+  int s2D_10_M10_01_0M1[]  = {1,0, -1,0, 0,1, 0,-1};
+
+  int s2D_00_P10_M10_M20[] = {0,0, 1,0, -1,0, -2,0};
+  int s2D_00_0P1_0M1_0M2[] = {0,0, 0,1, 0,-1, 0,-2};
+  int s2D_00_P10_P20_M10[] = {0,0, 1,0, 2,0, -1,0};
+  int s2D_00_0P1_0P2_0M1[] = {0,0, 0,1, 0,2, 0,-1};
+
 
   int stride2D_x[] = {1,0};
   int stride2D_y[] = {0,1};
 
-  S2D_00         = ops_decl_stencil( 2, 1, s2D, "00");
+  int stride2D_null[] = {0,0};
+
+  int xmax2D[] = {x_max+2,0};
+  int ymax2D[] = {0,y_max+2};
+
+  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   S2D_00_P10     = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");
   S2D_00_0P1     = ops_decl_stencil( 2, 2, s2D_00_0P1, "0,0:0,1");
@@ -167,60 +184,37 @@ void build_field()
   S2D_00_M20     = ops_decl_stencil( 2, 2, s2D_00_M20, "0,0:-2,0");
   S2D_00_0M2     = ops_decl_stencil( 2, 2, s2D_00_0M2, "0,0:0,-2");
 
-  S2D_00_P30 = ops_decl_stencil( 2, 2, s2D_00_P30, "0,0:3,0");
-  S2D_00_0P3 = ops_decl_stencil( 2, 2, s2D_00_0P3, "0,0:0,3");
+  S2D_00_P30     = ops_decl_stencil( 2, 2, s2D_00_P30, "0,0:3,0");
+  S2D_00_0P3     = ops_decl_stencil( 2, 2, s2D_00_0P3, "0,0:0,3");
 
-  S2D_00_M30 = ops_decl_stencil( 2, 2, s2D_00_M30, "0,0:-3,0");
-  S2D_00_0M3 = ops_decl_stencil( 2, 2, s2D_00_0M3, "0,0:0,-3");
+  S2D_00_M30     = ops_decl_stencil( 2, 2, s2D_00_M30, "0,0:-3,0");
+  S2D_00_0M3     = ops_decl_stencil( 2, 2, s2D_00_0M3, "0,0:0,-3");
 
-  S2D_00_P40 = ops_decl_stencil( 2, 2, s2D_00_P40, "0,0:4,0");
-  S2D_00_0P4 = ops_decl_stencil( 2, 2, s2D_00_0P4, "0,0,0,-4");
+  S2D_00_P40     = ops_decl_stencil( 2, 2, s2D_00_P40, "0,0:4,0");
+  S2D_00_0P4     = ops_decl_stencil( 2, 2, s2D_00_0P4, "0,0,0,-4");
 
-  S2D_00_M40 = ops_decl_stencil( 2, 2, s2D_00_M40, "0,0:=4,0");
-  S2D_00_0M4 = ops_decl_stencil( 2, 2, s2D_00_0M4, "0,0:0,-4");
+  S2D_00_M40     = ops_decl_stencil( 2, 2, s2D_00_M40, "0,0:=4,0");
+  S2D_00_0M4     = ops_decl_stencil( 2, 2, s2D_00_0M4, "0,0:0,-4");
 
-
-  int s2D_00_P10_0P1_P1P1[]  = {0,0, 1,0, 0,1, 1,1};
   S2D_00_P10_0P1_P1P1 = ops_decl_stencil( 2, 4, s2D_00_P10_0P1_P1P1, "0,0:1,0:0,1:1,1");
+  S2D_00_M10_0M1_M1M1 = ops_decl_stencil( 2, 4, s2D_00_M10_0M1_M1M1, "0,0:-1,0:0,-1:-1,-1");
+  S2D_00_P10_0M1_P1M1= ops_decl_stencil( 2, 4, s2D_00_P10_0M1_P1M1, "0,0:1,0:0,-1:1,-1");
+  S2D_00_0P1_M10_M1P1= ops_decl_stencil( 2, 4, s2D_00_0P1_M10_M1P1, "0,0:0,1:-1,0:-1,1");
 
-  int self2D_minus1xy[]  = {0,0, -1,0, 0,-1, -1,-1};
-  sten_self2D_minus1xy = ops_decl_stencil( 2, 4, self2D_minus1xy, "self2D_minus1xy");
+  S2D_10_M10_01_0M1 = ops_decl_stencil( 2, 4, s2D_10_M10_01_0M1, "1,0:-1,0:0,1:0,-1");
 
-  int self2D_plus1x_minus1y[] = {0,0, 1,0, 0,-1, 1,-1};
-  sten_self2D_plus1x_minus1y= ops_decl_stencil( 2, 4, self2D_plus1x_minus1y, "self2D_plus1x_minus1y");
+  S2D_00_P10_M10_M20 = ops_decl_stencil( 2, 4, s2D_00_P10_M10_M20, "0,0:1,0:-1,0:-2,0");
+  S2D_00_P10_M10_M20_STRIDE2D_X = ops_decl_strided_stencil( 2, 4, s2D_00_P10_M10_M20, stride2D_x, "self_stride2D_x");
 
+  S2D_00_0P1_0M1_0M2 = ops_decl_stencil( 2, 4, s2D_00_0P1_0M1_0M2, "0,0:0,1:0-1:0,-2");
+  S2D_00_0P1_0M1_0M2_STRID2D_Y = ops_decl_strided_stencil( 2, 4, s2D_00_0P1_0M1_0M2, stride2D_y, "self_stride2D_y");
 
-  int self2D_plus1y_minus1x[] = {0,0, 0,1, -1,0, -1,1};
-  sten_self2D_plus1y_minus1x= ops_decl_stencil( 2, 4, self2D_plus1y_minus1x, "self2D_plus1y_minus1x");
-
-
-  int self2D_4point1xy[]  = {1,0, -1,0, 0,1, 0,-1};
-  sten_self2D_4point1xy = ops_decl_stencil( 2, 4, self2D_4point1xy, "self2D_4point1xy");
-
-
-  int self2D_plus_1_minus1_2_x[] = {0,0, 1,0, -1,0, -2,0};
-  sten_self2D_plus_1_minus1_2_x = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_x, "self2D_plus_1_minus1_2_x");
-  sten_self_plus_1_minus1_2_x_stride2D_x = ops_decl_strided_stencil( 2, 4, self2D_plus_1_minus1_2_x, stride2D_x, "self_stride2D_x");
-
-  int self2D_plus_1_minus1_2_y[] = {0,0, 0,1, 0,-1, 0,-2};
-  sten_self2D_plus_1_minus1_2_y = ops_decl_stencil( 2, 4, self2D_plus_1_minus1_2_y, "self2D_plus_1_minus1_2_y");
-  sten_self_plus_1_minus1_2_y_stride2D_y = ops_decl_strided_stencil( 2, 4, self2D_plus_1_minus1_2_y, stride2D_y, "self_stride2D_y");
-
-  int self2D_plus_1_2_minus1_x[] = {0,0, 1,0, 2,0, -1,0};
-  sten_self2D_plus_1_2_minus1x = ops_decl_stencil( 2, 4, self2D_plus_1_2_minus1_x, "self2D_plus_1_2_minus1_x");
-
-  int self2D_plus_1_2_minus1_y[] = {0,0, 0,1, 0,2, 0,-1};
-  sten_self2D_plus_1_2_minus1y = ops_decl_stencil( 2, 4, self2D_plus_1_2_minus1_y, "self2D_plus_1_2_minus1_y");
+  S2D_00_P10_P20_M10 = ops_decl_stencil( 2, 4, s2D_00_P10_P20_M10, "0,0:1,0:2,0:-1,0}");
+  S2D_00_0P1_0P2_0M1 = ops_decl_stencil( 2, 4, s2D_00_0P1_0P2_0M1, "0,0,:0,1,:0,2,:0,-1");
 
 
-  int stride2D_null[] = {0,0};
-
-  int xmax2D[] = {x_max+2,0};
-  int ymax2D[] = {0,y_max+2};
-
-
-  sten_self_stride2D_x = ops_decl_strided_stencil( 2, 1, s2D, stride2D_x, "self_stride2D_x");
-  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, s2D, stride2D_y, "self_stride2D_y");
+  s2D_00_STRID2D_X = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_x, "self_stride2D_x");
+  sten_self_stride2D_y = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_y, "self_stride2D_y");
 
   sten_self_plus1_stride2D_x = ops_decl_strided_stencil( 2, 2, s2D_00_P10, stride2D_x, "self_stride2D_x");
   sten_self_plus1_stride2D_y = ops_decl_strided_stencil( 2, 2, s2D_00_0P1, stride2D_y, "self_stride2D_y");

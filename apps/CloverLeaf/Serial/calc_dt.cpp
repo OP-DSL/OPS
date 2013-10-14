@@ -83,7 +83,7 @@ void calc_dt(double* local_dt, char* local_control,
   if(*local_dt < dtmin) small = 1;
 
   ops_par_loop_opt(calc_dt_get_kernel, "calc_dt_get_kernel", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
+    ops_arg_dat(cellx, s2D_00_STRID2D_X, OPS_READ),
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
     ops_arg_gbl(xl_pos, 1, OPS_WRITE),
     ops_arg_gbl(yl_pos, 1, OPS_WRITE));
@@ -95,10 +95,10 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("timestep : %lf\n",*local_dt);
 
     ops_par_loop_opt(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
+    ops_arg_dat(cellx, s2D_00_STRID2D_X, OPS_READ),
     ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
-    ops_arg_dat(xvel0, sten_self2D_4point1xy, OPS_READ),
-    ops_arg_dat(yvel0, sten_self2D_4point1xy, OPS_READ),
+    ops_arg_dat(xvel0, S2D_10_M10_01_0M1, OPS_READ),
+    ops_arg_dat(yvel0, S2D_10_M10_01_0M1, OPS_READ),
     ops_arg_dat(density0, S2D_00, OPS_READ),
     ops_arg_dat(energy0, S2D_00, OPS_READ),
     ops_arg_dat(pressure, S2D_00, OPS_READ),

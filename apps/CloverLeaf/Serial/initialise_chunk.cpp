@@ -76,6 +76,6 @@ void initialise_chunk()
     ops_arg_dat(volume, S2D_00, OPS_WRITE),
     ops_arg_dat(celldy, sten_self_stride2D_y, OPS_READ),
     ops_arg_dat(xarea, S2D_00, OPS_WRITE),
-    ops_arg_dat(celldx, sten_self_stride2D_x, OPS_READ),
+    ops_arg_dat(celldx, s2D_00_STRID2D_X, OPS_READ),
     ops_arg_dat(yarea, S2D_00, OPS_WRITE));
 }
