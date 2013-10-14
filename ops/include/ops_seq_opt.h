@@ -48,6 +48,109 @@ inline int ops_offs_set(int n_x,
         (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
 }
 
+inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+
+    for (int i = 0; i < arg.stencil->points; i++){
+      p_arg[i] =
+         arg.data + //base of 1D array
+         arg.dat->size * ( //multiply by the number of bytes per element
+         (n_x - arg.dat->offset[0]) * //calculate the offset from index 0
+         arg.stencil->stride[0]  + // jump in strides ??
+         arg.stencil->stencil[i * arg.stencil->dims + 0] //get the value at the ith stencil point
+         );
+    }
+  } else {
+    *p_arg = arg.data;
+  }
+}
+
+inline void ops_arg_set(int n_x,
+                        int n_y, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+    for (int i = 0; i < arg.stencil->points; i++){
+      p_arg[i] =
+        arg.data + //base of 2D array
+        //y dimension -- get to the correct y line
+        arg.dat->size * arg.dat->block_size[0] * ( //multiply by the number of
+                                                    //bytes per element and xdim block size
+
+        //(n_y - arg.dat->offset[1]) * // calculate the offset from index 0 for y dim
+        //arg.stencil->stride[1] + // jump in strides in y dim ??
+        n_y * arg.stencil->stride[1] - arg.dat->offset[1] +
+        arg.stencil->stencil[i*arg.stencil->dims + 1]) //get the value at the ith
+                                                       //stencil point "+ 1" is the y dim
+        +
+        //x dimension - get to the correct x point on the y line
+        arg.dat->size * ( //multiply by the number of bytes per element
+
+        //(n_x - arg.dat->offset[0]) * //calculate the offset from index 0 for x dim
+        //arg.stencil->stride[0] + // jump in strides in x dim ??
+        n_x * arg.stencil->stride[0] - arg.dat->offset[0] +
+        arg.stencil->stencil[i*arg.stencil->dims + 0] //get the value at the ith
+                                                      //stencil point "+ 0" is the x dim
+      );
+    }
+  } else {
+    *p_arg = arg.data;
+  }
+}
+
+inline void ops_arg_set(int n_x,
+                        int n_y,
+                        int n_z, ops_arg arg, char **p_arg){
+  if (arg.stencil!=NULL) {
+    for (int i = 0; i < arg.stencil->points; i++)
+      p_arg[i] =
+      arg.data +
+      //z dimension - get to the correct z plane
+      arg.dat->size * arg.dat->block_size[1] * arg.dat->block_size[0] * (
+      (n_z - arg.dat->offset[2]) *
+      arg.stencil->stride[2] +
+      arg.stencil->stencil[i*arg.stencil->dims + 2])
+      +
+      //y dimension -- get to the correct y line on the z plane
+      arg.dat->size * arg.dat->block_size[0] * (
+      (n_y - arg.dat->offset[1]) *
+      arg.stencil->stride[1] +
+      arg.stencil->stencil[i*arg.stencil->dims + 1])
+      +
+      //x dimension - get to the correct x point on the y line
+      arg.dat->size * (
+      (n_x - arg.dat->offset[0]) *
+      arg.stencil->stride[0] +
+      arg.stencil->stencil[i*arg.stencil->dims + 0]
+      );
+  } else {
+    *p_arg = arg.data;
+  }
+}
+
+
+
+inline void ops_args_set(int iter_x,
+                         int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, args[n], p_a[n]);
+  }
+}
+
+inline void ops_args_set(int iter_x,
+                         int iter_y,
+                         int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, iter_y, args[n], p_a[n]);
+  }
+}
+
+inline void ops_args_set(int iter_x,
+                         int iter_y,
+                         int iter_z, int nargs, ops_arg *args, char ***p_a){
+  for (int n=0; n<nargs; n++) {
+    ops_arg_set(iter_x, iter_y, iter_z, args[n], p_a[n]);
+  }
+}
+
 
 
 //
