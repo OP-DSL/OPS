@@ -127,7 +127,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_P10, OPS_WRITE),
         ops_arg_dat(work_array4/*advec_vel*/, S2D_00, OPS_RW),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, OPS_WRITE),
-        ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRIDE2D_X, OPS_READ),
+        ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRID2D_X, OPS_READ),
         ops_arg_dat(vel1, S2D_00_P10_P20_M10, OPS_READ));
     }
     else {

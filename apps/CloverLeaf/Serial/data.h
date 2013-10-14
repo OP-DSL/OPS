@@ -146,17 +146,17 @@ extern ops_stencil S2D_00_0P1_M10_M1P1;
 
 extern ops_stencil S2D_10_M10_01_0M1;
 
-extern ops_stencil s2D_00_STRID2D_X;
-extern ops_stencil sten_self_stride2D_y;
+extern ops_stencil S2D_00_STRID2D_X;
+extern ops_stencil S2D_00_STRID2D_Y;
 
-extern ops_stencil sten_self_plus1_stride2D_x;
-extern ops_stencil sten_self_plus1_stride2D_y;
+extern ops_stencil s2D_00_P10_STRID2D_X;
+extern ops_stencil S2D_00_0P1_STRID2D_Y;
 
-extern ops_stencil sten_self_minus1_stride2D_x;
-extern ops_stencil sten_self_minus1_stride2D_y;
+extern ops_stencil S2D_00_M10_STRID2D_X;
+extern ops_stencil S2D_00_0M1_STRID2D_Y;
 
 extern ops_stencil S2D_00_P10_M10_M20;
-extern ops_stencil S2D_00_P10_M10_M20_STRIDE2D_X;
+extern ops_stencil S2D_00_P10_M10_M20_STRID2D_X;
 extern ops_stencil S2D_00_0P1_0M1_0M2;
 extern ops_stencil S2D_00_0P1_0M1_0M2_STRID2D_Y;
 
