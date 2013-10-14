@@ -81,7 +81,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
       );
 
-    ops_par_loop(advec_cell_xdir_kernel3a, "advec_cell_xdir_kernel3a", 2, rangexy_inner_plus2x,
+    /*ops_par_loop(advec_cell_xdir_kernel3a, "advec_cell_xdir_kernel3a", 2, rangexy_inner_plus2x,
       ops_arg_dat(vol_flux_x, S2D_00, OPS_READ),
       ops_arg_dat(work_array1, sten_self2D_plus_1_minus1_2_x, OPS_READ),
       ops_arg_dat(xx, sten_self_plus1_stride2D_x, OPS_READ),
@@ -97,7 +97,7 @@ void advec_cell(int sweep_number, int dir)
 
       ops_arg_dat(mass_flux_x, S2D_00, OPS_WRITE),
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
-      );
+      );*/
 
 
 
@@ -147,7 +147,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
       );
 
-    ops_par_loop(advec_cell_ydir_kernel3a, "advec_cell_ydir_kernel3a", 2, rangexy_inner_plus2y,
+    /*ops_par_loop(advec_cell_ydir_kernel3a, "advec_cell_ydir_kernel3a", 2, rangexy_inner_plus2y,
       ops_arg_dat(vol_flux_y, S2D_00, OPS_READ),
       ops_arg_dat(work_array1, sten_self2D_plus_1_minus1_2_y, OPS_READ),
       ops_arg_dat(yy, sten_self_plus1_stride2D_y, OPS_READ),
@@ -163,7 +163,7 @@ void advec_cell(int sweep_number, int dir)
 
       ops_arg_dat(mass_flux_y, S2D_00, OPS_WRITE),
       ops_arg_dat(work_array7, S2D_00, OPS_WRITE)
-      );
+      );*/
 
 
     ops_par_loop_opt(advec_cell_ydir_kernel4, "advec_cell_ydir_kernel4", 2, rangexy_inner,

@@ -93,7 +93,6 @@ void ops_par_loop_idealgas (char const * name, int dim, int *range,
     for (int np=0; np<args[3].stencil->points; np++) p_a[3][np] += (args[3].dat->size * offs[3][1]);
   }
 
-
   for (int i = 0; i < 4; i++)
     free(p_a[i]);
 }
