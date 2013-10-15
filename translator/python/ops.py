@@ -32,9 +32,9 @@ import re
 import datetime
 
 # import OpenMP and CUDA code generation functions
-#from op2_gen_seq import op2_gen_seq
-#from op2_gen_openmp import op2_gen_openmp
-#from op2_gen_cuda import op2_gen_cuda
+from ops_gen_seq import ops_gen_seq
+#from ops_gen_openmp import ops_gen_openmp
+#from ops_gen_cuda import ops_gen_cuda
 
 
 # from http://stackoverflow.com/a/241506/396967
@@ -473,7 +473,7 @@ def main():
         # finally, generate target-specific kernel files
         #
 
-        #ops_gen_seq(str(sys.argv[1]), date, consts, kernels)
+        ops_gen_seq(str(sys.argv[1]), date, kernels)
         #ops_gen_openmp(str(sys.argv[1]), date, consts, kernels)
         #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
