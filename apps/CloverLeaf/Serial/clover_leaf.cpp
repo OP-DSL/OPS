@@ -179,8 +179,6 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-
-
     timestep();
 
     PdV(TRUE);

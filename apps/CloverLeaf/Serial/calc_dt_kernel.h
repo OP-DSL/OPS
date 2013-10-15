@@ -47,19 +47,19 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
 }
 
 
-void calc_dt_min_kernel(double** dt_min /*dt_min is work_array1*/,
+void calc_dt_kernel_min(double** dt_min /*dt_min is work_array1*/,
                     double** dt_min_val) {
   if(**dt_min < **dt_min_val)
     **dt_min_val = **dt_min;
 }
 
-void calc_dt_get_kernel(double** cellx, double** celly,
+void calc_dt_kernel_get(double** cellx, double** celly,
                         double** xl_pos, double** yl_pos) {
   **xl_pos = **cellx;
   **yl_pos = **celly;
 }
 
-void calc_dt_print_kernel(double** cellx, double** celly,
+void calc_dt_kernel_print(double** cellx, double** celly,
                         double** xvel0, double** yvel0,
                         double** density0, double** energy0,
                         double** pressure, double** soundspeed) {
