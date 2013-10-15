@@ -307,9 +307,29 @@ def main():
         repeat = False
         rep1 = False
         rep2 = False
-        ##
-        ##todo
-        ##
+        which_file = -1
+        for nk in range(0, nkernels):
+          rep1 = kernels[nk]['name'] == name and \
+            kernels[nk]['nargs'] == nargs and \
+            kernels[nk]['dim'] == dim and \
+            kernels[nk]['range'] == _range
+          if rep1:
+            rep2 = True
+            for arg in range(0, nargs):
+                rep2 = rep2 and \
+                    kernels[nk]['var'][arg] == var[arg] and \
+                    kernels[nk]['stens'][arg] == stens[arg] and \
+                    kernels[nk]['dims'][arg] == dims[arg] and \
+                    kernels[nk]['accs'][arg] == accs[arg]
+
+            if rep2:
+              print 'repeated kernel with compatible arguments: ' + \
+                    kernels[nk]['name'],
+              repeat = True
+              which_file = nk
+            else:
+              print 'repeated kernel with incompatible arguments: ERROR'
+              break
 
 
         #
@@ -317,7 +337,7 @@ def main():
         #
 
         ##
-        ##todo
+        ##todo -- not sure what are interesting here
         ##
 
         #
@@ -328,7 +348,8 @@ def main():
             nkernels = nkernels + 1
             temp = {'name': name,
                     'nargs': nargs,
-                    'dims': dim,
+                    'dim': dim,
+                    'dims': dims,
                     'stens': stens,
                     'var': var,
                     'accs': accs,
@@ -373,57 +394,57 @@ def main():
 
         # process header and loops
         for loc in range(0, len(locs)):
-            if locs[loc] != -1:
-                fid.write(text[loc_old:locs[loc] - 1])
-                loc_old = locs[loc] - 1
+          if locs[loc] != -1:
+              fid.write(text[loc_old:locs[loc] - 1])
+              loc_old = locs[loc] - 1
 
-            indent = ''
-            ind = 0
-            while 1:
-                if text[locs[loc] - ind] == '\n':
-                    break
-                indent = indent + ' '
-                ind = ind + 1
+          indent = ''
+          ind = 0
+          while 1:
+              if text[locs[loc] - ind] == '\n':
+                  break
+              indent = indent + ' '
+              ind = ind + 1
 
-            if (locs[loc] in loc_header) and (locs[loc] != -1):
-                fid.write(' "ops_lib_cpp.h"\n\n')
-                fid.write('//\n// ops_par_loop declarations\n//\n')
-                for k_iter in range(0, len(kernels_in_files[a - 1])):
-                    k = kernels_in_files[a - 1][k_iter]
-                    line = '\nvoid ops_par_loop_' + \
-                        kernels[k]['name'] + '(char const *, int , int*, \n'
-                    for n in range(1, kernels[k]['nargs']):
-                        line = line + '  ops_arg,\n'
-                    line = line + '  ops_arg );\n'
-                    fid.write(line)
+          if (locs[loc] in loc_header) and (locs[loc] != -1):
+              fid.write(' "ops_lib_cpp.h"\n\n')
+              fid.write('//\n// ops_par_loop declarations\n//\n')
+              for k_iter in range(0, len(kernels_in_files[a - 1])):
+                  k = kernels_in_files[a - 1][k_iter]
+                  line = '\nvoid ops_par_loop_' + \
+                      kernels[k]['name'] + '(char const *, int , int*, \n'
+                  for n in range(1, kernels[k]['nargs']):
+                      line = line + '  ops_arg,\n'
+                  line = line + '  ops_arg );\n'
+                  fid.write(line)
 
-                fid.write('\n')
-                loc_old = locs[loc] + header_len
-                continue
-
-            if locs[loc] in loc_loops:
-              indent = indent + ' ' * len('ops_par_loop')
-              endofcall = text.find(';', locs[loc])
-              curr_loop = loc_loops.index(locs[loc])
-              name = loop_args[curr_loop]['name1']
-              line = str(' ops_par_loop_' + name + '(' +
-                         loop_args[curr_loop]['name2'] + ', ' +
-                         loop_args[curr_loop]['dim'] + ', ' +
-                         loop_args[curr_loop]['range'] + ',\n' + indent)
-
-              for arguments in range(0, loop_args[curr_loop]['nargs']):
-                  elem = loop_args[curr_loop]['args'][arguments]
-                  if elem['type'] == 'ops_arg_dat':
-                      line = line + elem['type'] + '(' + elem['dat'] + \
-                          ', ' + elem['sten'] +', ' + elem['acc'] + '),\n' + indent
-                  elif elem['type'] == 'ops_arg_gbl':
-                      line = line + elem['type'] + '(' + elem['data'] + \
-                          ', ' + elem['dim'] + ', ' + elem['acc'] + '),\n' + indent
-
-              fid.write(line[0:-len(indent) - 2] + ');')
-
-              loc_old = endofcall + 1
+              fid.write('\n')
+              loc_old = locs[loc] + header_len
               continue
+
+          if locs[loc] in loc_loops:
+            indent = indent + ' ' * len('ops_par_loop')
+            endofcall = text.find(';', locs[loc])
+            curr_loop = loc_loops.index(locs[loc])
+            name = loop_args[curr_loop]['name1']
+            line = str(' ops_par_loop_' + name + '(' +
+                       loop_args[curr_loop]['name2'] + ', ' +
+                       loop_args[curr_loop]['dim'] + ', ' +
+                       loop_args[curr_loop]['range'] + ',\n' + indent)
+
+            for arguments in range(0, loop_args[curr_loop]['nargs']):
+                elem = loop_args[curr_loop]['args'][arguments]
+                if elem['type'] == 'ops_arg_dat':
+                    line = line + elem['type'] + '(' + elem['dat'] + \
+                        ', ' + elem['sten'] +', ' + elem['acc'] + '),\n' + indent
+                elif elem['type'] == 'ops_arg_gbl':
+                    line = line + elem['type'] + '(' + elem['data'] + \
+                        ', ' + elem['dim'] + ', ' + elem['acc'] + '),\n' + indent
+
+            fid.write(line[0:-len(indent) - 2] + ');')
+
+            loc_old = endofcall + 1
+            continue
 
         print loc_old, len(text)
         fid.write(text[loc_old:])
