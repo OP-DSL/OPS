@@ -129,7 +129,7 @@ def ops_par_loop_parse(text):
 
   loop_args = []
 
-  text = comment_remover(text)
+  #text = comment_remover(text)
   search = "ops_par_loop_opt"
   i = text.find(search)
   while i > -1:
@@ -151,28 +151,28 @@ def ops_par_loop_parse(text):
             # append this struct to a temporary list/array
             temp_args.append(temp_dat)
             num_args = num_args + 1
-            j = arg_string.find(search2, j + 11)
+            j = arg_string.find(search2, j + 12)
 
         elif j <= -1:
             temp_gbl = get_arg_gbl(arg_string, k)
             # append this struct to a temporary list/array
             temp_args.append(temp_gbl)
             num_args = num_args + 1
-            k = arg_string.find(search3, k + 11)
+            k = arg_string.find(search3, k + 12)
 
         elif j < k:
             temp_dat = get_arg_dat(arg_string, j)
             # append this struct to a temporary list/array
             temp_args.append(temp_dat)
             num_args = num_args + 1
-            j = arg_string.find(search2, j + 11)
+            j = arg_string.find(search2, j + 12)
 
         else:
             temp_gbl = get_arg_gbl(arg_string, k)
             # append this struct to a temporary list/array
             temp_args.append(temp_gbl)
             num_args = num_args + 1
-            k = arg_string.find(search3, k + 11)
+            k = arg_string.find(search3, k + 12)
 
       temp = {'loc': i,
             'name1': arg_string.split(',')[0].strip(),
@@ -184,7 +184,7 @@ def ops_par_loop_parse(text):
       #print temp
       loop_args.append(temp)
 
-      i = text.find(search, i + 16)
+      i = text.find(search, i + 15)
   print '\n\n'
   return (loop_args)
 
@@ -356,11 +356,77 @@ def main():
 
         loc_old = 0
 
-        ##
-        ##todo
-        ##
+        # read original file and locate header location
+        header_len = 14
+        loc_header = [text.find("ops_seq_opt.h")]
+        if loc_header[0] == -1:
+          header_len = 13
+          loc_header = [text.find("ops_lib_cpp.h")]
 
+        # get locations of all ops_par_loops
+        n_loops = len(loop_args)
+        loc_loops = [0] * n_loops
+        for n in range(0, n_loops):
+            loc_loops[n] = loop_args[n]['loc']
 
+        locs = sorted(loc_header + loc_loops)
+
+        # process header and loops
+        for loc in range(0, len(locs)):
+            if locs[loc] != -1:
+                fid.write(text[loc_old:locs[loc] - 1])
+                loc_old = locs[loc] - 1
+
+            indent = ''
+            ind = 0
+            while 1:
+                if text[locs[loc] - ind] == '\n':
+                    break
+                indent = indent + ' '
+                ind = ind + 1
+
+            if (locs[loc] in loc_header) and (locs[loc] != -1):
+                fid.write(' "ops_lib_cpp.h"\n\n')
+                fid.write('//\n// ops_par_loop declarations\n//\n')
+                for k_iter in range(0, len(kernels_in_files[a - 1])):
+                    k = kernels_in_files[a - 1][k_iter]
+                    line = '\nvoid ops_par_loop_' + \
+                        kernels[k]['name'] + '(char const *, int , int*, \n'
+                    for n in range(1, kernels[k]['nargs']):
+                        line = line + '  ops_arg,\n'
+                    line = line + '  ops_arg );\n'
+                    fid.write(line)
+
+                fid.write('\n')
+                loc_old = locs[loc] + header_len
+                continue
+
+            if locs[loc] in loc_loops:
+              indent = indent + ' ' * len('ops_par_loop')
+              endofcall = text.find(';', locs[loc])
+              curr_loop = loc_loops.index(locs[loc])
+              name = loop_args[curr_loop]['name1']
+              line = str(' ops_par_loop_' + name + '(' +
+                         loop_args[curr_loop]['name2'] + ', ' +
+                         loop_args[curr_loop]['dim'] + ', ' +
+                         loop_args[curr_loop]['range'] + ',\n' + indent)
+
+              for arguments in range(0, loop_args[curr_loop]['nargs']):
+                  elem = loop_args[curr_loop]['args'][arguments]
+                  if elem['type'] == 'ops_arg_dat':
+                      line = line + elem['type'] + '(' + elem['dat'] + \
+                          ', ' + elem['sten'] +', ' + elem['acc'] + '),\n' + indent
+                  elif elem['type'] == 'ops_arg_gbl':
+                      line = line + elem['type'] + '(' + elem['data'] + \
+                          ', ' + elem['dim'] + ', ' + elem['acc'] + '),\n' + indent
+
+              fid.write(line[0:-len(indent) - 2] + ');')
+
+              loc_old = endofcall + 1
+              continue
+
+        print loc_old, len(text)
+        fid.write(text[loc_old:])
         fid.close()
         f.close()
 
