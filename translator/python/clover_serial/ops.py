@@ -390,7 +390,18 @@ def main():
         for n in range(0, n_loops):
             loc_loops[n] = loop_args[n]['loc']
 
-        locs = sorted(loc_header + loc_loops)
+        #get locations of all kernel.h headder file declarations
+        loc_kernel_headers = []
+
+        p = re.compile('#include .*kernel.h')
+        iterator = p.finditer(text)
+        for match in iterator:
+          #print match.start()
+          loc_kernel_headers.append(match.start());
+          #loc_kernel_headers.append(match.end());
+
+
+        locs = sorted(loc_header + loc_loops + loc_kernel_headers)
 
         # process header and loops
         for loc in range(0, len(locs)):
@@ -412,7 +423,7 @@ def main():
               for k_iter in range(0, len(kernels_in_files[a - 1])):
                   k = kernels_in_files[a - 1][k_iter]
                   line = '\nvoid ops_par_loop_' + \
-                      kernels[k]['name'] + '(char const *, int , int*, \n'
+                      kernels[k]['name'] + '(char const *, int , int*,\n'
                   for n in range(1, kernels[k]['nargs']):
                       line = line + '  ops_arg,\n'
                   line = line + '  ops_arg );\n'
@@ -420,6 +431,13 @@ def main():
 
               fid.write('\n')
               loc_old = locs[loc] + header_len
+              continue
+
+
+          if (locs[loc] in loc_kernel_headers) and (locs[loc] != -1):
+              fid.write('\n//')
+              endofcall = text.find('kernel.h', locs[loc])
+              loc_old = locs[loc] #endofcall + 1
               continue
 
           if locs[loc] in loc_loops:
