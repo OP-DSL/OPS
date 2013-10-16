@@ -21,9 +21,9 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
-  #CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
-  CCFLAGS	= -O3 -ipo -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -O3 -ipo -vec-report -xSSE4.2 #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -O3 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
+  #CFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
+  #CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= mpiCC
@@ -40,32 +40,48 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_seq
+all: clean cloverleaf_seq cloverleaf_genseq
 
 
 #
 # simple sequential version
 #
+SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 
-cloverleaf_seq:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
-		initialise.cpp generate.cpp ideal_gas.cpp \
-		update_halo.cpp field_summary.cpp time_step.cpp viscosity.cpp \
-		calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp flux_calc.cpp \
-		advection.cpp advec_cell.cpp advec_mom.cpp reset_field.cpp \
+cloverleaf_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
+	        initialise.cpp generate.cpp ideal_gas.cpp \
+                update_halo.cpp field_summary.cpp time_step.cpp viscosity.cpp \
+                calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp flux_calc.cpp \
+                advection.cpp advec_cell.cpp advec_mom.cpp reset_field.cpp \
+                initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+                update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+                PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
+	        $(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
+                initialise_chunk.cpp initialise.cpp generate.cpp \
+                ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
+                viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
+                flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
+		advec_mom.cpp -lops_seq -o cloverleaf_seq
+
+cloverleaf_genseq:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+		initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
+		update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+		calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+		advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
 		initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
 		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
 		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
 		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
-		$(CPP) $(CPPFLAGS) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
-		initialise_chunk.cpp initialise.cpp generate.cpp \
-		ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
-		viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
-		flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
-		advec_mom.cpp \
-		$(OPS_INC) $(OPS_LIB) -lops_seq -o cloverleaf_seq
+		$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
+		initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
+		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_seq -o cloverleaf_genseq
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_seq *.o
+		rm -f cloverleaf_seq cloverleaf_genseq *.o

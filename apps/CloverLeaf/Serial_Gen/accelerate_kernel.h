@@ -1,7 +1,10 @@
-#ifndef PdV_KERNEL_H
-#define PdV_KERNEL_H
+#ifndef ACCELERATE_KERNEL_H
+#define ACCELERATE_KERNEL_H
 
-void accelerate_stepbymass_kernel( double **density0, double **volume,
+#include "data.h"
+#include "definitions.h"
+
+void accelerate_kernel_stepbymass( double **density0, double **volume,
                 double **stepbymass, double **pressure) {
 
   double nodal_mass;

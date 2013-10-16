@@ -1,6 +1,9 @@
 #ifndef INITIALISE_CHUNK_KERNEL_H
 #define INITIALISE_CHUNK_KERNEL_H
 
+#include "data.h"
+#include "definitions.h"
+
 void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
 
   int x_min=field->x_min;
@@ -85,7 +88,7 @@ void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **ce
 
 }
 
-void initialise_volume_xarea_yarea(double **volume, double **celldy, double **xarea,
+void initialise_chunk_kernel_volume(double **volume, double **celldy, double **xarea,
                                          double **celldx, double **yarea) {
 
   double d_x, d_y;

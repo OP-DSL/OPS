@@ -82,29 +82,29 @@
   ops_stencil S2D_00_0M4;
 
   ops_stencil S2D_00_P10_0P1_P1P1;
-  ops_stencil sten_self2D_minus1xy;
+  ops_stencil S2D_00_M10_0M1_M1M1;
 
-  ops_stencil sten_self2D_plus1x_minus1y;
-  ops_stencil sten_self2D_plus1y_minus1x;
+  ops_stencil S2D_00_P10_0M1_P1M1;
+  ops_stencil S2D_00_0P1_M10_M1P1;
 
-  ops_stencil sten_self2D_4point1xy;
+  ops_stencil S2D_10_M10_01_0M1;
 
-  ops_stencil sten_self_stride2D_x;
-  ops_stencil sten_self_stride2D_y;
+  ops_stencil S2D_00_STRID2D_X;
+  ops_stencil S2D_00_STRID2D_Y;
 
-  ops_stencil sten_self_plus1_stride2D_x;
-  ops_stencil sten_self_plus1_stride2D_y;
+  ops_stencil s2D_00_P10_STRID2D_X;
+  ops_stencil S2D_00_0P1_STRID2D_Y;
 
-  ops_stencil sten_self_minus1_stride2D_x;
-  ops_stencil sten_self_minus1_stride2D_y;
+  ops_stencil S2D_00_M10_STRID2D_X;
+  ops_stencil S2D_00_0M1_STRID2D_Y;
 
-  ops_stencil sten_self2D_plus_1_minus1_2_x;
-  ops_stencil sten_self_plus_1_minus1_2_x_stride2D_x;
-  ops_stencil sten_self2D_plus_1_minus1_2_y;
-  ops_stencil sten_self_plus_1_minus1_2_y_stride2D_y;
+  ops_stencil S2D_00_P10_M10_M20;
+  ops_stencil S2D_00_P10_M10_M20_STRID2D_X;
+  ops_stencil S2D_00_0P1_0M1_0M2;
+  ops_stencil S2D_00_0P1_0M1_0M2_STRID2D_Y;
 
-  ops_stencil sten_self2D_plus_1_2_minus1x;
-  ops_stencil sten_self2D_plus_1_2_minus1y;
+  ops_stencil S2D_00_P10_P20_M10;
+  ops_stencil S2D_00_0P1_0P2_0M1;
 
 
   ops_stencil sten_self_stride2D_xmax;

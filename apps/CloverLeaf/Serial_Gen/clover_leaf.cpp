@@ -45,7 +45,6 @@
 
 
 // OPS header file
-#include "ops_seq.h"
 #include "ops_seq_opt.h"
 
 // Cloverleaf constants
@@ -180,11 +179,7 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-    /*if(step == 1)
-    {
-      ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
-      ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
-    }*/
+
 
     timestep();
 
@@ -215,15 +210,6 @@ int main(int argc, char **argv)
       field_summary();
       break;
     }
-
-    /*if(step == 71)
-    {
-      ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-      int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
-      ops_par_loop_opt(test_kernel2, "test_kernel2", 2, rangexy_inner,
-      ops_arg_dat(density0, sten_self_stride2D_x, OPS_READ));
-      exit(0);
-    }*/
   }
 
 

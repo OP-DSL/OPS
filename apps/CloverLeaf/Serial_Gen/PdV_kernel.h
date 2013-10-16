@@ -1,6 +1,9 @@
 #ifndef PdV_KERNEL_H
 #define PdV_KERNEL_H
 
+#include "data.h"
+#include "definitions.h"
+
 void PdV_kernel_predict(double **xarea, double **xvel0,
                 double **yarea, double **yvel0,
                 double **volume_change, double **volume,

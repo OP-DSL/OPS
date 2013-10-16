@@ -28,7 +28,7 @@ void viscosity_kernel( double **xvel0, double **yvel0,
             0.5*(*yvel0[1] + *yvel0[3] - *yvel0[0] - *yvel0[2])/(*celldx[0]);
 
 
-  //int self2D_4point1xy[]  = {1,0, -1,0, 0,1, 0,-1};
+  //int s2D_10_M10_01_0M1[]  = {1,0, -1,0, 0,1, 0,-1};
   pgradx  = (*pressure[0] - *pressure[1])/(*celldx[0]+ *celldx[1]);
   pgrady = (*pressure[2] - *pressure[3])/(*celldy[0]+ *celldy[1]);
 

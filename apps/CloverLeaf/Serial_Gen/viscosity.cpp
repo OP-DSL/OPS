@@ -28,7 +28,6 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
 #include "ops_seq_opt.h"
 
 #include "data.h"
@@ -55,9 +54,9 @@ void viscosity_func()
   ops_par_loop_opt(viscosity_kernel, "viscosity_kernel", 2, rangexy_inner,
       ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
       ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
-      ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
-      ops_arg_dat(celldy, sten_self_plus1_stride2D_y, OPS_READ),
-      ops_arg_dat(pressure, sten_self2D_4point1xy, OPS_READ),
+      ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, OPS_READ),
+      ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, OPS_READ),
+      ops_arg_dat(pressure, S2D_10_M10_01_0M1, OPS_READ),
       ops_arg_dat(density0, S2D_00, OPS_READ),
       ops_arg_dat(viscosity, S2D_00, OPS_WRITE));
 }

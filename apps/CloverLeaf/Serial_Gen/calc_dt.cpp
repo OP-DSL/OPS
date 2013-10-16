@@ -26,7 +26,6 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
 #include "ops_seq_opt.h"
 
 #include "data.h"
@@ -56,8 +55,8 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop_opt(calc_dt_kernel, "calc_dt_kernel", 2, rangexy_inner,
-    ops_arg_dat(celldx, sten_self_plus1_stride2D_x, OPS_READ),
-    ops_arg_dat(celldy, sten_self_plus1_stride2D_y, OPS_READ),
+    ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, OPS_READ),
+    ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, OPS_READ),
     ops_arg_dat(soundspeed, S2D_00, OPS_READ),
     ops_arg_dat(viscosity, S2D_00, OPS_READ),
     ops_arg_dat(density0, S2D_00, OPS_READ),
@@ -68,7 +67,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(yarea, S2D_00_0P1, OPS_READ),
     ops_arg_dat(work_array1, S2D_00, OPS_WRITE) );
 
-  ops_par_loop_opt(calc_dt_min_kernel, "calc_dt_min_kernel", 2, rangexy_inner,
+  ops_par_loop_opt(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, OPS_READ),
     ops_arg_gbl(local_dt, 1, OPS_WRITE));
 
@@ -83,9 +82,9 @@ void calc_dt(double* local_dt, char* local_control,
 
   if(*local_dt < dtmin) small = 1;
 
-  ops_par_loop_opt(calc_dt_get_kernel, "calc_dt_get_kernel", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
-    ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
+  ops_par_loop_opt(calc_dt_kernel_get, "calc_dt_kernel_get", 2, rangexy_getpoint,
+    ops_arg_dat(cellx, S2D_00_STRID2D_X, OPS_READ),
+    ops_arg_dat(celly, S2D_00_STRID2D_Y, OPS_READ),
     ops_arg_gbl(xl_pos, 1, OPS_WRITE),
     ops_arg_gbl(yl_pos, 1, OPS_WRITE));
 
@@ -95,11 +94,11 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
     ops_printf("timestep : %lf\n",*local_dt);
 
-    ops_par_loop_opt(calc_dt_print_kernel, "calc_dt_print_kernel", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, sten_self_stride2D_x, OPS_READ),
-    ops_arg_dat(celly, sten_self_stride2D_y, OPS_READ),
-    ops_arg_dat(xvel0, sten_self2D_4point1xy, OPS_READ),
-    ops_arg_dat(yvel0, sten_self2D_4point1xy, OPS_READ),
+    ops_par_loop_opt(calc_dt_kernel_print, "calc_dt_kernel_print", 2, rangexy_getpoint,
+    ops_arg_dat(cellx, S2D_00_STRID2D_X, OPS_READ),
+    ops_arg_dat(celly, S2D_00_STRID2D_Y, OPS_READ),
+    ops_arg_dat(xvel0, S2D_10_M10_01_0M1, OPS_READ),
+    ops_arg_dat(yvel0, S2D_10_M10_01_0M1, OPS_READ),
     ops_arg_dat(density0, S2D_00, OPS_READ),
     ops_arg_dat(energy0, S2D_00, OPS_READ),
     ops_arg_dat(pressure, S2D_00, OPS_READ),

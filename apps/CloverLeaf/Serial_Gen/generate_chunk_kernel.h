@@ -1,7 +1,10 @@
 #ifndef GENERATE_CHUNK_KERNEL_H
 #define GENERATE_CHUNK_KERNEL_H
 
-void generate_kernel( double **vertexx, double **vertexy,
+#include "data.h"
+#include "definitions.h"
+
+void generate_chunk_kernel( double **vertexx, double **vertexy,
                      double **energy0, double **density0,
                      double **xvel0,  double **yvel0,
                      double **cellx, double **celly) {
