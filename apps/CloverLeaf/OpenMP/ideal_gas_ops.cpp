@@ -74,15 +74,15 @@ void ideal_gas(int predict)
     ops_par_loop_ideal_gas_kernel("ideal_gas_kernel", 2, rangexy_inner,
                  ops_arg_dat(density0, S2D_00, "double", OPS_READ),
                  ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
+                 ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),
+                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_WRITE));
   }
   else {
     ops_par_loop_ideal_gas_kernel("ideal_gas_kernel", 2, rangexy_inner,
                  ops_arg_dat(density1, S2D_00, "double", OPS_READ),
                  ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
+                 ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),
+                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_WRITE));
   }
 
 }
