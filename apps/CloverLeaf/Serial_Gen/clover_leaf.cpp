@@ -188,9 +188,6 @@ int main(int argc, char **argv)
 
     accelerate();
 
-    //if(step == 1)
-    //  exit(0);
-
     PdV(FALSE);
 
     flux_calc();
