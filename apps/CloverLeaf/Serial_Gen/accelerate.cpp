@@ -56,7 +56,7 @@ void accelerate()
 
   ops_par_loop_opt(accelerate_kernelx1, "accelerate_kernelx1", 2, rangexy_inner_plus1,
     ops_arg_dat(xvel0, S2D_00, "double", OPS_READ),
-    ops_arg_dat(xvel1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(xvel1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_dat(xarea, S2D_00_0M1, "double", OPS_READ),
     ops_arg_dat(pressure, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
