@@ -58,7 +58,7 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
   return dat;
 }
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, ops_access acc )
+ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );
 }

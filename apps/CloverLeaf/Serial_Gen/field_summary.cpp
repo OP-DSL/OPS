@@ -61,17 +61,17 @@ void field_summary()
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
   ops_par_loop_opt(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
-      ops_arg_dat(volume, S2D_00, OPS_READ),
-      ops_arg_dat(density0, S2D_00, OPS_READ),
-      ops_arg_dat(energy0, S2D_00, OPS_READ),
-      ops_arg_dat(pressure, S2D_00, OPS_READ),
-      ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
-      ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
-      ops_arg_gbl(&vol, 1, OPS_WRITE),
-      ops_arg_gbl(&mass, 1, OPS_WRITE),
-      ops_arg_gbl(&ie, 1, OPS_WRITE),
-      ops_arg_gbl(&ke, 1, OPS_WRITE),
-      ops_arg_gbl(&press, 1, OPS_WRITE));
+      ops_arg_dat(volume, S2D_00, "double", OPS_READ),
+      ops_arg_dat(density0, S2D_00, "double", OPS_READ),
+      ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
+      ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
+      ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+      ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+      ops_arg_gbl(&vol, 1, "double", OPS_READ),
+      ops_arg_gbl(&mass, 1, "double", OPS_READ),
+      ops_arg_gbl(&ie, 1, "double", OPS_READ),
+      ops_arg_gbl(&ke, 1, "double", OPS_READ),
+      ops_arg_gbl(&press, 1, "double", OPS_READ));
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Time %lf\n",time);

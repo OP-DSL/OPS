@@ -103,6 +103,8 @@ def ops_gen_seq(master, date, kernels):
     stens = kernels[nk]['stens']
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
+    typs  = kernels[nk]['typs']
+
 
 ##########################################################################
 #  start with seq kernel function
@@ -214,7 +216,7 @@ def ops_gen_seq(master, date, kernels):
     code('')
     text = name+'( '
     for n in range (0, nargs):
-        text = text +' (double **)p_a['+str(n)+']'
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)p_a['+str(n)+']'
         if nargs <> 1 and n != nargs-1:
           text = text + ','
         else:

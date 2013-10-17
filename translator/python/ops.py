@@ -88,7 +88,7 @@ def get_arg_dat(arg_string, j):
     dat_args_string = comment_remover(dat_args_string)
 
     # check for syntax errors
-    if len(dat_args_string.split(',')) != 3:
+    if len(dat_args_string.split(',')) != 4:
         print 'Error parsing op_arg_dat(%s): must have three arguments' \
               % dat_args_string
         return
@@ -98,7 +98,8 @@ def get_arg_dat(arg_string, j):
     temp_dat = {'type': 'ops_arg_dat',
                 'dat': dat_args_string.split(',')[0].strip(),
                 'sten': dat_args_string.split(',')[1].strip(),
-                'acc': dat_args_string.split(',')[2].strip()}
+                'typ': dat_args_string.split(',')[2].strip(),
+                'acc': dat_args_string.split(',')[3].strip()}
 
     return temp_dat
 
@@ -110,7 +111,7 @@ def get_arg_gbl(arg_string, k):
     gbl_args_string = comment_remover(gbl_args_string)
 
     # check for syntax errors
-    if len(gbl_args_string.split(',')) != 3:
+    if len(gbl_args_string.split(',')) != 4:
         print 'Error parsing op_arg_gbl(%s): must have four arguments' \
               % gbl_args_string
         return
@@ -120,7 +121,8 @@ def get_arg_gbl(arg_string, k):
     temp_gbl = {'type': 'ops_arg_gbl',
                 'data': gbl_args_string.split(',')[0].strip(),
                 'dim': gbl_args_string.split(',')[1].strip(),
-                'acc': gbl_args_string.split(',')[2].strip()}
+                'typ': gbl_args_string.split(',')[2].strip(),
+                'acc': gbl_args_string.split(',')[3].strip()}
 
     return temp_gbl
 
@@ -263,6 +265,7 @@ def main():
         stens = [0] * nargs
         accs = [0] * nargs
         dims = [''] * nargs #only for globals
+        typs = [''] * nargs
 
         for m in range(0, nargs):
           arg_type = loop_args[i]['args'][m]['type']
@@ -271,6 +274,7 @@ def main():
           if arg_type.strip() == 'ops_arg_dat':
             var[m] = args['dat']
             stens[m] = args['sten']
+            typs[m] = args['typ']
 
             l = -1
             for l in range(0, len(OPS_accs_labels)):
@@ -288,6 +292,7 @@ def main():
           if arg_type.strip() == 'ops_arg_gbl':
             var[m] = args['data']
             dims[m] = args['dim']
+            typs[m] = args['typ']
 
             l = -1
             for l in range(0, len(OPS_accs_labels)):
@@ -320,6 +325,7 @@ def main():
                     kernels[nk]['var'][arg] == var[arg] and \
                     kernels[nk]['stens'][arg] == stens[arg] and \
                     kernels[nk]['dims'][arg] == dims[arg] and \
+                    kernels[nk]['typs'][arg] == typs[arg] and \
                     kernels[nk]['accs'][arg] == accs[arg]
 
             if rep2:
@@ -353,6 +359,7 @@ def main():
                     'stens': stens,
                     'var': var,
                     'accs': accs,
+                    'typs': typs,
                     'range': _range
             }
             kernels.append(temp)
@@ -454,10 +461,12 @@ def main():
                 elem = loop_args[curr_loop]['args'][arguments]
                 if elem['type'] == 'ops_arg_dat':
                     line = line + elem['type'] + '(' + elem['dat'] + \
-                        ', ' + elem['sten'] +', ' + elem['acc'] + '),\n' + indent
+                        ', ' + elem['sten'] + ', ' + elem['typ'] + \
+                        ', ' + elem['acc'] + '),\n' + indent
                 elif elem['type'] == 'ops_arg_gbl':
                     line = line + elem['type'] + '(' + elem['data'] + \
-                        ', ' + elem['dim'] + ', ' + elem['acc'] + '),\n' + indent
+                        ', ' + elem['dim'] + ', ' +  elem['typ'] + \
+                        ', ' +  elem['acc'] + '),\n' + indent
 
             fid.write(line[0:-len(indent) - 2] + ');')
 
