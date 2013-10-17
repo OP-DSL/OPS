@@ -40,13 +40,13 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_seq cloverleaf_genseq
+all: clean cloverleaf_seq cloverleaf_openmp
 
 
 #
 # simple sequential version
 #
-SEQ_KERNELS = clover_leaf_seq_kernels.cpp
+SEQ_KERNELS = clover_leaf_omp_kernels.cpp
 
 cloverleaf_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
 	        initialise.cpp generate.cpp ideal_gas.cpp \
@@ -64,7 +64,7 @@ cloverleaf_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initial
                 flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
 		advec_mom.cpp -lops_seq -o cloverleaf_seq
 
-cloverleaf_genseq:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+cloverleaf_openmp:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 		initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
 		update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
 		calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
@@ -78,10 +78,10 @@ cloverleaf_genseq:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp init
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_seq -o cloverleaf_genseq
+		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_seq -o cloverleaf_openmp
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_seq cloverleaf_genseq *.o
+		rm -f cloverleaf_seq cloverleaf_openmp *.o
