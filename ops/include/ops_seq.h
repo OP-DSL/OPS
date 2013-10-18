@@ -36,7 +36,7 @@
   */
 
 #include "ops_lib_cpp.h"
-/*
+
 inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
   if (arg.stencil!=NULL) {
 
@@ -138,7 +138,7 @@ inline void ops_args_set(int iter_x,
   for (int n=0; n<nargs; n++) {
     ops_arg_set(iter_x, iter_y, iter_z, args[n], p_a[n]);
   }
-}*/
+}
 
 
 template < class T0 >

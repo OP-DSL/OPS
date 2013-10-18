@@ -217,8 +217,8 @@ def ops_gen_openmp(master, date, kernels):
     ENDFOR()
     code('')
 
-    code('int start = ((y_size-1)/nthreads+1)*thr;')
-    code('int finish = MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
+    code('int start = range[2] + ((y_size-1)/nthreads+1)*thr;')
+    code('int finish = range[2] +  MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
 
     comm('')
     comm('set up initial pointers')

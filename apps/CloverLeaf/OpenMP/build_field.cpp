@@ -41,6 +41,9 @@ void build_field()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+  printf("x_min = %d, y_min = %d\n",x_min,y_min);
+  printf("x_max = %d, y_max = %d\n",x_max,y_max);
+
   /**----------------------------OPS Declarations----------------------------**/
 
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
