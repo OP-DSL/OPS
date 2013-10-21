@@ -67,11 +67,11 @@ void field_summary()
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
       ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
       ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-      ops_arg_gbl(&vol, 1, "double", OPS_WRITE),
-      ops_arg_gbl(&mass, 1, "double", OPS_WRITE),
-      ops_arg_gbl(&ie, 1, "double", OPS_WRITE),
-      ops_arg_gbl(&ke, 1, "double", OPS_WRITE),
-      ops_arg_gbl(&press, 1, "double", OPS_WRITE));
+      ops_arg_gbl(&vol, 1, "double", OPS_INC),
+      ops_arg_gbl(&mass, 1, "double", OPS_INC),
+      ops_arg_gbl(&ie, 1, "double", OPS_INC),
+      ops_arg_gbl(&ke, 1, "double", OPS_INC),
+      ops_arg_gbl(&press, 1, "double", OPS_INC));
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Time %lf\n",time);
