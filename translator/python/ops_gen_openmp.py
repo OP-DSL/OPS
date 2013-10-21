@@ -316,7 +316,6 @@ def ops_gen_openmp(master, date, kernels):
       ENDFOR()
 
 
-
     depth = depth - 2
     code('}')
 
