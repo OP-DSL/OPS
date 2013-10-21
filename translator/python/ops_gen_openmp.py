@@ -95,7 +95,7 @@ def ops_gen_openmp(master, date, kernels):
 ##########################################################################
 
   for nk in range (0,len(kernels)):
-
+    arg_typ  = kernels[nk]['arg_type']
     name  = kernels[nk]['name']
     nargs = kernels[nk]['nargs']
     dim   = kernels[nk]['dim']
@@ -118,6 +118,13 @@ def ops_gen_openmp(master, date, kernels):
     i = name.find('kernel')
     name2 = name[0:i-1]
     #print name2
+
+    reduction = False
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        reduction = True
+        break
 
     #backend functions that should go to the sequential backend lib
     code('#include "lib.h"')
@@ -186,6 +193,16 @@ def ops_gen_openmp(master, date, kernels):
     code('#endif')
     code('')
 
+    code('double ***reduct_gbl;')
+    code('reduct_gbl =  (double ***)malloc(nthreads * sizeof(double **));')
+    code('for ( int thr=0; thr<nthreads; thr++ ){')
+    code('reduct_gbl[thr] =  (double **)malloc(11 * sizeof(double *));')
+    code('for(int i = 0; i<11; i++) {')
+    code('reduct_gbl[thr][i] = (double *)malloc(1 * sizeof(double ));')
+    code('}')
+    code('}')
+
+
     code('int y_size = range[3]-range[2];')
 
     code('#pragma omp parallel for')
@@ -230,15 +247,20 @@ def ops_gen_openmp(master, date, kernels):
 
     comm('call kernel function, passing in pointers to data')
     code('')
+    n_per_line = 2
     text = name+'( '
     for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)p_a['+str(n)+']'
-        if nargs <> 1 and n != nargs-1:
-          text = text + ','
-        else:
-          text = text +' );\n'
-        if n%n_per_line == 2 and n <> nargs-1:
-          text = text +'\n          '
+      else:
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)&reduct_gbl['+str(n)+'][thr]'
+
+      if nargs <> 1 and n != nargs-1:
+        text = text + ','
+      else:
+        text = text +' );\n'
+      if n%n_per_line == 1 and n <> nargs-1:
+        text = text +'\n          '
     code(text);
 
     code('int a = 0;')
@@ -271,8 +293,29 @@ def ops_gen_openmp(master, date, kernels):
     ENDFOR()
     ENDFOR()
 
+    #generate code for combining the reductions
+    if reduction == True:
+      code('')
+      comm(' combine reduction data')
+      FOR('thr','0','nthreads')
+      IF('args[i].argtype == OPS_ARG_GBL')
+      FOR('i','0',str(nargs))
+      code('*((double *)(args[i].data)) += reduct_gbl[i][thr][0];')
+      ENDFOR()
+      ENDIF()
+      ENDFOR()
+
+      FOR('i','0',str(nargs))
+      FOR('thr','0','nthreads')
+      code('free(reduct_gbl[i][thr]);')
+      ENDFOR()
+      code('free(reduct_gbl[i]);')
+      ENDFOR()
+
+
     depth = depth - 2
     code('}')
+
 
 ##########################################################################
 #  output individual kernel file

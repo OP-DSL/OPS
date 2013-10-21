@@ -260,7 +260,7 @@ def main():
         #
         # process arguments
         #
-
+        typ = [''] * nargs
         var = [''] * nargs
         stens = [0] * nargs
         accs = [0] * nargs
@@ -275,6 +275,7 @@ def main():
             var[m] = args['dat']
             stens[m] = args['sten']
             typs[m] = args['typ']
+            typ[m] = 'ops_arg_dat'
 
             l = -1
             for l in range(0, len(OPS_accs_labels)):
@@ -293,6 +294,7 @@ def main():
             var[m] = args['data']
             dims[m] = args['dim']
             typs[m] = args['typ']
+            typ[m] = 'ops_arg_gbl'
 
             l = -1
             for l in range(0, len(OPS_accs_labels)):
@@ -352,7 +354,8 @@ def main():
 
         if not repeat:
             nkernels = nkernels + 1
-            temp = {'name': name,
+            temp = { 'arg_type':typ,
+                     'name': name,
                     'nargs': nargs,
                     'dim': dim,
                     'dims': dims,

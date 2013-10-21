@@ -45,14 +45,13 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
 
   double ***reduct_gbl;
-  reduct_gbl =  (double ***)malloc(nthreads * sizeof(double **));
-  for ( int thr=0; thr<nthreads; thr++ ){
-    reduct_gbl[thr] =  (double **)malloc(11 * sizeof(double *));
-    for(int i = 0; i<11; i++) {
-      reduct_gbl[thr][i] = (double *)malloc(1 * sizeof(double ));
+  reduct_gbl =  (double ***)malloc(11 * sizeof(double **));
+  for(int i = 0; i<11; i++) {
+    reduct_gbl[i] =  (double **)malloc(nthreads * sizeof(double *));
+    for ( int thr=0; thr<nthreads; thr++ ){
+      reduct_gbl[i][thr] = (double *)malloc(1 * sizeof(double ));
     }
   }
-
 
   int y_size = range[3]-range[2];
   #pragma omp parallel for
@@ -86,8 +85,10 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
         //call kernel function, passing in pointers to data
 
         field_summary_kernel(  (double **)p_a[0], (double **)p_a[1], (double **)p_a[2],
-           (double **)p_a[3], (double **)p_a[4], (double **)p_a[5], &reduct_gbl[thr][6],
-           &reduct_gbl[thr][7], &reduct_gbl[thr][8], &reduct_gbl[thr][9], &reduct_gbl[thr][10]);
+           (double **)p_a[3], (double **)p_a[4], (double **)p_a[5],
+           (double **)&reduct_gbl[6][thr], (double **)&reduct_gbl[7][thr],
+           (double **)&reduct_gbl[8][thr], (double **)&reduct_gbl[9][thr],
+           (double **)&reduct_gbl[10][thr]);
 
         int a = 0;
         //shift pointers to data x direction
@@ -122,16 +123,16 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
     if (args[i].argtype == OPS_ARG_GBL) {
       for (int thr=0; thr<nthreads; thr++) {
         //printf("thr %d arg %d %lf\n", thr, i, reduct_gbl[thr][i][0] );
-        *((double *)(args[i].data)) += reduct_gbl[thr][i][0];
+        *((double *)(args[i].data)) += reduct_gbl[i][thr][0];
       }
     }
   }
 
-  for ( int thr=0; thr<nthreads; thr++ ){
-    for(int i = 0; i<11; i++) {
-      free(reduct_gbl[thr][i]);
+  for(int i = 0; i<11; i++) {
+    for ( int thr=0; thr<nthreads; thr++ ){
+      free(reduct_gbl[i][thr]);
     }
-    free(reduct_gbl[thr]);
+    free(reduct_gbl[i]);
   }
 
 
