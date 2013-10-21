@@ -20,7 +20,6 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   int  offs[11][2];
 
 
-
   for ( int i=0; i<11; i++ ){
     if (args[i].stencil!=NULL) {
       offs[i][0] = 1;  //unit step in x dimension
@@ -44,19 +43,25 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   int nthreads = 1;
   #endif
 
-  double reduct_gbl[11][nthreads];
+
+  double ***reduct_gbl;
+  reduct_gbl =  (double ***)malloc(nthreads * sizeof(double **));
+  for ( int thr=0; thr<nthreads; thr++ ){
+    reduct_gbl[thr] =  (double **)malloc(11 * sizeof(double *));
+    for(int i = 0; i<11; i++) {
+      reduct_gbl[thr][i] = (double *)malloc(1 * sizeof(double ));
+    }
+  }
+
 
   int y_size = range[3]-range[2];
-  #pragma omp parallel for shared(reduct_gbl)
+  #pragma omp parallel for
   for ( int thr=0; thr<nthreads; thr++ ){
 
     char **p_a[11];
 
     //store index of non_gbl args
     int non_gbl[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    int gbl[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-
 
     int ng = 0; int g = 0;
     for ( int i=0; i<11; i++ ){
@@ -66,7 +71,7 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
       }
       else if (args[i].argtype == OPS_ARG_GBL) {
         p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
-        gbl[g++] = i;
+
       }
     }
 
@@ -81,8 +86,8 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
         //call kernel function, passing in pointers to data
 
         field_summary_kernel(  (double **)p_a[0], (double **)p_a[1], (double **)p_a[2],
-           (double **)p_a[3], (double **)p_a[4], (double **)p_a[5], (double **)p_a[6],
-           (double **)p_a[7], (double **)p_a[8], (double **)p_a[9], (double **)p_a[10] );
+           (double **)p_a[3], (double **)p_a[4], (double **)p_a[5], &reduct_gbl[thr][6],
+           &reduct_gbl[thr][7], &reduct_gbl[thr][8], &reduct_gbl[thr][9], &reduct_gbl[thr][10]);
 
         int a = 0;
         //shift pointers to data x direction
@@ -105,13 +110,6 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
     }
 
-
-    for ( int i=0; i<11; i++ ){
-      if (args[i].argtype == OPS_ARG_GBL)
-        reduct_gbl[i][thr] = **((double **)p_a[i]);
-    }
-
-
     for ( int i=0; i<11; i++ ){
       free(p_a[i]);
     }
@@ -119,11 +117,22 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
   // combine reduction data
 
-  for (int thr=0; thr<nthreads; thr++) {
-    for ( int i=0; i<11; i++ ){
-      if (args[i].argtype == OPS_ARG_GBL)
-        printf("thr %d arg %d %lf\n", thr, i, reduct_gbl[i][thr] );
-        *((double *)(args[i].data)) += reduct_gbl[i][thr];
+
+  for ( int i=0; i<11; i++ ){
+    if (args[i].argtype == OPS_ARG_GBL) {
+      for (int thr=0; thr<nthreads; thr++) {
+        //printf("thr %d arg %d %lf\n", thr, i, reduct_gbl[thr][i][0] );
+        *((double *)(args[i].data)) += reduct_gbl[thr][i][0];
+      }
     }
   }
+
+  for ( int thr=0; thr<nthreads; thr++ ){
+    for(int i = 0; i<11; i++) {
+      free(reduct_gbl[thr][i]);
+    }
+    free(reduct_gbl[thr]);
+  }
+
+
 }
