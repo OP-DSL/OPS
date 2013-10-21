@@ -209,7 +209,6 @@ int main(int argc, char **argv)
     }
   }
 
-
   fclose(g_out);
   ops_exit();
 }
