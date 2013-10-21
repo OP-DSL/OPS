@@ -183,11 +183,7 @@ int main(int argc, char **argv)
 
     PdV(TRUE);
 
-
     accelerate();
-
-    //if(step == 1)
-    //  exit(0);
 
     PdV(FALSE);
 
