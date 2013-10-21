@@ -193,15 +193,15 @@ def ops_gen_openmp(master, date, kernels):
     code('#endif')
     code('')
 
-    code('double ***reduct_gbl;')
-    code('reduct_gbl =  (double ***)malloc('+str(nargs)+' * sizeof(double **));')
-    FOR('i','0',str(nargs))
-    code('reduct_gbl[i] =  (double **)malloc(nthreads * sizeof(double *));')
-    FOR('thr','0','nthreads')
-    code('reduct_gbl[i][thr] = (double *)malloc(1 * sizeof(double ));')
-    ENDFOR()
-    ENDFOR()
-
+    if reduction == True:
+      code('double ***reduct_gbl;')
+      code('reduct_gbl =  (double ***)malloc('+str(nargs)+' * sizeof(double **));')
+      FOR('i','0',str(nargs))
+      code('reduct_gbl[i] =  (double **)malloc(nthreads * sizeof(double *));')
+      FOR('thr','0','nthreads')
+      code('reduct_gbl[i][thr] = (double *)malloc(1 * sizeof(double ));')
+      ENDFOR()
+      ENDFOR()
 
     code('int y_size = range[3]-range[2];')
 
@@ -222,6 +222,7 @@ def ops_gen_openmp(master, date, kernels):
           text = text+'\n'
     code(text);
     code('int g = 0;')
+
 
     FOR('i','0',str(nargs))
     IF('args[i].argtype == OPS_ARG_DAT')
