@@ -193,16 +193,20 @@ def ops_gen_openmp(master, date, kernels):
     code('#endif')
     code('')
 
+    #setup reduction variables
     if reduction == True:
-      code('double ***reduct_gbl;')
-      code('reduct_gbl =  (double ***)malloc('+str(nargs)+' * sizeof(double **));')
-      FOR('i','0',str(nargs))
-      code('reduct_gbl[i] =  (double **)malloc(nthreads * sizeof(double *));')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
+
       FOR('thr','0','nthreads')
-      code('reduct_gbl[i][thr] = (double *)malloc(1 * sizeof(double ));')
-      ENDFOR()
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
+               ' *)malloc(1 * sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
       ENDFOR()
 
+    code('')
     code('int y_size = range[3]-range[2];')
 
     code('#pragma omp parallel for')
@@ -254,7 +258,7 @@ def ops_gen_openmp(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)p_a['+str(n)+']'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)&reduct_gbl['+str(n)+'][thr]'
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **) &arg_gbl'+str(n)+'[thr]'
 
       if nargs <> 1 and n != nargs-1:
         text = text + ','
@@ -284,7 +288,7 @@ def ops_gen_openmp(master, date, kernels):
     ENDFOR()
     ENDFOR()
 
-    code('')
+
     ENDFOR()
 
     code('')
@@ -299,19 +303,18 @@ def ops_gen_openmp(master, date, kernels):
       code('')
       comm(' combine reduction data')
       FOR('thr','0','nthreads')
-      FOR('i','0',str(nargs))
-      IF('args[i].argtype == OPS_ARG_GBL')
-      code('*((double *)(args[i].data)) += reduct_gbl[i][thr][0];')
-      ENDFOR()
-      ENDIF()
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code('*(('+(str(typs[n]).replace('"','')).strip()+
+               '*)(args['+str(n)+'].data)) += *arg_gbl'+str(n)+'[thr];')
       ENDFOR()
 
-      FOR('i','0',str(nargs))
       FOR('thr','0','nthreads')
-      code('free(reduct_gbl[i][thr]);')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code('free(arg_gbl'+str(n)+'[thr]);')
       ENDFOR()
-      code('free(reduct_gbl[i]);')
-      ENDFOR()
+
 
 
     depth = depth - 2
