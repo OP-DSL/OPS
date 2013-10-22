@@ -212,7 +212,7 @@ def ops_gen_openmp(master, date, kernels):
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
-               ' *)malloc('+str(dims[n])+' * sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
+               ' *)calloc('+str(dims[n])+', sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
       ENDFOR()
 
     code('')
