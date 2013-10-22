@@ -233,9 +233,6 @@ def ops_gen_openmp(master, date, kernels):
     code('p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));')
     code('non_gbl[g++] = i;')
     ENDIF()
-    ELSEIF('args[i].argtype == OPS_ARG_GBL')
-    code('p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));')
-    ENDIF()
     ENDFOR()
     code('')
 
@@ -245,7 +242,12 @@ def ops_gen_openmp(master, date, kernels):
     comm('')
     comm('set up initial pointers')
 
-    code('ops_args_set(range[0], start, '+str(nargs)+', args,p_a); //set up the initial possition\n')
+    #code('ops_args_set(range[0], start, '+str(nargs)+', args,p_a); //set up the initial possition\n')
+    comm('set up the initial possition');
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('ops_arg_set(range[0], start, args['+str(n)+'], p_a['+str(n)+']);')
+    code('')
 
     FOR('n_y','start','finish')
     FOR('n_x','range[0]','range[1]')
@@ -290,12 +292,12 @@ def ops_gen_openmp(master, date, kernels):
 
 
     ENDFOR()
-
     code('')
 
-    FOR('i','0',str(nargs))
-    code('free(p_a[i]);')
-    ENDFOR()
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('free(p_a['+str(n)+']);')
+
     ENDFOR()
 
     #generate code for combining the reductions
