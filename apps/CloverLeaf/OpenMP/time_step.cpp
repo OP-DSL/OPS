@@ -50,6 +50,11 @@ void timestep()
   dt = g_big;
   int small = 0;
 
+  x_pos  = 0.0;
+  y_pos  = 0.0;
+  xl_pos = 0.0;
+  yl_pos = 0.0;
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
