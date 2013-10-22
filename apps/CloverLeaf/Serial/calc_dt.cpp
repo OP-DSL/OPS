@@ -55,21 +55,21 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop_opt(calc_dt_kernel, "calc_dt_kernel", 2, rangexy_inner,
-    ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, OPS_READ),
-    ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, OPS_READ),
-    ops_arg_dat(soundspeed, S2D_00, OPS_READ),
-    ops_arg_dat(viscosity, S2D_00, OPS_READ),
-    ops_arg_dat(density0, S2D_00, OPS_READ),
-    ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
-    ops_arg_dat(xarea, S2D_00_P10, OPS_READ),
-    ops_arg_dat(volume, S2D_00, OPS_READ),
-    ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, OPS_READ),
-    ops_arg_dat(yarea, S2D_00_0P1, OPS_READ),
-    ops_arg_dat(work_array1, S2D_00, OPS_WRITE) );
+    ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+    ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
+    ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
+    ops_arg_dat(density0, S2D_00, "double", OPS_READ),
+    ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+    ops_arg_dat(xarea, S2D_00_P10, "double", OPS_READ),
+    ops_arg_dat(volume, S2D_00, "double", OPS_READ),
+    ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+    ops_arg_dat(yarea, S2D_00_0P1, "double", OPS_READ),
+    ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE) );
 
   ops_par_loop_opt(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
-    ops_arg_dat(work_array1, S2D_00, OPS_READ),
-    ops_arg_gbl(local_dt, 1, OPS_WRITE));
+    ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
+    ops_arg_gbl(local_dt, 1, "double", OPS_WRITE));
 
 
   //Extract the mimimum timestep information
@@ -83,10 +83,10 @@ void calc_dt(double* local_dt, char* local_control,
   if(*local_dt < dtmin) small = 1;
 
   ops_par_loop_opt(calc_dt_kernel_get, "calc_dt_kernel_get", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, S2D_00_STRID2D_X, OPS_READ),
-    ops_arg_dat(celly, S2D_00_STRID2D_Y, OPS_READ),
-    ops_arg_gbl(xl_pos, 1, OPS_WRITE),
-    ops_arg_gbl(yl_pos, 1, OPS_WRITE));
+    ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
+    ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE),
+    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));
 
   if(small != 0) {
     ops_printf("Timestep information:\n");
@@ -95,14 +95,14 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("timestep : %lf\n",*local_dt);
 
     ops_par_loop_opt(calc_dt_kernel_print, "calc_dt_kernel_print", 2, rangexy_getpoint,
-    ops_arg_dat(cellx, S2D_00_STRID2D_X, OPS_READ),
-    ops_arg_dat(celly, S2D_00_STRID2D_Y, OPS_READ),
-    ops_arg_dat(xvel0, S2D_10_M10_01_0M1, OPS_READ),
-    ops_arg_dat(yvel0, S2D_10_M10_01_0M1, OPS_READ),
-    ops_arg_dat(density0, S2D_00, OPS_READ),
-    ops_arg_dat(energy0, S2D_00, OPS_READ),
-    ops_arg_dat(pressure, S2D_00, OPS_READ),
-    ops_arg_dat(soundspeed, S2D_00, OPS_READ));
+    ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
+    ops_arg_dat(xvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
+    ops_arg_dat(yvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
+    ops_arg_dat(density0, S2D_00, "double", OPS_READ),
+    ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
+    ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
+    ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
   }
 
   if(dtl_control == 1) sprintf(local_control, "sound");
