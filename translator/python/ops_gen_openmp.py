@@ -120,11 +120,14 @@ def ops_gen_openmp(master, date, kernels):
     #print name2
 
     reduction = False
+    ng_args = 0
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         reduction = True
-        break
+      else:
+        ng_args = ng_args + 1
+
 
     #backend functions that should go to the sequential backend lib
     code('#include "lib.h"')
@@ -207,7 +210,6 @@ def ops_gen_openmp(master, date, kernels):
         if arg_typ[n] == 'ops_arg_gbl':
           code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
 
-
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
@@ -225,24 +227,19 @@ def ops_gen_openmp(master, date, kernels):
     code('char **p_a['+str(nargs)+'];')
     code('')
     comm('store index of non_gbl args')
-    text = 'int non_gbl['+str(nargs)+'] = {'
-    for n in range (0, nargs):
-        text = text + '0'
-        if nargs <> 1 and n != nargs-1:
-          text = text +', '
-        else:
-          text = text +'};\n'
-        if n%n_per_line == 5 and n <> nargs-1:
-          text = text+'\n'
+    code('int g = '+str(ng_args)+';')
+    text = 'int non_gbl['+str(ng_args)+'] = {'
+    for n in range (0, ng_args):
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text + str(n)
+
+      if nargs <> 1 and n != ng_args-1:
+        text = text +', '
+      else:
+        text = text +'};\n'
+      if n%n_per_line == 5 and n <> ng_args-1:
+        text = text+'\n'
     code(text);
-    code('int g = 0;')
-
-
-    FOR('i','0',str(nargs))
-    IF('args[i].argtype == OPS_ARG_DAT')
-    code('non_gbl[g++] = i;')
-    ENDIF()
-    ENDFOR()
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -322,9 +319,6 @@ def ops_gen_openmp(master, date, kernels):
           FOR('d','0',str(dims[n]))
           code('arg'+str(n)+'h[d] += arg_gbl'+str(n)+'[thr][d];')
           ENDFOR()
-
-          #code('*(('+(str(typs[n]).replace('"','')).strip()+
-          #     '*)(args['+str(n)+'].data)) += *arg_gbl'+str(n)+'[thr];')
       ENDFOR()
 
       FOR('thr','0','nthreads')
