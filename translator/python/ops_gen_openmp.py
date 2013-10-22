@@ -217,6 +217,7 @@ def ops_gen_openmp(master, date, kernels):
 
     code('')
     code('int y_size = range[3]-range[2];')
+    code('')
 
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
@@ -239,10 +240,14 @@ def ops_gen_openmp(master, date, kernels):
 
     FOR('i','0',str(nargs))
     IF('args[i].argtype == OPS_ARG_DAT')
-    code('p_a[i] = (char **)malloc(args[i].stencil->points * sizeof(char *));')
     code('non_gbl[g++] = i;')
     ENDIF()
     ENDFOR()
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('p_a['+str(n)+'] = (char **)malloc(args['+str(n)+'].stencil->points * sizeof(char *));')
+
     code('')
 
     code('int start = range[2] + ((y_size-1)/nthreads+1)*thr;')
