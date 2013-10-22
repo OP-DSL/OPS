@@ -164,9 +164,16 @@ def ops_gen_openmp(master, date, kernels):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
+
+    if reduction == True:
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code('double*arg'+str(n)+'h = (double *)arg'+str(n)+'.data;')
+
+    code('')
+    comm('setup offsets');
     code('int  offs['+str(nargs)+'][2];')
     code('')
-
     FOR('i','0',str(nargs))
     IF('args[i].stencil!=NULL')
     code('offs[i][0] = 1;  //unit step in x dimension')
@@ -195,15 +202,17 @@ def ops_gen_openmp(master, date, kernels):
 
     #setup reduction variables
     if reduction == True:
+      comm('allocate and initialise arrays for global reduction')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
+
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
-               ' *)malloc(1 * sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
+               ' *)malloc('+str(dims[n])+' * sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
       ENDFOR()
 
     code('')
@@ -242,8 +251,6 @@ def ops_gen_openmp(master, date, kernels):
     comm('')
     comm('set up initial pointers')
 
-    #code('ops_args_set(range[0], start, '+str(nargs)+', args,p_a); //set up the initial possition\n')
-    comm('set up the initial possition');
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('ops_arg_set(range[0], start, args['+str(n)+'], p_a['+str(n)+']);')
@@ -307,8 +314,12 @@ def ops_gen_openmp(master, date, kernels):
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code('*(('+(str(typs[n]).replace('"','')).strip()+
-               '*)(args['+str(n)+'].data)) += *arg_gbl'+str(n)+'[thr];')
+          FOR('d','0',str(dims[n]))
+          code('arg'+str(n)+'h[d] += arg_gbl'+str(n)+'[thr][d];')
+          ENDFOR()
+
+          #code('*(('+(str(typs[n]).replace('"','')).strip()+
+          #     '*)(args['+str(n)+'].data)) += *arg_gbl'+str(n)+'[thr];')
       ENDFOR()
 
       FOR('thr','0','nthreads')
