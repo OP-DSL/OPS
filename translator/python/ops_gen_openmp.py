@@ -208,16 +208,11 @@ def ops_gen_openmp(master, date, kernels):
       comm('allocate and initialise arrays for global reduction')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          #code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
-          code((str(typs[n]).replace('"','')).strip()+
-          ' *arg_gbl'+str(n)+' = (' + (str(typs[n]).replace('"','')).strip() +
-          ' *) malloc(nthreads * 64 * sizeof('+(str(typs[n]).replace('"','')).strip()+' *));')
+          code((str(typs[n]).replace('"','')).strip()+' arg_gbl'+str(n)+'[nthreads * 64];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          #code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
-          #     ' *)calloc('+str(dims[n])+', sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
           code('arg_gbl'+str(n)+'[64*thr] = *arg'+str(n)+'h;')
       ENDFOR()
 
@@ -330,13 +325,6 @@ def ops_gen_openmp(master, date, kernels):
             code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] = arg_gbl'+str(n)+'[64*thr];')
 
       ENDFOR()
-
-
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          code('free(arg_gbl'+str(n)+');')
-
-
 
     depth = depth - 2
     code('}')
