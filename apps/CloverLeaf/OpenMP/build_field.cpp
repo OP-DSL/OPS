@@ -196,7 +196,7 @@ void build_field()
   S2D_00_P40     = ops_decl_stencil( 2, 2, s2D_00_P40, "0,0:4,0");
   S2D_00_0P4     = ops_decl_stencil( 2, 2, s2D_00_0P4, "0,0,0,-4");
 
-  S2D_00_M40     = ops_decl_stencil( 2, 2, s2D_00_M40, "0,0:=4,0");
+  S2D_00_M40     = ops_decl_stencil( 2, 2, s2D_00_M40, "0,0:-4,0");
   S2D_00_0M4     = ops_decl_stencil( 2, 2, s2D_00_0M4, "0,0:0,-4");
 
   S2D_00_P10_0P1_P1P1 = ops_decl_stencil( 2, 4, s2D_00_P10_0P1_P1P1, "0,0:1,0:0,1:1,1");
