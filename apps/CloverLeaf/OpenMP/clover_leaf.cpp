@@ -179,7 +179,11 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
+    //if(step == 2)
+    //  exit(0);
+
     timestep();
+
 
     PdV(TRUE);
 

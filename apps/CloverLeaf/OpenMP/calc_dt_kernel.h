@@ -51,9 +51,10 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
 
 
 void calc_dt_kernel_min(double** dt_min /*dt_min is work_array1*/,
-                    double** dt_min_val) {
-  if(**dt_min < **dt_min_val)
-    **dt_min_val = **dt_min;
+                    double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val,**dt_min);
+  //if(**dt_min < *dt_min_val)
+    //**dt_min_val = **dt_min;
 }
 
 void calc_dt_kernel_get(double** cellx, double** celly,

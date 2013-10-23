@@ -85,6 +85,7 @@ void calc_dt(double* local_dt, char* local_control,
   *local_dt = g_big;
   small = 0;
 
+
   int dtl_control;
 
   //initialize sizes using global values

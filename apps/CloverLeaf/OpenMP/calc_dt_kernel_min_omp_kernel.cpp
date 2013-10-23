@@ -15,7 +15,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
 
   ops_arg args[2] = { arg0, arg1};
 
-  double*arg1h = (double *)arg1.data;
+  double *arg1h = (double *)arg1.data;
 
   //setup offsets
   int  offs[2][2];
@@ -44,9 +44,9 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
   #endif
 
   //allocate and initialise arrays for global reduction
-  double *arg_gbl1[nthreads];
+  double *arg_gbl1 = (double *) malloc(nthreads * 64 * sizeof(double *));
   for ( int thr=0; thr<nthreads; thr++ ){
-    arg_gbl1[thr] = (double *)calloc(1, sizeof(double ));
+    arg_gbl1[64*thr] = *arg1h;
   }
 
   int y_size = range[3]-range[2];
@@ -72,7 +72,8 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
       for ( int n_x=range[0]; n_x<range[1]; n_x++ ){
         //call kernel function, passing in pointers to data
 
-        calc_dt_kernel_min(  (double **)p_a[0], (double **) &arg_gbl1[thr] );
+        //calc_dt_kernel_min(  (double **)p_a[0],  (double **)&arg1h );
+        calc_dt_kernel_min(  (double **)p_a[0],  &arg_gbl1[64*thr] );
 
         int a = 0;
         //shift pointers to data x direction
@@ -96,14 +97,16 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
 
     free(p_a[0]);
   }
-
+  //arg1h[0] = 0.0;
   // combine reduction data
   for ( int thr=0; thr<nthreads; thr++ ){
-    for ( int d=0; d<1; d++ ){
-      arg1h[d] += arg_gbl1[thr][d];
-    }
+    //for ( int d=0; d<1; d++ ){
+      //arg1h[d] += arg_gbl1[thr][d];
+      //printf("thread %d: vals %e\n",  thr, arg_gbl1[64*thr]);
+      arg1h[0] = MIN(arg1h[0], arg_gbl1[64*thr]);
+    //}
   }
-  for ( int thr=0; thr<nthreads; thr++ ){
-    free(arg_gbl1[thr]);
-  }
+  //for ( int thr=0; thr<nthreads; thr++ ){
+    free(arg_gbl1);
+  //}
 }

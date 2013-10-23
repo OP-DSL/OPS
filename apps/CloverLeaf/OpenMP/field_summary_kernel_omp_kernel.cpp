@@ -50,7 +50,7 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   #endif
 
   //allocate and initialise arrays for global reduction
-  double *arg_gbl6[nthreads];
+  /*double *arg_gbl6[nthreads];
   double *arg_gbl7[nthreads];
   double *arg_gbl8[nthreads];
   double *arg_gbl9[nthreads];
@@ -61,6 +61,19 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
     arg_gbl8[thr] = (double *)calloc(1, sizeof(double ));
     arg_gbl9[thr] = (double *)calloc(1, sizeof(double ));
     arg_gbl10[thr] = (double *)calloc(1, sizeof(double ));
+  }*/
+
+  double *arg_gbl6 = (double *) malloc(nthreads * 64 * sizeof(double *));
+  double *arg_gbl7 = (double *) malloc(nthreads * 64 * sizeof(double *));
+  double *arg_gbl8 = (double *) malloc(nthreads * 64 * sizeof(double *));
+  double *arg_gbl9 = (double *) malloc(nthreads * 64 * sizeof(double *));
+  double *arg_gbl10 = (double *) malloc(nthreads * 64 * sizeof(double *));
+  for ( int thr=0; thr<nthreads; thr++ ){
+    arg_gbl6[64*thr] = *arg6h;
+    arg_gbl7[64*thr] = *arg7h;
+    arg_gbl8[64*thr] = *arg8h;
+    arg_gbl9[64*thr] = *arg9h;
+    arg_gbl10[64*thr] = *arg10h;
   }
 
   int y_size = range[3]-range[2];
@@ -99,9 +112,9 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
         field_summary_kernel(  (double **)p_a[0], (double **)p_a[1],
            (double **)p_a[2], (double **)p_a[3],
            (double **)p_a[4], (double **)p_a[5],
-           (double **) &arg_gbl6[thr], (double **) &arg_gbl7[thr],
-           (double **) &arg_gbl8[thr], (double **) &arg_gbl9[thr],
-           (double **) &arg_gbl10[thr] );
+           &arg_gbl6[64*thr], &arg_gbl7[64*thr],
+           &arg_gbl8[64*thr], &arg_gbl9[64*thr],
+           &arg_gbl10[64*thr] );
 
         int a = 0;
         //shift pointers to data x direction
@@ -133,7 +146,12 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
   // combine reduction data
   for ( int thr=0; thr<nthreads; thr++ ){
-    for ( int d=0; d<1; d++ ){
+    arg6h[0] += arg_gbl6[64*thr];
+    arg7h[0] += arg_gbl7[64*thr];
+    arg8h[0] += arg_gbl8[64*thr];
+    arg9h[0] += arg_gbl9[64*thr];
+    arg10h[0] += arg_gbl10[64*thr];
+    /*for ( int d=0; d<1; d++ ){
       arg6h[d] += arg_gbl6[thr][d];
     }
     for ( int d=0; d<1; d++ ){
@@ -147,13 +165,13 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
     }
     for ( int d=0; d<1; d++ ){
       arg10h[d] += arg_gbl10[thr][d];
-    }
+    }*/
   }
-  for ( int thr=0; thr<nthreads; thr++ ){
-    free(arg_gbl6[thr]);
-    free(arg_gbl7[thr]);
-    free(arg_gbl8[thr]);
-    free(arg_gbl9[thr]);
-    free(arg_gbl10[thr]);
-  }
+
+  free(arg_gbl6);
+  free(arg_gbl7);
+  free(arg_gbl8);
+  free(arg_gbl9);
+  free(arg_gbl10);
+
 }
