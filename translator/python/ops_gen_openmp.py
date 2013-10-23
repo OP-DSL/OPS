@@ -82,12 +82,12 @@ def ops_gen_openmp(master, date, kernels):
   global dims, stens
   global g_m, file_text, depth
 
-  OP_ID   = 1;  OP_GBL   = 2;  OP_MAP = 3;
+  OPS_ID   = 1;  OPS_GBL   = 2;
 
-  OP_READ = 1;  OP_WRITE = 2;  OP_RW  = 3;
-  OP_INC  = 4;  OP_MAX   = 5;  OP_MIN = 6;
+  OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
+  OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;
 
-  accsstring = ['OP_READ','OP_WRITE','OP_RW','OP_INC','OP_MAX','OP_MIN' ]
+  accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
 
 ##########################################################################
@@ -208,13 +208,17 @@ def ops_gen_openmp(master, date, kernels):
       comm('allocate and initialise arrays for global reduction')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
+          #code((str(typs[n]).replace('"','')).strip()+' *arg_gbl'+str(n)+'[nthreads];')
+          code((str(typs[n]).replace('"','')).strip()+
+          ' *arg_gbl'+str(n)+' = (' + (str(typs[n]).replace('"','')).strip() +
+          ' *) malloc(nthreads * 64 * sizeof('+(str(typs[n]).replace('"','')).strip()+' *));')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
-               ' *)calloc('+str(dims[n])+', sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
+          #code('arg_gbl'+str(n)+'[thr] = ('+(str(typs[n]).replace('"','')).strip()+
+          #     ' *)calloc('+str(dims[n])+', sizeof('+(str(typs[n]).replace('"','')).strip()+' ));')
+          code('arg_gbl'+str(n)+'[64*thr] = *arg'+str(n)+'h;')
       ENDFOR()
 
     code('')
@@ -269,7 +273,7 @@ def ops_gen_openmp(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)p_a['+str(n)+']'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **) &arg_gbl'+str(n)+'[thr]'
+        text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
       if nargs <> 1 and n != nargs-1:
         text = text + ','
@@ -316,16 +320,22 @@ def ops_gen_openmp(master, date, kernels):
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          FOR('d','0',str(dims[n]))
-          code('arg'+str(n)+'h[d] += arg_gbl'+str(n)+'[thr][d];')
-          ENDFOR()
+          if accs[n] == OPS_INC:
+            code('arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
+          elif accs[n] == OPS_MIN:
+            code('arg'+str(n)+'h[0] = MIN(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+          elif accs[n] == OPS_MAX:
+            code('arg'+str(n)+'h[0] = MAX(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+          elif accs[n] == OPS_WRITE:
+            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] = arg_gbl'+str(n)+'[64*thr];')
+
       ENDFOR()
 
-      FOR('thr','0','nthreads')
+
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code('free(arg_gbl'+str(n)+'[thr]);')
-      ENDFOR()
+          code('free(arg_gbl'+str(n)+');')
+
 
 
     depth = depth - 2

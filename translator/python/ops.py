@@ -201,17 +201,17 @@ def main():
   kernels = []
   kernels_in_files = []
 
-  OP_GBL = 2
+  OPS_GBL = 2
 
-  OP_READ = 1
-  OP_WRITE = 2
-  OP_RW = 3
-  OP_INC = 4
-  OP_MAX = 5
-  OP_MIN = 6
+  OPS_READ = 1
+  OPS_WRITE = 2
+  OPS_RW = 3
+  OPS_INC = 4
+  OPS_MAX = 5
+  OPS_MIN = 6
 
-  OPS_accs_labels = ['OP_READ', 'OP_WRITE', 'OP_RW', 'OP_INC',
-                    'OP_MAX', 'OP_MIN']
+  OPS_accs_labels = ['OPS_READ', 'OPS_WRITE', 'OPS_RW', 'OPS_INC',
+                    'OPS_MAX', 'OPS_MIN']
 
   #
   # loop over all input source files

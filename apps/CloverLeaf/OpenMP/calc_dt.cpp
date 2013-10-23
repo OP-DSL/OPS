@@ -69,7 +69,7 @@ void calc_dt(double* local_dt, char* local_control,
 
   ops_par_loop_opt(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
-    ops_arg_gbl(local_dt, 1, "double", OPS_WRITE));
+    ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
 
   //Extract the mimimum timestep information
@@ -78,7 +78,7 @@ void calc_dt(double* local_dt, char* local_control,
   *jldt = (int)jk_control%x_max;
   *kldt = 1 + (jk_control/x_max);
 
-  int rangexy_getpoint[] = {*jldt-1,*jldt,*kldt-1,*kldt}; // inner range without border
+  int rangexy_getpoint[] = {*jldt-1,*jldt,*kldt-1,*kldt}; // get point value
 
   if(*local_dt < dtmin) small = 1;
 
