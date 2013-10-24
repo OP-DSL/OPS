@@ -27,7 +27,6 @@ void field_summary_kernel( double **volume, double **density0,
   vsqrd = vsqrd + 0.25 * ( pow((*xvel0[2]),2.0) + pow((*yvel0[2]),2.0) );
   vsqrd = vsqrd + 0.25 * ( pow((*xvel0[3]),2.0) + pow((*yvel0[3]),2.0) );*/
 
-
   cell_vol = **volume;
   cell_mass = cell_vol * (**density0);
   *vol = *vol + cell_vol;

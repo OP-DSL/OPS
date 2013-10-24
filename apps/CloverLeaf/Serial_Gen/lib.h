@@ -61,8 +61,6 @@ inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
          arg.stencil->stencil[i * arg.stencil->dims + 0] //get the value at the ith stencil point
          );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -92,8 +90,6 @@ inline void ops_arg_set(int n_x,
                                                       //stencil point "+ 0" is the x dim
       );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -122,8 +118,6 @@ inline void ops_arg_set(int n_x,
       arg.stencil->stride[0] +
       arg.stencil->stencil[i*arg.stencil->dims + 0]
       );
-  } else {
-    *p_arg = arg.data;
   }
 }
 

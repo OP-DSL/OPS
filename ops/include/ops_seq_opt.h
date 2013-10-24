@@ -60,8 +60,6 @@ inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
          arg.stencil->stencil[i * arg.stencil->dims + 0] //get the value at the ith stencil point
          );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -91,8 +89,6 @@ inline void ops_arg_set(int n_x,
                                                       //stencil point "+ 0" is the x dim
       );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -121,8 +117,6 @@ inline void ops_arg_set(int n_x,
       arg.stencil->stride[0] +
       arg.stencil->stencil[i*arg.stencil->dims + 0]
       );
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -192,7 +186,7 @@ void ops_par_loop_opt(void (*kernel)(T0*),
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -228,7 +222,7 @@ void ops_par_loop_opt(void (*kernel)(T0*),
     }
   }
   for (int i = 0; i < 1; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -270,7 +264,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*),
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -306,7 +300,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*),
     }
   }
   for (int i = 0; i < 2; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -348,7 +342,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*),
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -384,7 +378,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*),
     }
   }
   for (int i = 0; i < 3; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -426,7 +420,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*),
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -462,7 +456,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*),
     }
   }
   for (int i = 0; i < 4; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -508,7 +502,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -545,7 +539,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 5; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -591,7 +585,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -628,7 +622,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 6; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -674,7 +668,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -711,7 +705,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 7; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -757,7 +751,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -794,7 +788,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 8; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -844,7 +838,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -882,7 +876,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 9; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -932,7 +926,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -970,7 +964,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 10; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1020,7 +1014,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1058,7 +1052,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 11; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1108,7 +1102,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1146,7 +1140,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 12; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1200,7 +1194,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1239,7 +1233,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 13; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1293,7 +1287,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1332,7 +1326,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 14; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1386,7 +1380,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1425,7 +1419,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 15; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }
 
 //
@@ -1479,7 +1473,7 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
       non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));
+      p_a[i] = (char **)args[i].data;
   }
 
   int total_range = 1;
@@ -1518,5 +1512,5 @@ void ops_par_loop_opt(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
   for (int i = 0; i < 16; i++)
-    free(p_a[i]);
+  if(args[i].argtype == OPS_ARG_DAT)    free(p_a[i]);
 }

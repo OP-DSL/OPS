@@ -80,8 +80,6 @@ inline void ops_arg_set(int n_x, ops_arg arg, char **p_arg){
          arg.stencil->stencil[i * arg.stencil->dims + 0] //get the value at the ith stencil point
          );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -111,8 +109,6 @@ inline void ops_arg_set(int n_x,
                                                       //stencil point "+ 0" is the x dim
       );
     }
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -141,8 +137,6 @@ inline void ops_arg_set(int n_x,
       arg.stencil->stride[0] +
       arg.stencil->stencil[i*arg.stencil->dims + 0]
       );
-  } else {
-    *p_arg = arg.data;
   }
 }
 
@@ -272,7 +266,7 @@ for nargs in range (1,maxargs+1):
     f.write('      non_gbl[g++] = i;\n')
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
-    f.write('      p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));\n')
+    f.write('      p_a[i] = (char **)args[i].data;\n')
     f.write('  }\n\n')
 
     f.write('  int total_range = 1;\n')
@@ -319,5 +313,6 @@ for nargs in range (1,maxargs+1):
     f.write('  }\n')
 
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++)\n')
+    f.write('  if(args[i].argtype == OPS_ARG_DAT)')
     f.write('    free(p_a[i]);\n')
     f.write('}')

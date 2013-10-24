@@ -95,7 +95,7 @@ def ops_gen_seq(master, date, kernels):
 ##########################################################################
 
   for nk in range (0,len(kernels)):
-
+    arg_typ  = kernels[nk]['arg_type']
     name  = kernels[nk]['name']
     nargs = kernels[nk]['nargs']
     dim   = kernels[nk]['dim']
@@ -193,7 +193,7 @@ def ops_gen_seq(master, date, kernels):
     code('non_gbl[g++] = i;')
     ENDIF()
     ELSEIF('args[i].argtype == OPS_ARG_GBL')
-    code('p_a[i] = (char **)malloc(args[i].dim * sizeof(char *));')
+    code('p_a[i] = (char **)args[i].data;')
     ENDIF()
     ENDFOR()
 
@@ -216,13 +216,16 @@ def ops_gen_seq(master, date, kernels):
     code('')
     text = name+'( '
     for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' **)p_a['+str(n)+']'
-        if nargs <> 1 and n != nargs-1:
-          text = text + ','
-        else:
-          text = text +' );\n'
-        if n%n_per_line == 2 and n <> nargs-1:
-          text = text +'\n          '
+      else:
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+      if nargs <> 1 and n != nargs-1:
+        text = text + ','
+      else:
+        text = text +' );\n'
+      if n%n_per_line == 2 and n <> nargs-1:
+        text = text +'\n          '
     code(text);
     comm('decrement counter')
     code('count[0]--;\n')
@@ -247,9 +250,9 @@ def ops_gen_seq(master, date, kernels):
     ENDFOR()
     code('')
 
-    FOR('i','0',str(nargs))
-    code('free(p_a[i]);')
-    ENDFOR()
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('free(p_a['+str(n)+']);')
 
     depth = depth - 2
     code('}')
