@@ -33,7 +33,7 @@
 #include "definitions.h"
 #include "advec_cell_kernel.h"
 
-void advec_cell(int sweep_number, int dir, int step)
+void advec_cell(int sweep_number, int dir)
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;
@@ -121,14 +121,6 @@ void advec_cell(int sweep_number, int dir, int step)
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ)
         );
 
-      //if(step == 1 && dir == g_ydir) {
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(work_array3, "cloverdats.dat");
-      //exit(0);
-      //}
-
   }
 
     ops_par_loop_opt(advec_cell_kernel3_ydir, "advec_cell_kernel3_ydir", 2, rangexy_inner_plus2y,
@@ -158,8 +150,5 @@ void advec_cell(int sweep_number, int dir, int step)
       );
 
   }
-
-
-
 
 }
