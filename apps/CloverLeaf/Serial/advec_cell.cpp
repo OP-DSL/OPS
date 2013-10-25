@@ -49,6 +49,8 @@ void advec_cell(int sweep_number, int dir)
   int rangexy_inner_plus2x[] = {x_min,x_max+2,y_min,y_max}; // inner range with +2 in x
   int rangexy_inner_plus2y[] = {x_min,x_max,y_min,y_max+2}; // inner range with +2 in y
 
+  //printf("direction: %d sweep_number %d \n", dir, sweep_number);
+
   if(dir == g_xdir) {
 
     if(sweep_number == 1) {
@@ -68,6 +70,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(vol_flux_x, S2D_00_P10, "double", OPS_READ)
         );
     }
+
 
     ops_par_loop_opt(advec_cell_kernel3_xdir, "advec_cell_kernel3_xdir", 2, rangexy_inner_plus2x,
       ops_arg_dat(vol_flux_x, S2D_00, "double", OPS_READ),
@@ -97,6 +100,8 @@ void advec_cell(int sweep_number, int dir)
   }
   else {
 
+
+
     if(sweep_number == 1) {
       ops_par_loop_opt(advec_cell_kernel1_ydir, "advec_cell_kernel1_ydir", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
@@ -107,13 +112,16 @@ void advec_cell(int sweep_number, int dir)
         );
     }
     else {
+
+
       ops_par_loop_opt(advec_cell_kernel2_ydir, "advec_cell_kernel2_ydir", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array2, S2D_00, "double", OPS_READ),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-        ops_arg_dat(vol_flux_y, S2D_00_P10, "double", OPS_READ)
+        ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ)
         );
-    }
+
+  }
 
     ops_par_loop_opt(advec_cell_kernel3_ydir, "advec_cell_kernel3_ydir", 2, rangexy_inner_plus2y,
       ops_arg_dat(vol_flux_y, S2D_00, "double", OPS_READ),
@@ -125,6 +133,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(mass_flux_y, S2D_00, "double", OPS_READ),
       ops_arg_dat(work_array7, S2D_00, "double", OPS_READ)
       );
+
 
     ops_par_loop_opt(advec_cell_kernel4_ydir, "advec_cell_kernel4_ydir", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, "double", OPS_READ),

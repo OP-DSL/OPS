@@ -1,6 +1,9 @@
 #ifndef CALC_DT_KERNEL_H
 #define CALC_DT_KERNEL_H
 
+#include "data.h"
+#include "definitions.h"
+
 void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
                     double **viscosity, double **density0, double **xvel0,
                     double **xarea, double **volume, double **yvel0,
@@ -14,7 +17,12 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
   cc = (**soundspeed) * (**soundspeed);
   cc = cc + 2.0 * (**viscosity)/(**density0);
   cc = MAX(sqrt(cc),g_small);
+
+  //printf("dtc_safe %3.15e \n",dtc_safe);
+
   dtct = dtc_safe * MIN(dsx,dsy)/cc;
+
+
 
   div=0.0;
 
@@ -36,27 +44,26 @@ void calc_dt_kernel(double** celldx, double** celldy, double **soundspeed,
 
   div = div/(2.0*(**volume));
 
-  if(div < -1*(g_small))
+  if(div < -g_small)
     dtdivt = dtdiv_safe * (-1.0/div);
   else
     dtdivt = g_big;
 
   //dt_min is work_array1
   **dt_min = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
-
+  //printf("dt_min %3.15e \n",**dt_min);
 }
 
 
 void calc_dt_kernel_min(double** dt_min /*dt_min is work_array1*/,
-                    double** dt_min_val) {
-  if(**dt_min < **dt_min_val)
-    **dt_min_val = **dt_min;
+                    double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val,**dt_min);
 }
 
 void calc_dt_kernel_get(double** cellx, double** celly,
-                        double** xl_pos, double** yl_pos) {
-  **xl_pos = **cellx;
-  **yl_pos = **celly;
+                        double* xl_pos, double* yl_pos) {
+  *xl_pos = **cellx;
+  *yl_pos = **celly;
 }
 
 void calc_dt_kernel_print(double** cellx, double** celly,

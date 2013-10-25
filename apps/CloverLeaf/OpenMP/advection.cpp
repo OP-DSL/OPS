@@ -32,7 +32,7 @@
 #include "definitions.h"
 
 void update_halo(int* fields, int depth);
-void advec_cell(int sweep_number, int direction, int step);
+void advec_cell(int sweep_number, int direction);
 void advec_mom(int which_vel, int sweep_number, int dir);
 
 void advection(int step)
@@ -64,15 +64,7 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 0;
   update_halo(fields,2);
 
-  advec_cell(sweep_number, direction,step);
-
-  //if(step == 7)
-  //{
-    //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-    //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-    //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
-    //exit(0);
-  //}
+  advec_cell(sweep_number, direction);
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
@@ -99,15 +91,7 @@ void advection(int step)
   if(advect_x == TRUE) direction = g_ydir;
   if(!(advect_x == TRUE)) direction= g_xdir;
 
-  advec_cell(sweep_number,direction,step);
-
-  //if(step == 1) {
-    //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-    //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-    //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
-    //ops_print_dat_to_txtfile_core(work_array3, "cloverdats.dat");
-    //exit(0);
-  //}
+  advec_cell(sweep_number,direction);
 
   fields[FIELD_DENSITY0]  = 0;
   fields[FIELD_ENERGY0]   = 0;
