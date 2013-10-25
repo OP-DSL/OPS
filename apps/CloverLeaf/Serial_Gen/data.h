@@ -163,9 +163,4 @@ extern ops_stencil S2D_00_0P1_0M1_0M2_STRID2D_Y;
 extern ops_stencil S2D_00_P10_P20_M10;
 extern ops_stencil S2D_00_0P1_0P2_0M1;
 
-extern ops_stencil sten_self_stride2D_xmax;
-extern ops_stencil sten_self_nullstride2D_xmax;
-extern ops_stencil sten_self_stride2D_ymax;
-extern ops_stencil sten_self_nullstride2D_ymax;
-
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/

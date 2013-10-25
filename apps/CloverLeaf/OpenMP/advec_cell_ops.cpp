@@ -115,7 +115,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *, int , int*,
 #include "definitions.h"
 //#include "advec_cell_kernel.h"
 
-void advec_cell(int sweep_number, int dir, int step)
+void advec_cell(int sweep_number, int dir)
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;

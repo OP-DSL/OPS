@@ -105,9 +105,3 @@
 
   ops_stencil S2D_00_P10_P20_M10;
   ops_stencil S2D_00_0P1_0P2_0M1;
-
-
-  ops_stencil sten_self_stride2D_xmax;
-  ops_stencil sten_self_nullstride2D_xmax;
-  ops_stencil sten_self_stride2D_ymax;
-  ops_stencil sten_self_nullstride2D_ymax;

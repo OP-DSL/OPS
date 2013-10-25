@@ -225,11 +225,6 @@ void build_field()
   S2D_00_M10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "s2D_00_M10_stride2D_x");
   S2D_00_0M1_STRID2D_Y = ops_decl_strided_stencil( 2, 2, s2D_00_0M1, stride2D_y, "s2D_00_0M1_stride2D_y");
 
-  sten_self_stride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_y, "self_stride2D_xmax");
-  sten_self_nullstride2D_xmax = ops_decl_strided_stencil( 2, 1, xmax2D, stride2D_null, "self_nullstride2D_xmax");
-  sten_self_stride2D_ymax = ops_decl_strided_stencil( 2, 1, ymax2D, stride2D_x, "self_stride2D_ymax");
-  sten_self_nullstride2D_ymax = ops_decl_strided_stencil( 2, 1, ymax2D, stride2D_null, "self_nullstride2D_ymax");
-
 
   //print ops blocks and dats details
   ops_diagnostic_output();
