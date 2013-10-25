@@ -503,8 +503,8 @@ def main():
         # finally, generate target-specific kernel files
         #
 
-        ops_gen_seq(str(sys.argv[1]), date, kernels)
-        #ops_gen_openmp(str(sys.argv[1]), date, kernels)
+        #ops_gen_seq(str(sys.argv[1]), date, kernels)
+        ops_gen_openmp(str(sys.argv[1]), date, kernels)
         #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
 

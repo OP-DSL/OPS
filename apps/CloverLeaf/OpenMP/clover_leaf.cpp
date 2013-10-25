@@ -179,21 +179,39 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-    //if(step == 2)
-    //  exit(0);
+
 
     timestep();
 
 
+
     PdV(TRUE);
 
+    //if(step == 1) {
+      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      //exit(0);
+    //}
+
     accelerate();
+
+
 
     PdV(FALSE);
 
     flux_calc();
 
     advection(step);
+
+    if(step == 1) {
+      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
+      //exit(0);
+    }
+
+
 
     reset_field();
 

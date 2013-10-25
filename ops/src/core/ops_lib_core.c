@@ -411,7 +411,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     if( strcmp(dat->type,"double") == 0 ) {
       for(int i = 0; i < dat->block_size[1]; i++ ) {
         for(int j = 0; j < dat->block_size[0]; j++ ) {
-          if (fprintf(fp, "%3.10lf ",
+          if (fprintf(fp, " %3.10lf",
             ((double *)dat->data)[i*dat->block_size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);

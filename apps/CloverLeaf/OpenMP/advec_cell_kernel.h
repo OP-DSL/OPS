@@ -7,6 +7,9 @@ void advec_cell_kernel1_xdir( double **pre_vol, double **post_vol, double **volu
   **pre_vol = **volume + ( (*vol_flux_x[1]) - (*vol_flux_x[0]) +
                            (*vol_flux_y[1]) - (*vol_flux_y[0]));
   **post_vol = **pre_vol - ( (*vol_flux_x[1]) - (*vol_flux_x[0]));
+
+
+
 }
 
 
@@ -101,6 +104,8 @@ void advec_cell_kernel4_xdir( double **density1, double **energy1,
   **advec_vol = (**pre_vol) + (*vol_flux_x[0]) - (*vol_flux_x[1]);
   **density1 = (**post_mass)/(**advec_vol);
   **energy1 = **post_ener;
+
+
 }
 
 
@@ -112,6 +117,8 @@ void advec_cell_kernel1_ydir( double **pre_vol, double **post_vol, double **volu
   **pre_vol = (**volume) + ( (*vol_flux_y[1]) - (*vol_flux_y[0]) +
                              (*vol_flux_x[1]) - (*vol_flux_x[0]) );
   **post_vol = (**pre_vol) - ( (*vol_flux_y[1]) - (*vol_flux_y[0]) );
+
+
 }
 
 void advec_cell_kernel2_ydir( double **pre_vol, double **post_vol, double **volume,
@@ -204,6 +211,8 @@ void advec_cell_kernel4_ydir( double **density1, double **energy1,
   **advec_vol = (**pre_vol) + (*vol_flux_y[0]) - (*vol_flux_y[1]);
   **density1 = (**post_mass)/(**advec_vol);
   **energy1 = **post_ener;
+
+  //printf("**pre_vol %3.15e, **pre_mass, %3.15e\n",**pre_vol, **pre_mass);
 }
 
 #endif

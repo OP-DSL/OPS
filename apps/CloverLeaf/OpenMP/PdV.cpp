@@ -52,7 +52,7 @@ void PdV(int predict)
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  if(predict) {
+  if(predict == TRUE) {
   ops_par_loop_opt(PdV_kernel_predict, "PdV_kernel_predict", 2, rangexy_inner,
     ops_arg_dat(xarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
     ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
@@ -90,7 +90,7 @@ void PdV(int predict)
     exit(-2);
   }
 
-  if(predict) {
+  if(predict == TRUE) {
     ideal_gas(TRUE);
 
     fields[FIELD_DENSITY0]  = 0;
@@ -111,7 +111,7 @@ void PdV(int predict)
 
   }
 
-  if(predict) {
+  if(predict == TRUE) {
     revert();
   }
 

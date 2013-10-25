@@ -52,6 +52,7 @@ void calc_dt(double* local_dt, char* local_control,
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop_opt(calc_dt_kernel, "calc_dt_kernel", 2, rangexy_inner,

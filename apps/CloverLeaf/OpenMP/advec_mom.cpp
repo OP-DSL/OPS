@@ -61,7 +61,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   }
 
   mom_sweep = dir + 2*(sweep_number-1);
-  //printf("mom_sweep %d direction: %d sweep_number: %d\n",mom_sweep, dir, sweep_number);
+  //printf("vector %d, direction: %d sweep_number: %d mom_sweep %d \n",vector, dir, sweep_number, mom_sweep);
 
   if(mom_sweep == 1) { // x 1
       ops_par_loop_opt(advec_mom_kernel_x1, "advec_mom_kernel_x1", 2, rangexy,
@@ -121,7 +121,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
 
     int range_plus1xy_minus1x[] = {x_min-1,x_max+1,y_min,y_max+1}; // partial x range partial y range
-    if(vector) {
+    if(vector == 1) {
 
       ops_par_loop_opt(advec_mom_kernel1_x, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
@@ -163,7 +163,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array1/*node_flux*/, S2D_00_0M1, "double", OPS_READ));
 
     int range_plus1xy_minus1y[] = {x_min,x_max+1,y_min-1,y_max+1}; // partial x range partial y range
-    if(vector) {
+    if(vector == 1) {
         ops_par_loop_opt(advec_mom_kernel1_y, "advec_mom_kernel1_y", 2, range_plus1xy_minus1y,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_0P1, "double", OPS_READ),

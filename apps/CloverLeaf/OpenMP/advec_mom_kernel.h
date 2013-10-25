@@ -40,7 +40,7 @@ void advec_mom_kernel_y2( double **pre_vol, double **post_vol,
                           double **volume,
                           double **vol_flux_x) {
 
-//vol_flux_x accessed with : {0,0, 0,1}
+//vol_flux_x accessed with : {0,0, 1,0}
 
   **post_vol = **volume;
   **pre_vol  = **post_vol + (*vol_flux_x[1]) - (*vol_flux_x[0]);
@@ -178,6 +178,10 @@ void advec_mom_kernel1_y( double **node_flux, double **node_mass_pre,
 
   sigma = fabs(*node_flux[0])/(*node_mass_pre[1]);
   sigma2 = fabs(*node_flux[0])/(*node_mass_pre[0]);
+
+  //printf("sigma %3.15e, sigma2, %3.15e ",sigma, sigma2);
+  //printf("*node_flux[0] %3.15e, *node_mass_pre[0], %3.15e\n",*node_flux[0], *node_mass_pre[0]);
+
   width = *celldy[0];
   vdiffuw = (*vel1[1]) - (*vel1[2]);
   vdiffdw = (*vel1[0]) - (*vel1[1]);
@@ -196,6 +200,10 @@ void advec_mom_kernel1_y( double **node_flux, double **node_mass_pre,
                         auw/(*celldy[1]))/6.0, MIN(auw, adw));
   limiter2 = wind2 * MIN( width * ( (2.0 - sigma2) * adw/width + (1.0 + sigma2) *
                         auw2/(*celldy[2]))/6.0, MIN(auw2,adw));
+
+  //printf("limiter %3.15e, limiter2, %3.15e\n",limiter, limiter2);
+  //printf("vdiffdw %3.15e, vdiffdw2, %3.15e\n",vdiffdw, vdiffdw2);
+
 
   if((vdiffuw * vdiffdw) <= 0.0) limiter = 0.0;
   if((vdiffuw2 * vdiffdw2) <= 0.0) limiter2 = 0.0;
