@@ -50,7 +50,7 @@ endif
 
 .PHONY: clean mklib
 
-all: clean core seq
+all: clean core seq openmp
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
 
@@ -61,6 +61,10 @@ core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.c $(SRC)/externlib/op
 seq: mklib core $(OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
 	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_seq.o
+
+openmp: mklib core $(OBJ)/ops_lib_core.o
+	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/openmp/ops_openmp_decl.c -o $(OBJ)/ops_openmp_decl.o
+	ar -r $(LIB)/libops_openmp.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_openmp_decl.o
 
 clean:
 	-rm -if $(OBJ)/*.o

@@ -79,7 +79,7 @@ cloverleaf_openmp:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp init
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_seq -o cloverleaf_openmp
+		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_openmp -o cloverleaf_openmp
 #
 # cleanup
 #
