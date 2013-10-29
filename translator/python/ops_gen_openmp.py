@@ -130,7 +130,7 @@ def ops_gen_openmp(master, date, kernels):
 
 
     #backend functions that should go to the sequential backend lib
-    code('#include "lib.h"')
+    code('#include "ops_lib_openmp.h"')
 
     code('#ifdef _OPENMP')
     code('#include <omp.h>')
