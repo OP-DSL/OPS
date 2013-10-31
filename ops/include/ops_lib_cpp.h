@@ -106,4 +106,6 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
 }
 
+void ops_timers( double *cpu, double *et );
+
 #endif /* __OP_LIB_CPP_H */

@@ -187,5 +187,6 @@ void ops_diagnostic_output( );
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
+void ops_timers_core( double *cpu, double *et );
 
 #endif /* __OP_LIB_CORE_H */

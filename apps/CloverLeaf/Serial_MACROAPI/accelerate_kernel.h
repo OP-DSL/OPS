@@ -24,8 +24,6 @@ void accelerate_kernelx1( double **xvel0, double **xvel1,
                         double **stepbymass,
                         double **xarea, double **pressure) {
 
-  double nodal_mass;
-
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, 0,-1};
 
@@ -39,8 +37,6 @@ void accelerate_kernely1( double **yvel0, double **yvel1,
                         double **stepbymass,
                         double **yarea, double **pressure) {
 
-  double nodal_mass;
-
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, -1,0};
   **yvel1 = (**yvel0) - (**stepbymass) *
@@ -53,8 +49,6 @@ void accelerate_kernely1( double **yvel0, double **yvel1,
 void accelerate_kernelx2( double **xvel1, double **stepbymass,
                         double **xarea, double **viscosity) {
 
-  double nodal_mass;
-
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, 0,-1};
 
@@ -65,8 +59,6 @@ void accelerate_kernelx2( double **xvel1, double **stepbymass,
 
 void accelerate_kernely2( double **yvel1, double **stepbymass,
                         double **yarea, double **viscosity) {
-
-  double nodal_mass;
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, -1,0};

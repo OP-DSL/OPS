@@ -37,6 +37,7 @@
 
 #include <sys/time.h>
 #include "ops_lib_core.h"
+#include <sys/time.h>
 
 int OPS_diags = 0;
 
@@ -483,4 +484,13 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   fclose(fp);
+}
+
+void ops_timers_core( double * cpu, double * et )
+{
+  (void)cpu;
+  struct timeval t;
+
+  gettimeofday ( &t, ( struct timezone * ) 0 );
+  *et = t.tv_sec + t.tv_usec * 1.0e-6;
 }

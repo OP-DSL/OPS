@@ -37,6 +37,13 @@
 
 #include <ops_lib_cpp.h>
 
+int xdim0;
+int xdim1;
+int xdim2;
+int xdim3;
+int xdim4;
+int xdim5;
+
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
                            char const * type, char const * name )
@@ -71,4 +78,9 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
   ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_timers(double * cpu, double * et)
+{
+    ops_timers_core(cpu,et);
 }

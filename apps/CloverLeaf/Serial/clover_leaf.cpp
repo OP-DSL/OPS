@@ -164,6 +164,8 @@ int main(int argc, char **argv)
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
+  double ct0, ct1, et0, et1;
+  ops_timers_core(&ct0, &et0);
 
   while(1) {
 
@@ -199,17 +201,19 @@ int main(int argc, char **argv)
       break;
     }
 
-    /*if(step == 71)
+    if(step == 20)
     {
-      ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-      int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
-      ops_par_loop_opt(test_kernel2, "test_kernel2", 2, rangexy_inner,
-      ops_arg_dat(density0, S2D_00_STRID2D_X, OPS_READ));
-      exit(0);
-    }*/
+      //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+      //int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
+      //ops_par_loop_opt(test_kernel2, "test_kernel2", 2, rangexy_inner,
+      //ops_arg_dat(density0, S2D_00_STRID2D_X, OPS_READ));
+      //exit(0);
+      break;
+    }
   }
 
-
+  ops_timers_core(&ct1, &et1);
+  ops_printf("Total Wall time %lf\n",et1-et0);
   fclose(g_out);
   ops_exit();
 }

@@ -174,6 +174,8 @@ int main(int argc, char **argv)
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
+  double ct0, ct1, et0, et1;
+  ops_timers_core(&ct0, &et0);
 
   while(1) {
 
@@ -187,11 +189,7 @@ int main(int argc, char **argv)
 
     PdV(TRUE);
 
-    //if(step == 1) {
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //exit(0);
-    //}
+
 
     accelerate();
 
@@ -229,7 +227,18 @@ int main(int argc, char **argv)
       field_summary();
       break;
     }
+
+     //if(step == 20) {
+      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      //exit(0);
+     // break;
+    //}
+
   }
+
+  ops_timers_core(&ct1, &et1);
+  ops_printf("Total Wall time %lf\n",et1-et0);
 
   fclose(g_out);
   ops_exit();
