@@ -27,12 +27,31 @@
 
 // OPS header file
 #include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 #include "data.h"
 #include "definitions.h"
 
 #include "flux_calc_kernel.h"
 
+
+void flux_calc_kernelx_macro( double *vol_flux_x, double *xarea,
+                        double *xvel0, double *xvel1) {
+
+  //{0,0, 0,1};
+  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
+  ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
+
+}
+
+void flux_calc_kernely_macro( double *vol_flux_y, double *yarea,
+                        double *yvel0, double *yvel1) {
+
+    //{0,0, 1,0};
+  vol_flux_y[OPS_ACC0(0,0)] = 0.25 * dt * (yarea[OPS_ACC1(0,0)]) *
+  ( (yvel0[OPS_ACC2(0,0)]) + (yvel0[OPS_ACC2(1,0)]) + (yvel1[OPS_ACC3(0,0)]) + (yvel1[OPS_ACC3(1,0)]) );
+
+}
 
 void flux_calc()
 {
@@ -48,7 +67,7 @@ void flux_calc()
 
   int rangexy_inner_plus1x[] = {x_min,x_max+1,y_min,y_max};
 
-  ops_par_loop_opt(flux_calc_kernelx, "flux_calc_kernelx", 2, rangexy_inner_plus1x,
+  ops_par_loop_macro(flux_calc_kernelx_macro, "flux_calc_kernelx_macro", 2, rangexy_inner_plus1x,
     ops_arg_dat(vol_flux_x, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
     ops_arg_dat(xvel0, S2D_00_0P1, "double", OPS_READ),
@@ -56,7 +75,7 @@ void flux_calc()
 
   int rangexy_inner_plus1y[] = {x_min,x_max,y_min,y_max+1};
 
-  ops_par_loop_opt(flux_calc_kernely, "flux_calc_kernely", 2, rangexy_inner_plus1y,
+  ops_par_loop_macro(flux_calc_kernely_macro, "flux_calc_kernely_macro", 2, rangexy_inner_plus1y,
     ops_arg_dat(vol_flux_y, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(yarea, S2D_00, "double", OPS_READ),
     ops_arg_dat(yvel0, S2D_00_P10, "double", OPS_READ),
