@@ -27,12 +27,28 @@
 
 // OPS header file
 #include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 #include "data.h"
 #include "definitions.h"
 
 #include "reset_field_kernel.h"
 
+void reset_field_kernel1_macro( double *density0, double *density1,
+                        double *energy0, double *energy1) {
+
+  density0[OPS_ACC0(0,0)]  = density1[OPS_ACC1(0,0)] ;
+  energy0[OPS_ACC2(0,0)]  = energy1[OPS_ACC3(0,0)] ;
+
+}
+
+void reset_field_kernel2_macro( double *xvel0, double *xvel1,
+                        double *yvel0, double *yvel1) {
+
+  xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;
+  yvel0[OPS_ACC2(0,0)]  = yvel1[OPS_ACC3(0,0)] ;
+
+}
 
 void reset_field()
 {
@@ -48,7 +64,7 @@ void reset_field()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  ops_par_loop_opt(reset_field_kernel1, "reset_field_kernel1", 2, rangexy_inner,
+  ops_par_loop_opt(reset_field_kernel1_macro, "reset_field_kernel1_macro", 2, rangexy_inner,
     ops_arg_dat(density0, S2D_00, "double", OPS_READ),
     ops_arg_dat(density1, S2D_00, "double", OPS_READ),
     ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
@@ -56,7 +72,7 @@ void reset_field()
 
   int rangexy_inner_plus1xy[] = {x_min,x_max+1,y_min,y_max+1}; // inner range without border
 
-  ops_par_loop_opt(reset_field_kernel2, "reset_field_kernel2", 2, rangexy_inner_plus1xy,
+  ops_par_loop_opt(reset_field_kernel2_macro, "reset_field_kernel2_macro", 2, rangexy_inner_plus1xy,
     ops_arg_dat(xvel0, S2D_00, "double", OPS_READ),
     ops_arg_dat(xvel1, S2D_00, "double", OPS_READ),
     ops_arg_dat(yvel0, S2D_00, "double", OPS_READ),

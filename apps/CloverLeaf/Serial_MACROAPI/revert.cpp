@@ -30,11 +30,19 @@
 
 // OPS header file
 #include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 #include "data.h"
 #include "definitions.h"
 
 #include "revert_kernel.h"
+
+void revert_kernel_macro( double *density0, double *density1,
+                double *energy0, double *energy1) {
+
+  density1[OPS_ACC1(0,0)] = density0[OPS_ACC0(0,0)];
+  energy1[OPS_ACC3(0,0)] = energy0[OPS_ACC2(0,0)];
+}
 
 void revert()
 {
@@ -50,7 +58,7 @@ void revert()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  ops_par_loop_opt(revert_kernel, "PdV_kernel_predict", 2, rangexy_inner,
+  ops_par_loop_macro(revert_kernel_macro, "revert_kernel_macro", 2, rangexy_inner,
     ops_arg_dat(density0, S2D_00, "double", OPS_READ),
     ops_arg_dat(density1, S2D_00, "double", OPS_READ),
     ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
