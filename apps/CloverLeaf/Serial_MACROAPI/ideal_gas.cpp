@@ -28,6 +28,7 @@
 
 // OPS header file
 #include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -35,6 +36,19 @@
 //Cloverleaf kernels
 #include "ideal_gas_kernel.h"
 
+
+void ideal_gas_kernel_macro( double *density, double *energy,
+                     double *pressure, double *soundspeed) {
+
+  double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
+
+  v = 1.0 / density[OPS_ACC0(0,0)];
+  pressure[OPS_ACC2(0,0)] = (1.4 - 1.0) * density[OPS_ACC0(0,0)] * energy[OPS_ACC1(0,0)];
+  pressurebyenergy = (1.4 - 1.0) * density[OPS_ACC0(0,0)];
+  pressurebyvolume = -1*density[OPS_ACC0(0,0)] * pressure[OPS_ACC2(0,0)];
+  sound_speed_squared = v*v*(pressure[OPS_ACC2(0,0)] * pressurebyenergy-pressurebyvolume);
+  soundspeed[OPS_ACC3(0,0)] = sqrt(sound_speed_squared);
+}
 
 void ideal_gas(int predict)
 {
@@ -49,14 +63,14 @@ void ideal_gas(int predict)
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   if(predict != TRUE) {
-    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+    ops_par_loop_macro(ideal_gas_kernel_macro, "ideal_gas_kernel_macro", 2, rangexy_inner,
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
       ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
   }
   else {
-    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+    ops_par_loop_macro(ideal_gas_kernel_macro, "ideal_gas_kernel_macro", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
