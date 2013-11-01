@@ -45,6 +45,17 @@ int xdim4;
 int xdim5;
 int xdim6;
 int xdim7;
+int xdim8;
+int xdim9;
+int xdim10;
+int xdim11;
+int xdim12;
+int xdim13;
+int xdim14;
+int xdim15;
+int xdim16;
+int xdim17;
+
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
