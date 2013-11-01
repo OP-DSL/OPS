@@ -212,7 +212,6 @@ void advec_cell_kernel4_ydir( double **density1, double **energy1,
   **density1 = (**post_mass)/(**advec_vol);
   **energy1 = **post_ener;
 
-  //printf("**pre_vol %3.15e, **pre_mass, %3.15e\n",**pre_vol, **pre_mass);
 }
 
 #endif

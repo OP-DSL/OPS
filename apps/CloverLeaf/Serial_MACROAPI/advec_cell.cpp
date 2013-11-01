@@ -28,10 +28,79 @@
 
 // OPS header file
 #include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 #include "data.h"
 #include "definitions.h"
 #include "advec_cell_kernel.h"
+
+void advec_cell_kernel1_xdir_macro( double *pre_vol, double *post_vol, double *volume,
+                        double *vol_flux_x, double *vol_flux_y) {
+
+  pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + ( vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)] +
+                           vol_flux_y[OPS_ACC4(0,1)] - vol_flux_y[OPS_ACC4(0,1)]);
+  post_vol[OPS_ACC1(0,0)] = pre_vol[OPS_ACC0(0,0)] - ( vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)]);
+
+}
+
+void advec_cell_kernel2_xdir_macro( double *pre_vol, double *post_vol, double *volume,
+                        double *vol_flux_x) {
+
+  pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
+  post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)];
+
+}
+
+
+void advec_cell_kernel4_xdir_macro( double *density1, double *energy1,
+                         double *mass_flux_x, double *vol_flux_x,
+                         double *pre_vol, double *post_vol,
+                         double *pre_mass, double *post_mass,
+                         double *advec_vol, double *post_ener,
+                         double *ener_flux) {
+
+  pre_mass[OPS_ACC6(0,0)] = density1[OPS_ACC0(0,0)] * pre_vol[OPS_ACC4(0,0)];
+  post_mass[OPS_ACC7(0,0)] = pre_mass[OPS_ACC6(0,0)] + mass_flux_x[OPS_ACC2(0,0)] - mass_flux_x[OPS_ACC2(1,0)];
+  post_ener[OPS_ACC9(0,0)] = ( energy1[OPS_ACC1(0,0)] * pre_mass[OPS_ACC6(0,0)] + ener_flux[OPS_ACC10(0,0)] - ener_flux[OPS_ACC10(1,0)])/post_mass[OPS_ACC7(0,0)];
+  advec_vol[OPS_ACC8(0,0)] = pre_vol[OPS_ACC4(0,0)] + vol_flux_x[OPS_ACC3(0,0)] - vol_flux_x[OPS_ACC3(1,0)];
+  density1[OPS_ACC0(0,0)] = post_mass[OPS_ACC7(0,0)]/advec_vol[OPS_ACC8(0,0)];
+  energy1[OPS_ACC1(0,0)] = post_ener[OPS_ACC9(0,0)];
+
+}
+
+
+void advec_cell_kernel1_ydir_macro( double *pre_vol, double *post_vol, double *volume,
+                        double *vol_flux_x, double *vol_flux_y) {
+
+  pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + ( vol_flux_y[OPS_ACC3(0,1)] - vol_flux_y[OPS_ACC3(0,0)] +
+                           vol_flux_x[OPS_ACC4(1,0)] - vol_flux_x[OPS_ACC4(1,0)]);
+  post_vol[OPS_ACC1(0,0)] = pre_vol[OPS_ACC0(0,0)] - ( vol_flux_y[OPS_ACC3(0,1)] - vol_flux_y[OPS_ACC3(0,0)]);
+
+}
+
+void advec_cell_kernel2_ydir_macro( double *pre_vol, double *post_vol, double *volume,
+                        double *vol_flux_y) {
+
+  pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC3(0,1)] - vol_flux_y[OPS_ACC3(0,0)];
+  post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)];
+
+}
+
+void advec_cell_kernel4_ydir_macro( double *density1, double *energy1,
+                         double *mass_flux_y, double *vol_flux_y,
+                         double *pre_vol, double *post_vol,
+                         double *pre_mass, double *post_mass,
+                         double *advec_vol, double *post_ener,
+                         double *ener_flux) {
+
+  pre_mass[OPS_ACC6(0,0)] = density1[OPS_ACC0(0,0)] * pre_vol[OPS_ACC4(0,0)];
+  post_mass[OPS_ACC7(0,0)] = pre_mass[OPS_ACC6(0,0)] + mass_flux_y[OPS_ACC2(0,0)] - mass_flux_y[OPS_ACC2(0,1)];
+  post_ener[OPS_ACC9(0,0)] = ( energy1[OPS_ACC1(0,0)] * pre_mass[OPS_ACC6(0,0)] + ener_flux[OPS_ACC10(0,0)] - ener_flux[OPS_ACC10(0,1)])/post_mass[OPS_ACC7(0,0)];
+  advec_vol[OPS_ACC8(0,0)] = pre_vol[OPS_ACC4(0,0)] + vol_flux_y[OPS_ACC3(0,0)] - vol_flux_y[OPS_ACC3(0,1)];
+  density1[OPS_ACC0(0,0)] = post_mass[OPS_ACC7(0,0)]/advec_vol[OPS_ACC8(0,0)];
+  energy1[OPS_ACC1(0,0)] = post_ener[OPS_ACC9(0,0)];
+
+}
 
 void advec_cell(int sweep_number, int dir)
 {
@@ -54,7 +123,7 @@ void advec_cell(int sweep_number, int dir)
   if(dir == g_xdir) {
 
     if(sweep_number == 1) {
-      ops_par_loop_opt(advec_cell_kernel1_xdir, "advec_cell_kernel1_xdir", 2, rangexy,
+      ops_par_loop_macro(advec_cell_kernel1_xdir_macro, "advec_cell_kernel1_xdir_macro", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array2, S2D_00, "double", OPS_READ),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -63,7 +132,7 @@ void advec_cell(int sweep_number, int dir)
         );
     }
     else {
-      ops_par_loop_opt(advec_cell_kernel2_xdir, "advec_cell_kernel2_xdir", 2, rangexy,
+      ops_par_loop_macro(advec_cell_kernel2_xdir_macro, "advec_cell_kernel2_xdir_macro", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array2, S2D_00, "double", OPS_READ),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -83,7 +152,7 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, S2D_00, "double", OPS_READ)
       );
 
-    ops_par_loop_opt(advec_cell_kernel4_xdir, "advec_cell_kernel4_xdir", 2, rangexy_inner,
+    ops_par_loop_macro(advec_cell_kernel4_xdir_macro, "advec_cell_kernel4_xdir_macro", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
       ops_arg_dat(mass_flux_x, S2D_00_P10, "double", OPS_READ),
@@ -103,7 +172,7 @@ void advec_cell(int sweep_number, int dir)
 
 
     if(sweep_number == 1) {
-      ops_par_loop_opt(advec_cell_kernel1_ydir, "advec_cell_kernel1_ydir", 2, rangexy,
+      ops_par_loop_macro(advec_cell_kernel1_ydir_macro, "advec_cell_kernel1_ydir_macro", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array2, S2D_00, "double", OPS_READ),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -114,7 +183,7 @@ void advec_cell(int sweep_number, int dir)
     else {
 
 
-      ops_par_loop_opt(advec_cell_kernel2_ydir, "advec_cell_kernel2_ydir", 2, rangexy,
+      ops_par_loop_macro(advec_cell_kernel2_ydir_macro, "advec_cell_kernel2_ydir_macro", 2, rangexy,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array2, S2D_00, "double", OPS_READ),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -135,7 +204,7 @@ void advec_cell(int sweep_number, int dir)
       );
 
 
-    ops_par_loop_opt(advec_cell_kernel4_ydir, "advec_cell_kernel4_ydir", 2, rangexy_inner,
+    ops_par_loop_macro(advec_cell_kernel4_ydir_macro, "advec_cell_kernel4_ydir_macro", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
       ops_arg_dat(mass_flux_y, S2D_00_0P1, "double", OPS_READ),
