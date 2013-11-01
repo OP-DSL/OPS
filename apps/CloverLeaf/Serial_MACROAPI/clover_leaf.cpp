@@ -201,12 +201,13 @@ int main(int argc, char **argv)
 
     advection(step);
 
-    if(step == 1) {
+    if(step == 20) {
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
       //exit(0);
+
     }
 
 
@@ -232,7 +233,7 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
-      break;
+      //break;
      }
 
   }
