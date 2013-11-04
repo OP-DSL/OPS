@@ -191,6 +191,7 @@ for nargs in range (1,maxargs+1):
 
 
     for n in range (0, nargs):
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
       f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];\n')
     f.write('\n')
 
@@ -219,6 +220,7 @@ for nargs in range (1,maxargs+1):
     f.write('    int a = 0;\n')
     f.write('    // shift pointers to data\n')
     f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
+    f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
     f.write('        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);\n')
     f.write('    }\n')
     f.write('  }\n')

@@ -82,6 +82,17 @@ void calc_dt_kernel_macro(double *celldx, double *celldy, double *soundspeed,
   //printf("dt_min %3.15e \n",**dt_min);
 }
 
+void calc_dt_kernel_min_macro(double* dt_min /*dt_min is work_array1*/,
+                    double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+}
+
+void calc_dt_kernel_get_macro(double* cellx, double* celly,
+                        double* xl_pos, double* yl_pos) {
+  *xl_pos = cellx[OPS_ACC0(0,0)];
+  *yl_pos = celly[OPS_ACC1(0,0)];
+}
+
 void calc_dt_kernel_print_macro(double *cellx, double *celly,
                         double *xvel0, double *yvel0,
                         double *density0, double *energy0,
@@ -132,7 +143,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(yarea, S2D_00_0P1, "double", OPS_READ),
     ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE) );
 
-  ops_par_loop_opt(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
+  ops_par_loop_macro(calc_dt_kernel_min_macro, "calc_dt_kernel_min_macro", 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
@@ -147,7 +158,7 @@ void calc_dt(double* local_dt, char* local_control,
 
   if(*local_dt < dtmin) small = 1;
 
-  ops_par_loop_opt(calc_dt_kernel_get, "calc_dt_kernel_get", 2, rangexy_getpoint,
+  ops_par_loop_macro(calc_dt_kernel_get_macro, "calc_dt_kernel_get_macro", 2, rangexy_getpoint,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
     ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE),
