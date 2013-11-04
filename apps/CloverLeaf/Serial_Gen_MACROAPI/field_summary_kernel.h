@@ -1,10 +1,10 @@
 #ifndef FIELD_SUMMARY_KERNEL_H
 #define FIELD_SUMMARY_KERNEL_H
 
-void field_summary_kernel( double **volume, double **density0,
-                     double **energy0, double **pressure,
-                     double **xvel0,
-                     double **yvel0,
+void field_summary_kernel( double *volume, double *density0,
+                     double *energy0, double *pressure,
+                     double *xvel0,
+                     double *yvel0,
                      double *vol,
                      double *mass,
                      double *ie,
@@ -17,23 +17,19 @@ void field_summary_kernel( double **volume, double **density0,
   //yvel0, 0,0, 1,0, 0,1, 1,1
 
   vsqrd = 0.0;
-  vsqrd = vsqrd + 0.25 * ( (*xvel0[0])*(*xvel0[0]) + (*yvel0[0])*(*yvel0[0]) );
-  vsqrd = vsqrd + 0.25 * ( (*xvel0[1])*(*xvel0[1]) + (*yvel0[1])*(*yvel0[1]) );
-  vsqrd = vsqrd + 0.25 * ( (*xvel0[2])*(*xvel0[2]) + (*yvel0[2])*(*yvel0[2]) );
-  vsqrd = vsqrd + 0.25 * ( (*xvel0[3])*(*xvel0[3]) + (*yvel0[3])*(*yvel0[3]) );
+  vsqrd = vsqrd + 0.25 * ( xvel0[OPS_ACC4(0,0)] * xvel0[OPS_ACC4(0,0)] + yvel0[OPS_ACC5(0,0)] * yvel0[OPS_ACC5(0,0)]);
+  vsqrd = vsqrd + 0.25 * ( xvel0[OPS_ACC4(1,0)] * xvel0[OPS_ACC4(1,0)] + yvel0[OPS_ACC5(1,0)] * yvel0[OPS_ACC5(1,0)]);
+  vsqrd = vsqrd + 0.25 * ( xvel0[OPS_ACC4(0,1)] * xvel0[OPS_ACC4(0,1)] + yvel0[OPS_ACC5(0,1)] * yvel0[OPS_ACC5(0,1)]);
+  vsqrd = vsqrd + 0.25 * ( xvel0[OPS_ACC4(1,1)] * xvel0[OPS_ACC4(1,1)] + yvel0[OPS_ACC5(1,1)] * yvel0[OPS_ACC5(1,1)]);
 
-  /*vsqrd = vsqrd + 0.25 * ( pow((*xvel0[0]),2.0) + pow((*yvel0[0]),2.0) );
-  vsqrd = vsqrd + 0.25 * ( pow((*xvel0[1]),2.0) + pow((*yvel0[1]),2.0) );
-  vsqrd = vsqrd + 0.25 * ( pow((*xvel0[2]),2.0) + pow((*yvel0[2]),2.0) );
-  vsqrd = vsqrd + 0.25 * ( pow((*xvel0[3]),2.0) + pow((*yvel0[3]),2.0) );*/
 
-  cell_vol = **volume;
-  cell_mass = cell_vol * (**density0);
+  cell_vol = volume[OPS_ACC0(0,0)];
+  cell_mass = cell_vol * density0[OPS_ACC1(0,0)];
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * (**energy0);
+  *ie = *ie + cell_mass * energy0[OPS_ACC2(0,0)];
   *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * (**pressure);
+  *press = *press + cell_vol * pressure[OPS_ACC3(0,0)];
 
 }
 
