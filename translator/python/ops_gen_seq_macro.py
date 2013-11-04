@@ -156,23 +156,34 @@ def ops_gen_seq_macro(master, date, kernels):
         text = text +'\n                    '
     code(text);
 
-    FOR('i','0',str(nargs))
-    IF('args[i].stencil!=NULL')
-    code('offs[i][0] = 1;  //unit step in x dimension')
-    code('offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]);')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('offs['+str(n)+'][0] = 1;  //unit step in x dimension')
+        code('offs['+str(n)+'][1] = ops_offs_set(range[0],range[2]+1, args['+str(n)+']) - ops_offs_set(range[1],range[2], args['+str(n)+']);')
+        IF('args['+str(n)+'].stencil->stride[0] == 0')
+        code('offs['+str(n)+'][0] = 0;')
+        code('offs['+str(n)+'][1] = args['+str(n)+'].dat->block_size[0];')
+        ENDIF();
+        comm('stride in x as y stride is 0')
+        ELSEIF('args['+str(n)+'].stencil->stride[1] == 0')
+        code('offs['+str(n)+'][0] = 1;')
+        code('offs['+str(n)+'][1] = -( range[1] - range[0] );')
+        ENDIF()
+        code('')
 
-    comm('stride in y as x stride is 0')
-    IF('args[i].stencil->stride[0] == 0')
-    code('offs[i][0] = 0;')
-    code('offs[i][1] = args[i].dat->block_size[0];')
-    ENDIF();
-    comm('stride in x as y stride is 0')
-    ELSEIF('args[i].stencil->stride[1] == 0')
-    code('offs[i][0] = 1;')
-    code('offs[i][1] = -( range[1] - range[0] );')
-    ENDIF()
-    ENDIF()
-    ENDFOR()
+
+    #comm('stride in y as x stride is 0')
+    #IF('args[i].stencil->stride[0] == 0')
+    #code('offs[i][0] = 0;')
+    #code('offs[i][1] = args[i].dat->block_size[0];')
+    #ENDIF();
+    #comm('stride in x as y stride is 0')
+    #ELSEIF('args[i].stencil->stride[1] == 0')
+    #code('offs[i][0] = 1;')
+    #code('offs[i][1] = -( range[1] - range[0] );')
+    #ENDIF()
+    #ENDIF()
+    #ENDFOR()
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
