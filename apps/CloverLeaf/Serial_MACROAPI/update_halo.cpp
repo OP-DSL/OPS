@@ -235,6 +235,78 @@ void update_halo_kernel2_yvel_minus_2_b_macro(double *yvel0, double *yvel1){
 
 ///
 
+void update_halo_kernel3_plus_4_a_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = vol_flux_x[OPS_ACC0(0,4)];
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = mass_flux_x[OPS_ACC1(0,4)];
+}
+void update_halo_kernel3_plus_2_a_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = vol_flux_x[OPS_ACC0(0,2)];
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = mass_flux_x[OPS_ACC1(0,2)];
+}
+
+void update_halo_kernel3_plus_4_b_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = vol_flux_x[OPS_ACC0(0,-4)];
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = mass_flux_x[OPS_ACC1(0,-4)];
+}
+void update_halo_kernel3_plus_2_b_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = vol_flux_x[OPS_ACC0(0,-2)];
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = mass_flux_x[OPS_ACC1(0,-2)];
+}
+
+void update_halo_kernel3_minus_4_a_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(4,0)]);
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(4,0)]);
+}
+void update_halo_kernel3_minus_2_a_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(2,0)]);
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(2,0)]);
+}
+void update_halo_kernel3_minus_4_b_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(-4,0)]);
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(-4,0)]);
+}
+void update_halo_kernel3_minus_2_b_macro(double *vol_flux_x, double *mass_flux_x){
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(-2,0)]);
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(-2,0)]);
+}
+
+
+///
+
+
+void update_halo_kernel4_plus_4_a_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(4,0)];
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(4,0)];
+}
+void update_halo_kernel4_plus_2_a_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(2,0)];
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(2,0)];
+}
+void update_halo_kernel4_plus_4_b_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(-4,0)];
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(-4,0)];
+}
+void update_halo_kernel4_plus_2_b_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(-2,0)];
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(-2,0)];
+}
+
+void update_halo_kernel4_minus_4_a_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,4)]);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,4)]);
+}
+void update_halo_kernel4_minus_2_a_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,2)]);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,2)]);
+}
+void update_halo_kernel4_minus_4_b_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-4)]);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-4)]);
+}
+void update_halo_kernel4_minus_2_b_macro(double *vol_flux_y, double *mass_flux_y){
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-2)]);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-2)]);
+}
 
 void update_halo(int* fields, int depth)
 {
@@ -440,47 +512,47 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b2c[] = {x_min-depth,x_max+1+depth,y_min-2,y_min-1};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_b2c,
+  ops_par_loop_macro(update_halo_kernel3_plus_4_a_macro, "update_halo_kernel3_plus_4_a_macro", 2, rangexy_b2c,
               ops_arg_dat(vol_flux_x, S2D_00_0P4, "double", OPS_READ),
               ops_arg_dat(mass_flux_x, S2D_00_0P4, "double", OPS_READ));
 
   int rangexy_b1c[] = {x_min-depth,x_max+1+depth,y_min-1,y_min};
-  ops_par_loop_opt(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_b1c,
+  ops_par_loop_macro(update_halo_kernel3_plus_2_a_macro, "update_halo_kernel3_plus_2_a_macro", 2, rangexy_b1c,
             ops_arg_dat(vol_flux_x, S2D_00_0P2, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_0P2, "double", OPS_READ));
 
 
   int rangexy_t2c[] = {x_min-depth,x_max+1+depth,y_max+1,y_max+2};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_t2c,
+  ops_par_loop_macro(update_halo_kernel3_plus_4_b_macro, "update_halo_kernel3_plus_4_b_macro", 2, rangexy_t2c,
             ops_arg_dat(vol_flux_x, S2D_00_0M4, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_0M4, "double", OPS_READ));
 
   int rangexy_t1c[] = {x_min-depth,x_max+1+depth,y_max,y_max+1};
-  ops_par_loop_opt(update_halo_kernel3_plus, "update_halo_kernel3", 2, rangexy_t1c,
+  ops_par_loop_macro(update_halo_kernel3_plus_2_b_macro, "update_halo_kernel3_plus_2_b_macro", 2, rangexy_t1c,
             ops_arg_dat(vol_flux_x, S2D_00_0M2, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_0M2, "double", OPS_READ));
 
 
   int rangexy_l2c[] = {x_min-2,x_min-1,y_min-depth,y_max+depth};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel3_minus, "update_halo_kernel3_minus", 2, rangexy_l2c,
+  ops_par_loop_macro(update_halo_kernel3_minus_4_a_macro, "update_halo_kernel3_minus_4_a_macro", 2, rangexy_l2c,
             ops_arg_dat(vol_flux_x, S2D_00_P40, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_P40, "double", OPS_READ));
 
   int rangexy_l1c[] = {x_min-1,x_min,y_min-depth,y_max+depth};
-  ops_par_loop_opt(update_halo_kernel3_minus, "update_halo_kernel3_minus", 2, rangexy_l1c,
+  ops_par_loop_macro(update_halo_kernel3_minus_2_a_macro, "update_halo_kernel3_minus_2_a_macro", 2, rangexy_l1c,
             ops_arg_dat(vol_flux_x, S2D_00_P20, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_P20, "double", OPS_READ));
 
   int rangexy_r2c[] = {x_max+2,x_max+3,y_min-depth,y_max+depth}; //
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel3_minus, "update_halo_kernel3_minus", 2, rangexy_r2c,
+  ops_par_loop_macro(update_halo_kernel3_minus_4_b_macro, "update_halo_kernel3_minus_4_b_macro", 2, rangexy_r2c,
             ops_arg_dat(vol_flux_x, S2D_00_M40, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_M40, "double", OPS_READ));
 
   int rangexy_r1c[] = {x_max+1,x_max+2,y_min-depth,y_max+depth}; //
-  ops_par_loop_opt(update_halo_kernel3_minus, "update_halo_kernel3_minus", 2, rangexy_r1c,
+  ops_par_loop_macro(update_halo_kernel3_minus_2_b_macro, "update_halo_kernel3_minus_2_b_macro", 2, rangexy_r1c,
             ops_arg_dat(vol_flux_x, S2D_00_M20, "double", OPS_READ),
             ops_arg_dat(mass_flux_x, S2D_00_M20, "double", OPS_READ));
 
@@ -490,45 +562,45 @@ void update_halo(int* fields, int depth)
 
   int rangexy_b2d[] = {x_min-depth,x_max+depth,y_min-2,y_min-1};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_b2d,
+  ops_par_loop_macro(update_halo_kernel4_minus_4_a_macro, "update_halo_kernel4_minus_4_a_macro", 2, rangexy_b2d,
               ops_arg_dat(vol_flux_y, S2D_00_0P4, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_0P4, "double", OPS_READ));
 
   int rangexy_b1d[] = {x_min-depth,x_max+depth,y_min-1,y_min};
-  ops_par_loop_opt(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_b1d,
+  ops_par_loop_macro(update_halo_kernel4_minus_2_a_macro, "update_halo_kernel4_minus_2_a_macro", 2, rangexy_b1d,
               ops_arg_dat(vol_flux_y, S2D_00_0P2, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_0P2, "double", OPS_READ));
 
   int rangexy_t2d[] = {x_min-depth,x_max+depth,y_max+2,y_max+3}; //
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_t2d,
+  ops_par_loop_macro(update_halo_kernel4_minus_4_b_macro, "update_halo_kernel4_minus_4_b_macro", 2, rangexy_t2d,
               ops_arg_dat(vol_flux_y, S2D_00_0M4, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_0M4, "double", OPS_READ));
 
   int rangexy_t1d[] = {x_min-depth,x_max+depth,y_max+1,y_max+2}; //
-  ops_par_loop_opt(update_halo_kernel4_minus, "update_halo_kernel4", 2, rangexy_t1d,
+  ops_par_loop_macro(update_halo_kernel4_minus_2_b_macro, "update_halo_kernel4_minus_2_b_macro", 2, rangexy_t1d,
               ops_arg_dat(vol_flux_y, S2D_00_0M2, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_0M2, "double", OPS_READ));
 
   int rangexy_l2d[] = {x_min-2,x_min-1,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_l2d,
+  ops_par_loop_macro(update_halo_kernel4_plus_4_a_macro, "update_halo_kernel4_plus_4_a_macro", 2, rangexy_l2d,
               ops_arg_dat(vol_flux_y, S2D_00_P40, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_P40, "double", OPS_READ));
 
   int rangexy_l1d[] = {x_min-1,x_min,y_min-depth,y_max+1+depth};
-  ops_par_loop_opt(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_l1d,
+  ops_par_loop_macro(update_halo_kernel4_plus_2_a_macro, "update_halo_kernel4_plus_2_a_macro", 2, rangexy_l1d,
               ops_arg_dat(vol_flux_y, S2D_00_P20, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_P20, "double", OPS_READ));
 
   int rangexy_r2d[] = {x_max+1,x_max+2,y_min-depth,y_max+1+depth};
   if(depth ==2)
-  ops_par_loop_opt(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_r2d,
+  ops_par_loop_macro(update_halo_kernel4_plus_4_b_macro, "update_halo_kernel4_plus_4_b_macro", 2, rangexy_r2d,
               ops_arg_dat(vol_flux_y, S2D_00_M40, "double", OPS_READ),
               ops_arg_dat(mass_flux_y, S2D_00_M40, "double", OPS_READ));
 
   int rangexy_r1d[] = {x_max,x_max+1,y_min-depth,y_max+1+depth};
-  ops_par_loop_opt(update_halo_kernel4_plus, "update_halo_kernel4", 2, rangexy_r1d,
+  ops_par_loop_macro(update_halo_kernel4_plus_2_b_macro, "update_halo_kernel4_plus_2_b_macro", 2, rangexy_r1d,
             ops_arg_dat(vol_flux_y, S2D_00_M20, "double", OPS_READ),
             ops_arg_dat(mass_flux_y, S2D_00_M20, "double", OPS_READ));
 
