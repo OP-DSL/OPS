@@ -53,9 +53,6 @@
 // Cloverleaf definitions
 #include "definitions.h"
 
-//Cloverleaf kernels
-#include "test_kernel.h"
-
 
 // Cloverleaf functions
 void initialise();
@@ -174,6 +171,8 @@ int main(int argc, char **argv)
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
+  double ct0, ct1, et0, et1;
+  ops_timers_core(&ct0, &et0);
 
   while(1) {
 
@@ -219,6 +218,8 @@ int main(int argc, char **argv)
      }
   }
 
+  ops_timers_core(&ct1, &et1);
+  ops_printf("Total Wall time %lf\n",et1-et0);
 
   fclose(g_out);
   ops_exit();
