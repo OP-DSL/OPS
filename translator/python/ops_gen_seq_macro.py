@@ -159,7 +159,7 @@ def ops_gen_seq_macro(master, date, kernels):
     FOR('i','0',str(nargs))
     IF('args[i].stencil!=NULL')
     code('offs[i][0] = 1;  //unit step in x dimension')
-    code('offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;')
+    code('offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]);')
 
     comm('stride in y as x stride is 0')
     IF('args[i].stencil->stride[0] == 0')
@@ -169,7 +169,7 @@ def ops_gen_seq_macro(master, date, kernels):
     comm('stride in x as y stride is 0')
     ELSEIF('args[i].stencil->stride[1] == 0')
     code('offs[i][0] = 1;')
-    code('offs[i][1] = -( range[1] - range[0] ) +1;')
+    code('offs[i][1] = -( range[1] - range[0] );')
     ENDIF()
     ENDIF()
     ENDFOR()
@@ -191,21 +191,23 @@ def ops_gen_seq_macro(master, date, kernels):
     ENDFOR()
 
     code('')
-    code('int total_range = 1;')
-    FOR('m','0','dim')
-    comm('number in each dimension')
-    code('count[m] = range[2*m+1]-range[2*m];')
-    code('total_range *= count[m];')
-    ENDFOR()
-    comm('extra in last to ensure correct termination')
-    code('count[dim-1]++;\n\n')
+    #code('int total_range = 1;')
+    #FOR('m','0','dim')
+    #comm('number in each dimension')
+    #code('count[m] = range[2*m+1]-range[2*m];')
+    #code('total_range *= count[m];')
+    #ENDFOR()
+    #comm('extra in last to ensure correct termination')
+    #code('count[dim-1]++;\n\n')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
-    FOR('nt','0','total_range')
+    #FOR('nt','0','total_range')
+    FOR('n_y','range[2]','range[3]')
+    FOR('n_x','range[0]','range[1]')
 
     comm('call kernel function, passing in pointers to data')
     code('')
@@ -222,27 +224,32 @@ def ops_gen_seq_macro(master, date, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
-    comm('decrement counter')
-    code('count[0]--;\n')
-    comm('max dimension with changed index')
-    code('int m = 0;')
+    #comm('decrement counter')
+    #code('count[0]--;\n')
+    #comm('max dimension with changed index')
+    #code('int m = 0;')
 
-    WHILE('(count[m]==0)')
-    code('count[m] = range[2*m+1]-range[2*m]; // reset counter')
-    code('m++;                                // next dimension')
-    code('count[m]--;                         // decrement counter')
-    ENDWHILE()
+    #WHILE('(count[m]==0)')
+    #code('count[m] = range[2*m+1]-range[2*m]; // reset counter')
+    #code('m++;                                // next dimension')
+    #code('count[m]--;                         // decrement counter')
+    #ENDWHILE()
     code('')
 
 
-    comm('shift pointers to data')
+    comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][m]);')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][0]);')
 
     ENDFOR()
     code('')
 
+    comm('shift pointers to data y direction')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][1]);')
+    ENDFOR()
 
 
     depth = depth - 2
