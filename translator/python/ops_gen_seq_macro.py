@@ -174,38 +174,32 @@ def ops_gen_seq_macro(master, date, kernels):
     ENDIF()
     ENDFOR()
 
-    comm('set up initial pointers')
-    FOR('i','0',str(nargs))
-    IF('args[i].argtype == OPS_ARG_DAT')
-    code('p_a[i] = (char *)args[i].data //base of 2D array')
-    code('+')
-    comm('y dimension -- get to the correct y line')
-    code('args[i].dat->size * args[i].dat->block_size[0] * ( range[2] * args[i].stencil->stride[1] - args[i].dat->offset[1] )')
-    code('+')
-    comm('x dimension - get to the correct x point on the y line')
-    code('args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );')
-    ENDIF()
-    ELSEIF('args[i].argtype == OPS_ARG_GBL')
-    code('p_a[i] = (char *)args[i].data;')
-    ENDIF()
-    ENDFOR()
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
+        code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
-    #code('int total_range = 1;')
-    #FOR('m','0','dim')
-    #comm('number in each dimension')
-    #code('count[m] = range[2*m+1]-range[2*m];')
-    #code('total_range *= count[m];')
-    #ENDFOR()
-    #comm('extra in last to ensure correct termination')
-    #code('count[dim-1]++;\n\n')
+    comm('set up initial pointers')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
+        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * args['+str(n)+'].stencil->stride[1] - args['+str(n)+'].dat->offset[1] )')
+        code('+ args['+str(n)+'].dat->size * ( range[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0] );')
+        code('')
+      else:
+        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        code('')
+
+    code('')
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
-    #FOR('nt','0','total_range')
     FOR('n_y','range[2]','range[3]')
     FOR('n_x','range[0]','range[1]')
 
@@ -224,23 +218,14 @@ def ops_gen_seq_macro(master, date, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
-    #comm('decrement counter')
-    #code('count[0]--;\n')
-    #comm('max dimension with changed index')
-    #code('int m = 0;')
-
-    #WHILE('(count[m]==0)')
-    #code('count[m] = range[2*m+1]-range[2*m]; // reset counter')
-    #code('m++;                                // next dimension')
-    #code('count[m]--;                         // decrement counter')
-    #ENDWHILE()
     code('')
 
 
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][0]);')
+          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][0]);')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
 
     ENDFOR()
     code('')
@@ -248,7 +233,8 @@ def ops_gen_seq_macro(master, date, kernels):
     comm('shift pointers to data y direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][1]);')
+          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][1]);')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
 
