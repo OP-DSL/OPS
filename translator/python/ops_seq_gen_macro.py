@@ -154,18 +154,6 @@ for nargs in range (1,maxargs+1):
     f.write('    }\n')
     f.write('  }\n\n')
 
-    f.write('  //store index of non_gbl args\n')
-    f.write('  int non_gbl['+str(nargs)+'] = {')
-    for n in range (0, nargs):
-        f.write('0')
-        if nargs <> 1 and n != nargs-1:
-          f.write(', ')
-        else:
-          f.write('};\n')
-        if n%n_per_line == 5 and n <> nargs-1:
-          f.write('\n                    ')
-    f.write('  int g = 0;\n\n')
-
     f.write('  //set up initial pointers\n')
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if (args[i].argtype == OPS_ARG_DAT) {\n')
@@ -176,7 +164,6 @@ for nargs in range (1,maxargs+1):
     f.write('      +\n')
     f.write('      //x dimension - get to the correct x point on the y line\n')
     f.write('      args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );\n')
-    f.write('      non_gbl[g++] = i;\n')
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
     f.write('      p_a[i] = (char *)args[i].data;\n')

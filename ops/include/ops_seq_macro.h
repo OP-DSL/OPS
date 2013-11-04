@@ -105,10 +105,6 @@ void ops_par_loop_macro(void (*kernel)(T0*),
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[1] = {0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -119,7 +115,6 @@ void ops_par_loop_macro(void (*kernel)(T0*),
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -185,10 +180,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*),
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[2] = {0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -199,7 +190,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*),
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -266,10 +256,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*),
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[3] = {0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -280,7 +266,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*),
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -348,10 +333,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*),
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[4] = {0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -362,7 +343,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*),
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -435,10 +415,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[5] = {0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -449,7 +425,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -524,10 +499,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[6] = {0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -538,7 +509,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -614,10 +584,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[7] = {0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 7; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -628,7 +594,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -705,10 +670,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -719,7 +680,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -801,10 +761,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 9; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -815,7 +771,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -899,10 +854,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 10; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -913,7 +864,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -998,10 +948,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 11; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1012,7 +958,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1098,10 +1043,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 12; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1112,7 +1053,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1203,10 +1143,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 13; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1217,7 +1153,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1310,10 +1245,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 14; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1324,7 +1255,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1418,10 +1348,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 15; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1432,7 +1358,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1527,10 +1452,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  //store index of non_gbl args
-  int non_gbl[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int g = 0;
-
   //set up initial pointers
   for (int i = 0; i < 16; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
@@ -1541,7 +1462,6 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
       +
       //x dimension - get to the correct x point on the y line
       args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-      non_gbl[g++] = i;
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
