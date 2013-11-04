@@ -15,9 +15,10 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief Mesh chunk generation driver
+/** @brief Ideal gas kernel driver
  *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
- *  @details Invoked the users specified chunk generator.
+ *  @details Invokes the user specified kernel for the ideal gas equation of
+ *  state using the specified time level data.
 **/
 
 #include <stdlib.h>
@@ -32,9 +33,10 @@
 #include "definitions.h"
 
 //Cloverleaf kernels
-#include "generate_chunk_kernel.h"
+#include "ideal_gas_kernel.h"
 
-void generate()
+
+void ideal_gas(int predict)
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;
@@ -44,15 +46,21 @@ void generate()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  ops_par_loop_opt(generate_chunk_kernel, "generate_chunk_kernel", 2, rangexy,
-    ops_arg_dat(vertexx,  s2D_00_P10_STRID2D_X, "double", OPS_READ),
-    ops_arg_dat(vertexy,  S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
-    ops_arg_dat(energy0,  S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(density0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(xvel0,    S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
-    ops_arg_dat(yvel0,    S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
-    ops_arg_dat(cellx,    s2D_00_P10_STRID2D_X, "double", OPS_READ),
-    ops_arg_dat(celly,    S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
+  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
+
+  if(!predict) {
+    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+      ops_arg_dat(density0, S2D_00, "double", OPS_READ),
+      ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
+      ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
+      ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
+  }
+  else {
+    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+      ops_arg_dat(density1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
+      ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
+  }
 
 }
