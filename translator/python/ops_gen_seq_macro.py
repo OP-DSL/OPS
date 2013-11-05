@@ -107,13 +107,13 @@ def ops_gen_seq_macro(master, date, kernels):
 
     #parse stencil to locate strided access
     stride = [1] * nargs * 2
-    print stride
+    #print stride
     for n in range (0, nargs):
       if str(stens[n]).find('STRID2D_X') > 0:
         stride[2*n+1] = 0
       elif str(stens[n]).find('STRID2D_Y') > 0:
         stride[2*n] = 0
-    print stride
+    #print stride
 
 
 ##########################################################################
@@ -193,9 +193,7 @@ def ops_gen_seq_macro(master, date, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('p_a['+str(n)+'] = &args['+str(n)+'].data[')
-        #code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * args['+str(n)+'].stencil->stride[1] - args['+str(n)+'].dat->offset[1] )')
         code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
-        #code('+ args['+str(n)+'].dat->size * ( range[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0] )];')
         code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] )];')
         code('')
       else:
@@ -211,10 +209,41 @@ def ops_gen_seq_macro(master, date, kernels):
     code('')
 
     FOR('n_y','range[2]','range[3]')
-    FOR('n_x','range[0]','range[1]')
+    FOR('n_x','range[0]','range[0]+(range[1]-range[0])/4')
 
-    comm('call kernel function, passing in pointers to data')
+    comm('call kernel function, passing in pointers to data -vectorised')
+    code('#pragma simd')
+    FOR('i','0','4')
+    text = name+'( '
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
+      else:
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+      if nargs <> 1 and n != nargs-1:
+        text = text + ','
+      else:
+        text = text +' );\n'
+      if n%n_per_line == 2 and n <> nargs-1:
+        text = text +'\n          '
+    code(text);
+    ENDFOR()
     code('')
+
+
+    comm('shift pointers to data x direction')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1)*4;')
+
+    ENDFOR()
+    code('')
+
+
+    FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
+    comm('call kernel function, passing in pointers to data - remainder')
+    code('#pragma simd')
+    FOR('i','0','4')
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -228,22 +257,22 @@ def ops_gen_seq_macro(master, date, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
+    ENDFOR()
     code('')
 
 
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][0]);')
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
 
     ENDFOR()
     code('')
 
+
     comm('shift pointers to data y direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (args['+str(n)+'].dat->size * offs['+str(n)+'][1]);')
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
