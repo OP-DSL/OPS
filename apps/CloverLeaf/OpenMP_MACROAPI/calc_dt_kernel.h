@@ -58,6 +58,7 @@ inline void calc_dt_kernel_get(double* cellx, double* celly,
                         double* xl_pos, double* yl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
   *yl_pos = celly[OPS_ACC1(0,0)];
+  //printf("xl_pos %lf yl_pos %lf\n",*xl_pos,*yl_pos);
 }
 
 inline void calc_dt_kernel_print(double *cellx, double *celly,

@@ -43,7 +43,7 @@ void timestep()
 {
   int jldt, kldt;
   double dtlp;
-  double x_pos, y_pos, xl_pos, yl_pos;
+  double x_pos = 0.0, y_pos = 0.0, xl_pos = 0.0, yl_pos = 0.0;
   char dt_control[8];
   char dtl_control[8];
 

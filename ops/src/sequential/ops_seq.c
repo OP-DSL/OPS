@@ -72,6 +72,7 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
     int bytes = size*type_size;
     for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
     dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
+    //dat->data = (char*) malloc(bytes); //initialize data bits to 0
     dat->user_managed = 0;
   }
 

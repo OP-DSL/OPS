@@ -353,7 +353,7 @@ def ops_gen_openmp_macro(master, date, kernels):
           elif accs[n] == OPS_MAX:
             code('arg'+str(n)+'h[0] = MAX(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
           elif accs[n] == OPS_WRITE:
-            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] = arg_gbl'+str(n)+'[64*thr];')
+            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
           ENDFOR()
       ENDFOR()
 
