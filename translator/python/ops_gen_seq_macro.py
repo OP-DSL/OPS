@@ -194,7 +194,7 @@ def ops_gen_seq_macro(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('p_a['+str(n)+'] = &args['+str(n)+'].data[')
         code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
-        code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] )];')
+        code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
         code('')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
@@ -242,7 +242,7 @@ def ops_gen_seq_macro(master, date, kernels):
 
     FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
     comm('call kernel function, passing in pointers to data - remainder')
-    code('#pragma simd')
+
     FOR('i','0','4')
     text = name+'( '
     for n in range (0, nargs):
