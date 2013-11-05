@@ -4,7 +4,7 @@
 #include "data.h"
 #include "definitions.h"
 
-void PdV_kernel_predict(double *xarea, double *xvel0,
+inline void PdV_kernel_predict(double *xarea, double *xvel0,
                 double *yarea, double *yvel0,
                 double *volume_change, double *volume,
                 double *pressure,
@@ -44,7 +44,7 @@ void PdV_kernel_predict(double *xarea, double *xvel0,
 
 }
 
-void PdV_kernel_nopredict(double *xarea, double *xvel0, double *xvel1,
+inline void PdV_kernel_nopredict(double *xarea, double *xvel0, double *xvel1,
                 double *yarea, double *yvel0, double *yvel1,
                 double *volume_change, double *volume,
                 double *pressure,

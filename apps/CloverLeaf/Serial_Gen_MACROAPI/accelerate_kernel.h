@@ -6,7 +6,7 @@
 
 
 
-void accelerate_kernel_stepbymass( double *density0, double *volume,
+inline void accelerate_kernel_stepbymass( double *density0, double *volume,
                 double *stepbymass) {
 
   double nodal_mass;
@@ -21,7 +21,7 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 
 }
 
-void accelerate_kernelx1( double *xvel0, double *xvel1,
+inline void accelerate_kernelx1( double *xvel0, double *xvel1,
                         double *stepbymass,
                         double *xarea, double *pressure) {
   //{0,0, -1,0, 0,-1, -1,-1};
@@ -32,7 +32,7 @@ void accelerate_kernelx1( double *xvel0, double *xvel1,
               xarea[OPS_ACC3(0,-1)] * ( pressure[OPS_ACC4(0,-1)] - pressure[OPS_ACC4(-1,-1)] ) );
 }
 
-void accelerate_kernely1( double *yvel0, double *yvel1,
+inline void accelerate_kernely1( double *yvel0, double *yvel1,
                         double *stepbymass,
                         double *yarea, double *pressure) {
 
@@ -46,7 +46,7 @@ void accelerate_kernely1( double *yvel0, double *yvel1,
 }
 
 
-void accelerate_kernelx2( double *xvel1, double *stepbymass,
+inline void accelerate_kernelx2( double *xvel1, double *stepbymass,
                         double *xarea, double *viscosity) {
 
   //{0,0, -1,0, 0,-1, -1,-1};
@@ -57,7 +57,7 @@ void accelerate_kernelx2( double *xvel1, double *stepbymass,
               xarea[OPS_ACC2(0,-1)] * ( viscosity[OPS_ACC3(0,-1)] - viscosity[OPS_ACC3(-1,-1)] ) );
 }
 
-void accelerate_kernely2( double *yvel1, double *stepbymass,
+inline void accelerate_kernely2( double *yvel1, double *stepbymass,
                         double *yarea, double *viscosity) {
 
   //{0,0, -1,0, 0,-1, -1,-1};

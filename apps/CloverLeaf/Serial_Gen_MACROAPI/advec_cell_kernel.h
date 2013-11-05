@@ -1,7 +1,7 @@
 #ifndef ADVEC_CELL_KERNEL_H
 #define ADVEC_CELL_KERNEL_H
 
-void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, double *volume,
+inline void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, double *volume,
                         double *vol_flux_x, double *vol_flux_y) {
 
   pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + ( vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)] +
@@ -12,7 +12,7 @@ void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, double *volume,
 
 
 
-void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, double *volume,
+inline void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, double *volume,
                         double *vol_flux_x) {
 
   pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
@@ -21,7 +21,7 @@ void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, double *volume,
 }
 
 
-void advec_cell_kernel3_xdir( double *vol_flux_x, double *pre_vol, int *xx,
+inline void advec_cell_kernel3_xdir( double *vol_flux_x, double *pre_vol, int *xx,
                               double *vertexdx,
                               double *density1, double *energy1 ,
                               double *mass_flux_x, double *ener_flux) {
@@ -92,7 +92,7 @@ void advec_cell_kernel3_xdir( double *vol_flux_x, double *pre_vol, int *xx,
 }
 
 
-void advec_cell_kernel4_xdir( double *density1, double *energy1,
+inline void advec_cell_kernel4_xdir( double *density1, double *energy1,
                          double *mass_flux_x, double *vol_flux_x,
                          double *pre_vol, double *post_vol,
                          double *pre_mass, double *post_mass,
@@ -109,7 +109,7 @@ void advec_cell_kernel4_xdir( double *density1, double *energy1,
 }
 
 
-void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, double *volume,
+inline void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, double *volume,
                         double *vol_flux_x, double *vol_flux_y) {
 
   pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + ( vol_flux_y[OPS_ACC4(0,1)] - vol_flux_y[OPS_ACC4(0,0)] +
@@ -118,7 +118,7 @@ void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, double *volume,
 
 }
 
-void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, double *volume,
+inline void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, double *volume,
                         double *vol_flux_y) {
 
   pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC3(0,1)] - vol_flux_y[OPS_ACC3(0,0)];
@@ -127,7 +127,7 @@ void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, double *volume,
 }
 
 
-void advec_cell_kernel3_ydir( double *vol_flux_y, double *pre_vol, int *yy,
+inline void advec_cell_kernel3_ydir( double *vol_flux_y, double *pre_vol, int *yy,
                               double *vertexdy,
                               double *density1, double *energy1 ,
                               double *mass_flux_y, double *ener_flux) {
@@ -197,7 +197,7 @@ void advec_cell_kernel3_ydir( double *vol_flux_y, double *pre_vol, int *yy,
   ener_flux[OPS_ACC7(0,0)] = mass_flux_y[OPS_ACC6(0,0)] * ( energy1[OPS_ACC0(0,donor)] + limiter );
 }
 
-void advec_cell_kernel4_ydir( double *density1, double *energy1,
+inline void advec_cell_kernel4_ydir( double *density1, double *energy1,
                          double *mass_flux_y, double *vol_flux_y,
                          double *pre_vol, double *post_vol,
                          double *pre_mass, double *post_mass,

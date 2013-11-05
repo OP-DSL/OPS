@@ -1,7 +1,7 @@
 #ifndef FLUX_CALC_KERNEL_H
 #define FLUX_CALC_KERNEL_H
 
-void flux_calc_kernelx( double *vol_flux_x, double *xarea,
+inline void flux_calc_kernelx( double *vol_flux_x, double *xarea,
                         double *xvel0, double *xvel1) {
 
   //{0,0, 0,1};
@@ -10,7 +10,7 @@ void flux_calc_kernelx( double *vol_flux_x, double *xarea,
 
 }
 
-void flux_calc_kernely( double *vol_flux_y, double *yarea,
+inline void flux_calc_kernely( double *vol_flux_y, double *yarea,
                         double *yvel0, double *yvel1) {
 
     //{0,0, 1,0};

@@ -69,7 +69,7 @@ void calc_dt(double* local_dt, char* local_control,
 
   ops_par_loop_opt(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
-    ops_arg_gbl(local_dt, 1, "double", OPS_READ));
+    ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
 
   //Extract the mimimum timestep information

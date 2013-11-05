@@ -1,7 +1,7 @@
 #ifndef ADVEC_MOM_KERNEL_H
 #define ADVEC_MOM_KERNEL_H
 
-void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
+inline void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
                           double *volume,
                           double *vol_flux_x, double *vol_flux_y) {
 
@@ -10,7 +10,7 @@ void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
 
 }
 
-void advec_mom_kernel_y1( double *pre_vol, double *post_vol,
+inline void advec_mom_kernel_y1( double *pre_vol, double *post_vol,
                           double *volume,
                           double *vol_flux_x, double *vol_flux_y) {
 
@@ -19,7 +19,7 @@ void advec_mom_kernel_y1( double *pre_vol, double *post_vol,
 
 }
 
-void advec_mom_kernel_x2( double *pre_vol, double *post_vol,
+inline void advec_mom_kernel_x2( double *pre_vol, double *post_vol,
                           double *volume,
                           double *vol_flux_y) {
 
@@ -28,7 +28,7 @@ void advec_mom_kernel_x2( double *pre_vol, double *post_vol,
 
 }
 
-void advec_mom_kernel_y2( double *pre_vol, double *post_vol,
+inline void advec_mom_kernel_y2( double *pre_vol, double *post_vol,
                           double *volume,
                           double *vol_flux_x) {
 
@@ -38,7 +38,7 @@ void advec_mom_kernel_y2( double *pre_vol, double *post_vol,
 }
 
 
-void advec_mom_kernel_mass_flux_x( double *node_flux, double *mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x( double *node_flux, double *mass_flux_x) {
 
   //mass_flux_x accessed with: {0,0, 1,0, 0,-1, 1,-1}
 
@@ -47,7 +47,7 @@ void advec_mom_kernel_mass_flux_x( double *node_flux, double *mass_flux_x) {
 }
 
 
-void advec_mom_kernel_mass_flux_y( double *node_flux, double *mass_flux_y) {
+inline void advec_mom_kernel_mass_flux_y( double *node_flux, double *mass_flux_y) {
 
   //mass_flux_y accessed with: {0,0, 0,1, -1,0, -1,1}
 
@@ -56,7 +56,7 @@ void advec_mom_kernel_mass_flux_y( double *node_flux, double *mass_flux_y) {
 }
 
 
-void advec_mom_kernel_post_advec_x( double *node_mass_post, double *post_vol,
+inline void advec_mom_kernel_post_advec_x( double *node_mass_post, double *post_vol,
                                   double *density1) {
 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
@@ -70,7 +70,7 @@ void advec_mom_kernel_post_advec_x( double *node_mass_post, double *post_vol,
 }
 
 //this is the same as advec_mom_kernel_post_advec_x ... just repeated here for debugging
-void advec_mom_kernel_post_advec_y( double *node_mass_post, double *post_vol,
+inline void advec_mom_kernel_post_advec_y( double *node_mass_post, double *post_vol,
                                   double *density1) {
 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
@@ -84,7 +84,7 @@ void advec_mom_kernel_post_advec_y( double *node_mass_post, double *post_vol,
 }
 
 
-void advec_mom_kernel1_x( double *node_flux, double *node_mass_pre,
+inline void advec_mom_kernel1_x( double *node_flux, double *node_mass_pre,
                         double *advec_vel, double *mom_flux,
                         double *celldx, double *vel1) {
 
@@ -136,7 +136,7 @@ void advec_mom_kernel1_x( double *node_flux, double *node_mass_pre,
 }
 
 
-void advec_mom_kernel1_y( double *node_flux, double *node_mass_pre,
+inline void advec_mom_kernel1_y( double *node_flux, double *node_mass_pre,
                         double *advec_vel, double *mom_flux,
                         double *celldy, double *vel1) {
 
@@ -187,14 +187,14 @@ void advec_mom_kernel1_y( double *node_flux, double *node_mass_pre,
 }
 
 
-void advec_mom_kernel_pre_advec_x( double *node_mass_pre, double *node_mass_post,
+inline void advec_mom_kernel_pre_advec_x( double *node_mass_pre, double *node_mass_post,
                                   double *node_flux) {
 
   //node_flux accessed with: {0,0, -1,0}
   node_mass_pre[OPS_ACC0(0,0)] = node_mass_post[OPS_ACC1(0,0)] - node_flux[OPS_ACC2(-1,0)] + node_flux[OPS_ACC2(0,0)];
 
 }
-void advec_mom_kernel_pre_advec_y( double *node_mass_pre, double *node_mass_post,
+inline void advec_mom_kernel_pre_advec_y( double *node_mass_pre, double *node_mass_post,
                                   double *node_flux) {
 
   //node_flux accessed with: {0,0, 0,-1}
@@ -203,7 +203,7 @@ void advec_mom_kernel_pre_advec_y( double *node_mass_pre, double *node_mass_post
 }
 
 
-void advec_mom_kernel2_x( double *vel1, double *node_mass_post,
+inline void advec_mom_kernel2_x( double *vel1, double *node_mass_post,
                         double *node_mass_pre, double *mom_flux) {
 
   //mom_flux accessed with: {0,0, -1,0}
@@ -213,7 +213,7 @@ void advec_mom_kernel2_x( double *vel1, double *node_mass_post,
 }
 
 
-void advec_mom_kernel2_y( double *vel1, double *node_mass_post,
+inline void advec_mom_kernel2_y( double *vel1, double *node_mass_post,
                         double *node_mass_pre, double *mom_flux) {
 
   //mom_flux accessed with: {0,0, 0,-1}

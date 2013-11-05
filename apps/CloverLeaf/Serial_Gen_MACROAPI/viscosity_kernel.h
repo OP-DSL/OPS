@@ -1,6 +1,6 @@
 #ifndef VISCOSITY_KERNEL_H
 #define VISCOSITY_KERNEL_H
-void viscosity_kernel( double *xvel0, double *yvel0,
+inline void viscosity_kernel( double *xvel0, double *yvel0,
                        double *celldx, double *celldy,
                        double *pressure, double *density0,
                        double *viscosity) {

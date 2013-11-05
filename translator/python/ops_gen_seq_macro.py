@@ -115,6 +115,12 @@ def ops_gen_seq_macro(master, date, kernels):
         stride[2*n] = 0
     #print stride
 
+    reduction = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OP_READ:
+        reduction = 1
+
+
 
 ##########################################################################
 #  start with seq kernel function
@@ -212,7 +218,8 @@ def ops_gen_seq_macro(master, date, kernels):
     FOR('n_x','range[0]','range[0]+(range[1]-range[0])/4')
 
     comm('call kernel function, passing in pointers to data -vectorised')
-    code('#pragma simd')
+    if reduction == 0:
+      code('#pragma simd')
     FOR('i','0','4')
     text = name+'( '
     for n in range (0, nargs):
@@ -243,7 +250,7 @@ def ops_gen_seq_macro(master, date, kernels):
     FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
     comm('call kernel function, passing in pointers to data - remainder')
 
-    FOR('i','0','4')
+
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -257,7 +264,7 @@ def ops_gen_seq_macro(master, date, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
-    ENDFOR()
+
     code('')
 
 

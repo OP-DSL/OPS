@@ -4,7 +4,7 @@
 #include "data.h"
 #include "definitions.h"
 
-void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
+inline void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;
@@ -25,7 +25,7 @@ void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
 }
 
 
-void initialise_chunk_kernel_y(double **vertexy, int **yy, double **vertexdy) {
+inline void initialise_chunk_kernel_y(double **vertexy, int **yy, double **vertexdy) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;
@@ -46,7 +46,7 @@ void initialise_chunk_kernel_y(double **vertexy, int **yy, double **vertexdy) {
 }
 
 
-void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, double **celldx) {
+inline void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, double **celldx) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;;
@@ -67,7 +67,7 @@ void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, double **ce
 
 }
 
-void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **celldy) {
+inline void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **celldy) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;;
@@ -88,7 +88,7 @@ void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **ce
 
 }
 
-void initialise_chunk_kernel_volume(double **volume, double **celldy, double **xarea,
+inline void initialise_chunk_kernel_volume(double **volume, double **celldy, double **xarea,
                                          double **celldx, double **yarea) {
 
   double d_x, d_y;

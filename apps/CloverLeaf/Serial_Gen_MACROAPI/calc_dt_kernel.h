@@ -3,7 +3,7 @@
 
 #include "data.h"
 #include "definitions.h"
-void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
+inline void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
                     double *viscosity, double *density0, double *xvel0,
                     double *xarea, double *volume, double *yvel0,
                     double *yarea, double *dt_min /*dt_min is work_array1*/) {
@@ -49,18 +49,18 @@ void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
   //printf("dt_min %3.15e \n",**dt_min);
 }
 
-void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
+inline void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 }
 
-void calc_dt_kernel_get(double* cellx, double* celly,
+inline void calc_dt_kernel_get(double* cellx, double* celly,
                         double* xl_pos, double* yl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
   *yl_pos = celly[OPS_ACC1(0,0)];
 }
 
-void calc_dt_kernel_print(double *cellx, double *celly,
+inline void calc_dt_kernel_print(double *cellx, double *celly,
                         double *xvel0, double *yvel0,
                         double *density0, double *energy0,
                         double *pressure, double *soundspeed) {

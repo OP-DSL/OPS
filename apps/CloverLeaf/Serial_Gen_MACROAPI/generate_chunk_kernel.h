@@ -4,7 +4,7 @@
 #include "data.h"
 #include "definitions.h"
 
-void generate_chunk_kernel( double **vertexx, double **vertexy,
+inline void generate_chunk_kernel( double **vertexx, double **vertexy,
                      double **energy0, double **density0,
                      double **xvel0,  double **yvel0,
                      double **cellx, double **celly) {

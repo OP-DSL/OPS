@@ -1,7 +1,7 @@
 #ifndef FIELD_SUMMARY_KERNEL_H
 #define FIELD_SUMMARY_KERNEL_H
 
-void field_summary_kernel( double *volume, double *density0,
+inline void field_summary_kernel( double *volume, double *density0,
                      double *energy0, double *pressure,
                      double *xvel0,
                      double *yvel0,
