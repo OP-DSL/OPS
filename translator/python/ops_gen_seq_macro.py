@@ -105,6 +105,16 @@ def ops_gen_seq_macro(master, date, kernels):
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
 
+    #parse stencil to locate strided access
+    stride = [1] * nargs * 2
+    print stride
+    for n in range (0, nargs):
+      if str(stens[n]).find('STRID2D_X') > 0:
+        stride[2*n+1] = 0
+      elif str(stens[n]).find('STRID2D_Y') > 0:
+        stride[2*n] = 0
+    print stride
+
 
 ##########################################################################
 #  start with seq kernel function
@@ -172,19 +182,6 @@ def ops_gen_seq_macro(master, date, kernels):
         code('')
 
 
-    #comm('stride in y as x stride is 0')
-    #IF('args[i].stencil->stride[0] == 0')
-    #code('offs[i][0] = 0;')
-    #code('offs[i][1] = args[i].dat->block_size[0];')
-    #ENDIF();
-    #comm('stride in x as y stride is 0')
-    #ELSEIF('args[i].stencil->stride[1] == 0')
-    #code('offs[i][0] = 1;')
-    #code('offs[i][1] = -( range[1] - range[0] );')
-    #ENDIF()
-    #ENDIF()
-    #ENDFOR()
-
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
@@ -195,11 +192,11 @@ def ops_gen_seq_macro(master, date, kernels):
     comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
         code('p_a['+str(n)+'] = &args['+str(n)+'].data[')
-        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * args['+str(n)+'].stencil->stride[1] - args['+str(n)+'].dat->offset[1] )')
-        #code('+ args['+str(n)+'].dat->size * ( range[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0] );')
-        code('+ args['+str(n)+'].dat->size * ( range[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0] )];')
+        #code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * args['+str(n)+'].stencil->stride[1] - args['+str(n)+'].dat->offset[1] )')
+        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
+        #code('+ args['+str(n)+'].dat->size * ( range[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0] )];')
+        code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] )];')
         code('')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
