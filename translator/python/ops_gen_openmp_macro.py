@@ -268,11 +268,40 @@ def ops_gen_openmp_macro(master, date, kernels):
     code('')
 
     FOR('n_y','start','finish')
-    FOR('n_x','range[0]','range[1]')
+    FOR('n_x','range[0]','range[0]+(range[1]-range[0])/4')
 
-    comm('call kernel function, passing in pointers to data')
-    code('')
+    comm('call kernel function, passing in pointers to data - vectorised')
+    if reduct == 0:
+      code('#pragma simd')
+    FOR('i','0','4')
     n_per_line = 2
+    text = name+'( '
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
+      else:
+        text = text +' &arg_gbl'+str(n)+'[64*thr]'
+
+      if nargs <> 1 and n != nargs-1:
+        text = text + ','
+      else:
+        text = text +' );\n'
+      if n%n_per_line == 1 and n <> nargs-1:
+        text = text +'\n          '
+    code(text);
+    ENDFOR()
+    code('')
+
+
+    comm('shift pointers to data x direction')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1)*4;')
+    ENDFOR()
+    code('')
+
+    FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
+    comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -287,15 +316,15 @@ def ops_gen_openmp_macro(master, date, kernels):
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
     code(text);
-
+    code('')
 
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+
     ENDFOR()
     code('')
-
 
     comm('shift pointers to data y direction')
     for n in range (0, nargs):

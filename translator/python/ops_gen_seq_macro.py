@@ -249,8 +249,6 @@ def ops_gen_seq_macro(master, date, kernels):
 
     FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
     comm('call kernel function, passing in pointers to data - remainder')
-
-
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
