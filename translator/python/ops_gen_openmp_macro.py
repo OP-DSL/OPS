@@ -1,9 +1,9 @@
 """
-OPS Sequential code generator
+OPS OpenMP code generator
 
 This routine is called by ops.py which parses the input files
 
-It produces a file xxx_seq_kernel.cpp for each kernel,
+It produces a file xxx_omp_kernel.cpp for each kernel,
 plus a master kernel file
 
 """
@@ -77,12 +77,12 @@ def ENDIF():
   depth -= 2
   code('}')
 
-def ops_gen_seq_macro(master, date, kernels):
+def ops_gen_openmp_macro(master, date, kernels):
 
   global dims, stens
   global g_m, file_text, depth
 
-  OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
+  OPS_ID   = 1;  OPS_GBL   = 2;
 
   OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
   OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;
@@ -115,12 +115,10 @@ def ops_gen_seq_macro(master, date, kernels):
         stride[2*n] = 0
 
 
-    reduction = 0
+    reduct = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-        reduction = 1
-
-
+        reduct = 1
 
 ##########################################################################
 #  start with seq kernel function
@@ -135,13 +133,28 @@ def ops_gen_seq_macro(master, date, kernels):
     name2 = name[0:i-1]
     #print name2
 
+    reduction = False
+    ng_args = 0
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        reduction = True
+      else:
+        ng_args = ng_args + 1
+
+
     #backend functions that should go to the sequential backend lib
-    code('#include "lib.h"')
+    code('#include "ops_lib_openmp.h"')
+
+    code('#ifdef _OPENMP')
+    code('#include <omp.h>')
+    code('#endif')
 
     comm('user function')
     code('#include "'+name2+'_kernel.h"')
     comm('')
     comm(' host stub function')
+
     code('void ops_par_loop_'+name+'(char const *name, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
@@ -157,17 +170,15 @@ def ops_gen_seq_macro(master, date, kernels):
     depth = 2
 
     code('');
-    code('char *p_a['+str(nargs)+'];')
+
     code('int  offs['+str(nargs)+'][2];')
-
-
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
       if nargs <> 1 and n != nargs-1:
         text = text +','
       else:
-        text = text +'};\n\n'
+        text = text +'};\n'
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
@@ -195,11 +206,59 @@ def ops_gen_seq_macro(master, date, kernels):
         code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
+    if reduction == True:
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code('double*arg'+str(n)+'h = (double *)arg'+str(n)+'.data;')
+
+    code('')
+    code('#ifdef _OPENMP')
+    code('int nthreads = omp_get_max_threads( );')
+    code('#else')
+    code('int nthreads = 1;')
+    code('#endif')
+    code('')
+
+    #setup reduction variables
+    if reduction == True:
+      comm('allocate and initialise arrays for global reduction')
+      comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code((str(typs[n]).replace('"','')).strip()+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
+
+      FOR('thr','0','nthreads')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          FOR('d', '0',dims[n])
+          code('arg_gbl'+str(n)+'[64*thr] = *arg'+str(n)+'h;')
+          ENDFOR()
+      ENDFOR()
+
+    code('')
+    code('int y_size = range[3]-range[2];')
+    code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
+    code('')
+
+    code('#pragma omp parallel for')
+    FOR('thr','0','nthreads')
+    code('')
+    code('char *p_a['+str(nargs)+'];')
+    code('')
+
+    code('int start = range[2] + ((y_size-1)/nthreads+1)*thr;')
+    code('int finish = range[2] +  MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
+
+    comm('')
     comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('p_a['+str(n)+'] = &args['+str(n)+'].data[')
-        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
+        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( start * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
         code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
         code('')
       else:
@@ -208,71 +267,32 @@ def ops_gen_seq_macro(master, date, kernels):
 
     code('')
 
+    FOR('n_y','start','finish')
+    FOR('n_x','range[0]','range[1]')
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
+    comm('call kernel function, passing in pointers to data')
     code('')
-
-    FOR('n_y','range[2]','range[3]')
-    FOR('n_x','range[0]','range[0]+(range[1]-range[0])/4')
-
-    comm('call kernel function, passing in pointers to data -vectorised')
-    if reduction == 0:
-      code('#pragma simd')
-    FOR('i','0','4')
-    text = name+'( '
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
-      else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
-      if nargs <> 1 and n != nargs-1:
-        text = text + ','
-      else:
-        text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
-        text = text +'\n          '
-    code(text);
-    ENDFOR()
-    code('')
-
-
-    comm('shift pointers to data x direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1)*4;')
-
-    ENDFOR()
-    code('')
-
-
-    FOR('n_x','range[0]+((range[1]-range[0])/4)*4','range[1]')
-    comm('call kernel function, passing in pointers to data - remainder')
-
-
+    n_per_line = 2
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' &arg_gbl'+str(n)+'[64*thr]'
+
       if nargs <> 1 and n != nargs-1:
         text = text + ','
       else:
         text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
+      if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
     code(text);
-
-    code('')
 
 
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
-
+        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
     ENDFOR()
     code('')
 
@@ -280,17 +300,42 @@ def ops_gen_seq_macro(master, date, kernels):
     comm('shift pointers to data y direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
+    ENDFOR()
+    code('')
+
+
+
+
+    #generate code for combining the reductions
+    if reduction == True:
+      code('')
+      comm(' combine reduction data')
+      FOR('thr','0','nthreads')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          FOR('d','0',dims[n])
+          if accs[n] == OPS_INC:
+            code('arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
+          elif accs[n] == OPS_MIN:
+            code('arg'+str(n)+'h[0] = MIN(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+          elif accs[n] == OPS_MAX:
+            code('arg'+str(n)+'h[0] = MAX(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+          elif accs[n] == OPS_WRITE:
+            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] = arg_gbl'+str(n)+'[64*thr];')
+          ENDFOR()
+      ENDFOR()
 
     depth = depth - 2
     code('}')
 
+
 ##########################################################################
 #  output individual kernel file
 ##########################################################################
-    fid = open(name+'_seq_kernel.cpp','w')
+    fid = open(name+'_omp_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
     fid.write(file_text)
@@ -313,11 +358,11 @@ def ops_gen_seq_macro(master, date, kernels):
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
-      code('#include "'+kernels[nk]['name']+'_seq_kernel.cpp"')
+      code('#include "'+kernels[nk]['name']+'_omp_kernel.cpp"')
       kernel_name_list.append(kernels[nk]['name'])
 
   master = master.split('.')[0]
-  fid = open(master.split('.')[0]+'_seq_kernels.cpp','w')
+  fid = open(master.split('.')[0]+'_omp_kernels.cpp','w')
   fid.write('//\n// auto-generated by op2.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
   fid.write(file_text)
   fid.close()
