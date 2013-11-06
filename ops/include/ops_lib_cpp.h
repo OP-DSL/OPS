@@ -77,6 +77,7 @@ extern int OPS_block_index, OPS_block_max,
 extern ops_block * OPS_block_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 
+void ops_init( int argc, char **argv, int diags_level );
 
 ops_dat ops_decl_dat_char (ops_block, int, int*, int*, char *, int, char const*, char const* );
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );

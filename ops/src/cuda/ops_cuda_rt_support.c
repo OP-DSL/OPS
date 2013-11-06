@@ -30,70 +30,72 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops openmp backend implementation
+/** @brief ops cuda specific runtime support functions
   * @author Gihan Mudalige
-  * @details Implements the OPS API calls for the openmp backend
+  * @details Implements cuda backend runtime support functions
   */
 
-#include <ops_lib_cpp.h>
 
-int xdim0;
-int xdim1;
-int xdim2;
-int xdim3;
-int xdim4;
-int xdim5;
-int xdim6;
-int xdim7;
-int xdim8;
-int xdim9;
-int xdim10;
-int xdim11;
-int xdim12;
-int xdim13;
-int xdim14;
-int xdim15;
-int xdim16;
-int xdim17;
+//
+// header files
+//
 
-void
-ops_init ( int argc, char ** argv, int diags )
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <math_constants.h>
+
+#include <ops_lib_core.h>
+#include <ops_cuda_rt_support.h>
+
+
+//
+// CUDA utility functions
+//
+
+void __cudaSafeCall ( cudaError_t err, const char * file, const int line )
 {
-  ops_init_core ( argc, argv, diags );
+  if ( cudaSuccess != err ) {
+    fprintf ( stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n",
+              file, line, cudaGetErrorString ( err ) );
+    exit ( -1 );
+  }
 }
 
-ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
-                           int* offset,  char* data, int type_size,
-                           char const * type, char const * name )
+void cutilDeviceInit( int argc, char ** argv )
 {
-  ops_dat dat;
-
-  if(data != NULL) {
-    dat = ops_decl_dat_core(block, size, block_size, offset, data, type_size, type, name);
-  }
-  else {
-    dat = ops_decl_dat_temp_core (block, size, block_size, offset,
-                                           data, type_size, type, name );
-    int bytes = size*type_size;
-    for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
-    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
-    dat->user_managed = 0;
+  (void)argc;
+  (void)argv;
+  int deviceCount;
+  cutilSafeCall( cudaGetDeviceCount ( &deviceCount ) );
+  if ( deviceCount == 0 ) {
+    printf ( "cutil error: no devices supporting CUDA\n" );
+    exit ( -1 );
   }
 
-  return dat;
-}
+  // Test we have access to a device
+  float *test;
+  cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
+  if (err != cudaSuccess) {
+    OPS_hybrid_gpu = 0;
+  } else {
+    OPS_hybrid_gpu = 1;
+  }
+  if (OPS_hybrid_gpu) {
+    cudaFree(test);
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
-{
-  return ops_arg_dat_core( dat, stencil, acc );
-}
+    cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 
-ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
-{
-  return ops_arg_gbl_core( data, dim, size, acc );
-}
-
-void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
-{
-  ops_print_dat_to_txtfile_core(dat, file_name);
+    int deviceId = -1;
+    cudaGetDevice(&deviceId);
+    cudaDeviceProp_t deviceProp;
+    cutilSafeCall ( cudaGetDeviceProperties ( &deviceProp, deviceId ) );
+    printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
+  } else {
+    printf ( "\n Using CPU\n" );
+  }
 }

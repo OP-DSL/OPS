@@ -95,7 +95,7 @@ ops_dat search_dat(ops_block block, int size, int *block_size, int* offset,
 /*
 * OPS core functions
 */
-void ops_init( int argc, char ** argv, int diags )
+void ops_init_core( int argc, char ** argv, int diags )
 {
   OPS_diags = diags;
 

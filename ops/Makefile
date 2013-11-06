@@ -13,6 +13,8 @@ INC = include
 LIB = lib
 OBJ = obj
 
+CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
+
 #
 # compiler settings
 #
@@ -50,7 +52,7 @@ endif
 
 .PHONY: clean mklib
 
-all: clean core seq openmp
+all: clean core seq openmp cuda
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
 
@@ -65,6 +67,11 @@ seq: mklib core $(OBJ)/ops_lib_core.o
 openmp: mklib core $(OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/openmp/ops_openmp_decl.c -o $(OBJ)/ops_openmp_decl.o
 	ar -r $(LIB)/libops_openmp.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_openmp_decl.o
+
+cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
+	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_INC) -I$(INC) \
+        -c $(SRC)/cuda/ops_cuda_decl.c -o $(OBJ)/ops_cuda_decl.o
+	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_cuda_decl.o
 
 clean:
 	-rm -if $(OBJ)/*.o

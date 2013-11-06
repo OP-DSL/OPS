@@ -30,13 +30,19 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops openmp backend implementation
+/** @brief ops cuda backend implementation
   * @author Gihan Mudalige
-  * @details Implements the OPS API calls for the openmp backend
+  * @details Implements the OPS API calls for the cuda backend
   */
 
-#include <ops_lib_cpp.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 
+#include <ops_lib_cpp.h>
+#include <ops_cuda_rt_support.h>
+
+//these are global vars ... may need to be put in cuda device memory
 int xdim0;
 int xdim1;
 int xdim2;
@@ -56,12 +62,33 @@ int xdim15;
 int xdim16;
 int xdim17;
 
-void
-ops_init ( int argc, char ** argv, int diags )
+
+void ops_init ( int argc, char ** argv, int diags )
 {
   ops_init_core ( argc, argv, diags );
+
+#if CUDART_VERSION < 3020
+#error : "must be compiled using CUDA 3.2 or later"
+#endif
+
+#ifdef CUDA_NO_SM_13_DOUBLE_INTRINSICS
+#warning : " *** no support for double precision arithmetic *** "
+#endif
+
+  cutilDeviceInit ( argc, argv );
+
+// \warning add -DSET_CUDA_CACHE_CONFIG to compiling line
+// for this file when implementing C OPS.
+//
+
+#ifdef SET_CUDA_CACHE_CONFIG
+  cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferShared ) );
+#endif
+
+  printf ( "\n 16/48 L1/shared \n" );
 }
 
+/*
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
                            char const * type, char const * name )
@@ -97,3 +124,4 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
+*/

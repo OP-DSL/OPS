@@ -159,7 +159,7 @@ typedef struct
 * Core lib function prototypes
 *******************************************************************************/
 
-void ops_init( int argc, char **argv, int diags_level );
+void ops_init_core( int argc, char **argv, int diags_level );
 
 void ops_exit( void );
 
