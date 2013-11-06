@@ -53,9 +53,6 @@
 // Cloverleaf definitions
 #include "definitions.h"
 
-//Cloverleaf kernels
-#include "test_kernel.h"
-
 
 // Cloverleaf functions
 void initialise();

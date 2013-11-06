@@ -57,6 +57,13 @@ int xdim16;
 int xdim17;
 
 
+void
+ops_init ( int argc, char ** argv, int diags )
+{
+  ops_init_core ( argc, argv, diags );
+}
+
+
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
                            char const * type, char const * name )
