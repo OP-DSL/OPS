@@ -305,6 +305,11 @@ def ops_gen_seq_macro(master, date, kernels):
   code('#include "ops_lib_cpp.h"')
   code('')
 
+  #constants for macros
+  for i in range(0,20):
+    code('int xdim'+str(i)+';')
+  code('')
+
   comm('user kernel files')
 
   kernel_name_list = []

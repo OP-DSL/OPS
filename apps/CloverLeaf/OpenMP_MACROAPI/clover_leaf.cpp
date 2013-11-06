@@ -207,7 +207,7 @@ int main(int argc, char **argv)
       break;
     }
 
-      if(step == 70) {
+      if(step == 20) {
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
