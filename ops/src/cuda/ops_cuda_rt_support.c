@@ -99,3 +99,90 @@ void cutilDeviceInit( int argc, char ** argv )
     printf ( "\n Using CPU\n" );
   }
 }
+
+void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
+{
+  //if (!OPS_hybrid_gpu) return;
+  cutilSafeCall ( cudaMalloc ( data_d, size ) );
+  cutilSafeCall ( cudaMemcpy ( *data_d, *data_h, size,
+                               cudaMemcpyHostToDevice ) );
+  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+}
+
+
+
+void op_upload_dat(op_dat dat) {
+  if (!OP_hybrid_gpu) return;
+  int set_size = dat->set->size;
+  if (strstr( dat->type, ":soa")!= NULL) {
+    char *temp_data = (char *)op_malloc(dat->size*set_size*sizeof(char));
+    int element_size = dat->size/dat->dim;
+    for (int i = 0; i < dat->dim; i++) {
+      for (int j = 0; j < set_size; j++) {
+        for (int c = 0; c < element_size; c++) {
+          temp_data[element_size*i*set_size + element_size*j + c] = dat->data[dat->size*j+element_size*i+c];
+        }
+      }
+    }
+    cutilSafeCall( cudaMemcpy(dat->data_d, temp_data, set_size*dat->size, cudaMemcpyHostToDevice));
+    op_free(temp_data);
+  } else {
+    cutilSafeCall( cudaMemcpy(dat->data_d, dat->data, set_size*dat->size, cudaMemcpyHostToDevice));
+  }
+}
+
+void ops_download_dat(op_dat dat) {
+
+  //if (!OP_hybrid_gpu) return;
+  int bytes = dat->size;
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes*dat->block->block_size[i];
+  cutilSafeCall( cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
+
+}
+
+void ops_upload_dat(op_dat dat) {
+
+  //if (!OP_hybrid_gpu) return;
+  int bytes = dat->size;
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes*dat->block->block_size[i];
+  cutilSafeCall( cudaMemcpy(dat->data_d, dat->data , bytes, cudaMemcpyHostToDevice));
+
+}
+
+void ops_halo_exchanges(ops_arg *args, int nargs)
+{
+  for (int n=0; n<nargs; n++)
+    if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
+      ops_download_dat(args[n].dat);
+      args[n].dat->dirty_hd = 0;
+    }
+}
+
+void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
+{
+  for (int n=0; n<nargs; n++)
+    if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
+      ops_upload_dat(args[n].dat);
+      args[n].dat->dirty_hd = 0;
+    }
+}
+
+void ops_set_dirtybit(ops_arg *args, int nargs)
+{
+  for (int n=0; n<nargs; n++) {
+    if((args[n].argtype == OPS_ARG_DAT) &&
+       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW)) {
+      args[n].dat->dirty_hd = 1;
+    }
+  }
+}
+
+void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
+{
+  for (int n=0; n<nargs; n++) {
+    if((args[n].argtype == OPS_ARG_DAT) &&
+       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW)) {
+      args[n].dat->dirty_hd = 2;
+    }
+  }
+}

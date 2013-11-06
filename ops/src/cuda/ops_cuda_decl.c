@@ -68,12 +68,14 @@ void ops_init ( int argc, char ** argv, int diags )
   printf ( "\n 16/48 L1/shared \n" );
 }
 
-/*
+
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
                            char const * type, char const * name )
 {
   ops_dat dat;
+  int bytes = size*type_size;
+  for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
 
   if(data != NULL) {
     dat = ops_decl_dat_core(block, size, block_size, offset, data, type_size, type, name);
@@ -81,15 +83,17 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
   else {
     dat = ops_decl_dat_temp_core (block, size, block_size, offset,
                                            data, type_size, type, name );
-    int bytes = size*type_size;
-    for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
+
     dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
   }
 
+  ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+    ( void ** ) &( dat->data ), bytes );
+
   return dat;
 }
-
+/*
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );
