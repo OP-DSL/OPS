@@ -1,6 +1,9 @@
 #ifndef ADVEC_CELL_KERNEL_H
 #define ADVEC_CELL_KERNEL_H
 
+#include "data.h"
+#include "definitions.h"
+
 inline void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, double *volume,
                         double *vol_flux_x, double *vol_flux_y) {
 

@@ -33,7 +33,7 @@ import datetime
 
 # import SEQ, OpenMP and CUDA code generation functions
 #from ops_gen_seq import ops_gen_seq
-#from ops_gen_seq_macro import ops_gen_seq_macro
+from ops_gen_seq_macro import ops_gen_seq_macro
 from ops_gen_openmp_macro import ops_gen_openmp_macro
 #from ops_gen_cuda import ops_gen_cuda
 
@@ -505,9 +505,9 @@ def main():
         #
 
         #ops_gen_seq(str(sys.argv[1]), date, kernels)
-        #ops_gen_seq_macro(str(sys.argv[1]), date, kernels)
+        ops_gen_seq_macro(str(sys.argv[1]), date, kernels)
         #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-        ops_gen_openmp_macro(str(sys.argv[1]), date, kernels)
+        #ops_gen_openmp_macro(str(sys.argv[1]), date, kernels)
         #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
