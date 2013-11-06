@@ -4,7 +4,7 @@
 #include "data.h"
 #include "definitions.h"
 
-inline void initialise_chunk_kernel_x(double **vertexx, int **xx, double **vertexdx) {
+inline void initialise_chunk_kernel_x(double *vertexx, int *xx, double *vertexdx) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;
@@ -19,13 +19,11 @@ inline void initialise_chunk_kernel_x(double **vertexx, int **xx, double **verte
   min_x=grid->xmin+d_x*field->left;
   min_y=grid->ymin+d_y*field->bottom;
 
-  **vertexx = min_x + d_x *(double)(((int)(**xx)) - x_min);
-  **vertexdx = (double)d_x;
-  //printf("%lf ", **vertexx);
+  vertexx[OPS_ACC0(0,0)] = min_x + d_x * (xx[OPS_ACC1(0,0)] - x_min);
+  vertexdx[OPS_ACC2(0,0)] = (double)d_x;
 }
 
-
-inline void initialise_chunk_kernel_y(double **vertexy, int **yy, double **vertexdy) {
+inline void initialise_chunk_kernel_y(double *vertexy, int *yy, double *vertexdy) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;
@@ -40,13 +38,13 @@ inline void initialise_chunk_kernel_y(double **vertexy, int **yy, double **verte
   min_x=grid->xmin+d_x*field->left;
   min_y=grid->ymin+d_y*field->bottom;
 
-  **vertexy = min_y + d_y * (double)(((int)(**yy)) - y_min);
-  **vertexdy = (double)d_y;
-  //printf("%lf ", **vertexy);
+  vertexy[OPS_ACC0(0,0)] = min_y + d_y * (yy[OPS_ACC1(0,0)] - y_min);
+  vertexdy[OPS_ACC2(0,0)] = (double)d_y;
 }
 
 
-inline void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, double **celldx) {
+
+inline void initialise_chunk_kernel_cellx(double *vertexx, double* cellx, double *celldx) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;;
@@ -61,13 +59,12 @@ inline void initialise_chunk_kernel_cellx(double **vertexx, double** cellx, doub
   min_x=grid->xmin+d_x;
   min_y=grid->ymin+d_y;
 
-  **cellx = 0.5*( *vertexx[0] + *vertexx[1] );
-  **celldx = d_x;
-  //printf("%lf %lf\n", *vertexx[0], *vertexx[1]);
+  cellx[OPS_ACC1(0,0)]  = 0.5*( vertexx[OPS_ACC0(0,0)] + vertexx[OPS_ACC0(1,0)] );
+  celldx[OPS_ACC2(0,0)]  = d_x;
 
 }
 
-inline void initialise_chunk_kernel_celly(double **vertexy, double** celly, double **celldy) {
+inline void initialise_chunk_kernel_celly(double *vertexy, double *celly, double *celldy) {
 
   int x_min=field->x_min;
   int x_max=field->x_max;;
@@ -82,24 +79,23 @@ inline void initialise_chunk_kernel_celly(double **vertexy, double** celly, doub
   min_x=grid->xmin+d_x;
   min_y=grid->ymin+d_y;
 
-  **celly = 0.5*( *vertexy[0] + *vertexy[1] );
-  **celldy = d_y;
-  //printf("%lf ", (double)**celldy);
+  celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
+  celldy[OPS_ACC2(0,0)] = d_y;
+
 
 }
 
-inline void initialise_chunk_kernel_volume(double **volume, double **celldy, double **xarea,
-                                         double **celldx, double **yarea) {
+inline void initialise_chunk_kernel_volume(double *volume, double *celldy, double *xarea,
+                                         double *celldx, double *yarea) {
 
   double d_x, d_y;
 
   d_x = (grid->xmax - grid->xmin)/(double)grid->x_cells;
   d_y = (grid->ymax - grid->ymin)/(double)grid->y_cells;
 
-  **volume = d_x*d_y;
-  **xarea=**celldy;
-  **yarea=**celldx;
-  //printf("%lf ", (double)**xarea);
+  volume[OPS_ACC0(0,0)] = d_x*d_y;
+  xarea[OPS_ACC2(0,0)] = celldy[OPS_ACC1(0,0)];
+  yarea[OPS_ACC4(0,0)] = celldx[OPS_ACC3(0,0)];
 }
 
 
