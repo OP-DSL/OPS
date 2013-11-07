@@ -20,7 +20,7 @@ void* xmalloc(size_t size);
 
 void* xrealloc(void *ptr, size_t size);
 
-int min(int array[], int size);
+//int min(int array[], int size);
 
 int binary_search(int a[], int value, int low, int high);
 

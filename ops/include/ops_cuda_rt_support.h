@@ -81,6 +81,8 @@ extern void __syncthreads ( );
 
 void cutilDeviceInit( int argc, char ** argv);
 void __cudaSafeCall( cudaError_t err, const char * file, const int line );
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
+void ops_cuda_get_data( ops_dat dat );
 
 #ifdef __cplusplus
 }

@@ -53,6 +53,12 @@
 #include <ops_cuda_rt_support.h>
 
 
+// Small re-declaration to avoid using struct in the C version.
+// This is due to the different way in which C and C++ see structs
+
+typedef struct cudaDeviceProp cudaDeviceProp_t;
+
+
 //
 // CUDA utility functions
 //
@@ -110,41 +116,20 @@ void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
 }
 
 
+void ops_download_dat(ops_dat dat) {
 
-void op_upload_dat(op_dat dat) {
-  if (!OP_hybrid_gpu) return;
-  int set_size = dat->set->size;
-  if (strstr( dat->type, ":soa")!= NULL) {
-    char *temp_data = (char *)op_malloc(dat->size*set_size*sizeof(char));
-    int element_size = dat->size/dat->dim;
-    for (int i = 0; i < dat->dim; i++) {
-      for (int j = 0; j < set_size; j++) {
-        for (int c = 0; c < element_size; c++) {
-          temp_data[element_size*i*set_size + element_size*j + c] = dat->data[dat->size*j+element_size*i+c];
-        }
-      }
-    }
-    cutilSafeCall( cudaMemcpy(dat->data_d, temp_data, set_size*dat->size, cudaMemcpyHostToDevice));
-    op_free(temp_data);
-  } else {
-    cutilSafeCall( cudaMemcpy(dat->data_d, dat->data, set_size*dat->size, cudaMemcpyHostToDevice));
-  }
-}
-
-void ops_download_dat(op_dat dat) {
-
-  //if (!OP_hybrid_gpu) return;
+  if (!OPS_hybrid_gpu) return;
   int bytes = dat->size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes*dat->block->block_size[i];
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
   cutilSafeCall( cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
 
 }
 
-void ops_upload_dat(op_dat dat) {
+void ops_upload_dat(ops_dat dat) {
 
-  //if (!OP_hybrid_gpu) return;
+  if (!OPS_hybrid_gpu) return;
   int bytes = dat->size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes*dat->block->block_size[i];
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
   cutilSafeCall( cudaMemcpy(dat->data_d, dat->data , bytes, cudaMemcpyHostToDevice));
 
 }
@@ -185,4 +170,22 @@ void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
       args[n].dat->dirty_hd = 2;
     }
   }
+}
+
+//
+// routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
+//
+
+void ops_cuda_get_data ( ops_dat dat )
+{
+  if (!OPS_hybrid_gpu) return;
+  if (dat->dirty_hd == 2) dat->dirty_hd = 0;
+  else return;
+  int bytes = dat->size;
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
+  cutilSafeCall ( cudaMemcpy ( dat->data, dat->data_d,
+                               bytes,
+                               cudaMemcpyDeviceToHost ) );
+  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+
 }

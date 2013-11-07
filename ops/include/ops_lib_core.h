@@ -59,6 +59,8 @@ typedef long long ll;
 typedef unsigned long long ull;
 
 
+extern int OPS_hybrid_gpu;
+
 /*
 * enum list for ops_par_loop
 */
@@ -99,8 +101,10 @@ typedef struct
   int         *block_size; /* size of the array in each block dimension*/
   int         *offset;     /* starting index for each dimention*/
   char        *data;       /* data on host */
+  char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
   char const *type;        /* datatype */
+  int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
 } ops_dat_core;
 
@@ -135,6 +139,7 @@ typedef struct
   ops_stencil stencil; /* the stencil */
   int         dim;     /* dimension of data */
   char        *data;   /* data on host */
+  char        *data_d; /* data on device (for CUDA)*/
   ops_access   acc;    /* access type */
   ops_arg_type argtype;/* arg type */
 } ops_arg;
@@ -188,5 +193,10 @@ void ops_diagnostic_output( );
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
 void ops_timers_core( double *cpu, double *et );
+
+/* why are these placed here ?*/
+void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
+void ops_halo_exchanges_cuda(ops_arg *args, int nargs);
+
 
 #endif /* __OP_LIB_CORE_H */

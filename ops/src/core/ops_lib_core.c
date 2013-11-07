@@ -46,6 +46,8 @@ int OPS_stencil_index = 0, OPS_stencil_max = 0;
 int OPS_dat_index = 0;
 
 
+int OPS_hybrid_gpu = 0;
+
 /*
 * Lists of blocks and dats declared in an OPS programs
 */
@@ -308,8 +310,10 @@ ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   arg.stencil = stencil;
   if ( dat != NULL ) {
     arg.data = dat->data;
+    arg.data_d = dat->data_d;
   } else {
     arg.data = NULL;
+    arg.data_d = NULL;
   }
   arg.acc = acc;
   return arg;
@@ -319,6 +323,7 @@ ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
   ops_arg arg;
   arg.argtype = OPS_ARG_GBL;
   arg.dat = NULL;
+  arg.data_d = NULL;
   arg.stencil = NULL;
   arg.dim = dim;
   arg.data = data;

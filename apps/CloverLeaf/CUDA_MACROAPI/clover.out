@@ -8,8 +8,8 @@ Clover version 1.000000
  state 1 density=0.2 energy=1.0
  state 2 density=1.0 energy=2.5 geometry=rectangle xmin=0.0 xmax=5.0 ymin=0.0 ymax=2.0
 
- x_cells=7680
- y_cells=7680
+ x_cells=960
+ y_cells=960
 
  xmin=0.0
  ymin=0.0
@@ -44,8 +44,8 @@ Clover version 1.000000
            state ymin: 0.000000e+00
            state ymax: 2.000000e+00
 
-              x_cells: 7680
-              y_cells: 7680
+              x_cells: 960
+              y_cells: 960
                  xmin: 0.000000e+00
                  ymin: 0.000000e+00
                  xmax: 1.000000e+01
@@ -70,32 +70,32 @@ Clover version 1.000000
  step:     0   1.000E+02   2.800E+01   2.800E-01   1.720E-01   4.300E+01        0.000E+00        4.300E+01
 
  Starting the calculation
- Step 1 time   0.0000000 control sound timestep  7.70E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 2 time   0.0007703 control sound timestep  4.70E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 3 time   0.0012405 control sound timestep  5.97E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 4 time   0.0018380 control sound timestep  6.29E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 5 time   0.0024675 control sound timestep  6.93E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 6 time   0.0031602 control sound timestep  6.91E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 7 time   0.0038513 control sound timestep  7.04E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 8 time   0.0045556 control sound timestep  7.41E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 9 time   0.0052964 control sound timestep  7.33E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 10 time   0.0060292 control sound timestep  7.28E-04  1, 1 x  6.510417E-04  y 6.510417E-04
+ Step 1 time   0.0000000 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 2 time   0.0061626 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 3 time   0.0123252 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 4 time   0.0184877 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 5 time   0.0246503 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 6 time   0.0308129 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 7 time   0.0369755 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 8 time   0.0431381 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 9 time   0.0493007 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 10 time   0.0554632 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
 
- Time 0.006757
+ Time 0.061626
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    10   1.000E+02   2.800E+01   2.800E-01   1.719E-01   4.298E+01        1.596E-02        4.300E+01
+ step:    10   1.000E+02   2.800E+01   2.800E-01   1.719E-01   4.298E+01        3.734E-04        4.298E+01
 
- Step 11 time   0.0067568 control sound timestep  7.22E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 12 time   0.0074792 control sound timestep  7.20E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 13 time   0.0081988 control sound timestep  7.21E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 14 time   0.0089202 control sound timestep  7.24E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 15 time   0.0096444 control sound timestep  7.25E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 16 time   0.0103697 control sound timestep  7.26E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 17 time   0.0110953 control sound timestep  7.26E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 18 time   0.0118213 control sound timestep  7.26E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 19 time   0.0125475 control sound timestep  7.26E-04  1, 1 x  6.510417E-04  y 6.510417E-04
- Step 20 time   0.0132737 control sound timestep  7.26E-04  1, 1 x  6.510417E-04  y 6.510417E-04
+ Step 11 time   0.0616258 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 12 time   0.0677884 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 13 time   0.0739510 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 14 time   0.0801136 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 15 time   0.0862762 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 16 time   0.0924387 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 17 time   0.0986013 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 18 time   0.1047639 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 19 time   0.1109265 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
+ Step 20 time   0.1170891 control sound timestep  6.16E-03  1, 1 x  5.208333E-03  y 5.208333E-03
 
- Time 0.014000
+ Time 0.123252
                Volume      Mass        Density     Pressure    Internal Energy  Kinetic Energy   Total Energy
- step:    20   1.000E+02   2.800E+01   2.800E-01   1.719E-01   4.296E+01        3.396E-02        4.300E+01
+ step:    20   1.000E+02   2.800E+01   2.800E-01   1.718E-01   4.296E+01        8.026E-04        4.296E+01

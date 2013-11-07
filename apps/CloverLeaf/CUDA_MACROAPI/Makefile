@@ -21,10 +21,10 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
-  #CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
+  CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
-  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
+  #CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= mpiCC
@@ -52,7 +52,7 @@ all: clean cloverleaf_cuda
 # simple sequential version
 #
 
-cloverleaf_cuda:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+cloverleaf_cuda: cloverleaf_kernels_cu.o clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 		initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
 		update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
 		calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
@@ -66,10 +66,9 @@ cloverleaf_cuda:	clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initia
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
+		advec_mom_ops.cpp clover_leaf_omp_kernels.cpp cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
 
-cloverleaf_kernels_cu.o:	cloverleaf_kernels.cu \
-				accelerate_kernel.cu accelerate_kernel.h \
+cloverleaf_kernels_cu.o:	accelerate_kernel_stepbymass_cuda_kernel.cu \
 				Makefile
 				nvcc $(VAR) $(INC) $(NVCCFLAGS) $(OPS_INC) \
 				-c -o cloverleaf_kernels_cu.o cloverleaf_kernels.cu
