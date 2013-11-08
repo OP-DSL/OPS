@@ -62,10 +62,10 @@ void PdV(int predict)
     ops_arg_dat(volume, S2D_00, "double", OPS_READ),
     ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
     ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-    ops_arg_dat(density1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(density1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
     ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-    ops_arg_dat(energy1, S2D_00, "double", OPS_READ));
+    ops_arg_dat(energy1, S2D_00, "double", OPS_WRITE));
   }
   else {
   ops_par_loop_opt(PdV_kernel_nopredict, "PdV_kernel_nopredict", 2, rangexy_inner,
@@ -79,10 +79,10 @@ void PdV(int predict)
     ops_arg_dat(volume, S2D_00, "double", OPS_READ),
     ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
     ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-    ops_arg_dat(density1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(density1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
     ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-    ops_arg_dat(energy1, S2D_00, "double", OPS_READ));
+    ops_arg_dat(energy1, S2D_00, "double", OPS_WRITE));
   }
 
   if(error_condition == 1) {

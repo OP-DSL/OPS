@@ -195,7 +195,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 void ops_timers_core( double *cpu, double *et );
 
 /* why are these placed here ?*/
+void ops_set_dirtybit(ops_arg *args, int nargs);
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
+void ops_halo_exchanges(ops_arg *args, int nargs);
 void ops_halo_exchanges_cuda(ops_arg *args, int nargs);
 
 

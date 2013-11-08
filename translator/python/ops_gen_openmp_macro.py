@@ -244,6 +244,8 @@ def ops_gen_openmp_macro(master, date, kernels):
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
+    code('ops_halo_exchanges(args, '+str(nargs)+');\n')
+
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
     code('')
@@ -266,6 +268,7 @@ def ops_gen_openmp_macro(master, date, kernels):
         code('')
 
     code('')
+
 
     FOR('n_y','start','finish')
     FOR('n_x','range[0]','range[0]+(range[1]-range[0])/4')
@@ -356,6 +359,8 @@ def ops_gen_openmp_macro(master, date, kernels):
             code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
           ENDFOR()
       ENDFOR()
+
+    code('ops_set_dirtybit(args, '+str(nargs)+');\n')
 
     depth = depth - 2
     code('}')

@@ -108,5 +108,6 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 }
 
 void ops_timers( double *cpu, double *et );
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 
 #endif /* __OP_LIB_CPP_H */

@@ -4,12 +4,9 @@
 
 //header
 #include "ops_lib_cpp.h"
-//#include "ops_cuda_rt_support.h"
-//#include "op_cuda_reduction.h"
 
 
-#include "data.h"
-#include "definitions.h"
+
 
 //user kernel files
 

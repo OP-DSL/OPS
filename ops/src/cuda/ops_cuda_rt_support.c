@@ -118,27 +118,31 @@ void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
 
 void ops_download_dat(ops_dat dat) {
 
-  if (!OPS_hybrid_gpu) return;
+  //if (!OPS_hybrid_gpu) return;
   int bytes = dat->size;
   for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
+  //printf("downloading to host from device %d bytes\n",bytes);
   cutilSafeCall( cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
 
 }
 
 void ops_upload_dat(ops_dat dat) {
 
-  if (!OPS_hybrid_gpu) return;
+  //if (!OPS_hybrid_gpu) return;
   int bytes = dat->size;
   for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
+  //printf("uploading to device from host %d bytes\n",bytes);
   cutilSafeCall( cudaMemcpy(dat->data_d, dat->data , bytes, cudaMemcpyHostToDevice));
 
 }
 
 void ops_halo_exchanges(ops_arg *args, int nargs)
 {
+  //printf("in ops_halo_exchanges\n");
   for (int n=0; n<nargs; n++)
     if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       ops_download_dat(args[n].dat);
+      //printf("halo exchanges on host\n");
       args[n].dat->dirty_hd = 0;
     }
 }
@@ -154,9 +158,11 @@ void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
 
 void ops_set_dirtybit(ops_arg *args, int nargs)
 {
+  //printf("in ops_set_dirtybit\n");
   for (int n=0; n<nargs; n++) {
     if((args[n].argtype == OPS_ARG_DAT) &&
        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW)) {
+      //printf("setting dirty bit on host\n");
       args[n].dat->dirty_hd = 1;
     }
   }
@@ -176,11 +182,11 @@ void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
 
-void ops_cuda_get_data ( ops_dat dat )
+void ops_cuda_get_data( ops_dat dat )
 {
-  if (!OPS_hybrid_gpu) return;
-  if (dat->dirty_hd == 2) dat->dirty_hd = 0;
-  else return;
+  //if (!OPS_hybrid_gpu) return;
+  //if (dat->dirty_hd == 2) dat->dirty_hd = 0;
+  //else return;
   int bytes = dat->size;
   for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
   cutilSafeCall ( cudaMemcpy ( dat->data, dat->data_d,

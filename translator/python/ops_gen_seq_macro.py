@@ -208,6 +208,8 @@ def ops_gen_seq_macro(master, date, kernels):
 
     code('')
 
+    code('ops_halo_exchanges(args, '+str(nargs)+');\n')
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -281,6 +283,7 @@ def ops_gen_seq_macro(master, date, kernels):
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
+    code('ops_set_dirtybit(args, '+str(nargs)+');\n')
 
     depth = depth - 2
     code('}')
