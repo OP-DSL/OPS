@@ -178,18 +178,22 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
+
     timestep();
 
-    PdV(TRUE);
-
-    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
-
-    accelerate();
     if(step == 1) {
       //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
     }
+
+    PdV(TRUE);
+
+    accelerate();
+
+    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+    //exit(0);
+
 
     PdV(FALSE);
 
@@ -215,11 +219,11 @@ int main(int argc, char **argv)
     }
 
       if(step == 20) {
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //exit(0);
-      break;
-     }
+        //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+        //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+        //exit(0);
+        break;
+      }
   }
 
   ops_timers_core(&ct1, &et1);

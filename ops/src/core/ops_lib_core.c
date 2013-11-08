@@ -203,6 +203,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 
   dat->data = (char *)data;
   dat->user_managed = 1;
+  dat->dirty_hd = 0;
   dat->type = copy_str( type );
   dat->name = copy_str(name);
 

@@ -21,7 +21,7 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
-  CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
+  CCFLAGS	= -O2 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
   #CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
@@ -38,7 +38,7 @@ endif
 #
 # set flags for NVCC compilation and linking
 #
-NVCCFLAGS        = -O3 -arch=sm_20 -Xptxas=-v -Dlcm=ca -use_fast_math #-g -G -O0
+NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca #-use_fast_math #-g -G #-O0
 
 
 #
@@ -68,7 +68,7 @@ cloverleaf_cuda: cloverleaf_kernels_cu.o clover_leaf.cpp start.cpp build_field.c
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp clover_leaf_omp_kernels.cpp cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
 
-cloverleaf_kernels_cu.o:	accelerate_kernel_stepbymass_cuda_kernel.cu \
+cloverleaf_kernels_cu.o:	cloverleaf_kernels.cu \
 				Makefile
 				nvcc $(VAR) $(INC) $(NVCCFLAGS) $(OPS_INC) \
 				-c -o cloverleaf_kernels_cu.o cloverleaf_kernels.cu

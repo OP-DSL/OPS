@@ -10,28 +10,28 @@
 #define OPS_ACC0(x,y) (x+xdim0_accel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_accel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_accel*(y))
+#define OPS_ACC3(x,y) (x+xdim3_accel*(y))
 
 
-__device__ inline void accelerate_kernel_stepbymass(const double *density0, const double *volume,
-                double *stepbymass) {
 
-  double nodal_mass;
+__device__
+inline void accelerate_kernelx2( double *xvel1, const double *stepbymass,
+                        const double *xarea, const double *viscosity) {
 
   //{0,0, -1,0, 0,-1, -1,-1};
-  nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
-    + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
-    + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
-    + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+  //{0,0, 0,-1};
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt_device / nodal_mass;
-
+  xvel1[OPS_ACC0(0,0)] = xvel1[OPS_ACC0(0,0)] - stepbymass[OPS_ACC1(0,0)] *
+            ( xarea[OPS_ACC2(0,0)] * ( viscosity[OPS_ACC3(0,0)] - viscosity[OPS_ACC3(-1,0)] ) +
+              xarea[OPS_ACC2(0,-1)] * ( viscosity[OPS_ACC3(0,-1)] - viscosity[OPS_ACC3(-1,-1)] ) );
 }
 
 
-__global__ void ops_accelerate_kernel_stepbymass(
-const double* __restrict arg0,
+__global__ void ops_accelerate_kernelx2(
+double* __restrict arg0,
 const double* __restrict arg1,
-double* __restrict arg2,
+const double* __restrict arg2,
+const double* __restrict arg3,
 int size0,
 int size1 ){
 
@@ -41,18 +41,19 @@ int size1 ){
   arg0 += idx_x * 1 + idx_y * 1 * xdim0_accel;
   arg1 += idx_x * 1 + idx_y * 1 * xdim1_accel;
   arg2 += idx_x * 1 + idx_y * 1 * xdim2_accel;
+  arg3 += idx_x * 1 + idx_y * 1 * xdim3_accel;
   if (idx_x < size0 && idx_y < size1) {
-    accelerate_kernel_stepbymass(arg0 ,arg1 ,arg2 );
+    accelerate_kernelx2(arg0 ,arg1 ,arg2 ,arg3 );
   }
 }
 
 // host stub function
-void ops_par_loop_accelerate_kernel_stepbymass(char const *name, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+void ops_par_loop_accelerate_kernelx2(char const *name, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
-  ops_arg args[3] = { arg0, arg1, arg2};
+  ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
-  printf("in kernel 1\n");
+  printf("in kernel 4\n");
 
   int x_size = range[1]-range[0];
   int y_size = range[3]-range[2];
@@ -60,13 +61,15 @@ void ops_par_loop_accelerate_kernel_stepbymass(char const *name, int dim, int* r
   int xdim0 = args[0].dat->block_size[0];
   int xdim1 = args[1].dat->block_size[0];
   int xdim2 = args[2].dat->block_size[0];
+  int xdim3 = args[3].dat->block_size[0];
 
   cudaMemcpyToSymbol( xdim0_accel, &xdim0, sizeof(int) );
   cudaMemcpyToSymbol( xdim1_accel, &xdim1, sizeof(int) );
   cudaMemcpyToSymbol( xdim2_accel, &xdim2, sizeof(int) );
+  cudaMemcpyToSymbol( xdim3_accel, &xdim3, sizeof(int) );
   cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );
 
-  char *p_a[3];
+  char *p_a[4];
 
 
   //set up initial pointers
@@ -82,18 +85,22 @@ void ops_par_loop_accelerate_kernel_stepbymass(char const *name, int dim, int* r
   + args[2].dat->size * args[2].dat->block_size[0] * ( range[2] * 1 - args[2].dat->offset[1] )
   + args[2].dat->size * ( range[0] * 1 - args[2].dat->offset[0] ) ];
 
+  p_a[3] = &args[3].data_d[
+  + args[3].dat->size * args[3].dat->block_size[0] * ( range[2] * 1 - args[3].dat->offset[1] )
+  + args[3].dat->size * ( range[0] * 1 - args[3].dat->offset[0] ) ];
 
-  ops_halo_exchanges_cuda(args, 3);
+
+  ops_halo_exchanges_cuda(args, 4);
 
   int block_size = 16;
   dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);
   dim3 block(16,16,1);
 
   //call kernel wrapper function, passing in pointers to data
-  ops_accelerate_kernel_stepbymass<<<grid, block >>> (  (double *)p_a[0],  (double *)p_a[1],
-           (double *)p_a[2], x_size, y_size);
+  ops_accelerate_kernelx2<<<grid, block >>> (  (double *)p_a[0],  (double *)p_a[1],
+           (double *)p_a[2],  (double *)p_a[3], x_size, y_size);
 
   cudaDeviceSynchronize();
-  ops_set_dirtybit_cuda(args, 3);
-  ops_halo_exchanges(args, 3);
+  ops_set_dirtybit_cuda(args, 4);
+  ops_halo_exchanges(args, 4);
 }
