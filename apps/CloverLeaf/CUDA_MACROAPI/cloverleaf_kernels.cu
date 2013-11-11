@@ -21,6 +21,8 @@ __constant__ int xdim12_accel;
 __constant__ int xdim13_accel;
 
 __constant__ double dt_device;
+__constant__ double x_max_device;
+__constant__ double y_max_device;
 
 #define OPS_ACC_MACROS
 #define OPS_ACC0(x,y) (x+xdim0_accel*(y))
@@ -68,3 +70,13 @@ __constant__ double dt_device;
 #include "advec_mom_kernel_pre_advec_y_cuda_kernel.cu"
 #include "advec_mom_kernel1_y_cuda_kernel.cu"
 #include "advec_mom_kernel2_y_cuda_kernel.cu"
+
+
+#include "advec_cell_kernel1_xdir_cuda_kernel.cu"
+#include "advec_cell_kernel2_xdir_cuda_kernel.cu"
+#include "advec_cell_kernel3_xdir_cuda_kernel.cu"
+#include "advec_cell_kernel4_xdir_cuda_kernel.cu"
+#include "advec_cell_kernel1_ydir_cuda_kernel.cu"
+#include "advec_cell_kernel2_ydir_cuda_kernel.cu"
+#include "advec_cell_kernel3_ydir_cuda_kernel.cu"
+#include "advec_cell_kernel4_ydir_cuda_kernel.cu"

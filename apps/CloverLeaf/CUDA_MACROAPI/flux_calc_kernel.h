@@ -1,6 +1,9 @@
 #ifndef FLUX_CALC_KERNEL_H
 #define FLUX_CALC_KERNEL_H
 
+#include "data.h"
+#include "definitions.h"
+
 inline void flux_calc_kernelx( double *vol_flux_x, double *xarea,
                         double *xvel0, double *xvel1) {
 
