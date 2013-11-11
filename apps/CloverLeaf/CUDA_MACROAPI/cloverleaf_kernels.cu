@@ -54,7 +54,7 @@ __constant__ double dt_device;
 #include "reset_field_kernel1_cuda_kernel.cu"
 #include "reset_field_kernel2_cuda_kernel.cu"
 
-/*#include "advec_mom_kernel_x1_cuda_kernel.cu"
+#include "advec_mom_kernel_x1_cuda_kernel.cu"
 #include "advec_mom_kernel_y1_cuda_kernel.cu"
 #include "advec_mom_kernel_x2_cuda_kernel.cu"
 #include "advec_mom_kernel_y2_cuda_kernel.cu"
@@ -67,4 +67,4 @@ __constant__ double dt_device;
 #include "advec_mom_kernel_post_advec_y_cuda_kernel.cu"
 #include "advec_mom_kernel_pre_advec_y_cuda_kernel.cu"
 #include "advec_mom_kernel1_y_cuda_kernel.cu"
-#include "advec_mom_kernel2_y_cuda_kernel.cu"*/
+#include "advec_mom_kernel2_y_cuda_kernel.cu"
