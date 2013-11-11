@@ -24,6 +24,8 @@ __constant__ double dt_device;
 __constant__ double x_max_device;
 __constant__ double y_max_device;
 
+//can have a function to copy device constants here .. see OP2 airfoil_kernels.cu
+
 #define OPS_ACC_MACROS
 #define OPS_ACC0(x,y) (x+xdim0_accel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_accel*(y))
@@ -71,7 +73,6 @@ __constant__ double y_max_device;
 #include "advec_mom_kernel1_y_cuda_kernel.cu"
 #include "advec_mom_kernel2_y_cuda_kernel.cu"
 
-
 #include "advec_cell_kernel1_xdir_cuda_kernel.cu"
 #include "advec_cell_kernel2_xdir_cuda_kernel.cu"
 #include "advec_cell_kernel3_xdir_cuda_kernel.cu"
@@ -80,3 +81,5 @@ __constant__ double y_max_device;
 #include "advec_cell_kernel2_ydir_cuda_kernel.cu"
 #include "advec_cell_kernel3_ydir_cuda_kernel.cu"
 #include "advec_cell_kernel4_ydir_cuda_kernel.cu"
+
+#include "ideal_gas_kernel_cuda_kernel.cu"
