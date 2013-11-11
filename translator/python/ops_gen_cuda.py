@@ -182,7 +182,7 @@ def ops_gen_cuda(master, date, kernels):
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
     for n in range (0, nargs):
-      code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_accel;')
+      code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_device;')
 
     n_per_line = 5
     IF('idx_x < size0 && idx_y < size1')
@@ -262,8 +262,11 @@ def ops_gen_cuda(master, date, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('cudaMemcpyToSymbol( xdim'+str(n)+'_accel, &xdim'+str(n)+', sizeof(int) );')
+        code('cudaMemcpyToSymbol( xdim'+str(n)+'_device, &xdim'+str(n)+', sizeof(int) );')
+
+    #these constant copy needs to be stripped out to the headder file
     code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
+    #code('cudaMemcpyToSymbol( fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
     code('')
 
     code('char *p_a['+str(nargs)+'];')
@@ -330,7 +333,7 @@ def ops_gen_cuda(master, date, kernels):
 
     code('cudaDeviceSynchronize();')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
-    code('ops_halo_exchanges(args, '+str(nargs)+');')
+    #code('ops_halo_exchanges(args, '+str(nargs)+');')
 
     depth = depth - 2
     code('}')

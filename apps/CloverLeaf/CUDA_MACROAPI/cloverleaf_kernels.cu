@@ -5,42 +5,61 @@
 //header
 #include "ops_lib_cpp.h"
 
-__constant__ int xdim0_accel;
-__constant__ int xdim1_accel;
-__constant__ int xdim2_accel;
-__constant__ int xdim3_accel;
-__constant__ int xdim4_accel;
-__constant__ int xdim5_accel;
-__constant__ int xdim6_accel;
-__constant__ int xdim7_accel;
-__constant__ int xdim8_accel;
-__constant__ int xdim9_accel;
-__constant__ int xdim10_accel;
-__constant__ int xdim11_accel;
-__constant__ int xdim12_accel;
-__constant__ int xdim13_accel;
+__constant__ int xdim0_device;
+__constant__ int xdim1_device;
+__constant__ int xdim2_device;
+__constant__ int xdim3_device;
+__constant__ int xdim4_device;
+__constant__ int xdim5_device;
+__constant__ int xdim6_device;
+__constant__ int xdim7_device;
+__constant__ int xdim8_device;
+__constant__ int xdim9_device;
+__constant__ int xdim10_device;
+__constant__ int xdim11_device;
+__constant__ int xdim12_device;
+__constant__ int xdim13_device;
 
 __constant__ double dt_device;
 __constant__ double x_max_device;
 __constant__ double y_max_device;
 
+
+__constant__ int FIELD_DEVICE_DENSITY0   = 0;
+__constant__ int FIELD_DEVICE_DENSITY1   = 1;
+__constant__ int FIELD_DEVICE_ENERGY0    = 2;
+__constant__ int FIELD_DEVICE_ENERGY1    = 3;
+__constant__ int FIELD_DEVICE_PRESSURE   = 4;
+__constant__ int FIELD_DEVICE_VISCOSITY  = 5;
+__constant__ int FIELD_DEVICE_SOUNDSPEED = 6;
+__constant__ int FIELD_DEVICE_XVEL0      = 7;
+__constant__ int FIELD_DEVICE_XVEL1      = 8;
+__constant__ int FIELD_DEVICE_YVEL0      = 9;
+__constant__ int FIELD_DEVICE_YVEL1      =10;
+__constant__ int FIELD_DEVICE_VOL_FLUX_X =11;
+__constant__ int FIELD_DEVICE_VOL_FLUX_Y =12;
+__constant__ int FIELD_DEVICE_MASS_FLUX_X=13;
+__constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
+
+__constant__ int fields_device[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
 //can have a function to copy device constants here .. see OP2 airfoil_kernels.cu
 
 #define OPS_ACC_MACROS
-#define OPS_ACC0(x,y) (x+xdim0_accel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_accel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_accel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_accel*(y))
-#define OPS_ACC4(x,y) (x+xdim4_accel*(y))
-#define OPS_ACC5(x,y) (x+xdim5_accel*(y))
-#define OPS_ACC6(x,y) (x+xdim6_accel*(y))
-#define OPS_ACC7(x,y) (x+xdim7_accel*(y))
-#define OPS_ACC8(x,y) (x+xdim8_accel*(y))
-#define OPS_ACC9(x,y) (x+xdim9_accel*(y))
-#define OPS_ACC10(x,y) (x+xdim10_accel*(y))
-#define OPS_ACC11(x,y) (x+xdim11_accel*(y))
-#define OPS_ACC12(x,y) (x+xdim12_accel*(y))
-#define OPS_ACC13(x,y) (x+xdim13_accel*(y))
+#define OPS_ACC0(x,y) (x+xdim0_device*(y))
+#define OPS_ACC1(x,y) (x+xdim1_device*(y))
+#define OPS_ACC2(x,y) (x+xdim2_device*(y))
+#define OPS_ACC3(x,y) (x+xdim3_device*(y))
+#define OPS_ACC4(x,y) (x+xdim4_device*(y))
+#define OPS_ACC5(x,y) (x+xdim5_device*(y))
+#define OPS_ACC6(x,y) (x+xdim6_device*(y))
+#define OPS_ACC7(x,y) (x+xdim7_device*(y))
+#define OPS_ACC8(x,y) (x+xdim8_device*(y))
+#define OPS_ACC9(x,y) (x+xdim9_device*(y))
+#define OPS_ACC10(x,y) (x+xdim10_device*(y))
+#define OPS_ACC11(x,y) (x+xdim11_device*(y))
+#define OPS_ACC12(x,y) (x+xdim12_device*(y))
+#define OPS_ACC13(x,y) (x+xdim13_device*(y))
 
 
 //user kernel files
@@ -85,3 +104,50 @@ __constant__ double y_max_device;
 #include "ideal_gas_kernel_cuda_kernel.cu"
 #include "flux_calc_kernelx_cuda_kernel.cu"
 #include "flux_calc_kernely_cuda_kernel.cu"
+
+/*#include "update_halo_kernel1_b2_cuda_kernel.cu"
+#include "update_halo_kernel1_b1_cuda_kernel.cu"
+#include "update_halo_kernel1_t2_cuda_kernel.cu"
+#include "update_halo_kernel1_t1_cuda_kernel.cu"
+#include "update_halo_kernel1_l2_cuda_kernel.cu"
+#include "update_halo_kernel1_l1_cuda_kernel.cu"
+#include "update_halo_kernel1_r2_cuda_kernel.cu"
+#include "update_halo_kernel1_r1_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_plus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_plus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_plus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_plus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_minus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_minus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_minus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel2_xvel_minus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_minus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_minus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_minus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_minus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_plus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_plus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_plus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel2_yvel_plus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel3_plus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel3_plus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel3_plus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel3_plus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel3_minus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel3_minus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel3_minus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel3_minus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel4_minus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel4_minus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel4_minus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel4_minus_2_b_cuda_kernel.cu"
+#include "update_halo_kernel4_plus_4_a_cuda_kernel.cu"
+#include "update_halo_kernel4_plus_2_a_cuda_kernel.cu"
+#include "update_halo_kernel4_plus_4_b_cuda_kernel.cu"
+#include "update_halo_kernel4_plus_2_b_cuda_kernel.cu"*/
+
+/*#include "initialise_chunk_kernel_x_cuda_kernel.cu"
+#include "initialise_chunk_kernel_y_cuda_kernel.cu"
+#include "initialise_chunk_kernel_cellx_cuda_kernel.cu"
+#include "initialise_chunk_kernel_celly_cuda_kernel.cu"
+#include "initialise_chunk_kernel_volume_cuda_kernel.cu"*/
