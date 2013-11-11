@@ -19,11 +19,9 @@
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/. */
 
-/** @brief call the viscosity kernels
- *  @author Wayne Gaudin
- *  @details Calculates an artificial viscosity using the Wilkin's method to
- *  smooth out shock front and prevent oscillations around discontinuities.
- *  Only cells in compression will have a non-zero value.
+/** @brief Driver for the flux kernels
+ *  @author Wayne Gaudin, converted to OPS by Gihan Mudalige
+ *  @details Invokes the used specified flux kernel
 **/
 
 #include <stdlib.h>
@@ -38,10 +36,13 @@
 // ops_par_loop declarations
 //
 
-void ops_par_loop_viscosity_kernel(char const *, int , int*,
+void ops_par_loop_flux_calc_kernelx(char const *, int , int*,
   ops_arg,
   ops_arg,
   ops_arg,
+  ops_arg );
+
+void ops_par_loop_flux_calc_kernely(char const *, int , int*,
   ops_arg,
   ops_arg,
   ops_arg,
@@ -52,14 +53,13 @@ void ops_par_loop_viscosity_kernel(char const *, int , int*,
 #include "data.h"
 #include "definitions.h"
 
-//#include "viscosity_kernel.h"
+//#include "flux_calc_kernel.h"
 
 
-
-
-
-void viscosity_func()
+void flux_calc()
 {
+  error_condition = 0; // Not used yet due to issue with OpenA reduction
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
@@ -68,14 +68,20 @@ void viscosity_func()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
+  int rangexy_inner_plus1x[] = {x_min,x_max+1,y_min,y_max};
 
-  ops_par_loop_viscosity_kernel("viscosity_kernel", 2, rangexy_inner,
-               ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
-               ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
-               ops_arg_dat(pressure, S2D_10_M10_01_0M1, "double", OPS_READ),
-               ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(viscosity, S2D_00, "double", OPS_WRITE));
+  ops_par_loop_flux_calc_kernelx("flux_calc_kernelx", 2, rangexy_inner_plus1x,
+               ops_arg_dat(vol_flux_x, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
+               ops_arg_dat(xvel0, S2D_00_0P1, "double", OPS_READ),
+               ops_arg_dat(xvel1, S2D_00_0P1, "double", OPS_READ));
+
+  int rangexy_inner_plus1y[] = {x_min,x_max,y_min,y_max+1};
+
+  ops_par_loop_flux_calc_kernely("flux_calc_kernely", 2, rangexy_inner_plus1y,
+               ops_arg_dat(vol_flux_y, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(yarea, S2D_00, "double", OPS_READ),
+               ops_arg_dat(yvel0, S2D_00_P10, "double", OPS_READ),
+               ops_arg_dat(yvel1, S2D_00_P10, "double", OPS_READ));
+
 }

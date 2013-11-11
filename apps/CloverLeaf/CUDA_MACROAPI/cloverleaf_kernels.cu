@@ -83,3 +83,5 @@ __constant__ double y_max_device;
 #include "advec_cell_kernel4_ydir_cuda_kernel.cu"
 
 #include "ideal_gas_kernel_cuda_kernel.cu"
+#include "flux_calc_kernelx_cuda_kernel.cu"
+#include "flux_calc_kernely_cuda_kernel.cu"
