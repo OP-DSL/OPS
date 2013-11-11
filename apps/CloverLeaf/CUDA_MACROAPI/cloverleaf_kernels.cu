@@ -50,6 +50,9 @@ __constant__ double dt_device;
 
 #include "PdV_kernel_predict_cuda_kernel.cu"
 #include "PdV_kernel_nopredict_cuda_kernel.cu"
+#include "revert_kernel_cuda_kernel.cu"
+#include "reset_field_kernel1_cuda_kernel.cu"
+#include "reset_field_kernel2_cuda_kernel.cu"
 
 /*#include "advec_mom_kernel_x1_cuda_kernel.cu"
 #include "advec_mom_kernel_y1_cuda_kernel.cu"
