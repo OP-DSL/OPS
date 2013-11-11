@@ -15,14 +15,14 @@ __constant__ int xdim6_accel;
 
 __constant__ double dt_device;
 
-//#define OPS_ACC_MACROS
-/*#define OPS_ACC0(x,y) (x+xdim0_accel*(y))
+#define OPS_ACC_MACROS
+#define OPS_ACC0(x,y) (x+xdim0_accel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_accel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_accel*(y))
 #define OPS_ACC3(x,y) (x+xdim3_accel*(y))
 #define OPS_ACC4(x,y) (x+xdim4_accel*(y))
 #define OPS_ACC5(x,y) (x+xdim5_accel*(y))
-#define OPS_ACC6(x,y) (x+xdim6_accel*(y))*/
+#define OPS_ACC6(x,y) (x+xdim6_accel*(y))
 
 //user kernel files
 
@@ -31,3 +31,4 @@ __constant__ double dt_device;
 #include "accelerate_kernely1_cuda_kernel.cu"
 #include "accelerate_kernelx2_cuda_kernel.cu"
 #include "accelerate_kernely2_cuda_kernel.cu"
+#include "viscosity_kernel_cuda_kernel.cu"

@@ -1,8 +1,10 @@
 #ifndef VISCOSITY_KERNEL_H
 #define VISCOSITY_KERNEL_H
-inline void viscosity_kernel( double *xvel0, double *yvel0,
-                       double *celldx, double *celldy,
-                       double *pressure, double *density0,
+
+__device__
+inline void viscosity_kernel(const double *xvel0, const double *yvel0,
+                       const double *celldx, const double *celldy,
+                       const double *pressure, const double *density0,
                        double *viscosity) {
 
   double ugrad, vgrad,
