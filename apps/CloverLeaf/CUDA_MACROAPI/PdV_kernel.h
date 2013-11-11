@@ -4,13 +4,14 @@
 #include "data.h"
 #include "definitions.h"
 
-inline void PdV_kernel_predict(double *xarea, double *xvel0,
-                double *yarea, double *yvel0,
-                double *volume_change, double *volume,
-                double *pressure,
-                double *density0, double *density1,
-                double *viscosity,
-                double *energy0, double *energy1) {
+__device__
+inline void PdV_kernel_predict(const double *xarea, const double *xvel0,
+                const double *yarea, const double *yvel0,
+                double *volume_change, const double *volume,
+                const double *pressure,
+                const double *density0, double *density1,
+                const double *viscosity,
+                const double *energy0, double *energy1) {
 
   //xvel0, S2D_00_P10_0P1_P1P1
 
@@ -18,14 +19,14 @@ inline void PdV_kernel_predict(double *xarea, double *xvel0,
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
   left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
-                                xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] ) ) * 0.25 * dt * 0.5;
+                                xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] ) ) * 0.25 * dt_device * 0.5;
   right_flux = ( xarea[OPS_ACC0(1,0)] * ( xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] +
-                                 xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] ) ) * 0.25 * dt * 0.5;
+                                 xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] ) ) * 0.25 * dt_device * 0.5;
 
   bottom_flux = ( yarea[OPS_ACC2(0,0)] * ( yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] +
-                                  yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] ) ) * 0.25* dt * 0.5;
+                                  yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] ) ) * 0.25* dt_device * 0.5;
   top_flux = ( yarea[OPS_ACC2(0,1)] * ( yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] +
-                               yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] ) ) * 0.25 * dt * 0.5;
+                               yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] ) ) * 0.25 * dt_device * 0.5;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
@@ -44,13 +45,14 @@ inline void PdV_kernel_predict(double *xarea, double *xvel0,
 
 }
 
-inline void PdV_kernel_nopredict(double *xarea, double *xvel0, double *xvel1,
-                double *yarea, double *yvel0, double *yvel1,
-                double *volume_change, double *volume,
-                double *pressure,
-                double *density0, double *density1,
-                double *viscosity,
-                double *energy0, double *energy1) {
+__device__
+inline void PdV_kernel_nopredict(const double *xarea, const double *xvel0, const double *xvel1,
+                const double *yarea, const double *yvel0, const double *yvel1,
+                double *volume_change, const double *volume,
+                const double *pressure,
+                const double *density0, double *density1,
+                const double *viscosity,
+                const double *energy0, double *energy1) {
 
   //xvel0, S2D_00_P10_0P1_P1P1
 
@@ -58,14 +60,14 @@ inline void PdV_kernel_nopredict(double *xarea, double *xvel0, double *xvel1,
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
   left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
-                                xvel1[OPS_ACC2(0,0)] + xvel1[OPS_ACC2(0,1)] ) ) * 0.25 * dt;
+                                xvel1[OPS_ACC2(0,0)] + xvel1[OPS_ACC2(0,1)] ) ) * 0.25 * dt_device;
   right_flux = ( xarea[OPS_ACC0(1,0)] * ( xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] +
-                                 xvel1[OPS_ACC2(1,0)] + xvel1[OPS_ACC2(1,1)] ) ) * 0.25 * dt;
+                                 xvel1[OPS_ACC2(1,0)] + xvel1[OPS_ACC2(1,1)] ) ) * 0.25 * dt_device;
 
   bottom_flux = ( yarea[OPS_ACC3(0,0)] * ( yvel0[OPS_ACC4(0,0)] + yvel0[OPS_ACC4(1,0)] +
-                                  yvel1[OPS_ACC5(0,0)] + yvel1[OPS_ACC5(1,0)] ) ) * 0.25* dt;
+                                  yvel1[OPS_ACC5(0,0)] + yvel1[OPS_ACC5(1,0)] ) ) * 0.25* dt_device;
   top_flux = ( yarea[OPS_ACC3(0,1)] * ( yvel0[OPS_ACC4(0,1)] + yvel0[OPS_ACC4(1,1)] +
-                               yvel1[OPS_ACC5(0,1)] + yvel1[OPS_ACC5(1,1)] ) ) * 0.25 * dt;
+                               yvel1[OPS_ACC5(0,1)] + yvel1[OPS_ACC5(1,1)] ) ) * 0.25 * dt_device;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 

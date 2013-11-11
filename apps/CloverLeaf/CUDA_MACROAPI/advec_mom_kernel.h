@@ -1,44 +1,48 @@
 #ifndef ADVEC_MOM_KERNEL_H
 #define ADVEC_MOM_KERNEL_H
 
+//__device__
 inline void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
-                          double *volume,
-                          double *vol_flux_x, double *vol_flux_y) {
+                          const double *volume,
+                          const double *vol_flux_x, const double *vol_flux_y) {
 
   post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC4(0,1)] -  vol_flux_y[OPS_ACC3(0,0)];
   pre_vol[OPS_ACC0(0,0)] = post_vol[OPS_ACC1(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
 
 }
 
+//__device__
 inline void advec_mom_kernel_y1( double *pre_vol, double *post_vol,
-                          double *volume,
-                          double *vol_flux_x, double *vol_flux_y) {
+                          const double *volume,
+                          const double *vol_flux_x, const double *vol_flux_y) {
 
   post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_x[OPS_ACC3(1,0)] -  vol_flux_x[OPS_ACC3(0,0)];
   pre_vol[OPS_ACC0(0,0)] = post_vol[OPS_ACC1(0,0)] + vol_flux_y[OPS_ACC4(0,1)] - vol_flux_y[OPS_ACC4(0,0)];
 
 }
 
+//__device__
 inline void advec_mom_kernel_x2( double *pre_vol, double *post_vol,
-                          double *volume,
-                          double *vol_flux_y) {
+                          const double *volume,
+                          const double *vol_flux_y) {
 
   post_vol[OPS_ACC1(0,0)]  = volume[OPS_ACC2(0,0)] ;
   pre_vol[OPS_ACC0(0,0)]   = post_vol[OPS_ACC1(0,0)]  + vol_flux_y[OPS_ACC3(0,1)] - vol_flux_y[OPS_ACC3(0,0)];
 
 }
 
+//__device__
 inline void advec_mom_kernel_y2( double *pre_vol, double *post_vol,
-                          double *volume,
-                          double *vol_flux_x) {
+                          const double *volume,
+                          const double *vol_flux_x) {
 
   post_vol[OPS_ACC1(0,0)]  = volume[OPS_ACC2(0,0)] ;
   pre_vol[OPS_ACC0(0,0)]   = post_vol[OPS_ACC1(0,0)]  + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
 
 }
 
-
-inline void advec_mom_kernel_mass_flux_x( double *node_flux, double *mass_flux_x) {
+//__device__
+inline void advec_mom_kernel_mass_flux_x( double *node_flux, const double *mass_flux_x) {
 
   //mass_flux_x accessed with: {0,0, 1,0, 0,-1, 1,-1}
 
@@ -47,7 +51,8 @@ inline void advec_mom_kernel_mass_flux_x( double *node_flux, double *mass_flux_x
 }
 
 
-inline void advec_mom_kernel_mass_flux_y( double *node_flux, double *mass_flux_y) {
+//__device__
+inline void advec_mom_kernel_mass_flux_y( double *node_flux, const double *mass_flux_y) {
 
   //mass_flux_y accessed with: {0,0, 0,1, -1,0, -1,1}
 
@@ -56,8 +61,9 @@ inline void advec_mom_kernel_mass_flux_y( double *node_flux, double *mass_flux_y
 }
 
 
-inline void advec_mom_kernel_post_advec_x( double *node_mass_post, double *post_vol,
-                                  double *density1) {
+//__device__
+inline void advec_mom_kernel_post_advec_x( double *node_mass_post, const double *post_vol,
+                                  const double *density1) {
 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
@@ -70,8 +76,9 @@ inline void advec_mom_kernel_post_advec_x( double *node_mass_post, double *post_
 }
 
 //this is the same as advec_mom_kernel_post_advec_x ... just repeated here for debugging
-inline void advec_mom_kernel_post_advec_y( double *node_mass_post, double *post_vol,
-                                  double *density1) {
+//__device__
+inline void advec_mom_kernel_post_advec_y( double *node_mass_post, const double *post_vol,
+                                  const double *density1) {
 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
@@ -83,10 +90,10 @@ inline void advec_mom_kernel_post_advec_y( double *node_mass_post, double *post_
 
 }
 
-
-inline void advec_mom_kernel1_x( double *node_flux, double *node_mass_pre,
+//__device__
+inline void advec_mom_kernel1_x( const double *node_flux, const double *node_mass_pre,
                         double *advec_vel, double *mom_flux,
-                        double *celldx, double *vel1) {
+                        const double *celldx, const double *vel1) {
 
   //node_flux accessed with: {0,0}
   //node_mass_pre accessed with: {0,0, 1,0}
@@ -135,10 +142,10 @@ inline void advec_mom_kernel1_x( double *node_flux, double *node_mass_pre,
 
 }
 
-
-inline void advec_mom_kernel1_y( double *node_flux, double *node_mass_pre,
+//__device__
+inline void advec_mom_kernel1_y( const double *node_flux, const double *node_mass_pre,
                         double *advec_vel, double *mom_flux,
-                        double *celldy, double *vel1) {
+                        const double *celldy, const double *vel1) {
 
   //node_flux accessed with: {0,0}
   //node_mass_pre accessed with: {0,0, 0,1}
@@ -186,25 +193,27 @@ inline void advec_mom_kernel1_y( double *node_flux, double *node_mass_pre,
   mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
 }
 
-
-inline void advec_mom_kernel_pre_advec_x( double *node_mass_pre, double *node_mass_post,
-                                  double *node_flux) {
+//__device__
+inline void advec_mom_kernel_pre_advec_x( double *node_mass_pre, const double *node_mass_post,
+                                  const double *node_flux) {
 
   //node_flux accessed with: {0,0, -1,0}
   node_mass_pre[OPS_ACC0(0,0)] = node_mass_post[OPS_ACC1(0,0)] - node_flux[OPS_ACC2(-1,0)] + node_flux[OPS_ACC2(0,0)];
 
 }
-inline void advec_mom_kernel_pre_advec_y( double *node_mass_pre, double *node_mass_post,
-                                  double *node_flux) {
+
+//__device__
+inline void advec_mom_kernel_pre_advec_y( double *node_mass_pre, const double *node_mass_post,
+                                  const double *node_flux) {
 
   //node_flux accessed with: {0,0, 0,-1}
   node_mass_pre[OPS_ACC0(0,0)] = node_mass_post[OPS_ACC1(0,0)] - node_flux[OPS_ACC2(0,-1)] + node_flux[OPS_ACC2(0,0)];
 
 }
 
-
-inline void advec_mom_kernel2_x( double *vel1, double *node_mass_post,
-                        double *node_mass_pre, double *mom_flux) {
+//__device__
+inline void advec_mom_kernel2_x(double *vel1, const double *node_mass_post,
+                       const  double *node_mass_pre, const double *mom_flux) {
 
   //mom_flux accessed with: {0,0, -1,0}
   vel1[OPS_ACC0(0,0)] = ( vel1[OPS_ACC0(0,0)] * node_mass_pre[OPS_ACC2(0,0)]  +
@@ -212,9 +221,9 @@ inline void advec_mom_kernel2_x( double *vel1, double *node_mass_post,
 
 }
 
-
-inline void advec_mom_kernel2_y( double *vel1, double *node_mass_post,
-                        double *node_mass_pre, double *mom_flux) {
+//__device__
+inline void advec_mom_kernel2_y( double *vel1, const double *node_mass_post,
+                        const double *node_mass_pre, const double *mom_flux) {
 
   //mom_flux accessed with: {0,0, 0,-1}
   vel1[OPS_ACC0(0,0)] = ( vel1[OPS_ACC0(0,0)] * node_mass_pre[OPS_ACC2(0,0)]  +
