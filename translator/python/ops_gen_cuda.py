@@ -173,8 +173,11 @@ def ops_gen_cuda(master, date, kernels):
         code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW) :
         code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+      elif arg_typ[n] == 'ops_arg_gbl'and accs[n] == OPS_READ:
+        code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
 
-    code('int* fields_device,')
+
+
     code('int size0,')
     code('int size1 ){')
     depth = depth + 2
@@ -183,7 +186,8 @@ def ops_gen_cuda(master, date, kernels):
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
     for n in range (0, nargs):
-      code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_device;')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_device;')
 
     n_per_line = 5
     IF('idx_x < size0 && idx_y < size1')
@@ -193,7 +197,7 @@ def ops_gen_cuda(master, date, kernels):
       if nargs <> 1 and n != nargs-1:
         text = text +','
       else:
-        text = text +', fields_device);'
+        text = text +');'
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text)
@@ -235,22 +239,6 @@ def ops_gen_cuda(master, date, kernels):
         text = text +'\n                    '
     code(text);
 
-
-    code('')
-    if reduction == True:
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          code('double*arg'+str(n)+'h = (double *)arg'+str(n)+'.data;')
-
-    #setup reduction variables
-    if reduction == True:
-      comm('allocate and initialise arrays for global reduction')
-      comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
-
-
     code('')
     code('int x_size = range[1]-range[0];')
     code('int y_size = range[3]-range[2];')
@@ -269,11 +257,39 @@ def ops_gen_cuda(master, date, kernels):
     code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
     #code('cudaMemcpyToSymbol( fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
 
-    code('cudaMalloc((void **)&fields_device, sizeof(int)*NUM_FIELDS);')
-    code('cudaMemcpy(fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
-
+    #code('cudaMalloc((void **)&fields_device, sizeof(int)*NUM_FIELDS);')
+    #code('cudaMemcpy(fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
     code('')
 
+    #setup reduction variables
+    code('')
+    for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] == OPS_READ:
+            code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+    code('')
+
+    code('int consts_bytes = 0;')
+    for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] == OPS_READ:
+            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+            code('reallocConstArrays(consts_bytes);')
+    code('')
+
+    for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] == OPS_READ:
+            code('consts_bytes = 0;')
+            code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
+            code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+            code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+            code('mvConstArraysToDevice(consts_bytes);')
+
+
+
+    code('')
     code('char *p_a['+str(nargs)+'];')
     code('')
 
@@ -286,16 +302,14 @@ def ops_gen_cuda(master, date, kernels):
         code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
         code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
         code('')
-      else:
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
-        code('')
+
 
     code('')
     code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
     code('')
     code('int block_size = 16;')
     code('dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);')
-    code('dim3 block(16,16,1);')
+    code('dim3 block(block_size,block_size,1);')
     code('')
 
     #for n in range (0, nargs):
@@ -308,11 +322,11 @@ def ops_gen_cuda(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+'],'
       else:
-        text = text +' &arg_gbl'+str(n)+'[64*thr]'
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data_d, '
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
-    text = text +'fields_device, x_size, y_size);'
+    text = text +'x_size, y_size);'
     code(text);
 
     code('')
@@ -321,7 +335,7 @@ def ops_gen_cuda(master, date, kernels):
     if reduction == True:
       code('')
       comm(' combine reduction data')
-      FOR('thr','0','nthreads')
+      #FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           FOR('d','0',dims[n])
@@ -334,7 +348,7 @@ def ops_gen_cuda(master, date, kernels):
           elif accs[n] == OPS_WRITE:
             code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
           ENDFOR()
-      ENDFOR()
+      #ENDFOR()
 
     code('cudaDeviceSynchronize();')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')

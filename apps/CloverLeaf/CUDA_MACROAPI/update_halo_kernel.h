@@ -1,9 +1,9 @@
 #ifndef UPDATE_HALO_KERNEL_H
 #define UPDATE_HALO_KERNEL_H
 
-//#include "data.h"
+#include "data.h"
 
-/*__device__
+__device__
 inline void update_halo_kernel1_b2(double *density0, double *density1,
                           double *energy0, double *energy1,
                           double *pressure, double *viscosity,
@@ -16,7 +16,7 @@ inline void update_halo_kernel1_b2(double *density0, double *density1,
   if(fields[FIELD_DEVICE_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC0(0,3)];
   if(fields[FIELD_DEVICE_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC0(0,3)];
 
-}*/
+}
 __device__
 inline void update_halo_kernel1_b1(double *density0, double *density1,
                           double *energy0, double *energy1,
