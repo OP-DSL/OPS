@@ -32,8 +32,6 @@ int size1 ){
   for (int d=0; d<1; d++) arg9_l[d] = 0.0;
   for (int d=0; d<1; d++) arg10_l[d] = 0.0;
 
-  extern __shared__ char shared[];
-
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -197,11 +195,11 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   int nshared = 0;
   int nthread = block_size*block_size;
 
-  nshared = MAX(nshared,sizeof(double)*4);
-  nshared = MAX(nshared,sizeof(double)*4);
-  nshared = MAX(nshared,sizeof(double)*4);
-  nshared = MAX(nshared,sizeof(double)*4);
-  nshared = MAX(nshared,sizeof(double)*4);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
 
   nshared = MAX(nshared*nthread,reduct_size*nthread);
 

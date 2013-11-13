@@ -60,10 +60,10 @@ __inline__ __device__ void ops_reduction( volatile T * dat_g, T dat_l )
 
   __syncthreads();
 
-  int d = 1 << (31 - __clz(((int)blockDim.x-1)) );
+  int d = 1 << (31 - __clz(((int)(blockDim.x * blockDim.y)-1)) );
   // d = blockDim.x/2 rounded up to nearest power of 2
 
-  if ( tid+d < blockDim.x ) {
+  if ( tid+d < blockDim.x*blockDim.y ) {
     dat_t = temp[tid+d];
 
     switch ( reduction ) {
