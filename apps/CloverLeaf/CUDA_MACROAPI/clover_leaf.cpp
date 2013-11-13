@@ -167,6 +167,8 @@ int main(int argc, char **argv)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+  //fields = (int *)malloc(NUM_FIELDS*sizeof(int));
+  //for(int i=0; i<NUM_FIELDS;i++) fields[i] = 0;
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
@@ -218,7 +220,7 @@ int main(int argc, char **argv)
       break;
     }
 
-      if(step == 20) {
+      if(step == 70) {
         //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
         //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
         //exit(0);

@@ -174,6 +174,7 @@ def ops_gen_cuda(master, date, kernels):
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW) :
         code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
 
+    code('int* fields_device,')
     code('int size0,')
     code('int size1 ){')
     depth = depth + 2
@@ -192,7 +193,7 @@ def ops_gen_cuda(master, date, kernels):
       if nargs <> 1 and n != nargs-1:
         text = text +','
       else:
-        text = text +');'
+        text = text +', fields_device);'
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text)
@@ -267,6 +268,10 @@ def ops_gen_cuda(master, date, kernels):
     #these constant copy needs to be stripped out to the headder file
     code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
     #code('cudaMemcpyToSymbol( fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
+
+    code('cudaMalloc((void **)&fields_device, sizeof(int)*NUM_FIELDS);')
+    code('cudaMemcpy(fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
+
     code('')
 
     code('char *p_a['+str(nargs)+'];')
@@ -307,7 +312,7 @@ def ops_gen_cuda(master, date, kernels):
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
-    text = text +'x_size, y_size);'
+    text = text +'fields_device, x_size, y_size);'
     code(text);
 
     code('')

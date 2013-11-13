@@ -4,6 +4,9 @@
 
 //header
 #include "ops_lib_cpp.h"
+#include "ops_cuda_rt_support.h"
+#include "ops_cuda_reduction.h"
+
 
 __constant__ int xdim0_device;
 __constant__ int xdim1_device;
@@ -41,7 +44,7 @@ __constant__ int FIELD_DEVICE_VOL_FLUX_Y =12;
 __constant__ int FIELD_DEVICE_MASS_FLUX_X=13;
 __constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
 
-__constant__ int fields_device[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+__device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 //can have a function to copy device constants here .. see OP2 airfoil_kernels.cu
 
@@ -105,7 +108,9 @@ __constant__ int fields_device[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #include "flux_calc_kernelx_cuda_kernel.cu"
 #include "flux_calc_kernely_cuda_kernel.cu"
 
-/*#include "update_halo_kernel1_b2_cuda_kernel.cu"
+//#include "field_summary_kernel_cuda_kernel.cu"
+
+#include "update_halo_kernel1_b2_cuda_kernel.cu"
 #include "update_halo_kernel1_b1_cuda_kernel.cu"
 #include "update_halo_kernel1_t2_cuda_kernel.cu"
 #include "update_halo_kernel1_t1_cuda_kernel.cu"
@@ -144,7 +149,7 @@ __constant__ int fields_device[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #include "update_halo_kernel4_plus_4_a_cuda_kernel.cu"
 #include "update_halo_kernel4_plus_2_a_cuda_kernel.cu"
 #include "update_halo_kernel4_plus_4_b_cuda_kernel.cu"
-#include "update_halo_kernel4_plus_2_b_cuda_kernel.cu"*/
+#include "update_halo_kernel4_plus_2_b_cuda_kernel.cu"
 
 /*#include "initialise_chunk_kernel_x_cuda_kernel.cu"
 #include "initialise_chunk_kernel_y_cuda_kernel.cu"

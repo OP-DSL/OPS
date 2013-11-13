@@ -159,6 +159,14 @@ typedef struct
 #define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 
+/*
+ * alignment macro based on example on page 50 of CUDA Programming Guide version 3.0
+ * rounds up to nearest multiple of 16 bytes
+ */
+
+#define ROUND_UP(bytes) (((bytes) + 15) & ~15)
+#define ROUND_UP_64(bytes) (((bytes) + 63) & ~63)
+
 
 /*******************************************************************************
 * Core lib function prototypes

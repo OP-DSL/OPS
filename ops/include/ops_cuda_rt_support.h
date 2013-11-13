@@ -83,6 +83,11 @@ void cutilDeviceInit( int argc, char ** argv);
 void __cudaSafeCall( cudaError_t err, const char * file, const int line );
 void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
 void ops_cuda_get_data( ops_dat dat );
+void reallocConstArrays( int consts_bytes );
+void reallocReductArrays( int reduct_bytes );
+void mvConstArraysToDevice( int consts_bytes );
+void mvReductArraysToDevice( int reduct_bytes );
+void mvReductArraysToHost( int reduct_bytes );
 
 #ifdef __cplusplus
 }

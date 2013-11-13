@@ -58,6 +58,14 @@
 
 typedef struct cudaDeviceProp cudaDeviceProp_t;
 
+int OPS_consts_bytes = 0,
+    OPS_reduct_bytes = 0;
+
+char * OPS_consts_h,
+     * OPS_consts_d,
+     * OPS_reduct_h,
+     * OPS_reduct_d;
+
 
 //
 // CUDA utility functions
@@ -194,4 +202,64 @@ void ops_cuda_get_data( ops_dat dat )
                                cudaMemcpyDeviceToHost ) );
   cutilSafeCall ( cudaDeviceSynchronize ( ) );
 
+}
+
+
+//
+// routines to resize constant/reduct arrays, if necessary
+//
+
+void reallocConstArrays ( int consts_bytes )
+{
+  if ( consts_bytes > OPS_consts_bytes ) {
+    if ( OPS_consts_bytes > 0 ) {
+      free ( OPS_consts_h );
+      cutilSafeCall ( cudaFree ( OPS_consts_d ) );
+    }
+    OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
+    OPS_consts_h = ( char * ) malloc ( OPS_consts_bytes );
+    cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_consts_d,
+                                 OPS_consts_bytes ) );
+  }
+}
+
+void reallocReductArrays ( int reduct_bytes )
+{
+  if ( reduct_bytes > OPS_reduct_bytes ) {
+    if ( OPS_reduct_bytes > 0 ) {
+      free ( OPS_reduct_h );
+      cutilSafeCall ( cudaFree ( OPS_reduct_d ) );
+    }
+    OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
+    OPS_reduct_h = ( char * ) malloc ( OPS_reduct_bytes );
+    cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_reduct_d,
+                                 OPS_reduct_bytes ) );
+  }
+}
+
+//
+// routines to move constant/reduct arrays
+//
+
+
+
+void mvConstArraysToDevice ( int consts_bytes )
+{
+  cutilSafeCall ( cudaMemcpy ( OPS_consts_d, OPS_consts_h, consts_bytes,
+                               cudaMemcpyHostToDevice ) );
+  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+}
+
+void mvReductArraysToDevice ( int reduct_bytes )
+{
+  cutilSafeCall ( cudaMemcpy ( OPS_reduct_d, OPS_reduct_h, reduct_bytes,
+                               cudaMemcpyHostToDevice ) );
+  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+}
+
+void mvReductArraysToHost ( int reduct_bytes )
+{
+  cutilSafeCall ( cudaMemcpy ( OPS_reduct_h, OPS_reduct_d, reduct_bytes,
+                               cudaMemcpyDeviceToHost ) );
+  cutilSafeCall ( cudaDeviceSynchronize ( ) );
 }
