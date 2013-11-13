@@ -12,8 +12,25 @@ const double* __restrict arg2,
 const double* __restrict arg3,
 const double* __restrict arg4,
 const double* __restrict arg5,
+double* __restrict arg6,
+double* __restrict arg7,
+double* __restrict arg8,
+double* __restrict arg9,
+double* __restrict arg10,
 int size0,
 int size1 ){
+
+  double arg6_l[1];
+  double arg7_l[1];
+  double arg8_l[1];
+  double arg9_l[1];
+  double arg10_l[1];
+
+  for (int d=0; d<1; d++) arg6_l[d] = 0.0;
+  for (int d=0; d<1; d++) arg7_l[d] = 0.0;
+  for (int d=0; d<1; d++) arg8_l[d] = 0.0;
+  for (int d=0; d<1; d++) arg9_l[d] = 0.0;
+  for (int d=0; d<1; d++) arg10_l[d] = 0.0;
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -24,16 +41,25 @@ int size1 ){
   arg3 += idx_x * 1 + idx_y * 1 * xdim3_device;
   arg4 += idx_x * 1 + idx_y * 1 * xdim4_device;
   arg5 += idx_x * 1 + idx_y * 1 * xdim5_device;
-  arg6 += idx_x * 1 + idx_y * 1 * xdim6_device;
-  arg7 += idx_x * 1 + idx_y * 1 * xdim7_device;
-  arg8 += idx_x * 1 + idx_y * 1 * xdim8_device;
-  arg9 += idx_x * 1 + idx_y * 1 * xdim9_device;
-  arg10 += idx_x * 1 + idx_y * 1 * xdim10_device;
+
   if (idx_x < size0 && idx_y < size1) {
     field_summary_kernel(arg0 ,arg1 ,arg2 ,arg3 ,
-arg4 ,arg5 ,arg6 ,arg7 ,arg8 ,
-arg9 ,arg10 );
+      arg4 ,arg5 ,arg6 ,arg7 ,arg8 , arg9 ,arg10 );
   }
+
+  // global reductions
+
+  for(int d=0; d<1; d++)
+    ops_reduction<OPS_INC>(&arg6[d+threadIdx.x + threadIdx.y*blockDim.x],arg6_l[d]);
+  for(int d=0; d<1; d++)
+    ops_reduction<OPS_INC>(&arg7[d+threadIdx.x + threadIdx.y*blockDim.x],arg7_l[d]);
+  for(int d=0; d<1; d++)
+    ops_reduction<OPS_INC>(&arg8[d+threadIdx.x + threadIdx.y*blockDim.x],arg8_l[d]);
+  for(int d=0; d<1; d++)
+    ops_reduction<OPS_INC>(&arg9[d+threadIdx.x + threadIdx.y*blockDim.x],arg9_l[d]);
+  for(int d=0; d<1; d++)
+    ops_reduction<OPS_INC>(&arg10[d+threadIdx.x + threadIdx.y*blockDim.x],arg10_l[d]);
+
 }
 
 // host stub function
@@ -44,19 +70,6 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
-
-  double*arg6h = (double *)arg6.data;
-  double*arg7h = (double *)arg7.data;
-  double*arg8h = (double *)arg8.data;
-  double*arg9h = (double *)arg9.data;
-  double*arg10h = (double *)arg10.data;
-  //allocate and initialise arrays for global reduction
-  //assumes a max of 64 threads with a cacche line size of 64 bytes
-  double arg_gbl6[1 * 64 * 64];
-  double arg_gbl7[1 * 64 * 64];
-  double arg_gbl8[1 * 64 * 64];
-  double arg_gbl9[1 * 64 * 64];
-  double arg_gbl10[1 * 64 * 64];
 
   int x_size = range[1]-range[0];
   int y_size = range[3]-range[2];
@@ -76,8 +89,70 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   cudaMemcpyToSymbol( xdim5_device, &xdim5, sizeof(int) );
   cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );
 
-  char *p_a[11];
+  double*arg6h = (double *)arg6.data;
+  double*arg7h = (double *)arg7.data;
+  double*arg8h = (double *)arg8.data;
+  double*arg9h = (double *)arg9.data;
+  double*arg10h = (double *)arg10.data;
 
+  int block_size = 16;
+  int nblocks = ((x_size-1)/block_size+ 1)*((y_size-1)/block_size + 1);
+
+  // transfer global reduction data to GPU
+  int maxblocks = nblocks;
+
+  int reduct_bytes = 0;
+  int reduct_size = 0;
+
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+
+  reduct_size = MAX(reduct_size,sizeof(double)*5);
+
+  reallocReductArrays(reduct_bytes);
+
+  reduct_bytes = 0;
+
+  arg6.data = OPS_reduct_h + reduct_bytes;
+  arg6.data_d = OPS_reduct_d + reduct_bytes;
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++) ((double *)arg6.data)[d+b*1] = 0.0;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  //mvReductArraysToDevice(reduct_bytes);
+
+  arg7.data = OPS_reduct_h + reduct_bytes;
+  arg7.data_d = OPS_reduct_d + reduct_bytes;
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++) ((double *)arg7.data)[d+b*1] = 0.0;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  //mvReductArraysToDevice(reduct_bytes);
+
+  arg8.data = OPS_reduct_h + reduct_bytes;
+  arg8.data_d = OPS_reduct_d + reduct_bytes;
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++) ((double *)arg8.data)[d+b*1] = 0.0;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  //mvReductArraysToDevice(reduct_bytes);
+
+  arg9.data = OPS_reduct_h + reduct_bytes;
+  arg9.data_d = OPS_reduct_d + reduct_bytes;
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++) ((double *)arg9.data)[d+b*1] = 0.0;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  //mvReductArraysToDevice(reduct_bytes);
+
+  arg10.data = OPS_reduct_h + reduct_bytes;
+  arg10.data_d = OPS_reduct_d + reduct_bytes;
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++) ((double *)arg10.data)[d+b*1] = 0.0;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+
+  mvReductArraysToDevice(reduct_bytes);
+
+  char *p_a[11];
 
   //set up initial pointers
   p_a[0] = &args[0].data_d[
@@ -104,50 +179,65 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   + args[5].dat->size * args[5].dat->block_size[0] * ( range[2] * 1 - args[5].dat->offset[1] )
   + args[5].dat->size * ( range[0] * 1 - args[5].dat->offset[0] ) ];
 
-  p_a[6] = (char *)args[6].data;
-
-  p_a[7] = (char *)args[7].data;
-
-  p_a[8] = (char *)args[8].data;
-
-  p_a[9] = (char *)args[9].data;
-
-  p_a[10] = (char *)args[10].data;
-
 
   ops_halo_exchanges_cuda(args, 11);
 
-  int block_size = 16;
   dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);
-  dim3 block(16,16,1);
+  dim3 block(block_size,block_size,1);
+
+
+  int nshared = 0;
+  int nthread = 128;
+  nshared = MAX(nshared,sizeof(double)*4);
+  nshared = MAX(nshared*nthread,reduct_size*nthread);
+
 
   //call kernel wrapper function, passing in pointers to data
-  ops_field_summary_kernel<<<grid, block >>> (  (double *)p_a[0], (double *)p_a[1],
+  ops_field_summary_kernel<<<grid, block, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
            (double *)p_a[2], (double *)p_a[3],
            (double *)p_a[4], (double *)p_a[5],
-           &arg_gbl6[64*thr] &arg_gbl7[64*thr]
-           &arg_gbl8[64*thr] &arg_gbl9[64*thr]
-           &arg_gbl10[64*thr]x_size, y_size);
+           (double *)arg6.data_d,
+           (double *)arg7.data_d,
+           (double *)arg8.data_d,
+           (double *)arg9.data_d,
+           (double *)arg10.data_d,
+           x_size, y_size);
 
 
-  // combine reduction data
-  for ( int thr=0; thr<nthreads; thr++ ){
-    for ( int d=0; d<1; d++ ){
-      arg6h[0] += arg_gbl6[64*thr];
-    }
-    for ( int d=0; d<1; d++ ){
-      arg7h[0] += arg_gbl7[64*thr];
-    }
-    for ( int d=0; d<1; d++ ){
-      arg8h[0] += arg_gbl8[64*thr];
-    }
-    for ( int d=0; d<1; d++ ){
-      arg9h[0] += arg_gbl9[64*thr];
-    }
-    for ( int d=0; d<1; d++ ){
-      arg10h[0] += arg_gbl10[64*thr];
-    }
-  }
+// transfer global reduction data back to CPU
+
+  mvReductArraysToHost(reduct_bytes);
+
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++)
+      arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*1];
+
+  arg6.data = (char *)arg6h;
+
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++)
+      arg7h[d] = arg7h[d] + ((double *)arg7.data)[d+b*1];
+
+  arg7.data = (char *)arg7h;
+
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++)
+      arg8h[d] = arg8h[d] + ((double *)arg8.data)[d+b*1];
+
+  arg8.data = (char *)arg8h;
+
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++)
+      arg9h[d] = arg9h[d] + ((double *)arg9.data)[d+b*1];
+
+  arg9.data = (char *)arg9h;
+
+  for (int b=0; b<maxblocks; b++)
+    for (int d=0; d<1; d++)
+      arg10h[d] = arg10h[d] + ((double *)arg10.data)[d+b*1];
+
+  arg10.data = (char *)arg10h;
+
   cudaDeviceSynchronize();
   ops_set_dirtybit_cuda(args, 11);
 }

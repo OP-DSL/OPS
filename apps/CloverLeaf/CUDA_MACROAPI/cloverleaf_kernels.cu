@@ -108,7 +108,7 @@ __device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #include "flux_calc_kernelx_cuda_kernel.cu"
 #include "flux_calc_kernely_cuda_kernel.cu"
 
-//#include "field_summary_kernel_cuda_kernel.cu"
+#include "field_summary_kernel_cuda_kernel.cu"
 
 #include "update_halo_kernel1_b2_cuda_kernel.cu"
 #include "update_halo_kernel1_b1_cuda_kernel.cu"
