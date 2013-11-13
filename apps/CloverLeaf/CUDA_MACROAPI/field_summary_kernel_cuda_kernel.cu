@@ -44,21 +44,21 @@ int size1 ){
 
   if (idx_x < size0 && idx_y < size1) {
     field_summary_kernel(arg0 ,arg1 ,arg2 ,arg3 ,
-      arg4 ,arg5 ,arg6 ,arg7 ,arg8 , arg9 ,arg10 );
+      arg4 ,arg5 ,arg6_l ,arg7_l ,arg8_l , arg9_l ,arg10_l );
   }
 
   // global reductions
 
   for(int d=0; d<1; d++)
-    ops_reduction<OPS_INC>(&arg6[d+threadIdx.x + threadIdx.y*blockDim.x],arg6_l[d]);
+    ops_reduction<OPS_INC>(&arg6[d+blockIdx.x + blockIdx.y*gridDim.x],arg6_l[d]);
   for(int d=0; d<1; d++)
-    ops_reduction<OPS_INC>(&arg7[d+threadIdx.x + threadIdx.y*blockDim.x],arg7_l[d]);
+    ops_reduction<OPS_INC>(&arg7[d+blockIdx.x + blockIdx.y*gridDim.x],arg7_l[d]);
   for(int d=0; d<1; d++)
-    ops_reduction<OPS_INC>(&arg8[d+threadIdx.x + threadIdx.y*blockDim.x],arg8_l[d]);
+    ops_reduction<OPS_INC>(&arg8[d+blockIdx.x + blockIdx.y*gridDim.x],arg8_l[d]);
   for(int d=0; d<1; d++)
-    ops_reduction<OPS_INC>(&arg9[d+threadIdx.x + threadIdx.y*blockDim.x],arg9_l[d]);
+    ops_reduction<OPS_INC>(&arg9[d+blockIdx.x + blockIdx.y*gridDim.x],arg9_l[d]);
   for(int d=0; d<1; d++)
-    ops_reduction<OPS_INC>(&arg10[d+threadIdx.x + threadIdx.y*blockDim.x],arg10_l[d]);
+    ops_reduction<OPS_INC>(&arg10[d+blockIdx.x + blockIdx.y*gridDim.x],arg10_l[d]);
 
 }
 
@@ -96,6 +96,10 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   double*arg10h = (double *)arg10.data;
 
   int block_size = 16;
+
+  dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);
+  dim3 block(block_size,block_size,1);
+
   int nblocks = ((x_size-1)/block_size+ 1)*((y_size-1)/block_size + 1);
 
   // transfer global reduction data to GPU
@@ -110,11 +114,17 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
-  reduct_size = MAX(reduct_size,sizeof(double)*5);
+  reduct_size = MAX(reduct_size,sizeof(double)*1); //multiply by dim of this arg when code generating
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
 
   reallocReductArrays(reduct_bytes);
 
   reduct_bytes = 0;
+
+  //do not copy if OPS_INC
 
   arg6.data = OPS_reduct_h + reduct_bytes;
   arg6.data_d = OPS_reduct_d + reduct_bytes;
@@ -182,15 +192,10 @@ void ops_par_loop_field_summary_kernel(char const *name, int dim, int* range,
 
   ops_halo_exchanges_cuda(args, 11);
 
-  dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);
-  dim3 block(block_size,block_size,1);
-
-
   int nshared = 0;
-  int nthread = 128;
+  int nthread = block_size*block_size;
   nshared = MAX(nshared,sizeof(double)*4);
   nshared = MAX(nshared*nthread,reduct_size*nthread);
-
 
   //call kernel wrapper function, passing in pointers to data
   ops_field_summary_kernel<<<grid, block, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
