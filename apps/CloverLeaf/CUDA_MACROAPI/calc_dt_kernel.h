@@ -3,10 +3,12 @@
 
 #include "data.h"
 #include "definitions.h"
-inline void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
-                    double *viscosity, double *density0, double *xvel0,
-                    double *xarea, double *volume, double *yvel0,
-                    double *yarea, double *dt_min /*dt_min is work_array1*/) {
+
+__device__
+inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
+                    const double *viscosity, const double *density0, const double *xvel0,
+                    const double *xarea, const double *volume, const double *yvel0,
+                    const double *yarea, double *dt_min /*dt_min is work_array1*/) {
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
 
@@ -49,22 +51,25 @@ inline void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
   //printf("dt_min %3.15e \n",**dt_min);
 }
 
-inline void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
+__device__
+inline void calc_dt_kernel_min(const double* dt_min /*dt_min is work_array1*/,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 }
 
-inline void calc_dt_kernel_get(double* cellx, double* celly,
+__device__
+inline void calc_dt_kernel_get(const double* cellx, const double* celly,
                         double* xl_pos, double* yl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
   *yl_pos = celly[OPS_ACC1(0,0)];
   //printf("xl_pos %lf yl_pos %lf\n",*xl_pos,*yl_pos);
 }
 
-inline void calc_dt_kernel_print(double *cellx, double *celly,
-                        double *xvel0, double *yvel0,
-                        double *density0, double *energy0,
-                        double *pressure, double *soundspeed) {
+__device__
+inline void calc_dt_kernel_print(const double *cellx, const double *celly,
+                        const double *xvel0, const double *yvel0,
+                        const double *density0, const double *energy0,
+                        const double *pressure, const double *soundspeed) {
   printf("Cell velocities:\n");
   printf("%E, %E \n",xvel0[OPS_ACC2(1,0)], yvel0[OPS_ACC3(1,0)]); //xvel0(jldt  ,kldt  ),yvel0(jldt  ,kldt  )
   printf("%E, %E \n",xvel0[OPS_ACC2(-1,0)], yvel0[OPS_ACC3(-1,0)]); //xvel0(jldt+1,kldt  ),yvel0(jldt+1,kldt  )

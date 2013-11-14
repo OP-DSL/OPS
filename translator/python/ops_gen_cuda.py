@@ -244,7 +244,6 @@ def ops_gen_cuda(master, date, kernels):
         code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
 
 
-
     code('')
     depth = depth - 2
     code('}')
