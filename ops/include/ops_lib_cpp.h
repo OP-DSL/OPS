@@ -73,11 +73,17 @@ inline int type_error (const bool * a, const char *type ) {
 */
 
 #define ZERO_double 0.0;
+#define INFINITY_double INFINITY;
 #define ZERO_float 0.0f;
+#define INFINITY_float INFINITY;
 #define ZERO_int 0;
+#define INFINITY_int INFINITY;
 #define ZERO_uint 0;
+#define INFINITY_uint INFINITY;
 #define ZERO_ll 0;
+#define INFINITY_ll INFINITY;
 #define ZERO_ull 0;
+#define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
 

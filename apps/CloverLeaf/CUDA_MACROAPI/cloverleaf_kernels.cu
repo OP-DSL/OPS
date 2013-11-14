@@ -158,8 +158,8 @@ __device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #include "update_halo_kernel4_plus_2_b_cuda_kernel.cu"
 
 #include "calc_dt_kernel_cuda_kernel.cu"
-//#include "calc_dt_kernel_min_cuda_kernel.cu"
-//#include "calc_dt_kernel_get_cuda_kernel.cu"
+#include "calc_dt_kernel_min_cuda_kernel.cu"
+#include "calc_dt_kernel_get_cuda_kernel.cu"
 #include "calc_dt_kernel_print_cuda_kernel.cu"
 
 /*#include "initialise_chunk_kernel_x_cuda_kernel.cu"

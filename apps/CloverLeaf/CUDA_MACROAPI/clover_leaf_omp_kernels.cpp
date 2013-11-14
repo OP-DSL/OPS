@@ -105,8 +105,8 @@ int xdim19;
 //#include "flux_calc_kernely_omp_kernel.cpp"
 //#include "field_summary_kernel_omp_kernel.cpp"
 //#include "calc_dt_kernel_omp_kernel.cpp"
-#include "calc_dt_kernel_min_omp_kernel.cpp"
-#include "calc_dt_kernel_get_omp_kernel.cpp"
+//#include "calc_dt_kernel_min_omp_kernel.cpp"
+//#include "calc_dt_kernel_get_omp_kernel.cpp"
 //#include "calc_dt_kernel_print_omp_kernel.cpp"*/
 
 #include "initialise_chunk_kernel_x_omp_kernel.cpp"

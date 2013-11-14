@@ -4,12 +4,12 @@
 #include "data.h"
 #include "definitions.h"
 
-//__device__
-//inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
-//                    const double *viscosity, const double *density0, const double *xvel0,
-//                    const double *xarea, const double *volume, const double *yvel0,
-//                    const double *yarea, double *dt_min /*dt_min is work_array1*/) {
-/*
+__device__
+inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
+                    const double *viscosity, const double *density0, const double *xvel0,
+                    const double *xarea, const double *volume, const double *yvel0,
+                   const double *yarea, double *dt_min /*dt_min is work_array1*/) {
+
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
 
   dsx = celldx[OPS_ACC0(0,0)];
@@ -49,22 +49,22 @@
   //dt_min is work_array1
   dt_min[OPS_ACC10(0,0)] = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
   //printf("dt_min %3.15e \n",**dt_min);
-}*/
+}
 
-//__device__
+__device__
 inline void calc_dt_kernel_min(const double* dt_min /*dt_min is work_array1*/,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 }
 
-//__device__
+__device__
 inline void calc_dt_kernel_get(const double* cellx, const double* celly,
                         double* xl_pos, double* yl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
   *yl_pos = celly[OPS_ACC1(0,0)];
   //printf("xl_pos %lf yl_pos %lf\n",*xl_pos,*yl_pos);
 }
-/*
+
 __device__
 inline void calc_dt_kernel_print(const double *cellx, const double *celly,
                         const double *xvel0, const double *yvel0,
@@ -78,6 +78,6 @@ inline void calc_dt_kernel_print(const double *cellx, const double *celly,
 
   printf("density, energy, pressure, soundspeed = %lf, %lf, %lf, %lf \n",
     density0[OPS_ACC4(0,0)], energy0[OPS_ACC5(0,0)], pressure[OPS_ACC6(0,0)], soundspeed[OPS_ACC7(0,0)]);
-}*/
+}
 
 #endif

@@ -87,8 +87,8 @@ void calc_dt(double* local_dt, char* local_control,
   ops_par_loop_opt(calc_dt_kernel_get, "calc_dt_kernel_get", 2, rangexy_getpoint,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
-    ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE),
-    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));
+    ops_arg_gbl(xl_pos, 1, "double", OPS_INC),
+    ops_arg_gbl(yl_pos, 1, "double", OPS_INC));
 
   if(small != 0) {
     ops_printf("Timestep information:\n");
