@@ -186,7 +186,7 @@ def ops_gen_cuda(master, date, kernels):
     #local variable to hold reductions on GPU
     code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code((str(typs[n]).replace('"','')).strip()+' arg'+str(n)+'_l['+str(dims[n])+'];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
@@ -214,10 +214,16 @@ def ops_gen_cuda(master, date, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +'arg'+str(n)
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        text = text +'arg'+str(n)
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
-      if nargs <> 1 and n != nargs-1:
-        text = text +', '
+
+      if nargs <> 1 and n <> nargs-1:
+        if n%n_per_line <> 3:
+          text = text +', '
+        else:
+          text = text +','
       else:
         text = text +');'
       if n%n_per_line == 3 and n <> nargs-1:
@@ -433,7 +439,7 @@ def ops_gen_cuda(master, date, kernels):
       code('mvReductArraysToHost(reduct_bytes);')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         FOR('b','0','maxblocks')
         FOR('d','0',str(dims[n]))
         if accs[n] == OPS_INC:
