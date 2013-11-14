@@ -68,6 +68,18 @@ inline int type_error (const bool * a, const char *type ) {
   (void)a; return (strcmp ( type, "bool" ) && strcmp ( type, "bool:soa" ));
 }
 
+/*
+* zero constants
+*/
+
+#define ZERO_double 0.0;
+#define ZERO_float 0.0f;
+#define ZERO_int 0;
+#define ZERO_uint 0;
+#define ZERO_ll 0;
+#define ZERO_ull 0;
+#define ZERO_bool 0;
+
 
 extern int OPS_diags;
 

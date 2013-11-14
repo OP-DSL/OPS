@@ -173,14 +173,32 @@ def ops_gen_cuda(master, date, kernels):
         code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW) :
         code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
-      elif arg_typ[n] == 'ops_arg_gbl'and accs[n] == OPS_READ:
-        code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
-
-
+      elif arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+        else:
+          code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
 
     code('int size0,')
     code('int size1 ){')
     depth = depth + 2
+
+    #local variable to hold reductions on GPU
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        code((str(typs[n]).replace('"','')).strip()+' arg'+str(n)+'_l['+str(dims[n])+'];')
+
+    # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = INFINITY;')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = -INFINITY;')
+
+
     code('')
     code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
@@ -189,19 +207,39 @@ def ops_gen_cuda(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_device;')
 
+    code('')
     n_per_line = 5
     IF('idx_x < size0 && idx_y < size1')
     text = name+'('
     for n in range (0, nargs):
-      text = text +'arg'+str(n)+' '
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text +'arg'+str(n)
+      else:
+        text = text +'arg'+str(n)+'_l'
       if nargs <> 1 and n != nargs-1:
-        text = text +','
+        text = text +', '
       else:
         text = text +');'
       if n%n_per_line == 3 and n <> nargs-1:
-         text = text +'\n'
+         text = text +'\n                   '
     code(text)
     ENDIF()
+
+    #reduction accross blocks
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+
+
+
+    code('')
     depth = depth - 2
     code('}')
 
@@ -255,38 +293,86 @@ def ops_gen_cuda(master, date, kernels):
 
     #these constant copy needs to be stripped out to the headder file
     code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
-    #code('cudaMemcpyToSymbol( fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
-
-    #code('cudaMalloc((void **)&fields_device, sizeof(int)*NUM_FIELDS);')
-    #code('cudaMemcpy(fields_device, fields , sizeof(int)*NUM_FIELDS, cudaMemcpyHostToDevice);')
     code('')
 
     #setup reduction variables
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] == OPS_READ:
-            code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+          code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
     code('')
 
-    code('int consts_bytes = 0;')
+    #set up CUDA grid and thread blocks
+    code('int block_size = 16;')
+    code('dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);')
+    code('dim3 block(block_size,block_size,1);')
+    code('')
+
+    GBL_READ = False
+    GBL_INC = False
+    GBL_MAX = False
+    GBL_MIN = False
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] == OPS_READ:
-            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-            code('reallocConstArrays(consts_bytes);')
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          GBL_READ = True
+        if accs[n] == OPS_INC:
+          GBL_INC = True
+        if accs[n] == OPS_MAX:
+          GBL_MAX = True
+        if accs[n] == OPS_MIN:
+          GBL_MIN = True
+
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      code('int nblocks = ((x_size-1)/block_size+ 1)*((y_size-1)/block_size + 1);')
+      code('int maxblocks = nblocks;')
+      code('int reduct_bytes = 0;')
+      code('int reduct_size = 0;')
+      code('')
+
+    if GBL_READ == True:
+      code('int consts_bytes = 0;')
+      code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        else:
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+          code('reduct_size = MAX(reduct_size,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+    code('')
+
+    if GBL_READ == True:
+      code('reallocConstArrays(consts_bytes);')
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      code('reallocReductArrays(reduct_bytes);')
+      code('reduct_bytes = 0;')
+      code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
+        code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
+        code('for (int b=0; b<maxblocks; b++)')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        code('')
+
     code('')
 
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] == OPS_READ:
-            code('consts_bytes = 0;')
-            code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
-            code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
-            code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
-            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-            code('mvConstArraysToDevice(consts_bytes);')
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('consts_bytes = 0;')
+          code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+          code('mvConstArraysToDevice(consts_bytes);')
 
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      code('mvReductArraysToDevice(reduct_bytes);')
 
 
     code('')
@@ -307,17 +393,29 @@ def ops_gen_cuda(master, date, kernels):
     code('')
     code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
     code('')
-    code('int block_size = 16;')
-    code('dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);')
-    code('dim3 block(block_size,block_size,1);')
+
+
+    #set up shared memory for reduction
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+       code('int nshared = 0;')
+       code('int nthread = block_size*block_size;')
+       code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('nshared = MAX(nshared,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
     code('')
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
+      code('')
 
-    #for n in range (0, nargs):
-    #  code('arg'+str(n)+'.dat->dirty_hd = 1;')
 
+   #kernel call
     comm('call kernel wrapper function, passing in pointers to data')
     n_per_line = 2
-    text = 'ops_'+name+'<<<grid, block >>> ( '
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      text = 'ops_'+name+'<<<grid, block, nshared >>> ( '
+    else:
+      text = 'ops_'+name+'<<<grid, block >>> ( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+'],'
@@ -331,24 +429,23 @@ def ops_gen_cuda(master, date, kernels):
 
     code('')
 
-    #generate code for combining the reductions
-    if reduction == True:
-      code('')
-      comm(' combine reduction data')
-      #FOR('thr','0','nthreads')
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          FOR('d','0',dims[n])
-          if accs[n] == OPS_INC:
-            code('arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
-          elif accs[n] == OPS_MIN:
-            code('arg'+str(n)+'h[0] = MIN(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
-          elif accs[n] == OPS_MAX:
-            code('arg'+str(n)+'h[0] = MAX(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
-          elif accs[n] == OPS_WRITE:
-            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
-          ENDFOR()
-      #ENDFOR()
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+      code('mvReductArraysToHost(reduct_bytes);')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        FOR('b','0','maxblocks')
+        FOR('d','0',str(dims[n]))
+        if accs[n] == OPS_INC:
+          code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + ((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+        elif accs[n] == OPS_MAX:
+          code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        elif accs[n] == OPS_MIN:
+          code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        ENDFOR()
+        ENDFOR()
+        code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
+        code('')
 
     code('cudaDeviceSynchronize();')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
