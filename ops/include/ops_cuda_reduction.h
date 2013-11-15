@@ -124,7 +124,7 @@ __inline__ __device__ void ops_reduction( volatile T * dat_g, T dat_l )
           case OPS_MAX:
             if ( dat_t > dat_l ) dat_l = dat_t;
             break;
-  }
+        }
 
         temp[tid] = dat_l;
       }
@@ -179,7 +179,7 @@ __inline__ __device__ void ops_reduction_alt ( volatile T * dat_g, T dat_l )
 
     // first, do reductions for each thread
 
-    for (int t = tid+d; t < blockDim.x ; t += d) {
+    for (int t = tid+d; t < blockDim.x*blockDim.y; t += d) {
       dat_t = temp[t];
 
       switch ( reduction ) {

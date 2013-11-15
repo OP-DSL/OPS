@@ -192,11 +192,11 @@ def ops_gen_cuda(master, date, kernels):
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = INFINITY;')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY'+(str(typs[n]).replace('"','')).strip()+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l['+str(dims[n])+'] = -INFINITY;')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY'+(str(typs[n]).replace('"','')).strip()+';')
 
 
     code('')

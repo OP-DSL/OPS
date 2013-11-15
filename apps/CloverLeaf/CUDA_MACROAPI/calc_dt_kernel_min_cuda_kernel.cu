@@ -3,7 +3,11 @@
 //
 
 //user function
-#include "calc_dt_kernel.h"
+__device__
+inline void calc_dt_kernel_min(const double* dt_min /*dt_min is work_array1*/,
+                    double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+}
 
 __global__ void ops_calc_dt_kernel_min(
 const double* __restrict arg0,
@@ -12,7 +16,7 @@ int size0,
 int size1 ){
 
   double arg1_l[1];
-  for (int d=0; d<1; d++) arg1_l[1] = INFINITY;
+  for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -24,7 +28,7 @@ int size1 ){
   }
   for (int d=0; d<1; d++)
     ops_reduction<OPS_MIN>(&arg1[d+blockIdx.x + blockIdx.y*gridDim.x],arg1_l[d]);
-
+  //printf(" %lf %lf\n",arg1_l[0], arg1[0+blockIdx.x + blockIdx.y*gridDim.x]);
 }
 
 // host stub function
@@ -52,7 +56,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
   double *arg1h = (double *)arg1.data;
 
   int block_size = 16;
-  dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);
+  dim3 grid( (x_size-1)/block_size + 1, (y_size-1)/block_size + 1, 1);
   dim3 block(block_size,block_size,1);
 
   int nblocks = ((x_size-1)/block_size+ 1)*((y_size-1)/block_size + 1);
@@ -97,12 +101,17 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, int dim, int* range,
   ops_calc_dt_kernel_min<<<grid, block, nshared >>> (  (double *)p_a[0], (double *)arg1.data_d, x_size, y_size);
 
   mvReductArraysToHost(reduct_bytes);
+
+  //printf("max blocks %d, \n",maxblocks);
+
   for ( int b=0; b<maxblocks; b++ ){
+    //printf("%d, %lf, %lf, \n",b , ((double *)arg1h)[0], ((double *)arg1.data)[0]);
     for ( int d=0; d<1; d++ ){
       arg1h[d] = MIN(arg1h[d],((double *)arg1.data)[d+b*1]);
     }
   }
   arg1.data = (char *)arg1h;
+  //printf(" %lf, %lf\n",((double *) arg1.data)[0], arg1h[0]);
 
   cudaDeviceSynchronize();
   ops_set_dirtybit_cuda(args, 2);
