@@ -194,9 +194,9 @@ def ops_gen_cuda(master, date, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
         code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
 
 
     code('')
@@ -234,13 +234,13 @@ def ops_gen_cuda(master, date, kernels):
     #reduction accross blocks
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
         code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
         code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) ')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
         code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
 
 
