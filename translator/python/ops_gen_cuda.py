@@ -324,9 +324,8 @@ def ops_gen_cuda(master, date, kernels):
     code('')
 
     #set up CUDA grid and thread blocks
-    code('int block_size = 16;')
-    code('dim3 grid( (x_size-1)/block_size+ 1, (y_size-1)/block_size + 1, 1);')
-    code('dim3 block(block_size,block_size,1);')
+    code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
+    code('dim3 block(OPS_block_size_x,OPS_block_size_y,1);')
     code('')
 
     GBL_READ = False
@@ -346,7 +345,7 @@ def ops_gen_cuda(master, date, kernels):
           GBL_MIN = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
-      code('int nblocks = ((x_size-1)/block_size+ 1)*((y_size-1)/block_size + 1);')
+      code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('int reduct_size = 0;')
@@ -425,7 +424,7 @@ def ops_gen_cuda(master, date, kernels):
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
        code('int nshared = 0;')
-       code('int nthread = block_size*block_size;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
@@ -474,10 +473,10 @@ def ops_gen_cuda(master, date, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    code('cudaDeviceSynchronize();')
+    #code('cudaDeviceSynchronize();')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
     #code('ops_halo_exchanges(args, '+str(nargs)+');')
-
+    code('OPS_kernels['+str(nk)+'].count++;')
     depth = depth - 2
     code('}')
 

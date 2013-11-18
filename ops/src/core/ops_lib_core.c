@@ -57,6 +57,8 @@ ops_block * OPS_block_list;
 ops_stencil * OPS_stencil_list;
 Double_linked_list OPS_dat_list; //Head of the double linked list
 
+int OPS_block_size_x = 0;
+int OPS_block_size_y = 0;
 
 /*
 * Utility functions
@@ -101,6 +103,26 @@ ops_dat search_dat(ops_block block, int size, int *block_size, int* offset,
 void ops_init_core( int argc, char ** argv, int diags )
 {
   OPS_diags = diags;
+
+  for ( int n = 1; n < argc; n++ )
+  {
+    if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
+    {
+      OPS_block_size_x = atoi ( argv[n] + 17 );
+      printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
+    }
+
+    if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_Y=", 17 ) == 0 )
+    {
+      OPS_block_size_y = atoi ( argv[n] + 17 );
+      printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+    }
+  }
+
+
+
+  if (OPS_block_size_x == 0) OPS_block_size_x = 16;
+  if (OPS_block_size_y == 0) OPS_block_size_y = 16;
 
   /*Initialize the double linked list to hold ops_dats*/
   TAILQ_INIT(&OPS_dat_list);

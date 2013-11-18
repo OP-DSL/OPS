@@ -47,6 +47,11 @@ void ops_init ( int argc, char ** argv, int diags )
 {
   ops_init_core ( argc, argv, diags );
 
+  if ((OPS_block_size_x*OPS_block_size_y) > 1024) {
+    printf ( " OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
+    exit ( -1 );
+  }
+
 #if CUDART_VERSION < 3020
 #error : "must be compiled using CUDA 3.2 or later"
 #endif
@@ -66,6 +71,7 @@ void ops_init ( int argc, char ** argv, int diags )
 #endif
 
   printf ( "\n 16/48 L1/shared \n" );
+
 }
 
 

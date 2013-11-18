@@ -71,6 +71,9 @@ extern char * OPS_consts_h,
 
 extern void __syncthreads ( );
 
+extern int OPS_block_size_x;
+extern int OPS_block_size_y;
+
 /*
 * personal stripped-down version of cutil_inline.h
 */

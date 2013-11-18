@@ -66,6 +66,8 @@ char * OPS_consts_h,
      * OPS_reduct_h,
      * OPS_reduct_d;
 
+int OPS_gbl_changed = 1;
+char *OPS_gbl_prev = NULL;
 
 //
 // CUDA utility functions
@@ -214,9 +216,11 @@ void reallocConstArrays ( int consts_bytes )
   if ( consts_bytes > OPS_consts_bytes ) {
     if ( OPS_consts_bytes > 0 ) {
       free ( OPS_consts_h );
+      cudaFreeHost ( OPS_gbl_prev );
       cutilSafeCall ( cudaFree ( OPS_consts_d ) );
     }
     OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
+    cudaMallocHost ( (void**)&OPS_gbl_prev, OPS_consts_bytes );
     OPS_consts_h = ( char * ) malloc ( OPS_consts_bytes );
     cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_consts_d,
                                  OPS_consts_bytes ) );
@@ -245,9 +249,19 @@ void reallocReductArrays ( int reduct_bytes )
 
 void mvConstArraysToDevice ( int consts_bytes )
 {
-  cutilSafeCall ( cudaMemcpy ( OPS_consts_d, OPS_consts_h, consts_bytes,
-                               cudaMemcpyHostToDevice ) );
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+  OPS_gbl_changed=0;
+  for(int i = 0; i<consts_bytes; i++)
+  {
+    if (OPS_consts_h[i] != OPS_gbl_prev[i]) OPS_gbl_changed=1;
+  }
+  if (OPS_gbl_changed) {
+    //memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
+    //cutilSafeCall ( cudaMemcpyAsync ( OPS_consts_d, OPS_gbl_prev, consts_bytes,
+    //                             cudaMemcpyHostToDevice ) );
+    cutilSafeCall ( cudaMemcpy ( OPS_consts_d, OPS_consts_h, consts_bytes,
+                                 cudaMemcpyHostToDevice ) );
+    memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
+  }
 }
 
 void mvReductArraysToDevice ( int reduct_bytes )

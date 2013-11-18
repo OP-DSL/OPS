@@ -6,21 +6,7 @@
 #include "ops_lib_cpp.h"
 #include "ops_cuda_rt_support.h"
 #include "ops_cuda_reduction.h"
-/*
-__constant__ int xdim0_device;
-__constant__ int xdim1_device;
-__constant__ int xdim2_device;
-__constant__ int xdim3_device;
-__constant__ int xdim4_device;
-__constant__ int xdim5_device;
-__constant__ int xdim6_device;
-__constant__ int xdim7_device;
-__constant__ int xdim8_device;
-__constant__ int xdim9_device;
-__constant__ int xdim10_device;
-__constant__ int xdim11_device;
-__constant__ int xdim12_device;
-__constant__ int xdim13_device;*/
+
 
 __constant__ double dt;
 __constant__ double x_max;
@@ -51,7 +37,7 @@ __constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
 
 #define NUM_FIELDS 15
 
-__device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+__device__ int* fields_device;
 
 
 void ops_decl_const_char(int dim, char const *type,
