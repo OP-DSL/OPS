@@ -1,16 +1,17 @@
 #ifndef PdV_KERNEL_H
 #define PdV_KERNEL_H
 
-#include "data.h"
+//#include "data.h"
 #include "definitions.h"
 
-inline void PdV_kernel_predict(double *xarea, double *xvel0,
-                double *yarea, double *yvel0,
-                double *volume_change, double *volume,
-                double *pressure,
-                double *density0, double *density1,
-                double *viscosity,
-                double *energy0, double *energy1) {
+
+inline void PdV_kernel_predict(const double *xarea, const double *xvel0,
+                const double *yarea, const double *yvel0,
+                double *volume_change, const double *volume,
+                const double *pressure,
+                const double *density0, double *density1,
+                const double *viscosity,
+                const double *energy0, double *energy1) {
 
   //xvel0, S2D_00_P10_0P1_P1P1
 
@@ -44,13 +45,14 @@ inline void PdV_kernel_predict(double *xarea, double *xvel0,
 
 }
 
-inline void PdV_kernel_nopredict(double *xarea, double *xvel0, double *xvel1,
-                double *yarea, double *yvel0, double *yvel1,
-                double *volume_change, double *volume,
-                double *pressure,
-                double *density0, double *density1,
-                double *viscosity,
-                double *energy0, double *energy1) {
+
+inline void PdV_kernel_nopredict(const double *xarea, const double *xvel0, const double *xvel1,
+                const double *yarea, const double *yvel0, const double *yvel1,
+                double *volume_change, const double *volume,
+                const double *pressure,
+                const double *density0, double *density1,
+                const double *viscosity,
+                const double *energy0, double *energy1) {
 
   //xvel0, S2D_00_P10_0P1_P1P1
 

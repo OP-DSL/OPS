@@ -116,10 +116,10 @@ void timestep()
   if(dt < dtmin) small=1;
   ops_printf(
   " Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E\n",
-    step,   time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+    step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
   ops_fprintf(g_out,
-  " Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E\n",
-    step,   time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+  "\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
+    step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
 
   if(small == 1) {
     ops_printf("timestep :small timestep\n");

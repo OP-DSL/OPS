@@ -91,6 +91,6 @@ void initialise()
 
   start();
 
-  ops_fprintf(g_out," Starting the calculation\n");
+  ops_fprintf(g_out,"\n Starting the calculation\n");
   fclose(g_in);
 }

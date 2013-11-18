@@ -128,7 +128,7 @@ int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
 
 double end_time;
@@ -167,6 +167,14 @@ int main(int argc, char **argv)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+  /*ops_decl_const2("g_small", 1, "double", &g_small );
+  ops_decl_const2("g_big", 1, "double", &g_big );
+  ops_decl_const2("dtc_safe", 1, "double", &dtc_safe );
+  ops_decl_const2("dtu_safe", 1, "double", &dtu_safe );
+  ops_decl_const2("dtv_safe", 1, "double", &dtv_safe );
+  ops_decl_const2("dtdiv_safe", 1, "double", &dtdiv_safe );
+  ops_decl_const2("x_max", 1, "int", &x_max );
+  ops_decl_const2("y_max", 1, "int", &y_max );*/
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
@@ -180,9 +188,23 @@ int main(int argc, char **argv)
 
     timestep();
 
+    //declare a global constant for dt ... as this chages for each iteration
+    //ops_decl_const2("dt", 1, "double", &dt );
+
+
+    if(step == 1) {
+      //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+      //exit(0);
+    }
+
     PdV(TRUE);
 
     accelerate();
+
+    //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
+    //exit(0);
+
 
     PdV(FALSE);
 
@@ -195,28 +217,28 @@ int main(int argc, char **argv)
     if (advect_x == TRUE) advect_x = FALSE;
     else advect_x = TRUE;
 
-    time = time + dt;
+    clover_time = clover_time + dt;
 
     if(summary_frequency != 0)
       if((step%summary_frequency) == 0)
         field_summary();
 
-    if((time+g_small) > end_time || (step >= end_step)) {
+    if((clover_time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
       break;
     }
 
       if(step == 70) {
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //exit(0);
-      break;
-     }
+        //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+        //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
+        //exit(0);
+        break;
+      }
   }
 
   ops_timers_core(&ct1, &et1);
-  ops_printf("Total Wall time %lf\n",et1-et0);
+  ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   fclose(g_out);
   ops_exit();

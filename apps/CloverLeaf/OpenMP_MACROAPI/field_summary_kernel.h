@@ -1,10 +1,11 @@
 #ifndef FIELD_SUMMARY_KERNEL_H
 #define FIELD_SUMMARY_KERNEL_H
 
-inline void field_summary_kernel( double *volume, double *density0,
-                     double *energy0, double *pressure,
-                     double *xvel0,
-                     double *yvel0,
+
+inline void field_summary_kernel( const double *volume, const double *density0,
+                     const double *energy0, const double *pressure,
+                     const double *xvel0,
+                     const double *yvel0,
                      double *vol,
                      double *mass,
                      double *ie,

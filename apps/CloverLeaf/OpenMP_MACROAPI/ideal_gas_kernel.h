@@ -1,7 +1,8 @@
 #ifndef IDEAL_GAS_KERNEL_H
 #define IDEAL_GAS_KERNEL_H
 
-inline void ideal_gas_kernel( double *density, double *energy,
+
+inline void ideal_gas_kernel(const double *density, const double *energy,
                      double *pressure, double *soundspeed) {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
