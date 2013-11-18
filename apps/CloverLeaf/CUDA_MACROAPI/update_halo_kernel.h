@@ -1,7 +1,7 @@
 #ifndef UPDATE_HALO_KERNEL_H
 #define UPDATE_HALO_KERNEL_H
 
-#include "data.h"
+//#include "data.h"
 
 __device__
 inline void update_halo_kernel1_b2(double *density0, double *density1,

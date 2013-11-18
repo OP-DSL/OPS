@@ -43,13 +43,13 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, int dim, int* 
   cudaMemcpyToSymbol( xdim0_device, &xdim0, sizeof(int) );
   cudaMemcpyToSymbol( xdim1_device, &xdim1, sizeof(int) );
   cudaMemcpyToSymbol( xdim2_device, &xdim2, sizeof(int) );
-  cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );
-  cudaMemcpyToSymbol( g_small_device,  &g_small, sizeof(double) );
-  cudaMemcpyToSymbol( g_big_device,  &g_big, sizeof(double) );
-  cudaMemcpyToSymbol( dtc_safe_device,  &dtc_safe, sizeof(double) );
-  cudaMemcpyToSymbol( dtu_safe_device,  &dtu_safe, sizeof(double) );
-  cudaMemcpyToSymbol( dtv_safe_device,  &dtv_safe, sizeof(double) );
-  cudaMemcpyToSymbol( dtdiv_safe_device,  &dtdiv_safe, sizeof(double) );
+  cudaMemcpyToSymbol( dt,  &dt, sizeof(double) );
+  cudaMemcpyToSymbol( g_small,  &g_small, sizeof(double) );
+  cudaMemcpyToSymbol( g_big,  &g_big, sizeof(double) );
+  cudaMemcpyToSymbol( dtc_safe,  &dtc_safe, sizeof(double) );
+  cudaMemcpyToSymbol( dtu_safe,  &dtu_safe, sizeof(double) );
+  cudaMemcpyToSymbol( dtv_safe,  &dtv_safe, sizeof(double) );
+  cudaMemcpyToSymbol( dtdiv_safe,  &dtdiv_safe, sizeof(double) );
 
 
 

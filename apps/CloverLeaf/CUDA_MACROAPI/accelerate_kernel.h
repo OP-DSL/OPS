@@ -1,7 +1,7 @@
 #ifndef ACCELERATE_KERNEL_H
 #define ACCELERATE_KERNEL_H
 
-#include "data.h"
+////#include "data.h"
 #include "definitions.h"
 
 
@@ -19,7 +19,7 @@ inline void accelerate_kernel_stepbymass(const double *density0, const double *v
     + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
 
   //stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt_device / nodal_mass;
+  stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
 
 }
 

@@ -8,7 +8,7 @@
 __constant__ int xdim0_device;
 __constant__ int xdim1_device;
 __constant__ int xdim2_device;
-__constant__ double dt_device;
+__constant__ double dt;
 
 #define OPS_ACC_MACROS
 #define OPS_ACC0(x,y) (x+xdim0_device*(y))
@@ -30,7 +30,7 @@ __constant__ double dt_device;
     + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
     + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt_device / nodal_mass;
+  stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
 }*/
 
 
@@ -74,7 +74,7 @@ void ops_par_loop_deviceerate_kernel_stepbymass(char const *name, int dim, int* 
   cudaMemcpyToSymbol( xdim0_device, &xdim0, sizeof(int) );
   cudaMemcpyToSymbol( xdim1_device, &xdim1, sizeof(int) );
   cudaMemcpyToSymbol( xdim2_device, &xdim2, sizeof(int) );
-  cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );
+  cudaMemcpyToSymbol( dt,  &dt, sizeof(double) );
 
   char *p_a[3];
 

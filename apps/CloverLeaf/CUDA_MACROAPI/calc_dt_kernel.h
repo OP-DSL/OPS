@@ -1,8 +1,8 @@
 #ifndef CALC_DT_KERNEL_H
 #define CALC_DT_KERNEL_H
 
-#include "data.h"
-#include "definitions.h"
+////#include "data.h"
+//#include "definitions.h"
 
 __device__
 inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
@@ -17,9 +17,9 @@ inline void calc_dt_kernel(const double *celldx, const double *celldy, const dou
 
   cc = soundspeed[OPS_ACC2(0,0)] * soundspeed[OPS_ACC2(0,0)];
   cc = cc + 2.0 * viscosity[OPS_ACC3(0,0)]/density0[OPS_ACC4(0,0)];
-  cc = MAX(sqrt(cc),g_small_device);
+  cc = MAX(sqrt(cc),g_small);
 
-  dtct = dtc_safe_device * MIN(dsx,dsy)/cc;
+  dtct = dtc_safe * MIN(dsx,dsy)/cc;
 
   div=0.0;
 
@@ -30,21 +30,21 @@ inline void calc_dt_kernel(const double *celldx, const double *celldy, const dou
 
   div = div + dv2 - dv1;
 
-  dtut = dtu_safe_device * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1), fabs(dv2)), g_small_device * volume[OPS_ACC7(0,0)]);
+  dtut = dtu_safe * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume[OPS_ACC7(0,0)]);
 
   dv1 = (yvel0[OPS_ACC8(0,0)] + yvel0[OPS_ACC8(1,0)]) * yarea[OPS_ACC9(0,0)];
   dv2 = (yvel0[OPS_ACC8(0,1)] + yvel0[OPS_ACC8(1,1)]) * yarea[OPS_ACC9(0,1)];
 
   div = div + dv2 - dv1;
 
-  dtvt = dtv_safe_device * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1),fabs(dv2)), g_small_device * volume[OPS_ACC7(0,0)]);
+  dtvt = dtv_safe * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * volume[OPS_ACC7(0,0)]);
 
   div = div/(2.0 * volume[OPS_ACC7(0,0)]);
 
-  if(div < -g_small_device)
-    dtdivt = dtdiv_safe_device * (-1.0/div);
+  if(div < -g_small)
+    dtdivt = dtdiv_safe * (-1.0/div);
   else
-    dtdivt = g_big_device;
+    dtdivt = g_big;
 
   //dt_min is work_array1
   dt_min[OPS_ACC10(0,0)] = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));

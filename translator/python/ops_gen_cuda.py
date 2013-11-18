@@ -296,15 +296,6 @@ def ops_gen_cuda(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('cudaMemcpyToSymbol( xdim'+str(n)+'_device, &xdim'+str(n)+', sizeof(int) );')
 
-    #these constant copy needs to be stripped out to the headder file
-    #code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
-    code('cudaMemcpyToSymbol( g_small_device,  &g_small, sizeof(double) );')
-    code('cudaMemcpyToSymbol( g_big_device,  &g_big, sizeof(double) );')
-    code('cudaMemcpyToSymbol( dtc_safe_device,  &dtc_safe, sizeof(double) );')
-    code('cudaMemcpyToSymbol( dtu_safe_device,  &dtu_safe, sizeof(double) );')
-    code('cudaMemcpyToSymbol( dtv_safe_device,  &dtv_safe, sizeof(double) );')
-    code('cudaMemcpyToSymbol( dtdiv_safe_device,  &dtdiv_safe, sizeof(double) );')
-
     code('')
 
     #setup reduction variables

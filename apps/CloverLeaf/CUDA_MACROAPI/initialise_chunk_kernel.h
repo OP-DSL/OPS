@@ -1,7 +1,7 @@
 #ifndef INITIALISE_CHUNK_KERNEL_H
 #define INITIALISE_CHUNK_KERNEL_H
 
-#include "data.h"
+//#include "data.h"
 #include "definitions.h"
 
 //__device__

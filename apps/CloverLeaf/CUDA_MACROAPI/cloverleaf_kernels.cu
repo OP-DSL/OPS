@@ -23,16 +23,16 @@ __constant__ int xdim11_device;
 __constant__ int xdim12_device;
 __constant__ int xdim13_device;
 
-__constant__ double dt_device;
-__constant__ double x_max_device;
-__constant__ double y_max_device;
+__constant__ double dt;
+__constant__ double x_max;
+__constant__ double y_max;
 
-__constant__ double g_small_device;
-__constant__ double dtc_safe_device;
-__constant__ double g_big_device;
-__constant__ double dtu_safe_device;
-__constant__ double dtv_safe_device;
-__constant__ double dtdiv_safe_device;
+__constant__ double g_small;
+__constant__ double dtc_safe;
+__constant__ double g_big;
+__constant__ double dtu_safe;
+__constant__ double dtv_safe;
+__constant__ double dtdiv_safe;
 
 __constant__ int FIELD_DEVICE_DENSITY0   = 0;
 __constant__ int FIELD_DEVICE_DENSITY1   = 1;
@@ -50,29 +50,32 @@ __constant__ int FIELD_DEVICE_VOL_FLUX_Y =12;
 __constant__ int FIELD_DEVICE_MASS_FLUX_X=13;
 __constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
 
+#define NUM_FIELDS 15
+
 __device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
 
 
 void ops_decl_const_char(int dim, char const *type,
             int size, char *dat, char const *name) {
   if (!strcmp(name,"dt")) {
-    cutilSafeCall(cudaMemcpyToSymbol(dt_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(dt, dat, dim*size));
   } else if (!strcmp(name,"x_max")) {
-    cutilSafeCall(cudaMemcpyToSymbol(x_max_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(x_max, dat, dim*size));
   } else if (!strcmp(name,"y_max")) {
-    cutilSafeCall(cudaMemcpyToSymbol(y_max_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(y_max, dat, dim*size));
   } else if (!strcmp(name,"g_small")) {
-    cutilSafeCall(cudaMemcpyToSymbol(g_small_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(g_small, dat, dim*size));
   } else if (!strcmp(name,"dtc_safe")) {
-    cutilSafeCall(cudaMemcpyToSymbol(dtc_safe_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(dtc_safe, dat, dim*size));
   } else if (!strcmp(name,"g_big")) {
-    cutilSafeCall(cudaMemcpyToSymbol(g_big_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(g_big, dat, dim*size));
   } else if (!strcmp(name,"dtu_safe")) {
-    cutilSafeCall(cudaMemcpyToSymbol(dtu_safe_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(dtu_safe, dat, dim*size));
   } else if (!strcmp(name,"dtv_safe")) {
-    cutilSafeCall(cudaMemcpyToSymbol(dtv_safe_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(dtv_safe, dat, dim*size));
   } else if (!strcmp(name,"dtdiv_safe")) {
-    cutilSafeCall(cudaMemcpyToSymbol(dtdiv_safe_device, dat, dim*size));
+    cutilSafeCall(cudaMemcpyToSymbol(dtdiv_safe, dat, dim*size));
   } else {
     printf("error: unknown const name\n"); exit(1);
   }

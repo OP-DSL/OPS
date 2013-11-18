@@ -1,7 +1,7 @@
 #ifndef FLUX_CALC_KERNEL_H
 #define FLUX_CALC_KERNEL_H
 
-#include "data.h"
+//#include "data.h"
 #include "definitions.h"
 
 __device__
@@ -9,7 +9,7 @@ inline void flux_calc_kernelx( double *vol_flux_x, const double *xarea,
                         const double *xvel0, const double *xvel1) {
 
   //{0,0, 0,1};
-  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt_device * (xarea[OPS_ACC1(0,0)]) *
+  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
   ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
 
 }
@@ -19,7 +19,7 @@ inline void flux_calc_kernely( double *vol_flux_y, const double *yarea,
                         const double *yvel0, const double *yvel1) {
 
     //{0,0, 1,0};
-  vol_flux_y[OPS_ACC0(0,0)] = 0.25 * dt_device * (yarea[OPS_ACC1(0,0)]) *
+  vol_flux_y[OPS_ACC0(0,0)] = 0.25 * dt * (yarea[OPS_ACC1(0,0)]) *
   ( (yvel0[OPS_ACC2(0,0)]) + (yvel0[OPS_ACC2(1,0)]) + (yvel1[OPS_ACC3(0,0)]) + (yvel1[OPS_ACC3(1,0)]) );
 
 }

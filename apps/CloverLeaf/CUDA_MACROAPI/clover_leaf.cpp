@@ -167,8 +167,14 @@ int main(int argc, char **argv)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  //fields = (int *)malloc(NUM_FIELDS*sizeof(int));
-  //for(int i=0; i<NUM_FIELDS;i++) fields[i] = 0;
+  ops_decl_const2("g_small", 1, "double", &g_small );
+  ops_decl_const2("g_big", 1, "double", &g_big );
+  ops_decl_const2("dtc_safe", 1, "double", &dtc_safe );
+  ops_decl_const2("dtu_safe", 1, "double", &dtu_safe );
+  ops_decl_const2("dtv_safe", 1, "double", &dtv_safe );
+  ops_decl_const2("dtdiv_safe", 1, "double", &dtdiv_safe );
+  ops_decl_const2("x_max", 1, "int", &x_max );
+  ops_decl_const2("y_max", 1, "int", &y_max );
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
@@ -180,8 +186,11 @@ int main(int argc, char **argv)
 
     step = step + 1;
 
-
     timestep();
+
+    //declare a global constant for dt ... as this chages for each iteration
+    ops_decl_const2("dt", 1, "double", &dt );
+
 
     if(step == 1) {
       //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
@@ -224,7 +233,7 @@ int main(int argc, char **argv)
         //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
         //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
         //exit(0);
-        //break;
+        break;
       }
   }
 
