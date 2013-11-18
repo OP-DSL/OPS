@@ -6,10 +6,7 @@
 #include "ops_lib_cpp.h"
 #include "ops_cuda_rt_support.h"
 #include "ops_cuda_reduction.h"
-
-#include "data.h"
-#include "definitions.h"
-
+/*
 __constant__ int xdim0_device;
 __constant__ int xdim1_device;
 __constant__ int xdim2_device;
@@ -23,7 +20,7 @@ __constant__ int xdim9_device;
 __constant__ int xdim10_device;
 __constant__ int xdim11_device;
 __constant__ int xdim12_device;
-__constant__ int xdim13_device;
+__constant__ int xdim13_device;*/
 
 __constant__ double dt;
 __constant__ double x_max;
