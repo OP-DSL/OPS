@@ -7,6 +7,8 @@
 #include "ops_cuda_rt_support.h"
 #include "ops_cuda_reduction.h"
 
+#include "data.h"
+#include "definitions.h"
 
 __constant__ int xdim0_device;
 __constant__ int xdim1_device;
@@ -55,7 +57,6 @@ __constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
 __device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 
-
 void ops_decl_const_char(int dim, char const *type,
             int size, char *dat, char const *name) {
   if (!strcmp(name,"dt")) {
@@ -80,23 +81,6 @@ void ops_decl_const_char(int dim, char const *type,
     printf("error: unknown const name\n"); exit(1);
   }
 }
-
-
-#define OPS_ACC_MACROS
-#define OPS_ACC0(x,y) (x+xdim0_device*(y))
-#define OPS_ACC1(x,y) (x+xdim1_device*(y))
-#define OPS_ACC2(x,y) (x+xdim2_device*(y))
-#define OPS_ACC3(x,y) (x+xdim3_device*(y))
-#define OPS_ACC4(x,y) (x+xdim4_device*(y))
-#define OPS_ACC5(x,y) (x+xdim5_device*(y))
-#define OPS_ACC6(x,y) (x+xdim6_device*(y))
-#define OPS_ACC7(x,y) (x+xdim7_device*(y))
-#define OPS_ACC8(x,y) (x+xdim8_device*(y))
-#define OPS_ACC9(x,y) (x+xdim9_device*(y))
-#define OPS_ACC10(x,y) (x+xdim10_device*(y))
-#define OPS_ACC11(x,y) (x+xdim11_device*(y))
-#define OPS_ACC12(x,y) (x+xdim12_device*(y))
-#define OPS_ACC13(x,y) (x+xdim13_device*(y))
 
 
 //user kernel files
