@@ -209,7 +209,7 @@ def ops_gen_openmp_macro(master, date, kernels):
     if reduction == True:
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code('double*arg'+str(n)+'h = (double *)arg'+str(n)+'.data;')
+          code((str(typs[n]).replace('"','')).strip()+'*arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
 
     code('')
     code('#ifdef _OPENMP')
@@ -229,9 +229,21 @@ def ops_gen_openmp_macro(master, date, kernels):
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[64*thr] = *arg'+str(n)+'h;')
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          ENDFOR()
+        elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+          FOR('d', '0',dims[n])
+          code('arg_gbl'+str(n)+'[d+64*thr] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          ENDFOR()
+        elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+          FOR('d', '0',dims[n])
+          code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          ENDFOR()
+        elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+          FOR('d', '0',dims[n])
+          code('arg_gbl'+str(n)+'[d+64*thr] = arg'+str(n)+'h[d];')
           ENDFOR()
       ENDFOR()
 

@@ -64,6 +64,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(pressure, S2D_00_0P3, "double", OPS_RW),
               ops_arg_dat(viscosity, S2D_00_0P3, "double", OPS_RW),
               ops_arg_dat(soundspeed, S2D_00_0P3, "double", OPS_RW),
+              ops_arg_gbl(fields, 15, "int", OPS_READ),
               );
 
   int rangexy_b1a[] = {x_min-depth,x_max+depth,y_min-1,y_min};
@@ -75,6 +76,7 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(pressure, S2D_00_0P1, "double", OPS_RW),
               ops_arg_dat(viscosity, S2D_00_0P1, "double", OPS_RW),
               ops_arg_dat(soundspeed, S2D_00_0P1, "double", OPS_RW),
+              ops_arg_gbl(fields, 15, "int", OPS_READ),
               );
 
   int rangexy_t2a[] = {x_min-depth,x_max+depth,y_max+1,y_max+2};
