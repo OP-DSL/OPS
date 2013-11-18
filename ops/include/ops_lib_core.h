@@ -144,6 +144,17 @@ typedef struct
   ops_arg_type argtype;/* arg type */
 } ops_arg;
 
+typedef struct
+{
+  char const *name;     /* name of kernel function */
+  int         count;    /* number of times called */
+  float       time;     /* total execution time */
+  float       transfer; /* bytes of data transfer (used) */
+  float       mpi_time; /* time spent in MPI calls */
+} ops_kernel;
+
+extern int OPS_kern_max, OPS_kern_curr;
+extern ops_kernel * OPS_kernels;
 
 /*
 * min / max definitions
@@ -202,6 +213,7 @@ void ops_diagnostic_output( );
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
+void ops_timing_realloc ( int );
 void ops_timers_core( double *cpu, double *et );
 
 /* why are these placed here ?*/

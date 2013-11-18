@@ -145,23 +145,37 @@ def ops_gen_cuda(master, date, kernels):
 #  generate constants and MACROS
 ##########################################################################
 
-    #for n in range (0, nargs):
-    #  code('__constant__ int xdim'+str(n)+'_accel;')
-    #code('__constant__ double dt_device;')
-    #code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('__constant__ int xdim'+str(n)+'_'+name+';')
+    code('')
 
     #code('#define OPS_ACC_MACROS')
-    #for n in range (0, nargs):
-    #  code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_accel*(y))')
-    #code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+    code('')
 
 ##########################################################################
 #  generate headder
 ##########################################################################
 
     comm('user function')
-    code('#include "'+name2+'_kernel.h"')
-    comm('')
+    fid = open(name2+'_kernel.h', 'r')
+    text = fid.read()
+    fid.close()
+    i = text.find(name)
+    i = text[0:i].rfind('\n')
+    j = text[i:].find('\n}')
+    code('__device__')
+    file_text += text[i:i+j+2]
+    code('')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#undef OPS_ACC'+str(n))
+    code('')
+    code('')
 
 ##########################################################################
 #  generate cuda kernel wrapper function
@@ -205,7 +219,7 @@ def ops_gen_cuda(master, date, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_device;')
+        code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+name+';')
 
     code('')
     n_per_line = 5
@@ -292,9 +306,13 @@ def ops_gen_cuda(master, date, kernels):
         code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
+    #timing structs
+    code('ops_timing_realloc('+str(nk)+');')
+    IF('OPS_kernels['+str(nk)+'].count == 0')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('cudaMemcpyToSymbol( xdim'+str(n)+'_device, &xdim'+str(n)+', sizeof(int) );')
+        code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
+    ENDIF()
 
     code('')
 
@@ -429,7 +447,7 @@ def ops_gen_cuda(master, date, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+'],'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data_d, '
+        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data_d,'
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '

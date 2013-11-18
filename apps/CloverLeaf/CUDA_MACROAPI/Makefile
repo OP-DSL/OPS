@@ -10,7 +10,8 @@
 #
 OPS_INC		= -I$(OPS_INSTALL_PATH)/include
 OPS_LIB		= -L$(OPS_INSTALL_PATH)/lib
-
+CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
+CUDA_INC = -L$(CUDA_INSTALL_PATH)/include
 
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++

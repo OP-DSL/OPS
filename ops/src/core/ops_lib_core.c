@@ -44,7 +44,8 @@ int OPS_diags = 0;
 int OPS_block_index = 0, OPS_block_max = 0;
 int OPS_stencil_index = 0, OPS_stencil_max = 0;
 int OPS_dat_index = 0;
-
+int OPS_kern_max=0, OPS_kern_curr=0;
+ops_kernel * OPS_kernels=NULL;
 
 int OPS_hybrid_gpu = 0;
 
@@ -508,4 +509,32 @@ void ops_timers_core( double * cpu, double * et )
 
   gettimeofday ( &t, ( struct timezone * ) 0 );
   *et = t.tv_sec + t.tv_usec * 1.0e-6;
+}
+
+void
+ops_timing_realloc ( int kernel )
+{
+  int OPS_kern_max_new;
+  OPS_kern_curr = kernel;
+
+  if ( kernel >= OPS_kern_max )
+  {
+    OPS_kern_max_new = kernel + 10;
+    OPS_kernels = ( ops_kernel * ) realloc ( OPS_kernels, OPS_kern_max_new * sizeof ( ops_kernel ) );
+    if ( OPS_kernels == NULL )
+    {
+      printf ( " ops_timing_realloc error \n" );
+      exit ( -1 );
+    }
+
+    for ( int n = OPS_kern_max; n < OPS_kern_max_new; n++ )
+    {
+      OPS_kernels[n].count = 0;
+      OPS_kernels[n].time = 0.0f;
+      OPS_kernels[n].transfer = 0.0f;
+      OPS_kernels[n].mpi_time = 0.0f;
+      OPS_kernels[n].name = "unused";
+    }
+    OPS_kern_max = OPS_kern_max_new;
+  }
 }
