@@ -187,6 +187,8 @@ ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
                       int *block_size, int* offset,  char * data, int type_size,
                       char const * type, char const * name );
 
+void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
+
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
 

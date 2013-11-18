@@ -297,7 +297,7 @@ def ops_gen_cuda(master, date, kernels):
         code('cudaMemcpyToSymbol( xdim'+str(n)+'_device, &xdim'+str(n)+', sizeof(int) );')
 
     #these constant copy needs to be stripped out to the headder file
-    code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
+    #code('cudaMemcpyToSymbol( dt_device,  &dt, sizeof(double) );')
     code('cudaMemcpyToSymbol( g_small_device,  &g_small, sizeof(double) );')
     code('cudaMemcpyToSymbol( g_big_device,  &g_big, sizeof(double) );')
     code('cudaMemcpyToSymbol( dtc_safe_device,  &dtc_safe, sizeof(double) );')

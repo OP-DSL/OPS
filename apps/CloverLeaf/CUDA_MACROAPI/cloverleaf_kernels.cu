@@ -52,7 +52,32 @@ __constant__ int FIELD_DEVICE_MASS_FLUX_Y=14;
 
 __device__ int* fields_device;// = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-//can have a function to copy device constants here .. see OP2 airfoil_kernels.cu
+
+void ops_decl_const_char(int dim, char const *type,
+            int size, char *dat, char const *name) {
+  if (!strcmp(name,"dt")) {
+    cutilSafeCall(cudaMemcpyToSymbol(dt_device, dat, dim*size));
+  } else if (!strcmp(name,"x_max")) {
+    cutilSafeCall(cudaMemcpyToSymbol(x_max_device, dat, dim*size));
+  } else if (!strcmp(name,"y_max")) {
+    cutilSafeCall(cudaMemcpyToSymbol(y_max_device, dat, dim*size));
+  } else if (!strcmp(name,"g_small")) {
+    cutilSafeCall(cudaMemcpyToSymbol(g_small_device, dat, dim*size));
+  } else if (!strcmp(name,"dtc_safe")) {
+    cutilSafeCall(cudaMemcpyToSymbol(dtc_safe_device, dat, dim*size));
+  } else if (!strcmp(name,"g_big")) {
+    cutilSafeCall(cudaMemcpyToSymbol(g_big_device, dat, dim*size));
+  } else if (!strcmp(name,"dtu_safe")) {
+    cutilSafeCall(cudaMemcpyToSymbol(dtu_safe_device, dat, dim*size));
+  } else if (!strcmp(name,"dtv_safe")) {
+    cutilSafeCall(cudaMemcpyToSymbol(dtv_safe_device, dat, dim*size));
+  } else if (!strcmp(name,"dtdiv_safe")) {
+    cutilSafeCall(cudaMemcpyToSymbol(dtdiv_safe_device, dat, dim*size));
+  } else {
+    printf("error: unknown const name\n"); exit(1);
+  }
+}
+
 
 #define OPS_ACC_MACROS
 #define OPS_ACC0(x,y) (x+xdim0_device*(y))

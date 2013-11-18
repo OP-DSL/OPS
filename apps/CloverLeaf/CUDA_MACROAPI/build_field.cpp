@@ -222,6 +222,13 @@ void build_field()
   S2D_00_M10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "s2D_00_M10_stride2D_x");
   S2D_00_0M1_STRID2D_Y = ops_decl_strided_stencil( 2, 2, s2D_00_0M1, stride2D_y, "s2D_00_0M1_stride2D_y");
 
+
+  //
+  //declare global constants
+  //
+  ops_decl_const2("dt", 1, "double", &dt );
+
+
   //print ops blocks and dats details
   ops_diagnostic_output();
 

@@ -174,6 +174,15 @@ ops_block ops_decl_block(int dims, int *size, char *name)
   return block;
 }
 
+void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name )
+{
+  (void)dim;
+  (void)type;
+  (void)typeSize;
+  (void)data;
+  (void)name;
+}
+
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
                       int *block_size, int* offset, char *data, int type_size,
                       char const * type,

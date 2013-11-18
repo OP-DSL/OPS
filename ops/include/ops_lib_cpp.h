@@ -100,6 +100,7 @@ void ops_init( int argc, char **argv, int diags_level );
 ops_dat ops_decl_dat_char (ops_block, int, int*, int*, char *, int, char const*, char const* );
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
+void ops_decl_const_char( int, char const *, int, char *, char const* );
 
 
 template < class T >
@@ -108,6 +109,27 @@ ops_arg ops_arg_gbl ( T * data, int dim, char const * type, ops_access acc )
   return ops_arg_gbl_char ( ( char * ) data, dim, sizeof(T), acc );
 }
 
+template < class T >
+void ops_decl_const2 ( char const * name, int dim, char const *type, T * data )
+{
+  if ( type_error ( data, type ) )
+  {
+    printf ( "incorrect type specified for constant \"%s\" \n", name ); exit ( 1 );
+  }
+
+  ops_decl_const_char ( dim, type, sizeof ( T ), (char *) data, name );
+}
+
+template < class T >
+void ops_decl_const ( int dim, char const * type, T * data )
+{
+  (void)dim;
+  if ( type_error ( data, type ) )
+  {
+    printf ( "incorrect type specified for constant in op_decl_const" );
+    exit ( 1 );
+  }
+}
 
 template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
