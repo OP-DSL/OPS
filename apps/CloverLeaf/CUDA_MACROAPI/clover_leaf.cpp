@@ -90,23 +90,6 @@ int     CHUNK_LEFT    = 1,
         CHUNK_TOP     = 4,
         EXTERNAL_FACE = -1;
 
-int     FIELD_DENSITY0   = 0,
-        FIELD_DENSITY1   = 1,
-        FIELD_ENERGY0    = 2,
-        FIELD_ENERGY1    = 3,
-        FIELD_PRESSURE   = 4,
-        FIELD_VISCOSITY  = 5,
-        FIELD_SOUNDSPEED = 6,
-        FIELD_XVEL0      = 7,
-        FIELD_XVEL1      = 8,
-        FIELD_YVEL0      = 9,
-        FIELD_YVEL1      =10,
-        FIELD_VOL_FLUX_X =11,
-        FIELD_VOL_FLUX_Y =12,
-        FIELD_MASS_FLUX_X=13,
-        FIELD_MASS_FLUX_Y=14,
-        NUM_FIELDS       =15;
-
 FILE    *g_out, *g_in;  //Files for input and output
 
 int     g_rect=1,
@@ -167,14 +150,14 @@ int main(int argc, char **argv)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  ops_decl_const2("g_small", 1, "double", &g_small );
-  ops_decl_const2("g_big", 1, "double", &g_big );
-  ops_decl_const2("dtc_safe", 1, "double", &dtc_safe );
-  ops_decl_const2("dtu_safe", 1, "double", &dtu_safe );
-  ops_decl_const2("dtv_safe", 1, "double", &dtv_safe );
-  ops_decl_const2("dtdiv_safe", 1, "double", &dtdiv_safe );
-  ops_decl_const2("x_max", 1, "int", &x_max );
-  ops_decl_const2("y_max", 1, "int", &y_max );
+  ops_decl_const("g_small", 1, "double", &g_small );
+  ops_decl_const("g_big", 1, "double", &g_big );
+  ops_decl_const("dtc_safe", 1, "double", &dtc_safe );
+  ops_decl_const("dtu_safe", 1, "double", &dtu_safe );
+  ops_decl_const("dtv_safe", 1, "double", &dtv_safe );
+  ops_decl_const("dtdiv_safe", 1, "double", &dtdiv_safe );
+  ops_decl_const("x_max", 1, "int", &x_max );
+  ops_decl_const("y_max", 1, "int", &y_max );
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
@@ -189,7 +172,7 @@ int main(int argc, char **argv)
     timestep();
 
     //declare a global constant for dt ... as this chages for each iteration
-    ops_decl_const2("dt", 1, "double", &dt );
+    ops_decl_const("dt", 1, "double", &dt );
 
 
     if(step == 1) {

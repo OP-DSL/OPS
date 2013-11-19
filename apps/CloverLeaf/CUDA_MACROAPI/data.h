@@ -34,22 +34,22 @@ extern int     g_name_len_max,
                g_xdir,
                g_ydir;
 
-extern int     FIELD_DENSITY0,
-        FIELD_DENSITY1,
-        FIELD_ENERGY0,
-        FIELD_ENERGY1,
-        FIELD_PRESSURE,
-        FIELD_VISCOSITY,
-        FIELD_SOUNDSPEED,
-        FIELD_XVEL0,
-        FIELD_XVEL1,
-        FIELD_YVEL0,
-        FIELD_YVEL1,
-        FIELD_VOL_FLUX_X,
-        FIELD_VOL_FLUX_Y,
-        FIELD_MASS_FLUX_X,
-        FIELD_MASS_FLUX_Y,
-        NUM_FIELDS;
+#define FIELD_DENSITY0 0
+#define FIELD_DENSITY1 1
+#define FIELD_ENERGY0 2
+#define FIELD_ENERGY1 3
+#define FIELD_PRESSURE 4
+#define FIELD_VISCOSITY 5
+#define FIELD_SOUNDSPEED 6
+#define FIELD_XVEL0 7
+#define FIELD_XVEL1 8
+#define FIELD_YVEL0 9
+#define FIELD_YVEL1 10
+#define FIELD_VOL_FLUX_X 11
+#define FIELD_VOL_FLUX_Y 12
+#define FIELD_MASS_FLUX_X 13
+#define FIELD_MASS_FLUX_Y 14
+#define NUM_FIELDS 15
 
 extern FILE    *g_out, *g_in;  //Files for input and output
 extern int     g_rect, g_circ, g_point; //geometry of block

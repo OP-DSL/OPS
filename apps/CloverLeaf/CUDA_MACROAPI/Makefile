@@ -69,10 +69,10 @@ cloverleaf_cuda: cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cpp build_fie
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp clover_leaf_omp_kernels.cpp cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
 
-cloverleaf_kernels_cu.o:	cloverleaf_kernels.cu \
+cloverleaf_kernels_cu.o:	clover_leaf_kernels.cu \
 				Makefile
 				nvcc $(VAR) $(INC) $(NVCCFLAGS) $(OPS_INC) \
-				-c -o cloverleaf_kernels_cu.o cloverleaf_kernels.cu
+				-c -o cloverleaf_kernels_cu.o clover_leaf_kernels.cu
 #
 # cleanup
 #
