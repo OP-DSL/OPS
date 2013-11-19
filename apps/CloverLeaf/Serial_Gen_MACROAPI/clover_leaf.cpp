@@ -190,7 +190,7 @@ int main(int argc, char **argv)
       ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
-      exit(0);
+      //exit(0);
     }
 
     PdV(FALSE);
