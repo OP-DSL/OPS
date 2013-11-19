@@ -77,7 +77,7 @@ def ENDIF():
   depth -= 2
   code('}')
 
-def ops_gen_seq_macro(master, date, kernels):
+def ops_gen_seq_macro(master, date, consts, kernels):
 
   global dims, stens
   global g_m, file_text, depth
@@ -302,7 +302,7 @@ def ops_gen_seq_macro(master, date, kernels):
 ##########################################################################
 #  output one master kernel file
 ##########################################################################
-
+  depth = 0
   file_text =''
   comm('header')
   code('#include "ops_lib_cpp.h"')

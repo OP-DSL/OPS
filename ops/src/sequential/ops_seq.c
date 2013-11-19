@@ -82,6 +82,15 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
+void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
+{
+  (void)dim;
+  (void)type;
+  (void)typeSize;
+  (void)data;
+  (void)name;
+}
+
 void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
