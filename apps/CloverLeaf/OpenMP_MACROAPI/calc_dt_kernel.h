@@ -1,9 +1,6 @@
 #ifndef CALC_DT_KERNEL_H
 #define CALC_DT_KERNEL_H
 
-////#include "data.h"
-//#include "definitions.h"
-
 
 inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
                    const double *viscosity, const double *density0, const double *xvel0,

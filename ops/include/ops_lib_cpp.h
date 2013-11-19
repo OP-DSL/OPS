@@ -121,7 +121,7 @@ void ops_decl_const2 ( char const * name, int dim, char const *type, T * data )
 }
 
 template < class T >
-void ops_decl_const ( int dim, char const * type, T * data )
+void ops_decl_const ( char const * name, int dim, char const * type, T * data )
 {
   (void)dim;
   if ( type_error ( data, type ) )

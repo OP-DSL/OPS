@@ -66,6 +66,30 @@ def ops_parse_calls(text):
 
     return (inits, exits)
 
+def ops_decl_const_parse(text):
+  """Parsing for ops_decl_const calls"""
+
+  consts = []
+  for m in re.finditer('ops_decl_const\((.*)\)', text):
+    args = m.group(1).split(',')
+
+    # check for syntax errors
+    if len(args) != 4:
+      print 'Error in ops_decl_const : must have four arguments'
+      return
+
+    consts.append({
+          'loc': m.start(),
+          'name': args[0].strip(),
+          'dim': args[1].strip(),
+          'type': args[2].strip(),
+          'name2': args[3].strip()
+    })
+
+  return consts
+
+
+
 def arg_parse(text, j):
     """Parsing arguments in op_par_loop to find the correct closing brace"""
 
@@ -198,6 +222,7 @@ def main():
   ninit = 0
   nexit = 0
   nkernels = 0
+  nconsts = 0
   consts = []
   kernels = []
   kernels_in_files = []
@@ -243,8 +268,49 @@ def main():
       ninit = ninit + inits
       nexit = nexit + exits
 
+      # parse and process constants
+
+      const_args = ops_decl_const_parse(text)
+      print str(len(const_args))
+
+      # cleanup '&' symbols from name and convert dim to integer
+      if const_args:
+        for i in range(0, len(const_args)):
+            if const_args[i]['name2'][0] == '&':
+              const_args[i]['name2'] = const_args[i]['name2'][1:]
+              const_args[i]['dim'] = int(const_args[i]['dim'])
+              const_args[i]['name'] = const_args[i]['name']
+
+      # check for repeats
+      nconsts = 0
+      if const_args:
+        for i in range(0, len(const_args)):
+            repeat = 0
+            name = const_args[i]['name']
+            for c in range(0, nconsts):
+                if const_args[i]['name'] == consts[c]['name']:
+                    repeat = 1
+                    if const_args[i]['type'] != consts[c]['type']:
+                        print 'type mismatch in repeated ops_decl_const'
+                    if const_args[i]['dim'] != consts[c]['dim']:
+                        print 'size mismatch in repeated ops_decl_const'
+
+            if repeat > 0:
+                print 'repeated global constant ' + const_args[i]['name']
+            else:
+                print '\nglobal constant (' + const_args[i]['name'].strip() \
+                      + ') of size ' + str(const_args[i]['dim'])
+
+            # store away in master list
+            if repeat == 0:
+                nconsts = nconsts + 1
+                temp = {'dim': const_args[i]['dim'],
+                        'type': const_args[i]['type'].strip(),
+                        'name': const_args[i]['name'].strip()}
+                consts.append(temp)
+
       #
-      # parse and process op_par_loop calls
+      # parse and process ops_par_loop calls
       #
 
       loop_args = ops_par_loop_parse(text)
@@ -506,8 +572,8 @@ def main():
 
         #ops_gen_seq(str(sys.argv[1]), date, kernels)
         #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-        ops_gen_seq_macro(str(sys.argv[1]), date, kernels)
-        #ops_gen_openmp_macro(str(sys.argv[1]), date, kernels)
+        #ops_gen_seq_macro(str(sys.argv[1]), date, kernels)
+        ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
         #ops_gen_cuda(str(sys.argv[1]), date, kernels)
 
 
