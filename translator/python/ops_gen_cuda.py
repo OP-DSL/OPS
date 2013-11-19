@@ -77,7 +77,7 @@ def ENDIF():
   depth -= 2
   code('}')
 
-def ops_gen_cuda(master, date, kernels):
+def ops_gen_cuda(master, date, consts, kernels):
 
   global dims, stens
   global g_m, file_text, depth

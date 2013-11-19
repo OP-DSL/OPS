@@ -64,6 +64,15 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
   return dat;
 }
 
+void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
+{
+  (void)dim;
+  (void)type;
+  (void)typeSize;
+  (void)data;
+  (void)name;
+}
+
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );

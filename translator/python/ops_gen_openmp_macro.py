@@ -393,7 +393,7 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
 ##########################################################################
 #  output one master kernel file
 ##########################################################################
-
+  depth = 0
   file_text =''
   comm('header')
   code('#include "ops_lib_cpp.h"')
