@@ -82,7 +82,7 @@ def para_parse(text, j, op_b, cl_b):
 
     depth = 0
     loc2 = j
-    print op_b, cl_b
+
     while 1:
       if text[loc2] == op_b:
             depth = depth + 1
