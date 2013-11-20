@@ -93,6 +93,39 @@ def para_parse(text, j, op_b, cl_b):
                 return loc2
       loc2 = loc2 + 1
 
+def comment_remover(text):
+    """Remove comments from text"""
+
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return ''
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    return re.sub(pattern, replacer, text)
+
+
+def remove_triling_w_space(text):
+  line_start = 0
+  line = ""
+  line_end = 0
+  striped_test = ''
+  count = 0
+  while 1:
+    line_end =  text.find("\n",line_start+1)
+    line = text[line_start:line_end]
+    line = line.rstrip()
+    striped_test = striped_test + line +'\n'
+    line_start = line_end + 1
+    line = ""
+    if line_end < 0:
+      return striped_test
+
+
 def ops_gen_cuda(master, date, consts, kernels):
 
   global dims, stens
@@ -180,12 +213,17 @@ def ops_gen_cuda(master, date, consts, kernels):
     fid = open(name2+'_kernel.h', 'r')
     text = fid.read()
     fid.close()
+    text = comment_remover(text)
+
+    text = remove_triling_w_space(text)
+
     i = text.find(name)
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     code('__device__')
-    file_text += text[i:k+2]
+    #file_text += text[i:k+2]
+    code(text[i:k+2])
     code('')
     code('')
     for n in range (0, nargs):
