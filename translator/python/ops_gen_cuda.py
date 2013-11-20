@@ -77,16 +77,17 @@ def ENDIF():
   depth -= 2
   code('}')
 
-def para_parse(text, j, brace):
+def para_parse(text, j, op_b, cl_b):
     """Parsing code block, i.e. text to find the correct closing brace"""
 
     depth = 0
     loc2 = j
+    print op_b, cl_b
     while 1:
-      if text[loc2] == '{':
+      if text[loc2] == op_b:
             depth = depth + 1
 
-      elif text[loc2] == '}':
+      elif text[loc2] == cl_b:
             depth = depth - 1
             if depth == 0:
                 return loc2
@@ -182,12 +183,8 @@ def ops_gen_cuda(master, date, consts, kernels):
     i = text.find(name)
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
-    #print name, i, i+j
-    #i = text.rfind('{')
-    #j = text[i:].find('\n}')
-    k = para_parse(text, i+j, '}')
+    k = para_parse(text, i+j, '{', '}')
     code('__device__')
-    #file_text += text[i:i+j+2]
     file_text += text[i:k+2]
     code('')
     code('')
