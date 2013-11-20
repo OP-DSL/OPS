@@ -182,7 +182,7 @@ def ops_gen_cuda(master, date, consts, kernels):
     i = text.find(name)
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
-    print name, i, i+j
+    #print name, i, i+j
     #i = text.rfind('{')
     #j = text[i:].find('\n}')
     k = para_parse(text, i+j, '}')
