@@ -119,44 +119,52 @@ inline void update_halo_kernel1_r1(double *density0, double *density1,
 }
 ////
 __device__
-inline void update_halo_kernel2_xvel_plus_4_a(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_plus_4_a(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = xvel0[OPS_ACC0(0,4)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = xvel1[OPS_ACC1(0,4)];
 }
 __device__
-inline void update_halo_kernel2_xvel_plus_2_a(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_plus_2_a(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = xvel0[OPS_ACC0(0,2)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = xvel1[OPS_ACC1(0,2)];
 }
 __device__
-inline void update_halo_kernel2_xvel_plus_4_b(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_plus_4_b(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = xvel0[OPS_ACC0(0,-4)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = xvel1[OPS_ACC1(0,-4)];
 }
 __device__
-inline void update_halo_kernel2_xvel_plus_2_b(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_plus_2_b(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = xvel0[OPS_ACC0(0,-2)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = xvel1[OPS_ACC1(0,-2)];
 }
 
 ///
 __device__
-inline void update_halo_kernel2_xvel_minus_4_a(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_minus_4_a(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(4,0)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(4,0)];
 }
 __device__
-inline void update_halo_kernel2_xvel_minus_2_a(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_minus_2_a(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(2,0)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(2,0)];
 }
 __device__
-inline void update_halo_kernel2_xvel_minus_4_b(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_minus_4_b(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(-4,0)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(-4,0)];
 }
 __device__
-inline void update_halo_kernel2_xvel_minus_2_b(double *xvel0, double *xvel1, const int* fields) {
+inline void update_halo_kernel2_xvel_minus_2_b(double *xvel0, double *xvel1, const int* fields)
+{
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(-2,0)];
   if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(-2,0)];
 }
