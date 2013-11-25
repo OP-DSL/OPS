@@ -45,7 +45,7 @@
 
 
 // OPS header file
-#include "ops_seq_opt.h"
+#include "ops_seq_macro.h"
 
 // Cloverleaf constants
 #include "data.h"
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
-      //break;
+      break;
      }
 
   }

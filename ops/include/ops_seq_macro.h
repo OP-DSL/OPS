@@ -76,11 +76,21 @@ extern int xdim14;
 extern int xdim15;
 
 
+inline int ops_offs_set(int n_x,
+                        int n_y, ops_arg arg){
+        return
+        arg.dat->block_size[0] * //multiply by the number of
+        (n_y - arg.dat->offset[1])  // calculate the offset from index 0 for y dim
+        +
+        (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
+}
+
+
 //
 //ops_par_loop routine for 1 arguments
 //
 template <class T0>
-void ops_par_loop_macro(void (*kernel)(T0*),
+void ops_par_loop(void (*kernel)(T0*),
      char const * name, int dim, int *range,
      ops_arg arg0) {
 
@@ -155,7 +165,7 @@ void ops_par_loop_macro(void (*kernel)(T0*),
 //ops_par_loop routine for 2 arguments
 //
 template <class T0,class T1>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*),
+void ops_par_loop(void (*kernel)(T0*, T1*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1) {
 
@@ -231,7 +241,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*),
 //ops_par_loop routine for 3 arguments
 //
 template <class T0,class T1,class T2>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*),
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
@@ -308,7 +318,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*),
 //ops_par_loop routine for 4 arguments
 //
 template <class T0,class T1,class T2,class T3>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*),
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
@@ -387,7 +397,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*),
 //
 template <class T0,class T1,class T2,class T3,
 class T4>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -471,7 +481,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 //
 template <class T0,class T1,class T2,class T3,
 class T4,class T5>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -556,7 +566,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 //
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -642,7 +652,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 //
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*),
      char const * name, int dim, int *range,
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -730,7 +740,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*),
      char const * name, int dim, int *range,
@@ -823,7 +833,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*),
      char const * name, int dim, int *range,
@@ -917,7 +927,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*),
      char const * name, int dim, int *range,
@@ -1012,7 +1022,7 @@ void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
 template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10,class T11>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*, T11*),
      char const * name, int dim, int *range,
@@ -1109,7 +1119,7 @@ template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10,class T11,
 class T12>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*, T11*,
                            T12*),
@@ -1211,7 +1221,7 @@ template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10,class T11,
 class T12,class T13>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*, T11*,
                            T12*, T13*),
@@ -1314,7 +1324,7 @@ template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10,class T11,
 class T12,class T13,class T14>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*, T11*,
                            T12*, T13*, T14*),
@@ -1418,7 +1428,7 @@ template <class T0,class T1,class T2,class T3,
 class T4,class T5,class T6,class T7,
 class T8,class T9,class T10,class T11,
 class T12,class T13,class T14,class T15>
-void ops_par_loop_macro(void (*kernel)(T0*, T1*, T2*, T3*,
+void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                            T4*, T5*, T6*, T7*,
                            T8*, T9*, T10*, T11*,
                            T12*, T13*, T14*, T15*),
