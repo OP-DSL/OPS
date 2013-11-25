@@ -591,8 +591,8 @@ def main():
   #ops_gen_seq(str(sys.argv[1]), date, kernels)
   #ops_gen_openmp(str(sys.argv[1]), date, kernels)
   #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
 
