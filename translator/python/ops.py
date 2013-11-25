@@ -455,8 +455,8 @@ def main():
       loc_old = 0
 
       # read original file and locate header location
-      header_len = 14
-      loc_header = [text.find("ops_seq_opt.h")]
+      header_len = 9
+      loc_header = [text.find("ops_seq.h")]
       if loc_header[0] == -1:
         header_len = 13
         loc_header = [text.find("ops_lib_cpp.h")]
@@ -590,9 +590,9 @@ def main():
 
   #ops_gen_seq(str(sys.argv[1]), date, kernels)
   #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-  #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
 
