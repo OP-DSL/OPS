@@ -31,7 +31,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq_opt.h"
+#include "ops_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -60,7 +60,7 @@ void field_summary()
 
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
-  ops_par_loop_opt(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
+  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
       ops_arg_dat(volume, S2D_00, "double", OPS_READ),
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
