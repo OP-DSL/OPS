@@ -157,10 +157,10 @@ def ops_par_loop_parse(text):
   loop_args = []
 
   #text = comment_remover(text)
-  search = "ops_par_loop_opt"
+  search = "ops_par_loop"
   i = text.find(search)
   while i > -1:
-      arg_string = text[text.find('(', i) + 1:text.find(';', i + 16)]
+      arg_string = text[text.find('(', i) + 1:text.find(';', i + 12)]
 
       # parse arguments in par loop
       temp_args = []
