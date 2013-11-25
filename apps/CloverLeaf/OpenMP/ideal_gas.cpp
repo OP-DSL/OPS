@@ -27,7 +27,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq_opt.h"
+#include "ops_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -49,14 +49,14 @@ void ideal_gas(int predict)
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   if(!predict) {
-    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),
       ops_arg_dat(soundspeed, S2D_00, "double", OPS_WRITE));
   }
   else {
-    ops_par_loop_opt(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
+    ops_par_loop(ideal_gas_kernel, "ideal_gas_kernel", 2, rangexy_inner,
       ops_arg_dat(density1, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),

@@ -26,7 +26,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq_opt.h"
+#include "ops_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -49,31 +49,31 @@ void initialise_chunk()
   ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
 
   int rangex[] = {x_min-2, x_max+3, 0, 1};
-  ops_par_loop_opt(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
                ops_arg_dat(vertexx, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(xx, S2D_00, "int", OPS_READ),
                ops_arg_dat(vertexdx, S2D_00, "double", OPS_WRITE));
 
   int rangey[] = {0, 1, y_min-2, y_max+3};
-  ops_par_loop_opt(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
                ops_arg_dat(vertexy, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(yy, S2D_00, "int", OPS_READ),
                ops_arg_dat(vertexdy, S2D_00, "double", OPS_WRITE));
 
   rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
-  ops_par_loop_opt(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
+  ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
                ops_arg_dat(vertexx, S2D_00_P10, "double", OPS_READ),
                ops_arg_dat(cellx, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(celldx, S2D_00, "double", OPS_WRITE));
 
   rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
-  ops_par_loop_opt(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
+  ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", 2, rangey,
                ops_arg_dat(vertexy, S2D_00_0P1, "double", OPS_READ),
                ops_arg_dat(celly, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(celldy, S2D_00, "double", OPS_WRITE));
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-  ops_par_loop_opt(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", 2, rangexy,
+  ops_par_loop(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", 2, rangexy,
     ops_arg_dat(volume, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(celldy, S2D_00_STRID2D_Y, "double", OPS_READ),
     ops_arg_dat(xarea, S2D_00, "double", OPS_WRITE),

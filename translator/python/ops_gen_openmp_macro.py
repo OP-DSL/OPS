@@ -398,7 +398,7 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
   comm('header')
   code('#include "ops_lib_cpp.h"')
   code('')
-  comm(' global constants       ')
+  comm('global constants')
 
   for nc in range (0,len(consts)):
     if consts[nc]['dim']==1:

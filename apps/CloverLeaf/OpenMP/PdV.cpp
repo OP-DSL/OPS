@@ -26,7 +26,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq_opt.h"
+#include "ops_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -53,7 +53,7 @@ void PdV(int predict)
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   if(predict) {
-  ops_par_loop_opt(PdV_kernel_predict, "PdV_kernel_predict", 2, rangexy_inner,
+  ops_par_loop(PdV_kernel_predict, "PdV_kernel_predict", 2, rangexy_inner,
     ops_arg_dat(xarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
     ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
@@ -68,7 +68,7 @@ void PdV(int predict)
     ops_arg_dat(energy1, S2D_00, "double", OPS_WRITE));
   }
   else {
-  ops_par_loop_opt(PdV_kernel_nopredict, "PdV_kernel_nopredict", 2, rangexy_inner,
+  ops_par_loop(PdV_kernel_nopredict, "PdV_kernel_nopredict", 2, rangexy_inner,
     ops_arg_dat(xarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
     ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
     ops_arg_dat(xvel1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
