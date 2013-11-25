@@ -45,7 +45,7 @@
 
 
 // OPS header file
-#include "ops_seq_macro.h"
+#include "ops_seq.h"
 
 // Cloverleaf constants
 #include "data.h"
