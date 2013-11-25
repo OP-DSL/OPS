@@ -524,6 +524,34 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   fclose(fp);
 }
 
+void ops_timing_output()
+{
+  int maxlen = 0;
+  for (int i = 0; i < OPS_kern_max; i++) {
+    if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
+  }
+  char *buf = (char*)malloc((maxlen+50)*sizeof(char));
+  char buf2[50];
+  sprintf(buf,"Name");
+  for (int i = 4; i < maxlen;i++) strcat(buf," ");
+  printf("%s  Count Time     Bandwidth (GB/s)\n",buf);
+
+  sprintf(buf,"");
+  for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
+  printf("%s\n",buf);
+  double sumtime = 0.0f;
+  for (int k = 0; k < OPS_kern_max; k++) {
+    if (OPS_kernels[k].count < 1) continue;
+    sprintf(buf,"%s",OPS_kernels[k].name);
+    for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
+
+    sprintf(buf2,"%-5d %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+    printf("%s%s\n",buf,buf2);
+    sumtime += OPS_kernels[k].time;
+  }
+  printf("Total kernel time: %g\n",sumtime);
+}
+
 void ops_timers_core( double * cpu, double * et )
 {
   (void)cpu;
@@ -534,7 +562,7 @@ void ops_timers_core( double * cpu, double * et )
 }
 
 void
-ops_timing_realloc ( int kernel )
+ops_timing_realloc ( int kernel, const char *name )
 {
   int OPS_kern_max_new;
   OPS_kern_curr = kernel;
@@ -551,12 +579,27 @@ ops_timing_realloc ( int kernel )
 
     for ( int n = OPS_kern_max; n < OPS_kern_max_new; n++ )
     {
-      OPS_kernels[n].count = 0;
+      OPS_kernels[n].count = -1;
       OPS_kernels[n].time = 0.0f;
       OPS_kernels[n].transfer = 0.0f;
       OPS_kernels[n].mpi_time = 0.0f;
-      OPS_kernels[n].name = "unused";
     }
     OPS_kern_max = OPS_kern_max_new;
   }
+
+  if (OPS_kernels[kernel].count == -1) {
+    OPS_kernels[kernel].name = (char *)malloc((strlen(name)+1)*sizeof(char));
+    strcpy(OPS_kernels[kernel].name,name);
+    OPS_kernels[kernel].count = 0;
+  }
+}
+
+float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
+  float size = 1.0f;
+  for (int i = 0; i < dims; i++) {
+    if (arg->stencil->stride[i] != 0)
+      size *= (range[2*i+1]-range[2*i]);
+  }
+  size *= arg->dat->size*((arg->argtype==OPS_READ || arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
+  return size;
 }

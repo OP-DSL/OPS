@@ -97,7 +97,7 @@ typedef struct
 {
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
-  int         size;        /* number of data items per grid point*/
+  int         size;        /* number of bytes per grid point*/
   int         *block_size; /* size of the array in each block dimension*/
   int         *offset;     /* starting index for each dimention*/
   char        *data;       /* data on host */
@@ -146,7 +146,7 @@ typedef struct
 
 typedef struct
 {
-  char const *name;     /* name of kernel function */
+  char       *name;     /* name of kernel function */
   int         count;    /* number of times called */
   float       time;     /* total execution time */
   float       transfer; /* bytes of data transfer (used) */
@@ -210,11 +210,13 @@ void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
 
 void ops_diagnostic_output( );
+void ops_timing_output();
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
-void ops_timing_realloc ( int );
+void ops_timing_realloc ( int, const char * );
 void ops_timers_core( double *cpu, double *et );
+float ops_compute_transfer(int dims, int *range, ops_arg *arg);
 
 /* why are these placed here ?*/
 void ops_set_dirtybit(ops_arg *args, int nargs);

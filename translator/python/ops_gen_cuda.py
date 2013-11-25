@@ -362,7 +362,12 @@ def ops_gen_cuda(master, date, consts, kernels):
     code('')
 
     #timing structs
-    code('ops_timing_realloc('+str(nk)+');')
+    code('')
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('ops_timers_core(&c1,&t1);')
+    code('')
     IF('OPS_kernels['+str(nk)+'].count == 0')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -528,10 +533,17 @@ def ops_gen_cuda(master, date, consts, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    #code('cudaDeviceSynchronize();')
+    code('if (OPS_diags>1) cudaDeviceSynchronize();')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
     #code('ops_halo_exchanges(args, '+str(nargs)+');')
+    code('')
+    comm('Update kernel record')
+    code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
     depth = depth - 2
     code('}')
 

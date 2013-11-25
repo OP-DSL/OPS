@@ -256,7 +256,12 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
-
+    code('')
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('ops_timers_core(&c1,&t1);')
+    code('')
     code('ops_halo_exchanges(args, '+str(nargs)+');\n')
 
     code('#pragma omp parallel for')
@@ -374,7 +379,14 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
       ENDFOR()
 
     code('ops_set_dirtybit(args, '+str(nargs)+');\n')
-
+    code('')
+    comm('Update kernel record')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
     depth = depth - 2
     code('}')
 
