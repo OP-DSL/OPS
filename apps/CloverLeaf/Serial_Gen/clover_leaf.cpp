@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
     accelerate();
     if(step == 1) {
-      ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
       //exit(0);

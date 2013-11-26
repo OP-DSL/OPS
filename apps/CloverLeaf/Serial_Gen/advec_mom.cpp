@@ -121,7 +121,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
     ops_par_loop(advec_mom_kernel1_x_nonvector, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_P10, "double", OPS_READ),
-        ops_arg_dat(work_array4/*advec_vel*/, S2D_00, "double", OPS_RW),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRID2D_X, "double", OPS_READ),
         ops_arg_dat(vel1, S2D_00_P10_P20_M10, "double", OPS_READ));
@@ -157,7 +156,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
     ops_par_loop(advec_mom_kernel1_y_nonvector, "advec_mom_kernel1_y", 2, range_plus1xy_minus1y,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_0P1, "double", OPS_READ),
-        ops_arg_dat(work_array4/*advec_vel*/, S2D_00, "double", OPS_RW),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(celldy, S2D_00_0P1_0M1_0M2_STRID2D_Y, "double", OPS_READ),
         ops_arg_dat(vel1, S2D_00_0P1_0P2_0M1, "double", OPS_READ));
