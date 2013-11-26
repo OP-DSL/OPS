@@ -4,16 +4,16 @@
 
 #include "lib.h"
 //user function
-#include "viscosity_kernel.h"
+#include "advec_mom_kernel.h"
 
 // host stub function
-void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
+void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5, ops_arg arg6) {
+ ops_arg arg4, ops_arg arg5) {
 
-  char *p_a[7];
-  int  offs[7][2];
-  ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
+  char *p_a[6];
+  int  offs[6][2];
+  ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
   offs[0][0] = 1;  //unit step in x dimension
@@ -88,18 +88,6 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
     offs[5][1] = -( range[1] - range[0] );
   }
 
-  offs[6][0] = 1;  //unit step in x dimension
-  offs[6][1] = ops_offs_set(range[0],range[2]+1, args[6]) - ops_offs_set(range[1],range[2], args[6]);
-  if (args[6].stencil->stride[0] == 0) {
-    offs[6][0] = 0;
-    offs[6][1] = args[6].dat->block_size[0];
-  }
-  //stride in x as y stride is 0
-  else if (args[6].stencil->stride[1] == 0) {
-    offs[6][0] = 1;
-    offs[6][1] = -( range[1] - range[0] );
-  }
-
   int off0_1 = offs[0][0];
   int off0_2 = offs[0][1];
   int dat0 = args[0].dat->size;
@@ -118,9 +106,6 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
   int off5_1 = offs[5][0];
   int off5_2 = offs[5][1];
   int dat5 = args[5].dat->size;
-  int off6_1 = offs[6][0];
-  int off6_2 = offs[6][1];
-  int dat6 = args[6].dat->size;
 
   //set up initial pointers
   p_a[0] = &args[0].data[
@@ -132,32 +117,28 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
   + args[1].dat->size * ( range[0] * 1 - args[1].dat->offset[0] ) ];
 
   p_a[2] = &args[2].data[
-  + args[2].dat->size * args[2].dat->block_size[0] * ( range[2] * 0 - args[2].dat->offset[1] )
+  + args[2].dat->size * args[2].dat->block_size[0] * ( range[2] * 1 - args[2].dat->offset[1] )
   + args[2].dat->size * ( range[0] * 1 - args[2].dat->offset[0] ) ];
 
   p_a[3] = &args[3].data[
   + args[3].dat->size * args[3].dat->block_size[0] * ( range[2] * 1 - args[3].dat->offset[1] )
-  + args[3].dat->size * ( range[0] * 0 - args[3].dat->offset[0] ) ];
+  + args[3].dat->size * ( range[0] * 1 - args[3].dat->offset[0] ) ];
 
   p_a[4] = &args[4].data[
-  + args[4].dat->size * args[4].dat->block_size[0] * ( range[2] * 1 - args[4].dat->offset[1] )
+  + args[4].dat->size * args[4].dat->block_size[0] * ( range[2] * 0 - args[4].dat->offset[1] )
   + args[4].dat->size * ( range[0] * 1 - args[4].dat->offset[0] ) ];
 
   p_a[5] = &args[5].data[
   + args[5].dat->size * args[5].dat->block_size[0] * ( range[2] * 1 - args[5].dat->offset[1] )
   + args[5].dat->size * ( range[0] * 1 - args[5].dat->offset[0] ) ];
 
-  p_a[6] = &args[6].data[
-  + args[6].dat->size * args[6].dat->block_size[0] * ( range[2] * 1 - args[6].dat->offset[1] )
-  + args[6].dat->size * ( range[0] * 1 - args[6].dat->offset[0] ) ];
-
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(27,"viscosity_kernel");
+  ops_timing_realloc(20,"advec_mom_kernel1_x_nonvector");
   ops_timers_core(&c1,&t1);
 
-  ops_halo_exchanges(args, 7);
+  ops_halo_exchanges(args, 6);
 
   xdim0 = args[0].dat->block_size[0];
   xdim1 = args[1].dat->block_size[0];
@@ -165,15 +146,14 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
   xdim3 = args[3].dat->block_size[0];
   xdim4 = args[4].dat->block_size[0];
   xdim5 = args[5].dat->block_size[0];
-  xdim6 = args[6].dat->block_size[0];
 
   for ( int n_y=range[2]; n_y<range[3]; n_y++ ){
     for ( int n_x=range[0]; n_x<range[0]+(range[1]-range[0])/4; n_x++ ){
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<4; i++ ){
-        viscosity_kernel(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
-           (double *)p_a[3]+ i*0, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1 );
+        advec_mom_kernel1_x_nonvector(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
+           (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1 );
 
       }
 
@@ -184,13 +164,12 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
       p_a[3]= p_a[3] + (dat3 * off3_1)*4;
       p_a[4]= p_a[4] + (dat4 * off4_1)*4;
       p_a[5]= p_a[5] + (dat5 * off5_1)*4;
-      p_a[6]= p_a[6] + (dat6 * off6_1)*4;
     }
 
     for ( int n_x=range[0]+((range[1]-range[0])/4)*4; n_x<range[1]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      viscosity_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6] );
+      advec_mom_kernel1_x_nonvector(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
 
 
       //shift pointers to data x direction
@@ -200,7 +179,6 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
       p_a[3]= p_a[3] + (dat3 * off3_1);
       p_a[4]= p_a[4] + (dat4 * off4_1);
       p_a[5]= p_a[5] + (dat5 * off5_1);
-      p_a[6]= p_a[6] + (dat6 * off6_1);
     }
 
     //shift pointers to data y direction
@@ -210,20 +188,18 @@ void ops_par_loop_viscosity_kernel(char const *name, int dim, int* range,
     p_a[3]= p_a[3] + (dat3 * off3_2);
     p_a[4]= p_a[4] + (dat4 * off4_2);
     p_a[5]= p_a[5] + (dat5 * off5_2);
-    p_a[6]= p_a[6] + (dat6 * off6_2);
   }
-  ops_set_dirtybit(args, 7);
+  ops_set_dirtybit(args, 6);
 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[27].count++;
-  OPS_kernels[27].time += t2-t1;
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[20].count++;
+  OPS_kernels[20].time += t2-t1;
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg5);
 }
