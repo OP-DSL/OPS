@@ -157,6 +157,8 @@ inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double
   double vdiffuw, vdiffdw, auw, adw, limiter;
   int upwind, donor, downwind, dif;
 
+  double advec_vel_temp;
+
   if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
     upwind = 2;
     donor =1;
@@ -186,8 +188,8 @@ inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double
     limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldx[OPS_ACC4(dif,0)])/6.0, MIN(auw, adw));
   }
 
-  advec_vel[OPS_ACC2(0,0)] = vel1[OPS_ACC5(donor,0)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
+  advec_vel_temp = vel1[OPS_ACC5(donor,0)] + (1.0 - sigma) * limiter;
+  mom_flux[OPS_ACC3(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
 
 }
 
@@ -258,6 +260,7 @@ inline void advec_mom_kernel1_y_nonvector( const double *node_flux, const double
   double sigma, wind, width;
   double vdiffuw, vdiffdw, auw, adw, limiter;
   int upwind, donor, downwind, dif;
+  double advec_vel_temp;
 
   if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
     upwind = 2;
@@ -283,8 +286,8 @@ inline void advec_mom_kernel1_y_nonvector( const double *node_flux, const double
     if(vdiffdw <= 0.0) wind = -1.0;
     limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy[OPS_ACC4(0,dif)])/6.0,MIN(auw,adw));
   }
-  advec_vel[OPS_ACC2(0,0)] = vel1[OPS_ACC5(0,donor)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
+  advec_vel_temp= vel1[OPS_ACC5(0,donor)] + (1.0 - sigma) * limiter;
+  mom_flux[OPS_ACC3(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
 }
 
 
