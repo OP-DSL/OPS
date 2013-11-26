@@ -133,7 +133,7 @@ int main(int argc, char **argv)
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,5);
+  ops_init(argc,argv,1);
   ops_printf(" Clover version %f\n", g_version);
 
 

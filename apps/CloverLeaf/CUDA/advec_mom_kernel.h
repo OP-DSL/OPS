@@ -142,6 +142,57 @@ inline void advec_mom_kernel1_x( const double *node_flux, const double *node_mas
 
 }
 
+
+__device__
+inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double *node_mass_pre,
+                        double *advec_vel, double *mom_flux,
+                        const double *celldx, const double *vel1) {
+
+  //node_flux accessed with: {0,0}
+  //node_mass_pre accessed with: {0,0, 1,0}
+  //celldx is accessed with {0,0, 1,0, -1,0, -2,0} striding in x
+  //vel1 is accessed with {0,0, 1,0, 2,0, -1,0}
+
+  double sigma, wind, width;
+  double vdiffuw, vdiffdw, auw, adw, limiter;
+  int upwind, donor, downwind, dif;
+
+  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
+    upwind = 2;
+    donor =1;
+    downwind = 0;
+    dif = donor;
+  }
+  else {
+    upwind=-1;
+    donor=0;
+    downwind=1;
+    dif=upwind;
+  }
+
+  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(donor,0)];
+
+  width = celldx[OPS_ACC4(0,0)];
+  vdiffuw = vel1[OPS_ACC5(donor,0)] - vel1[OPS_ACC5(upwind,0)];
+  vdiffdw = vel1[OPS_ACC5(downwind,0)] - vel1[OPS_ACC5(donor,0)];
+  limiter=0.0;
+
+
+  if(vdiffuw*vdiffdw > 0.0) {
+    auw = fabs(vdiffuw);
+    adw = fabs(vdiffdw);
+    wind = 1.0;
+    if(vdiffdw <= 0.0) wind = -1.0;
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldx[OPS_ACC4(dif,0)])/6.0, MIN(auw, adw));
+  }
+
+  advec_vel[OPS_ACC2(0,0)] = vel1[OPS_ACC5(donor,0)] + (1.0 - sigma) * limiter;
+  mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
+
+}
+
+
+
 __device__
 inline void advec_mom_kernel1_y( const double *node_flux, const double *node_mass_pre,
                         double *advec_vel, double *mom_flux,
@@ -192,6 +243,50 @@ inline void advec_mom_kernel1_y( const double *node_flux, const double *node_mas
 
   mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
 }
+
+
+__device__
+inline void advec_mom_kernel1_y_nonvector( const double *node_flux, const double *node_mass_pre,
+                        double *advec_vel, double *mom_flux,
+                        const double *celldy, const double *vel1) {
+
+  //node_flux accessed with: {0,0}
+  //node_mass_pre accessed with: {0,0, 0,1}
+  //celldy is accessed with {0,0, 0,1, 0,-1, 0,-2} striding in y
+  //vel1 is accessed with {0,0, 0,1, 0,2, 0,-1}
+
+  double sigma, wind, width;
+  double vdiffuw, vdiffdw, auw, adw, limiter;
+  int upwind, donor, downwind, dif;
+
+  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
+    upwind = 2;
+    donor = 1;
+    downwind = 0;
+    dif = donor;
+  } else {
+    upwind = -1;
+    donor = 0;
+    downwind = 1;
+    dif = upwind;
+  }
+
+  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(0,donor)];
+  width = celldy[OPS_ACC4(0,0)];
+  vdiffuw = vel1[OPS_ACC5(0,donor)] - vel1[OPS_ACC5(0,upwind)];
+  vdiffdw = vel1[OPS_ACC5(0,downwind)] - vel1[OPS_ACC5(0,donor)];
+  limiter = 0.0;
+  if(vdiffuw*vdiffdw > 0.0) {
+    auw = fabs(vdiffuw);
+    adw = fabs(vdiffdw);
+    wind = 1.0;
+    if(vdiffdw <= 0.0) wind = -1.0;
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy[OPS_ACC4(0,dif)])/6.0,MIN(auw,adw));
+  }
+  advec_vel[OPS_ACC2(0,0)] = vel1[OPS_ACC5(0,donor)] + (1.0 - sigma) * limiter;
+  mom_flux[OPS_ACC3(0,0)] = advec_vel[OPS_ACC2(0,0)] * node_flux[OPS_ACC0(0,0)];
+}
+
 
 __device__
 inline void advec_mom_kernel_pre_advec_x( double *node_mass_pre, const double *node_mass_post,
