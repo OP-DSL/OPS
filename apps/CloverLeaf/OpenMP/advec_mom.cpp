@@ -51,8 +51,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   int mom_sweep;
   ops_dat vel1;
 
-  int vector = TRUE; //currently always use vector loops .. need to set this in input
-
   if( which_vel == 1) {
     vel1 = xvel1;
   }
@@ -119,21 +117,14 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, S2D_00_M10, "double", OPS_READ));
 
-
     int range_plus1xy_minus1x[] = {x_min-1,x_max+1,y_min,y_max+1}; // partial x range partial y range
-    if(vector) {
-
-      ops_par_loop(advec_mom_kernel1_x, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
+    ops_par_loop(advec_mom_kernel1_x_nonvector, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_P10, "double", OPS_READ),
         ops_arg_dat(work_array4/*advec_vel*/, S2D_00, "double", OPS_RW),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRID2D_X, "double", OPS_READ),
         ops_arg_dat(vel1, S2D_00_P10_P20_M10, "double", OPS_READ));
-    }
-    else {
-      //currently ignor this section
-    }
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
     ops_par_loop(advec_mom_kernel2_x, "advec_mom_kernel2_x", 2, range_partx_party_2,
@@ -163,18 +154,13 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array1/*node_flux*/, S2D_00_0M1, "double", OPS_READ));
 
     int range_plus1xy_minus1y[] = {x_min,x_max+1,y_min-1,y_max+1}; // partial x range partial y range
-    if(vector) {
-        ops_par_loop(advec_mom_kernel1_y, "advec_mom_kernel1_y", 2, range_plus1xy_minus1y,
+    ops_par_loop(advec_mom_kernel1_y_nonvector, "advec_mom_kernel1_y", 2, range_plus1xy_minus1y,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_0P1, "double", OPS_READ),
         ops_arg_dat(work_array4/*advec_vel*/, S2D_00, "double", OPS_RW),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(celldy, S2D_00_0P1_0M1_0M2_STRID2D_Y, "double", OPS_READ),
         ops_arg_dat(vel1, S2D_00_0P1_0P2_0M1, "double", OPS_READ));
-    }
-    else {
-      //currently ignor this section
-    }
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
     ops_par_loop(advec_mom_kernel2_y, "advec_mom_kernel2_y", 2, range_partx_party_2,

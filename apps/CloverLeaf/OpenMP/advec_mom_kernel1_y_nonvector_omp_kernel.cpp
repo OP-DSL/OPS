@@ -10,11 +10,12 @@
 #include "advec_mom_kernel.h"
 
 // host stub function
-void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
+void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
+ ops_arg arg4, ops_arg arg5) {
 
-  int  offs[4][2];
-  ops_arg args[4] = { arg0, arg1, arg2, arg3};
+  int  offs[6][2];
+  ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
   offs[0][0] = 1;  //unit step in x dimension
   offs[0][1] = ops_offs_set(range[0],range[2]+1, args[0]) - ops_offs_set(range[1],range[2], args[0]);
@@ -64,6 +65,30 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
     offs[3][1] = -( range[1] - range[0] );
   }
 
+  offs[4][0] = 1;  //unit step in x dimension
+  offs[4][1] = ops_offs_set(range[0],range[2]+1, args[4]) - ops_offs_set(range[1],range[2], args[4]);
+  if (args[4].stencil->stride[0] == 0) {
+    offs[4][0] = 0;
+    offs[4][1] = args[4].dat->block_size[0];
+  }
+  //stride in x as y stride is 0
+  else if (args[4].stencil->stride[1] == 0) {
+    offs[4][0] = 1;
+    offs[4][1] = -( range[1] - range[0] );
+  }
+
+  offs[5][0] = 1;  //unit step in x dimension
+  offs[5][1] = ops_offs_set(range[0],range[2]+1, args[5]) - ops_offs_set(range[1],range[2], args[5]);
+  if (args[5].stencil->stride[0] == 0) {
+    offs[5][0] = 0;
+    offs[5][1] = args[5].dat->block_size[0];
+  }
+  //stride in x as y stride is 0
+  else if (args[5].stencil->stride[1] == 0) {
+    offs[5][0] = 1;
+    offs[5][1] = -( range[1] - range[0] );
+  }
+
   int off0_1 = offs[0][0];
   int off0_2 = offs[0][1];
   int dat0 = args[0].dat->size;
@@ -76,6 +101,12 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
   int off3_1 = offs[3][0];
   int off3_2 = offs[3][1];
   int dat3 = args[3].dat->size;
+  int off4_1 = offs[4][0];
+  int off4_2 = offs[4][1];
+  int dat4 = args[4].dat->size;
+  int off5_1 = offs[5][0];
+  int off5_2 = offs[5][1];
+  int dat5 = args[5].dat->size;
 
 
   #ifdef _OPENMP
@@ -91,19 +122,21 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
   xdim1 = args[1].dat->block_size[0];
   xdim2 = args[2].dat->block_size[0];
   xdim3 = args[3].dat->block_size[0];
+  xdim4 = args[4].dat->block_size[0];
+  xdim5 = args[5].dat->block_size[0];
 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(15,"advec_mom_kernel_x2");
+  ops_timing_realloc(25,"advec_mom_kernel1_y_nonvector");
   ops_timers_core(&c1,&t1);
 
-  ops_halo_exchanges(args, 4);
+  ops_halo_exchanges(args, 6);
 
   #pragma omp parallel for
   for ( int thr=0; thr<nthreads; thr++ ){
 
-    char *p_a[4];
+    char *p_a[6];
 
     int start = range[2] + ((y_size-1)/nthreads+1)*thr;
     int finish = range[2] +  MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);
@@ -125,14 +158,23 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
     + args[3].dat->size * args[3].dat->block_size[0] * ( start * 1 - args[3].dat->offset[1] )
     + args[3].dat->size * ( range[0] * 1 - args[3].dat->offset[0] ) ];
 
+    p_a[4] = &args[4].data[
+    + args[4].dat->size * args[4].dat->block_size[0] * ( start * 1 - args[4].dat->offset[1] )
+    + args[4].dat->size * ( range[0] * 0 - args[4].dat->offset[0] ) ];
+
+    p_a[5] = &args[5].data[
+    + args[5].dat->size * args[5].dat->block_size[0] * ( start * 1 - args[5].dat->offset[1] )
+    + args[5].dat->size * ( range[0] * 1 - args[5].dat->offset[0] ) ];
+
 
     for ( int n_y=start; n_y<finish; n_y++ ){
       for ( int n_x=range[0]; n_x<range[0]+(range[1]-range[0])/4; n_x++ ){
         //call kernel function, passing in pointers to data - vectorised
         #pragma simd
         for ( int i=0; i<4; i++ ){
-          advec_mom_kernel_x2(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1,
-           (double *)p_a[2]+ i*1, (double *)p_a[3]+ i*1 );
+          advec_mom_kernel1_y_nonvector(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1,
+           (double *)p_a[2]+ i*1, (double *)p_a[3]+ i*1,
+           (double *)p_a[4]+ i*0, (double *)p_a[5]+ i*1 );
 
         }
 
@@ -141,12 +183,15 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
         p_a[1]= p_a[1] + (dat1 * off1_1)*4;
         p_a[2]= p_a[2] + (dat2 * off2_1)*4;
         p_a[3]= p_a[3] + (dat3 * off3_1)*4;
+        p_a[4]= p_a[4] + (dat4 * off4_1)*4;
+        p_a[5]= p_a[5] + (dat5 * off5_1)*4;
       }
 
       for ( int n_x=range[0]+((range[1]-range[0])/4)*4; n_x<range[1]; n_x++ ){
         //call kernel function, passing in pointers to data - remainder
-        advec_mom_kernel_x2(  (double *)p_a[0], (double *)p_a[1],
-           (double *)p_a[2], (double *)p_a[3] );
+        advec_mom_kernel1_y_nonvector(  (double *)p_a[0], (double *)p_a[1],
+           (double *)p_a[2], (double *)p_a[3],
+           (double *)p_a[4], (double *)p_a[5] );
 
 
         //shift pointers to data x direction
@@ -154,6 +199,8 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
         p_a[1]= p_a[1] + (dat1 * off1_1);
         p_a[2]= p_a[2] + (dat2 * off2_1);
         p_a[3]= p_a[3] + (dat3 * off3_1);
+        p_a[4]= p_a[4] + (dat4 * off4_1);
+        p_a[5]= p_a[5] + (dat5 * off5_1);
       }
 
       //shift pointers to data y direction
@@ -161,18 +208,22 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, int dim, int* range,
       p_a[1]= p_a[1] + (dat1 * off1_2);
       p_a[2]= p_a[2] + (dat2 * off2_2);
       p_a[3]= p_a[3] + (dat3 * off3_2);
+      p_a[4]= p_a[4] + (dat4 * off4_2);
+      p_a[5]= p_a[5] + (dat5 * off5_2);
     }
   }
 
-  ops_set_dirtybit(args, 4);
+  ops_set_dirtybit(args, 6);
 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[15].count++;
-  OPS_kernels[15].time += t2-t1;
-  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[25].count++;
+  OPS_kernels[25].time += t2-t1;
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg5);
 }
