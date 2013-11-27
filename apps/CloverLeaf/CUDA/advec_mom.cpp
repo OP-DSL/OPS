@@ -125,6 +125,15 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRID2D_X, "double", OPS_READ),
         ops_arg_dat(vel1, S2D_00_P10_P20_M10, "double", OPS_READ));
 
+   //     ops_par_loop(advec_mom_kernel1_x_nonvector_test, "advec_mom_kernel1_x", 2, range_plus1xy_minus1x,
+   //     ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
+   //     ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_P10, "double", OPS_READ),
+   //     ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
+   //     ops_arg_dat(celldx, S2D_00_P10_M10_M20_STRID2D_X, "double", OPS_READ),
+   //     ops_arg_dat(vel1, S2D_00_P10_P20_M10, "double", OPS_READ));
+
+
+
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
     ops_par_loop(advec_mom_kernel2_x, "advec_mom_kernel2_x", 2, range_partx_party_2,
         ops_arg_dat(vel1, S2D_00, "double", OPS_WRITE),

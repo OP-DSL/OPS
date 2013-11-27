@@ -54,6 +54,21 @@ def comment_remover(text):
     )
     return re.sub(pattern, replacer, text)
 
+def remove_triling_w_space(text):
+  line_start = 0
+  line = ""
+  line_end = 0
+  striped_test = ''
+  count = 0
+  while 1:
+    line_end =  text.find("\n",line_start+1)
+    line = text[line_start:line_end]
+    line = line.rstrip()
+    striped_test = striped_test + line +'\n'
+    line_start = line_end + 1
+    line = ""
+    if line_end < 0:
+      return striped_test[:-1]
 
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
@@ -251,6 +266,10 @@ def main():
       src_file = str(sys.argv[a])
       f = open(src_file, 'r')
       text = f.read()
+
+      #get rid of all comments
+      text = remove_triling_w_space(comment_remover(text))
+      #text = comment_remover(text)
 
       #
       # check for ops_init, ops_exit calls
@@ -561,7 +580,7 @@ def main():
           loc_old = endofcall + 1
           continue
 
-      #print loc_old, len(text)
+
       fid.write(text[loc_old:])
       fid.close()
       f.close()
@@ -590,9 +609,9 @@ def main():
 
   #ops_gen_seq(str(sys.argv[1]), date, kernels)
   #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-  ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
 

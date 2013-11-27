@@ -218,6 +218,11 @@ def ops_gen_cuda(master, date, consts, kernels):
     text = remove_triling_w_space(text)
 
     i = text.find(name)
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
+
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
@@ -570,7 +575,7 @@ def ops_gen_cuda(master, date, consts, kernels):
   code('#include "ops_cuda_reduction.h"')
   code('')
 
-  comm(' global constants       ')
+  comm(' global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim']==1:
       code('__constant__ '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
@@ -595,7 +600,7 @@ def ops_gen_cuda(master, date, consts, kernels):
       ENDIF()
     code('cutilSafeCall(cudaMemcpyToSymbol('+(str(consts[nc]['name']).replace('"','')).strip()+', dat, dim*size));')
     ENDIF()
-    code('else ')
+    code('else')
 
   code('{')
   depth = depth + 2
