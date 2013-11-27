@@ -1,7 +1,7 @@
 #ifndef REVERT_KERNEL_H
 #define REVERT_KERNEL_H
 
-__device__
+
 inline void revert_kernel( const double *density0, double *density1,
                 const double *energy0, double *energy1) {
 

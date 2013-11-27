@@ -4,7 +4,7 @@
 //#include "data.h"
 #include "definitions.h"
 
-//__device__
+//
 inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
 
   int x_min=field->x_min;
@@ -24,7 +24,7 @@ inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *ve
   vertexdx[OPS_ACC2(0,0)] = (double)d_x;
 }
 
-//__device__
+//
 inline void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
 
   int x_min=field->x_min;
@@ -44,7 +44,7 @@ inline void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *ve
   vertexdy[OPS_ACC2(0,0)] = (double)d_y;
 }
 
-//__device__
+//
 inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
 
   int x_min=field->x_min;
@@ -65,7 +65,7 @@ inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, 
 
 }
 
-//__device__
+//
 inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
   int x_min=field->x_min;
@@ -87,7 +87,7 @@ inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly, 
 
 }
 
-//__device__
+//
 inline void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
                                          const double *celldx, double *yarea) {
 

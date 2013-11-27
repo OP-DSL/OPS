@@ -4,7 +4,7 @@
 //#include "data.h"
 #include "definitions.h"
 
-__device__
+
 inline void PdV_kernel_predict(const double *xarea, const double *xvel0,
                 const double *yarea, const double *yvel0,
                 double *volume_change, const double *volume,
@@ -45,7 +45,7 @@ inline void PdV_kernel_predict(const double *xarea, const double *xvel0,
 
 }
 
-__device__
+
 inline void PdV_kernel_nopredict(const double *xarea, const double *xvel0, const double *xvel1,
                 const double *yarea, const double *yvel0, const double *yvel1,
                 double *volume_change, const double *volume,

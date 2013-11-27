@@ -1,10 +1,9 @@
 #ifndef CALC_DT_KERNEL_H
 #define CALC_DT_KERNEL_H
 
-////#include "data.h"
+//#include "data.h"
 //#include "definitions.h"
 
-__device__
 inline void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
                    const double *viscosity, const double *density0, const double *xvel0,
                     const double *xarea, const double *volume, const double *yvel0,
@@ -52,13 +51,13 @@ inline void calc_dt_kernel(const double *celldx, const double *celldy, const dou
 }
 
 
-__device__
+
 inline void calc_dt_kernel_min(const double* dt_min /*dt_min is work_array1*/,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 }
 
-__device__
+
 inline void calc_dt_kernel_get(const double* cellx, const double* celly,
                         double* xl_pos, double* yl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
@@ -66,7 +65,7 @@ inline void calc_dt_kernel_get(const double* cellx, const double* celly,
   //printf("xl_pos %lf yl_pos %lf\n",*xl_pos,*yl_pos);
 }
 
-__device__
+
 inline void calc_dt_kernel_print(const double *cellx, const double *celly,
                         const double *xvel0, const double *yvel0,
                         const double *density0, const double *energy0,

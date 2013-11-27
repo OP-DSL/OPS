@@ -3,7 +3,7 @@
 //#include "data.h"
 #include "definitions.h"
 
-__device__
+
 inline void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, const double *volume,
                         const double *vol_flux_x, const double *vol_flux_y) {
 
@@ -14,7 +14,7 @@ inline void advec_cell_kernel1_xdir( double *pre_vol, double *post_vol, const do
 }
 
 
-__device__
+
 inline void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, const double *volume,
                         const double *vol_flux_x) {
 
@@ -23,7 +23,7 @@ inline void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, const do
 
 }
 
-__device__
+
 inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre_vol, const int *xx,
                               const double *vertexdx,
                               const double *density1, const double *energy1 ,
@@ -94,10 +94,10 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
   ener_flux[OPS_ACC7(0,0)] = mass_flux_x[OPS_ACC6(0,0)] * ( energy1[OPS_ACC0(donor,0)] + limiter );
 }
 
-__device__
+
 inline void advec_cell_kernel4_xdir( double *density1, double *energy1,
                          const double *mass_flux_x, const double *vol_flux_x,
-                         double *pre_vol, double *post_vol,
+                         const double *pre_vol, const double *post_vol,
                          double *pre_mass, double *post_mass,
                          double *advec_vol, double *post_ener,
                          double *ener_flux) {
@@ -111,7 +111,7 @@ inline void advec_cell_kernel4_xdir( double *density1, double *energy1,
 
 }
 
-__device__
+
 inline void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, const double *volume,
                         const double *vol_flux_x, const double *vol_flux_y) {
 
@@ -120,7 +120,7 @@ inline void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, const do
   post_vol[OPS_ACC1(0,0)] = pre_vol[OPS_ACC0(0,0)] - ( vol_flux_y[OPS_ACC4(0,1)] - vol_flux_y[OPS_ACC4(0,0)]);
 
 }
-__device__
+
 inline void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, const double *volume,
                         const double *vol_flux_y) {
 
@@ -129,7 +129,7 @@ inline void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, const do
 
 }
 
-__device__
+
 inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre_vol, const int *yy,
                               const double *vertexdy,
                               const double *density1, const double *energy1 ,
@@ -199,10 +199,10 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
 
   ener_flux[OPS_ACC7(0,0)] = mass_flux_y[OPS_ACC6(0,0)] * ( energy1[OPS_ACC0(0,donor)] + limiter );
 }
-__device__
+
 inline void advec_cell_kernel4_ydir( double *density1, double *energy1,
                          const double *mass_flux_y, const double *vol_flux_y,
-                         double *pre_vol, double *post_vol,
+                         const double *pre_vol, const double *post_vol,
                          double *pre_mass, double *post_mass,
                          double *advec_vol, double *post_ener,
                          double *ener_flux) {

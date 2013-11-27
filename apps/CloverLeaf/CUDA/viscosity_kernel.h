@@ -1,7 +1,7 @@
 #ifndef VISCOSITY_KERNEL_H
 #define VISCOSITY_KERNEL_H
 
-__device__
+
 inline void viscosity_kernel(const double *xvel0, const double *yvel0,
                        const double *celldx, const double *celldy,
                        const double *pressure, const double *density0,

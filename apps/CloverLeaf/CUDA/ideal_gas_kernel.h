@@ -1,7 +1,7 @@
 #ifndef IDEAL_GAS_KERNEL_H
 #define IDEAL_GAS_KERNEL_H
 
-__device__
+
 inline void ideal_gas_kernel(const double *density, const double *energy,
                      double *pressure, double *soundspeed) {
 

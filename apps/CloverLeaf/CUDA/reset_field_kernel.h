@@ -1,7 +1,7 @@
 #ifndef RESET_FIELD_KERNEL_H
 #define RESET_FIELD_KERNEL_H
 
-__device__
+
 inline void reset_field_kernel1( double *density0, const double *density1,
                         double *energy0, const double *energy1) {
 
@@ -10,7 +10,7 @@ inline void reset_field_kernel1( double *density0, const double *density1,
 
 }
 
-__device__
+
 inline void reset_field_kernel2( double *xvel0, const double *xvel1,
                         double *yvel0, const double *yvel1) {
 

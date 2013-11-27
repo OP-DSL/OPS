@@ -1,7 +1,7 @@
 #ifndef FIELD_SUMMARY_KERNEL_H
 #define FIELD_SUMMARY_KERNEL_H
 
-__device__
+
 inline void field_summary_kernel( const double *volume, const double *density0,
                      const double *energy0, const double *pressure,
                      const double *xvel0,

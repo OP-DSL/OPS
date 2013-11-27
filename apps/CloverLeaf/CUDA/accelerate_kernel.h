@@ -6,7 +6,7 @@
 
 
 
-__device__
+
 inline void accelerate_kernel_stepbymass(const double *density0, const double *volume,
                 double *stepbymass) {
 
@@ -23,7 +23,7 @@ inline void accelerate_kernel_stepbymass(const double *density0, const double *v
 
 }
 
-__device__
+
 inline void accelerate_kernelx1(const  double *xvel0, double *xvel1,
                         const double *stepbymass,
                         const double *xarea, const double *pressure) {
@@ -35,7 +35,7 @@ inline void accelerate_kernelx1(const  double *xvel0, double *xvel1,
               xarea[OPS_ACC3(0,-1)] * ( pressure[OPS_ACC4(0,-1)] - pressure[OPS_ACC4(-1,-1)] ) );
 }
 
-__device__
+
 inline void accelerate_kernely1( const double *yvel0, double *yvel1,
                         const double *stepbymass,
                         const double *yarea, const double *pressure) {
@@ -50,7 +50,7 @@ inline void accelerate_kernely1( const double *yvel0, double *yvel1,
 }
 
 
-__device__
+
 inline void accelerate_kernelx2( double *xvel1, const double *stepbymass,
                         const double *xarea, const double *viscosity) {
 
@@ -63,7 +63,7 @@ inline void accelerate_kernelx2( double *xvel1, const double *stepbymass,
 }
 
 
-__device__
+
 inline void accelerate_kernely2( double *yvel1, const double *stepbymass,
                         const double *yarea, const double *viscosity) {
 
