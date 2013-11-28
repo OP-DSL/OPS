@@ -81,8 +81,10 @@ extern int visit_frequency;
 extern int summary_frequency;
 extern int use_vector_loops;
 
-extern double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
+
+extern int x_min, y_min, x_max, y_max, x_cells, y_cells;
 
 extern int jdt, kdt;
 

@@ -534,7 +534,7 @@ void ops_timing_output()
   char buf2[50];
   sprintf(buf,"Name");
   for (int i = 4; i < maxlen;i++) strcat(buf," ");
-  printf("%s  Count Time     Bandwidth (GB/s)\n",buf);
+  printf("\n\n%s  Count Time     Bandwidth (GB/s)\n",buf);
 
   sprintf(buf,"");
   for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");

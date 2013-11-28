@@ -31,6 +31,7 @@
 // OPS header file
 #include "ops_seq.h"
 
+
 #include "data.h"
 #include "definitions.h"
 
@@ -46,7 +47,7 @@ void field_summary();
 
 void start()
 {
-  time  = 0.0;
+  clover_time  = 0.0;
   step  = 0;
   dtold = dtinit;
   dt    = dtinit;

@@ -50,6 +50,11 @@ void timestep()
   dt = g_big;
   int small = 0;
 
+  x_pos  = 0.0;
+  y_pos  = 0.0;
+  xl_pos = 0.0;
+  yl_pos = 0.0;
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
@@ -116,10 +121,10 @@ void timestep()
   if(dt < dtmin) small=1;
   ops_printf(
   " Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E\n",
-    step,   time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+    step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
   ops_fprintf(g_out,
   " Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E\n",
-    step,   time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+    step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
 
   if(small == 1) {
     ops_printf("timestep :small timestep\n");
