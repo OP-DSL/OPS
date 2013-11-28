@@ -131,6 +131,8 @@ int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
 
+int x_min, y_min, x_max, y_max, x_cells, y_cells;
+
 double end_time;
 int end_step;
 int visit_frequency;
@@ -160,12 +162,12 @@ int main(int argc, char **argv)
 
 
   //initialize sizes using global values
-  int x_cells = grid->x_cells;
-  int y_cells = grid->y_cells;
-  int x_min = field->x_min;
-  int x_max = field->x_max;
-  int y_min = field->y_min;
-  int y_max = field->y_max;
+  x_cells = grid->x_cells;
+  y_cells = grid->y_cells;
+  x_min = field->x_min;
+  x_max = field->x_max;
+  y_min = field->y_min;
+  y_max = field->y_max;
 
   ops_decl_const("g_small", 1, "double", &g_small );
   ops_decl_const("g_big", 1, "double", &g_big );

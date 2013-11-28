@@ -148,8 +148,10 @@ int complete; //logical
 
 int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-double dtold, dt, time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
+double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;
+
+int x_min, y_min, x_max, y_max, x_cells, y_cells;
 
 double end_time;
 int end_step;
@@ -234,13 +236,13 @@ int main(int argc, char **argv)
     if (advect_x == TRUE) advect_x = FALSE;
     else advect_x = TRUE;
 
-    time = time + dt;
+    clover_time = clover_time + dt;
 
     if(summary_frequency != 0)
       if((step%summary_frequency) == 0)
         field_summary();
 
-    if((time+g_small) > end_time || (step >= end_step)) {
+    if((clover_time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
       break;
