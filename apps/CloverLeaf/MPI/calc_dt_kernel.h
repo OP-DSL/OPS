@@ -47,7 +47,7 @@ void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
 
   //dt_min is work_array1
   dt_min[OPS_ACC10(0,0)] = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
-  //printf("dt_min %3.15e \n",**dt_min);
+
 }
 
 void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,

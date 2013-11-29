@@ -162,6 +162,8 @@ void read_input()
                 token = strtok(NULL, " =");
                 states =  (state_type *) xrealloc(states, sizeof(state_type) * (number_of_states+1));
                 states[number_of_states] = (state_type ) xmalloc(sizeof(state_type_core));
+                states[number_of_states]->xvel = 0.0;
+                states[number_of_states]->yvel = 0.0;
 
                 token = strtok(NULL, " =");
                 while(token) {

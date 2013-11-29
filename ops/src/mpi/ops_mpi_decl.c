@@ -57,10 +57,10 @@ void ops_exit()
   //op_rt_exit();
   ops_exit_core();
 
-  /*int flag = 0;
-  MPI_Finalized(&flag);
-  if(!flag)
-    MPI_Finalize();*/
+  //int flag = 0;
+  //MPI_Finalized(&flag);
+  //if(!flag)
+    MPI_Finalize();
 }
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
