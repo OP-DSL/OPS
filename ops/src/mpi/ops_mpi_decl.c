@@ -35,15 +35,33 @@
   * @details Implements the OPS API calls for the mpi backend
   */
 
+#include <mpi.h>
 #include <ops_lib_cpp.h>
 
 
 void
 ops_init ( int argc, char ** argv, int diags )
 {
+  //int flag = 0;
+  //MPI_Initialized(&flag);
+  //if(!flag)
+  //{
+    MPI_Init(&argc, &argv);
+  //}
   ops_init_core ( argc, argv, diags );
 }
 
+void ops_exit()
+{
+  //op_mpi_exit();
+  //op_rt_exit();
+  ops_exit_core();
+
+  /*int flag = 0;
+  MPI_Finalized(&flag);
+  if(!flag)
+    MPI_Finalize();*/
+}
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,

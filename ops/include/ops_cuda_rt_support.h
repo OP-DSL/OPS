@@ -50,6 +50,7 @@
 #include <device_launch_parameters.h>
 #include <device_functions.h>
 
+#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
 
 
@@ -91,6 +92,7 @@ void reallocReductArrays( int reduct_bytes );
 void mvConstArraysToDevice( int consts_bytes );
 void mvReductArraysToDevice( int reduct_bytes );
 void mvReductArraysToHost( int reduct_bytes );
+void ops_cuda_exit( );
 
 #ifdef __cplusplus
 }

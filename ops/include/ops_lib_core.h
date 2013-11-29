@@ -185,7 +185,7 @@ extern ops_kernel * OPS_kernels;
 
 void ops_init_core( int argc, char **argv, int diags_level );
 
-void ops_exit( void );
+void ops_exit_core( void );
 
 ops_block ops_decl_block(int dims, int *size, char *name);
 

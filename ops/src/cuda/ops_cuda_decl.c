@@ -74,6 +74,11 @@ void ops_init ( int argc, char ** argv, int diags )
 
 }
 
+void ops_exit()
+{
+  ops_cuda_exit(); // frees dat_d memory
+  ops_exit_core(); // frees lib core variables
+}
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,

@@ -43,6 +43,13 @@ ops_init ( int argc, char ** argv, int diags )
   ops_init_core ( argc, argv, diags );
 }
 
+void
+ops_exit ( )
+{
+  //ops_rt_exit ( );
+  ops_exit_core ( );
+}
+
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  char* data, int type_size,
                            char const * type, char const * name )

@@ -129,7 +129,7 @@ void ops_init_core( int argc, char ** argv, int diags )
 
 }
 
-void ops_exit( )
+void ops_exit_core( )
 {
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {

@@ -277,3 +277,16 @@ void mvReductArraysToHost ( int reduct_bytes )
                                cudaMemcpyDeviceToHost ) );
   cutilSafeCall ( cudaDeviceSynchronize ( ) );
 }
+
+
+void ops_cuda_exit ( )
+{
+  if (!OPS_hybrid_gpu) return;
+  ops_dat_entry *item;
+  TAILQ_FOREACH(item, &OPS_dat_list, entries)
+  {
+    cutilSafeCall (cudaFree((item->dat)->data_d));
+  }
+
+  cudaDeviceReset ( );
+}
