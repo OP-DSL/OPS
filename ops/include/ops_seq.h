@@ -40,6 +40,7 @@
 
 
 #ifndef OPS_ACC_MACROS
+#ifndef OPS_DEBUG
 #define OPS_ACC0(x,y) (x+xdim0*(y))
 #define OPS_ACC1(x,y) (x+xdim1*(y))
 #define OPS_ACC2(x,y) (x+xdim2*(y))
@@ -56,6 +57,24 @@
 #define OPS_ACC13(x,y) (x+xdim13*(y))
 #define OPS_ACC14(x,y) (x+xdim14*(y))
 #define OPS_ACC15(x,y) (x+xdim15*(y))
+#else
+#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
+#define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
+#define OPS_ACC2(x,y) (ops_stencil_check_2d(2, x, y, xdim2, -1))
+#define OPS_ACC3(x,y) (ops_stencil_check_2d(3, x, y, xdim3, -1))
+#define OPS_ACC4(x,y) (ops_stencil_check_2d(4, x, y, xdim4, -1))
+#define OPS_ACC5(x,y) (ops_stencil_check_2d(5, x, y, xdim5, -1))
+#define OPS_ACC6(x,y) (ops_stencil_check_2d(6, x, y, xdim6, -1))
+#define OPS_ACC7(x,y) (ops_stencil_check_2d(7, x, y, xdim7, -1))
+#define OPS_ACC8(x,y) (ops_stencil_check_2d(8, x, y, xdim8, -1))
+#define OPS_ACC9(x,y) (ops_stencil_check_2d(9, x, y, xdim8, -1))
+#define OPS_ACC10(x,y) (ops_stencil_check_2d(10, x, y, xdim10, -1))
+#define OPS_ACC11(x,y) (ops_stencil_check_2d(11, x, y, xdim11, -1))
+#define OPS_ACC12(x,y) (ops_stencil_check_2d(12, x, y, xdim12, -1))
+#define OPS_ACC13(x,y) (ops_stencil_check_2d(13, x, y, xdim13, -1))
+#define OPS_ACC14(x,y) (ops_stencil_check_2d(14, x, y, xdim14, -1))
+#define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
+#endif
 #endif
 
 extern int xdim0;
