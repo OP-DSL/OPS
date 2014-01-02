@@ -52,7 +52,7 @@ detailed.
 
 Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
 applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
-due to the implicit connectivity between neighboring mesh elements (such as vertices, cells) in structured
+due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
 meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
 points using one or more ``stencils'' to access data.\\
 
@@ -250,7 +250,6 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 \caption{\small example user kernel}
 \normalsize\vspace{-0pt}\label{fig:example}
 \end{figure}
-
 \begin{figure}[h]\small
 \vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
 \begin{pyglist}[language=c]
@@ -269,7 +268,9 @@ ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
 
 \noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
 to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the macros \texttt{OPS\_ACC0, OPS\_ACC1} and
-\texttt{OPS\_ACC2}. This specifies the stencil in accessing the elements of the respective data arrays. 
+\texttt{OPS\_ACC2}. These specifies the stencil in accessing the elements of the respective data arrays. At compile
+time these macros will be expanded to give the correct array index (in this case accessing a 1D array with 2D indexing
+related to the stencil specified) to access the relevant element.
 
 \begin{thebibliography}{1}
 \bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
