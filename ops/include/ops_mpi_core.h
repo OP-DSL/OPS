@@ -1,3 +1,5 @@
+#ifndef __OPS_MPI_CORE_H
+#define __OPS_MPI_CORE_H
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -30,41 +32,18 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief dummy function for CPU backend
-  * @author Gihan Mudalige
-  * @details Implements dummy functions for cpu backend (OpenMP and Sequential)
+/** @brief core header file for the ops MPI backend
+  * @author Gihan Mudalige, Istvan Reguly
+  * @details Headderfile for OPS MPI backend
   */
 
+#include <mpi.h>
 
-#include "ops_lib_core.h"
+/** Define the root MPI process **/
+#ifdef MPI_ROOT
+#undef MPI_ROOT
+#endif
+#define MPI_ROOT 0
 
-void ops_halo_exchanges(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
 
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-/* uncomment after MPI backend is done
-int ops_is_root()
-{
-  return 1;
-}
-*/
+#endif /*__OPS_MPI_CORE_H*/

@@ -126,7 +126,7 @@ void build_field()
   //
   //Declare commonly used stencils
   //
-  int s2D_00[]            = {0,0};
+  int s2D_00[]         = {0,0};
   int s2D_00_P10[]     = {0,0, 1,0};
   int s2D_00_0P1[]     = {0,0, 0,1};
   int s2D_00_M10[]     = {0,0, -1,0};

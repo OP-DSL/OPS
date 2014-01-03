@@ -30,41 +30,19 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief dummy function for CPU backend
+/** @brief ops mpi run-time support routines
   * @author Gihan Mudalige
-  * @details Implements dummy functions for cpu backend (OpenMP and Sequential)
+  * @details Implements the runtime support routines for the OPS mpi backend
   */
 
+#include <ops_lib_core.h>
 
-#include "ops_lib_core.h"
+#include <mpi.h>
+#include <ops_mpi_core.h>
 
-void ops_halo_exchanges(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-/* uncomment after MPI backend is done
 int ops_is_root()
 {
-  return 1;
+  int my_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+  return (my_rank==MPI_ROOT);
 }
-*/

@@ -47,6 +47,12 @@ void field_summary();
 
 void start()
 {
+  /**--------------------------decompose 2D grid ----------------------------**/
+  if (ops_is_root()) {
+    ops_fprintf(g_out," Setting up initial geometry\n");
+    ops_fprintf(g_out,"\n");
+  }
+
   clover_time  = 0.0;
   step  = 0;
   dtold = dtinit;
