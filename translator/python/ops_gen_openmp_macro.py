@@ -183,7 +183,11 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
-
+    code('#ifdef OPS_DEBUG')
+    code('ops_register_args(args, "'+name+'");')
+    code('#endif')
+    code('')
+    
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = 1;  //unit step in x dimension')

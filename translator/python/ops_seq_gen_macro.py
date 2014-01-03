@@ -68,8 +68,13 @@ f.write(top)
 #
 
 f.write('#ifndef OPS_ACC_MACROS\n')
+f.write('#ifndef OPS_DEBUG\n')
 for nargs in range (0,maxargs):
   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (x+xdim'+str(nargs)+'*(y))\n')
+f.write('#else\n\n')
+for nargs in range (0,maxargs):
+  f.write('#define OPS_ACC'+str(nargs)+'(x,y) (ops_stencil_check_2d('+str(nargs)+', x, y, xdim'+str(nargs)+', -1))\n')
+f.write('#endif\n')
 f.write('#endif\n\n')
 
 for nargs in range (0,maxargs):
@@ -137,7 +142,9 @@ for nargs in range (1,maxargs+1):
         if n%n_per_line == 3 and n <> nargs-1:
           f.write('\n                    ')
 
-
+    f.write('  #ifdef OPS_DEBUG')
+    f.write('  ops_register_args(args, name);');
+    f.write('  #endif')
     f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
     f.write('    if(args[i].stencil!=NULL) {\n')
     f.write('      offs[i][0] = 1;  //unit step in x dimension\n')

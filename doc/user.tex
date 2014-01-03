@@ -1,0 +1,283 @@
+\documentclass[11pt]{article}
+\usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{graphicx}
+% \usepackage[footnotesize]{subfigure}
+\usepackage{listings}
+\usepackage{verbments}
+
+\date{Jan 2014}
+
+ \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
+ \oddsidemargin 0.1in
+ \textheight 9.25in  \textwidth 6.00in
+ \parskip 5pt plus 1pt minus 1pt
+ \def \baselinestretch {1.25}   % one-and-a-half spaced
+ \setlength {\unitlength} {0.75in}
+
+\newenvironment{routine}[2]
+{\vspace{.0in}{\noindent\bf\hspace{-5pt}  #1}{\\ \noindent #2}
+\begin{list}{}{
+\renewcommand{\makelabel}[1]{{\tt  ##1 } \hfil}
+\itemsep 0pt plus 1pt minus 1pt
+\leftmargin  1.5in
+\rightmargin 0.0in
+\labelwidth  1.1in
+\itemindent  0.0in
+\listparindent  0.0in
+\labelsep    0.05in}
+}{\end{list}}
+%
+
+\begin{document}
+
+\title{OPS C++ User's Manual}
+\author{Mike Giles, Istvan Reguly, Gihan Mudalige}
+\maketitle
+
+\newpage
+
+
+\tableofcontents
+
+
+\newpage
+\section{Introduction}
+
+
+OPS is a high-level framework with associated libraries and preprocessors to generate parallel executables for
+applications on \textbf{multi-block structured grids}. Multi-block structured grids consists of an unstructured
+collection of structured meshes/grids. This document describes the current OPS C++ API, which supports the development
+of single-block structured mesh applications. Initial proposals for extending to multi-block structured meshes are also
+detailed. 
+
+Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
+applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
+due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
+meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
+points using one or more ``stencils'' to access data.\\
+
+\noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
+application:
+\begin{itemize}
+\item
+When looping over the interior with loop indices $i,j,k$, often 
+there are 1D arrays which are referenced using just one of the 
+indices.
+
+\item
+To implement boundary conditions, we often loop over a 2D face,
+accessing both the 3D dataset and data from a 2D dataset.
+
+\item
+To implement periodic boundary conditions using dummy ``halo'' 
+points, we sometimes have to copy one plane of boundary data to
+another.  e.g.~if the first dimension has size $I$ then we might 
+copy the plane $i=I\!-\!2$ to plane $i=0$, and plane $i=1$ to 
+plane $i=I\!-\!1$.
+
+\item
+In multigrid, we are working with two grids with one having twice
+as many points as the other in each direction.  To handle this we 
+require a stencil with a non-unit stride.
+
+\item
+In multi-block grids, we have several structured blocks.  The 
+connectivity between the faces of different blocks can be quite 
+complex, and in particular they may not be oriented in the same 
+way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ 
+face of another block.  This is awkward and hard to handle simply.
+\end{itemize}
+
+\noindent The latest proposal is to handle all of these different requirements through stencil definitions.
+
+
+\clearpage
+
+\newpage
+\section{OPS C++ API}
+
+\subsection{Initialisation and termination routines}
+
+\begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
+{This routine must be called before all other OPS routines.}
+\item[argc, argv]   the usual command line arguments
+\item[diags\_level] an integer which defines the level of debugging
+                    diagnostics and reporting to be performed
+\end{routine}
+
+
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\begin{routine} {ops\_block ops\_decl\_block(int dims, int *size, char *name)}
+{This routine defines a structured grid block.}
+
+\item[dims]          dimension of the set
+\item[size]          size of the set in each dimension
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, T *data, char *name)}
+{This routine defines a dataset.}
+
+\item[block]         structured block
+\item[dim]           dimension of dataset (number of items per block element)
+\item[data]          input data of type {\tt T}
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\begin{routine} {void ops\_diagnostic\_output()}
+{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
+\item \vspace{-0.3in}
+\end{routine}
+
+
+
+\newpage
+
+\subsection{Parallel loop syntax}
+
+A parallel loop with N arguments has the following syntax:
+
+\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), char *name,
+                 int dims, int *range,\\
+\hspace*{1.4in} ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
+
+\item[kernel]     user's kernel function with N arguments
+\item[name]       name of kernel function, used for output diagnostics
+\item[dims]       dimension of loop iteration
+\item[range]      iteration range array
+\item[args]       arguments
+\end{routine}
+
+
+\vspace{0.2in}
+\noindent
+The {\bf ops\_arg} arguments in {\bf ops\_par\_loop} are provided by one of the 
+following routines, one for global constants and reductions, and the other 
+for OPS datasets.
+
+\vspace{0.1in}
+
+
+\begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
+\item[data]       data array
+\item[dim]        array dimension
+\item[type]    	  string representing the type of data held in data
+\item[acc]        access type
+\end{routine}
+
+
+\begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
+                 ops\_access acc)}{}
+\item[dat]        dataset
+\item[stencil]    stencil for accessing data
+\item[type]    	  string representing the type of data held in dataset
+\item[acc]        access type
+\end{routine}
+
+
+\newpage
+
+\noindent The final ingredient is the stencil specification, for which we have two versions: simple and strided.\\
+
+\begin{routine} {ops\_stencil ops\_decl\_stencil(int dims,
+                 int points, int *stencil, char *name)}{}
+\item[dims]     dimension of loop iteration
+\item[points]   number of points in the stencil
+\item[stencil]  stencil for accessing data
+\item[name]	string representing the name of the stencil
+\end{routine}
+
+
+\begin{routine} {ops\_stencil ops\_decl\_strided\_stencil(int dims, int points,\\
+\hspace*{2.65in} int *stencil, int *stride, char *name)}{}
+\item[dims]       dimension of loop iteration
+\item[points]     number of points in the stencil
+\item[stencil]    stencil for accessing data
+\item[stride]     stride for accessing data
+\item[name]	string representing the name of the stencil
+\end{routine}
+
+\vspace{0.2in}
+
+\noindent In the strided case, the indices for referencing the data used by point {\tt p} are defined as:\\
+
+\noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]}\\
+
+\noindent If, for one or more dimensions, both {\tt stride[m]} and {\tt stencil[p*dims+m]} are zero, then one of the
+following must be true;
+\begin{itemize}
+\item
+the dataset being referenced has size 1 for these dimensions
+\item
+these dimensions are to be omitted and so the dataset has 
+dimension equal to the number of remaining dimensions.
+\end{itemize}
+
+\noindent These two stencil definitions probably take care of all of the cases in the Introduction except for multiblock
+applications with interfaces with different orientations -- this will need a third, even more general, stencil
+specification.
+
+\noindent The strided stencil will handle both multigrid (with a stride of 2) and the boundary condition and reduced
+dimension applications (with a stride of 0 for the relevant dimensions).
+
+
+\newpage
+\section{OPS User Kernels}
+
+\noindent In OPS, the elemental operation carried out per mesh/grid point is specified as an outlined function called
+a \textit{user kernel}. An example is given in \figurename{ \ref{fig:example}}.
+\begin{figure}[h]\small
+\vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
+\begin{pyglist}[language=c]
+void accelerate_kernel_stepbymass( double *density0, double *volume,
+                                   double *stepbymass) {
+  double nodal_mass;
+
+  //uses the four point stencil {0,0, -1,0, 0,-1, -1,-1};
+  nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
+    + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
+    + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
+    + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+
+  stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
+}
+\end{pyglist}
+\vspace{-10pt}\noindent\line(1,0){8}\vspace{-10pt}
+\caption{\small example user kernel}
+\normalsize\vspace{-0pt}\label{fig:example}
+\end{figure}
+\begin{figure}[h]\small
+\vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
+\begin{pyglist}[language=c]
+int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; //x-y range
+
+ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
+             2, rangexy_inner_plus1,
+             ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+             ops_arg_dat(volume,   S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+             ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
+\end{pyglist}
+\vspace{-10pt}\noindent\line(1,0){8}\vspace{-10pt}
+\caption{\small example \texttt{ops\_par\_loop}}
+\normalsize\vspace{-0pt}\label{fig:parloop}
+\end{figure}
+
+\noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
+to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the macros \texttt{OPS\_ACC0, OPS\_ACC1} and
+\texttt{OPS\_ACC2}. These specifies the stencil in accessing the elements of the respective data arrays. At compile
+time these macros will be expanded to give the correct array index (in this case accessing a 1D array with 2D indexing
+related to the stencil specified) to access the relevant element.
+
+\begin{thebibliography}{1}
+\bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
+\end{thebibliography}
+
+\end{document}
+
+
+
+
