@@ -91,7 +91,7 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0)] = mass_flux_x[OPS_ACC6(0,0)] * ( energy1[OPS_ACC0(donor,0)] + limiter );
+  ener_flux[OPS_ACC7(0,0)] = mass_flux_x[OPS_ACC6(0,0)] * ( energy1[OPS_ACC5(donor,0)] + limiter );
 }
 
 
@@ -197,7 +197,7 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0)] = mass_flux_y[OPS_ACC6(0,0)] * ( energy1[OPS_ACC0(0,donor)] + limiter );
+  ener_flux[OPS_ACC7(0,0)] = mass_flux_y[OPS_ACC6(0,0)] * ( energy1[OPS_ACC5(0,donor)] + limiter );
 }
 
 inline void advec_cell_kernel4_ydir( double *density1, double *energy1,

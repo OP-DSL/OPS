@@ -61,7 +61,7 @@ inline void advec_mom_kernel_post_advec_x( double *node_mass_post, const double 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
 
-  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC0(0,-1)] +
+  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC1(0,-1)] +
                               density1[OPS_ACC2(0,0)]   * post_vol[OPS_ACC1(0,0)]   +
                               density1[OPS_ACC2(-1,-1)] * post_vol[OPS_ACC1(-1,-1)] +
                               density1[OPS_ACC2(-1,0)]  * post_vol[OPS_ACC1(-1,0)]  );
@@ -75,7 +75,7 @@ inline void advec_mom_kernel_post_advec_y( double *node_mass_post, const double 
   //post_vol accessed with: {0,0, -1,0, 0,-1, -1,-1}
   //density1 accessed with: {0,0, -1,0, 0,-1, -1,-1}
 
-  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC0(0,-1)] +
+  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC1(0,-1)] +
                               density1[OPS_ACC2(0,0)]   * post_vol[OPS_ACC1(0,0)]   +
                               density1[OPS_ACC2(-1,-1)] * post_vol[OPS_ACC1(-1,-1)] +
                               density1[OPS_ACC2(-1,0)]  * post_vol[OPS_ACC1(-1,0)]  );
