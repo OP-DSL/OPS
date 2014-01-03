@@ -65,7 +65,7 @@ inline void accelerate_kernely2( double *yvel1, double *stepbymass,
 
   yvel1[OPS_ACC0(0,0)] = yvel1[OPS_ACC0(0,0)] - stepbymass[OPS_ACC1(0,0)] *
             ( yarea[OPS_ACC2(0,0)] * ( viscosity[OPS_ACC3(0,0)] - viscosity[OPS_ACC3(0,-1)] ) +
-              yarea[OPS_ACC2(0,-1)] * ( viscosity[OPS_ACC3(-1,0)] - viscosity[OPS_ACC3(-1,-1)] ) );
+              yarea[OPS_ACC2(-1,0)] * ( viscosity[OPS_ACC3(-1,0)] - viscosity[OPS_ACC3(-1,-1)] ) );
 
 }
 #endif
