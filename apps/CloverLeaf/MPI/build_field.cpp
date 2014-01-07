@@ -50,13 +50,6 @@ void build_field()
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
   ops_block clover_grid = ops_decl_block(2, dims, "clover grid");
 
-  //declare edges of block
-  dims[0] = x_cells; dims[1] = 1;
-  clover_xedge = ops_decl_block(2, dims, "xedge");
-
-  dims[0] = 1; dims[1] = y_cells;
-  clover_yedge = ops_decl_block(2, dims, "yedge");
-
   //
   //declare data on blocks
   //

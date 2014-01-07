@@ -4,8 +4,6 @@
   //
 
   ops_block clover_grid;
-  ops_block clover_xedge;
-  ops_block clover_yedge;
 
   //
   //ops dats

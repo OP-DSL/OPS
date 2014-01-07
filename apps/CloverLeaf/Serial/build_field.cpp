@@ -48,14 +48,7 @@ void build_field()
   /**----------------------------OPS Declarations----------------------------**/
 
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
-  ops_block clover_grid = ops_decl_block(2, dims, "grid");
-
-  //declare edges of block
-  dims[0] = x_cells; dims[1] = 1;
-  clover_xedge = ops_decl_block(2, dims, "xedge");
-
-  dims[0] = 1; dims[1] = y_cells;
-  clover_yedge = ops_decl_block(2, dims, "yedge");
+  ops_block clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //
   //declare data on blocks
@@ -104,24 +97,24 @@ void build_field()
   int size5[2] = {1,(y_max+3)-(y_min-2)};
   int offsetx[2] = {-2,0};
   int offsety[2] = {0,-2};
-  cellx    = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "cellx");
-  celly    = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celly");
-  vertexx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexx");
-  vertexy  = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexy");
-  celldx   = ops_decl_dat(clover_xedge, 1, size2, offsetx, temp, "double", "celldx");
-  celldy   = ops_decl_dat(clover_yedge, 1, size3, offsety, temp, "double", "celldy");
-  vertexdx = ops_decl_dat(clover_xedge, 1, size4, offsetx, temp, "double", "vertexdx");
-  vertexdy = ops_decl_dat(clover_yedge, 1, size5, offsety, temp, "double", "vertexdy");
+  cellx    = ops_decl_dat(clover_grid, 1, size2, offsetx, temp, "double", "cellx");
+  celly    = ops_decl_dat(clover_grid, 1, size3, offsety, temp, "double", "celly");
+  vertexx  = ops_decl_dat(clover_grid, 1, size4, offsetx, temp, "double", "vertexx");
+  vertexy  = ops_decl_dat(clover_grid, 1, size5, offsety, temp, "double", "vertexy");
+  celldx   = ops_decl_dat(clover_grid, 1, size2, offsetx, temp, "double", "celldx");
+  celldy   = ops_decl_dat(clover_grid, 1, size3, offsety, temp, "double", "celldy");
+  vertexdx = ops_decl_dat(clover_grid, 1, size4, offsetx, temp, "double", "vertexdx");
+  vertexdy = ops_decl_dat(clover_grid, 1, size5, offsety, temp, "double", "vertexdy");
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   int* xindex = (int *)xmalloc(sizeof(int)*size4[0]);
   for(int i=x_min-2; i<x_max+3; i++) xindex[i-offsetx[0]] = i - x_min;
-  xx  = ops_decl_dat(clover_xedge, 1, size4, offsetx, xindex, "int", "xx");
+  xx  = ops_decl_dat(clover_grid, 1, size4, offsetx, xindex, "int", "xx");
 
   //contains y indicies from 0 to ymax+3 -- needed for initialization
   int* yindex = (int *)xmalloc(sizeof(int)*size5[1]);
   for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
-  yy  = ops_decl_dat(clover_yedge, 1, size5, offsety, yindex, "int", "yy");
+  yy  = ops_decl_dat(clover_grid, 1, size5, offsety, yindex, "int", "yy");
 
   //
   //Declare commonly used stencils

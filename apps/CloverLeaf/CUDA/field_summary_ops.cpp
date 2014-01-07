@@ -78,8 +78,8 @@ void field_summary()
   if(complete == TRUE) {
     if(test_problem == 1) {
       qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
-      ops_printf("Test problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      ops_fprintf(g_out,"Test problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
+      ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
+      ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
       if(qa_diff < 0.001) {
         ops_printf("This test is considered PASSED\n");
         ops_fprintf(g_out,"This test is considered PASSED\n");

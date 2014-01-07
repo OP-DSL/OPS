@@ -63,8 +63,6 @@ extern int     fields[];
 //ops blocks
 
 extern ops_block clover_grid;
-extern ops_block clover_xedge;
-extern ops_block clover_yedge;
 
 //ops dats
 extern ops_dat density0;
