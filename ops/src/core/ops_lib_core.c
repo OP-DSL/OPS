@@ -155,7 +155,7 @@ void ops_exit_core( )
   }
 
   // free stencills
-  for ( int i = 0; i < OPS_block_index; i++ ) {
+  for ( int i = 0; i < OPS_stencil_index; i++ ) {
     free((char*)OPS_stencil_list[i]->name);
     free(OPS_stencil_list[i]->stencil);
     free(OPS_stencil_list[i]->stride);

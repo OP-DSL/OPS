@@ -37,7 +37,7 @@
 
 #include <mpi.h>
 #include <ops_lib_cpp.h>
-
+#include <ops_mpi_core.h>
 
 void
 ops_init ( int argc, char ** argv, int diags )
@@ -47,6 +47,11 @@ ops_init ( int argc, char ** argv, int diags )
   if(!flag) {
     MPI_Init(&argc, &argv);
   }
+
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
+  MPI_Comm_rank(OPS_MPI_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_WORLD, &comm_size);
+
   ops_init_core ( argc, argv, diags );
 }
 

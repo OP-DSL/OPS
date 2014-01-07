@@ -229,4 +229,6 @@ void ops_halo_exchanges_cuda(ops_arg *args, int nargs);
 
 int ops_is_root();
 
+void ops_partition(int dims, int* size, char* routine);
+
 #endif /* __OP_LIB_CORE_H */

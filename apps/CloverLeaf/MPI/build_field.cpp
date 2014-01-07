@@ -50,6 +50,13 @@ void build_field()
   int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
   ops_block clover_grid = ops_decl_block(2, dims, "clover grid");
 
+  //decompose the block
+  ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
+
+
+  ops_exit();//exit for now
+  exit(0);
+
   //
   //declare data on blocks
   //

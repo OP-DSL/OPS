@@ -1,5 +1,3 @@
-#ifndef __OPS_MPI_CORE_H
-#define __OPS_MPI_CORE_H
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -32,31 +30,23 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief core header file for the ops MPI backend
-  * @author Gihan Mudalige, Istvan Reguly
-  * @details Headderfile for OPS MPI backend
+/** @brief ops mpi partitioning
+  * @author Gihan Mudalige
+  * @details Implements the single block structured mesh partitioning
+  * for distributed memort (MPI) parallelization
   */
 
 #include <mpi.h>
+#include <ops_lib_cpp.h>
+#include <ops_mpi_core.h>
 
-/** Define the root MPI process **/
-#ifdef MPI_ROOT
-#undef MPI_ROOT
-#endif
-#define MPI_ROOT 0
+MPI_Comm OPS_MPI_WORLD;
+int comm_size;
+int my_rank;
 
-//
-//MPI Communicator for halo creation and exchange
-//
+int* neighbor;
 
-extern MPI_Comm OPS_MPI_WORLD;
-extern int comm_size;
-extern int my_rank;
-
-extern int* neighbor; //holds the neighbors of each mpi process.
-               // depending on the dimension of the block, this will
-               // need to be allocated the correct number of neighbors
-
-
-
-#endif /*__OPS_MPI_CORE_H*/
+void ops_partition(int dims, int* size, char* routine)
+{
+  printf("comm_size = %d, my rank = %d\n",comm_size, my_rank);
+}
