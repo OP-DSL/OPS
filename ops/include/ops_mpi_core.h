@@ -53,10 +53,4 @@ extern MPI_Comm OPS_MPI_WORLD;
 extern int comm_size;
 extern int my_rank;
 
-extern int* neighbor; //holds the neighbors of each mpi process.
-               // depending on the dimension of the block, this will
-               // need to be allocated the correct number of neighbors
-
-
-
 #endif /*__OPS_MPI_CORE_H*/

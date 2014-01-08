@@ -31,7 +31,7 @@
 */
 
 /** @brief ops mpi partitioning
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, adopted from Parallel OCCF routines by Mike Giles
   * @details Implements the single block structured mesh partitioning
   * for distributed memort (MPI) parallelization
   */
@@ -40,13 +40,80 @@
 #include <ops_lib_cpp.h>
 #include <ops_mpi_core.h>
 
-MPI_Comm OPS_MPI_WORLD;
+MPI_Comm OPS_MPI_WORLD; // comm world for a single block
 int comm_size;
 int my_rank;
 
-int* neighbor;
 
-void ops_partition(int dims, int* size, char* routine)
+void ops_partition(int ndim2, int* dims2, char* routine)
 {
-  printf("comm_size = %d, my rank = %d\n",comm_size, my_rank);
+  /**create cartesian processor grid**/
+
+  MPI_Comm OPS_CART_COMM; //comm world
+  int ndim = ndim2;
+  int *pdims = (int *) xmalloc(ndim*sizeof(int));
+  int *periodic = (int *) xmalloc(ndim*sizeof(int));
+  for(int n=0; n<ndim; n++) {
+    pdims[n] = 0;
+    periodic[n] = 0; //false .. for now
+  }
+
+  MPI_Dims_create(comm_size, ndim, pdims);
+
+  if(my_rank == MPI_ROOT){
+    printf("proc grid: ");
+    for(int n=0; n<ndim; n++)
+      printf("%d ",pdims[n]);
+    printf("\n");
+  }
+
+  MPI_Cart_create( OPS_MPI_WORLD,  ndim,  pdims,  periodic,
+    1,  &OPS_CART_COMM);
+
+
+  /**determine subgrid dimensions and displacements**/
+
+  int my_cart_rank;
+  int *coords = (int *) xmalloc(ndim*sizeof(int));
+  int *disps = (int *) xmalloc(ndim*sizeof(int));
+  int *dims = (int *) xmalloc(ndim*sizeof(int));
+
+
+  MPI_Comm_rank(OPS_CART_COMM, &my_cart_rank);
+  MPI_Cart_coords( OPS_CART_COMM, my_cart_rank, ndim, coords);
+
+  printf("Coordinates of rank %d : (",my_rank);
+  for(int n=0; n<ndim; n++)
+    printf("%d ",coords[n]);
+  printf(")\n");
+
+  for(int n=0; n<ndim; n++){
+    disps[n] = (coords[n] * dims2[n])/pdims[n];
+    dims[n]  = ((coords[n]+1)*dims2[n])/pdims[n] - disps[n];
+    dims2[n] = dims[n];
+  }
+
+  /**get IDs of neighbours**/
+
+  int *id_m = (int *) xmalloc(ndim*sizeof(int));
+  int *id_p = (int *) xmalloc(ndim*sizeof(int));
+  for(int n=0; n<ndim; n++)
+    MPI_Cart_shift(OPS_CART_COMM, n, 1, id_m, id_p);
+
+  /**calculate subgrid start and end indicies**/
+  int *ibeg = (int *) xmalloc(ndim*sizeof(int));
+  int *iend = (int *) xmalloc(ndim*sizeof(int));
+  for(int n=0; n<ndim; n++){
+    ibeg[n] = disps[n];
+    iend[n] = ibeg[n]+dims[n]-1;
+  }
+
+  printf("rank %d \n",my_rank);
+    printf("%5s  :  %5s  :  %5s  :  %5s  :  %5s\n","dim","disp","size","start","end");
+  for(int n=0; n<ndim; n++)
+    printf("%5d  :  %5d  :  %5d  :  %5d  :  %5d\n",n , disps[n], dims[n], ibeg[n], iend[n]);
+  printf("\n");
+
+  printf("Finished block decomposition\n");
+
 }
