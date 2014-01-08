@@ -41,16 +41,19 @@
 #include <ops_mpi_core.h>
 
 MPI_Comm OPS_MPI_WORLD; // comm world for a single block
-int comm_size;
-int my_rank;
+int ops_comm_size;
+int ops_my_rank;
 
 
-void ops_partition(int ndim2, int* dims2, char* routine)
+void ops_partition(int g_ndim, int* g_dims, char* routine)
 {
-  /**create cartesian processor grid**/
+  //g_dim  - global number of dimensions .. will be the same on each local mpi process
+  //g_dims - global dimension sizes, i.e. size in each dimension of the global mesh
+
+/** ---- create cartesian processor grid ---- **/
 
   MPI_Comm OPS_CART_COMM; //comm world
-  int ndim = ndim2;
+  int ndim = g_ndim;
   int *pdims = (int *) xmalloc(ndim*sizeof(int));
   int *periodic = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++) {
@@ -58,9 +61,9 @@ void ops_partition(int ndim2, int* dims2, char* routine)
     periodic[n] = 0; //false .. for now
   }
 
-  MPI_Dims_create(comm_size, ndim, pdims);
+  MPI_Dims_create(ops_comm_size, ndim, pdims);
 
-  if(my_rank == MPI_ROOT){
+  if(ops_my_rank == MPI_ROOT){
     printf("proc grid: ");
     for(int n=0; n<ndim; n++)
       printf("%d ",pdims[n]);
@@ -70,8 +73,7 @@ void ops_partition(int ndim2, int* dims2, char* routine)
   MPI_Cart_create( OPS_MPI_WORLD,  ndim,  pdims,  periodic,
     1,  &OPS_CART_COMM);
 
-
-  /**determine subgrid dimensions and displacements**/
+/** ---- determine subgrid dimensions and displacements ---- **/
 
   int my_cart_rank;
   int *coords = (int *) xmalloc(ndim*sizeof(int));
@@ -82,25 +84,26 @@ void ops_partition(int ndim2, int* dims2, char* routine)
   MPI_Comm_rank(OPS_CART_COMM, &my_cart_rank);
   MPI_Cart_coords( OPS_CART_COMM, my_cart_rank, ndim, coords);
 
-  printf("Coordinates of rank %d : (",my_rank);
+  printf("Coordinates of rank %d : (",ops_my_rank);
   for(int n=0; n<ndim; n++)
     printf("%d ",coords[n]);
   printf(")\n");
 
   for(int n=0; n<ndim; n++){
-    disps[n] = (coords[n] * dims2[n])/pdims[n];
-    dims[n]  = ((coords[n]+1)*dims2[n])/pdims[n] - disps[n];
-    dims2[n] = dims[n];
+    disps[n] = (coords[n] * g_dims[n])/pdims[n];
+    dims[n]  = ((coords[n]+1)*g_dims[n])/pdims[n] - disps[n];
+    g_dims[n] = dims[n];
   }
 
-  /**get IDs of neighbours**/
+/** ---- get IDs of neighbours ---- **/
 
   int *id_m = (int *) xmalloc(ndim*sizeof(int));
   int *id_p = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++)
     MPI_Cart_shift(OPS_CART_COMM, n, 1, id_m, id_p);
 
-  /**calculate subgrid start and end indicies**/
+/** ---- calculate subgrid start and end indicies ---- **/
+
   int *ibeg = (int *) xmalloc(ndim*sizeof(int));
   int *iend = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++){
@@ -108,12 +111,13 @@ void ops_partition(int ndim2, int* dims2, char* routine)
     iend[n] = ibeg[n]+dims[n]-1;
   }
 
-  printf("rank %d \n",my_rank);
+  printf("rank %d \n",ops_my_rank);
     printf("%5s  :  %5s  :  %5s  :  %5s  :  %5s\n","dim","disp","size","start","end");
   for(int n=0; n<ndim; n++)
     printf("%5d  :  %5d  :  %5d  :  %5d  :  %5d\n",n , disps[n], dims[n], ibeg[n], iend[n]);
   printf("\n");
 
-  printf("Finished block decomposition\n");
+  MPI_Barrier(OPS_MPI_WORLD);
+  ops_printf("Finished block decomposition\n");
 
 }

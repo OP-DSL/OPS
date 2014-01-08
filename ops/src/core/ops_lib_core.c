@@ -400,23 +400,6 @@ void ops_diagnostic_output ( )
 
 
 
-void ops_printf(const char* format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vprintf(format, argptr);
-  va_end(argptr);
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vfprintf(stream, format, argptr);
-  va_end(argptr);
-}
-
-
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
   FILE *fp;

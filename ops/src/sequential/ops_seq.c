@@ -100,3 +100,19 @@ void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
 }
+
+void ops_printf(const char* format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
+  vprintf(format, argptr);
+  va_end(argptr);
+}
+
+void ops_fprintf(FILE *stream, const char *format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
+  vfprintf(stream, format, argptr);
+  va_end(argptr);
+}

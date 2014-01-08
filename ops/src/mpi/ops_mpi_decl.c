@@ -49,8 +49,8 @@ ops_init ( int argc, char ** argv, int diags )
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
-  MPI_Comm_rank(OPS_MPI_WORLD, &my_rank);
-  MPI_Comm_size(OPS_MPI_WORLD, &comm_size);
+  MPI_Comm_rank(OPS_MPI_WORLD, &ops_my_rank);
+  MPI_Comm_size(OPS_MPI_WORLD, &ops_comm_size);
 
   ops_init_core ( argc, argv, diags );
 }
@@ -115,4 +115,24 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
 void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
+}
+
+void ops_printf(const char* format, ...)
+{
+  if(ops_my_rank==MPI_ROOT) {
+    va_list argptr;
+    va_start(argptr, format);
+    vprintf(format, argptr);
+    va_end(argptr);
+  }
+}
+
+void ops_fprintf(FILE *stream, const char *format, ...)
+{
+  if(ops_my_rank==MPI_ROOT) {
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stream, format, argptr);
+    va_end(argptr);
+  }
 }

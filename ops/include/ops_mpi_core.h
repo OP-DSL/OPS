@@ -50,7 +50,7 @@
 //
 
 extern MPI_Comm OPS_MPI_WORLD;
-extern int comm_size;
-extern int my_rank;
+extern int ops_comm_size;
+extern int ops_my_rank;
 
 #endif /*__OPS_MPI_CORE_H*/
