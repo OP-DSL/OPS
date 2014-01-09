@@ -46,11 +46,47 @@
 #define MPI_ROOT 0
 
 //
+//Struct for holding the decomposition details of a block on an MPI process
+//
+typedef struct {
+  // the decomposition is for this block
+  ops_block block;
+  //number of dimensions;
+  int ndim;
+  // my MPI rank in each dimension (in cart cords)
+  int* coords;
+  // previous neighbor in each dimension (in cart cords)
+  int* id_m;
+  // next neighbor in each dimension (in cart cords)
+  int* id_p;
+  // the size of the local sub-block in each dimension
+  int* sizes;
+  // the displacement from the start of the block in each dimension
+  int* disps;
+  // the global index of the starting element of the local sub-block in each dimension
+  int* istart;
+  // the global index of the starting element of the local sub-block
+  int* iend;
+
+  //might need to hold explicitly the local istart and iend which are 0 and sizes[n]-1
+
+} sub_block;
+
+typedef sub_block * sub_block_list;
+
+
+//
 //MPI Communicator for halo creation and exchange
 //
 
 extern MPI_Comm OPS_MPI_WORLD;
 extern int ops_comm_size;
 extern int ops_my_rank;
+
+//
+// list holding sub-block geometries
+//
+extern sub_block_list *OPS_sub_block_list;
+
 
 #endif /*__OPS_MPI_CORE_H*/

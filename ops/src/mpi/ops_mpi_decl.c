@@ -57,8 +57,8 @@ ops_init ( int argc, char ** argv, int diags )
 
 void ops_exit()
 {
-  //op_mpi_exit();
-  //op_rt_exit();
+  //ops_mpi_exit();
+  //ops_rt_exit();
   ops_exit_core();
 
   int flag = 0;

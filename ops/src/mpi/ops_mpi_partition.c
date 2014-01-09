@@ -44,11 +44,13 @@ MPI_Comm OPS_MPI_WORLD; // comm world for a single block
 int ops_comm_size;
 int ops_my_rank;
 
+sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
+                                   // geometries
 
-void ops_partition(int g_ndim, int* g_dims, char* routine)
+void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   //g_dim  - global number of dimensions .. will be the same on each local mpi process
-  //g_dims - global dimension sizes, i.e. size in each dimension of the global mesh
+  //g_sizes - global dimension sizes, i.e. size in each dimension of the global mesh
 
 /** ---- create cartesian processor grid ---- **/
 
@@ -62,14 +64,6 @@ void ops_partition(int g_ndim, int* g_dims, char* routine)
   }
 
   MPI_Dims_create(ops_comm_size, ndim, pdims);
-
-  if(ops_my_rank == MPI_ROOT){
-    printf("proc grid: ");
-    for(int n=0; n<ndim; n++)
-      printf("%d ",pdims[n]);
-    printf("\n");
-  }
-
   MPI_Cart_create( OPS_MPI_WORLD,  ndim,  pdims,  periodic,
     1,  &OPS_CART_COMM);
 
@@ -78,21 +72,16 @@ void ops_partition(int g_ndim, int* g_dims, char* routine)
   int my_cart_rank;
   int *coords = (int *) xmalloc(ndim*sizeof(int));
   int *disps = (int *) xmalloc(ndim*sizeof(int));
-  int *dims = (int *) xmalloc(ndim*sizeof(int));
+  int *sizes = (int *) xmalloc(ndim*sizeof(int));
 
 
   MPI_Comm_rank(OPS_CART_COMM, &my_cart_rank);
   MPI_Cart_coords( OPS_CART_COMM, my_cart_rank, ndim, coords);
 
-  printf("Coordinates of rank %d : (",ops_my_rank);
-  for(int n=0; n<ndim; n++)
-    printf("%d ",coords[n]);
-  printf(")\n");
-
   for(int n=0; n<ndim; n++){
-    disps[n] = (coords[n] * g_dims[n])/pdims[n];
-    dims[n]  = ((coords[n]+1)*g_dims[n])/pdims[n] - disps[n];
-    g_dims[n] = dims[n];
+    disps[n] = (coords[n] * g_sizes[n])/pdims[n];
+    sizes[n]  = ((coords[n]+1)*g_sizes[n])/pdims[n] - disps[n];
+    g_sizes[n] = sizes[n];
   }
 
 /** ---- get IDs of neighbours ---- **/
@@ -100,24 +89,71 @@ void ops_partition(int g_ndim, int* g_dims, char* routine)
   int *id_m = (int *) xmalloc(ndim*sizeof(int));
   int *id_p = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++)
-    MPI_Cart_shift(OPS_CART_COMM, n, 1, id_m, id_p);
+    MPI_Cart_shift(OPS_CART_COMM, n, 1, &id_m[n], &id_p[n]);
 
 /** ---- calculate subgrid start and end indicies ---- **/
 
-  int *ibeg = (int *) xmalloc(ndim*sizeof(int));
+  int *istart = (int *) xmalloc(ndim*sizeof(int));
   int *iend = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++){
-    ibeg[n] = disps[n];
-    iend[n] = ibeg[n]+dims[n]-1;
+    istart[n] = disps[n];
+    iend[n] = istart[n]+sizes[n]-1;
   }
 
-  printf("rank %d \n",ops_my_rank);
-    printf("%5s  :  %5s  :  %5s  :  %5s  :  %5s\n","dim","disp","size","start","end");
-  for(int n=0; n<ndim; n++)
-    printf("%5d  :  %5d  :  %5d  :  %5d  :  %5d\n",n , disps[n], dims[n], ibeg[n], iend[n]);
-  printf("\n");
+/** ---- Store subgrid decomposition geometries ---- **/
+
+  sub_block_list sb_list= (sub_block_list)xmalloc(sizeof(sub_block));
+  sb_list->block = block;
+  sb_list->ndim = ndim;
+  sb_list->coords = coords;
+  sb_list->id_m = id_m;
+  sb_list->id_p = id_p;
+  sb_list->sizes = sizes;
+  sb_list->disps = disps;
+  sb_list->istart = istart;
+  sb_list->iend = iend;
+
+  OPS_sub_block_list[block->index] = sb_list;
 
   MPI_Barrier(OPS_MPI_WORLD);
+  ops_printf("block \"%s\" decomposed on to a processor grid of ",block->name);
+  for(int n=0; n<ndim; n++){
+    ops_printf("%d ",pdims[n]);
+    n == ndim-1? ops_printf(" ") : ops_printf("x ");
+  }
+  ops_printf("\n");
+}
+
+
+void ops_partition(int g_ndim, int* g_sizes, char* routine)
+{
+  //create list to hold sub-grid decomposition geometries for each mpi process
+  OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
+
+  for(int b=0; b<OPS_block_index; b++){ //for each block
+    ops_block block=OPS_block_list[b];
+    ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
+
+    sub_block_list sb_list = OPS_sub_block_list[block->index];
+
+    printf("rank %d (",ops_my_rank);
+    for(int n=0; n<sb_list->ndim; n++)
+      printf("%d ",sb_list->coords[n]);
+    printf(")\n");
+    printf("%5s  :  %9s  :  %9s  :  %5s  :  %5s  :  %5s  :  %5s\n",
+      "dim", "prev_rank", "next_rank", "disp", "size","start",  "end");
+    for(int n=0; n<sb_list->ndim; n++)
+    printf("%5d  :  %9d  :  %9d  :  %5d  :  %5d  :  %5d  :  %5d\n",
+      n, sb_list->id_m[n], sb_list->id_p[n], sb_list->disps[n], sb_list->sizes[n],
+      sb_list->istart[n], sb_list->iend[n]);
+    printf("\n");
+  }
   ops_printf("Finished block decomposition\n");
 
+  //then need to findout what the halo sizes to be imported are
+  //then need to findout what the halo sizes to be exported are
+
+  //allocate the buffers for send and receive for halos
+
+  //realloc the ops_dats based on the max halo sizes on each mpi process
 }
