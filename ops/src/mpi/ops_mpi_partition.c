@@ -150,10 +150,21 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
   }
   ops_printf("Finished block decomposition\n");
 
-  //then need to findout what the halo sizes to be imported are
-  //then need to findout what the halo sizes to be exported are
-
-  //allocate the buffers for send and receive for halos
-
-  //realloc the ops_dats based on the max halo sizes on each mpi process
 }
+
+//ops_dats will be declared with max halo depths in both directions in a dimension
+//use the same depth when allocating the local ops_dats on each MPI process
+
+//for each ops_dat declared on a decomposed ops_block
+  //for each dimension of the block
+    //for each direction in dimension
+      //create a send buffer and a receive buffer
+
+//halo exchange routine should aim to be one Isend/Ireceive per block dimension
+//Then this routine can be called for each dimension as in the decompose() routine, with a waitall after each dimension
+//might need MPI_CART_RANK to convert the cartecian coordinates of sender and receiver to actual MPI ranks -- seems no need for this
+
+
+//special case where iterating in 2D and accessing 1D edge, then all procs will need to
+//have a new special halo created... this will only be known at loop runtime
+//and perhaps will need to be allocated on-the-fly.

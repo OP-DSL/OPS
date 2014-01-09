@@ -53,7 +53,6 @@ void build_field()
   //decompose the block
   ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
 
-
   ops_exit();//exit for now
   exit(0);
 
