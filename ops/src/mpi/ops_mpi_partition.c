@@ -139,14 +139,16 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
 
     sub_block_list sb_list = OPS_sub_block_list[block->index];
 
-    printf("rank %d (",ops_my_rank);
+    printf(" ===========================================================================\n" );
+    printf(" rank %d (",ops_my_rank);
     for(int n=0; n<sb_list->ndim; n++)
       printf("%d ",sb_list->coords[n]);
     printf(")\n");
-    printf("%5s  :  %9s  :  %9s  :  %5s  :  %5s  :  %5s  :  %5s\n",
+    printf( " ------------------------------\n" );
+    printf(" %5s  :  %9s  :  %9s  :  %5s  :  %5s  :  %5s  :  %5s\n",
       "dim", "prev_rank", "next_rank", "disp", "size","start",  "end");
     for(int n=0; n<sb_list->ndim; n++)
-    printf("%5d  :  %9d  :  %9d  :  %5d  :  %5d  :  %5d  :  %5d\n",
+    printf(" %5d  :  %9d  :  %9d  :  %5d  :  %5d  :  %5d  :  %5d\n",
       n, sb_list->id_m[n], sb_list->id_p[n], sb_list->disps[n], sb_list->sizes[n],
       sb_list->istart[n], sb_list->iend[n]);
     printf("\n");

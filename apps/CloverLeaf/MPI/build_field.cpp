@@ -53,8 +53,6 @@ void build_field()
   //decompose the block
   ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
 
-
-
   //
   //declare data on blocks
   //

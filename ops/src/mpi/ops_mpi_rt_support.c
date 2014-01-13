@@ -46,3 +46,51 @@ int ops_is_root()
   MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
   return (my_rank==MPI_ROOT);
 }
+
+void pack(ops_dat dat, char* buff, int depth, int dim, sub_block_list sb)
+{
+  //remember that the packing for some dimensions is done in strides
+}
+
+
+
+/* halo exchange for an arg->dat
+  for each dimension of the block on which this dat is declared on {
+
+    for both directions in dimension {
+      pack send_buffer
+    }
+    send and receive messages in both directions
+
+    MPI_wait_all() //barrier in dimenssion
+
+    for both directions in dimension {
+      unpack recieve_buffer
+    }
+  }
+*/
+void ops_exchange_halo(ops_arg* arg, int depth)
+{
+  ops_dat dat = arg->dat;
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+
+  for(int n=0;n<sb->ndim;n++){
+    //pack possitive send buffer
+    if(sb->id_p[n] != MPI_PROC_NULL)
+      pack(dat, dat->send_buff_p[n], depth, n, sb);
+    //pack negative send buffer
+    if(sb->id_m[n] != MPI_PROC_NULL)
+      pack(dat, dat->send_buff_n[n], depth, n, sb);
+
+    //Isend possitive buffer
+    //Isend negative buffer
+
+    //Ireceive possitive buffer
+    //Ireceive negative buffer
+
+    //MPI_Wait_all()
+
+    //ukpack possitive send buffer
+    //ukpack negative send buffer
+  }
+}

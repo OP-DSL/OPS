@@ -93,6 +93,8 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
                            int* tail, char* data,
                            int type_size, char const * type, char const * name )
 {
+  int edge_dat = 0; //flag indicating that this is an edge dat
+
   sub_block_list sb = OPS_sub_block_list[block->index]; //get sub-block geometries
 
   int* sub_size = (int *)xmalloc(sizeof(int) * sb->ndim);
@@ -106,10 +108,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
     else { // this dat is a an edge data block that needs to be replicated on each MPI process
       //apply the size as 1 for this dimension, later to be replicated on each process
       sub_size[n] = 1;
+      edge_dat = 1;
     }
   }
 
-  //allocate an empty dat based on the local array sizes computed above on each MPI process
+/** ---- allocate an empty dat based on the local array sizes computed
+         above on each MPI process                                      ---- **/
   ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, offset, data, type_size, type, name );
 
   int bytes = size*type_size;
@@ -119,6 +123,42 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled
+
+/** ---- now allocate mpi buffers for this dat,
+         if its not an edge dat -- held in the dat itself               ---- **/
+
+  //for each dimension of the block
+    //for each direction in dimension
+      //create a send buffer and a receive buffer
+
+  if(!edge_dat) {
+
+    dat->send_buff_p =  (char **) malloc(sb->ndim * sizeof(char *));
+    dat->recv_buff_p =  (char **) malloc(sb->ndim * sizeof(char *));
+    dat->send_buff_n =  (char **) malloc(sb->ndim * sizeof(char *));
+    dat->recv_buff_n =  (char **) malloc(sb->ndim * sizeof(char *));
+
+    int max_depth = 0;
+    int off_tail = 0;
+
+    for(int n=0; n<sb->ndim; n++){
+
+      int ofs = 0;
+      int tal = 0;
+      for (int i=0; i<sb->ndim; i++) { ofs *= (-offset[i]); tal *= (-tail[i]); }
+      ofs = ofs/(-offset[n]);
+      tal = tal/(-tail[n]);
+
+      max_depth = MAX(ofs,tal); //the maximum halo depth
+
+      off_tail = ((-offset[n]) + (-tail[n]));
+
+      dat->send_buff_p[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
+      dat->recv_buff_p[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
+      dat->send_buff_n[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
+      dat->recv_buff_n[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
+    }
+  }
 
   return dat;
 }

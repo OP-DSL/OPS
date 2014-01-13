@@ -103,9 +103,14 @@ typedef struct
   char        *data;       /* data on host */
   char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
-  char const *type;        /* datatype */
+  char const  *type;       /* datatype */
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
+
+  char        **send_buff_p;/* send buffers for MPI comms (possitive direction)*/
+  char        **send_buff_n;/* send buffers for MPI comms (negative direction)*/
+  char        **recv_buff_p;/* receive buffers for MPI comms (possitive direction)*/
+  char        **recv_buff_n;/* receive buffers for MPI comms (negative direction)*/
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
