@@ -53,17 +53,29 @@ void build_field()
   //decompose the block
   ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
 
-  ops_exit();//exit for now
-  exit(0);
+
 
   //
   //declare data on blocks
   //
   int offset[2] = {-2,-2};
+  int tail[2] = {-2,-2};
   int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
 
-  density0    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density0");
+  density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
+
+  int size_1[2] = {(x_max+2)-(x_min-2),1};
+  int offset_1[2] = {-2,0};
+  int tail_1[2] = {-2,0};
+  cellx       = ops_decl_dat_mpi(clover_grid, 1, size_1, offset_1, tail_1, temp, "double", "cellx");
+
+  ops_diagnostic_output();
+
+  ops_exit();//exit for now
+  exit(0);
+
+  density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
   density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
   energy0     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy0");
   energy1     = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "energy1");
