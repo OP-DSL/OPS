@@ -73,6 +73,7 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
     i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
     i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
 
+
     //send in positive direction, receive from negative direction
     printf("Exchaning 1 From:%d To: %d\n", i3, i1);
     MPI_Sendrecv(&dat->data[i3*size],1,sb->mpidat[n],sb->id_p[n],0,

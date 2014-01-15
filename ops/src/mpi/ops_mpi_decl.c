@@ -123,7 +123,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
   for(int j = 0; j<sub_size[1]; j++) {
     for(int i = 0; i<sub_size[0]; i++) {
-      dat->data[dat->size * (j* sub_size[0] + i) ] = j * sub_size[0] + i ;
+      dat->data[dat->size * (j* sub_size[0] + i) ] = (double )(j * sub_size[0] + i);
     }
   }
 
