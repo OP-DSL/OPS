@@ -124,41 +124,29 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled
 
-/** ---- now allocate mpi buffers for this dat,
-         if its not an edge dat -- held in the dat itself               ---- **/
+  /** ---- Create MPI data types for halo exchange ---- **/
 
-  //for each dimension of the block
-    //for each direction in dimension
-      //create a send buffer and a receive buffer
+  int *prod = (int *) xmalloc(sb->ndim*sizeof(int));
+  int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
+  for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
 
   if(!edge_dat) {
+    for(int n = 0; n<sb->ndim; n++) {
+      if(n == 0) prod[n] = 1*(sb->sizes[n] + 2*(max_depth[n]));
+      else prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth)[n]);
+    }
 
-    dat->send_buff_p =  (char **) malloc(sb->ndim * sizeof(char *));
-    dat->recv_buff_p =  (char **) malloc(sb->ndim * sizeof(char *));
-    dat->send_buff_n =  (char **) malloc(sb->ndim * sizeof(char *));
-    dat->recv_buff_n =  (char **) malloc(sb->ndim * sizeof(char *));
+    MPI_Datatype stride[sb->ndim];
 
-    int max_depth = 0;
-    int off_tail = 0;
-
-    for(int n=0; n<sb->ndim; n++){
-
-      int ofs = 0;
-      int tal = 0;
-      for (int i=0; i<sb->ndim; i++) { ofs *= (-offset[i]); tal *= (-tail[i]); }
-      ofs = ofs/(-offset[n]);
-      tal = tal/(-tail[n]);
-
-      max_depth = MAX(ofs,tal); //the maximum halo depth
-
-      off_tail = ((-offset[n]) + (-tail[n]));
-
-      dat->send_buff_p[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
-      dat->recv_buff_p[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
-      dat->send_buff_n[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
-      dat->recv_buff_n[n] = (char*) calloc( max_depth * (sb->sizes[n] + off_tail) * size * type_size , 1);
+    for(int n = 0; n<sb->ndim; n++) {
+      if(n == 0) MPI_Type_vector(prod[sb->ndim - 1]/prod[n], 1        , prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
+      else       MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
+      MPI_Type_commit(&stride[n]);
     }
   }
+
+
+
 
   return dat;
 }

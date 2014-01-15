@@ -94,6 +94,7 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
   for(int n=0; n<ndim; n++)
     MPI_Cart_shift(OPS_CART_COMM, n, 1, &id_m[n], &id_p[n]);
 
+
 /** ---- calculate subgrid start and end indicies ---- **/
 
   int *istart = (int *) xmalloc(ndim*sizeof(int));
