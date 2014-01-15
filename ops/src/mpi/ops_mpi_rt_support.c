@@ -53,23 +53,6 @@ void pack(ops_dat dat, char* buff, int depth, int dim, sub_block_list sb)
 
 }
 
-
-
-/* halo exchange for an arg->dat
-  for each dimension of the block on which this dat is declared on {
-
-    for both directions in dimension {
-      pack send_buffer
-    }
-    send and receive messages in both directions
-
-    MPI_wait_all() //barrier in dimenssion
-
-    for both directions in dimension {
-      unpack recieve_buffer
-    }
-  }
-*/
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
@@ -79,33 +62,28 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
   int* md = sb->max_depth;
   int* prod = sb->prod;
   MPI_Status *status;
+  int size = dat->size;
 
   for(int n=0;n<sb->ndim;n++){
 
     MPI_Status status;
 
-    if(n==0) {
-      i1 = (md[n] - d) * 1;
-      i2 = md[n] * 1;
-      i3 = (prod[n]/1 - md[n] - d) * 1;
-      i4 = (prod[n]/1 - md[n] ) * 1;
-    }
-    else {
-      i1 = (md[n] - d) * prod[n-1];
-      i2 = md[n] * prod[n-1];
-      i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
-      i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
-    }
+    i1 = (md[n] - d) * prod[n-1];
+    i2 = md[n] * prod[n-1];
+    i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
+    i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
 
     //send in positive direction, receive from negative direction
-    MPI_Sendrecv(&dat->data[i3],1,sb->mpidat[n],sb->id_p[n],0,
-                 &dat->data[i4],1,sb->mpidat[n],sb->id_m[n],0,
+    //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
+    MPI_Sendrecv(&dat->data[i3*size],1,sb->mpidat[n],sb->id_p[n],0,
+                 &dat->data[i1*size],1,sb->mpidat[n],sb->id_m[n],0,
                  OPS_CART_COMM, &status);
 
     //send in negative direction, receive from positive direction
-    MPI_Sendrecv(&dat->data[i3],1,sb->mpidat[n],sb->id_p[n],0,
-             &dat->data[i4],1,sb->mpidat[n],sb->id_m[n],0,
-             OPS_CART_COMM, &status);
+    //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
+    MPI_Sendrecv(&dat->data[i2*size],1,sb->mpidat[n],sb->id_m[n],1,
+                 &dat->data[i4*size],1,sb->mpidat[n],sb->id_p[n],1,
+                 OPS_CART_COMM, &status);
   }
 
 }

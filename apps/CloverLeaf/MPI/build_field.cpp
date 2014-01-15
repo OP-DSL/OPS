@@ -27,6 +27,7 @@
 
 // OPS header file
 #include "ops_seq.h"
+#include "ops_mpi_core.h"
 
 
 #include "data.h"
@@ -67,6 +68,11 @@ void build_field()
   int offset_1[2] = {-2,0};
   int tail_1[2] = {-2,0};
   cellx       = ops_decl_dat_mpi(clover_grid, 1, size_1, offset_1, tail_1, temp, "double", "cellx");
+
+  int s2D_00[]         = {0,0};
+  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
+  ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
+  ops_exchange_halo(&arg_test,1);
 
   ops_diagnostic_output();
 
@@ -135,7 +141,7 @@ void build_field()
   //
   //Declare commonly used stencils
   //
-  int s2D_00[]         = {0,0};
+  //int s2D_00[]         = {0,0};
   int s2D_00_P10[]     = {0,0, 1,0};
   int s2D_00_0P1[]     = {0,0, 0,1};
   int s2D_00_M10[]     = {0,0, -1,0};
@@ -178,7 +184,7 @@ void build_field()
   int xmax2D[] = {x_max+2,0};
   int ymax2D[] = {0,y_max+2};
 
-  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
+  //S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   S2D_00_P10     = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");
   S2D_00_0P1     = ops_decl_stencil( 2, 2, s2D_00_0P1, "0,0:0,1");

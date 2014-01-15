@@ -94,4 +94,10 @@ extern int ops_my_rank;
 extern sub_block_list *OPS_sub_block_list;
 
 
+/*******************************************************************************
+* External functions defined in ops_mpi_(cuda)_rt_support.c
+*******************************************************************************/
+void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+
+
 #endif /*__OPS_MPI_CORE_H*/

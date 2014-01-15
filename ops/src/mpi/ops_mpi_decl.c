@@ -127,21 +127,23 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
   /** ---- Create MPI data types for halo exchange ---- **/
   if(!edge_dat) {
 
-    int *prod = (int *) xmalloc(sb->ndim*sizeof(int));
+    int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
+    int *prod = &prod_t[1];
     int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
     for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
 
+    prod[-1] = 1;
     for(int n = 0; n<sb->ndim; n++) {
-      if(n == 0) prod[n] = 1*(sb->sizes[n] + 2*(max_depth[n]));
-      else prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth)[n]);
+      prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth)[n]);
     }
 
-    MPI_Datatype stride[sb->ndim];
+    MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim);
 
-    for(int n = 0; n<sb->ndim; n++) {
-      if(n == 0) MPI_Type_vector(prod[sb->ndim - 1]/prod[n], 1        , prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
-      else       MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
+    for(int n = 0; n<sb->ndim; n++) { //need to make MPI_DOUBLE_PRECISION general
+      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE, &stride[n]);
       MPI_Type_commit(&stride[n]);
+      //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
+      //printf("max_depth %d\n",max_depth[n]);
     }
 
     //store away product array prod[] and MPI_Types for this ops_dat
