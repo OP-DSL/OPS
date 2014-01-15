@@ -42,6 +42,11 @@
 
 MPI_Comm OPS_MPI_WORLD; // comm world for a single block
                         // -- need to have a communicator for each block in multi-block
+
+MPI_Comm OPS_CART_COMM; // cartesian comm world
+// -- agian need to have and store
+// a comm world for each block in multi-block
+
 int ops_comm_size;
 int ops_my_rank;
 
@@ -55,9 +60,6 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 
 /** ---- create cartesian processor grid ---- **/
 
-  MPI_Comm OPS_CART_COMM; // cartesian comm world
-                          // -- agian need to have and store
-                          // a comm world for each block in multi-block
   int ndim = g_ndim;
   int *pdims = (int *) xmalloc(ndim*sizeof(int));
   int *periodic = (int *) xmalloc(ndim*sizeof(int));

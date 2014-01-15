@@ -67,8 +67,12 @@ typedef struct {
   int* istart;
   // the global index of the starting element of the local sub-block
   int* iend;
-
-  //might need to hold explicitly the local istart and iend which are 0 and sizes[n]-1
+  // product array -- used for MPI send/Receives
+  int* prod;
+  //MPI Types for send/receive
+  MPI_Datatype* mpidat;
+  //max halo depths in each dimension
+  int* max_depth;
 
 } sub_block;
 
@@ -80,6 +84,7 @@ typedef sub_block * sub_block_list;
 //
 
 extern MPI_Comm OPS_MPI_WORLD;
+extern MPI_Comm OPS_CART_COMM;
 extern int ops_comm_size;
 extern int ops_my_rank;
 

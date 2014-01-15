@@ -125,12 +125,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
   //what to do if not ?? How will the halos be handled
 
   /** ---- Create MPI data types for halo exchange ---- **/
-
-  int *prod = (int *) xmalloc(sb->ndim*sizeof(int));
-  int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
-  for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
-
   if(!edge_dat) {
+
+    int *prod = (int *) xmalloc(sb->ndim*sizeof(int));
+    int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
+    for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
+
     for(int n = 0; n<sb->ndim; n++) {
       if(n == 0) prod[n] = 1*(sb->sizes[n] + 2*(max_depth[n]));
       else prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth)[n]);
@@ -143,10 +143,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
       else       MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
       MPI_Type_commit(&stride[n]);
     }
+
+    //store away product array prod[] and MPI_Types for this ops_dat
+    sb->prod = prod;
+    sb->mpidat = stride;
+    sb->max_depth = max_depth;
   }
-
-
-
 
   return dat;
 }
