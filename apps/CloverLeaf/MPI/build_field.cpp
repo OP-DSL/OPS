@@ -80,10 +80,10 @@ void build_field()
   int s2D_00[]         = {0,0};
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
-  //ops_exchange_halo(&arg_test,1);
+  ops_exchange_halo(&arg_test,1);
   //MPI_Barrier(OPS_CART_COMM);
   ops_exchange_halo(&arg_test,2);
-  MPI_Barrier(OPS_CART_COMM);
+  //MPI_Barrier(OPS_CART_COMM);
 
   printf("After on rank %d\n",ops_my_rank);
   for(int j = 0; j<OPS_sub_block_list[0]->sizes[1]+4; j++) {

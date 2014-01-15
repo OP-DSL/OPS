@@ -140,7 +140,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
     prod[-1] = 1;
     for(int n = 0; n<sb->ndim; n++) {
-      prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth)[n]);
+      prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth[n]));
     }
 
     MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim);

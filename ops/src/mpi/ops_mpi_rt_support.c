@@ -69,9 +69,11 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
     MPI_Status status;
 
     i1 = (md[n] - d) * prod[n-1];
-    i2 = md[n] * prod[n-1];
+    //i2 = md[n] * prod[n-1];
+    i2 = (md[n] + d - 1 )* prod[n-1];
     i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
-    i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
+    //i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
+    i4 = (prod[n]/prod[n-1] - md[n] + d - 1 ) * prod[n-1];
 
 
     //send in positive direction, receive from negative direction
