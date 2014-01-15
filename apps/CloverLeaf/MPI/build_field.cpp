@@ -64,6 +64,14 @@ void build_field()
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
 
+  printf("Before on rank %d\n",ops_my_rank);
+  for(int j = 0; j<OPS_sub_block_list[0]->sizes[1]+2; j++) {
+    for(int i = 0; i<OPS_sub_block_list[0]->sizes[0]+2; i++) {
+      printf("%lf ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+2) + i) ]);
+    }
+    printf("\n");
+  }
+
   int size_1[2] = {(x_max+2)-(x_min-2),1};
   int offset_1[2] = {-2,0};
   int tail_1[2] = {-2,0};
@@ -73,6 +81,14 @@ void build_field()
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
   ops_exchange_halo(&arg_test,1);
+
+  printf("After on rank %d\n",ops_my_rank);
+  for(int j = 0; j<OPS_sub_block_list[0]->sizes[1]+2; j++) {
+    for(int i = 0; i<OPS_sub_block_list[0]->sizes[0]+2; i++) {
+      printf("%lf ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+2) + i) ]);
+    }
+    printf("\n");
+  }
 
   ops_diagnostic_output();
 

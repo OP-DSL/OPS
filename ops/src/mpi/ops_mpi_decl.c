@@ -121,6 +121,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
 
+  for(int j = 0; j<sub_size[1]; j++) {
+    for(int i = 0; i<sub_size[0]; i++) {
+      dat->data[dat->size * (j* sub_size[0] + i) ] = j * sub_size[0] + i ;
+    }
+  }
+
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled
 
@@ -140,7 +146,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
     MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim);
 
     for(int n = 0; n<sb->ndim; n++) { //need to make MPI_DOUBLE_PRECISION general
-      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE, &stride[n]);
+      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
       MPI_Type_commit(&stride[n]);
       //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
       //printf("max_depth %d\n",max_depth[n]);
