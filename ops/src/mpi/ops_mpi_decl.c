@@ -135,12 +135,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
     int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
     int *prod = &prod_t[1];
-    int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
-    for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
+    //int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
+    //for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
 
     prod[-1] = 1;
     for(int n = 0; n<sb->ndim; n++) {
-      prod[n] = prod[n-1]*(sb->sizes[n] + 2*(max_depth[n]));
+      prod[n] = prod[n-1]*(sb->sizes[n] -offset[n] - tail[n]);
     }
 
     MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim);
@@ -155,7 +155,8 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
     //store away product array prod[] and MPI_Types for this ops_dat
     sb->prod = prod;
     sb->mpidat = stride;
-    sb->max_depth = max_depth;
+    sb->offset = offset;
+    sb->tail = tail;
   }
 
   return dat;

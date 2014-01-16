@@ -59,21 +59,32 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
 
   int i1,i2,i3,i4; //indicies for halo and boundary of the dat
-  int* md = sb->max_depth;
+  int* offset = sb->offset;
+  int* tail = sb->tail;
   int* prod = sb->prod;
   MPI_Status *status;
   int size = dat->size;
+
+  int md = 0;
+
 
   for(int n=0;n<sb->ndim;n++){
 
     MPI_Status status;
 
-    i1 = (md[n] - d) * prod[n-1];
+    //i1 = (md[n] - d) * prod[n-1];
+    i1 = ((-offset[n]) - d) * prod[n-1];
+
     //i2 = md[n] * prod[n-1];
-    i2 = (md[n] + d - 1 )* prod[n-1];
-    i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
+    //i2 = (md[n] + d - 1 )* prod[n-1];
+    i2 = ((-tail[n]) + d - 1 ) * prod[n-1];
+
+    //i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
+    i3 = (prod[n]/prod[n-1] - (-tail[n]) - d) * prod[n-1];
+
     //i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
-    i4 = (prod[n]/prod[n-1] - md[n] + d - 1 ) * prod[n-1];
+    //i4 = (prod[n]/prod[n-1] - md[n] + d - 1 ) * prod[n-1];
+    i4 = (prod[n]/prod[n-1] - (-offset[n]) + d - 1 ) * prod[n-1];
 
 
     //send in positive direction, receive from negative direction

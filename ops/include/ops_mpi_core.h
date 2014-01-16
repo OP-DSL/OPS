@@ -71,8 +71,10 @@ typedef struct {
   int* prod;
   //MPI Types for send/receive
   MPI_Datatype* mpidat;
-  //max halo depths in each dimension
-  int* max_depth;
+  //max halo depths at the begining of each dimension
+  int* offset;
+  //max halo depths at the end of each dimension
+  int* tail;
 
 } sub_block;
 
