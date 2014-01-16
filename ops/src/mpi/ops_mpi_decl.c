@@ -39,6 +39,9 @@
 #include <ops_lib_cpp.h>
 #include <ops_mpi_core.h>
 
+
+#define MAX_DEPTH 5
+
 void
 ops_init ( int argc, char ** argv, int diags )
 {
@@ -143,13 +146,15 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
       prod[n] = prod[n-1]*(sb->sizes[n] -offset[n] - tail[n]);
     }
 
-    MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim);
+    MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
 
     for(int n = 0; n<sb->ndim; n++) { //need to make MPI_DOUBLE_PRECISION general
-      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[n]);
-      MPI_Type_commit(&stride[n]);
-      //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
-      //printf("max_depth %d\n",max_depth[n]);
+      for(int d = 0; d<MAX_DEPTH; d++) {
+        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[MAX_DEPTH*n+d]);
+        MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
+        //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
+        //printf("max_depth %d\n",max_depth[n]);
+      }
     }
 
     //store away product array prod[] and MPI_Types for this ops_dat

@@ -45,6 +45,11 @@
 #endif
 #define MPI_ROOT 0
 
+#ifdef
+#undef MAX_DEPTH
+#endif
+#define MAX_DEPTH 5
+
 //
 //Struct for holding the decomposition details of a block on an MPI process
 //
