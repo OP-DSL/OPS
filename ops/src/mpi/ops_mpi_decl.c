@@ -40,8 +40,6 @@
 #include <ops_mpi_core.h>
 
 
-#define MAX_DEPTH 5
-
 void
 ops_init ( int argc, char ** argv, int diags )
 {
@@ -138,8 +136,6 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
     int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
     int *prod = &prod_t[1];
-    //int *max_depth = (int *) xmalloc(sb->ndim*sizeof(int));
-    //for(int n = 0; n<sb->ndim; n++) max_depth[n] = MAX( (-offset[n]),(-tail[n]) );
 
     prod[-1] = 1;
     for(int n = 0; n<sb->ndim; n++) {
@@ -153,7 +149,6 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
         MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[MAX_DEPTH*n+d]);
         MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
-        //printf("max_depth %d\n",max_depth[n]);
       }
     }
 

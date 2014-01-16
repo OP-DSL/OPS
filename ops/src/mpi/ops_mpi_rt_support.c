@@ -71,21 +71,9 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
   for(int n=0;n<sb->ndim;n++){
 
     MPI_Status status;
-
-    //i1 = (md[n] - d) * prod[n-1];
     i1 = (-offset[n] - d) * prod[n-1];
-
-    //i2 = md[n] * prod[n-1];
-    //i2 = (md[n] + d - 1 )* prod[n-1];
-    /**i2 = ((-tail[n]) + d - 1 ) * prod[n-1];**/
     i2 = (-offset[n]    ) * prod[n-1];
-
-    //i3 = (prod[n]/prod[n-1] - md[n] - d) * prod[n-1];
     i3 = (prod[n]/prod[n-1] - (-tail[n]) - d) * prod[n-1];
-
-    //i4 = (prod[n]/prod[n-1] - md[n]    ) * prod[n-1];
-    //i4 = (prod[n]/prod[n-1] - md[n] + d - 1 ) * prod[n-1];
-    /**i4 = (prod[n]/prod[n-1] - (-offset[n]) + d - 1 ) * prod[n-1];**/
     i4 = (prod[n]/prod[n-1] - (-tail[n])    ) * prod[n-1];
 
     //send in positive direction, receive from negative direction
@@ -93,7 +81,6 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
     MPI_Sendrecv(&dat->data[i3*size],1,sb->mpidat[MAX_DEPTH*n+d],sb->id_p[n],0,
                  &dat->data[i1*size],1,sb->mpidat[MAX_DEPTH*n+d],sb->id_m[n],0,
                  OPS_CART_COMM, &status);
-
 
     //send in negative direction, receive from positive direction
     printf("Exchaning 2 From:%d To: %d\n", i2, i4);
