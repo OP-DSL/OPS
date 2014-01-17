@@ -37,7 +37,7 @@
   */
 
 #include "ops_lib_cpp.h"
-
+#include "ops_mpi_core.h"
 
 #ifndef OPS_ACC_MACROS
 #ifndef OPS_DEBUG
@@ -103,6 +103,50 @@ inline int ops_offs_set(int n_x,
         +
         (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
 }
+
+
+template <class T0>
+void ops_par_loop_mpi(void (*kernel)(T0*),
+     char const * name, ops_block block, int dim, int *range,
+     ops_arg arg0) {
+
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  ops_arg args[1] = { arg0 };
+
+  //check if all args, if they are dats are defined on this block
+  for(int i=0; i<1; i++) {
+    //if dat is not defined for this block -- exit with error message
+  }
+
+  //compute localy allocated range for each dat
+  int ps[sb->ndim];
+  int pe[sb->ndim];
+  for(int n=0; n<sb->ndim; n++) {
+    ps[n] = sb->istart[n] - args[0].dat->offset[n];
+    pe[n] = sb->iend[n];// - args[i].dat->tail[n];
+  }
+
+  //determin the valid range to iterate over on this MPI process
+  //if the global range spills outside of any of the ops_dat's
+  //allocated array size on this process, exit the loop
+  int ndim = sb->ndim;
+  for(int n=0; n<; n++) {
+
+     if(ps[n] >= range[ndim*n] && pe[n] <= range[ndim*n + 1])
+
+     if(ps[n] <  range[ndim*n] && pe[n] <=  range[ndim*n + 1])
+
+     if(ps[n] <  range[ndim*n] && pe[n] >  range[ndim*n + 1])
+
+     if(ps[n] <  range[ndim*n] && pe[n] <= range[ndim*n + 1])
+
+     if(ps[n] >= range[ndim*n] && pe[n] >  range[ndim*n + 1])
+
+  }
+
+}
+
+
 
 
 //

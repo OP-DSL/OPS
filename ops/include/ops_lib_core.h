@@ -98,7 +98,7 @@ typedef struct
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
   int         size;        /* number of bytes per grid point*/
-  int         *block_size; /* size of the array in each block dimension*/
+  int         *block_size; /* size of the array in each block dimension -- including halo*/
   int         *offset;     /* starting index for each dimention*/
   char        *data;       /* data on host */
   char        *data_d;     /* data on device */

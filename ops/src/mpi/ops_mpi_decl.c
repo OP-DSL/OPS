@@ -31,7 +31,7 @@
 */
 
 /** @brief ops mpi declaration
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi backend
   */
 
@@ -90,8 +90,8 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
 }
 
 
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset,
-                           int* tail, char* data,
+ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m,
+                           int* d_p, char* data,
                            int type_size, char const * type, char const * name )
 {
   int edge_dat = 0; //flag indicating that this is an edge dat
@@ -104,7 +104,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
     if(dat_size[n] != 1) { //i.e. this dat is a regular data block that needs to decomposed
       //compute the local array sizes for this dat for this dimension
       //including max halo depths
-      sub_size[n] = sb->sizes[n] - offset[n] - tail[n];
+
+      //do check to see if the sizes match with the blocks size
+      /** TO DO **/
+
+      //compute allocation size - which includes the halo
+      sub_size[n] = sb->sizes[n] - d_m[n] - d_p[n];
     }
     else { // this dat is a an edge data block that needs to be replicated on each MPI process
       //apply the size as 1 for this dimension, later to be replicated on each process
@@ -115,7 +120,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
 /** ---- allocate an empty dat based on the local array sizes computed
          above on each MPI process                                      ---- **/
-  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, offset, data, type_size, type, name );
+  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, data, type_size, type, name );
 
   int bytes = size*type_size;
   for (int i=0; i<sb->ndim; i++) bytes = bytes*sub_size[i];
@@ -139,24 +144,33 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
 
     prod[-1] = 1;
     for(int n = 0; n<sb->ndim; n++) {
-      prod[n] = prod[n-1]*(sb->sizes[n] -offset[n] - tail[n]);
+      prod[n] = prod[n-1]*(sb->sizes[n] - d_m[n] - d_p[n]);
     }
 
     MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
 
     for(int n = 0; n<sb->ndim; n++) { //need to make MPI_DOUBLE_PRECISION general
       for(int d = 0; d<MAX_DEPTH; d++) {
-        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1], prod[n], MPI_DOUBLE_PRECISION, &stride[MAX_DEPTH*n+d]);
+        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
+                        prod[n], MPI_DOUBLE_PRECISION, &stride[MAX_DEPTH*n+d]);
         MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
       }
     }
 
+    //create list to hold sub-grid decomposition geometries for each mpi process
+    OPS_sub_dat_list = (sub_dat_list *)xrealloc(OPS_sub_dat_list, OPS_dat_index*sizeof(sub_dat_list));
+
+
     //store away product array prod[] and MPI_Types for this ops_dat
-    sb->prod = prod;
-    sb->mpidat = stride;
-    sb->offset = offset;
-    sb->tail = tail;
+    sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
+    sd->dat = dat;
+    sd->prod = prod;
+    sd->mpidat = stride;
+    sd->d_m = d_m;
+    sd->d_p = d_p;
+
+    OPS_sub_dat_list[dat->index] = sd;
   }
 
   return dat;

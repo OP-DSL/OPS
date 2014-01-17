@@ -72,19 +72,30 @@ typedef struct {
   int* istart;
   // the global index of the starting element of the local sub-block
   int* iend;
-  // product array -- used for MPI send/Receives
-  int* prod;
-  //MPI Types for send/receive
-  MPI_Datatype* mpidat;
-  //max halo depths at the begining of each dimension
-  int* offset;
-  //max halo depths at the end of each dimension
-  int* tail;
 
 } sub_block;
 
 typedef sub_block * sub_block_list;
 
+
+//
+//Struct for holding the decomposition details of a dat on an MPI process
+//
+typedef struct {
+  // the decomposition is for this dat
+  ops_dat dat;
+  // product array -- used for MPI send/Receives
+  int* prod;
+  //MPI Types for send/receive -- these should be defined for the dat, not the block
+  MPI_Datatype* mpidat;
+  //max halo depths at the begining of each dimension -- these should be defined for the dat, not the block
+  int* d_m;
+  //max halo depths at the end of each dimension -- these should be defined for the dat, not the block
+  int* d_p;
+
+} sub_dat;
+
+typedef sub_dat * sub_dat_list;
 
 //
 //MPI Communicator for halo creation and exchange
@@ -99,6 +110,7 @@ extern int ops_my_rank;
 // list holding sub-block geometries
 //
 extern sub_block_list *OPS_sub_block_list;
+extern sub_dat_list *OPS_sub_dat_list;
 
 
 /*******************************************************************************

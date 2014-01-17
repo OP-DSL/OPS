@@ -33,6 +33,16 @@
 #include "data.h"
 #include "definitions.h"
 
+
+
+void test_kernel(double *density0) {
+
+  printf("%lf ",density0[OPS_ACC0(0,0)]);
+
+}
+
+
+
 void build_field()
 {
   //initialize sizes using global values
@@ -48,7 +58,7 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
+  int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
   ops_block clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //decompose the block
@@ -57,17 +67,25 @@ void build_field()
   //
   //declare data on blocks
   //
-  int offset[2] = {-2,-2};
-  int tail[2] = {-2,-2};
-  int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
+  int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
+  int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
+  int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
+  //int size[2] = {x_max-x_min, y_max-y_min};
   double* temp = NULL;
 
-  density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
+  //density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
+  density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
 
+  ops_diagnostic_output();
+
+  ops_exit();//exit for now
+  exit(0);
+
+  /*
   printf("Before on rank %d\n",ops_my_rank);
   for(int j = 0; j<OPS_sub_block_list[0]->sizes[1]+4; j++) {
     for(int i = 0; i<OPS_sub_block_list[0]->sizes[0]+4; i++) {
-      printf("%e ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+4) + i) ]);
+      printf("%3.2lf ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+4) + i) ]);
     }
     printf("\n");
   }
@@ -86,15 +104,15 @@ void build_field()
   printf("After on rank %d\n",ops_my_rank);
   for(int j = 0; j<OPS_sub_block_list[0]->sizes[1]+4; j++) {
     for(int i = 0; i<OPS_sub_block_list[0]->sizes[0]+4; i++) {
-      printf("%e ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+4) + i) ]);
+      printf("%3.2lf ", (double) density0->data[density0->size * (j* (OPS_sub_block_list[0]->sizes[0]+4) + i) ]);
     }
     printf("\n");
   }
 
-  ops_diagnostic_output();
+  int rangexy[] = {x_min,x_max,y_min,y_max}; // inner range
+  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
+    ops_arg_dat(density0, S2D_00, "double", OPS_READ));
 
-  ops_exit();//exit for now
-  exit(0);
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
   density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
@@ -261,5 +279,6 @@ void build_field()
 
   //print ops blocks and dats details
   ops_diagnostic_output();
+  */
 
 }

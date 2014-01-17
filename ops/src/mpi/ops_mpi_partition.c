@@ -53,6 +53,9 @@ int ops_my_rank;
 sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
                                    // geometries
 
+sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
+                                 // details
+
 void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   //g_dim  - global number of dimensions .. will be the same on each local mpi process
@@ -159,19 +162,6 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
   ops_printf("Finished block decomposition\n");
 
 }
-
-//ops_dats will be declared with max halo depths in both directions in a dimension
-//use the same depth when allocating the local ops_dats on each MPI process
-
-//for each ops_dat declared on a decomposed ops_block
-  //for each dimension of the block
-    //for each direction in dimension
-      //create a send buffer and a receive buffer
-
-//halo exchange routine should aim to be one Isend/Ireceive per block dimension
-//Then this routine can be called for each dimension as in the decompose() routine, with a waitall after each dimension
-//might need MPI_CART_RANK to convert the cartecian coordinates of sender and receiver to actual MPI ranks -- seems no need for this
-
 
 //special case where iterating in 2D and accessing 1D edge, then all procs will need to
 //have a new special halo created... this will only be known at loop runtime
