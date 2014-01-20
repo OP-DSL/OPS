@@ -48,10 +48,10 @@ void build_field()
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
-  int x_min = field->x_min;
-  int x_max = field->x_max;
-  int y_min = field->y_min;
-  int y_max = field->y_max;
+  int x_min = field->x_min + 2; //+2 to account for the boundary
+  int x_max = field->x_max + 2; //+2 to account for the boundary
+  int y_min = field->y_min + 2; //+2 to account for the boundary
+  int y_max = field->y_max + 2; //+2 to account for the boundary
 
   ops_printf("Global x_min = %d, y_min = %d\n",x_min,y_min);
   ops_printf("Global x_max = %d, y_max = %d\n",x_max,y_max);
@@ -70,11 +70,19 @@ void build_field()
   int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
-  //int size[2] = {x_max-x_min, y_max-y_min};
   double* temp = NULL;
 
-  //density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
+
+  int s2D_00[]         = {0,0};
+  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
+  ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
+  ops_exchange_halo(&arg_test,1);
+
+  int rangexy[] = {x_min,x_max,y_min,y_max}; // inner range
+  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
+    ops_arg_dat(density0, S2D_00, "double", OPS_READ));
+
 
   ops_diagnostic_output();
 
@@ -95,10 +103,6 @@ void build_field()
   int tail_1[2] = {-2,0};
   cellx       = ops_decl_dat_mpi(clover_grid, 1, size_1, offset_1, tail_1, temp, "double", "cellx");
 
-  int s2D_00[]         = {0,0};
-  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
-  ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
-  ops_exchange_halo(&arg_test,1);
 
 
   printf("After on rank %d\n",ops_my_rank);
@@ -109,9 +113,7 @@ void build_field()
     printf("\n");
   }
 
-  int rangexy[] = {x_min,x_max,y_min,y_max}; // inner range
-  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(density0, S2D_00, "double", OPS_READ));
+
 
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");

@@ -127,12 +127,6 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
 
-  for(int j = 0; j<sub_size[1]; j++) {
-    for(int i = 0; i<sub_size[0]; i++) {
-      dat->data[dat->size * (j* sub_size[0] + i) ] = (double )(j * sub_size[0] + i);
-    }
-  }
-
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled
 
