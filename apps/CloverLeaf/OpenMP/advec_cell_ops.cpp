@@ -149,7 +149,7 @@ void advec_cell(int sweep_number, int dir)
                  ops_arg_dat(work_array4, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(work_array5, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-                 ops_arg_dat(work_array7, S2D_00_P10, "double", OPS_WRITE));
+                 ops_arg_dat(work_array7, S2D_00_P10, "double", OPS_READ));
 
   }
   else {
@@ -194,7 +194,7 @@ void advec_cell(int sweep_number, int dir)
                  ops_arg_dat(work_array4, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(work_array5, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-                 ops_arg_dat(work_array7, S2D_00_0P1, "double", OPS_WRITE));
+                 ops_arg_dat(work_array7, S2D_00_0P1, "double", OPS_READ));
 
   }
 
