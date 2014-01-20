@@ -27,6 +27,7 @@
 
 // OPS header file
 #include "ops_seq.h"
+#include "ops_mpi_seq.h"
 #include "ops_mpi_core.h"
 
 
@@ -79,7 +80,7 @@ void build_field()
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
   ops_exchange_halo(&arg_test,1);
 
-  int rangexy[] = {x_min,x_max,y_min,y_max}; // inner range
+  int rangexy[] = {x_min+2,x_max+2,y_min+2,y_max+2}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
     ops_arg_dat(density0, S2D_00, "double", OPS_READ));
 

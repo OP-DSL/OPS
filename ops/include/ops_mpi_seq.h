@@ -95,16 +95,176 @@ extern int xdim14;
 extern int xdim15;
 
 
-inline int ops_offs_set(int n_x,
-                        int n_y, ops_arg arg){
-        return
-        arg.dat->block_size[0] * //multiply by the number of
-        (n_y - arg.dat->offset[1])  // calculate the offset from index 0 for y dim
-        +
-        (n_x - arg.dat->offset[0]); //calculate the offset from index 0 for x dim
+
+inline int mult(int* co, int* s, int r)
+{
+  int result = 1;
+  if(r > 0) {
+    for(int i = 0; i<r;i++) result *= s[i];
+  }
+  result = result * co[r];
+  return result;
+}
+
+inline int add(int* co, int* s, int r)
+{
+  int result = co[0];
+  for(int i = 1; i<=r;i++) result += mult(co,s,i);
+  return result;
 }
 
 
+inline int off(int ndim, int r, int* ps, int* pe, int* size)
+{
+
+  int i = 0;
+  int* c1 = (int*) xmalloc(sizeof(int)*ndim);
+  int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+
+  for(i=0; i<ndim; i++) c1[i] = ps[i];
+  c1[r] = ps[r] + 1;
+
+  for(i = 0; i<r; i++) c2[i] = pe[i];
+  for(i=r; i<ndim; i++) c2[i] = ps[i];
+
+  int off =  add(c1, size, r) - add(c2, size, r) + 1; //plus 1 to get the next element
+
+  free(c1);free(c2);
+  return off;
+}
+
+
+
+//
+//ops_par_loop routine for 1 arguments
+//
+template <class T0>
+void ops_par_loop_mpi(void (*kernel)(T0*),
+     char const * name, ops_block block, int dim, int *range,
+     ops_arg arg0) {
+
+  char *p_a[1];
+  int  offs[1][2];
+
+  int  count[dim];
+  ops_arg args[1] = { arg0};
+
+  sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
+  sub_block_list sb = OPS_sub_block_list[block->index];
+
+  //compute localy allocated range for the sub-block
+  int ndim = sb->ndim;
+  int ps[ndim];
+  int pe[ndim];
+  int* start = (int*) xmalloc(sizeof(int)*ndim);
+  int* end = (int*) xmalloc(sizeof(int)*ndim);
+
+  for(int n=0; n<sb->ndim; n++) {
+    ps[n] = sb->istart[n];
+    pe[n] = sb->iend[n]+1; //+1 is for C indexing
+    //printf("ps[n] : %d, pe[n] : %d elements: %d\n",ps[n],pe[n], pe[n]-ps[n]);
+  }
+
+
+  //determin the valid range to iterate over on this MPI process
+  for(int n=0; n<ndim; n++) {
+    //printf("range[ndim*n] : %d, range[ndim*n+1] : %d elements: %d\n",
+      //range[ndim*n],range[ndim*n+1], range[ndim*n+1]-range[ndim*n]);
+    if(pe[n] >= ps[n]) {
+      if(ps[n] >= range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
+        start[n] = ps[n] - arg0.dat->offset[n];
+        end[n]   = pe[n] - arg0.dat->offset[n];
+      }
+      else if (ps[n] < range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
+        start[n] = range[ndim*n] - arg0.dat->offset[n];
+        end[n]   = pe[n] - arg0.dat->offset[n];
+      }
+      else if (ps[n] < range[ndim*n] && pe[n] > range[ndim*n + 1]) {
+        start[n] = range[ndim*n]  - arg0.dat->offset[n];
+        end[n]   = range[ndim*n+1] - arg0.dat->offset[n];
+      }
+      else if (ps[n] < range[ndim*n] && pe[n] < range[ndim*n + 1]) {
+        start[n] = 0;
+        end[n]   = 0;
+      }
+      else if (ps[n] > range[ndim*n] && pe[n] > range[ndim*n + 1]) {
+        start[n] = 0;
+        end[n]   = 0;
+      }
+    }
+  }
+
+  for (int i = 0; i<1;i++) {
+    if(args[i].stencil!=NULL) {
+      offs[i][0] = 1;  //unit step in x dimension
+      for(int n=1; n<ndim; n++) {
+        offs[i][1] = off(2, 1, start, end, args[i].dat->block_size);
+      }
+
+      int correct = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+
+      printf("correct = %d, test = %d\n",correct, offs[i][1]);
+      offs[i][1] = correct;
+
+      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
+        offs[i][0] = 0;
+        offs[i][1] = args[i].dat->block_size[0];
+      }
+      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
+        offs[i][0] = 1;
+        offs[i][1] = -( range[1] - range[0] ) +1;
+      }
+    }
+  }
+
+  //set up initial pointers
+  for (int i = 0; i < 1; i++) {
+    if (args[i].argtype == OPS_ARG_DAT) {
+      p_a[i] = (char *)args[i].data //base of 2D array
+      +
+      //y dimension -- get to the correct y line
+      args[i].dat->size * args[i].dat->block_size[0] * ( range[2] * args[i].stencil->stride[1] - args[i].dat->offset[1] )
+      +
+      //x dimension - get to the correct x point on the y line
+      args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
+    }
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char *)args[i].data;
+  }
+
+  int total_range = 1;
+  for (int m=0; m<dim; m++) {
+    count[m] = range[2*m+1]-range[2*m];  // number in each dimension
+    total_range *= count[m];
+  }
+  count[dim-1]++;     // extra in last to ensure correct termination
+
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
+
+  for (int nt=0; nt<total_range; nt++) {
+    // call kernel function, passing in pointers to data
+
+    kernel(  (T0 *)p_a[0] );
+
+    count[0]--;   // decrement counter
+    int m = 0;    // max dimension with changed index
+    while (count[m]==0) {
+      count[m] = range[2*m+1]-range[2*m]; // reset counter
+      m++;                                // next dimension
+      count[m]--;                         // decrement counter
+    }
+
+    int a = 0;
+    // shift pointers to data
+    for (int i=0; i<1; i++) {
+      if (args[i].argtype == OPS_ARG_DAT)
+        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+    }
+  }
+}
+
+
+/*
 template <class T0>
 void ops_par_loop_mpi(void (*kernel)(T0*),
      char const * name, ops_block block, int dim, int *range,
@@ -122,7 +282,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   //check if all args, if they are dats are defined on this block
   for(int i=0; i<1; i++) {
     //if dat is not defined for this block -- exit with error message
-    /**TO DO**/
+    /**TO DO
   }
 
   //compute localy allocated range for the sub-block
@@ -145,9 +305,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     }
   }
 
+
+
   //compute offsets -- need a way to generalize the calculation for any dimension
 
   //setup initial pointers -- need a way to generalize the calculation for any dimension
 
 
-}
+}*/

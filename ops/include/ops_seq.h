@@ -94,6 +94,9 @@ extern int xdim14;
 extern int xdim15;
 
 
+
+
+
 inline int ops_offs_set(int n_x,
                         int n_y, ops_arg arg){
         return
@@ -122,6 +125,7 @@ void ops_par_loop(void (*kernel)(T0*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = 1;  //unit step in x dimension
       offs[i][1] = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
+
       if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
         offs[i][0] = 0;
         offs[i][1] = args[i].dat->block_size[0];
