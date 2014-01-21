@@ -80,9 +80,20 @@ void build_field()
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
   ops_exchange_halo(&arg_test,1);
 
-  int rangexy[] = {x_min+2,x_max+2,y_min+2,y_max+2}; // range
+  int rangexy[] = {x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
     ops_arg_dat(density0, S2D_00, "double", OPS_READ));
+
+  int stride2D_x[] = {1,0};
+  S2D_00_STRID2D_X = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_x, "s2D_00_stride2D_x");
+  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
+    ops_arg_dat(density0, S2D_00_STRID2D_X, "double", OPS_READ));
+
+
+  int stride2D_y[] = {0,1};
+  S2D_00_STRID2D_Y = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_y, "s2D_00_stride2D_y");
+  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
+    ops_arg_dat(density0, S2D_00_STRID2D_Y, "double", OPS_READ));
 
 
   ops_diagnostic_output();

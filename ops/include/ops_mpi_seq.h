@@ -114,7 +114,7 @@ inline int add(int* co, int* s, int r)
 }
 
 
-inline int off(int ndim, int r, int* ps, int* pe, int* size)
+inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
@@ -122,9 +122,9 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size)
   int* c2 = (int*) xmalloc(sizeof(int)*ndim);
 
   for(i=0; i<ndim; i++) c1[i] = ps[i];
-  c1[r] = ps[r] + 1;
+  c1[r] = ps[r] + 1*std[r];
 
-  for(i = 0; i<r; i++) c2[i] = pe[i];
+  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
   for(i=r; i<ndim; i++) c2[i] = ps[i];
 
   int off =  add(c1, size, r) - add(c2, size, r) + 1; //plus 1 to get the next element
@@ -133,6 +133,24 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size)
   return off;
 }
 
+
+inline int mult2(int* s, int r)
+{
+  int result = 1;
+  if(r > 0) {
+    for(int i = 0; i<r;i++) result *= s[i];
+  }
+  return result ;
+}
+
+inline int address(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+{
+  int base = 0;
+  for(int i=0; i<ndim; i++) {
+    base = base + dat_size * mult2(size, i) * (ps[i] * std[i] - off[i]);
+  }
+  return base;
+}
 
 
 //
@@ -168,8 +186,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
 
   //determin the valid range to iterate over on this MPI process
   for(int n=0; n<ndim; n++) {
-    //printf("range[ndim*n] : %d, range[ndim*n+1] : %d elements: %d\n",
-      //range[ndim*n],range[ndim*n+1], range[ndim*n+1]-range[ndim*n]);
     if(pe[n] >= ps[n]) {
       if(ps[n] >= range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
         start[n] = ps[n] - arg0.dat->offset[n];
@@ -192,42 +208,24 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
         end[n]   = 0;
       }
     }
+    //printf("start[n]: %d, end[n] : %d elements: %d\n",
+    //  start[n], end[n],  end[n]-start[n]);
   }
 
   for (int i = 0; i<1;i++) {
     if(args[i].stencil!=NULL) {
-      offs[i][0] = 1;  //unit step in x dimension
+      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][1] = off(2, 1, start, end, args[i].dat->block_size);
-      }
-
-      int correct = ops_offs_set(range[0],range[2]+1, args[i]) - ops_offs_set(range[1],range[2], args[i]) +1;
-
-      printf("correct = %d, test = %d\n",correct, offs[i][1]);
-      offs[i][1] = correct;
-
-      if (args[i].stencil->stride[0] == 0) { //stride in y as x stride is 0
-        offs[i][0] = 0;
-        offs[i][1] = args[i].dat->block_size[0];
-      }
-      else if (args[i].stencil->stride[1] == 0) {//stride in x as y stride is 0
-        offs[i][0] = 1;
-        offs[i][1] = -( range[1] - range[0] ) +1;
+        offs[i][n] = off(ndim, n, start, end, args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
 
   //set up initial pointers
   for (int i = 0; i < 1; i++) {
-    if (args[i].argtype == OPS_ARG_DAT) {
-      p_a[i] = (char *)args[i].data //base of 2D array
-      +
-      //y dimension -- get to the correct y line
-      args[i].dat->size * args[i].dat->block_size[0] * ( range[2] * args[i].stencil->stride[1] - args[i].dat->offset[1] )
-      +
-      //x dimension - get to the correct x point on the y line
-      args[i].dat->size * ( range[0] * args[i].stencil->stride[0] - args[i].dat->offset[0] );
-    }
+    if (args[i].argtype == OPS_ARG_DAT)
+      p_a[i] = (char *)args[i].data +
+               address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
   }
@@ -262,54 +260,3 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     }
   }
 }
-
-
-/*
-template <class T0>
-void ops_par_loop_mpi(void (*kernel)(T0*),
-     char const * name, ops_block block, int dim, int *range,
-     ops_arg arg0) {
-
-  char *p_a[1];
-  int  offs[1][2];
-
-  int  count[dim];
-  ops_arg args[1] = { arg0};
-  sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
-
-  sub_block_list sb = OPS_sub_block_list[block->index];
-
-  //check if all args, if they are dats are defined on this block
-  for(int i=0; i<1; i++) {
-    //if dat is not defined for this block -- exit with error message
-    /**TO DO
-  }
-
-  //compute localy allocated range for the sub-block
-  int ndim = sb->ndim;
-  int ps[ndim];
-  int pe[ndim];
-  for(int n=0; n<sb->ndim; n++) {
-    ps[n] = sb->istart[n];
-    pe[n] = sb->iend[n];
-  }
-
-  //determin the valid range to iterate over on this MPI process
-  int start[ndim];
-  int end[ndim];
-  for(int n=0; n<ndim; n++) {
-    if(pe[n] >= ps[n]) {
-      if(ps[n] >= range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
-        start[n] = ps[n]; end[n] = pe[n];
-      }
-    }
-  }
-
-
-
-  //compute offsets -- need a way to generalize the calculation for any dimension
-
-  //setup initial pointers -- need a way to generalize the calculation for any dimension
-
-
-}*/
