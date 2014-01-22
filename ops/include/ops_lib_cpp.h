@@ -99,7 +99,7 @@ extern ops_arg *OPS_curr_args;
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
 
-ops_dat ops_decl_dat_char(ops_block, int, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
                            char* data, int type_size, char const * type, char const * name );
 

@@ -81,7 +81,7 @@ void ops_exit()
 }
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
-                           int* offset,  char* data, int type_size,
+                           int* offset,  int* tail, char* data, int type_size,
                            char const * type, char const * name )
 {
   ops_dat dat;
@@ -89,10 +89,10 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
   for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
 
   if(data != NULL) {
-    dat = ops_decl_dat_core(block, size, block_size, offset, data, type_size, type, name);
+    dat = ops_decl_dat_core(block, size, block_size, offset, tail, data, type_size, type, name);
   }
   else {
-    dat = ops_decl_dat_temp_core (block, size, block_size, offset,
+    dat = ops_decl_dat_temp_core (block, size, block_size, offset, tail,
                                            data, type_size, type, name );
 
     dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0

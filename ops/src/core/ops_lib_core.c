@@ -208,7 +208,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 }
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, char *data, int type_size,
+                      int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
                       char const * name )
 {
@@ -233,6 +233,9 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 
   dat->offset =( int *)xmalloc(sizeof(int)*block->dims);
   memcpy(dat->offset,offset,sizeof(int)*block->dims);
+
+  dat->tail =( int *)xmalloc(sizeof(int)*block->dims);
+  memcpy(dat->tail,tail,sizeof(int)*block->dims);
 
   dat->data = (char *)data;
   dat->user_managed = 1;
@@ -260,7 +263,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 
 
 ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
-  int *block_size, int* offset,  char * data, int type_size, char const * type, char const * name )
+  int *block_size, int* offset,  int* tail, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
@@ -269,7 +272,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, data_size, block_size, offset, data, type_size, type, name );
+  return ops_decl_dat_core ( block, data_size, block_size, offset, tail, data, type_size, type, name );
 }
 
 
@@ -381,7 +384,7 @@ void ops_diagnostic_output ( )
       printf("\n");
     }
 
-    printf ( "\n dats item/point [block_size] [offset]  block\n" );
+    printf ( "\n dats item/point [block_size] [offset][tail]  block\n" );
     printf ( " ------------------------------\n" );
     ops_dat_entry *item;
     TAILQ_FOREACH(item, &OPS_dat_list, entries) {
@@ -391,6 +394,8 @@ void ops_diagnostic_output ( )
       printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->offset[i] );
+      for (int i=0; i<(item->dat)->block->dims; i++)
+        printf ( "[%d]",(item->dat)->tail[i] );
 
       printf ( " %15s\n", (item->dat)->block->name );
     }

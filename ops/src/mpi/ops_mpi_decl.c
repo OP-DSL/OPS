@@ -68,16 +68,16 @@ void ops_exit()
 }
 
 ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
-                           int* offset,  char* data, int type_size,
+                           int* offset,  int* tail, char* data, int type_size,
                            char const * type, char const * name )
 {
   ops_dat dat;
 
   if(data != NULL) {
-    dat = ops_decl_dat_core(block, size, block_size, offset, data, type_size, type, name);
+    dat = ops_decl_dat_core(block, size, block_size, offset, tail, data, type_size, type, name);
   }
   else {
-    dat = ops_decl_dat_temp_core (block, size, block_size, offset,
+    dat = ops_decl_dat_temp_core (block, size, block_size, offset, tail,
                                            data, type_size, type, name );
     int bytes = size*type_size;
     for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
@@ -120,12 +120,14 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
 
 /** ---- allocate an empty dat based on the local array sizes computed
          above on each MPI process                                      ---- **/
-  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, data, type_size, type, name );
+  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, d_p, data, type_size, type, name );
 
   int bytes = size*type_size;
   for (int i=0; i<sb->ndim; i++) bytes = bytes*sub_size[i];
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
+
+
 
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled

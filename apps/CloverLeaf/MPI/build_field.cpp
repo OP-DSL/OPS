@@ -73,8 +73,21 @@ void build_field()
   double* temp = NULL;
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
+  density1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
+  energy0     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
+  energy1     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
+  pressure    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "pressure");
+  viscosity   = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "viscosity");
+  soundspeed  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "soundspeed");
+  volume      = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "volume");
 
-  int s2D_00[]         = {0,0};
+  d_p[0]=-3;d_p[1]=-3;
+  xvel0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel0");
+  xvel1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel1");
+  yvel0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");
+  yvel1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel1");
+
+  /*int s2D_00[]         = {0,0};
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
   ops_exchange_halo(&arg_test,1);
@@ -92,7 +105,7 @@ void build_field()
   int stride2D_y[] = {0,1};
   S2D_00_STRID2D_Y = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_y, "s2D_00_stride2D_y");
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(density0, S2D_00_STRID2D_Y, "double", OPS_READ));
+    ops_arg_dat(density0, S2D_00_STRID2D_Y, "double", OPS_READ));*/
 
 
   ops_diagnostic_output();
