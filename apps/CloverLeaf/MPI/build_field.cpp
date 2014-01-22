@@ -43,16 +43,15 @@ void test_kernel(double *density0) {
 }
 
 
-
 void build_field()
 {
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
-  int x_min = field->x_min + 2; //+2 to account for the boundary
-  int x_max = field->x_max + 2; //+2 to account for the boundary
-  int y_min = field->y_min + 2; //+2 to account for the boundary
-  int y_max = field->y_max + 2; //+2 to account for the boundary
+  int x_min = field->x_min;
+  int x_max = field->x_max;
+  int y_min = field->y_min;
+  int y_max = field->y_max;
 
   ops_printf("Global x_min = %d, y_min = %d\n",x_min,y_min);
   ops_printf("Global x_max = %d, y_max = %d\n",x_max,y_max);

@@ -96,20 +96,19 @@ extern int xdim15;
 
 
 
-inline int mult(int* co, int* s, int r)
+inline int mult(int* s, int r)
 {
   int result = 1;
   if(r > 0) {
     for(int i = 0; i<r;i++) result *= s[i];
   }
-  result = result * co[r];
   return result;
 }
 
 inline int add(int* co, int* s, int r)
 {
   int result = co[0];
-  for(int i = 1; i<=r;i++) result += mult(co,s,i);
+  for(int i = 1; i<=r;i++) result += co[i]*mult(s,i);
   return result;
 }
 
@@ -133,21 +132,11 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
   return off;
 }
 
-
-inline int mult2(int* s, int r)
-{
-  int result = 1;
-  if(r > 0) {
-    for(int i = 0; i<r;i++) result *= s[i];
-  }
-  return result ;
-}
-
 inline int address(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult2(size, i) * (ps[i] * std[i] - off[i]);
+    base = base + dat_size * mult(size, i) * (ps[i] * std[i] - off[i]);
   }
   return base;
 }
@@ -168,7 +157,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   ops_arg args[1] = { arg0};
 
   sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
-  sub_block_list sb = OPS_sub_block_list[block->index];
+  sub_block_list sb0 = OPS_sub_block_list[block->index];
 
   //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
@@ -224,16 +213,17 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   //set up initial pointers
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT)
-      p_a[i] = (char *)args[i].data +
-               address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      p_a[i] = (char *)args[i].data + address(ndim, args[i].dat->size, start,
+               args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
   }
 
   int total_range = 1;
-  for (int m=0; m<dim; m++) {
-    count[m] = range[2*m+1]-range[2*m];  // number in each dimension
-    total_range *= count[m];
+  for (int n=0; n<ndim; n++) {
+    //count[m] = range[2*m+1]-range[2*m];  // number in each dimension
+    count[n] = end[n]-start[n];  // number in each dimension
+    total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -259,4 +249,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  free(start);free(end);
+
 }
