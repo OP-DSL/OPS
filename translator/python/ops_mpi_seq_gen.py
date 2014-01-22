@@ -212,7 +212,7 @@ for nargs in range (1,maxargs+1):
       '    for(int n=0; n<ndim; n++) {\n' +
       '      if(end[i*'+str(nargs)+'+n] >= start[i*'+str(nargs)+'+n]) {\n' +
       '        if(start[i*'+str(nargs)+'+n] >= range[ndim*n] && end[i*'+str(nargs)+'+n] <= range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+] = start[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
+      '          start[i*'+str(nargs)+'+n] = start[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
       '          end[i*'+str(nargs)+'+n]  = end[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
       '        }\n' +
       '        else if (start[i*'+str(nargs)+'+n] < range[ndim*n] && end[i*'+str(nargs)+'+n] <= range[ndim*n + 1]) {\n' +
@@ -236,8 +236,8 @@ for nargs in range (1,maxargs+1):
       '  }\n\n\n')
 
 
-    f.write('  #ifdef OPS_DEBUG')
-    f.write('  ops_register_args(args, name);');
+    f.write('  #ifdef OPS_DEBUG\n')
+    f.write('  ops_register_args(args, name);\n');
     f.write('  #endif\n\n')
 
     f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
@@ -300,7 +300,8 @@ for nargs in range (1,maxargs+1):
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
     f.write('        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);\n')
     f.write('    }\n')
-    f.write('  }\n')
+    f.write('  }\n\n')
 
+    f.write('  free(start);free(end);\n');
 
     f.write('}')

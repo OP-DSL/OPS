@@ -39,62 +39,23 @@
 #include "ops_lib_cpp.h"
 #include "ops_mpi_core.h"
 
+
 #ifndef OPS_ACC_MACROS
 #ifndef OPS_DEBUG
 #define OPS_ACC0(x,y) (x+xdim0*(y))
 #define OPS_ACC1(x,y) (x+xdim1*(y))
 #define OPS_ACC2(x,y) (x+xdim2*(y))
-#define OPS_ACC3(x,y) (x+xdim3*(y))
-#define OPS_ACC4(x,y) (x+xdim4*(y))
-#define OPS_ACC5(x,y) (x+xdim5*(y))
-#define OPS_ACC6(x,y) (x+xdim6*(y))
-#define OPS_ACC7(x,y) (x+xdim7*(y))
-#define OPS_ACC8(x,y) (x+xdim8*(y))
-#define OPS_ACC9(x,y) (x+xdim9*(y))
-#define OPS_ACC10(x,y) (x+xdim10*(y))
-#define OPS_ACC11(x,y) (x+xdim11*(y))
-#define OPS_ACC12(x,y) (x+xdim12*(y))
-#define OPS_ACC13(x,y) (x+xdim13*(y))
-#define OPS_ACC14(x,y) (x+xdim14*(y))
-#define OPS_ACC15(x,y) (x+xdim15*(y))
 #else
+
 #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
 #define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
 #define OPS_ACC2(x,y) (ops_stencil_check_2d(2, x, y, xdim2, -1))
-#define OPS_ACC3(x,y) (ops_stencil_check_2d(3, x, y, xdim3, -1))
-#define OPS_ACC4(x,y) (ops_stencil_check_2d(4, x, y, xdim4, -1))
-#define OPS_ACC5(x,y) (ops_stencil_check_2d(5, x, y, xdim5, -1))
-#define OPS_ACC6(x,y) (ops_stencil_check_2d(6, x, y, xdim6, -1))
-#define OPS_ACC7(x,y) (ops_stencil_check_2d(7, x, y, xdim7, -1))
-#define OPS_ACC8(x,y) (ops_stencil_check_2d(8, x, y, xdim8, -1))
-#define OPS_ACC9(x,y) (ops_stencil_check_2d(9, x, y, xdim8, -1))
-#define OPS_ACC10(x,y) (ops_stencil_check_2d(10, x, y, xdim10, -1))
-#define OPS_ACC11(x,y) (ops_stencil_check_2d(11, x, y, xdim11, -1))
-#define OPS_ACC12(x,y) (ops_stencil_check_2d(12, x, y, xdim12, -1))
-#define OPS_ACC13(x,y) (ops_stencil_check_2d(13, x, y, xdim13, -1))
-#define OPS_ACC14(x,y) (ops_stencil_check_2d(14, x, y, xdim14, -1))
-#define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
 #endif
 #endif
 
 extern int xdim0;
 extern int xdim1;
 extern int xdim2;
-extern int xdim3;
-extern int xdim4;
-extern int xdim5;
-extern int xdim6;
-extern int xdim7;
-extern int xdim8;
-extern int xdim9;
-extern int xdim10;
-extern int xdim11;
-extern int xdim12;
-extern int xdim13;
-extern int xdim14;
-extern int xdim15;
-
-
 
 inline int mult(int* s, int r)
 {
@@ -156,72 +117,75 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   int  count[dim];
   ops_arg args[1] = { arg0};
 
+  sub_block_list sb = OPS_sub_block_list[block->index];
   sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
-  sub_block_list sb0 = OPS_sub_block_list[block->index];
 
-  //compute localy allocated range for the sub-block
+
+    //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
-  int ps[ndim];
-  int pe[ndim];
-  int* start = (int*) xmalloc(sizeof(int)*ndim);
-  int* end = (int*) xmalloc(sizeof(int)*ndim);
+  int* start = (int*) xmalloc(sizeof(int)*ndim*1);
+  int* end = (int*) xmalloc(sizeof(int)*ndim*1);
 
-  for(int n=0; n<sb->ndim; n++) {
-    ps[n] = sb->istart[n];
-    pe[n] = sb->iend[n]+1; //+1 is for C indexing
-    //printf("ps[n] : %d, pe[n] : %d elements: %d\n",ps[n],pe[n], pe[n]-ps[n]);
+  for(int i = 0; i<1; i++) {
+    for(int n=0; n<sb->ndim; n++) {
+      start[i*1+n] = sb->istart[n];
+      end[i*1+n] = sb->iend[n]+1; //+1 is for C indexing
+    }
   }
 
-
-  //determin the valid range to iterate over on this MPI process
-  for(int n=0; n<ndim; n++) {
-    if(pe[n] >= ps[n]) {
-      if(ps[n] >= range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
-        start[n] = ps[n] - arg0.dat->offset[n];
-        end[n]   = pe[n] - arg0.dat->offset[n];
-      }
-      else if (ps[n] < range[ndim*n] && pe[n] <= range[ndim*n + 1]) {
-        start[n] = range[ndim*n] - arg0.dat->offset[n];
-        end[n]   = pe[n] - arg0.dat->offset[n];
-      }
-      else if (ps[n] < range[ndim*n] && pe[n] > range[ndim*n + 1]) {
-        start[n] = range[ndim*n]  - arg0.dat->offset[n];
-        end[n]   = range[ndim*n+1] - arg0.dat->offset[n];
-      }
-      else if (ps[n] < range[ndim*n] && pe[n] < range[ndim*n + 1]) {
-        start[n] = 0;
-        end[n]   = 0;
-      }
-      else if (ps[n] > range[ndim*n] && pe[n] > range[ndim*n + 1]) {
-        start[n] = 0;
-        end[n]   = 0;
+  for(int i = 0; i<1; i++) {
+    for(int n=0; n<ndim; n++) {
+      if(end[i*1+n] >= start[i*1+n]) {
+        if(start[i*1+n] >= range[ndim*n] && end[i*1+n] <= range[ndim*n + 1]) {
+          start[i*1+n] = start[i*1+n] - args[i].dat->offset[n];
+          end[i*1+n]  = end[i*1+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*1+n] < range[ndim*n] && end[i*1+n] <= range[ndim*n + 1]) {
+          start[i*1+n] = range[ndim*n] - args[i].dat->offset[n];
+          end[i*1+n]   = end[i*1+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*1+n] < range[ndim*n] && end[i*1+n] > range[ndim*n + 1]) {
+          start[i*1+n] = range[ndim*n]  - args[i].dat->offset[n];
+          end[i*1+n]   = range[ndim*n+1] - args[i].dat->offset[n];
+        }
+        else if (start[i*1+n] < range[ndim*n] && end[i*1+n] < range[ndim*n + 1]) {
+          start[i*1+n] = 0;
+          end[i*1+n]   = 0;
+        }
+        else if (start[i*1+n] > range[ndim*n] && end[i*1+n] > range[ndim*n + 1]) {
+          start[i*1+n] = 0;
+          end[i*1+n]   = 0;
+        }
       }
     }
-    //printf("start[n]: %d, end[n] : %d elements: %d\n",
-    //  start[n], end[n],  end[n]-start[n]);
   }
+
+
+  #ifdef OPS_DEBUG
+  ops_register_args(args, name);
+  #endif
 
   for (int i = 0; i<1;i++) {
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, start, end, args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i], &end[i], args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
 
   //set up initial pointers
   for (int i = 0; i < 1; i++) {
-    if (args[i].argtype == OPS_ARG_DAT)
-      p_a[i] = (char *)args[i].data + address(ndim, args[i].dat->size, start,
-               args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+    if (args[i].argtype == OPS_ARG_DAT) {
+      p_a[i] = (char *)args[i].data //base of 2D array
+      + address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+    }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
   }
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //count[m] = range[2*m+1]-range[2*m];  // number in each dimension
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -237,9 +201,9 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      count[m] = range[2*m+1]-range[2*m]; // reset counter
-      m++;                                // next dimension
-      count[m]--;                         // decrement counter
+      count[m] = end[m]-start[m]; // reset counter
+      m++;                        // next dimension
+      count[m]--;                 // decrement counter
     }
 
     int a = 0;
@@ -251,5 +215,238 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   }
 
   free(start);free(end);
+}
 
+//
+//ops_par_loop routine for 2 arguments
+//
+template <class T0,class T1>
+void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
+     char const * name, ops_block block, int dim, int *range,
+     ops_arg arg0, ops_arg arg1) {
+
+  char *p_a[2];
+  int  offs[2][2];
+
+  int  count[dim];
+  ops_arg args[2] = { arg0, arg1};
+
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
+  sub_dat_list sd1 = OPS_sub_dat_list[arg1.dat->index];
+
+
+    //compute localy allocated range for the sub-block
+  int ndim = sb->ndim;
+  int* start = (int*) xmalloc(sizeof(int)*ndim*2);
+  int* end = (int*) xmalloc(sizeof(int)*ndim*2);
+
+  for(int i = 0; i<2; i++) {
+    for(int n=0; n<sb->ndim; n++) {
+      start[i*2+n] = sb->istart[n];
+      end[i*2+n] = sb->iend[n]+1; //+1 is for C indexing
+    }
+  }
+
+  for(int i = 0; i<2; i++) {
+    for(int n=0; n<ndim; n++) {
+      if(end[i*2+n] >= start[i*2+n]) {
+        if(start[i*2+n] >= range[ndim*n] && end[i*2+n] <= range[ndim*n + 1]) {
+          start[i*2+n] = start[i*2+n] - args[i].dat->offset[n];
+          end[i*2+n]  = end[i*2+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*2+n] < range[ndim*n] && end[i*2+n] <= range[ndim*n + 1]) {
+          start[i*2+n] = range[ndim*n] - args[i].dat->offset[n];
+          end[i*2+n]   = end[i*2+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*2+n] < range[ndim*n] && end[i*2+n] > range[ndim*n + 1]) {
+          start[i*2+n] = range[ndim*n]  - args[i].dat->offset[n];
+          end[i*2+n]   = range[ndim*n+1] - args[i].dat->offset[n];
+        }
+        else if (start[i*2+n] < range[ndim*n] && end[i*2+n] < range[ndim*n + 1]) {
+          start[i*2+n] = 0;
+          end[i*2+n]   = 0;
+        }
+        else if (start[i*2+n] > range[ndim*n] && end[i*2+n] > range[ndim*n + 1]) {
+          start[i*2+n] = 0;
+          end[i*2+n]   = 0;
+        }
+      }
+    }
+  }
+
+
+  #ifdef OPS_DEBUG
+  ops_register_args(args, name);
+  #endif
+
+  for (int i = 0; i<2;i++) {
+    if(args[i].stencil!=NULL) {
+      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
+      for(int n=1; n<ndim; n++) {
+        offs[i][n] = off(ndim, n, &start[i], &end[i], args[i].dat->block_size, args[i].stencil->stride);
+      }
+    }
+  }
+
+  //set up initial pointers
+  for (int i = 0; i < 2; i++) {
+    if (args[i].argtype == OPS_ARG_DAT) {
+      p_a[i] = (char *)args[i].data //base of 2D array
+      + address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+    }
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char *)args[i].data;
+  }
+
+  int total_range = 1;
+  for (int n=0; n<ndim; n++) {
+    count[n] = end[n]-start[n];  // number in each dimension
+    total_range *= count[n];
+  }
+  count[dim-1]++;     // extra in last to ensure correct termination
+
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
+
+  for (int nt=0; nt<total_range; nt++) {
+    // call kernel function, passing in pointers to data
+
+    kernel(  (T0 *)p_a[0], (T1 *)p_a[1] );
+
+    count[0]--;   // decrement counter
+    int m = 0;    // max dimension with changed index
+    while (count[m]==0) {
+      count[m] = end[m]-start[m]; // reset counter
+      m++;                        // next dimension
+      count[m]--;                 // decrement counter
+    }
+
+    int a = 0;
+    // shift pointers to data
+    for (int i=0; i<2; i++) {
+      if (args[i].argtype == OPS_ARG_DAT)
+        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+    }
+  }
+
+  free(start);free(end);
+}
+
+//
+//ops_par_loop routine for 3 arguments
+//
+template <class T0,class T1,class T2>
+void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
+     char const * name, ops_block block, int dim, int *range,
+     ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+
+  char *p_a[3];
+  int  offs[3][2];
+
+  int  count[dim];
+  ops_arg args[3] = { arg0, arg1, arg2};
+
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  sub_dat_list sd0 = OPS_sub_dat_list[arg0.dat->index];
+  sub_dat_list sd1 = OPS_sub_dat_list[arg1.dat->index];
+  sub_dat_list sd2 = OPS_sub_dat_list[arg2.dat->index];
+
+
+    //compute localy allocated range for the sub-block
+  int ndim = sb->ndim;
+  int* start = (int*) xmalloc(sizeof(int)*ndim*3);
+  int* end = (int*) xmalloc(sizeof(int)*ndim*3);
+
+  for(int i = 0; i<3; i++) {
+    for(int n=0; n<sb->ndim; n++) {
+      start[i*3+n] = sb->istart[n];
+      end[i*3+n] = sb->iend[n]+1; //+1 is for C indexing
+    }
+  }
+
+  for(int i = 0; i<3; i++) {
+    for(int n=0; n<ndim; n++) {
+      if(end[i*3+n] >= start[i*3+n]) {
+        if(start[i*3+n] >= range[ndim*n] && end[i*3+n] <= range[ndim*n + 1]) {
+          start[i*3+n] = start[i*3+n] - args[i].dat->offset[n];
+          end[i*3+n]  = end[i*3+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] <= range[ndim*n + 1]) {
+          start[i*3+n] = range[ndim*n] - args[i].dat->offset[n];
+          end[i*3+n]   = end[i*3+n] - args[i].dat->offset[n];
+        }
+        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] > range[ndim*n + 1]) {
+          start[i*3+n] = range[ndim*n]  - args[i].dat->offset[n];
+          end[i*3+n]   = range[ndim*n+1] - args[i].dat->offset[n];
+        }
+        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] < range[ndim*n + 1]) {
+          start[i*3+n] = 0;
+          end[i*3+n]   = 0;
+        }
+        else if (start[i*3+n] > range[ndim*n] && end[i*3+n] > range[ndim*n + 1]) {
+          start[i*3+n] = 0;
+          end[i*3+n]   = 0;
+        }
+      }
+    }
+  }
+
+
+  #ifdef OPS_DEBUG
+  ops_register_args(args, name);
+  #endif
+
+  for (int i = 0; i<3;i++) {
+    if(args[i].stencil!=NULL) {
+      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
+      for(int n=1; n<ndim; n++) {
+        offs[i][n] = off(ndim, n, &start[i], &end[i], args[i].dat->block_size, args[i].stencil->stride);
+      }
+    }
+  }
+
+  //set up initial pointers
+  for (int i = 0; i < 3; i++) {
+    if (args[i].argtype == OPS_ARG_DAT) {
+      p_a[i] = (char *)args[i].data //base of 2D array
+      + address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+    }
+    else if (args[i].argtype == OPS_ARG_GBL)
+      p_a[i] = (char *)args[i].data;
+  }
+
+  int total_range = 1;
+  for (int n=0; n<ndim; n++) {
+    count[n] = end[n]-start[n];  // number in each dimension
+    total_range *= count[n];
+  }
+  count[dim-1]++;     // extra in last to ensure correct termination
+
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
+
+  for (int nt=0; nt<total_range; nt++) {
+    // call kernel function, passing in pointers to data
+
+    kernel(  (T0 *)p_a[0], (T1 *)p_a[1], (T2 *)p_a[2] );
+
+    count[0]--;   // decrement counter
+    int m = 0;    // max dimension with changed index
+    while (count[m]==0) {
+      count[m] = end[m]-start[m]; // reset counter
+      m++;                        // next dimension
+      count[m]--;                 // decrement counter
+    }
+
+    int a = 0;
+    // shift pointers to data
+    for (int i=0; i<3; i++) {
+      if (args[i].argtype == OPS_ARG_DAT)
+        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+    }
+  }
+
+  free(start);free(end);
 }
