@@ -34,9 +34,9 @@
 #include "definitions.h"
 
 
-void test_kernel(double *density0) {
+void test_kernel(double *vertexdx) {
 
-  printf("%lf ",density0[OPS_ACC0(0,0)]);
+  printf("%lf ",vertexdx[OPS_ACC0(0,0)]);
 
 }
 
@@ -353,7 +353,7 @@ void build_field()
 
   int rangexy[] = {x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(vertexdx, S2D_00, "double", OPS_READ));
+    ops_arg_dat(density0, S2D_00, "double", OPS_READ));
 
   ops_exit();//exit for now
   exit(0);
