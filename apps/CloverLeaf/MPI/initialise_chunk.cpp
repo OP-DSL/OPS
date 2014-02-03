@@ -28,6 +28,7 @@
 // OPS header file
 
 #include "ops_seq.h"
+#include "ops_mpi_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -46,14 +47,15 @@ void initialise_chunk()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  int self[] = {0,0};
-  ops_stencil sten1 = ops_decl_stencil( 2, 1, self, "self");
-
   int rangex[] = {x_min-2, x_max+3, 0, 1};
-  ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", 2, rangex,
+  ops_par_loop_mpi(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 2, rangex,
                ops_arg_dat(vertexx, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(xx, S2D_00, "int", OPS_READ),
                ops_arg_dat(vertexdx, S2D_00, "double", OPS_WRITE));
+
+  ops_exit();//exit for now
+  exit(0);
+
 
   int rangey[] = {0, 1, y_min-2, y_max+3};
   ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,

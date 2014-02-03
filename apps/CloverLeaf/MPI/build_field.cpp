@@ -28,12 +28,10 @@
 // OPS header file
 #include "ops_seq.h"
 #include "ops_mpi_seq.h"
-#include "ops_mpi_core.h"
 
 
 #include "data.h"
 #include "definitions.h"
-
 
 
 void test_kernel(double *density0) {
@@ -59,7 +57,7 @@ void build_field()
   /**----------------------------OPS Declarations----------------------------**/
 
   int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
-  ops_block clover_grid = ops_decl_block(2, dims, "clover grid");
+  clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //decompose the block
   ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
@@ -128,8 +126,15 @@ void build_field()
   vertexdy = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
 
 
+  //contains x indicies from 0 to xmax+3 -- needed for initialization
+  int* temp2 = NULL;
+  d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
+  xx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
+  for(int i=x_min-2; i<x_max+3; i++) ((int *)(xx->data))[i-d_m[0]] = i - x_min;
 
-
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
+  yy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
+  for(int i=y_min-2; i<y_max+3; i++) ((int *)(yy->data))[i-d_m[1]] = i - y_min;
 
 
 
@@ -345,12 +350,6 @@ void build_field()
 
   //print ops blocks and dats details
   ops_diagnostic_output();
-
-
-
-
-  ops_exit();//exit for now
-  exit(0);
 
 
 }

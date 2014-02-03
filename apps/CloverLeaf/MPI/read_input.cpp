@@ -252,9 +252,9 @@ void read_input()
 
   field = (field_type ) xmalloc(sizeof(field_type_core));
   field->x_min = 0 + 2; //+2 to account for the boundary
-  field->y_min = 0 + 2;
-  field->x_max = grid->x_cells + 2;
-  field->y_max = grid->y_cells + 2;
+  field->y_min = 0 + 2; //+2 to account for the boundary
+  field->x_max = grid->x_cells + 2; //+2 to account for the boundary
+  field->y_max = grid->y_cells + 2; //+2 to account for the boundary
   field->left = 0;
   field->bottom = 0;
 
