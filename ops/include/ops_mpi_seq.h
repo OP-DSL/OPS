@@ -57,7 +57,7 @@ extern int xdim0;
 extern int xdim1;
 extern int xdim2;
 
-inline int mult(int* s, int r)
+inline int mult(int s[], int r)
 {
   int result = 1;
   if(r > 0) {
@@ -66,7 +66,7 @@ inline int mult(int* s, int r)
   return result;
 }
 
-inline int add(int* co, int* s, int r)
+inline int add(int co[], int* s, int r)
 {
   int result = co[0];
   for(int i = 1; i<=r;i++) result += co[i]*mult(s,i);
@@ -78,8 +78,12 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
-  int* c1 = (int*) xmalloc(sizeof(int)*ndim);
-  int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+  //int* c1 = (int*) xmalloc(sizeof(int)*ndim);
+  //int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+
+  int c1[ndim];
+  int c2[ndim];
+
 
   for(i=0; i<ndim; i++) c1[i] = ps[i];
   c1[r] = ps[r] + 1*std[r];
@@ -89,7 +93,7 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
 
   int off =  add(c1, size, r) - add(c2, size, r) + 1; //plus 1 to get the next element
 
-  free(c1);free(c2);
+  //free(c1);free(c2);
   return off;
 }
 
@@ -352,41 +356,40 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   sub_dat_list sd1 = OPS_sub_dat_list[arg1.dat->index];
   sub_dat_list sd2 = OPS_sub_dat_list[arg2.dat->index];
 
-
-    //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*3);
   int* end = (int*) xmalloc(sizeof(int)*ndim*3);
 
   for(int i = 0; i<3; i++) {
     for(int n=0; n<sb->ndim; n++) {
-      start[i*3+n] = sb->istart[n];
-      end[i*3+n] = sb->iend[n]+1; //+1 is for C indexing
+      start[i*ndim+n] = sb->istart[n];
+      end[i*ndim+n] = sb->iend[n]+1; //+1 is for C indexing
     }
   }
 
   for(int i = 0; i<3; i++) {
     for(int n=0; n<ndim; n++) {
-      if(end[i*3+n] >= start[i*3+n]) {
-        if(start[i*3+n] >= range[ndim*n] && end[i*3+n] <= range[ndim*n + 1]) {
-          start[i*3+n] = start[i*3+n] - args[i].dat->offset[n];
-          end[i*3+n]  = end[i*3+n] - args[i].dat->offset[n];
+      if(end[i*ndim+n] >= start[i*ndim+n]) {
+        if(start[i*ndim+n] >= range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {
+          start[i*ndim+n] = start[i*ndim+n] - args[i].dat->offset[n];
+          end[i*ndim+n]  = end[i*ndim+n] - args[i].dat->offset[n];
         }
-        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] <= range[ndim*n + 1]) {
-          start[i*3+n] = range[ndim*n] - args[i].dat->offset[n];
-          end[i*3+n]   = end[i*3+n] - args[i].dat->offset[n];
+        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {
+          start[i*ndim+n] = range[ndim*n] - args[i].dat->offset[n];
+          end[i*ndim+n]   = end[i*ndim+n] - args[i].dat->offset[n];
         }
-        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] > range[ndim*n + 1]) {
-          start[i*3+n] = range[ndim*n]  - args[i].dat->offset[n];
-          end[i*3+n]   = range[ndim*n+1] - args[i].dat->offset[n];
+        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {
+          start[i*ndim+n] = range[ndim*n]  - args[i].dat->offset[n];
+          end[i*ndim+n]   = range[ndim*n+1] - args[i].dat->offset[n];
         }
-        else if (start[i*3+n] < range[ndim*n] && end[i*3+n] < range[ndim*n + 1]) {
-          start[i*3+n] = 0;
-          end[i*3+n]   = 0;
+        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] < range[ndim*n + 1]) {
+          start[i*ndim+n] = 0;
+          end[i*ndim+n]   = 0;
         }
-        else if (start[i*3+n] > range[ndim*n] && end[i*3+n] > range[ndim*n + 1]) {
-          start[i*3+n] = 0;
-          end[i*3+n]   = 0;
+        else if (start[i*ndim+n] > range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {
+          start[i*ndim+n] = 0;
+          end[i*ndim+n]   = 0;
         }
       }
     }
@@ -401,7 +404,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i], &end[i], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim+n], &end[i*ndim+n], args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -410,15 +413,17 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
   }
 
+  free(start);free(end);
+
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    count[n] = end[n]-start[n];  // number in each dimension
+    count[n] = sb->iend[n]+1 - sb->istart[n];//end[n]-start[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -435,7 +440,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      count[m] = end[m]-start[m]; // reset counter
+      count[m] = sb->iend[m]+1 - sb->istart[m];//end[m]-start[m]; // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
     }
@@ -448,5 +453,5 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     }
   }
 
-  free(start);free(end);
+
 }

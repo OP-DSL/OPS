@@ -134,8 +134,8 @@ void ops_exit_core( )
 {
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
-    free((char*)OPS_block_list[i]->name);
-    free((char*)OPS_block_list[i]->size);
+    free((char*)(OPS_block_list[i]->name));
+    free(OPS_block_list[i]->size);
     free(OPS_block_list[i]);
   }
   free(OPS_block_list);

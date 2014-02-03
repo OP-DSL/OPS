@@ -290,7 +290,7 @@ void build_field()
   int xmax2D[] = {x_max+2,0};
   int ymax2D[] = {0,y_max+2};
 
-  //S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
+  S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   S2D_00_P10     = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");
   S2D_00_0P1     = ops_decl_stencil( 2, 2, s2D_00_0P1, "0,0:0,1");
@@ -351,5 +351,11 @@ void build_field()
   //print ops blocks and dats details
   ops_diagnostic_output();
 
+  int rangexy[] = {x_min,x_max,y_min,y_max}; // range
+  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
+    ops_arg_dat(vertexdx, S2D_00, "double", OPS_READ));
+
+  ops_exit();//exit for now
+  exit(0);
 
 }
