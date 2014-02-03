@@ -87,6 +87,52 @@ void build_field()
   yvel0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");
   yvel1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel1");
 
+  d_p[0]=-3;d_p[1]=-2;
+  vol_flux_x  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_x");
+  mass_flux_x = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_x");
+  xarea       = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xarea");
+
+  d_p[0]=-2;d_p[1]=-3;
+  vol_flux_y  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_y");
+  mass_flux_y = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_y");
+  yarea       = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yarea");
+
+  d_p[0]=-3;d_p[1]=-3;
+  work_array1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array1");
+  work_array2    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array2");
+  work_array3    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array3");
+  work_array4    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array4");
+  work_array5    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array5");
+  work_array6    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array6");
+  work_array7    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
+
+
+  int size2[2] = {x_cells+5,1};
+  d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
+  cellx    = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
+  celldx   = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
+
+  int size3[2] = {1,y_cells+5};
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
+  celly    = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
+  celldy   = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celldy");
+
+  int size4[2] = {x_cells+5,1};
+  d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
+  vertexx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexx");
+  vertexdx = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexdx");
+
+  int size5[2] = {1,y_cells+5};
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
+  vertexy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexy");
+  vertexdy = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
+
+
+
+
+
+
+
   /*int s2D_00[]         = {0,0};
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
   ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
@@ -107,11 +153,6 @@ void build_field()
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
     ops_arg_dat(density0, S2D_00_STRID2D_Y, "double", OPS_READ));*/
 
-
-  ops_diagnostic_output();
-
-  ops_exit();//exit for now
-  exit(0);
 
   /*
   printf("Before on rank %d\n",ops_my_rank);
@@ -136,9 +177,6 @@ void build_field()
     }
     printf("\n");
   }
-
-
-
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, offset, tail, temp, "double", "density0");
   density1    = ops_decl_dat(clover_grid, 1, size, offset, temp, "double", "density1");
@@ -199,10 +237,12 @@ void build_field()
   for(int i=y_min-2; i<y_max+3; i++) yindex[i-offsety[1]] = i - y_min;
   yy  = ops_decl_dat(clover_grid, 1, size5, offsety, yindex, "int", "yy");
 
+  */
+
   //
   //Declare commonly used stencils
   //
-  //int s2D_00[]         = {0,0};
+  int s2D_00[]         = {0,0};
   int s2D_00_P10[]     = {0,0, 1,0};
   int s2D_00_0P1[]     = {0,0, 0,1};
   int s2D_00_M10[]     = {0,0, -1,0};
@@ -305,6 +345,12 @@ void build_field()
 
   //print ops blocks and dats details
   ops_diagnostic_output();
-  */
+
+
+
+
+  ops_exit();//exit for now
+  exit(0);
+
 
 }
