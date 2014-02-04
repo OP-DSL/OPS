@@ -193,8 +193,7 @@ for nargs in range (1,maxargs+1):
           f.write('\n                    ')
 
     f.write('  sub_block_list sb = OPS_sub_block_list[block->index];\n')
-    for n in range (0, nargs):
-      f.write('  sub_dat_list sd'+str(n)+' = OPS_sub_dat_list[arg'+str(n)+'.dat->index];\n')
+
 
     f.write('\n\n    //compute localy allocated range for the sub-block \n' +
     '  int ndim = sb->ndim;\n' +
@@ -202,34 +201,34 @@ for nargs in range (1,maxargs+1):
     '  int* end = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');\n\n')
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
-      '    for(int n=0; n<sb->ndim; n++) {\n' +
-      '      start[i*'+str(nargs)+'+n] = sb->istart[n];\n' +
-      '      end[i*'+str(nargs)+'+n] = sb->iend[n]+1; //+1 is for C indexing\n' +
+      '    for(int n=0; n<ndim; n++) {\n' +
+      '      start[i*ndim+n] = sb->istart[n];\n' +
+      '      end[i*ndim+n] = sb->iend[n]+1; //+1 is for C indexing\n' +
       '    }\n' +
       '  }\n\n')
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      if(end[i*'+str(nargs)+'+n] >= start[i*'+str(nargs)+'+n]) {\n' +
-      '        if(start[i*'+str(nargs)+'+n] >= range[ndim*n] && end[i*'+str(nargs)+'+n] <= range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+n] = start[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
-      '          end[i*'+str(nargs)+'+n]  = end[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
+      '      if(end[i*ndim+n] >= start[i*ndim+n]) {\n' +
+      '        if(start[i*ndim+n] >= range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {\n' +
+      '          start[i*ndim+n] = start[i*ndim+n] - args[i].dat->offset[n];\n' +
+      '          end[i*ndim+n]  = end[i*ndim+n] - args[i].dat->offset[n];\n' +
       '        }\n' +
-      '        else if (start[i*'+str(nargs)+'+n] < range[ndim*n] && end[i*'+str(nargs)+'+n] <= range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+n] = range[ndim*n] - args[i].dat->offset[n];\n' +
-      '          end[i*'+str(nargs)+'+n]   = end[i*'+str(nargs)+'+n] - args[i].dat->offset[n];\n' +
+      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {\n' +
+      '          start[i*ndim+n] = range[ndim*n] - args[i].dat->offset[n];\n' +
+      '          end[i*ndim+n]   = end[i*ndim+n] - args[i].dat->offset[n];\n' +
       '        }\n' +
-      '        else if (start[i*'+str(nargs)+'+n] < range[ndim*n] && end[i*'+str(nargs)+'+n] > range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+n] = range[ndim*n]  - args[i].dat->offset[n];\n' +
-      '          end[i*'+str(nargs)+'+n]   = range[ndim*n+1] - args[i].dat->offset[n];\n' +
+      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {\n' +
+      '          start[i*ndim+n] = range[ndim*n]  - args[i].dat->offset[n];\n' +
+      '          end[i*ndim+n]   = range[ndim*n+1] - args[i].dat->offset[n];\n' +
       '        }\n' +
-      '        else if (start[i*'+str(nargs)+'+n] < range[ndim*n] && end[i*'+str(nargs)+'+n] < range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+n] = 0;\n' +
-      '          end[i*'+str(nargs)+'+n]   = 0;\n' +
+      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] < range[ndim*n + 1]) {\n' +
+      '          start[i*ndim+n] = 0;\n' +
+      '          end[i*ndim+n]   = 0;\n' +
       '        }\n' +
-      '        else if (start[i*'+str(nargs)+'+n] > range[ndim*n] && end[i*'+str(nargs)+'+n] > range[ndim*n + 1]) {\n' +
-      '          start[i*'+str(nargs)+'+n] = 0;\n' +
-      '          end[i*'+str(nargs)+'+n]   = 0;\n' +
+      '        else if (start[i*ndim+n] > range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {\n' +
+      '          start[i*ndim+n] = 0;\n' +
+      '          end[i*ndim+n]   = 0;\n' +
       '        }\n' +
       '      }\n' +
       '    }\n' +
@@ -244,7 +243,7 @@ for nargs in range (1,maxargs+1):
     f.write('    if(args[i].stencil!=NULL) {\n')
     f.write('      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension\n')
     f.write('      for(int n=1; n<ndim; n++) {\n')
-    f.write('        offs[i][n] = off(ndim, n, &start[i], &end[i], args[i].dat->block_size, args[i].stencil->stride);\n')
+    f.write('        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);\n')
     f.write('      }\n')
     f.write('    }\n')
     f.write('  }\n\n')
@@ -253,15 +252,17 @@ for nargs in range (1,maxargs+1):
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if (args[i].argtype == OPS_ARG_DAT) {\n')
     f.write('      p_a[i] = (char *)args[i].data //base of 2D array\n')
-    f.write('      + address(ndim, args[i].dat->size, start, args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);\n')
+    f.write('      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);\n')
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
     f.write('      p_a[i] = (char *)args[i].data;\n')
     f.write('  }\n\n')
 
+    f.write('  free(start);free(end);\n\n');
+
     f.write('  int total_range = 1;\n')
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    count[n] = end[n]-start[n];  // number in each dimension\n')
+    f.write('    count[n] = range[2*n+1]-range[2*n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
@@ -289,7 +290,7 @@ for nargs in range (1,maxargs+1):
     f.write('    int m = 0;    // max dimension with changed index\n')
 
     f.write('    while (count[m]==0) {\n')
-    f.write('      count[m] = end[m]-start[m]; // reset counter\n')
+    f.write('      count[m] = range[2*m+1]-range[2*m]; // reset counter\n')
     f.write('      m++;                        // next dimension\n')
     f.write('      count[m]--;                 // decrement counter\n')
     f.write('    }\n\n')
@@ -301,7 +302,5 @@ for nargs in range (1,maxargs+1):
     f.write('        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);\n')
     f.write('    }\n')
     f.write('  }\n\n')
-
-    f.write('  free(start);free(end);\n');
 
     f.write('}')
