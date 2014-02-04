@@ -53,15 +53,14 @@ void initialise_chunk()
                ops_arg_dat(xx, S2D_00, "int", OPS_READ),
                ops_arg_dat(vertexdx, S2D_00, "double", OPS_WRITE));
 
-  ops_exit();//exit for now
-  exit(0);
-
 
   int rangey[] = {0, 1, y_min-2, y_max+3};
-  ops_par_loop(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", 2, rangey,
+  ops_par_loop_mpi(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", clover_grid, 2, rangey,
                ops_arg_dat(vertexy, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(yy, S2D_00, "int", OPS_READ),
                ops_arg_dat(vertexdy, S2D_00, "double", OPS_WRITE));
+
+
 
   rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
   ops_par_loop(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", 2, rangex,
@@ -82,4 +81,7 @@ void initialise_chunk()
     ops_arg_dat(xarea, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(celldx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00, "double", OPS_WRITE));
+
+  ops_exit();//exit for now
+  exit(0);
 }

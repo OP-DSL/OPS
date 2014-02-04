@@ -9,7 +9,7 @@
 #
 # this sets the max number of arguments in ops_par_loop
 #
-maxargs = 3
+maxargs = 5
 
 #open/create file
 f = open('./ops_mpi_seq.h','w')
@@ -202,37 +202,12 @@ for nargs in range (1,maxargs+1):
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = sb->istart[n];\n' +
-      '      end[i*ndim+n] = sb->iend[n]+1; //+1 is for C indexing\n' +
+      '      start[i*ndim+n] = 0 - args[i].dat->offset[n];;\n' +
+      '      end[i*ndim+n]   = args[i].dat->block_size[n] - args[i].dat->offset[n];\n' +
       '    }\n' +
       '  }\n\n')
 
-    f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
-      '    for(int n=0; n<ndim; n++) {\n' +
-      '      if(end[i*ndim+n] >= start[i*ndim+n]) {\n' +
-      '        if(start[i*ndim+n] >= range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {\n' +
-      '          start[i*ndim+n] = start[i*ndim+n] - args[i].dat->offset[n];\n' +
-      '          end[i*ndim+n]  = end[i*ndim+n] - args[i].dat->offset[n];\n' +
-      '        }\n' +
-      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] <= range[ndim*n + 1]) {\n' +
-      '          start[i*ndim+n] = range[ndim*n] - args[i].dat->offset[n];\n' +
-      '          end[i*ndim+n]   = end[i*ndim+n] - args[i].dat->offset[n];\n' +
-      '        }\n' +
-      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {\n' +
-      '          start[i*ndim+n] = range[ndim*n]  - args[i].dat->offset[n];\n' +
-      '          end[i*ndim+n]   = range[ndim*n+1] - args[i].dat->offset[n];\n' +
-      '        }\n' +
-      '        else if (start[i*ndim+n] < range[ndim*n] && end[i*ndim+n] < range[ndim*n + 1]) {\n' +
-      '          start[i*ndim+n] = 0;\n' +
-      '          end[i*ndim+n]   = 0;\n' +
-      '        }\n' +
-      '        else if (start[i*ndim+n] > range[ndim*n] && end[i*ndim+n] > range[ndim*n + 1]) {\n' +
-      '          start[i*ndim+n] = 0;\n' +
-      '          end[i*ndim+n]   = 0;\n' +
-      '        }\n' +
-      '      }\n' +
-      '    }\n' +
-      '  }\n\n\n')
+
 
 
     f.write('  #ifdef OPS_DEBUG\n')
@@ -260,9 +235,14 @@ for nargs in range (1,maxargs+1):
 
     f.write('  free(start);free(end);\n\n');
 
+    f.write('  int s[ndim];\n');
+    f.write('  int e[ndim];\n\n')
     f.write('  int total_range = 1;\n')
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    count[n] = range[2*n+1]-range[2*n];  // number in each dimension\n')
+    f.write('    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
+    f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
+    f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
+    f.write('    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
@@ -290,7 +270,8 @@ for nargs in range (1,maxargs+1):
     f.write('    int m = 0;    // max dimension with changed index\n')
 
     f.write('    while (count[m]==0) {\n')
-    f.write('      count[m] = range[2*m+1]-range[2*m]; // reset counter\n')
+    f.write('      //count[m] = range[2*m+1]-range[2*m]; // reset counter\n')
+    f.write('      count[m] = e[m]-s[m];       // reset counter\n')
     f.write('      m++;                        // next dimension\n')
     f.write('      count[m]--;                 // decrement counter\n')
     f.write('    }\n\n')

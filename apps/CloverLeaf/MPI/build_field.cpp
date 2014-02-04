@@ -351,9 +351,9 @@ void build_field()
   //print ops blocks and dats details
   ops_diagnostic_output();
 
-  /*int rangexy[] = {x_min,x_max,y_min,y_max}; // range
+  /*int rangexy[] = {0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(density0, S2D_00, "double", OPS_READ));
+    ops_arg_dat(vertexdy, S2D_00, "double", OPS_READ));
 
   ops_exit();//exit for now
   exit(0);*/
