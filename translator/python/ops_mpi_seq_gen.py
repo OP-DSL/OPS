@@ -202,8 +202,8 @@ for nargs in range (1,maxargs+1):
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = 0 - args[i].dat->offset[n];;\n' +
-      '      end[i*ndim+n]   = args[i].dat->block_size[n] + args[i].dat->tail[n];\n' +
+      '      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];\n' +
+      '      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];\n' +
       '    }\n' +
       '  }\n\n')
 
