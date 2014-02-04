@@ -143,10 +143,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   int* start = (int*) xmalloc(sizeof(int)*ndim*1);
   int* end = (int*) xmalloc(sizeof(int)*ndim*1);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<1; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -175,14 +183,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -237,10 +242,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
   int* start = (int*) xmalloc(sizeof(int)*ndim*2);
   int* end = (int*) xmalloc(sizeof(int)*ndim*2);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<2; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -269,14 +282,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -332,10 +342,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   int* start = (int*) xmalloc(sizeof(int)*ndim*3);
   int* end = (int*) xmalloc(sizeof(int)*ndim*3);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<3; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -364,14 +382,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -428,10 +443,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
   int* start = (int*) xmalloc(sizeof(int)*ndim*4);
   int* end = (int*) xmalloc(sizeof(int)*ndim*4);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<4; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -460,14 +483,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -529,10 +549,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   int* start = (int*) xmalloc(sizeof(int)*ndim*5);
   int* end = (int*) xmalloc(sizeof(int)*ndim*5);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<5; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -561,14 +589,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -632,10 +657,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   int* start = (int*) xmalloc(sizeof(int)*ndim*6);
   int* end = (int*) xmalloc(sizeof(int)*ndim*6);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<6; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -664,14 +697,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -736,10 +766,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   int* start = (int*) xmalloc(sizeof(int)*ndim*7);
   int* end = (int*) xmalloc(sizeof(int)*ndim*7);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<7; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -768,14 +806,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -841,10 +876,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   int* start = (int*) xmalloc(sizeof(int)*ndim*8);
   int* end = (int*) xmalloc(sizeof(int)*ndim*8);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<8; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -873,14 +916,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
@@ -951,10 +991,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   int* start = (int*) xmalloc(sizeof(int)*ndim*9);
   int* end = (int*) xmalloc(sizeof(int)*ndim*9);
 
+  int s[ndim];
+  int e[ndim];
+
+  for (int n=0; n<ndim; n++) {
+    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    if(s[n] < range[2*n]) s[n] = range[2*n];
+    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+  }
   for(int i = 0; i<9; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
     }
   }
 
@@ -983,14 +1031,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   free(start);free(end);
 
-  int s[ndim];
-  int e[ndim];
-
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
+    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    //if(s[n] < range[2*n]) s[n] = range[2*n];
+    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];

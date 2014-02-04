@@ -199,11 +199,19 @@ for nargs in range (1,maxargs+1):
     '  int ndim = sb->ndim;\n' +
     '  int* start = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');\n' +
     '  int* end = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');\n\n')
+    f.write('  int s[ndim];\n');
+    f.write('  int e[ndim];\n\n')
+
+    f.write('  for (int n=0; n<ndim; n++) {\n')
+    f.write('    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
+    f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
+    f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
+    f.write('  }\n')
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = range[2*n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];\n' +
-      '      end[i*ndim+n]   = range[2*n+1] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];\n' +
+      '      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];\n' +
+      '      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];\n' +
       '    }\n' +
       '  }\n\n')
 
@@ -233,13 +241,12 @@ for nargs in range (1,maxargs+1):
 
     f.write('  free(start);free(end);\n\n');
 
-    f.write('  int s[ndim];\n');
-    f.write('  int e[ndim];\n\n')
+
     f.write('  int total_range = 1;\n')
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
-    f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
-    f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
+    f.write('    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
+    f.write('    //if(s[n] < range[2*n]) s[n] = range[2*n];\n')
+    f.write('    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
     f.write('    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension\n')
     f.write('    count[n] = e[n]-s[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
