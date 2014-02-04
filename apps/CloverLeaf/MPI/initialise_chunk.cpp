@@ -82,6 +82,4 @@ void initialise_chunk()
     ops_arg_dat(celldx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00, "double", OPS_WRITE));
 
-  ops_exit();//exit for now
-  exit(0);
 }

@@ -9,7 +9,7 @@
 #
 # this sets the max number of arguments in ops_par_loop
 #
-maxargs = 5
+maxargs = 9
 
 #open/create file
 f = open('./ops_mpi_seq.h','w')
@@ -203,11 +203,9 @@ for nargs in range (1,maxargs+1):
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
       '      start[i*ndim+n] = 0 - args[i].dat->offset[n];;\n' +
-      '      end[i*ndim+n]   = args[i].dat->block_size[n] - args[i].dat->offset[n];\n' +
+      '      end[i*ndim+n]   = args[i].dat->block_size[n] + args[i].dat->tail[n];\n' +
       '    }\n' +
       '  }\n\n')
-
-
 
 
     f.write('  #ifdef OPS_DEBUG\n')
