@@ -243,6 +243,7 @@ for nargs in range (1,maxargs+1):
     f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
     f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
     f.write('    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension\n')
+    f.write('    count[n] = e[n]-s[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')

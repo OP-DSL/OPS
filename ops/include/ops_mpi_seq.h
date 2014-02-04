@@ -172,6 +172,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -265,6 +266,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -359,6 +361,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -454,6 +457,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -554,6 +558,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
     //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination

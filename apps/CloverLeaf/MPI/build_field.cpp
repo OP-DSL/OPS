@@ -34,9 +34,11 @@
 #include "definitions.h"
 
 
-void test_kernel(double *vertexdx) {
+void test_kernel(double *volume, double *xarea, double *yarea) {
 
-  printf("%lf ",vertexdx[OPS_ACC0(0,0)]);
+  printf("%lf ",volume[OPS_ACC0(0,0)]);
+  printf("%lf ",xarea[OPS_ACC1(0,0)]);
+  printf("%lf ",yarea[OPS_ACC2(0,0)]);
 
 }
 
@@ -351,9 +353,11 @@ void build_field()
   //print ops blocks and dats details
   ops_diagnostic_output();
 
-  /*int rangexy[] = {0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
+  /*int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};//{0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(vertexdy, S2D_00, "double", OPS_READ));
+    ops_arg_dat(volume, S2D_00, "double", OPS_READ),
+    ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
+    ops_arg_dat(yarea, S2D_00, "double", OPS_READ));
 
   ops_exit();//exit for now
   exit(0);*/
