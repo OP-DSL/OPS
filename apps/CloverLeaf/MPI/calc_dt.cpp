@@ -26,7 +26,6 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
 #include "ops_mpi_seq.h"
 
 #include "data.h"
@@ -69,7 +68,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(yarea, S2D_00_0P1, "double", OPS_READ),
     ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE) );
 
-  ops_par_loop(calc_dt_kernel_min, "calc_dt_kernel_min", 2, rangexy_inner,
+  ops_par_loop_mpi(calc_dt_kernel_min, "calc_dt_kernel_min", clover_grid, 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
@@ -95,7 +94,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
     ops_printf("timestep : %lf\n",*local_dt);
 
-  ops_par_loop(calc_dt_kernel_print, "calc_dt_kernel_print", 2,rangexy_getpoint,
+  ops_par_loop_mpi(calc_dt_kernel_print, "calc_dt_kernel_print", clover_grid, 2,rangexy_getpoint,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
     ops_arg_dat(xvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
