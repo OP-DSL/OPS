@@ -59,12 +59,12 @@ void generate()
     ops_arg_dat(cellx,    s2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly,    S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
-  /*ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
 
   ops_exit();//exit for now
-  exit(0);*/
+  exit(0);
 
 }

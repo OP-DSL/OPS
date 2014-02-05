@@ -887,6 +887,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+    printf("%s range[2*n] = %d range[2*n+1]= %d s[n] = %d e[n] = %d\n",name, range[2*n],range[2*n+1], s[n],e[n]);
     if(s[n] < range[2*n]) s[n] = range[2*n];
     if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
   }
