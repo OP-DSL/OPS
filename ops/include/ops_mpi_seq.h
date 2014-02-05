@@ -153,8 +153,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   }
   for(int i = 0; i<1; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -166,7 +166,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -175,7 +176,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -185,10 +187,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -204,7 +202,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -252,8 +249,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
   }
   for(int i = 0; i<2; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -265,7 +262,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -274,7 +272,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -284,10 +283,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -304,7 +299,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -352,8 +346,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   }
   for(int i = 0; i<3; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -365,7 +359,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -374,7 +369,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -384,10 +380,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -405,7 +397,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -453,8 +444,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
   }
   for(int i = 0; i<4; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -466,7 +457,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -475,7 +467,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -485,10 +478,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -507,7 +496,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -559,8 +547,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   for(int i = 0; i<5; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -572,7 +560,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -581,7 +570,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -591,10 +581,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -615,7 +601,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -667,8 +652,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   for(int i = 0; i<6; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -680,7 +665,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -689,7 +675,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -699,10 +686,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -724,7 +707,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -776,8 +758,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   for(int i = 0; i<7; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -789,7 +771,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -798,7 +781,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 7; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -808,10 +792,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -834,7 +814,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -886,8 +865,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   for(int i = 0; i<8; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -899,7 +878,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -908,7 +888,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -918,10 +899,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -945,7 +922,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
@@ -1001,8 +977,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   for(int i = 0; i<9; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] - args[i].dat->offset[n];//0 - args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];//args[i].dat->block_size[n] + args[i].dat->tail[n];
+      start[i*ndim+n] = s[n] - args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];
     }
   }
 
@@ -1014,7 +990,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim], args[i].dat->block_size, args[i].stencil->stride);
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+                         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
   }
@@ -1023,7 +1000,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 9; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim], args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->size, &start[i*ndim],
+        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1033,10 +1011,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    //s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    //if(s[n] < range[2*n]) s[n] = range[2*n];
-    //if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
-    //count[n] = range[2*n+1]-range[2*n];  // number in each dimension
     count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
@@ -1062,7 +1036,6 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      //count[m] = range[2*m+1]-range[2*m]; // reset counter
       count[m] = e[m]-s[m];       // reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
