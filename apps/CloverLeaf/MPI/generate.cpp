@@ -47,7 +47,8 @@ void generate()
   int y_max = field->y_max;
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
-
+  printf("x_cells %d, y_cells %d x_min %d,y_min %d,x_max %d,y_max %d\n",
+    x_cells, y_cells, x_min,y_min,x_max, y_max);
   ops_par_loop_mpi(generate_chunk_kernel, "generate_chunk_kernel", clover_grid, 2, rangexy,
     ops_arg_dat(vertexx,  s2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(vertexy,  S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
@@ -58,12 +59,12 @@ void generate()
     ops_arg_dat(cellx,    s2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly,    S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
-  ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+  /*ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(xx, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(yy, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(vertexx, "cloverdats.dat");
+  ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
 
   ops_exit();//exit for now
-  exit(0);
+  exit(0);*/
 
 }

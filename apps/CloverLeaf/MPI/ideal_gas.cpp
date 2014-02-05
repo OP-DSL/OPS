@@ -64,5 +64,4 @@ void ideal_gas(int predict)
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
       ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ));
   }
-
 }

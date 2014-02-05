@@ -9,7 +9,7 @@
 #
 # this sets the max number of arguments in ops_par_loop
 #
-maxargs = 9
+maxargs = 12
 
 #open/create file
 f = open('./ops_mpi_seq.h','w')
@@ -210,8 +210,8 @@ for nargs in range (1,maxargs+1):
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = s[n] - args[i].dat->offset[n];\n' +
-      '      end[i*ndim+n]   = e[n] - args[i].dat->offset[n];\n' +
+      '      start[i*ndim+n] = range[2*n];//s[n] ;//- args[i].dat->offset[n];\n' +
+      '      end[i*ndim+n]   = range[2*n+1];//e[n] ;//- args[i].dat->offset[n];\n' +
       '    }\n' +
       '  }\n\n')
 
@@ -244,7 +244,7 @@ for nargs in range (1,maxargs+1):
 
     f.write('  int total_range = 1;\n')
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    count[n] = e[n]-s[n];  // number in each dimension\n')
+    f.write('    count[n] = range[2*n+1]-range[2*n];//e[n]-s[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
@@ -272,7 +272,7 @@ for nargs in range (1,maxargs+1):
     f.write('    int m = 0;    // max dimension with changed index\n')
 
     f.write('    while (count[m]==0) {\n')
-    f.write('      count[m] = e[m]-s[m];       // reset counter\n')
+    f.write('      count[m] = range[2*m+1]-range[2*m];// reset counter\n')
     f.write('      m++;                        // next dimension\n')
     f.write('      count[m]--;                 // decrement counter\n')
     f.write('    }\n\n')
