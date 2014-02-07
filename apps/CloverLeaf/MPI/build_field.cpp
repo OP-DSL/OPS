@@ -113,15 +113,6 @@ void build_field()
   cellx    = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
   celldx   = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
 
-  /*ops_arg arg_test0 = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
-  ops_arg arg_test1 = ops_arg_dat(density1, S2D_00, "double", OPS_READ);
-  ops_arg arg_test2 = ops_arg_dat(energy1, S2D_00, "double", OPS_READ);
-  ops_arg arg_test3 = ops_arg_dat(work_array7, S2D_00, "double", OPS_READ);
-  ops_exchange_halo(&arg_test0,2);
-  ops_exchange_halo(&arg_test1,2);
-  ops_exchange_halo(&arg_test2,2);
-  ops_exchange_halo(&arg_test3,2);*/
-
   int size3[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
   celly    = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
@@ -262,8 +253,5 @@ void build_field()
 
   ops_exit();//exit for now
   exit(0);*/
-
-  ops_exit();//exit for now
-  exit(0);
 
 }

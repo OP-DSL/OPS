@@ -956,6 +956,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
   if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
 
+  ops_exchange_halo(&arg2,2);
+  ops_exchange_halo(&arg3,2);
+  ops_exchange_halo(&arg4,2);
+  ops_exchange_halo(&arg5,2);
 
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
