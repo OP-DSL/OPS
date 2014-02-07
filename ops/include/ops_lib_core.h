@@ -107,6 +107,7 @@ typedef struct
   char const  *type;       /* datatype */
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
+  int         e_dat;    /* is this an edge dat?*/
 
 } ops_dat_core;
 

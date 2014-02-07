@@ -115,6 +115,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
       //apply the size as 1 for this dimension, later to be replicated on each process
       sub_size[n] = 1;
       edge_dat = 1;
+
     }
   }
 
@@ -122,6 +123,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
          above on each MPI process                                      ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, d_p, data, type_size, type, name );
+  if( edge_dat == 1) dat->e_dat = 1; //this is an edge dat
 
   int bytes = size*type_size;
   for (int i=0; i<sb->ndim; i++) bytes = bytes*sub_size[i];

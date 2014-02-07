@@ -50,6 +50,7 @@ int ops_is_root()
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
+  //printf("Exchanging halos for %s\n",dat->name);
 
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];

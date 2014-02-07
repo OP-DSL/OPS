@@ -262,6 +262,11 @@ for nargs in range (1,maxargs+1):
       f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];\n')
     f.write('\n')
 
+    f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
+    f.write('    if(args[i].dat->e_dat == 0) ops_exchange_halo(&args[i],2);\n')
+    f.write('  }\n\n')
+
+
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')
