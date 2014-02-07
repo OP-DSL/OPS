@@ -72,8 +72,6 @@ void build_field()
   int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
   double* temp = NULL;
 
-
-
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
   density1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
   energy0     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
