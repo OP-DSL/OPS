@@ -887,14 +887,17 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
+
+    if(s[n] >= range[2*n]) s[n] = 0;
+    else s[n] = range[2*n] - s[n];
+    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    else e[n] = sb->sizes[n];
     printf("%s range[2*n] = %d range[2*n+1]= %d s[n] = %d e[n] = %d\n",name, range[2*n],range[2*n+1], s[n],e[n]);
-    if(s[n] < range[2*n]) s[n] = range[2*n];
-    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];
   }
   for(int i = 0; i<8; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = range[2*n];//s[n] ;//- args[i].dat->offset[n];
-      end[i*ndim+n]   = range[2*n+1];//e[n] ;//- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];//s[n] ;//- args[i].dat->offset[n];
+      end[i*ndim+n]   = e[n];//e[n] ;//- args[i].dat->offset[n];
     }
   }
 
@@ -927,7 +930,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
-    count[n] = range[2*n+1]-range[2*n];//e[n]-s[n];  // number in each dimension
+    count[n] = e[n]-s[n];  // number in each dimension
     total_range *= count[n];
   }
   count[dim-1]++;     // extra in last to ensure correct termination
@@ -950,7 +953,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
     while (count[m]==0) {
-      count[m] = range[2*m+1]-range[2*m];// reset counter
+      count[m] = e[m]-s[m];//range[2*m+1]-range[2*m];// reset counter
       m++;                        // next dimension
       count[m]--;                 // decrement counter
     }
