@@ -58,8 +58,7 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  //int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
-  int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
+  int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
   clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //decompose the block
@@ -70,18 +69,12 @@ void build_field()
   //
   int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
-  //int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
-  int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
+  int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
   double* temp = NULL;
 
+
+
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
-
-  int s2D_00[] = {0,0};
-  S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
-  ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
-  ops_exchange_halo(&arg_test,1);
-
-/*
   density1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
   energy0     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
   energy1     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
@@ -115,11 +108,19 @@ void build_field()
   work_array6    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array6");
   work_array7    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
 
-
   int size2[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
   cellx    = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
   celldx   = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
+
+  /*ops_arg arg_test0 = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
+  ops_arg arg_test1 = ops_arg_dat(density1, S2D_00, "double", OPS_READ);
+  ops_arg arg_test2 = ops_arg_dat(energy1, S2D_00, "double", OPS_READ);
+  ops_arg arg_test3 = ops_arg_dat(work_array7, S2D_00, "double", OPS_READ);
+  ops_exchange_halo(&arg_test0,2);
+  ops_exchange_halo(&arg_test1,2);
+  ops_exchange_halo(&arg_test2,2);
+  ops_exchange_halo(&arg_test3,2);*/
 
   int size3[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
@@ -135,7 +136,6 @@ void build_field()
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
   vertexy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexy");
   vertexdy = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
-
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   int* temp2 = NULL;
@@ -251,7 +251,8 @@ void build_field()
 
 
   //print ops blocks and dats details
-  ops_diagnostic_output();*/
+  ops_diagnostic_output();
+
 
   /*int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};//{0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
