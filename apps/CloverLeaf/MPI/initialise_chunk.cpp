@@ -47,6 +47,9 @@ void initialise_chunk()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+  printf("x_cells %d, y_cells %d x_min %d,y_min %d,x_max %d,y_max %d\n",
+    x_cells, y_cells, x_min,y_min,x_max, y_max);
+
   int rangex[] = {x_min-2, x_max+3, 0, 1};
   ops_par_loop_mpi(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 2, rangex,
                ops_arg_dat(vertexx, S2D_00, "double", OPS_WRITE),

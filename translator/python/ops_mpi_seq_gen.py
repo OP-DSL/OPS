@@ -209,6 +209,7 @@ for nargs in range (1,maxargs+1):
     f.write('    else s[n] = range[2*n] - s[n];\n')
     f.write('    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];\n')
     f.write('    else e[n] = sb->sizes[n];\n')
+    #f.write('    printf("%s range[2*n] = %d range[2*n+1]= %d s[n] = %d e[n] = %d\\n",name, range[2*n],range[2*n+1], s[n],e[n]);\n');
 
     #f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
     #f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')

@@ -58,7 +58,7 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
+  int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
   clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //decompose the block
@@ -69,7 +69,7 @@ void build_field()
   //
   int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
-  int size[2] = {x_cells, y_cells}; //size of the dat -- should be identical to the block on which its define on
+  int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
   double* temp = NULL;
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
@@ -107,22 +107,22 @@ void build_field()
   work_array7    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
 
 
-  int size2[2] = {x_cells,1};
+  int size2[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
   cellx    = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
   celldx   = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
 
-  int size3[2] = {1,y_cells};
+  int size3[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
   celly    = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
   celldy   = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celldy");
 
-  int size4[2] = {x_cells,1};
+  int size4[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
   vertexx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexx");
   vertexdx = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexdx");
 
-  int size5[2] = {1,y_cells};
+  int size5[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
   vertexy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexy");
   vertexdy = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
@@ -132,11 +132,11 @@ void build_field()
   int* temp2 = NULL;
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
   xx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
-  for(int i=x_min-2; i<x_max+3; i++) ((int *)(xx->data))[i-d_m[0]] = i - x_min;
+  //for(int i=x_min-2; i<x_max+3; i++) ((int *)(xx->data))[i-d_m[0]] = i - x_min;
 
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
   yy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
-  for(int i=y_min-2; i<y_max+3; i++) ((int *)(yy->data))[i-d_m[1]] = i - y_min;
+  //for(int i=y_min-2; i<y_max+3; i++) ((int *)(yy->data))[i-d_m[1]] = i - y_min;
 
   //
   //Declare commonly used stencils
