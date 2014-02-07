@@ -58,7 +58,8 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
+  //int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
+  int dims[2] = {x_cells, y_cells};  //cloverleaf 2D block dimensions
   clover_grid = ops_decl_block(2, dims, "clover grid");
 
   //decompose the block
@@ -69,10 +70,18 @@ void build_field()
   //
   int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
-  int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
+  //int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
+  int size[2] = {(x_max+2)-(x_min-2), (y_max+2)-(y_min-2)};
   double* temp = NULL;
 
   density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
+
+  int s2D_00[] = {0,0};
+  S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
+  ops_arg arg_test = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
+  ops_exchange_halo(&arg_test,1);
+
+/*
   density1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
   energy0     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
   energy1     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
@@ -185,7 +194,6 @@ void build_field()
   int ymax2D[] = {0,y_max+2};
 
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
-
   S2D_00_P10     = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");
   S2D_00_0P1     = ops_decl_stencil( 2, 2, s2D_00_0P1, "0,0:0,1");
   S2D_00_M10     = ops_decl_stencil( 2, 2, s2D_00_M10, "0,0:-1,0");
@@ -243,7 +251,7 @@ void build_field()
 
 
   //print ops blocks and dats details
-  ops_diagnostic_output();
+  ops_diagnostic_output();*/
 
   /*int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};//{0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
   ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
@@ -253,5 +261,8 @@ void build_field()
 
   ops_exit();//exit for now
   exit(0);*/
+
+  ops_exit();//exit for now
+  exit(0);
 
 }

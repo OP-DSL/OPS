@@ -47,12 +47,6 @@ int ops_is_root()
   return (my_rank==MPI_ROOT);
 }
 
-void pack(ops_dat dat, char* buff, int depth, int dim, sub_block_list sb)
-{
-  //remember that the packing for some dimensions is done in strides
-
-}
-
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
