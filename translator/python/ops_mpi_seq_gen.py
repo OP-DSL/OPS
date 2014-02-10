@@ -298,4 +298,9 @@ for nargs in range (1,maxargs+1):
     f.write('    }\n')
     f.write('  }\n\n')
 
+    for n in range (0, nargs):
+      f.write('  ops_mpi_reduce(&args['+str(n)+'],(T'+str(n)+' *)p_a['+str(n)+']);\n')
+    f.write('\n')
+
+
     f.write('}')

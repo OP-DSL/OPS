@@ -65,17 +65,17 @@ void generate()
   ops_print_dat_to_txtfile_core(vertexy, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(xx, "cloverdats.dat");*/
 
-  ops_arg arg_test0 = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
+  /*ops_arg arg_test0 = ops_arg_dat(density0, S2D_00, "double", OPS_READ);
   ops_arg arg_test1 = ops_arg_dat(density1, S2D_00, "double", OPS_READ);
   ops_arg arg_test2 = ops_arg_dat(energy1, S2D_00, "double", OPS_READ);
   ops_arg arg_test3 = ops_arg_dat(work_array7, S2D_00, "double", OPS_READ);
   ops_exchange_halo(&arg_test0,2);
   ops_exchange_halo(&arg_test1,2);
   ops_exchange_halo(&arg_test2,2);
-  ops_exchange_halo(&arg_test3,2);
+  ops_exchange_halo(&arg_test3,2);*/
 
 
-  ops_exit();//exit for now
-  exit(0);
+  //ops_exit();//exit for now
+  //exit(0);
 
 }

@@ -56,6 +56,7 @@ sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
 sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
                                  // details
 
+
 void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   //g_dim  - global number of dimensions .. will be the same on each local mpi process

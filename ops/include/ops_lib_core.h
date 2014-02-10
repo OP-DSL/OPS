@@ -234,4 +234,8 @@ int ops_is_root();
 
 void ops_partition(int dims, int* size, char* routine);
 
+void ops_mpi_reduce_float(ops_arg *args, float* data);
+void ops_mpi_reduce_double(ops_arg *args, double* data);
+void ops_mpi_reduce_int(ops_arg *args, int* data);
+
 #endif /* __OP_LIB_CORE_H */

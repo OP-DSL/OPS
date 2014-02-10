@@ -249,6 +249,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+
 }
 
 //
@@ -352,6 +354,9 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
 
 }
 
@@ -458,6 +463,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+
 }
 
 //
@@ -563,6 +572,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
 
 }
 
@@ -676,6 +690,12 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+
 }
 
 //
@@ -788,6 +808,13 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
 
 }
 
@@ -903,6 +930,14 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+
 }
 
 //
@@ -1017,6 +1052,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
 
 }
 
@@ -1139,6 +1183,16 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+
 }
 
 //
@@ -1260,6 +1314,17 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
 
 }
 
@@ -1384,6 +1449,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+
 }
 
 //
@@ -1507,6 +1584,19 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
 
 }
 
@@ -1638,6 +1728,20 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+
 }
 
 //
@@ -1768,6 +1872,21 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
 
 }
 
@@ -1901,6 +2020,22 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
+  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
+
 }
 
 //
@@ -2033,6 +2168,23 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
+  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
+  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
 
 }
 
@@ -2173,6 +2325,24 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
+  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
+  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
+  ops_mpi_reduce(&args[16],(T16 *)p_a[16]);
+
 }
 
 //
@@ -2312,5 +2482,24 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
         p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
     }
   }
+
+  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
+  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
+  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
+  ops_mpi_reduce(&args[16],(T16 *)p_a[16]);
+  ops_mpi_reduce(&args[17],(T17 *)p_a[17]);
 
 }

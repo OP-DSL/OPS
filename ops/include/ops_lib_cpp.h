@@ -175,4 +175,34 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 
 
 
+//
+// wrapper functions to handle MPI global reductions
+//
+
+inline void ops_mpi_reduce(ops_arg* args, float *data)
+{
+  ops_mpi_reduce_float(args,data);
+}
+
+inline void ops_mpi_reduce(ops_arg* args, double *data)
+{
+  ops_mpi_reduce_double(args,data);
+}
+
+inline void ops_mpi_reduce(ops_arg* args, int *data)
+{
+  ops_mpi_reduce_int(args,data);
+}
+
+//needed as a dummy, "do nothing" routine for the non-mpi backends
+template <class T>
+void ops_mpi_reduce(ops_arg* args, T* data)
+{
+
+}
+
+
+
+
+
 #endif /* __OPS_LIB_CPP_H */
