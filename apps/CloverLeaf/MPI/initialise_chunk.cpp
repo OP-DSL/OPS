@@ -63,8 +63,6 @@ void initialise_chunk()
                ops_arg_dat(yy, S2D_00_STRID2D_Y, "int", OPS_READ),
                ops_arg_dat(vertexdy, S2D_00_STRID2D_Y, "double", OPS_WRITE));
 
-
-
   rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = y_min-2; rangex[3] = y_max+2;
   ops_par_loop_mpi(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", clover_grid, 2, rangex,
                ops_arg_dat(vertexx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
