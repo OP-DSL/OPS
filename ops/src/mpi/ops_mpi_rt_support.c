@@ -103,27 +103,15 @@ void ops_exchange_halo_edge(ops_arg* arg, int d /*depth*/, int dir)
   MPI_Status status;
   int size = dat->size;
 
-  //for(int n=0;n<sb->ndim;n++){
+  //send in positive direction, receive from negative direction
+  MPI_Sendrecv(&dat->data[(-d_m[dir]+sb->sizes[dir]-d)*size],d,MPI_DOUBLE_PRECISION,sb->id_p[dir],0,
+               &dat->data[(-d_m[dir]-d)*size],d,MPI_DOUBLE_PRECISION,sb->id_m[dir],0,
+               OPS_CART_COMM, &status);
 
-    //MPI_Status status;
-    /*i1 = (-d_m[n] - d) * prod[n-1];
-    i2 = (-d_m[n]    ) * prod[n-1];
-    i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d) * prod[n-1];
-    i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];*/
-
-    //send in positive direction, receive from negative direction
-    //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-    MPI_Sendrecv(&dat->data[(-d_m[dir]+sb->sizes[dir]-d)*size],d,MPI_DOUBLE_PRECISION,sb->id_p[dir],0,
-                 &dat->data[(-d_m[dir]-d)*size],d,MPI_DOUBLE_PRECISION,sb->id_m[dir],0,
-                 OPS_CART_COMM, &status);
-
-    //send in negative direction, receive from positive direction
-    //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-    MPI_Sendrecv(&dat->data[-d_m[dir]*size],d,MPI_DOUBLE_PRECISION,sb->id_m[dir],1,
-                 &dat->data[(-d_m[dir]+sb->sizes[dir])*size],d,MPI_DOUBLE_PRECISION,sb->id_p[dir],1,
-                 OPS_CART_COMM, &status);
-  //}
-
+  //send in negative direction, receive from positive direction
+  MPI_Sendrecv(&dat->data[-d_m[dir]*size],d,MPI_DOUBLE_PRECISION,sb->id_m[dir],1,
+               &dat->data[(-d_m[dir]+sb->sizes[dir])*size],d,MPI_DOUBLE_PRECISION,sb->id_p[dir],1,
+               OPS_CART_COMM, &status);
 }
 
 
