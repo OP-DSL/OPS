@@ -52,7 +52,7 @@ void viscosity_func()
   ops_par_loop_mpi(viscosity_kernel, "viscosity_kernel", clover_grid, 2, rangexy_inner,
       ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
       ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-      ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
+      ops_arg_dat(celldx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
       ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_10_M10_01_0M1, "double", OPS_READ),
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),

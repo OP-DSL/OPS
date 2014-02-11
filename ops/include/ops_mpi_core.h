@@ -117,6 +117,7 @@ extern sub_dat_list *OPS_sub_dat_list;
 * External functions defined in ops_mpi_(cuda)_rt_support.c
 *******************************************************************************/
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+void ops_exchange_halo_edge(ops_arg* arg, int d /*depth*/, int dir);
 
 
 #endif /*__OPS_MPI_CORE_H*/

@@ -239,7 +239,7 @@ void build_field()
   S2D_00_STRID2D_X = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_x, "s2D_00_stride2D_x");
   S2D_00_STRID2D_Y = ops_decl_strided_stencil( 2, 1, s2D_00, stride2D_y, "s2D_00_stride2D_y");
 
-  s2D_00_P10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_P10, stride2D_x, "s2D_00_P10_stride2D_x");
+  S2D_00_P10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_P10, stride2D_x, "s2D_00_P10_stride2D_x");
   S2D_00_0P1_STRID2D_Y = ops_decl_strided_stencil( 2, 2, s2D_00_0P1, stride2D_y, "s2D_00_0P1_stride2D_y");
 
   S2D_00_M10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "s2D_00_M10_stride2D_x");
@@ -255,8 +255,8 @@ void build_field()
     ops_arg_dat(volume, S2D_00, "double", OPS_READ),
     ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00, "double", OPS_READ));
-
-  ops_exit();//exit for now
-  exit(0);*/
+  */
+  //ops_exit();//exit for now
+  //exit(0);
 
 }

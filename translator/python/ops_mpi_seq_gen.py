@@ -257,9 +257,25 @@ for nargs in range (1,maxargs+1):
       f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];\n')
     f.write('\n')
 
+    f.write('  //calculate max halodepth for each dat\n')
+    f.write('  int max_depth['+str(nargs)+'];\n')
+    f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
+    f.write('    max_depth[i] = 0;\n')
+    f.write('    if(args[i].stencil!=NULL) {\n')
+    f.write('      for (int s = 0; s<args[i].stencil->points * args[i].stencil->dims; s++)\n')
+    f.write('        max_depth[i] = MAX(max_depth[i], abs(args[i].stencil->stencil[s]));\n')
+    f.write('    }\n')
+    f.write('  }\n\n')
+
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)\n')
-    f.write('      ops_exchange_halo(&args[i],2);\n')
+    f.write('      ops_exchange_halo(&args[i],2);\n') #should this 2 be max_depth[i] ??
+    f.write('    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1)\n')
+    f.write('    {\n')
+    f.write('      for(int d = 0; d<ndim; d++)\n')
+    f.write('        if(args[i].dat->block_size[d] > 1)\n')
+    f.write('          ops_exchange_halo_edge(&args[i],2,d);\n')
+    f.write('    }\n')
     f.write('  }\n\n')
 
 

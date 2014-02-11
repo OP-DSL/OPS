@@ -299,6 +299,10 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
   stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
   memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
+  //for (int i = 0; i < dims*points; i++)
+  //  printf("%d ",stencil->stencil[i]);
+  //printf("\n");
+
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
 

@@ -74,6 +74,8 @@ void field_summary()
       ops_arg_gbl(&ke, 1, "double", OPS_INC),
       ops_arg_gbl(&press, 1, "double", OPS_INC));
 
+  //printf("mass = %lf\n",mass);
+
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out,"\n Time %lf\n",clover_time);
   ops_fprintf(g_out,"              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-s\n",
@@ -98,4 +100,5 @@ void field_summary()
     }
   }
   fflush(g_out);
+
 }

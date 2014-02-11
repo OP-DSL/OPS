@@ -72,6 +72,9 @@ void start()
 
   generate();
 
+  //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
+
   advect_x = TRUE;
 
   /**------------------------------ideal_gas---------------------------------**/
@@ -102,4 +105,6 @@ void start()
 
   field_summary();
 
+  //ops_exit();//exit for now
+  //exit(0);
 }

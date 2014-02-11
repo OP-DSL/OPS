@@ -52,11 +52,10 @@ void calc_dt(double* local_dt, char* local_control,
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop_mpi(calc_dt_kernel, "calc_dt_kernel", clover_grid, 2, rangexy_inner,
-    ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celldx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
     ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
     ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
@@ -72,9 +71,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
-  printf("*local_dt = %lf\n",*local_dt);
-  ops_exit();//exit for now
-  exit(0);
+  //printf("*local_dt = %lf\n",*local_dt);
 
   //Extract the mimimum timestep information
   dtl_control = 10.01 * (jk_control - (int)(jk_control));
@@ -113,5 +110,8 @@ void calc_dt(double* local_dt, char* local_control,
   if(dtl_control == 2) sprintf(local_control, "xvel");
   if(dtl_control == 3) sprintf(local_control, "yvel");
   if(dtl_control == 4) sprintf(local_control, "div");
+
+  //ops_exit();//exit for now
+  //exit(0);
 
 }

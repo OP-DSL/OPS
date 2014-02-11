@@ -135,7 +135,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
   //what to do if not ?? How will the halos be handled
 
   /** ---- Create MPI data types for halo exchange ---- **/
-  if( edge_dat != 1) {
+  //if( edge_dat != 1) {
 
     int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
     int *prod = &prod_t[1];
@@ -175,7 +175,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
     sd->d_p = d_plus;
 
     OPS_sub_dat_list[dat->index] = sd;
-  }
+  //}
 
   return dat;
 }
