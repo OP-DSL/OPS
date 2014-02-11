@@ -204,21 +204,16 @@ for nargs in range (1,maxargs+1):
 
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
-
-    f.write('    if(s[n] >= range[2*n]) s[n] = 0;\n')
+    f.write('    if (s[n] >= range[2*n]) s[n] = 0;\n')
     f.write('    else s[n] = range[2*n] - s[n];\n')
-    f.write('    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];\n')
+    f.write('    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];\n')
     f.write('    else e[n] = sb->sizes[n];\n')
-    #f.write('    printf("%s range[2*n] = %d range[2*n+1]= %d s[n] = %d e[n] = %d\\n",name, range[2*n],range[2*n+1], s[n],e[n]);\n');
-
-    #f.write('    if(s[n] < range[2*n]) s[n] = range[2*n];\n')
-    #f.write('    if(e[n] > range[2*n+1]) e[n] = range[2*n+1];\n')
     f.write('  }\n')
 
     f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
       '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];\n' +
-      '      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];\n' +
+      '      start[i*ndim+n] = s[n];\n' +
+      '      end[i*ndim+n]   = e[n];\n' +
       '    }\n' +
       '  }\n\n')
 
@@ -299,7 +294,7 @@ for nargs in range (1,maxargs+1):
     f.write('  }\n\n')
 
     for n in range (0, nargs):
-      f.write('  ops_mpi_reduce(&args['+str(n)+'],(T'+str(n)+' *)p_a['+str(n)+']);\n')
+      f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
 
 

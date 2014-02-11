@@ -47,12 +47,14 @@ void calc_dt_kernel(double *celldx, double *celldy, double *soundspeed,
 
   //dt_min is work_array1
   dt_min[OPS_ACC10(0,0)] = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
-
+  //printf("dt_min %lf, dtct %lf ",dt_min[OPS_ACC10(0,0)], dtct);
+  //printf("dsx %lf, dsy %lf ",dsx,dsy);
 }
 
 void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+  //printf("%lf ",*dt_min_val);
 }
 
 void calc_dt_kernel_get(double* cellx, double* celly,

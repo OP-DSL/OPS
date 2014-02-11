@@ -72,6 +72,10 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
+  printf("*local_dt = %lf\n",*local_dt);
+  ops_exit();//exit for now
+  exit(0);
+
   //Extract the mimimum timestep information
   dtl_control = 10.01 * (jk_control - (int)(jk_control));
   jk_control = jk_control - (jk_control - (int)(jk_control));

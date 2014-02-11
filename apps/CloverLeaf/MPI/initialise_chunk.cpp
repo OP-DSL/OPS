@@ -47,34 +47,36 @@ void initialise_chunk()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-  printf("x_cells %d, y_cells %d x_min %d,y_min %d,x_max %d,y_max %d\n",
-    x_cells, y_cells, x_min,y_min,x_max, y_max);
+  //int rangex[] = {x_min-2, x_max+3, 0, 1};
+  //int rangey[] = {0, 1, y_min-2, y_max+3};
 
-  int rangex[] = {x_min-2, x_max+3, 0, 1};
+  int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+
   ops_par_loop_mpi(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 2, rangex,
-               ops_arg_dat(vertexx, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(xx, S2D_00, "int", OPS_READ),
-               ops_arg_dat(vertexdx, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexx, S2D_00_STRID2D_X, "double", OPS_WRITE),
+               ops_arg_dat(xx, S2D_00_STRID2D_X, "int", OPS_READ),
+               ops_arg_dat(vertexdx, S2D_00_STRID2D_X, "double", OPS_WRITE));
 
-
-  int rangey[] = {0, 1, y_min-2, y_max+3};
   ops_par_loop_mpi(initialise_chunk_kernel_y, "initialise_chunk_kernel_y", clover_grid, 2, rangey,
-               ops_arg_dat(vertexy, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(yy, S2D_00, "int", OPS_READ),
-               ops_arg_dat(vertexdy, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexy, S2D_00_STRID2D_Y, "double", OPS_WRITE),
+               ops_arg_dat(yy, S2D_00_STRID2D_Y, "int", OPS_READ),
+               ops_arg_dat(vertexdy, S2D_00_STRID2D_Y, "double", OPS_WRITE));
 
-
-  rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = 0; rangex[3] = 1;
+  rangex[0] = x_min-2; rangex[1] = x_max+2; rangex[2] = y_min-2; rangex[3] = y_max+2;;
   ops_par_loop_mpi(initialise_chunk_kernel_cellx, "initialise_chunk_kernel_cellx", clover_grid, 2, rangex,
-               ops_arg_dat(vertexx, S2D_00_P10, "double", OPS_READ),
-               ops_arg_dat(cellx, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(celldx, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_WRITE),
+               ops_arg_dat(celldx, S2D_00_STRID2D_X, "double", OPS_WRITE));
 
-  rangey[0] = 0; rangey[1] = 1; rangey[2] = y_min-2; rangey[3] = y_max+2;
+  rangey[0] = x_min-2; rangey[1] = x_max+2; rangey[2] = y_min-2; rangey[3] = y_max+2;
   ops_par_loop_mpi(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", clover_grid, 2, rangey,
-               ops_arg_dat(vertexy, S2D_00_0P1, "double", OPS_READ),
-               ops_arg_dat(celly, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(celldy, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+               ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_WRITE),
+               ops_arg_dat(celldy, S2D_00_STRID2D_Y, "double", OPS_WRITE));
+
+  //ops_print_dat_to_txtfile_core(celldx, "cloverdats.dat");
+  //ops_print_dat_to_txtfile_core(celldy, "cloverdats.dat");
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
   ops_par_loop_mpi(initialise_chunk_kernel_volume, "initialise_chunk_kernel_volume", clover_grid, 2, rangexy,
@@ -84,4 +86,7 @@ void initialise_chunk()
     ops_arg_dat(celldx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00, "double", OPS_WRITE));
 
+  //printf("\n");
+  //ops_exit();//exit for now
+  //exit(0);
 }

@@ -74,6 +74,7 @@ extern int OPS_hybrid_gpu;
 
 #define OPS_ARG_GBL 0
 #define OPS_ARG_DAT 1
+#define OPS_ARG_IDX 2
 
 typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
@@ -208,6 +209,7 @@ ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stri
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
+ops_arg ops_arg_idx_core( );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);

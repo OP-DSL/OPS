@@ -175,15 +175,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<1; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -249,7 +249,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
 }
 
@@ -280,15 +280,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<2; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -355,8 +355,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
 }
 
@@ -387,15 +387,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<3; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -463,9 +463,9 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
 }
 
@@ -496,15 +496,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<4; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -573,10 +573,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
 }
 
@@ -611,15 +611,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<5; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -690,11 +690,11 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
 }
 
@@ -729,15 +729,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<6; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -809,12 +809,12 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
 }
 
@@ -849,15 +849,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<7; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -930,13 +930,13 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
 }
 
@@ -971,15 +971,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<8; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1053,14 +1053,14 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
 }
 
@@ -1099,15 +1099,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<9; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1183,15 +1183,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
 }
 
@@ -1230,15 +1230,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<10; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1315,16 +1315,16 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
 }
 
@@ -1363,15 +1363,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<11; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1449,17 +1449,17 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
 }
 
@@ -1498,15 +1498,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<12; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1585,18 +1585,18 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
 }
 
@@ -1639,15 +1639,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<13; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1728,19 +1728,19 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
 }
 
@@ -1783,15 +1783,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<14; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -1873,20 +1873,20 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
-  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
 }
 
@@ -1929,15 +1929,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<15; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -2020,21 +2020,21 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
-  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
-  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
 }
 
@@ -2077,15 +2077,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<16; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -2169,22 +2169,22 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
-  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
-  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
-  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
 }
 
@@ -2231,15 +2231,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<17; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -2325,23 +2325,23 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
-  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
-  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
-  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
-  ops_mpi_reduce(&args[16],(T16 *)p_a[16]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
+  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
 }
 
@@ -2388,15 +2388,15 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
 
   for (int n=0; n<ndim; n++) {
     s[n] = sb->istart[n];e[n] = sb->iend[n]+1;
-    if(s[n] >= range[2*n]) s[n] = 0;
+    if (s[n] >= range[2*n]) s[n] = 0;
     else s[n] = range[2*n] - s[n];
-    if(e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
+    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
   for(int i = 0; i<18; i++) {
     for(int n=0; n<ndim; n++) {
-      start[i*ndim+n] = s[n] ;//range[2*n];- args[i].dat->offset[n];
-      end[i*ndim+n]   = e[n] ;//range[2*n+1];- args[i].dat->offset[n];
+      start[i*ndim+n] = s[n];
+      end[i*ndim+n]   = e[n];
     }
   }
 
@@ -2483,23 +2483,23 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&args[0],(T0 *)p_a[0]);
-  ops_mpi_reduce(&args[1],(T1 *)p_a[1]);
-  ops_mpi_reduce(&args[2],(T2 *)p_a[2]);
-  ops_mpi_reduce(&args[3],(T3 *)p_a[3]);
-  ops_mpi_reduce(&args[4],(T4 *)p_a[4]);
-  ops_mpi_reduce(&args[5],(T5 *)p_a[5]);
-  ops_mpi_reduce(&args[6],(T6 *)p_a[6]);
-  ops_mpi_reduce(&args[7],(T7 *)p_a[7]);
-  ops_mpi_reduce(&args[8],(T8 *)p_a[8]);
-  ops_mpi_reduce(&args[9],(T9 *)p_a[9]);
-  ops_mpi_reduce(&args[10],(T10 *)p_a[10]);
-  ops_mpi_reduce(&args[11],(T11 *)p_a[11]);
-  ops_mpi_reduce(&args[12],(T12 *)p_a[12]);
-  ops_mpi_reduce(&args[13],(T13 *)p_a[13]);
-  ops_mpi_reduce(&args[14],(T14 *)p_a[14]);
-  ops_mpi_reduce(&args[15],(T15 *)p_a[15]);
-  ops_mpi_reduce(&args[16],(T16 *)p_a[16]);
-  ops_mpi_reduce(&args[17],(T17 *)p_a[17]);
+  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
+  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
+  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
 }

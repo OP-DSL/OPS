@@ -369,6 +369,17 @@ ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
   return arg;
 }
 
+ops_arg ops_arg_idx_core () {
+  ops_arg arg;
+  arg.argtype = OPS_ARG_IDX;
+  arg.dat = NULL;
+  arg.data_d = NULL;
+  arg.stencil = NULL;
+  arg.dim = 0;
+  arg.data = NULL;
+  arg.acc = 0;
+  return arg;
+}
 
 void ops_diagnostic_output ( )
 {

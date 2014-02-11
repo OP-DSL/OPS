@@ -4,7 +4,6 @@
 #include "data.h"
 #include "definitions.h"
 
-
 void initialise_chunk_kernel_x(double *vertexx, int *xx, double *vertexdx) {
 
   int x_min=field->x_min-2;
@@ -83,6 +82,7 @@ void initialise_chunk_kernel_celly(double *vertexy, double *celly, double *celld
   celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
   celldy[OPS_ACC2(0,0)] = d_y;
 
+  //printf("d_y %lf celldy %lf ",d_y, celldy[OPS_ACC2(0,0)]);
 
 }
 

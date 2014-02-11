@@ -117,6 +117,7 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE,
           MPI_MIN, OPS_MPI_WORLD);
       memcpy(arg->data, result, sizeof(double)*arg->dim);
+      //printf("here result %lf\n",((double *)arg->data)[0]);
     }
     else if(arg->acc == OPS_WRITE)//any
     {
@@ -135,6 +136,7 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       memcpy(arg->data, result, sizeof(double)*arg->dim);
       if (arg->dim == 1) free(result);
     }
+
     if (arg->dim > 1) free (result);
   }
   ops_timers_core(&c2, &t2);
