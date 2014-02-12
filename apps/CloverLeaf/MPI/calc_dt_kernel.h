@@ -57,23 +57,24 @@ void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
   //printf("%lf ",*dt_min_val);
 }
 
-void calc_dt_kernel_get(double* cellx, double* celly,
-                        double* xl_pos, double* yl_pos) {
+void calc_dt_kernel_getx(double* cellx, double* xl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
+}
+
+void calc_dt_kernel_gety(double* celly,double* yl_pos) {
   *yl_pos = celly[OPS_ACC1(0,0)];
 }
 
-void calc_dt_kernel_print(double *cellx, double *celly,
-                        double *xvel0, double *yvel0,
+void calc_dt_kernel_print(double *xvel0, double *yvel0,
                         double *density0, double *energy0,
                         double *pressure, double *soundspeed) {
   printf("Cell velocities:\n");
-  printf("%E, %E \n",xvel0[OPS_ACC2(1,0)], yvel0[OPS_ACC3(1,0)]); //xvel0(jldt  ,kldt  ),yvel0(jldt  ,kldt  )
-  printf("%E, %E \n",xvel0[OPS_ACC2(-1,0)], yvel0[OPS_ACC3(-1,0)]); //xvel0(jldt+1,kldt  ),yvel0(jldt+1,kldt  )
-  printf("%E, %E \n",xvel0[OPS_ACC2(0,1)], yvel0[OPS_ACC3(0,1)]); //xvel0(jldt+1,kldt+1),yvel0(jldt+1,kldt+1)
-  printf("%E, %E \n",xvel0[OPS_ACC2(0,-1)], yvel0[OPS_ACC3(0,-1)]); //xvel0(jldt  ,kldt+1),yvel0(jldt  ,kldt+1)
+  printf("%E, %E \n",xvel0[OPS_ACC0(1,0)], yvel0[OPS_ACC1(1,0)]); //xvel0(jldt  ,kldt  ),yvel0(jldt  ,kldt  )
+  printf("%E, %E \n",xvel0[OPS_ACC0(-1,0)], yvel0[OPS_ACC1(-1,0)]); //xvel0(jldt+1,kldt  ),yvel0(jldt+1,kldt  )
+  printf("%E, %E \n",xvel0[OPS_ACC0(0,1)], yvel0[OPS_ACC1(0,1)]); //xvel0(jldt+1,kldt+1),yvel0(jldt+1,kldt+1)
+  printf("%E, %E \n",xvel0[OPS_ACC0(0,-1)], yvel0[OPS_ACC1(0,-1)]); //xvel0(jldt  ,kldt+1),yvel0(jldt  ,kldt+1)
 
   printf("density, energy, pressure, soundspeed = %lf, %lf, %lf, %lf \n",
-    density0[OPS_ACC4(0,0)], energy0[OPS_ACC5(0,0)], pressure[OPS_ACC6(0,0)], soundspeed[OPS_ACC7(0,0)]);
+    density0[OPS_ACC2(0,0)], energy0[OPS_ACC3(0,0)], pressure[OPS_ACC4(0,0)], soundspeed[OPS_ACC5(0,0)]);
 }
 #endif
