@@ -234,13 +234,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
   }
 
   for (int i = 0; i < 1; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -355,13 +350,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
   }
 
   for (int i = 0; i < 2; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -478,13 +468,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
   }
 
   for (int i = 0; i < 3; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -603,13 +588,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
   }
 
   for (int i = 0; i < 4; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -734,13 +714,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 5; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -868,13 +843,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 6; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1004,13 +974,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 7; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1142,13 +1107,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 8; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1286,13 +1246,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 9; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1433,13 +1388,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 10; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1582,13 +1532,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 11; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1733,13 +1678,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 12; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -1890,13 +1830,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 13; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -2050,13 +1985,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 14; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -2212,13 +2142,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 15; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -2376,13 +2301,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 16; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -2546,13 +2466,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 17; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
@@ -2719,13 +2634,8 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
   }
 
   for (int i = 0; i < 18; i++) {
-    if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0)
+    if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
-    else if(args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 1) {
-      for(int d = 0; d<ndim; d++)
-        if(args[i].dat->block_size[d] > 1)
-          ops_exchange_halo_edge(&args[i],1,d);
-    }
   }
 
   for (int nt=0; nt<total_range; nt++) {
