@@ -148,10 +148,14 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
 
     MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
 
-    for(int n = 0; n<sb->ndim; n++) { //need to make MPI_DOUBLE_PRECISION general
+    MPI_Datatype new_type_p; //create generic type for MPI comms
+    MPI_Type_contiguous(size*type_size, MPI_CHAR, &new_type_p);
+    MPI_Type_commit(&new_type_p);
+
+    for(int n = 0; n<sb->ndim; n++) {
       for(int d = 0; d<MAX_DEPTH; d++) {
         MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
-                        prod[n], MPI_DOUBLE_PRECISION, &stride[MAX_DEPTH*n+d]);
+                        prod[n], new_type_p, &stride[MAX_DEPTH*n+d]);
         MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
       }
