@@ -140,9 +140,6 @@ void build_field()
   //for(int i=y_min-2; i<y_max+3; i++) ((int *)(yy->data))[i-d_m[1]] = i - y_min;
   for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)  ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
 
-  printf("sb->istart[0] %d, sb->istart[1] %d\n",sb->istart[0],sb->istart[1]);
-  printf("sb->iend[0] %d, sb->iend[1] %d\n",sb->iend[0],sb->iend[1]);
-
   //
   //Declare commonly used stencils
   //

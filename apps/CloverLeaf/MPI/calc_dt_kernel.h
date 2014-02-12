@@ -57,6 +57,11 @@ void calc_dt_kernel_min(double* dt_min /*dt_min is work_array1*/,
   //printf("%lf ",*dt_min_val);
 }
 
+void calc_dt_kernel_get(double* cellx, double* celly, double* xl_pos, double* yl_pos) {
+  *xl_pos = cellx[OPS_ACC0(0,0)];
+  *yl_pos = celly[OPS_ACC1(0,0)];
+}
+
 void calc_dt_kernel_getx(double* cellx, double* xl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0)];
 }

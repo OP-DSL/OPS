@@ -88,7 +88,7 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 
 }
 
-void ops_exchange_halo_edge(ops_arg* arg, int d /*depth*/, int dir)
+void ops_exchange_halo_edge2(ops_arg* arg, int d /*depth*/, int dir)
 {
   ops_dat dat = arg->dat;
   //printf("Exchanging halos for %s\n",dat->name);
@@ -114,6 +114,42 @@ void ops_exchange_halo_edge(ops_arg* arg, int d /*depth*/, int dir)
                OPS_CART_COMM, &status);
 }
 
+
+void ops_exchange_halo_edge(ops_arg* arg, int d /*depth*/, int n)
+{
+  ops_dat dat = arg->dat;
+  //printf("Exchanging halos for %s\n",dat->name);
+
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  int i1,i2,i3,i4; //indicies for halo and boundary of the dat
+  int* d_m = sd->d_m;
+  int* d_p = sd->d_p;
+  int* prod = sd->prod;
+
+  int size = dat->size;
+  MPI_Status status;
+
+  i1 = (-d_m[n] - d) * prod[n-1];
+  i2 = (-d_m[n]    ) * prod[n-1];
+  i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d) * prod[n-1];
+  i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
+
+  //send in positive direction, receive from negative direction
+  //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
+  MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],0,
+               &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],0,
+               OPS_CART_COMM, &status);
+
+  //send in negative direction, receive from positive direction
+  //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
+  MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],1,
+               &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],1,
+               OPS_CART_COMM, &status);
+
+
+}
 
 void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {

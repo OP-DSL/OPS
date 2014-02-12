@@ -76,8 +76,10 @@ void calc_dt(double* local_dt, char* local_control,
   //Extract the mimimum timestep information
   dtl_control = 10.01 * (jk_control - (int)(jk_control));
   jk_control = jk_control - (jk_control - (int)(jk_control));
-  *jldt = ((int)jk_control)%x_max;
-  *kldt = 1 + (jk_control/x_max);
+  //*jldt = ((int)jk_control)%x_max;
+  //*kldt = 1 + (jk_control/x_max);
+  *jldt = ((int)jk_control)%(x_max-x_min);
+  *kldt = 1 + (jk_control/(x_max-x_min));
 
   int rangexy_getpoint[] = {*jldt-1+2,*jldt+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
@@ -85,6 +87,12 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_getpointy[] = {x_min,x_max,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
   if(*local_dt < dtmin) small = 1;
+
+  /*ops_par_loop_mpi(calc_dt_kernel_get, "calc_dt_kernel_get", clover_grid, 2, rangexy_getpoint,
+    ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
+    ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE),
+    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));*/
 
   ops_par_loop_mpi(calc_dt_kernel_getx, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpointx,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
