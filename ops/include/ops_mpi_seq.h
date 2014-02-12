@@ -412,6 +412,7 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];
     else e[n] = sb->sizes[n];
   }
+
   for(int i = 0; i<3; i++) {
     for(int n=0; n<ndim; n++) {
       start[i*ndim+n] = s[n];

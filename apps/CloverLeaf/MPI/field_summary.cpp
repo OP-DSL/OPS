@@ -101,4 +101,7 @@ void field_summary()
   }
   fflush(g_out);
 
+  //ops_exit();//exit for now
+  //exit(0);
+
 }
