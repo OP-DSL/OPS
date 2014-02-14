@@ -230,8 +230,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*),
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -346,8 +348,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*),
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -464,8 +468,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*),
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -584,8 +590,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*),
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -710,8 +718,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -839,8 +849,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -970,8 +982,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1103,8 +1117,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1242,8 +1258,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1384,8 +1402,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1528,8 +1548,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1674,8 +1696,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1826,8 +1850,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -1981,8 +2007,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -2138,8 +2166,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -2297,8 +2327,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -2462,8 +2494,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
@@ -2630,8 +2664,10 @@ void ops_par_loop_mpi(void (*kernel)(T0*, T1*, T2*, T3*,
     max_depth[1] = 0;
     if(args[i].stencil!=NULL) {
       for(int d = 0; d<ndim; d++) {
-        for (int p = 0; p<args[i].stencil->points; p++)
+        for (int p = 0; p<args[i].stencil->points; p++) {
           max_depth[d] = MAX(max_depth[d], abs(args[i].stencil->stencil[p*ndim+d]));
+          if(max_depth[d]>2) printf("larger halo %d\n",max_depth[d]);
+        }
       }
       if(args[i].argtype == OPS_ARG_DAT)
         ops_exchange_halo(&args[i],max_depth);
