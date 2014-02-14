@@ -96,7 +96,8 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
   {
     double result_static;
     double *result;
-    if (arg->dim > 1 && arg->acc != OPS_WRITE) result = (double *) calloc (arg->dim, sizeof (double));
+    if (arg->dim > 1 && arg->acc != OPS_WRITE)
+      result = (double *) calloc (arg->dim, sizeof (double));
     else result = &result_static;
 
     if(arg->acc == OPS_INC)//global reduction
@@ -116,7 +117,6 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE,
           MPI_MIN, OPS_MPI_WORLD);
       memcpy(arg->data, result, sizeof(double)*arg->dim);
-      //printf("here result %lf\n",((double *)arg->data)[0]);
     }
     else if(arg->acc == OPS_WRITE)//any
     {
@@ -149,7 +149,8 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
   {
     float result_static;
     float *result;
-    if (arg->dim > 1 && arg->acc != OPS_WRITE) result = (float *) calloc (arg->dim, sizeof (float));
+    if (arg->dim > 1 && arg->acc != OPS_WRITE)
+      result = (float *) calloc (arg->dim, sizeof (float));
     else result = &result_static;
 
     if(arg->acc == OPS_INC)//global reduction
@@ -201,7 +202,8 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
   {
     int result_static;
     int *result;
-    if (arg->dim > 1 && arg->acc != OPS_WRITE) result = (int *) calloc (arg->dim, sizeof (int));
+    if (arg->dim > 1 && arg->acc != OPS_WRITE)
+      result = (int *) calloc (arg->dim, sizeof (int));
     else result = &result_static;
 
     if(arg->acc == OPS_INC)//global reduction

@@ -106,6 +106,7 @@ void timestep()
   //dtl_control = (char *)xmalloc(8*sizeof(char ));
   calc_dt(&dtlp, dtl_control, &xl_pos, &yl_pos, &jldt, &kldt);
 
+
   if (dtlp <= dt) {
       dt = dtlp;
       //memcpy(dt_control, dtl_control, sizeof(char)*8);
