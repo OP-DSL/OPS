@@ -132,13 +132,13 @@ void build_field()
   int* temp2 = NULL;
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
   xx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
-  //for(int i=x_min-2; i<x_max+3; i++) ((int *)(xx->data))[i-d_m[0]] = i - x_min;
-  for(int i=sb->istart[0]-2; i<sb->iend[0]+3+1; i++) ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min;
+  for(int i=sb->istart[0]-2; i<sb->iend[0]+3+1; i++)
+    ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min;
 
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
   yy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
-  //for(int i=y_min-2; i<y_max+3; i++) ((int *)(yy->data))[i-d_m[1]] = i - y_min;
-  for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)  ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
+  for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)
+    ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
 
   //
   //Declare commonly used stencils
@@ -242,18 +242,7 @@ void build_field()
   S2D_00_M10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "s2D_00_M10_stride2D_x");
   S2D_00_0M1_STRID2D_Y = ops_decl_strided_stencil( 2, 2, s2D_00_0M1, stride2D_y, "s2D_00_0M1_stride2D_y");
 
-
   //print ops blocks and dats details
   ops_diagnostic_output();
-
-
-  /*int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};//{0, 1, y_min-2, y_max+3};;//{x_min,x_max,y_min,y_max}; // range
-  ops_par_loop_mpi(test_kernel, "test_kernel",  clover_grid, 2, rangexy,
-    ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-    ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
-    ops_arg_dat(yarea, S2D_00, "double", OPS_READ));
-  */
-  //ops_exit();//exit for now
-  //exit(0);
 
 }
