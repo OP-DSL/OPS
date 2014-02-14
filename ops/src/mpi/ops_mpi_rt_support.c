@@ -88,7 +88,38 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
   }
 }
 
+
 void ops_mpi_reduce_double(ops_arg* arg, double* data)
+{
+  (void)data;
+  ops_timers_core(&c1, &t1);
+
+  if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
+    double *result = (double *) calloc (arg->dim, sizeof (double));
+
+    if(arg->acc == OPS_INC)//global reduction
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_MPI_WORLD);
+    else if(arg->acc == OPS_MAX)//global maximum
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MAX, OPS_MPI_WORLD);
+    else if(arg->acc == OPS_MIN)//global minimum
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_MPI_WORLD);
+    else if(arg->acc == OPS_WRITE) {//any
+      result = (double *) xrealloc (result,arg->dim*ops_comm_size*sizeof(double));
+      MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_MPI_WORLD);
+      for (int i = 1; i < ops_comm_size; i++) {
+        for (int j = 0; j < arg->dim; j++) {
+          if (result[i*arg->dim+j] != 0.0)
+            result[j] = result[i*arg->dim+j];
+        }
+      }
+    }
+    memcpy(arg->data, result, sizeof(double)*arg->dim);
+    free(result);
+  }
+}
+
+
+/*void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {
   (void)data;
   ops_timers_core(&c1, &t1);
@@ -114,7 +145,7 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
     }
     else if(arg->acc == OPS_MIN)//global minimum
     {
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE,
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_DOUBLE,
           MPI_MIN, OPS_MPI_WORLD);
       memcpy(arg->data, result, sizeof(double)*arg->dim);
     }
@@ -135,11 +166,11 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       memcpy(arg->data, result, sizeof(double)*arg->dim);
       if (arg->dim == 1) free(result);
     }
-
     if (arg->dim > 1) free (result);
   }
   ops_timers_core(&c2, &t2);
-}
+}*/
+
 
 void ops_mpi_reduce_float(ops_arg* arg, float* data)
 {
