@@ -67,7 +67,7 @@ void ops_exit()
   if(!flag) MPI_Finalize();
 }
 
-ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
+/*ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
                            int* offset,  int* tail, char* data, int type_size,
                            char const * type, char const * name )
 {
@@ -88,9 +88,9 @@ ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
 
   return dat;
 }
+*/
 
-
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m,
+ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
                            int* d_p, char* data,
                            int type_size, char const * type, char const * name )
 {
@@ -130,57 +130,53 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* d_m
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
 
-
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled
 
   /** ---- Create MPI data types for halo exchange ---- **/
-  //if( edge_dat != 1) {
 
-    int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
-    int *prod = &prod_t[1];
+  int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
+  int *prod = &prod_t[1];
 
-    prod[-1] = 1;
-    for(int n = 0; n<sb->ndim; n++) {
-      prod[n] = prod[n-1]*sub_size[n];
-      //prod[n] = prod[n-1]*(sb->sizes[n] - d_m[n] - d_p[n]);
+  prod[-1] = 1;
+  for(int n = 0; n<sb->ndim; n++) {
+    prod[n] = prod[n-1]*sub_size[n];
+    //prod[n] = prod[n-1]*(sb->sizes[n] - d_m[n] - d_p[n]);
+  }
+
+  MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
+
+  MPI_Datatype new_type_p; //create generic type for MPI comms
+  MPI_Type_contiguous(size*type_size, MPI_CHAR, &new_type_p);
+  MPI_Type_commit(&new_type_p);
+
+  for(int n = 0; n<sb->ndim; n++) {
+    for(int d = 0; d<MAX_DEPTH; d++) {
+      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
+                      prod[n], new_type_p, &stride[MAX_DEPTH*n+d]);
+      MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
+      //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
     }
+  }
 
-    MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
+  //create list to hold sub-grid decomposition geometries for each mpi process
+  OPS_sub_dat_list = (sub_dat_list *)xrealloc(OPS_sub_dat_list, OPS_dat_index*sizeof(sub_dat_list));
 
-    MPI_Datatype new_type_p; //create generic type for MPI comms
-    MPI_Type_contiguous(size*type_size, MPI_CHAR, &new_type_p);
-    MPI_Type_commit(&new_type_p);
+  //store away product array prod[] and MPI_Types for this ops_dat
+  sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
+  sd->dat = dat;
+  sd->prod = prod;
+  sd->mpidat = stride;
 
-    for(int n = 0; n<sb->ndim; n++) {
-      for(int d = 0; d<MAX_DEPTH; d++) {
-        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
-                        prod[n], new_type_p, &stride[MAX_DEPTH*n+d]);
-        MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
-        //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
-      }
-    }
+  int* d_minus = (int *)xmalloc(sizeof(int)*sb->ndim);
+  int* d_plus = (int *)xmalloc(sizeof(int)*sb->ndim);
+  memcpy(d_minus,d_m,sizeof(int)*sb->ndim);
+  memcpy(d_plus,d_p,sizeof(int)*sb->ndim);
 
-    //create list to hold sub-grid decomposition geometries for each mpi process
-    OPS_sub_dat_list = (sub_dat_list *)xrealloc(OPS_sub_dat_list, OPS_dat_index*sizeof(sub_dat_list));
+  sd->d_m = d_minus;
+  sd->d_p = d_plus;
 
-
-    //store away product array prod[] and MPI_Types for this ops_dat
-    sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
-    sd->dat = dat;
-    sd->prod = prod;
-    sd->mpidat = stride;
-
-    int* d_minus = (int *)xmalloc(sizeof(int)*sb->ndim);
-    int* d_plus = (int *)xmalloc(sizeof(int)*sb->ndim);
-    memcpy(d_minus,d_m,sizeof(int)*sb->ndim);
-    memcpy(d_plus,d_p,sizeof(int)*sb->ndim);
-
-    sd->d_m = d_minus;
-    sd->d_p = d_plus;
-
-    OPS_sub_dat_list[dat->index] = sd;
-  //}
+  OPS_sub_dat_list[dat->index] = sd;
 
   return dat;
 }

@@ -41,7 +41,7 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_mpi #cloverleaf_seq
+all: clean cloverleaf_mpi cloverleaf_seq
 
 
 #
@@ -84,4 +84,4 @@ cloverleaf_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initial
 #
 
 clean:
-		rm -f cloverleaf_mpi *.o
+		rm -f cloverleaf_mpi cloverleaf_seq *.o

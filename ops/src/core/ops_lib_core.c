@@ -62,6 +62,19 @@ int OPS_block_size_x = 0;
 int OPS_block_size_y = 0;
 
 /*
+* Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI backends
+*/
+
+int ops_comm_size;
+int ops_my_rank;
+
+sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
+                                   // geometries
+
+
+
+
+/*
 * Utility functions
 */
 static char * copy_str( char const * src )

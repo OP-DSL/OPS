@@ -146,9 +146,9 @@ void ops_upload_dat(ops_dat dat) {
 
 }
 
-void ops_halo_exchanges(ops_arg *args, int nargs)
+void ops_H_D_exchanges(ops_arg *args, int nargs)
 {
-  //printf("in ops_halo_exchanges\n");
+  //printf("in ops_H_D_exchanges\n");
   for (int n=0; n<nargs; n++)
     if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       ops_download_dat(args[n].dat);
@@ -157,7 +157,7 @@ void ops_halo_exchanges(ops_arg *args, int nargs)
     }
 }
 
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++)
     if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {

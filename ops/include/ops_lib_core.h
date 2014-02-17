@@ -157,8 +157,40 @@ typedef struct
   float       mpi_time; /* time spent in MPI calls */
 } ops_kernel;
 
+
+
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
+
+
+//
+//Struct for holding the decomposition details of a block on an MPI process
+//
+typedef struct {
+  // the decomposition is for this block
+  ops_block block;
+  //number of dimensions;
+  int ndim;
+  // my MPI rank in each dimension (in cart cords)
+  int* coords;
+  // previous neighbor in each dimension (in cart cords)
+  int* id_m;
+  // next neighbor in each dimension (in cart cords)
+  int* id_p;
+  // the size of the local sub-block in each dimension
+  int* sizes;
+  // the displacement from the start of the block in each dimension
+  int* disps;
+  // the global index of the starting element of the local sub-block in each dimension
+  int* istart;
+  // the global index of the starting element of the local sub-block
+  int* iend;
+
+} sub_block;
+
+typedef sub_block * sub_block_list;
+
+
 
 /*
 * min / max definitions
@@ -229,8 +261,8 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 /* check if these should be placed here */
 void ops_set_dirtybit(ops_arg *args, int nargs);
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
-void ops_halo_exchanges(ops_arg *args, int nargs);
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs);
+void ops_H_D_exchanges(ops_arg *args, int nargs);
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);
 
 int ops_is_root();
 

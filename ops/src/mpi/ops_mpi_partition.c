@@ -47,11 +47,6 @@ MPI_Comm OPS_CART_COMM; // cartesian comm world
 // -- agian need to have and store
 // a comm world for each block in multi-block
 
-int ops_comm_size;
-int ops_my_rank;
-
-sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
-                                   // geometries
 
 sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
                                  // details

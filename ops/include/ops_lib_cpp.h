@@ -96,6 +96,8 @@ extern ops_block * OPS_block_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
 
+extern sub_block_list *OPS_sub_block_list;
+
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
 
@@ -138,7 +140,7 @@ void ops_decl_const ( char const * name, int dim, char const * type, T * data )
   }
 }
 
-template < class T >
+/*template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
                       int *block_size, int* offset, T *data,
                       char const * type,
@@ -152,11 +154,11 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
   return ops_decl_dat_char(block, data_size, block_size, offset, (char *)data, sizeof(T), type, name );
 
-}
+}*/
 
 
 template < class T >
-ops_dat ops_decl_dat_mpi ( ops_block block, int data_size,
+ops_dat ops_decl_dat ( ops_block block, int data_size,
                       int *block_size, int* offset, int* tail, T *data,
                       char const * type,
                       char const * name )
@@ -167,7 +169,7 @@ ops_dat ops_decl_dat_mpi ( ops_block block, int data_size,
     exit ( 1 );
   }
 
-  return ops_decl_dat_mpi_char(block, data_size, block_size, offset, tail, (char *)data, sizeof(T), type, name );
+  return ops_decl_dat_char(block, data_size, block_size, offset, tail, (char *)data, sizeof(T), type, name );
 
 }
 

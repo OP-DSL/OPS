@@ -29,7 +29,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_mpi_seq.h"
+#include "ops_seq.h"
 
 #include "data.h"
 #include "definitions.h"
@@ -62,7 +62,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   //printf("mom_sweep %d direction: %d sweep_number: %d\n",mom_sweep, dir, sweep_number);
 
   if(mom_sweep == 1) { // x 1
-      ops_par_loop_mpi(advec_mom_kernel_x1, "advec_mom_kernel_x1", clover_grid, 2, rangexy,
+      ops_par_loop(advec_mom_kernel_x1, "advec_mom_kernel_x1", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -70,7 +70,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
   }
   else if(mom_sweep == 2) { // y 1
-    ops_par_loop_mpi(advec_mom_kernel_y1, "advec_mom_kernel_y1", clover_grid, 2, rangexy,
+    ops_par_loop(advec_mom_kernel_y1, "advec_mom_kernel_y1", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -78,14 +78,14 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
   }
   else if (mom_sweep == 3) { // x 2
-    ops_par_loop_mpi(advec_mom_kernel_x2, "advec_mom_kernel_x2", clover_grid, 2, rangexy,
+    ops_par_loop(advec_mom_kernel_x2, "advec_mom_kernel_x2", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
   }
   else if (mom_sweep == 4) { // y 2
-    ops_par_loop_mpi(advec_mom_kernel_y2, "advec_mom_kernel_y2", clover_grid, 2, rangexy,
+    ops_par_loop(advec_mom_kernel_y2, "advec_mom_kernel_y2", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
@@ -101,24 +101,24 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   if (dir == 1) {
 
     //Find staggered mesh mass fluxes, nodal masses and volumes.
-    ops_par_loop_mpi(advec_mom_kernel_mass_flux_x, "advec_mom_kernel_mass_flux_x", clover_grid, 2, range_fullx_party_1,
+    ops_par_loop(advec_mom_kernel_mass_flux_x, "advec_mom_kernel_mass_flux_x", clover_grid, 2, range_fullx_party_1,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(mass_flux_x, S2D_00_P10_0M1_P1M1, "double", OPS_READ));
 
     //Staggered cell mass post advection
-    ops_par_loop_mpi(advec_mom_kernel_post_advec_x, "advec_mom_kernel_post_advec_x", clover_grid, 2, range_partx_party_1,
+    ops_par_loop(advec_mom_kernel_post_advec_x, "advec_mom_kernel_post_advec_x", clover_grid, 2, range_partx_party_1,
         ops_arg_dat(work_array2, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
         ops_arg_dat(density1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 
     //Stagered cell mass pre advection
-    ops_par_loop_mpi(advec_mom_kernel_pre_advec_x, "advec_mom_kernel_pre_advec_x", clover_grid, 2, range_partx_party_1,
+    ops_par_loop(advec_mom_kernel_pre_advec_x, "advec_mom_kernel_pre_advec_x", clover_grid, 2, range_partx_party_1,
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, S2D_00_M10, "double", OPS_READ));
 
     int range_plus1xy_minus1x[] = {x_min-1,x_max+1,y_min,y_max+1}; // partial x range partial y range
-    ops_par_loop_mpi(advec_mom_kernel1_x_nonvector, "advec_mom_kernel1_x", clover_grid, 2, range_plus1xy_minus1x,
+    ops_par_loop(advec_mom_kernel1_x_nonvector, "advec_mom_kernel1_x", clover_grid, 2, range_plus1xy_minus1x,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_P10, "double", OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
@@ -126,7 +126,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(vel1, S2D_00_P10_P20_M10, "double", OPS_READ));
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
-    ops_par_loop_mpi(advec_mom_kernel2_x, "advec_mom_kernel2_x", clover_grid, 2, range_partx_party_2,
+    ops_par_loop(advec_mom_kernel2_x, "advec_mom_kernel2_x", clover_grid, 2, range_partx_party_2,
         ops_arg_dat(vel1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, "double", OPS_READ),
@@ -136,24 +136,24 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   else if (dir == 2) {
 
     //Find staggered mesh mass fluxes, nodal masses and volumes.
-    ops_par_loop_mpi(advec_mom_kernel_mass_flux_y, "advec_mom_kernel_mass_flux_y", clover_grid, 2, range_fully_party_1,
+    ops_par_loop(advec_mom_kernel_mass_flux_y, "advec_mom_kernel_mass_flux_y", clover_grid, 2, range_fully_party_1,
         ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(mass_flux_y, S2D_00_0P1_M10_M1P1, "double", OPS_READ));
 
     //Staggered cell mass post advection
-    ops_par_loop_mpi(advec_mom_kernel_post_advec_y, "advec_mom_kernel_post_advec_y", clover_grid, 2, range_partx_party_2,
+    ops_par_loop(advec_mom_kernel_post_advec_y, "advec_mom_kernel_post_advec_y", clover_grid, 2, range_partx_party_2,
         ops_arg_dat(work_array2, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array7, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
         ops_arg_dat(density1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 
     //Stagered cell mass pre advection
-    ops_par_loop_mpi(advec_mom_kernel_pre_advec_y, "advec_mom_kernel_pre_advec_y", clover_grid, 2, range_partx_party_2,
+    ops_par_loop(advec_mom_kernel_pre_advec_y, "advec_mom_kernel_pre_advec_y", clover_grid, 2, range_partx_party_2,
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array1/*node_flux*/, S2D_00_0M1, "double", OPS_READ));
 
     int range_plus1xy_minus1y[] = {x_min,x_max+1,y_min-1,y_max+1}; // partial x range partial y range
-    ops_par_loop_mpi(advec_mom_kernel1_y_nonvector, "advec_mom_kernel1_y", clover_grid, 2, range_plus1xy_minus1y,
+    ops_par_loop(advec_mom_kernel1_y_nonvector, "advec_mom_kernel1_y", clover_grid, 2, range_plus1xy_minus1y,
         ops_arg_dat(work_array1/*node_flux*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00_0P1, "double", OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, S2D_00, "double", OPS_WRITE),
@@ -161,7 +161,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(vel1, S2D_00_0P1_0P2_0M1, "double", OPS_READ));
 
     int range_partx_party_2[] = {x_min,x_max+1,y_min,y_max+1}; // full x range partial y range
-    ops_par_loop_mpi(advec_mom_kernel2_y, "advec_mom_kernel2_y", clover_grid, 2, range_partx_party_2,
+    ops_par_loop(advec_mom_kernel2_y, "advec_mom_kernel2_y", clover_grid, 2, range_partx_party_2,
         ops_arg_dat(vel1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(work_array2/*node_mass_post*/, S2D_00, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, S2D_00, "double", OPS_READ),

@@ -27,7 +27,6 @@
 
 // OPS header file
 #include "ops_seq.h"
-#include "ops_mpi_seq.h"
 
 
 #include "data.h"
@@ -72,71 +71,71 @@ void build_field()
   int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
   double* temp = NULL;
 
-  density0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
-  density1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
-  energy0     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
-  energy1     = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
-  pressure    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "pressure");
-  viscosity   = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "viscosity");
-  soundspeed  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "soundspeed");
-  volume      = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "volume");
+  density0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
+  density1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
+  energy0     = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
+  energy1     = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
+  pressure    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "pressure");
+  viscosity   = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "viscosity");
+  soundspeed  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "soundspeed");
+  volume      = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "volume");
 
   d_p[0]=-3;d_p[1]=-3;
-  xvel0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel0");
-  xvel1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel1");
-  yvel0    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");
-  yvel1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel1");
+  xvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel0");
+  xvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel1");
+  yvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");
+  yvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel1");
 
   d_p[0]=-3;d_p[1]=-2;
-  vol_flux_x  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_x");
-  mass_flux_x = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_x");
-  xarea       = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "xarea");
+  vol_flux_x  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_x");
+  mass_flux_x = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_x");
+  xarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xarea");
 
   d_p[0]=-2;d_p[1]=-3;
-  vol_flux_y  = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_y");
-  mass_flux_y = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_y");
-  yarea       = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "yarea");
+  vol_flux_y  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_y");
+  mass_flux_y = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_y");
+  yarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yarea");
 
   d_p[0]=-3;d_p[1]=-3;
-  work_array1    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array1");
-  work_array2    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array2");
-  work_array3    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array3");
-  work_array4    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array4");
-  work_array5    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array5");
-  work_array6    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array6");
-  work_array7    = ops_decl_dat_mpi(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
+  work_array1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array1");
+  work_array2    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array2");
+  work_array3    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array3");
+  work_array4    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array4");
+  work_array5    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array5");
+  work_array6    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array6");
+  work_array7    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
 
   int size2[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
-  cellx    = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
-  celldx   = ops_decl_dat_mpi(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
+  cellx    = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
+  celldx   = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
 
   int size3[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
-  celly    = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
-  celldy   = ops_decl_dat_mpi(clover_grid, 1, size3, d_m, d_p, temp, "double", "celldy");
+  celly    = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
+  celldy   = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "celldy");
 
   int size4[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
-  vertexx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexx");
-  vertexdx = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexdx");
+  vertexx  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexx");
+  vertexdx = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexdx");
 
   int size5[2] = {1,y_cells+5};
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
-  vertexy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexy");
-  vertexdy = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
+  vertexy  = ops_decl_dat(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexy");
+  vertexdy = ops_decl_dat(clover_grid, 1, size5, d_m, d_p, temp, "double", "vertexdy");
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
   sub_block_list sb = OPS_sub_block_list[0];
 
   int* temp2 = NULL;
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
-  xx  = ops_decl_dat_mpi(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
+  xx  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
   for(int i=sb->istart[0]-2; i<sb->iend[0]+3+1; i++)
     ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min;
 
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
-  yy  = ops_decl_dat_mpi(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
+  yy  = ops_decl_dat(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
   for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)
     ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
 

@@ -50,33 +50,6 @@
 #endif
 #define MAX_DEPTH 5
 
-//
-//Struct for holding the decomposition details of a block on an MPI process
-//
-typedef struct {
-  // the decomposition is for this block
-  ops_block block;
-  //number of dimensions;
-  int ndim;
-  // my MPI rank in each dimension (in cart cords)
-  int* coords;
-  // previous neighbor in each dimension (in cart cords)
-  int* id_m;
-  // next neighbor in each dimension (in cart cords)
-  int* id_p;
-  // the size of the local sub-block in each dimension
-  int* sizes;
-  // the displacement from the start of the block in each dimension
-  int* disps;
-  // the global index of the starting element of the local sub-block in each dimension
-  int* istart;
-  // the global index of the starting element of the local sub-block
-  int* iend;
-
-} sub_block;
-
-typedef sub_block * sub_block_list;
-
 
 //
 //Struct for holding the decomposition details of a dat on an MPI process

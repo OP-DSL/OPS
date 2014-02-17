@@ -38,13 +38,13 @@
 
 #include "ops_lib_core.h"
 
-void ops_halo_exchanges(ops_arg *args, int nargs)
+void ops_H_D_exchanges(ops_arg *args, int nargs)
 {
   (void)nargs;
   (void)args;
 }
 
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs)
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
 {
   (void)nargs;
   (void)args;
@@ -62,9 +62,32 @@ void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
   (void)args;
 }
 
-/* uncomment after MPI backend is done
 int ops_is_root()
 {
   return 1;
 }
-*/
+
+
+
+void ops_exchange_halo(ops_arg* arg, int d)
+{
+  (void)arg;
+}
+
+void ops_mpi_reduce_float(ops_arg* args, float* data)
+{
+  (void)args;
+  (void)data;
+}
+
+void ops_mpi_reduce_double(ops_arg* args, double* data)
+{
+  (void)args;
+  (void)data;
+}
+
+void ops_mpi_reduce_int(ops_arg* args, int* data)
+{
+  (void)args;
+  (void)data;
+}
