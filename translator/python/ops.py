@@ -36,6 +36,7 @@ import datetime
 from ops_gen_seq_macro import ops_gen_seq_macro
 from ops_gen_openmp_macro import ops_gen_openmp_macro
 from ops_gen_cuda import ops_gen_cuda
+from ops_gen_mpi import ops_gen_mpi
 
 
 # from http://stackoverflow.com/a/241506/396967
@@ -219,8 +220,9 @@ def ops_par_loop_parse(text):
       temp = {'loc': i,
             'name1': arg_string.split(',')[0].strip(),
             'name2': arg_string.split(',')[1].strip(),
-            'dim': arg_string.split(',')[2].strip(),
-            'range': arg_string.split(',')[3].strip(),
+            'block': arg_string.split(',')[2].strip(),
+            'dim': arg_string.split(',')[3].strip(),
+            'range': arg_string.split(',')[4].strip(),
             'args': temp_args,
             'nargs': num_args}
       #print temp
@@ -338,6 +340,7 @@ def main():
         name = loop_args[i]['name1']
         nargs = loop_args[i]['nargs']
         dim   = loop_args[i]['dim']
+        block = loop_args[i]['block']
         _range   = loop_args[i]['range']
         print '\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'
         print 'dim: '+dim
@@ -526,7 +529,7 @@ def main():
             for k_iter in range(0, len(kernels_in_files[a - 1])):
                 k = kernels_in_files[a - 1][k_iter]
                 line = '\nvoid ops_par_loop_' + \
-                    kernels[k]['name'] + '(char const *, int , int*,\n'
+                    kernels[k]['name'] + '(char const *, ops_block, int , int*,\n'
                 for n in range(1, kernels[k]['nargs']):
                     line = line + '  ops_arg,\n'
                 line = line + '  ops_arg );\n'
@@ -550,6 +553,7 @@ def main():
           name = loop_args[curr_loop]['name1']
           line = str(' ops_par_loop_' + name + '(' +
                      loop_args[curr_loop]['name2'] + ', ' +
+                     loop_args[curr_loop]['block'] + ', ' +
                      loop_args[curr_loop]['dim'] + ', ' +
                      loop_args[curr_loop]['range'] + ',\n' + indent)
 
@@ -607,11 +611,11 @@ def main():
   # finally, generate target-specific kernel files
   #
 
-  #ops_gen_seq(str(sys.argv[1]), date, kernels)
-  #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-  ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
+
+  #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
 
 
 
