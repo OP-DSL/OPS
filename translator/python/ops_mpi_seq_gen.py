@@ -302,7 +302,6 @@ for nargs in range (1,maxargs+1):
     f.write('      count[m]--;                 // decrement counter\n')
     f.write('    }\n\n')
 
-    f.write('    int a = 0;\n')
     f.write('    // shift pointers to data\n')
     f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')

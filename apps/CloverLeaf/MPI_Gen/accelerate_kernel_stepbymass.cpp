@@ -1,4 +1,48 @@
 
+inline int mult2(int* s, int r)
+{
+  int result = 1;
+  if(r > 0) {
+    for(int i = 0; i<r;i++) result *= s[i];
+  }
+  return result;
+}
+
+inline int add2(int* co, int* s, int r)
+{
+  int result = co[0];
+  for(int i = 1; i<=r;i++) result += co[i]*mult2(s,i);
+  return result;
+}
+
+
+inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
+{
+
+  int i = 0;
+  int* c1 = (int*) xmalloc(sizeof(int)*ndim);
+  int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+
+  for(i=0; i<ndim; i++) c1[i] = ps[i];
+  c1[r] = ps[r] + 1*std[r];
+
+  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
+  for(i=r; i<ndim; i++) c2[i] = ps[i];
+
+  int off =  add2(c1, size, r) - add2(c2, size, r);// + 1; //plus 1 to get the next element
+
+  free(c1);free(c2);
+  return off;
+}
+
+inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+{
+  int base = 0;
+  for(int i=0; i<ndim; i++) {
+    base = base + dat_size * mult(size, i) * (ps[i] * std[i] - off[i]);
+  }
+  return base;
+}
 
 // host stub function
 void ops_par_loop_accelerate_kernel_stepbymass(char const *name, ops_block block, int dim, int* range,
@@ -43,7 +87,7 @@ void ops_par_loop_accelerate_kernel_stepbymass(char const *name, ops_block block
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+        offs[i][n] = off2(ndim, n, &start[i*ndim], &end[i*ndim],
                          args[i].dat->block_size, args[i].stencil->stride);
       }
     }
@@ -53,7 +97,7 @@ void ops_par_loop_accelerate_kernel_stepbymass(char const *name, ops_block block
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address2(ndim, args[i].dat->size, &start[i*ndim],
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -62,41 +106,54 @@ void ops_par_loop_accelerate_kernel_stepbymass(char const *name, ops_block block
 
   free(start);free(end);
 
-  int total_range = 1;
-  for (int n=0; n<ndim; n++) {
-    count[n] = e[n]-s[n];  // number in each dimension
-    total_range *= count[n];
-  }
-  count[dim-1]++;     // extra in last to ensure correct termination
-
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
+  xdim0 = args[0].dat->block_size[0];
+  xdim1 = args[1].dat->block_size[0];
+  xdim2 = args[2].dat->block_size[0];
 
   for (int i = 0; i < 3; i++) {
     if(args[i].argtype == OPS_ARG_DAT)
       ops_exchange_halo(&args[i],2);
   }
 
-  for (int nt=0; nt<total_range; nt++) {
-    // call kernel function, passing in pointers to data
+  int off0_1 = offs[0][0];
+  int off0_2 = offs[0][1];
+  int dat0 = args[0].dat->size;
+  int off1_1 = offs[1][0];
+  int off1_2 = offs[1][1];
+  int dat1 = args[1].dat->size;
+  int off2_1 = offs[2][0];
+  int off2_2 = offs[2][1];
+  int dat2 = args[2].dat->size;
 
-    accelerate_kernel_stepbymass(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2] );
+  for ( int n_y=s[1]; n_y<e[1]; n_y++ ){
+    for ( int n_x=s[0]; n_x<s[0]+(e[0]-s[0])/4; n_x++ ){
+      //call kernel function, passing in pointers to data -vectorised
+      #pragma simd
+      for ( int i=0; i<4; i++ ){
+        accelerate_kernel_stepbymass(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1 );
 
-    count[0]--;   // decrement counter
-    int m = 0;    // max dimension with changed index
-    while (count[m]==0) {
-      count[m] =  e[m]-s[m];// reset counter
-      m++;                        // next dimension
-      count[m]--;                 // decrement counter
+      }
+
+      //shift pointers to data x direction
+      p_a[0]= p_a[0] + (dat0 * off0_1)*4;
+      p_a[1]= p_a[1] + (dat1 * off1_1)*4;
+      p_a[2]= p_a[2] + (dat2 * off2_1)*4;
     }
 
-    int a = 0;
-    // shift pointers to data
-    for (int i=0; i<3; i++) {
-      if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+    for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
+      //call kernel function, passing in pointers to data - remainder
+      accelerate_kernel_stepbymass(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2] );
+
+      //shift pointers to data x direction
+      p_a[0]= p_a[0] + (dat0 * off0_1);
+      p_a[1]= p_a[1] + (dat1 * off1_1);
+      p_a[2]= p_a[2] + (dat2 * off2_1);
     }
+
+    //shift pointers to data y direction
+    p_a[0]= p_a[0] + (dat0 * off0_2);
+    p_a[1]= p_a[1] + (dat1 * off1_2);
+    p_a[2]= p_a[2] + (dat2 * off2_2);
   }
 
   ops_mpi_reduce(&arg0,(double *)p_a[0]);
