@@ -11,7 +11,7 @@
 
 
 #include  "ops_lib_cpp.h"
-
+#include "ops_seq.h"
 //
 // ops_par_loop declarations
 //

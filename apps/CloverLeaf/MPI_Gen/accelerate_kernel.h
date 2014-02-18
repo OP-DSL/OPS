@@ -4,6 +4,7 @@
 #include "data.h"
 #include "definitions.h"
 
+
 void accelerate_kernel_stepbymass( double *density0, double *volume,
                 double *stepbymass) {
 
@@ -29,6 +30,7 @@ void accelerate_kernelx1( double *xvel0, double *xvel1,
             ( xarea[OPS_ACC3(0,0)]  * ( pressure[OPS_ACC4(0,0)] - pressure[OPS_ACC4(-1,0)] ) +
               xarea[OPS_ACC3(0,-1)] * ( pressure[OPS_ACC4(0,-1)] - pressure[OPS_ACC4(-1,-1)] ) );
 }
+
 
 void accelerate_kernely1( double *yvel0, double *yvel1,
                         double *stepbymass,

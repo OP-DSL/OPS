@@ -6,7 +6,6 @@
 #include "ops_lib_cpp.h"
 
 
-
 //user kernel files
 #include "accelerate_kernel_stepbymass_seq_kernel.cpp"
 #include "accelerate_kernelx1_seq_kernel.cpp"
