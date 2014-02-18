@@ -52,7 +52,7 @@ SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 cloverleaf_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
 	        initialise.cpp generate.cpp ideal_gas.cpp \
                 update_halo.cpp field_summary.cpp time_step.cpp viscosity.cpp \
-                calc_dt.cpp PdV.cpp revert.cpp accelerate_ops.cpp flux_calc.cpp \
+                calc_dt.cpp PdV_ops.cpp revert.cpp accelerate_ops.cpp flux_calc.cpp \
                 advection.cpp advec_cell.cpp advec_mom.cpp reset_field.cpp \
                 initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
@@ -61,7 +61,7 @@ cloverleaf_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initial
 	        $(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk.cpp initialise.cpp generate.cpp \
                 ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
-                viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate_ops.cpp \
+                viscosity.cpp calc_dt.cpp PdV_ops.cpp revert.cpp accelerate_ops.cpp \
                 flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
 		advec_mom.cpp $(SEQ_KERNELS) -lops_mpi -o cloverleaf_mpi
 #
