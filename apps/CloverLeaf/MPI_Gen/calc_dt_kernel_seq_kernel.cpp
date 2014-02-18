@@ -5,10 +5,10 @@
 #include "ops_mpi_core.h"
 #include "lib.h"
 //user function
-#include "advec_cell_kernel.h"
+#include "calc_dt_kernel.h"
 
 // host stub function
-void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10) {
@@ -51,7 +51,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "advec_cell_kernel4_ydir");
+  ops_register_args(args, "calc_dt_kernel");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -228,7 +228,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<4; i++ ){
-        advec_cell_kernel4_ydir(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
+        calc_dt_kernel(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*0, (double *)p_a[2]+ i*1,
            (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1,
            (double *)p_a[7]+ i*1, (double *)p_a[8]+ i*1, (double *)p_a[9]+ i*1, (double *)p_a[10]+ i*1 );
 
@@ -250,7 +250,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
 
     for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      advec_cell_kernel4_ydir(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+      calc_dt_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
            (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
            (double *)p_a[7], (double *)p_a[8], (double *)p_a[9], (double *)p_a[10] );
 

@@ -232,7 +232,8 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
         code('')
 
-      code('ops_exchange_halo(&args['+str(n)+'],2);')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
 
     code('free(start);free(end);')

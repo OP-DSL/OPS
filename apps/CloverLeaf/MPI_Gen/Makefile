@@ -24,7 +24,7 @@ ifeq ($(OPS_COMPILER),intel)
   #CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
-  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
+  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt #-vec-report
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= mpiCC
@@ -51,17 +51,17 @@ SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 
 cloverleaf_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 	        initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
-                update_halo_ops.cpp field_summary.cpp time_step.cpp viscosity_ops.cpp \
-                calc_dt.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+                update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+                calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
                 advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
                 initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
 	        $(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
-                initialise_chunk.cpp initialise.cpp generate_ops.cpp \
-                ideal_gas_ops.cpp update_halo_ops.cpp field_summary.cpp time_step.cpp \
-                viscosity_ops.cpp calc_dt.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+                initialise_chunk.cpp initialise.cpp generate.cpp \
+                ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+                viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp $(SEQ_KERNELS) -lops_mpi -o cloverleaf_mpi
 #

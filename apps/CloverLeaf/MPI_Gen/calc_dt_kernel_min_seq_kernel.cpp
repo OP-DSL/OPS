@@ -5,10 +5,10 @@
 #include "ops_mpi_core.h"
 #include "lib.h"
 //user function
-#include "update_halo_kernel.h"
+#include "calc_dt_kernel.h"
 
 // host stub function
-void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
   char *p_a[2];
@@ -49,7 +49,7 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "update_halo_kernel4_plus_4_b");
+  ops_register_args(args, "calc_dt_kernel_min");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -63,56 +63,40 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
   args[0].dat->block_size, args[0].stencil->stride, args[0].dat->offset);
   ops_exchange_halo(&args[0],2);
 
-  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
-  for ( int n=1; n<ndim; n++ ){
-    offs[1][n] = off2(ndim, n, &start[1*ndim],
-    &end[1*ndim],args[1].dat->block_size, args[1].stencil->stride);
-  }
-  //set up initial pointers
-  p_a[1] = (char *)args[1].data
-  + address2(ndim, args[1].dat->size, &start[1*ndim],
-  args[1].dat->block_size, args[1].stencil->stride, args[1].dat->offset);
-  ops_exchange_halo(&args[1],2);
+  p_a[1] = (char *)args[1].data;
+
 
   free(start);free(end);
 
   int off0_1 = offs[0][0];
   int off0_2 = offs[0][1];
   int dat0 = args[0].dat->size;
-  int off1_1 = offs[1][0];
-  int off1_2 = offs[1][1];
-  int dat1 = args[1].dat->size;
 
   xdim0 = args[0].dat->block_size[0];
-  xdim1 = args[1].dat->block_size[0];
 
   for ( int n_y=s[1]; n_y<e[1]; n_y++ ){
     for ( int n_x=s[0]; n_x<s[0]+(e[0]-s[0])/4; n_x++ ){
       //call kernel function, passing in pointers to data -vectorised
-      #pragma simd
       for ( int i=0; i<4; i++ ){
-        update_halo_kernel4_plus_4_b(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1 );
+        calc_dt_kernel_min(  (double *)p_a[0]+ i*1, (double *)p_a[1] );
 
       }
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_1)*4;
-      p_a[1]= p_a[1] + (dat1 * off1_1)*4;
     }
 
     for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      update_halo_kernel4_plus_4_b(  (double *)p_a[0], (double *)p_a[1] );
+      calc_dt_kernel_min(  (double *)p_a[0], (double *)p_a[1] );
 
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_1);
-      p_a[1]= p_a[1] + (dat1 * off1_1);
     }
 
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_2);
-    p_a[1]= p_a[1] + (dat1 * off1_2);
   }
   ops_mpi_reduce(&arg0,(double *)p_a[0]);
   ops_mpi_reduce(&arg1,(double *)p_a[1]);
