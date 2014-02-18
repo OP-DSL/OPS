@@ -5,10 +5,10 @@
 #include "ops_mpi_core.h"
 #include "lib.h"
 //user function
-#include "accelerate_kernel.h"
+#include "reset_field_kernel.h"
 
 // host stub function
-void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
   char *p_a[4];
@@ -49,7 +49,7 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "accelerate_kernelx2");
+  ops_register_args(args, "reset_field_kernel2");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -121,7 +121,7 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<4; i++ ){
-        accelerate_kernelx2(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
+        reset_field_kernel2(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
            (double *)p_a[3]+ i*1 );
 
       }
@@ -135,7 +135,7 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
 
     for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      accelerate_kernelx2(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+      reset_field_kernel2(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
            (double *)p_a[3] );
 
 

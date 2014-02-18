@@ -5,24 +5,24 @@
 #include "ops_mpi_core.h"
 #include "lib.h"
 //user function
-#include "PdV_kernel.h"
+#include "advec_cell_kernel.h"
 
 // host stub function
-void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
- ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11) {
+ ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
-  char *p_a[12];
-  int  offs[12][2];
-  ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
+  char *p_a[11];
+  int  offs[11][2];
+  ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
-  int* start = (int*) xmalloc(sizeof(int)*ndim*12);
-  int* end = (int*) xmalloc(sizeof(int)*ndim*12);
+  int* start = (int*) xmalloc(sizeof(int)*ndim*11);
+  int* end = (int*) xmalloc(sizeof(int)*ndim*11);
 
   int s[ndim];
   int e[ndim];
@@ -43,7 +43,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
     }
   }
 
-  for ( int i=0; i<12; i++ ){
+  for ( int i=0; i<11; i++ ){
     for ( int n=0; n<ndim; n++ ){
       start[i*ndim+n] = s[n];
       end[i*ndim+n]   = e[n];
@@ -51,7 +51,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "PdV_kernel_predict");
+  ops_register_args(args, "advec_cell_kernel4_ydir");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -175,17 +175,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   args[10].dat->block_size, args[10].stencil->stride, args[10].dat->offset);
   ops_exchange_halo(&args[10],2);
 
-  offs[11][0] = args[11].stencil->stride[0]*1;  //unit step in x dimension
-  for ( int n=1; n<ndim; n++ ){
-    offs[11][n] = off2(ndim, n, &start[11*ndim],
-    &end[11*ndim],args[11].dat->block_size, args[11].stencil->stride);
-  }
-  //set up initial pointers
-  p_a[11] = (char *)args[11].data
-  + address2(ndim, args[11].dat->size, &start[11*ndim],
-  args[11].dat->block_size, args[11].stencil->stride, args[11].dat->offset);
-  ops_exchange_halo(&args[11],2);
-
   free(start);free(end);
 
   int off0_1 = offs[0][0];
@@ -221,9 +210,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   int off10_1 = offs[10][0];
   int off10_2 = offs[10][1];
   int dat10 = args[10].dat->size;
-  int off11_1 = offs[11][0];
-  int off11_2 = offs[11][1];
-  int dat11 = args[11].dat->size;
 
   xdim0 = args[0].dat->block_size[0];
   xdim1 = args[1].dat->block_size[0];
@@ -236,17 +222,15 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   xdim8 = args[8].dat->block_size[0];
   xdim9 = args[9].dat->block_size[0];
   xdim10 = args[10].dat->block_size[0];
-  xdim11 = args[11].dat->block_size[0];
 
   for ( int n_y=s[1]; n_y<e[1]; n_y++ ){
     for ( int n_x=s[0]; n_x<s[0]+(e[0]-s[0])/4; n_x++ ){
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<4; i++ ){
-        PdV_kernel_predict(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
+        advec_cell_kernel4_ydir(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
            (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1,
-           (double *)p_a[7]+ i*1, (double *)p_a[8]+ i*1, (double *)p_a[9]+ i*1, (double *)p_a[10]+ i*1,
-           (double *)p_a[11]+ i*1 );
+           (double *)p_a[7]+ i*1, (double *)p_a[8]+ i*1, (double *)p_a[9]+ i*1, (double *)p_a[10]+ i*1 );
 
       }
 
@@ -262,15 +246,13 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
       p_a[8]= p_a[8] + (dat8 * off8_1)*4;
       p_a[9]= p_a[9] + (dat9 * off9_1)*4;
       p_a[10]= p_a[10] + (dat10 * off10_1)*4;
-      p_a[11]= p_a[11] + (dat11 * off11_1)*4;
     }
 
     for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      PdV_kernel_predict(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+      advec_cell_kernel4_ydir(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
            (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
-           (double *)p_a[7], (double *)p_a[8], (double *)p_a[9], (double *)p_a[10],
-           (double *)p_a[11] );
+           (double *)p_a[7], (double *)p_a[8], (double *)p_a[9], (double *)p_a[10] );
 
 
       //shift pointers to data x direction
@@ -285,7 +267,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
       p_a[8]= p_a[8] + (dat8 * off8_1);
       p_a[9]= p_a[9] + (dat9 * off9_1);
       p_a[10]= p_a[10] + (dat10 * off10_1);
-      p_a[11]= p_a[11] + (dat11 * off11_1);
     }
 
     //shift pointers to data y direction
@@ -300,7 +281,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
     p_a[8]= p_a[8] + (dat8 * off8_2);
     p_a[9]= p_a[9] + (dat9 * off9_2);
     p_a[10]= p_a[10] + (dat10 * off10_2);
-    p_a[11]= p_a[11] + (dat11 * off11_2);
   }
   ops_mpi_reduce(&arg0,(double *)p_a[0]);
   ops_mpi_reduce(&arg1,(double *)p_a[1]);
@@ -313,6 +293,5 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   ops_mpi_reduce(&arg8,(double *)p_a[8]);
   ops_mpi_reduce(&arg9,(double *)p_a[9]);
   ops_mpi_reduce(&arg10,(double *)p_a[10]);
-  ops_mpi_reduce(&arg11,(double *)p_a[11]);
 
 }

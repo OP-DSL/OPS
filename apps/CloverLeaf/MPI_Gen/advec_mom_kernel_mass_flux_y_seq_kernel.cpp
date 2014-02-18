@@ -5,22 +5,22 @@
 #include "ops_mpi_core.h"
 #include "lib.h"
 //user function
-#include "accelerate_kernel.h"
+#include "advec_mom_kernel.h"
 
 // host stub function
-void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
+void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1) {
 
-  char *p_a[4];
-  int  offs[4][2];
-  ops_arg args[4] = { arg0, arg1, arg2, arg3};
+  char *p_a[2];
+  int  offs[2][2];
+  ops_arg args[2] = { arg0, arg1};
 
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
-  int* start = (int*) xmalloc(sizeof(int)*ndim*4);
-  int* end = (int*) xmalloc(sizeof(int)*ndim*4);
+  int* start = (int*) xmalloc(sizeof(int)*ndim*2);
+  int* end = (int*) xmalloc(sizeof(int)*ndim*2);
 
   int s[ndim];
   int e[ndim];
@@ -41,7 +41,7 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
     }
   }
 
-  for ( int i=0; i<4; i++ ){
+  for ( int i=0; i<2; i++ ){
     for ( int n=0; n<ndim; n++ ){
       start[i*ndim+n] = s[n];
       end[i*ndim+n]   = e[n];
@@ -49,7 +49,7 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "accelerate_kernelx2");
+  ops_register_args(args, "advec_mom_kernel_mass_flux_y");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -74,28 +74,6 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
   args[1].dat->block_size, args[1].stencil->stride, args[1].dat->offset);
   ops_exchange_halo(&args[1],2);
 
-  offs[2][0] = args[2].stencil->stride[0]*1;  //unit step in x dimension
-  for ( int n=1; n<ndim; n++ ){
-    offs[2][n] = off2(ndim, n, &start[2*ndim],
-    &end[2*ndim],args[2].dat->block_size, args[2].stencil->stride);
-  }
-  //set up initial pointers
-  p_a[2] = (char *)args[2].data
-  + address2(ndim, args[2].dat->size, &start[2*ndim],
-  args[2].dat->block_size, args[2].stencil->stride, args[2].dat->offset);
-  ops_exchange_halo(&args[2],2);
-
-  offs[3][0] = args[3].stencil->stride[0]*1;  //unit step in x dimension
-  for ( int n=1; n<ndim; n++ ){
-    offs[3][n] = off2(ndim, n, &start[3*ndim],
-    &end[3*ndim],args[3].dat->block_size, args[3].stencil->stride);
-  }
-  //set up initial pointers
-  p_a[3] = (char *)args[3].data
-  + address2(ndim, args[3].dat->size, &start[3*ndim],
-  args[3].dat->block_size, args[3].stencil->stride, args[3].dat->offset);
-  ops_exchange_halo(&args[3],2);
-
   free(start);free(end);
 
   int off0_1 = offs[0][0];
@@ -104,57 +82,39 @@ void ops_par_loop_accelerate_kernelx2(char const *name, ops_block block, int dim
   int off1_1 = offs[1][0];
   int off1_2 = offs[1][1];
   int dat1 = args[1].dat->size;
-  int off2_1 = offs[2][0];
-  int off2_2 = offs[2][1];
-  int dat2 = args[2].dat->size;
-  int off3_1 = offs[3][0];
-  int off3_2 = offs[3][1];
-  int dat3 = args[3].dat->size;
 
   xdim0 = args[0].dat->block_size[0];
   xdim1 = args[1].dat->block_size[0];
-  xdim2 = args[2].dat->block_size[0];
-  xdim3 = args[3].dat->block_size[0];
 
   for ( int n_y=s[1]; n_y<e[1]; n_y++ ){
     for ( int n_x=s[0]; n_x<s[0]+(e[0]-s[0])/4; n_x++ ){
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<4; i++ ){
-        accelerate_kernelx2(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
-           (double *)p_a[3]+ i*1 );
+        advec_mom_kernel_mass_flux_y(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1 );
 
       }
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_1)*4;
       p_a[1]= p_a[1] + (dat1 * off1_1)*4;
-      p_a[2]= p_a[2] + (dat2 * off2_1)*4;
-      p_a[3]= p_a[3] + (dat3 * off3_1)*4;
     }
 
     for ( int n_x=s[0]+((e[0]-s[0])/4)*4; n_x<e[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      accelerate_kernelx2(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3] );
+      advec_mom_kernel_mass_flux_y(  (double *)p_a[0], (double *)p_a[1] );
 
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_1);
       p_a[1]= p_a[1] + (dat1 * off1_1);
-      p_a[2]= p_a[2] + (dat2 * off2_1);
-      p_a[3]= p_a[3] + (dat3 * off3_1);
     }
 
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_2);
     p_a[1]= p_a[1] + (dat1 * off1_2);
-    p_a[2]= p_a[2] + (dat2 * off2_2);
-    p_a[3]= p_a[3] + (dat3 * off3_2);
   }
   ops_mpi_reduce(&arg0,(double *)p_a[0]);
   ops_mpi_reduce(&arg1,(double *)p_a[1]);
-  ops_mpi_reduce(&arg2,(double *)p_a[2]);
-  ops_mpi_reduce(&arg3,(double *)p_a[3]);
 
 }

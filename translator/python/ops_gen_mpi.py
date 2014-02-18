@@ -218,7 +218,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('offs['+str(n)+'][0] = 1;  //unit step in x dimension')
+        code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
         FOR('n','1','ndim')
         code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
         code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
