@@ -177,8 +177,8 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
-    code('int* start = (int*) xmalloc(sizeof(int)*ndim*3);')
-    code('int* end = (int*) xmalloc(sizeof(int)*ndim*3);')
+    code('int* start = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');')
+    code('int* end = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');')
 
     code('')
     code('int s[ndim];')
@@ -203,7 +203,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     ENDFOR()
     code('')
 
-    FOR('i','0','3')
+    FOR('i','0',str(nargs))
     FOR('n','0','ndim')
     code('start[i*ndim+n] = s[n];')
     code('end[i*ndim+n]   = e[n];')
