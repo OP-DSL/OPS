@@ -53,41 +53,45 @@ int ops_is_root()
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
-  //printf("Exchanging halos for %s\n",dat->name);
 
-  sub_block_list sb = OPS_sub_block_list[dat->block->index];
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  //if(dat->dirtybit == 1) { //need to check OPS accs
 
-  int i1,i2,i3,i4; //indicies for halo and boundary of the dat
-  int* d_m = sd->d_m;
-  int* d_p = sd->d_p;
-  int* prod = sd->prod;
-  int size = dat->size;
-  MPI_Status status;
+    sub_block_list sb = OPS_sub_block_list[dat->block->index];
+    sub_dat_list sd = OPS_sub_dat_list[dat->index];
 
-  for(int n=0;n<sb->ndim;n++){
-    if(dat->block_size[n] > 1 && d > 0) {
+    int i1,i2,i3,i4; //indicies for halo and boundary of the dat
+    int* d_m = sd->d_m;
+    int* d_p = sd->d_p;
+    int* prod = sd->prod;
+    int size = dat->size;
+    MPI_Status status;
 
-      i1 = (-d_m[n] - d) * prod[n-1];
-      i2 = (-d_m[n]    ) * prod[n-1];
-      i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d) * prod[n-1];
-      i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
+    for(int n=0;n<sb->ndim;n++){
+      if(dat->block_size[n] > 1 && d > 0) {
 
-      //send in positive direction, receive from negative direction
-      //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-      MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],0,
-                   &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],0,
-                   OPS_CART_COMM, &status);
+        i1 = (-d_m[n] - d) * prod[n-1];
+        i2 = (-d_m[n]    ) * prod[n-1];
+        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d) * prod[n-1];
+        i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
 
-      //send in negative direction, receive from positive direction
-      //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-      MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],1,
-                   &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],1,
-                   OPS_CART_COMM, &status);
+        //send in positive direction, receive from negative direction
+        //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
+        MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],0,
+                     &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],0,
+                     OPS_CART_COMM, &status);
+
+        //send in negative direction, receive from positive direction
+        //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
+        MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],1,
+                     &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],1,
+                     OPS_CART_COMM, &status);
+      }
     }
-  }
-}
 
+    //dat->dirtybit = 0;
+  //}
+
+}
 
 void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {
@@ -172,5 +176,17 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
     }
     memcpy(arg->data, result, sizeof(int)*arg->dim);
     free(result);
+  }
+}
+
+
+void ops_set_halo_dirtybit(ops_arg *args, int nargs)
+{
+  //printf("in ops_set_dirtybit\n");
+  for (int n=0; n<nargs; n++) {
+    if((args[n].argtype == OPS_ARG_DAT) &&
+       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
+       args[n].dat->dirtybit = 1;
+    }
   }
 }

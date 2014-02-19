@@ -106,6 +106,7 @@ typedef struct
   char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
   char const  *type;       /* datatype */
+  int         dirtybit; /* flag to indicate MPI halo exchange is needed*/
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;    /* is this an edge dat?*/
@@ -259,6 +260,7 @@ void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 
 /* check if these should be placed here */
+void ops_set_halo_dirtybit(ops_arg *args, int nargs);
 void ops_set_dirtybit(ops_arg *args, int nargs);
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);

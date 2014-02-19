@@ -70,13 +70,13 @@ void accelerate()
     ops_arg_dat(pressure, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 
   ops_par_loop(accelerate_kernelx2, "accelerate_kernelx2", clover_grid, 2, rangexy_inner_plus1,
-    ops_arg_dat(xvel1, S2D_00, "double", OPS_INC),
+    ops_arg_dat(xvel1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_dat(xarea, S2D_00_0M1, "double", OPS_READ),
     ops_arg_dat(viscosity, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 
   ops_par_loop(accelerate_kernely2, "accelerate_kernely2", clover_grid, 2, rangexy_inner_plus1,
-    ops_arg_dat(yvel1, S2D_00, "double", OPS_INC),
+    ops_arg_dat(yvel1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_dat(yarea, S2D_00_M10, "double", OPS_READ),
     ops_arg_dat(viscosity, S2D_00_M10_0M1_M1M1, "double", OPS_READ));

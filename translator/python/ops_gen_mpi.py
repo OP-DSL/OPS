@@ -331,7 +331,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
 
-    #code('ops_set_dirtybit(args, '+str(nargs)+');\n')
+    code('ops_set_halo_dirtybit(args, '+str(nargs)+');\n')
+
     code('')
     #comm('Update kernel record')
     #code('ops_timers_core(&c2,&t2);')
