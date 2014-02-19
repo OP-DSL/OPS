@@ -136,8 +136,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     #print name2
 
     #backend functions that should go to the sequential backend lib
-    code('#include "ops_mpi_core.h"')
-    code('#include "lib.h"')
+    #code('#include "ops_mpi_core.h"')
+    code('#include "ops_lib_mpi.h"')
 
     comm('user function')
     code('#include "'+name2+'_kernel.h"')
