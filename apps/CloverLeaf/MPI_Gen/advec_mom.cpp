@@ -64,7 +64,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   if(mom_sweep == 1) { // x 1
       ops_par_loop(advec_mom_kernel_x1, "advec_mom_kernel_x1", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-        ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
         ops_arg_dat(vol_flux_x, S2D_00_P10, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
@@ -72,7 +72,7 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   else if(mom_sweep == 2) { // y 1
     ops_par_loop(advec_mom_kernel_y1, "advec_mom_kernel_y1", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-        ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
         ops_arg_dat(vol_flux_x, S2D_00_P10, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
@@ -80,14 +80,14 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   else if (mom_sweep == 3) { // x 2
     ops_par_loop(advec_mom_kernel_x2, "advec_mom_kernel_x2", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-        ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S2D_00_0P1, "double", OPS_READ));
   }
   else if (mom_sweep == 4) { // y 2
     ops_par_loop(advec_mom_kernel_y2, "advec_mom_kernel_y2", clover_grid, 2, rangexy,
         ops_arg_dat(work_array6, S2D_00, "double", OPS_WRITE),
-        ops_arg_dat(work_array7, S2D_00, "double", OPS_WRITE),
+        ops_arg_dat(work_array7, S2D_00, "double", OPS_RW),
         ops_arg_dat(volume, S2D_00, "double", OPS_READ),
         ops_arg_dat(vol_flux_x, S2D_00_P10, "double", OPS_READ));
   }
