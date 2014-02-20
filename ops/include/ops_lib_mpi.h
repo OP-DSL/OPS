@@ -125,8 +125,8 @@ inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
-  int* c1 = (int*) xmalloc(sizeof(int)*ndim);
-  int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+  int c1[ndim];
+  int c2[ndim];
 
   for(i=0; i<ndim; i++) c1[i] = ps[i];
   c1[r] = ps[r] + 1*std[r];
@@ -136,7 +136,6 @@ inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
 
   int off =  add2(c1, size, r) - add2(c2, size, r);
 
-  free(c1);free(c2);
   return off;
 }
 
