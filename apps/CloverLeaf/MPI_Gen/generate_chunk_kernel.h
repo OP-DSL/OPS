@@ -13,8 +13,6 @@ void generate_chunk_kernel( double *vertexx, double *vertexy,
 
   double radius, x_cent, y_cent;
 
-
-
   //State 1 is always the background state
 
   energy0[OPS_ACC2(0,0)]= states[0]->energy;
