@@ -97,7 +97,7 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {
   (void)data;
   if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    double *result = (double *) calloc (arg->dim, sizeof (double));
+    double result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
       MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_MPI_WORLD);
@@ -106,7 +106,6 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
     else if(arg->acc == OPS_MIN)//global minimum
       MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_MPI_WORLD);
     else if(arg->acc == OPS_WRITE) {//any
-      result = (double *) xrealloc (result,arg->dim*ops_comm_size*sizeof(double));
       MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_MPI_WORLD);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
@@ -116,7 +115,6 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       }
     }
     memcpy(arg->data, result, sizeof(double)*arg->dim);
-    free(result);
   }
 }
 
@@ -127,7 +125,7 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
   (void)data;
 
   if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    float *result = (float *) calloc (arg->dim, sizeof (float));
+    float result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
       MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM, OPS_MPI_WORLD);
@@ -136,7 +134,6 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
     else if(arg->acc == OPS_MIN)//global minimum
       MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MIN, OPS_MPI_WORLD);
     else if(arg->acc == OPS_WRITE) {//any
-      result = (float *) xrealloc (result,arg->dim*ops_comm_size*sizeof(float));
       MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result, arg->dim, MPI_FLOAT, OPS_MPI_WORLD);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
@@ -146,7 +143,6 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
       }
     }
     memcpy(arg->data, result, sizeof(float)*arg->dim);
-    free(result);
   }
 }
 
@@ -156,7 +152,7 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
   (void)data;
 
   if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    int *result = (int *) calloc (arg->dim, sizeof (int));
+    int result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
       MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM, OPS_MPI_WORLD);
@@ -165,7 +161,6 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
     else if(arg->acc == OPS_MIN)//global minimum
       MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MIN, OPS_MPI_WORLD);
     else if(arg->acc == OPS_WRITE) {//any
-      result = (int *) xrealloc (result,arg->dim*ops_comm_size*sizeof(int));
       MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result, arg->dim, MPI_INT, OPS_MPI_WORLD);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
@@ -175,7 +170,6 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
       }
     }
     memcpy(arg->data, result, sizeof(int)*arg->dim);
-    free(result);
   }
 }
 
