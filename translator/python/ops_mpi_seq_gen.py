@@ -313,5 +313,7 @@ for nargs in range (1,maxargs+1):
       f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
 
+    f.write('  ops_set_halo_dirtybit(args, '+str(nargs)+');\n')
+
 
     f.write('}')

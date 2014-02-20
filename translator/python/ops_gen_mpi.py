@@ -235,7 +235,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
         code('')
 
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW or accs[n] == OPS_INC):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
         code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
 
