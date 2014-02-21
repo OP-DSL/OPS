@@ -77,6 +77,13 @@ def ENDIF():
   depth -= 2
   code('}')
 
+def mult(text, i, n):
+  text = text + '1'
+  for nn in range (0, i):
+    text = text + '* args['+str(n)+'].dat->block_size['+str(nn)+']'
+  #print text
+  return text
+
 def ops_gen_mpi(master, date, consts, kernels):
 
   global dims, stens
@@ -177,9 +184,6 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
-    #code('int* start = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');')
-    #code('int* end = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');')
-
     code('int start[ndim*'+str(nargs)+'];')
     code('int end[ndim*'+str(nargs)+'];')
 
@@ -219,6 +223,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#endif')
     code('')
 
+    NDIM = 2
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
@@ -226,8 +232,24 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
         code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
         ENDFOR()
+
+    code('')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
+
+        #for dim in range (0, NDIM):
+        #  code('+ args['+str(n)+'].dat->size * mult2(args['+str(n)+'].dat->block_size, '+str(dim)+') * (start['+str(n)+'*'+str(NDIM)+'+'+str(dim)+'] * args['+str(n)+\
+        #    '].stencil->stride['+str(dim)+'] - offs['+str(n)+']['+str(dim)+'])')
+        #code(';\n')
+
+        #for dim in range (0, NDIM):
+        #  code('+ args['+str(n)+'].dat->size * '+mult('',dim,n)+' * (start['+str(n)+'*'+str(NDIM)+'+'+str(dim)+'] * args['+str(n)+\
+        #    '].stencil->stride['+str(dim)+'] - offs['+str(n)+']['+str(dim)+'])')
+        #code(';\n')
+
         code('+ address2(ndim, args['+str(n)+'].dat->size, &start['+str(n)+'*ndim],')
         code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
@@ -238,8 +260,6 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
         code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
-
-    #code('free(start);free(end);')
     code('')
 
     for n in range (0, nargs):
@@ -265,12 +285,12 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
 
     FOR('n_y','s[1]','e[1]')
-    FOR('n_x','s[0]','s[0]+(e[0]-s[0])/4')
+    FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
 
     comm('call kernel function, passing in pointers to data -vectorised')
     if reduction == 0:
       code('#pragma simd')
-    FOR('i','0','4')
+    FOR('i','0','SIMD_VEC')
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -297,7 +317,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
 
 
-    FOR('n_x','s[0]+((e[0]-s[0])/4)*4','e[0]')
+    FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):

@@ -83,6 +83,12 @@
 #endif
 #endif
 
+#ifndef SIMD_VEC
+#ifndef SIMD_VEC
+#define SIMD_VEC 4
+#endif
+#endif
+
 extern int xdim0;
 extern int xdim1;
 extern int xdim2;
@@ -103,8 +109,7 @@ extern int xdim16;
 extern int xdim17;
 
 
-
-inline int mult2(int* s, int r)
+int mult2(int* s, int r)
 {
   int result = 1;
   if(r > 0) {
@@ -113,7 +118,7 @@ inline int mult2(int* s, int r)
   return result;
 }
 
-inline int add2(int* co, int* s, int r)
+int add2(int* co, int* s, int r)
 {
   int result = co[0];
   for(int i = 1; i<=r;i++) result += co[i]*mult2(s,i);
@@ -121,7 +126,7 @@ inline int add2(int* co, int* s, int r)
 }
 
 
-inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
+int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
@@ -139,13 +144,17 @@ inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
   return off;
 }
 
-inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
     base = base + dat_size * mult2(size, i) * (ps[i] * std[i] - off[i]);
   }
+  //base = base + dat_size * 1 * (ps[0] * std[0] - off[0]) +
+  //              dat_size * 1 * size[0] * (ps[1] * std[1] - off[1]);
+
   return base;
 }
+
 
 #endif

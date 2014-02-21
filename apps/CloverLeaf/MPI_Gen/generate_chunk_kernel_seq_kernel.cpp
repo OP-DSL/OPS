@@ -5,24 +5,7 @@
 //user function
 #include "generate_chunk_kernel.h"
 
-inline int mult(int* s, int r)
-{
-  int result = 1;
-  if(r > 0) {
-    for(int i = 0; i<r;i++) result *= s[i];
-  }
-  return result;
-}
-
-inline int add(int* co, int* s, int r)
-{
-  int result = co[0];
-  for(int i = 1; i<=r;i++) result += co[i]*mult(s,i);
-  return result;
-}
-
-
-inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
+/*inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
@@ -36,19 +19,29 @@ inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
   for(i=r; i<ndim; i++) c2[i] = ps[i];
 
   //int off =  add(c1, size, r) - add(c2, size, r) + 1; //plus 1 to get the next element .. from ops_seq.h
-  int off =  add(c1, size, r) - add(c2, size, r);
+  int off =  add2(c1, size, r) - add2(c2, size, r);
 
   return off;
 }
 
-inline int address(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+inline int off3(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
-  int base = 0;
-  for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult(size, i) * (ps[i] * std[i] - off[i]);
-  }
-  return base;
-}
+
+  int i = 0;
+  int c1[ndim];
+  int c2[ndim];
+
+  for(i=0; i<ndim; i++) c1[i] = ps[i];
+  c1[r] = ps[r] + 1*std[r];
+
+  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
+  for(i=r; i<ndim; i++) c2[i] = ps[i];
+
+  //int off =  add2(c1, size, r) - add2(c2, size, r) + 1; //plus 1 to get the next element .. from ops_seq.h
+  int off =  add2(c1, size, r) - add2(c2, size, r);
+
+  return off;
+}*/
 
 // host stub function
 void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int dim, int* range,
@@ -100,7 +93,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
+        offs[i][n] = off2(ndim, n, &start[i*ndim], &end[i*ndim],
         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
@@ -110,7 +103,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address2(ndim, args[i].dat->size, &start[i*ndim],
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)

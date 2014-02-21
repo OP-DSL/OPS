@@ -84,7 +84,7 @@
 #include "update_halo_kernel4_plus_2_a_seq_kernel.cpp"
 #include "update_halo_kernel4_plus_4_b_seq_kernel.cpp"
 #include "update_halo_kernel4_plus_2_b_seq_kernel.cpp"
-#include "generate_chunk_kernel_seq_kernel.cpp"
+//#include "generate_chunk_kernel_seq_kernel.cpp"
 #include "calc_dt_kernel_seq_kernel.cpp"
 #include "calc_dt_kernel_min_seq_kernel.cpp"
 #include "calc_dt_kernel_getx_seq_kernel.cpp"
