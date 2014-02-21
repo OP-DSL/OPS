@@ -4,6 +4,7 @@
 
 //header
 #include "ops_lib_cpp.h"
+#include "ops_lib_mpi.h"
 
 
 //user kernel files
@@ -94,5 +95,4 @@
 #include "initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "initialise_chunk_kernel_cellx_seq_kernel.cpp"
 #include "initialise_chunk_kernel_celly_seq_kernel.cpp"
-#include "initialise_chunk_kernel_volume_seq_kernel.cpp"
-*/
+#include "initialise_chunk_kernel_volume_seq_kernel.cpp"*/

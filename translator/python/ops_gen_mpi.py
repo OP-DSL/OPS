@@ -137,7 +137,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     #backend functions that should go to the sequential backend lib
     #code('#include "ops_mpi_core.h"')
-    code('#include "ops_lib_mpi.h"')
+    #code('#include "ops_lib_mpi.h"')
 
     comm('user function')
     code('#include "'+name2+'_kernel.h"')
@@ -328,6 +328,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm('shift pointers to data y direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[2*n])+');')
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
