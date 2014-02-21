@@ -83,11 +83,17 @@
 #endif
 #endif
 
-#ifndef SIMD_VEC
+
 #ifndef SIMD_VEC
 #define SIMD_VEC 4
 #endif
+
+
+
+#ifndef ROUND_DOWN
+#define ROUND_DOWN(N,step) (((N)/(step))*(step))
 #endif
+
 
 extern int xdim0;
 extern int xdim1;
