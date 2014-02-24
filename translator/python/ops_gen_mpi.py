@@ -26,13 +26,19 @@ def code(text):
   prefix = ''
   if len(text) != 0:
     prefix = ' '*depth
-  #file_text += prefix+rep(text,g_m)+'\n'
+
   file_text += prefix+text+'\n'
 
 def FOR(i,start,finish):
   global file_text
   global depth
   code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
+  depth += 2
+
+def FOR2(i,start,finish,increment):
+  global file_text
+  global depth
+  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
   depth += 2
 
 def WHILE(line):
@@ -81,7 +87,7 @@ def mult(text, i, n):
   text = text + '1'
   for nn in range (0, i):
     text = text + '* args['+str(n)+'].dat->block_size['+str(nn)+']'
-  #print text
+
   return text
 
 def ops_gen_mpi(master, date, consts, kernels):
@@ -114,7 +120,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     #parse stencil to locate strided access
     stride = [1] * nargs * 2
-    #print stride
+
     for n in range (0, nargs):
       if str(stens[n]).find('STRID2D_X') > 0:
         stride[2*n+1] = 0
@@ -284,8 +290,12 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
+    code('int n_x;')
+
     FOR('n_y','s[1]','e[1]')
     FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
+    #code('for( n_x=0; n_x<ROUND_DOWN((e[0]-s[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
+    depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
     if reduction == 0:
@@ -318,6 +328,8 @@ def ops_gen_mpi(master, date, consts, kernels):
 
 
     FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
+    #code('for(;n_x<(e[0]-s[0]);n_x++) {')
+    depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
