@@ -212,17 +212,6 @@ int main(int argc, char **argv)
 
     advection(step);
 
-    if(step == 20) {
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-      //exit(0);
-
-    }
-
-
-
     reset_field();
 
     if (advect_x == TRUE) advect_x = FALSE;
@@ -250,6 +239,8 @@ int main(int argc, char **argv)
   }
 
   ops_timers_core(&ct1, &et1);
+  //ops_timing_output();
+
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   fclose(g_out);
