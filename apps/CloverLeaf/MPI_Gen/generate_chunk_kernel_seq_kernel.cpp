@@ -5,7 +5,7 @@
 //user function
 #include "generate_chunk_kernel.h"
 
-/*inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
+inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
@@ -41,7 +41,8 @@ inline int off3(int ndim, int r, int* ps, int* pe, int* size, int* std)
   int off =  add2(c1, size, r) - add2(c2, size, r);
 
   return off;
-}*/
+}
+
 
 // host stub function
 void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int dim, int* range,
@@ -93,7 +94,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        offs[i][n] = off2(ndim, n, &start[i*ndim], &end[i*ndim],
+        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],
         args[i].dat->block_size, args[i].stencil->stride);
       }
     }
