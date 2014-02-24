@@ -368,7 +368,11 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl':
         code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
 
-    code('ops_set_halo_dirtybit(args, '+str(nargs)+');\n')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('ops_set_halo_dirtybit(&args['+str(n)+']);')
+
+
 
     code('')
     comm('Update kernel record')

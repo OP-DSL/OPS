@@ -260,8 +260,10 @@ void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 
 /* check if these should be placed here */
-void ops_set_halo_dirtybit(ops_arg *args, int nargs);
 void ops_set_dirtybit(ops_arg *args, int nargs);
+//void ops_set_halo_dirtybit(ops_arg *args, int nargs);
+void ops_set_halo_dirtybit(ops_arg *arg);
+
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
 void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);

@@ -173,14 +173,7 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
   }
 }
 
-
-void ops_set_halo_dirtybit(ops_arg *args, int nargs)
+void ops_set_halo_dirtybit(ops_arg *arg)
 {
-  //printf("in ops_set_dirtybit\n");
-  for (int n=0; n<nargs; n++) {
-    if((args[n].argtype == OPS_ARG_DAT) &&
-       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
-       args[n].dat->dirtybit = 1;
-    }
-  }
+  arg->dat->dirtybit = 1;
 }
