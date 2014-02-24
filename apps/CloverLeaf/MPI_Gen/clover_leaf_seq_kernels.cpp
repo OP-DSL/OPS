@@ -91,8 +91,8 @@
 #include "calc_dt_kernel_gety_seq_kernel.cpp"
 #include "calc_dt_kernel_print_seq_kernel.cpp"
 #include "field_summary_kernel_seq_kernel.cpp"
-/*#include "initialise_chunk_kernel_x_seq_kernel.cpp"
+#include "initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "initialise_chunk_kernel_cellx_seq_kernel.cpp"
 #include "initialise_chunk_kernel_celly_seq_kernel.cpp"
-#include "initialise_chunk_kernel_volume_seq_kernel.cpp"*/
+#include "initialise_chunk_kernel_volume_seq_kernel.cpp"
