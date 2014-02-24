@@ -145,10 +145,7 @@ int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
   for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
   for(i=r; i<ndim; i++) c2[i] = ps[i];
 
-  int X = 0;
-  std[r-1] == 0?X=1:X=0;
-
-  int off =  add2(c1, size, r) - add2(c2, size, r) + 1*X;
+  int off =  add2(c1, size, r) - add2(c2, size, r) + 1*(!std[r-1]);
 
   return off;
 }
