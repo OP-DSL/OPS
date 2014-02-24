@@ -162,3 +162,18 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
 //special case where iterating in 2D and accessing 1D edge, then all procs will need to
 //have a new special halo created... this will only be known at loop runtime
 //and perhaps will need to be allocated on-the-fly.
+
+
+void ops_mpi_exit()
+{
+  ops_dat_entry *item;
+  int i;
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    i = (item->dat)->index;
+    free(OPS_sub_dat_list[i]->d_m);
+    free(OPS_sub_dat_list[i]->d_p);
+    free(&OPS_sub_dat_list[i]->prod[-1]);
+  }
+  free(OPS_sub_dat_list);
+  OPS_sub_dat_list = NULL;
+}

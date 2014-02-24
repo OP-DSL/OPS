@@ -85,6 +85,7 @@ extern int ops_my_rank;
 extern sub_block_list *OPS_sub_block_list;
 extern sub_dat_list *OPS_sub_dat_list;
 
+void ops_mpi_exit();
 
 /*******************************************************************************
 * External functions defined in ops_mpi_(cuda)_rt_support.c
