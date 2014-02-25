@@ -147,7 +147,7 @@ typedef struct
   char        *data_d; /* data on device (for CUDA)*/
   ops_access   acc;    /* access type */
   ops_arg_type argtype;/* arg type */
-  int         opt;     /*falg to indicate whether this is an optional arg, 0 - not optional, 1 - yes, optional*/
+  int         opt;     /*falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional*/
 } ops_arg;
 
 typedef struct

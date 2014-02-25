@@ -372,7 +372,7 @@ ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
     arg.data_d = NULL;
   }
   arg.acc = acc;
-  arg.opt = 0;
+  arg.opt = 1;
   return arg;
 }
 

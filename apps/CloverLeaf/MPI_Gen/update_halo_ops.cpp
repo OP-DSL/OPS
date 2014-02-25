@@ -234,9 +234,6 @@ void update_halo(int* fields, int depth)
   int y_max = field->y_max;
 
 
-
-
-
   int rangexy_b2a[] = {x_min-depth,x_max+depth,y_min-2,y_min-1};
   if(depth ==2)
   ops_par_loop_update_halo_kernel1_b2("update_halo_kernel1", clover_grid, 2, rangexy_b2a,
