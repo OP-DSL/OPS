@@ -250,7 +250,7 @@ void ops_par_loop(void (*kernel)(T0*),
 
   ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
-  ops_set_halo_dirtybit(args, 1);
+  ops_set_halo_dirtybit(&args[0]);
 }
 
 //
@@ -357,7 +357,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
   ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
-  ops_set_halo_dirtybit(args, 2);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
 }
 
 //
@@ -466,7 +467,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
   ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
-  ops_set_halo_dirtybit(args, 3);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
 }
 
 //
@@ -577,7 +580,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
   ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
-  ops_set_halo_dirtybit(args, 4);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
 }
 
 //
@@ -695,7 +701,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
   ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
-  ops_set_halo_dirtybit(args, 5);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
 }
 
 //
@@ -815,7 +825,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
   ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
-  ops_set_halo_dirtybit(args, 6);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
 }
 
 //
@@ -937,7 +952,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
   ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
-  ops_set_halo_dirtybit(args, 7);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
 }
 
 //
@@ -1061,7 +1082,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
   ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
-  ops_set_halo_dirtybit(args, 8);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
 }
 
 //
@@ -1192,7 +1220,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
   ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
-  ops_set_halo_dirtybit(args, 9);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
 }
 
 //
@@ -1325,7 +1361,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
   ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
-  ops_set_halo_dirtybit(args, 10);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
 }
 
 //
@@ -1460,7 +1505,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
   ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
-  ops_set_halo_dirtybit(args, 11);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
 }
 
 //
@@ -1597,7 +1652,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
   ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
-  ops_set_halo_dirtybit(args, 12);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
 }
 
 //
@@ -1741,7 +1807,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
   ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
-  ops_set_halo_dirtybit(args, 13);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
 }
 
 //
@@ -1887,7 +1965,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
   ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
-  ops_set_halo_dirtybit(args, 14);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
+  ops_set_halo_dirtybit(&args[13]);
 }
 
 //
@@ -2035,7 +2126,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
   ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
-  ops_set_halo_dirtybit(args, 15);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
+  ops_set_halo_dirtybit(&args[13]);
+  ops_set_halo_dirtybit(&args[14]);
 }
 
 //
@@ -2185,7 +2290,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
   ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
-  ops_set_halo_dirtybit(args, 16);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
+  ops_set_halo_dirtybit(&args[13]);
+  ops_set_halo_dirtybit(&args[14]);
+  ops_set_halo_dirtybit(&args[15]);
 }
 
 //
@@ -2342,7 +2462,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
   ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
-  ops_set_halo_dirtybit(args, 17);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
+  ops_set_halo_dirtybit(&args[13]);
+  ops_set_halo_dirtybit(&args[14]);
+  ops_set_halo_dirtybit(&args[15]);
+  ops_set_halo_dirtybit(&args[16]);
 }
 
 //
@@ -2501,5 +2637,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
   ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
-  ops_set_halo_dirtybit(args, 18);
+  ops_set_halo_dirtybit(&args[0]);
+  ops_set_halo_dirtybit(&args[1]);
+  ops_set_halo_dirtybit(&args[2]);
+  ops_set_halo_dirtybit(&args[3]);
+  ops_set_halo_dirtybit(&args[4]);
+  ops_set_halo_dirtybit(&args[5]);
+  ops_set_halo_dirtybit(&args[6]);
+  ops_set_halo_dirtybit(&args[7]);
+  ops_set_halo_dirtybit(&args[8]);
+  ops_set_halo_dirtybit(&args[9]);
+  ops_set_halo_dirtybit(&args[10]);
+  ops_set_halo_dirtybit(&args[11]);
+  ops_set_halo_dirtybit(&args[12]);
+  ops_set_halo_dirtybit(&args[13]);
+  ops_set_halo_dirtybit(&args[14]);
+  ops_set_halo_dirtybit(&args[15]);
+  ops_set_halo_dirtybit(&args[16]);
+  ops_set_halo_dirtybit(&args[17]);
 }
