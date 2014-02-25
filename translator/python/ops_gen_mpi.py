@@ -293,8 +293,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('int n_x;')
 
     FOR('n_y','s[1]','e[1]')
-    FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
-    #code('for( n_x=0; n_x<ROUND_DOWN((e[0]-s[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
+    #FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
+    code('for( n_x=0; n_x<ROUND_DOWN((e[0]-s[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
     depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
@@ -327,8 +327,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
 
 
-    FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
-    #code('for(;n_x<(e[0]-s[0]);n_x++) {')
+    #FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
+    code('for(;n_x<(e[0]-s[0]);n_x++) {')
     depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
