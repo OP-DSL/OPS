@@ -127,20 +127,33 @@ def get_arg_dat(arg_string, j):
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
+    #print dat_args_string
+    #num = len(dat_args_string.split(','))
+    #print num
 
     # check for syntax errors
-    if len(dat_args_string.split(',')) != 4:
-        print 'Error parsing op_arg_dat(%s): must have three arguments' \
-              % dat_args_string
-        return
+    if not(len(dat_args_string.split(',')) == 4 or len(dat_args_string.split(',')) == 5 ):
+      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
+      return
 
-    # split the dat_args_string into  6 and create a struct with the elements
-    # and type as op_arg_dat
-    temp_dat = {'type': 'ops_arg_dat',
-                'dat': dat_args_string.split(',')[0].strip(),
-                'sten': dat_args_string.split(',')[1].strip(),
-                'typ': dat_args_string.split(',')[2].strip(),
-                'acc': dat_args_string.split(',')[3].strip()}
+    if len(dat_args_string.split(',')) == 4:
+      # split the dat_args_string into  6 and create a struct with the elements
+      # and type as op_arg_dat
+      temp_dat = {'type': 'ops_arg_dat',
+                  'dat': dat_args_string.split(',')[0].strip(),
+                  'sten': dat_args_string.split(',')[1].strip(),
+                  'typ': dat_args_string.split(',')[2].strip(),
+                  'acc': dat_args_string.split(',')[3].strip()}
+    elif len(dat_args_string.split(',')) == 5:
+      # split the dat_args_string into  6 and create a struct with the elements
+      # and type as op_arg_dat
+      temp_dat = {'type': 'ops_arg_dat_opt',
+                  'dat': dat_args_string.split(',')[0].strip(),
+                  'sten': dat_args_string.split(',')[1].strip(),
+                  'typ': dat_args_string.split(',')[2].strip(),
+                  'acc': dat_args_string.split(',')[3].strip(),
+                  'opt': dat_args_string.split(',')[4].strip()}
+
 
     return temp_dat
 
@@ -360,7 +373,7 @@ def main():
           arg_type = loop_args[i]['args'][m]['type']
           args = loop_args[i]['args'][m]
 
-          if arg_type.strip() == 'ops_arg_dat':
+          if arg_type.strip() == 'ops_arg_dat' or arg_type.strip() == 'ops_arg_dat_opt':
             var[m] = args['dat']
             stens[m] = args['sten']
             typs[m] = args['typ']
@@ -563,6 +576,12 @@ def main():
                   line = line + elem['type'] + '(' + elem['dat'] + \
                       ', ' + elem['sten'] + ', ' + elem['typ'] + \
                       ', ' + elem['acc'] + '),\n' + indent
+              if elem['type'] == 'ops_arg_dat_opt':
+                  line = line + elem['type'] + '(' + elem['dat'] + \
+                      ', ' + elem['sten'] + ', ' + elem['typ'] + \
+                      ', ' + elem['acc'] + \
+                      ', ' + elem['opt'] +'),\n' + indent
+                  #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
               elif elem['type'] == 'ops_arg_gbl':
                   line = line + elem['type'] + '(' + elem['data'] + \
                       ', ' + elem['dim'] + ', ' +  elem['typ'] + \
