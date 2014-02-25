@@ -5,8 +5,11 @@
 #include "definitions.h"
 
 
-void accelerate_kernel_stepbymass( double *density0, double *volume,
-                double *stepbymass) {
+void accelerate_kernel( double *density0, double *volume,
+                double *stepbymass, double *xvel0, double *xvel1,
+                double *xarea, double *pressure,
+                double *yvel0, double *yvel1,
+                double *yarea, double *viscosity) {
 
   double nodal_mass;
 
@@ -18,54 +21,36 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 
   stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
 
-}
-
-void accelerate_kernelx1( double *xvel0, double *xvel1,
-                        double *stepbymass,
-                        double *xarea, double *pressure) {
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, 0,-1};
 
-  xvel1[OPS_ACC1(0,0)] = xvel0[OPS_ACC0(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( xarea[OPS_ACC3(0,0)]  * ( pressure[OPS_ACC4(0,0)] - pressure[OPS_ACC4(-1,0)] ) +
-              xarea[OPS_ACC3(0,-1)] * ( pressure[OPS_ACC4(0,-1)] - pressure[OPS_ACC4(-1,-1)] ) );
-}
-
-
-void accelerate_kernely1( double *yvel0, double *yvel1,
-                        double *stepbymass,
-                        double *yarea, double *pressure) {
+  xvel1[OPS_ACC4(0,0)] = xvel0[OPS_ACC3(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+            ( xarea[OPS_ACC5(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(-1,0)] ) +
+              xarea[OPS_ACC5(0,-1)] * ( pressure[OPS_ACC6(0,-1)] - pressure[OPS_ACC6(-1,-1)] ) );
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, -1,0};
 
-  yvel1[OPS_ACC1(0,0)] = yvel0[OPS_ACC0(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( yarea[OPS_ACC3(0,0)]  * ( pressure[OPS_ACC4(0,0)] - pressure[OPS_ACC4(0,-1)] ) +
-              yarea[OPS_ACC3(-1,0)] * ( pressure[OPS_ACC4(-1,0)] - pressure[OPS_ACC4(-1,-1)] ) );
-
-}
-
-
-void accelerate_kernelx2( double *xvel1, double *stepbymass,
-                        double *xarea, double *viscosity) {
+  yvel1[OPS_ACC8(0,0)] = yvel0[OPS_ACC7(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+            ( yarea[OPS_ACC9(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(0,-1)] ) +
+              yarea[OPS_ACC9(-1,0)] * ( pressure[OPS_ACC6(-1,0)] - pressure[OPS_ACC6(-1,-1)] ) );
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, 0,-1};
 
-  xvel1[OPS_ACC0(0,0)] = xvel1[OPS_ACC0(0,0)] - stepbymass[OPS_ACC1(0,0)] *
-            ( xarea[OPS_ACC2(0,0)] * ( viscosity[OPS_ACC3(0,0)] - viscosity[OPS_ACC3(-1,0)] ) +
-              xarea[OPS_ACC2(0,-1)] * ( viscosity[OPS_ACC3(0,-1)] - viscosity[OPS_ACC3(-1,-1)] ) );
-}
-
-void accelerate_kernely2( double *yvel1, double *stepbymass,
-                        double *yarea, double *viscosity) {
+  xvel1[OPS_ACC4(0,0)] = xvel1[OPS_ACC4(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+            ( xarea[OPS_ACC5(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(-1,0)] ) +
+              xarea[OPS_ACC5(0,-1)] * ( viscosity[OPS_ACC10(0,-1)] - viscosity[OPS_ACC10(-1,-1)] ) );
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, -1,0};
 
-  yvel1[OPS_ACC0(0,0)] = yvel1[OPS_ACC0(0,0)] - stepbymass[OPS_ACC1(0,0)] *
-            ( yarea[OPS_ACC2(0,0)] * ( viscosity[OPS_ACC3(0,0)] - viscosity[OPS_ACC3(0,-1)] ) +
-              yarea[OPS_ACC2(-1,0)] * ( viscosity[OPS_ACC3(-1,0)] - viscosity[OPS_ACC3(-1,-1)] ) );
+  yvel1[OPS_ACC8(0,0)] = yvel1[OPS_ACC8(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+            ( yarea[OPS_ACC9(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(0,-1)] ) +
+              yarea[OPS_ACC9(-1,0)] * ( viscosity[OPS_ACC10(-1,0)] - viscosity[OPS_ACC10(-1,-1)] ) );
+
 
 }
+
+
 #endif

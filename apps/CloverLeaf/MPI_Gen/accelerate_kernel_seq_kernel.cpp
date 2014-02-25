@@ -3,23 +3,24 @@
 //
 
 //user function
-#include "update_halo_kernel.h"
+#include "accelerate_kernel.h"
 
 // host stub function
-void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5, ops_arg arg6) {
+ ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
+ ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
-  char *p_a[7];
-  int  offs[7][2];
-  ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
+  char *p_a[11];
+  int  offs[11][2];
+  ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
-  int start[ndim*7];
-  int end[ndim*7];
+  int start[ndim*11];
+  int end[ndim*11];
 
   int s[ndim];
   int e[ndim];
@@ -40,7 +41,7 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
     }
   }
 
-  for ( int i=0; i<7; i++ ){
+  for ( int i=0; i<11; i++ ){
     for ( int n=0; n<ndim; n++ ){
       start[i*ndim+n] = s[n];
       end[i*ndim+n]   = e[n];
@@ -48,7 +49,7 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "update_halo_kernel1_b2");
+  ops_register_args(args, "accelerate_kernel");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -86,6 +87,26 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
     offs[6][n] = off2(ndim, n, &start[6*ndim],
     &end[6*ndim],args[6].dat->block_size, args[6].stencil->stride);
   }
+  offs[7][0] = args[7].stencil->stride[0]*1;  //unit step in x dimension
+  for ( int n=1; n<ndim; n++ ){
+    offs[7][n] = off2(ndim, n, &start[7*ndim],
+    &end[7*ndim],args[7].dat->block_size, args[7].stencil->stride);
+  }
+  offs[8][0] = args[8].stencil->stride[0]*1;  //unit step in x dimension
+  for ( int n=1; n<ndim; n++ ){
+    offs[8][n] = off2(ndim, n, &start[8*ndim],
+    &end[8*ndim],args[8].dat->block_size, args[8].stencil->stride);
+  }
+  offs[9][0] = args[9].stencil->stride[0]*1;  //unit step in x dimension
+  for ( int n=1; n<ndim; n++ ){
+    offs[9][n] = off2(ndim, n, &start[9*ndim],
+    &end[9*ndim],args[9].dat->block_size, args[9].stencil->stride);
+  }
+  offs[10][0] = args[10].stencil->stride[0]*1;  //unit step in x dimension
+  for ( int n=1; n<ndim; n++ ){
+    offs[10][n] = off2(ndim, n, &start[10*ndim],
+    &end[10*ndim],args[10].dat->block_size, args[10].stencil->stride);
+  }
 
 
   //set up initial pointers
@@ -104,7 +125,6 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   p_a[2] = (char *)args[2].data
   + address2(ndim, args[2].dat->size, &start[2*ndim],
   args[2].dat->block_size, args[2].stencil->stride, args[2].dat->offset);
-  ops_exchange_halo(&args[2],2);
 
   //set up initial pointers
   p_a[3] = (char *)args[3].data
@@ -116,7 +136,6 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   p_a[4] = (char *)args[4].data
   + address2(ndim, args[4].dat->size, &start[4*ndim],
   args[4].dat->block_size, args[4].stencil->stride, args[4].dat->offset);
-  ops_exchange_halo(&args[4],2);
 
   //set up initial pointers
   p_a[5] = (char *)args[5].data
@@ -129,6 +148,29 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   + address2(ndim, args[6].dat->size, &start[6*ndim],
   args[6].dat->block_size, args[6].stencil->stride, args[6].dat->offset);
   ops_exchange_halo(&args[6],2);
+
+  //set up initial pointers
+  p_a[7] = (char *)args[7].data
+  + address2(ndim, args[7].dat->size, &start[7*ndim],
+  args[7].dat->block_size, args[7].stencil->stride, args[7].dat->offset);
+  ops_exchange_halo(&args[7],2);
+
+  //set up initial pointers
+  p_a[8] = (char *)args[8].data
+  + address2(ndim, args[8].dat->size, &start[8*ndim],
+  args[8].dat->block_size, args[8].stencil->stride, args[8].dat->offset);
+
+  //set up initial pointers
+  p_a[9] = (char *)args[9].data
+  + address2(ndim, args[9].dat->size, &start[9*ndim],
+  args[9].dat->block_size, args[9].stencil->stride, args[9].dat->offset);
+  ops_exchange_halo(&args[9],2);
+
+  //set up initial pointers
+  p_a[10] = (char *)args[10].data
+  + address2(ndim, args[10].dat->size, &start[10*ndim],
+  args[10].dat->block_size, args[10].stencil->stride, args[10].dat->offset);
+  ops_exchange_halo(&args[10],2);
 
 
   int off0_1 = offs[0][0];
@@ -152,10 +194,22 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   int off6_1 = offs[6][0];
   int off6_2 = offs[6][1];
   int dat6 = args[6].dat->size;
+  int off7_1 = offs[7][0];
+  int off7_2 = offs[7][1];
+  int dat7 = args[7].dat->size;
+  int off8_1 = offs[8][0];
+  int off8_2 = offs[8][1];
+  int dat8 = args[8].dat->size;
+  int off9_1 = offs[9][0];
+  int off9_2 = offs[9][1];
+  int dat9 = args[9].dat->size;
+  int off10_1 = offs[10][0];
+  int off10_2 = offs[10][1];
+  int dat10 = args[10].dat->size;
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(0,"update_halo_kernel1_b2");
+  ops_timing_realloc(47,"accelerate_kernel");
   ops_timers_core(&c1,&t1);
 
   xdim0 = args[0].dat->block_size[0];
@@ -165,6 +219,10 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   xdim4 = args[4].dat->block_size[0];
   xdim5 = args[5].dat->block_size[0];
   xdim6 = args[6].dat->block_size[0];
+  xdim7 = args[7].dat->block_size[0];
+  xdim8 = args[8].dat->block_size[0];
+  xdim9 = args[9].dat->block_size[0];
+  xdim10 = args[10].dat->block_size[0];
 
   int n_x;
   for ( int n_y=s[1]; n_y<e[1]; n_y++ ){
@@ -172,8 +230,9 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          update_halo_kernel1_b2(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
-           (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1 );
+          accelerate_kernel(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*1, (double *)p_a[2]+ i*1,
+           (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1,
+           (double *)p_a[7]+ i*1, (double *)p_a[8]+ i*1, (double *)p_a[9]+ i*1, (double *)p_a[10]+ i*1 );
 
         }
 
@@ -185,12 +244,17 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
         p_a[4]= p_a[4] + (dat4 * off4_1)*SIMD_VEC;
         p_a[5]= p_a[5] + (dat5 * off5_1)*SIMD_VEC;
         p_a[6]= p_a[6] + (dat6 * off6_1)*SIMD_VEC;
+        p_a[7]= p_a[7] + (dat7 * off7_1)*SIMD_VEC;
+        p_a[8]= p_a[8] + (dat8 * off8_1)*SIMD_VEC;
+        p_a[9]= p_a[9] + (dat9 * off9_1)*SIMD_VEC;
+        p_a[10]= p_a[10] + (dat10 * off10_1)*SIMD_VEC;
       }
 
       for ( int n_x=s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC; n_x<e[0]; n_x++ ){
           //call kernel function, passing in pointers to data - remainder
-          update_halo_kernel1_b2(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6] );
+          accelerate_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
+           (double *)p_a[7], (double *)p_a[8], (double *)p_a[9], (double *)p_a[10] );
 
 
           //shift pointers to data x direction
@@ -201,6 +265,10 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
           p_a[4]= p_a[4] + (dat4 * off4_1);
           p_a[5]= p_a[5] + (dat5 * off5_1);
           p_a[6]= p_a[6] + (dat6 * off6_1);
+          p_a[7]= p_a[7] + (dat7 * off7_1);
+          p_a[8]= p_a[8] + (dat8 * off8_1);
+          p_a[9]= p_a[9] + (dat9 * off9_1);
+          p_a[10]= p_a[10] + (dat10 * off10_1);
         }
 
         //shift pointers to data y direction
@@ -211,24 +279,28 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
         p_a[4]= p_a[4] + (dat4 * off4_2);
         p_a[5]= p_a[5] + (dat5 * off5_2);
         p_a[6]= p_a[6] + (dat6 * off6_2);
+        p_a[7]= p_a[7] + (dat7 * off7_2);
+        p_a[8]= p_a[8] + (dat8 * off8_2);
+        p_a[9]= p_a[9] + (dat9 * off9_2);
+        p_a[10]= p_a[10] + (dat10 * off10_2);
       }
-      ops_set_halo_dirtybit(&args[0]);
-      ops_set_halo_dirtybit(&args[1]);
       ops_set_halo_dirtybit(&args[2]);
-      ops_set_halo_dirtybit(&args[3]);
       ops_set_halo_dirtybit(&args[4]);
-      ops_set_halo_dirtybit(&args[5]);
-      ops_set_halo_dirtybit(&args[6]);
+      ops_set_halo_dirtybit(&args[8]);
 
       //Update kernel record
       ops_timers_core(&c2,&t2);
-      OPS_kernels[0].count++;
-      OPS_kernels[0].time += t2-t1;
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
-      OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg6);
+      OPS_kernels[47].count++;
+      OPS_kernels[47].time += t2-t1;
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg0);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg1);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg2);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg3);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg4);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg5);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg6);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg7);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg8);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg9);
+      OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg10);
     }

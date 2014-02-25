@@ -139,6 +139,9 @@ void update_halo(int* fields, int depth)
               ops_arg_dat(viscosity, S2D_00_M10, "double", OPS_RW),
               ops_arg_dat(soundspeed, S2D_00_M10, "double", OPS_RW));
 
+
+
+
   //
   //xvel0, xvel1 has the same boundary ranges and assignment
   //
