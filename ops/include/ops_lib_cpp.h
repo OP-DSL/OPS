@@ -106,6 +106,7 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* off
                            char* data, int type_size, char const * type, char const * name );
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
 ops_arg ops_arg_idx( );
 
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );

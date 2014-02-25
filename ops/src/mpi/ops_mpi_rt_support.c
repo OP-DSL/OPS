@@ -54,7 +54,8 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
 
-  if(dat->dirtybit == 1) { //need to check OPS accs
+  if(arg->opt == 0 && dat->dirtybit == 1) { //need to check OPS accs
+    //ops_printf("exchanging %s\n",arg->dat->name);
 
     sub_block_list sb = OPS_sub_block_list[dat->block->index];
     sub_dat_list sd = OPS_sub_dat_list[dat->index];

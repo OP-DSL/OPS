@@ -174,6 +174,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('char *p_a['+str(nargs)+'];')
     code('int  offs['+str(nargs)+'][2];')
 
+    #code('ops_printf("In loop \%s\\n","'+name+'");')
 
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):

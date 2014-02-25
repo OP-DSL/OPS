@@ -186,6 +186,13 @@ ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_ac
   return ops_arg_dat_core( dat, stencil, acc );
 }
 
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag )
+{
+  ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->opt = flag;
+  return temp;
+}
+
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 {
   return ops_arg_gbl_core( data, dim, size, acc );
