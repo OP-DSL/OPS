@@ -366,7 +366,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     ENDFOR()
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
 
     for n in range (0, nargs):

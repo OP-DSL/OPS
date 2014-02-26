@@ -54,8 +54,8 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 {
   ops_dat dat = arg->dat;
 
-  //if(arg->opt == 1 && dat->dirtybit == 1) { //need to check OPS accs
-  if( dat->dirtybit == 1) { //need to check OPS accs
+  if(arg->opt == 1 && dat->dirtybit == 1) { //need to check OPS accs
+  //if( dat->dirtybit == 1) { //need to check OPS accs
   // ops_printf("exchanging %s\n",arg->dat->name);
 
     sub_block_list sb = OPS_sub_block_list[dat->block->index];
@@ -98,7 +98,7 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/)
 void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {
   (void)data;
-  if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
+  //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
     double result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
@@ -117,7 +117,7 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
       }
     }
     memcpy(arg->data, result, sizeof(double)*arg->dim);
-  }
+  //}
 }
 
 
@@ -126,7 +126,7 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
 {
   (void)data;
 
-  if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
+  //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
     float result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
@@ -145,7 +145,7 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
       }
     }
     memcpy(arg->data, result, sizeof(float)*arg->dim);
-  }
+  //}
 }
 
 
@@ -153,7 +153,7 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
 {
   (void)data;
 
-  if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
+  //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
     int result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
@@ -172,7 +172,7 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
       }
     }
     memcpy(arg->data, result, sizeof(int)*arg->dim);
-  }
+  //}
 }
 
 void ops_set_halo_dirtybit(ops_arg *arg)

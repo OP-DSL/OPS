@@ -248,9 +248,9 @@ void ops_par_loop(void (*kernel)(T0*),
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
-  ops_set_halo_dirtybit(&args[0]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
 }
 
 //
@@ -354,11 +354,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
 }
 
 //
@@ -463,13 +463,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
 }
 
 //
@@ -575,15 +575,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
 }
 
 //
@@ -695,17 +695,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
 }
 
 //
@@ -818,19 +818,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
 }
 
 //
@@ -944,21 +944,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
 }
 
 //
@@ -1073,23 +1073,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
 }
 
 //
@@ -1210,25 +1210,25 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
 }
 
 //
@@ -1350,27 +1350,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
 }
 
 //
@@ -1493,29 +1493,29 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
 }
 
 //
@@ -1639,31 +1639,31 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
 }
 
 //
@@ -1793,33 +1793,33 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
 }
 
 //
@@ -1950,35 +1950,35 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
-  ops_set_halo_dirtybit(&args[13]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
 }
 
 //
@@ -2110,37 +2110,37 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
-  ops_set_halo_dirtybit(&args[13]);
-  ops_set_halo_dirtybit(&args[14]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
 }
 
 //
@@ -2273,39 +2273,39 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
-  ops_set_halo_dirtybit(&args[13]);
-  ops_set_halo_dirtybit(&args[14]);
-  ops_set_halo_dirtybit(&args[15]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
 }
 
 //
@@ -2444,41 +2444,41 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
-  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
+  if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
-  ops_set_halo_dirtybit(&args[13]);
-  ops_set_halo_dirtybit(&args[14]);
-  ops_set_halo_dirtybit(&args[15]);
-  ops_set_halo_dirtybit(&args[16]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
 }
 
 //
@@ -2618,41 +2618,41 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
-  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
-  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
+  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
+  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
+  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
+  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
+  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
+  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
+  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
+  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
+  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
+  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
+  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
+  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
+  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
+  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
+  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
+  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
+  if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
+  if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
-  ops_set_halo_dirtybit(&args[0]);
-  ops_set_halo_dirtybit(&args[1]);
-  ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
-  ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
-  ops_set_halo_dirtybit(&args[6]);
-  ops_set_halo_dirtybit(&args[7]);
-  ops_set_halo_dirtybit(&args[8]);
-  ops_set_halo_dirtybit(&args[9]);
-  ops_set_halo_dirtybit(&args[10]);
-  ops_set_halo_dirtybit(&args[11]);
-  ops_set_halo_dirtybit(&args[12]);
-  ops_set_halo_dirtybit(&args[13]);
-  ops_set_halo_dirtybit(&args[14]);
-  ops_set_halo_dirtybit(&args[15]);
-  ops_set_halo_dirtybit(&args[16]);
-  ops_set_halo_dirtybit(&args[17]);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
+  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[17]);
 }

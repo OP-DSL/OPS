@@ -67,7 +67,10 @@ int ops_is_root()
   return 1;
 }
 
-
+void ops_set_halo_dirtybit(ops_arg *arg)
+{
+  (void)arg;
+}
 
 void ops_exchange_halo(ops_arg* arg, int d)
 {
