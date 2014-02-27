@@ -48,7 +48,7 @@ void update_halo(int* fields, int depth)
   int x_max = field->x_max;
   int y_min = field->y_min;
   int y_max = field->y_max;
-
+  //depth = depth + 2;
   //
   //density0, energy0, density1, energy1, pressure, viscosity and soundspeed
   // all has the same boundary ranges

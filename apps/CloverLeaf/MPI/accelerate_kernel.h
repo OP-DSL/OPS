@@ -7,7 +7,7 @@
 void accelerate_kernel_stepbymass( double *density0, double *volume,
                 double *stepbymass) {
 
-  double nodal_mass;
+  double nodal_mass = 0.0;
 
   //{0,0, -1,0, 0,-1, -1,-1};
   nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
@@ -16,6 +16,7 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
     + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
 
   stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
+  //printf("dt %19.16E\n",dt);
 
 }
 

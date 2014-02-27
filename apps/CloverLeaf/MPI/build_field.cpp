@@ -132,12 +132,12 @@ void build_field()
   d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
   xx  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp2, "int", "xx");
   for(int i=sb->istart[0]-2; i<sb->iend[0]+3+1; i++)
-    ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min;
+    ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min + 2;
 
   d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
   yy  = ops_decl_dat(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
   for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)
-    ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
+    ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min + 2;
 
   //
   //Declare commonly used stencils

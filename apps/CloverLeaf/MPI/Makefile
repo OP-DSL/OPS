@@ -41,7 +41,7 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_mpi cloverleaf_seq
+all: clean cloverleaf_mpi #cloverleaf_seq
 
 
 #
