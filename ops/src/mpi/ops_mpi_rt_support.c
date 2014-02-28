@@ -136,6 +136,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_m[n],1,
                      &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_p[n],1,
                      OPS_CART_COMM, &status);
+
       }
     }
 
