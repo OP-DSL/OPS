@@ -113,7 +113,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   p_a[0] = (char *)args[0].data
   + address2(ndim, args[0].dat->size, &start[0*ndim],
   args[0].dat->block_size, args[0].stencil->stride, args[0].dat->offset);
-  ops_exchange_halo(&args[0],2);
+  ops_exchange_halo2(&args[0],max,min);
 
   //set up initial pointers
   p_a[1] = (char *)args[1].data

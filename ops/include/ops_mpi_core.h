@@ -91,6 +91,7 @@ void ops_mpi_exit();
 * External functions defined in ops_mpi_(cuda)_rt_support.c
 *******************************************************************************/
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+void ops_exchange_halo2(ops_arg* arg, int* d_pos,  int* d_neg /*depth*/);
 
 
 #endif /*__OPS_MPI_CORE_H*/

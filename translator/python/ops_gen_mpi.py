@@ -242,9 +242,17 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     code('')
+    code('int max[2]; int min[2];')
+    code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers')
+        code('max[0] = 0;min[0]=0;max[1] = 0;min[1]=0;')
+        FOR('p','0','args['+str(n)+'].stencil->points')
+        FOR('n','0','ndim')
+        code('max[n] = MAX(max[n],args['+str(n)+'].stencil->stencil[2*p + '+str(n)+']');
+        code('min[n] = MIN(max[n],args['+str(n)+'].stencil->stencil[2*p + '+str(n)+']');
+
+        comm('set up initial pointers and exchange halos if nessasary')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
 
         #for dim in range (0, NDIM):
@@ -265,7 +273,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        code('ops_exchange_halo(&args['+str(n)+'],2);')
+        code('ops_exchange_halo2(&args['+str(n)+'],max,min);')
       code('')
     code('')
 
