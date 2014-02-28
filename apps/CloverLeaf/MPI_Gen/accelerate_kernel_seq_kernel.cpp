@@ -108,8 +108,6 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
     &end[10*ndim],args[10].dat->block_size, args[10].stencil->stride);
   }
 
-
-
   //set up initial pointers and exchange halos if nessasary
   p_a[0] = (char *)args[0].data
   + address2(ndim, args[0].dat->size, &start[0*ndim],
