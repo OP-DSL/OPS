@@ -115,22 +115,25 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
 
     for(int n=0;n<sb->ndim;n++){
       int d_min = abs(d_neg[n]);
-      if(dat->block_size[n] > 1 && (d_pos[n] > 0 || d_min > 0) ) {
 
-        i1 = (-d_m[n] - d_neg[n]) * prod[n-1];
+      if(dat->block_size[n] > 1 ) {//&& (d_pos[n] > 0 || d_min > 0) ) {
+
+        i1 = (-d_m[n] - d_min) * prod[n-1];
         i2 = (-d_m[n]    ) * prod[n-1];
-        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d_pos[n]) * prod[n-1];
+        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d_min) * prod[n-1];
         i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
 
         //send in positive direction, receive from negative direction
         //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-        MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_p[n],0,
-                     &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d_neg[n]],sb->id_m[n],0,
+        if(d_min > 0)
+        MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d_min],sb->id_p[n],0,
+                     &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d_min],sb->id_m[n],0,
                      OPS_CART_COMM, &status);
 
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-        MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d_neg[n]],sb->id_m[n],1,
+        if(d_pos[n] > 0)
+        MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_m[n],1,
                      &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_p[n],1,
                      OPS_CART_COMM, &status);
       }
