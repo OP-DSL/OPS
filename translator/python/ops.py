@@ -37,6 +37,7 @@ from ops_gen_seq_macro import ops_gen_seq_macro
 from ops_gen_openmp_macro import ops_gen_openmp_macro
 from ops_gen_cuda import ops_gen_cuda
 from ops_gen_mpi import ops_gen_mpi
+from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 
 
 # from http://stackoverflow.com/a/241506/396967
@@ -634,7 +635,8 @@ def main():
   #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
 
 
 
