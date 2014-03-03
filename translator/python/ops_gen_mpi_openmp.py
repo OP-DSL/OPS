@@ -320,23 +320,32 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('ops_timers_core(&c1,&t1);')
     code('')
 
+    code('int start_thread_add[ndim*nthreads*64];')
+    code('')
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
 
     code('')
     code('char *p_a['+str(nargs)+'];')
     code('')
-    code('int start = s[1];// + ((y_size-1)/nthreads+1)*thr;')
-    code('int finish = e[1];//s[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
+    code('int start = s[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('int finish = s[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
     code('')
 
+    comm('get addresss per thread')
+    code('start_thread_add[64*ndim*thr+0] = s[0];')
+    code('start_thread_add[64*ndim*thr+1] = s[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers and exchange halos if nessasary')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
 
-        code('+ address2(ndim, args['+str(n)+'].dat->size, &start_add['+str(n)+'*ndim],') #&start,')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add['+str(n)+'*ndim],')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start,')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_add['+str(n)+'*ndim],')
+        code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
         code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
