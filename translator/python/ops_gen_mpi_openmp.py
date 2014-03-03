@@ -249,12 +249,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
     code('')
 
-    comm('Halo Exchanges')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        code('ops_exchange_halo(&args['+str(n)+'],2);')
-    code('')
-
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
@@ -307,11 +301,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
     code('')
 
-
+    comm('Halo Exchanges')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
+        code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
-    code('int y_size = e[1]-s[1];')
-    code('')
-
 
     code('')
     comm('Timing')
@@ -326,6 +320,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     FOR('thr','0','nthreads')
 
     code('')
+    code('int y_size = e[1]-s[1];')
     code('char *p_a['+str(nargs)+'];')
     code('')
     code('int start = s[1] + ((y_size-1)/nthreads+1)*thr;')
@@ -353,10 +348,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code('')
     code('')
 
-
     FOR('n_y','start','finish')
     FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
-    depth = depth+2
+    #depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
     if reduction == 0:
@@ -389,7 +383,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
-    depth = depth+2
+    #depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
