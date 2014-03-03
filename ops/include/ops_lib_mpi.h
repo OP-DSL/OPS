@@ -115,7 +115,7 @@ extern int xdim16;
 extern int xdim17;
 
 
-int mult2(int* s, int r)
+inline int mult2(int* s, int r)
 {
   int result = 1;
   if(r > 0) {
@@ -124,7 +124,7 @@ int mult2(int* s, int r)
   return result;
 }
 
-int add2(int* co, int* s, int r)
+inline int add2(int* co, int* s, int r)
 {
   int result = co[0];
   for(int i = 1; i<=r;i++) result += co[i]*mult2(s,i);
@@ -132,7 +132,7 @@ int add2(int* co, int* s, int r)
 }
 
 
-int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
+inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
 {
 
   int i = 0;
@@ -150,7 +150,7 @@ int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
   return off;
 }
 
-int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {

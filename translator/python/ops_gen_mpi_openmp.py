@@ -336,10 +336,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers and exchange halos if nessasary')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add['+str(n)+'*ndim],')
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start,')
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_add['+str(n)+'*ndim],')
         code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
         code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
