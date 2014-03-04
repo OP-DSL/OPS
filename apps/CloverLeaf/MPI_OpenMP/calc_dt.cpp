@@ -76,10 +76,10 @@ void calc_dt(double* local_dt, char* local_control,
   //Extract the mimimum timestep information
   dtl_control = 10.01 * (jk_control - (int)(jk_control));
   jk_control = jk_control - (jk_control - (int)(jk_control));
-  *jldt = ((int)jk_control)%x_max;
-  *kldt = 1 + (jk_control/x_max);
-  //*jldt = ((int)jk_control)%(x_max-2);
-  //*kldt = 1 + (jk_control/(x_max-2));
+  //*jldt = ((int)jk_control)%x_max;
+  //*kldt = 1 + (jk_control/x_max);
+  *jldt = ((int)jk_control)%(x_max-2);
+  *kldt = 1 + (jk_control/(x_max-2));
 
   int rangexy_getpoint[] = {*jldt-1+2,*jldt+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 

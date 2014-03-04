@@ -156,8 +156,6 @@ inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* o
   for(int i=0; i<ndim; i++) {
     base = base + dat_size * mult2(size, i) * (ps[i] * std[i] - off[i]);
   }
-  //base = base + dat_size * 1 * (ps[0] * std[0] - off[0]) +
-  //              dat_size * 1 * size[0] * (ps[1] * std[1] - off[1]);
 
   return base;
 }
