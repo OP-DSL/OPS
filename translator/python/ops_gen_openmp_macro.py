@@ -458,8 +458,6 @@ def ops_gen_openmp_macro(master, date, consts, kernels):
       code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
   code('')
 
-
-
   #constants for macros
   for i in range(0,20):
     code('int xdim'+str(i)+';')
