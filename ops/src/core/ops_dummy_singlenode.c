@@ -32,7 +32,8 @@
 
 /** @brief dummy function for CPU backend
   * @author Gihan Mudalige
-  * @details Implements dummy functions for cpu backend (OpenMP and Sequential)
+  * @details Implements dummy functions from the MPI backend for the sequential
+  * cpu backend (OpenMP and Sequential)
   */
 
 

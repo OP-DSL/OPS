@@ -34,7 +34,7 @@
 
 /** @brief core header file for the ops MPI backend
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Headderfile for OPS MPI backend
+  * @details Headder file for OPS MPI backend
   */
 
 #include <mpi.h>

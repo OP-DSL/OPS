@@ -13,12 +13,12 @@
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
-* * Redistributions of source code must retain the above copyright
+* Redistributions of source code must retain the above copyright
 * notice, this list of conditions and the following disclaimer.
-* * Redistributions in binary form must reproduce the above copyright
+* Redistributions in binary form must reproduce the above copyright
 * notice, this list of conditions and the following disclaimer in the
 * documentation and/or other materials provided with the distribution.
-* * The name of Mike Giles may not be used to endorse or promote products
+* The name of Mike Giles may not be used to endorse or promote products
 * derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY Mike Giles ''AS IS'' AND ANY
@@ -34,7 +34,7 @@
 */
 
 /** @brief ops cuda specific runtime support functions
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, Istvan Reguly
   * @details Implements cuda backend runtime support functions
   */
 
