@@ -1,3 +1,4 @@
 *.o
-*.ptx
+cloverleaf_seq
 cloverleaf_mpi
+*.ptx
