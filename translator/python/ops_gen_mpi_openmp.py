@@ -313,6 +313,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           FOR('d', '0',dims[n])
           code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
           ENDFOR()
+        elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_WRITE:
+          FOR('d', '0',dims[n])
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
           FOR('d', '0',dims[n])
           code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')

@@ -1,3 +1,4 @@
 *.o
-*.ptx
+cloverleaf_openmp
 cloverleaf_mpi_openmp
+*.ptx
