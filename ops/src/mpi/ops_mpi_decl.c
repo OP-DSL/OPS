@@ -67,29 +67,6 @@ void ops_exit()
   if(!flag) MPI_Finalize();
 }
 
-/*ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
-                           int* offset,  int* tail, char* data, int type_size,
-                           char const * type, char const * name )
-{
-  ops_dat dat;
-
-  if(data != NULL) {
-    dat = ops_decl_dat_core(block, size, block_size, offset, tail, data, type_size, type, name);
-  }
-  else {
-    dat = ops_decl_dat_temp_core (block, size, block_size, offset, tail,
-                                           data, type_size, type, name );
-    int bytes = size*type_size;
-    for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
-    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
-    //dat->data = (char*) malloc(bytes); //initialize data bits to 0
-    dat->user_managed = 0;
-  }
-
-  return dat;
-}
-*/
-
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
                            int* d_p, char* data,
                            int type_size, char const * type, char const * name )

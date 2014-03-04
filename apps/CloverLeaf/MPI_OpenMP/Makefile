@@ -41,7 +41,7 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_mpi_openmp
+all: clean cloverleaf_mpi_openmp cloverleaf_openmp
 
 
 #
@@ -64,9 +64,27 @@ cloverleaf_mpi_openmp: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp $(OMP_KERNELS) -lops_mpi -o cloverleaf_mpi_openmp
+
+
+cloverleaf_openmp: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+                initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
+                update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+                calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+                advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
+                initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+                update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+                PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
+	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+                initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
+                ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+                viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+                flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+                advec_mom_ops.cpp $(OMP_KERNELS) -lops_openmp -o cloverleaf_openmp
+
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_mpi_openmp *.o
+		rm -f cloverleaf_mpi_openmp cloverleaf_openmp *.o
