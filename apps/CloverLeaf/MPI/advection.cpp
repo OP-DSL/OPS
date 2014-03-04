@@ -83,6 +83,7 @@ void advection(int step)
   fields[FIELD_MASS_FLUX_Y] = 1;
   update_halo(fields,2);
 
+
   advec_mom(xvel, sweep_number, direction);
   advec_mom(yvel, sweep_number, direction);
 

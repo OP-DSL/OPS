@@ -48,7 +48,7 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
     downwind = 0; //j
     dif      = donor;
   }
-  else if (xx[OPS_ACC2(1,0)] < x_max+2-2) { //the extra -2 is due to the extra boundary in the OPS version
+  else if (xx[OPS_ACC2(1,0)] < x_max+2-2) { //extra -2 due to extraborder in OPS
     upwind   = 1; //j+1
     donor    = 0; //j
     downwind = -1; //j-1
@@ -154,7 +154,7 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
     downwind = 0; //k
     dif      = donor;
   }
-  else if (yy[OPS_ACC2(0,1)] < y_max+2-2) {  //the extra -2 is due to the extra boundary in the OPS version
+  else if (yy[OPS_ACC2(0,1)] < y_max+2-2) { //extra -2 due to extra border in OPS version
     upwind   = 1; //j+1
     donor    = 0; //j
     downwind = -1; //j-1

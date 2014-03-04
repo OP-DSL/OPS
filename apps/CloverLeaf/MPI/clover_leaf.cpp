@@ -180,6 +180,7 @@ int main(int argc, char **argv)
 
   initialise();
 
+
   //initialize sizes using global values
   int x_cells = grid->x_cells;
   int y_cells = grid->y_cells;
@@ -227,29 +228,19 @@ int main(int argc, char **argv)
       field_summary();
       break;
     }
-    //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
 
-     //if(step == 1) {
+     if(step == 70) {
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
+      //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
       //break;
-      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(xvel0, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(yvel1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(work_array1, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(soundspeed, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(volume, "cloverdats.dat");
-      //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-      //exit(0);
-      //ops_print_dat_to_txtfile_core(density1, "cloverdats.dat");
-     //}
+     }
 
   }
 
   ops_timers_core(&ct1, &et1);
+  //ops_timing_output();
+
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   fclose(g_out);
