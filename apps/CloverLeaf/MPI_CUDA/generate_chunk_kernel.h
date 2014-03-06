@@ -6,10 +6,10 @@
 
 
 
-void generate_chunk_kernel( double *vertexx, double *vertexy,
+void generate_chunk_kernel( const double *vertexx, const double *vertexy,
                      double *energy0, double *density0,
                      double *xvel0,  double *yvel0,
-                     double *cellx, double *celly) {
+                     const double *cellx, const double *celly) {
 
   double radius, x_cent, y_cent;
 

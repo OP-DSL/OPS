@@ -7,6 +7,7 @@
 #include "ops_cuda_rt_support.h"
 #include "ops_cuda_reduction.h"
 
+
 // global constants
 __constant__ double g_small;
 __constant__ double g_big;
