@@ -176,9 +176,7 @@ inline int off2D(int r, int* ps, int* pe, int* size, int* std)
   for(i=r; i<2; i++) c2[i] = ps[i];
 
   int off =  add2(c1, size, r) - add2(c2, size, r) + 1*(!std[r-1]);
-
   return off;
-
 }
 
 
