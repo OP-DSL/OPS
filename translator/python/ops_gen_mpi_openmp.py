@@ -133,6 +133,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
+  NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
 ##########################################################################
 #  create new kernel file
@@ -367,7 +368,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('start_thread_add[64*ndim*thr+1] = s[1] + ((y_size-1)/nthreads+1)*thr;')
     code('')
 
-    NDIM = 2
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

@@ -158,8 +158,8 @@ inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* o
   }
 
   /* for 2D the code generator hard codes the following */
-  base = base + dat_size * 1       * (ps[0] * std[0] - off[0]);
-  base = base + dat_size * size[0] * (ps[1] * std[1] - off[1]);
+  //base = base + dat_size * 1       * (ps[0] * std[0] - off[0]);
+  //base = base + dat_size * size[0] * (ps[1] * std[1] - off[1]);
 
   return base;
 }
