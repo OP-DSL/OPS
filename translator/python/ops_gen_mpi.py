@@ -132,6 +132,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
+  NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
 ##########################################################################
 #  create new kernel file
@@ -260,18 +261,26 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#endif')
     code('')
 
-    NDIM = 2
-
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        FOR('n','1','ndim')
-        code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
-        code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-        ENDFOR()
+        #FOR('n','1','ndim')
+        #code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
+        #code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+        #ENDFOR()
+        for d in range (1, NDIM):
+          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start['+str(n)+'*'+str(NDIM)+'],')
+          code('&end['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+          code('')
 
     code('')
     code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
+        code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
     for n in range (0, nargs):
@@ -286,10 +295,18 @@ def ops_gen_mpi(master, date, consts, kernels):
         #ENDFOR()
 
         comm('set up initial pointers and exchange halos if nessasary')
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
 
-        code('+ address2(ndim, args['+str(n)+'].dat->size, &start['+str(n)+'*ndim],')
-        code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
+        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        code('(start[ndim+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        for d in range (1, NDIM):
+          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
+          code('(start[ndim+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+
+        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
+
+        #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start['+str(n)+'*ndim],')
+        #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
@@ -301,11 +318,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('')
     code('')
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
+
 
 
     code('')
@@ -436,6 +449,7 @@ def ops_gen_mpi(master, date, consts, kernels):
   file_text =''
   comm('header')
   code('#include "ops_lib_cpp.h"')
+  code('#include "ops_lib_mpi.h"')
   code('')
 
   #constants for macros

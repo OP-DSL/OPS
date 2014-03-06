@@ -165,4 +165,24 @@ inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* o
 }
 
 
+inline int off2D(int r, int* ps, int* pe, int* size, int* std)
+{
+  int i = 0;
+  int c1[2]; int c2[2];
+  for(i=0; i<2; i++) c1[i] = ps[i];
+  c1[r] = ps[r] + 1*std[r];
+
+  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
+  for(i=r; i<2; i++) c2[i] = ps[i];
+
+  int off =  add2(c1, size, r) - add2(c2, size, r) + 1*(!std[r-1]);
+
+  return off;
+
+}
+
+
+
+
+
 #endif
