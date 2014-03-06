@@ -367,12 +367,21 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('start_thread_add[64*ndim*thr+1] = s[1] + ((y_size-1)/nthreads+1)*thr;')
     code('')
 
+    NDIM = 2
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers and exchange halos if nessasary')
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-        code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
-        code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
+
+        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        code('(start_thread_add[64*ndim*thr+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        for d in range (1, NDIM):
+          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
+          code('(start_thread_add[64*ndim*thr+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+
+        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
+        #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
 
