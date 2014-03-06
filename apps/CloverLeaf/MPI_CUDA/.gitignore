@@ -1,0 +1,4 @@
+*.o
+cloverleaf_mpi_cuda
+cloverleaf_cuda
+*.ptx

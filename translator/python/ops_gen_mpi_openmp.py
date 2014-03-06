@@ -376,7 +376,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers and exchange halos if nessasary')
+        comm('set up initial pointers ')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         code('(start_thread_add[64*ndim*thr+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
