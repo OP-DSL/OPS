@@ -133,7 +133,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ops_exchange_halo(&args[6],2);
   ops_exchange_halo(&args[7],2);
 
-  ops_H_D_exchanges(args, 8);
 
   //Timing
   double t1,t2,c1,c2;
@@ -156,58 +155,58 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     start_thread_add[64*ndim*thr+1] = s[1] + ((y_size-1)/nthreads+1)*thr;
 
     //set up initial pointers and exchange halos if nessasary
-    int base0 = dat0 * 1 *
+    int base0 = dat0 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[0].stencil->stride[0] - args[0].dat->offset[0]);
-    base0 = base0  + dat0 * args[0].dat->block_size[0] *
+    base0 = base0  + dat0 * args[0].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[0].stencil->stride[1] - args[0].dat->offset[1]);
     p_a[0] = (char *)args[0].data + base0;
 
     //set up initial pointers and exchange halos if nessasary
-    int base1 = dat1 * 1 *
+    int base1 = dat1 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[1].stencil->stride[0] - args[1].dat->offset[0]);
-    base1 = base1  + dat1 * args[1].dat->block_size[0] *
+    base1 = base1  + dat1 * args[1].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[1].stencil->stride[1] - args[1].dat->offset[1]);
     p_a[1] = (char *)args[1].data + base1;
 
     //set up initial pointers and exchange halos if nessasary
-    int base2 = dat2 * 1 *
+    int base2 = dat2 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[2].stencil->stride[0] - args[2].dat->offset[0]);
-    base2 = base2  + dat2 * args[2].dat->block_size[0] *
+    base2 = base2  + dat2 * args[2].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[2].stencil->stride[1] - args[2].dat->offset[1]);
     p_a[2] = (char *)args[2].data + base2;
 
     //set up initial pointers and exchange halos if nessasary
-    int base3 = dat3 * 1 *
+    int base3 = dat3 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[3].stencil->stride[0] - args[3].dat->offset[0]);
-    base3 = base3  + dat3 * args[3].dat->block_size[0] *
+    base3 = base3  + dat3 * args[3].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[3].stencil->stride[1] - args[3].dat->offset[1]);
     p_a[3] = (char *)args[3].data + base3;
 
     //set up initial pointers and exchange halos if nessasary
-    int base4 = dat4 * 1 *
+    int base4 = dat4 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[4].stencil->stride[0] - args[4].dat->offset[0]);
-    base4 = base4  + dat4 * args[4].dat->block_size[0] *
+    base4 = base4  + dat4 * args[4].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[4].stencil->stride[1] - args[4].dat->offset[1]);
     p_a[4] = (char *)args[4].data + base4;
 
     //set up initial pointers and exchange halos if nessasary
-    int base5 = dat5 * 1 *
+    int base5 = dat5 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[5].stencil->stride[0] - args[5].dat->offset[0]);
-    base5 = base5  + dat5 * args[5].dat->block_size[0] *
+    base5 = base5  + dat5 * args[5].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[5].stencil->stride[1] - args[5].dat->offset[1]);
     p_a[5] = (char *)args[5].data + base5;
 
     //set up initial pointers and exchange halos if nessasary
-    int base6 = dat6 * 1 *
+    int base6 = dat6 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[6].stencil->stride[0] - args[6].dat->offset[0]);
-    base6 = base6  + dat6 * args[6].dat->block_size[0] *
+    base6 = base6  + dat6 * args[6].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[6].stencil->stride[1] - args[6].dat->offset[1]);
     p_a[6] = (char *)args[6].data + base6;
 
     //set up initial pointers and exchange halos if nessasary
-    int base7 = dat7 * 1 *
+    int base7 = dat7 * 1 * 
     (start_thread_add[64*ndim*thr+0] * args[7].stencil->stride[0] - args[7].dat->offset[0]);
-    base7 = base7  + dat7 * args[7].dat->block_size[0] *
+    base7 = base7  + dat7 * args[7].dat->block_size[0] * 
     (start_thread_add[64*ndim*thr+1] * args[7].stencil->stride[1] - args[7].dat->offset[1]);
     p_a[7] = (char *)args[7].data + base7;
 
@@ -267,8 +266,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ops_set_halo_dirtybit(&args[3]);
   ops_set_halo_dirtybit(&args[4]);
   ops_set_halo_dirtybit(&args[5]);
-
-  ops_set_dirtybit(args, 8);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

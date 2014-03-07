@@ -6,22 +6,22 @@
 #include <omp.h>
 #endif
 //user function
-#include "generate_chunk_kernel.h"
+#include "initialise_chunk_kernel.h"
 
 // host stub function
-void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
+ ops_arg arg4) {
 
-  int  offs[8][2];
-  ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
+  int  offs[5][2];
+  ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   //compute localy allocated range for the sub-block
   int ndim = sb->ndim;
-  int start_add[ndim*8];
-  int end_add[ndim*8];
+  int start_add[ndim*5];
+  int end_add[ndim*5];
 
   int s[ndim];
   int e[ndim];
@@ -42,7 +42,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     }
   }
 
-  for ( int i=0; i<8; i++ ){
+  for ( int i=0; i<5; i++ ){
     for ( int n=0; n<ndim; n++ ){
       start_add[i*ndim+n] = s[n];
       end_add[i*ndim+n]   = e[n];
@@ -50,7 +50,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "generate_chunk_kernel");
+  ops_register_args(args, "initialise_chunk_kernel_volume");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -73,18 +73,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   offs[4][1] = off2D(1, &start_add[4*2],
   &end_add[4*2],args[4].dat->block_size, args[4].stencil->stride);
 
-  offs[5][0] = args[5].stencil->stride[0]*1;  //unit step in x dimension
-  offs[5][1] = off2D(1, &start_add[5*2],
-  &end_add[5*2],args[5].dat->block_size, args[5].stencil->stride);
-
-  offs[6][0] = args[6].stencil->stride[0]*1;  //unit step in x dimension
-  offs[6][1] = off2D(1, &start_add[6*2],
-  &end_add[6*2],args[6].dat->block_size, args[6].stencil->stride);
-
-  offs[7][0] = args[7].stencil->stride[0]*1;  //unit step in x dimension
-  offs[7][1] = off2D(1, &start_add[7*2],
-  &end_add[7*2],args[7].dat->block_size, args[7].stencil->stride);
-
 
 
   int off0_1 = offs[0][0];
@@ -102,15 +90,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   int off4_1 = offs[4][0];
   int off4_2 = offs[4][1];
   int dat4 = args[4].dat->size;
-  int off5_1 = offs[5][0];
-  int off5_2 = offs[5][1];
-  int dat5 = args[5].dat->size;
-  int off6_1 = offs[6][0];
-  int off6_2 = offs[6][1];
-  int dat6 = args[6].dat->size;
-  int off7_1 = offs[7][0];
-  int off7_2 = offs[7][1];
-  int dat7 = args[7].dat->size;
 
 
   #ifdef _OPENMP
@@ -123,21 +102,16 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   xdim2 = args[2].dat->block_size[0];
   xdim3 = args[3].dat->block_size[0];
   xdim4 = args[4].dat->block_size[0];
-  xdim5 = args[5].dat->block_size[0];
-  xdim6 = args[6].dat->block_size[0];
-  xdim7 = args[7].dat->block_size[0];
 
   //Halo Exchanges
-  ops_exchange_halo(&args[0],2);
   ops_exchange_halo(&args[1],2);
-  ops_exchange_halo(&args[6],2);
-  ops_exchange_halo(&args[7],2);
+  ops_exchange_halo(&args[3],2);
 
-  ops_H_D_exchanges(args, 8);
+  ops_H_D_exchanges(args, 5);
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(81,"generate_chunk_kernel");
+  ops_timing_realloc(80,"initialise_chunk_kernel_volume");
   ops_timers_core(&c1,&t1);
 
   int start_thread_add[ndim*nthreads*64];
@@ -146,7 +120,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   for ( int thr=0; thr<nthreads; thr++ ){
 
     int y_size = e[1]-s[1];
-    char *p_a[8];
+    char *p_a[5];
 
     int start = s[1] + ((y_size-1)/nthreads+1)*thr;
     int finish = s[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);
@@ -190,36 +164,14 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     (start_thread_add[64*ndim*thr+1] * args[4].stencil->stride[1] - args[4].dat->offset[1]);
     p_a[4] = (char *)args[4].data + base4;
 
-    //set up initial pointers and exchange halos if nessasary
-    int base5 = dat5 * 1 *
-    (start_thread_add[64*ndim*thr+0] * args[5].stencil->stride[0] - args[5].dat->offset[0]);
-    base5 = base5  + dat5 * args[5].dat->block_size[0] *
-    (start_thread_add[64*ndim*thr+1] * args[5].stencil->stride[1] - args[5].dat->offset[1]);
-    p_a[5] = (char *)args[5].data + base5;
-
-    //set up initial pointers and exchange halos if nessasary
-    int base6 = dat6 * 1 *
-    (start_thread_add[64*ndim*thr+0] * args[6].stencil->stride[0] - args[6].dat->offset[0]);
-    base6 = base6  + dat6 * args[6].dat->block_size[0] *
-    (start_thread_add[64*ndim*thr+1] * args[6].stencil->stride[1] - args[6].dat->offset[1]);
-    p_a[6] = (char *)args[6].data + base6;
-
-    //set up initial pointers and exchange halos if nessasary
-    int base7 = dat7 * 1 *
-    (start_thread_add[64*ndim*thr+0] * args[7].stencil->stride[0] - args[7].dat->offset[0]);
-    base7 = base7  + dat7 * args[7].dat->block_size[0] *
-    (start_thread_add[64*ndim*thr+1] * args[7].stencil->stride[1] - args[7].dat->offset[1]);
-    p_a[7] = (char *)args[7].data + base7;
-
 
     for ( int n_y=start; n_y<finish; n_y++ ){
       for ( int n_x=s[0]; n_x<s[0]+(e[0]-s[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          generate_chunk_kernel(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*0, (double *)p_a[2]+ i*1,
-           (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1, (double *)p_a[5]+ i*1, (double *)p_a[6]+ i*1,
-           (double *)p_a[7]+ i*0 );
+          initialise_chunk_kernel_volume(  (double *)p_a[0]+ i*1, (double *)p_a[1]+ i*0, (double *)p_a[2]+ i*1,
+           (double *)p_a[3]+ i*1, (double *)p_a[4]+ i*1 );
 
         }
 
@@ -229,16 +181,12 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
         p_a[2]= p_a[2] + (dat2 * off2_1)*SIMD_VEC;
         p_a[3]= p_a[3] + (dat3 * off3_1)*SIMD_VEC;
         p_a[4]= p_a[4] + (dat4 * off4_1)*SIMD_VEC;
-        p_a[5]= p_a[5] + (dat5 * off5_1)*SIMD_VEC;
-        p_a[6]= p_a[6] + (dat6 * off6_1)*SIMD_VEC;
-        p_a[7]= p_a[7] + (dat7 * off7_1)*SIMD_VEC;
       }
 
       for ( int n_x=s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC; n_x<e[0]; n_x++ ){
         //call kernel function, passing in pointers to data - remainder
-        generate_chunk_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
-           (double *)p_a[7] );
+        initialise_chunk_kernel_volume(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+           (double *)p_a[3], (double *)p_a[4] );
 
 
         //shift pointers to data x direction
@@ -247,9 +195,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
         p_a[2]= p_a[2] + (dat2 * off2_1);
         p_a[3]= p_a[3] + (dat3 * off3_1);
         p_a[4]= p_a[4] + (dat4 * off4_1);
-        p_a[5]= p_a[5] + (dat5 * off5_1);
-        p_a[6]= p_a[6] + (dat6 * off6_1);
-        p_a[7]= p_a[7] + (dat7 * off7_1);
       }
 
       //shift pointers to data y direction
@@ -258,28 +203,21 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
       p_a[2]= p_a[2] + (dat2 * off2_2);
       p_a[3]= p_a[3] + (dat3 * off3_2);
       p_a[4]= p_a[4] + (dat4 * off4_2);
-      p_a[5]= p_a[5] + (dat5 * off5_2);
-      p_a[6]= p_a[6] + (dat6 * off6_2);
-      p_a[7]= p_a[7] + (dat7 * off7_2);
     }
   }
+  ops_set_halo_dirtybit(&args[0]);
   ops_set_halo_dirtybit(&args[2]);
-  ops_set_halo_dirtybit(&args[3]);
   ops_set_halo_dirtybit(&args[4]);
-  ops_set_halo_dirtybit(&args[5]);
 
-  ops_set_dirtybit(args, 8);
+  ops_set_dirtybit(args, 5);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[81].count++;
-  OPS_kernels[81].time += t2-t1;
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[80].count++;
+  OPS_kernels[80].time += t2-t1;
+  OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg4);
 }

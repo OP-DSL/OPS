@@ -33,15 +33,6 @@
 #include "definitions.h"
 
 
-void test_kernel(double *volume, double *xarea, double *yarea) {
-
-  printf("%lf ",volume[OPS_ACC0(0,0)]);
-  printf("%lf ",xarea[OPS_ACC1(0,0)]);
-  printf("%lf ",yarea[OPS_ACC2(0,0)]);
-
-}
-
-
 void build_field()
 {
   //initialize sizes using global values
@@ -62,6 +53,7 @@ void build_field()
 
   //decompose the block
   ops_partition(2, dims, "2D_BLOCK_DECOMPSE");
+
 
   //
   //declare data on blocks
@@ -138,6 +130,7 @@ void build_field()
   yy  = ops_decl_dat(clover_grid, 1, size5, d_m, d_p, temp2, "int", "yy");
   for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)
     ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
+
 
   //
   //Declare commonly used stencils
@@ -243,5 +236,6 @@ void build_field()
 
   //print ops blocks and dats details
   ops_diagnostic_output();
+
 
 }

@@ -70,7 +70,11 @@ void start()
   ops_fprintf(g_out," Generating chunks\n");
   ops_fprintf(g_out,"\n");
 
+
+
   generate();
+
+
 
   //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
@@ -79,7 +83,11 @@ void start()
 
   /**------------------------------ideal_gas---------------------------------**/
 
+
+
   ideal_gas(FALSE);
+
+
 
   /**-----------------------------update_halo--------------------------------**/
 

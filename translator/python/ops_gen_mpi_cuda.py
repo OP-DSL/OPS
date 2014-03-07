@@ -400,7 +400,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
     code('int start_add[ndim*'+str(nargs)+'];')
-    code('int end_add[ndim*'+str(nargs)+'];')
+    #code('int end_add[ndim*'+str(nargs)+'];')
 
     code('')
     code('int s[ndim];')
@@ -428,7 +428,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     FOR('i','0',str(nargs))
     FOR('n','0','ndim')
     code('start_add[i*ndim+n] = s[n];')
-    code('end_add[i*ndim+n]   = e[n];')
+    #code('end_add[i*ndim+n]   = e[n];')
     ENDFOR()
     ENDFOR()
     code('')
@@ -476,6 +476,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     GBL_INC = False
     GBL_MAX = False
     GBL_MIN = False
+    GBL_WRITE = False
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -487,8 +488,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           GBL_MAX = True
         if accs[n] == OPS_MIN:
           GBL_MIN = True
+        if accs[n] == OPS_WRITE:
+          GBL_WRITE = True
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
@@ -566,7 +569,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
           code('(start_add[ndim+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
+        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 
 
@@ -577,7 +580,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
     #set up shared memory for reduction
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
        code('int nshared = 0;')
        code('int nthread = OPS_block_size_x*OPS_block_size_y;')
        code('')
@@ -585,7 +588,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('nshared = MAX(nshared,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
     code('')
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
       code('')
 

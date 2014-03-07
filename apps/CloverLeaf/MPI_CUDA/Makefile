@@ -62,7 +62,7 @@ cloverleaf_cuda: cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cpp build_fie
 		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
 		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
 		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
-		$(CPP) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
 		initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \

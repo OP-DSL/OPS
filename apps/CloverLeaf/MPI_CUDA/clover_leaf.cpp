@@ -177,6 +177,7 @@ int main(int argc, char **argv)
   ops_decl_const("x_max", 1, "int", &x_max );
   ops_decl_const("y_max", 1, "int", &y_max );
 
+
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
   /**************************************************************************/
@@ -224,7 +225,7 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
-      break;
+      //break;
      }
 
   }

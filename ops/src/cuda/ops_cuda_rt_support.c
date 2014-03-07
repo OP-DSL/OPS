@@ -290,3 +290,38 @@ void ops_cuda_exit ( )
 
   cudaDeviceReset ( );
 }
+
+int ops_is_root()
+{
+  return 1;
+}
+
+void ops_set_halo_dirtybit(ops_arg *arg)
+{
+  (void)arg;
+}
+
+void ops_exchange_halo(ops_arg* arg, int d)
+{
+  (void)arg;
+}
+
+void ops_mpi_reduce_float(ops_arg* args, float* data)
+{
+  (void)args;
+  (void)data;
+}
+
+void ops_mpi_reduce_double(ops_arg* args, double* data)
+{
+  (void)args;
+  (void)data;
+}
+
+void ops_mpi_reduce_int(ops_arg* args, int* data)
+{
+  (void)args;
+  (void)data;
+}
+
+
