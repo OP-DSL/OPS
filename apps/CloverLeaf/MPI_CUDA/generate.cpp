@@ -46,7 +46,6 @@ void generate()
   int y_min = field->y_min;
   int y_max = field->y_max;
 
-
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
 
   ops_par_loop(generate_chunk_kernel, "generate_chunk_kernel", clover_grid, 2, rangexy,

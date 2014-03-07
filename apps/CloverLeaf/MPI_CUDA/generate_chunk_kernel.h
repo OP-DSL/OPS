@@ -4,14 +4,14 @@
 #include "data.h"
 #include "definitions.h"
 
-inline void generate_chunk_kernel( double *vertexx, double *vertexy,
+
+
+void generate_chunk_kernel( double *vertexx, double *vertexy,
                      double *energy0, double *density0,
                      double *xvel0,  double *yvel0,
                      double *cellx, double *celly) {
 
   double radius, x_cent, y_cent;
-
-
 
   //State 1 is always the background state
 
@@ -84,5 +84,6 @@ inline void generate_chunk_kernel( double *vertexx, double *vertexy,
     }
   }
 }
+
 
 #endif

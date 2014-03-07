@@ -400,7 +400,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
     code('int start_add[ndim*'+str(nargs)+'];')
-    code('int end_add[ndim*'+str(nargs)+'];')
+    #code('int end_add[ndim*'+str(nargs)+'];')
 
     code('')
     code('int s[ndim];')
