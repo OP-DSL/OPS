@@ -229,3 +229,16 @@ void ops_set_halo_dirtybit(ops_arg *arg)
 {
   arg->dat->dirtybit = 1;
 }
+
+
+void ops_H_D_exchanges(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}
+
+void ops_set_dirtybit_host(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}

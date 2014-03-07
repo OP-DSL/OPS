@@ -268,7 +268,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ops_set_halo_dirtybit(&args[4]);
   ops_set_halo_dirtybit(&args[5]);
 
-  ops_set_dirtybit(args, 8);
+  ops_set_dirtybit_host(args, 8);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

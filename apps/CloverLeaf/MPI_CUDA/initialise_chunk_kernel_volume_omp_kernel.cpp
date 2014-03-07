@@ -205,7 +205,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
     }
   }
 
-  ops_set_dirtybit(args, 5); //dirty on host
+  ops_set_dirtybit_host(args, 5); //dirty on host
 
   ops_set_halo_dirtybit(&args[0]);
   ops_set_halo_dirtybit(&args[2]);

@@ -165,7 +165,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
     }
   }
 
-  ops_set_dirtybit(args, 3); //dirty on host
+  ops_set_dirtybit_host(args, 3); //dirty on host
 
   ops_set_halo_dirtybit(&args[1]);
   ops_set_halo_dirtybit(&args[2]);
