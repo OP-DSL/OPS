@@ -395,49 +395,54 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         text = text +'\n                    '
     code(text);
 
-    code('sub_block_list sb = OPS_sub_block_list[Block->index];')
+    #code('sub_block_list sb = OPS_sub_block_list[Block->index];')
 
-    comm('compute localy allocated range for the sub-block')
-    code('int ndim = sb->ndim;')
-    code('int start_add[ndim*'+str(nargs)+'];')
+    #comm('compute localy allocated range for the sub-block')
+    #code('int ndim = sb->ndim;')
+    #code('int start_add[ndim*'+str(nargs)+'];')
     #code('int end_add[ndim*'+str(nargs)+'];')
 
-    code('')
-    code('int s[ndim];')
-    code('int e[ndim];')
-    code('')
+    #code('')
+    #code('int s[ndim];')
+    #code('int e[ndim];')
+    #code('')
 
-    FOR('n','0','ndim')
-    code('s[n] = sb->istart[n];e[n] = sb->iend[n]+1;')
-    IF('s[n] >= range[2*n]')
-    code('s[n] = 0;')
-    ENDIF()
-    ELSE()
-    code('s[n] = range[2*n] - s[n];')
-    ENDIF()
+    #FOR('n','0','ndim')
+    #code('s[n] = sb->istart[n];e[n] = sb->iend[n]+1;')
+    #IF('s[n] >= range[2*n]')
+    #code('s[n] = 0;')
+    #ENDIF()
+    #ELSE()
+    #code('s[n] = range[2*n] - s[n];')
+    #ENDIF()
 
-    IF('e[n] >= range[2*n+1]')
-    code('e[n] = range[2*n+1] - sb->istart[n];')
-    ENDIF()
-    ELSE()
-    code('e[n] = sb->sizes[n];')
-    ENDIF()
-    ENDFOR()
-    code('')
+    #IF('e[n] >= range[2*n+1]')
+    #code('e[n] = range[2*n+1] - sb->istart[n];')
+    #ENDIF()
+    #ELSE()
+    #code('e[n] = sb->sizes[n];')
+    #ENDIF()
+    #ENDFOR()
+    #code('')
 
-    FOR('i','0',str(nargs))
-    FOR('n','0','ndim')
-    code('start_add[i*ndim+n] = s[n];')
+    #FOR('i','0',str(nargs))
+    #FOR('n','0','ndim')
+    #code('start_add[i*ndim+n] = s[n];')
     #code('end_add[i*ndim+n]   = e[n];')
-    ENDFOR()
-    ENDFOR()
+    #ENDFOR()
+    #ENDFOR()
+    #code('')
+
+
+
+    #code('')
+    #code('int x_size = e[0]-s[0];')
+    #code('int y_size = e[1]-s[1];')
+    #code('')
+
     code('')
-
-
-
-    code('')
-    code('int x_size = e[0]-s[0];')
-    code('int y_size = e[1]-s[1];')
+    code('int x_size = range[1]-range[0];')
+    code('int y_size = range[3]-range[2];')
     code('')
 
     for n in range (0, nargs):
@@ -513,7 +518,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     if GBL_READ == True:
       code('reallocConstArrays(consts_bytes);')
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('reallocReductArrays(reduct_bytes);')
       code('reduct_bytes = 0;')
       code('')
@@ -544,14 +549,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
           code('mvConstArraysToDevice(consts_bytes);')
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToDevice(reduct_bytes);')
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
+    #for n in range (0, nargs):
+      #if arg_typ[n] == 'ops_arg_dat':
+        ##code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
+        ##code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
+        #code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
     code('char *p_a['+str(nargs)+'];')
@@ -559,17 +564,25 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
     comm('')
+    #for n in range (0, nargs):
+    #  if arg_typ[n] == 'ops_arg_dat':
+    #    comm('set up initial pointers')
+
+    #    code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+    #    code('(start_add[ndim+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+    #    for d in range (1, NDIM):
+    #      code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
+    #      code('(start_add[ndim+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+
+    #    code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
+    #    code('')
+
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers')
-
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start_add[ndim+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
-        for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_add[ndim+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
-
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
+        code('p_a['+str(n)+'] = &args['+str(n)+'].data_d[')
+        code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
+        code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
         code('')
 
 
@@ -596,7 +609,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
    #kernel call
     comm('call kernel wrapper function, passing in pointers to data')
     n_per_line = 2
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       text = 'ops_'+name+'<<<grid, block, nshared >>> ( '
     else:
       text = 'ops_'+name+'<<<grid, block >>> ( '
@@ -613,7 +626,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True:
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToHost(reduct_bytes);')
 
     for n in range (0, nargs):
@@ -631,7 +644,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    code('if (OPS_diags>1) cudaDeviceSynchronize();')
+    code('if (OPS_diags>1) cutilSafeCall(cudaDeviceSynchronize());')
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
     #code('ops_halo_exchanges(args, '+str(nargs)+');')
     code('')

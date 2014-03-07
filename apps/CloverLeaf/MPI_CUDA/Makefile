@@ -25,7 +25,7 @@ ifeq ($(OPS_COMPILER),intel)
   #CCFLAGS	= -O2 -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
-  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report -DOPS_DEBUG
+  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report #-DOPS_DEBUG
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= mpiCC
@@ -39,7 +39,7 @@ endif
 #
 # set flags for NVCC compilation and linking
 #
-NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca #-use_fast_math #-g -G #-O0
+NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca -g -G #-use_fast_math
 
 
 #

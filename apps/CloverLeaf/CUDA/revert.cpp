@@ -50,7 +50,7 @@ void revert()
 
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
-  ops_par_loop(revert_kernel, "PdV_kernel_predict", 2, rangexy_inner,
+  ops_par_loop(revert_kernel, "PdV_kernel_predict", clover_grid, 2, rangexy_inner,
     ops_arg_dat(density0, S2D_00, "double", OPS_READ),
     ops_arg_dat(density1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(energy0, S2D_00, "double", OPS_READ),

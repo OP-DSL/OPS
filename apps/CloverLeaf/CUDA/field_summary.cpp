@@ -61,7 +61,7 @@ void field_summary()
 
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
-  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
+  ops_par_loop(field_summary_kernel, "field_summary_kernel", clover_grid, 2, rangexy_inner,
       ops_arg_dat(volume, S2D_00, "double", OPS_READ),
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),

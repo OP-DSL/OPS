@@ -275,7 +275,7 @@ def ops_gen_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
         code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
-      elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW) :
+      elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
         code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -359,7 +359,7 @@ def ops_gen_cuda(master, date, consts, kernels):
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -512,7 +512,8 @@ def ops_gen_cuda(master, date, consts, kernels):
 
 
     code('')
-    code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
+    #code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
+    code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
     code('')
 
 
