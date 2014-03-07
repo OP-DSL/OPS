@@ -80,7 +80,7 @@ void calc_dt(double* local_dt, char* local_control,
   *jldt = (int)jk_control%x_max;
   *kldt = 1 + (jk_control/x_max);
 
-  int rangexy_getpoint[] = {*jldt-1,*jldt,*kldt-1,*kldt}; // inner range without border
+  int rangexy_getpoint[] = {*jldt-1+2,*jldt+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
   if(*local_dt < dtmin) small = 1;
 

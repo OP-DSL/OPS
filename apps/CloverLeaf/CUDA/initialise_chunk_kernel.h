@@ -7,10 +7,11 @@
 //
 inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
 
-  int x_min=field->x_min;
-  int x_max=field->x_max;
-  int y_min=field->y_min;
-  int y_max=field->y_max;
+  int x_min=field->x_min-2;
+  int x_max=field->x_max-2;
+  int y_min=field->y_min-2;
+  int y_max=field->y_max-2;
+
 
   double min_x, min_y, d_x, d_y;
 
@@ -27,10 +28,10 @@ inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *ve
 //
 inline void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
 
-  int x_min=field->x_min;
-  int x_max=field->x_max;
-  int y_min=field->y_min;
-  int y_max=field->y_max;
+  int x_min=field->x_min-2;
+  int x_max=field->x_max-2;
+  int y_min=field->y_min-2;
+  int y_max=field->y_max-2;
 
   double min_x, min_y, d_x, d_y;
 
@@ -47,10 +48,10 @@ inline void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *ve
 //
 inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
 
-  int x_min=field->x_min;
-  int x_max=field->x_max;;
-  int y_min=field->y_min;
-  int y_max=field->y_max;
+  int x_min=field->x_min-2;
+  int x_max=field->x_max-2;
+  int y_min=field->y_min-2;
+  int y_max=field->y_max-2;
 
   double min_x, min_y, d_x, d_y;
 
@@ -68,10 +69,10 @@ inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, 
 //
 inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
-  int x_min=field->x_min;
-  int x_max=field->x_max;;
-  int y_min=field->y_min;
-  int y_max=field->y_max;
+  int x_min=field->x_min-2;
+  int x_max=field->x_max-2;
+  int y_min=field->y_min-2;
+  int y_max=field->y_max-2;
 
   double min_x, min_y, d_x, d_y;
 
