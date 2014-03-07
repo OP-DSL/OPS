@@ -1,15 +1,17 @@
 #ifndef INITIALISE_CHUNK_KERNEL_H
 #define INITIALISE_CHUNK_KERNEL_H
 
-#include "data.h"
+//#include "data.h"
 #include "definitions.h"
 
-void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
+//
+inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
 
   int x_min=field->x_min-2;
   int x_max=field->x_max-2;
   int y_min=field->y_min-2;
   int y_max=field->y_max-2;
+
 
   double min_x, min_y, d_x, d_y;
 
@@ -23,7 +25,8 @@ void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx)
   vertexdx[OPS_ACC2(0,0)] = (double)d_x;
 }
 
-void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
+//
+inline void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
 
   int x_min=field->x_min-2;
   int x_max=field->x_max-2;
@@ -42,9 +45,8 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
   vertexdy[OPS_ACC2(0,0)] = (double)d_y;
 }
 
-
-
-void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
+//
+inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
 
   int x_min=field->x_min-2;
   int x_max=field->x_max-2;
@@ -64,7 +66,8 @@ void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double 
 
 }
 
-void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
+//
+inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
   int x_min=field->x_min-2;
   int x_max=field->x_max-2;
@@ -82,11 +85,11 @@ void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double 
   celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
   celldy[OPS_ACC2(0,0)] = d_y;
 
-  //printf("d_y %lf celldy %lf ",d_y, celldy[OPS_ACC2(0,0)]);
 
 }
 
-void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
+//
+inline void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
                                          const double *celldx, double *yarea) {
 
   double d_x, d_y;

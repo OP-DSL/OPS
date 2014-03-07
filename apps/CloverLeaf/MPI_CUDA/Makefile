@@ -39,7 +39,7 @@ endif
 #
 # set flags for NVCC compilation and linking
 #
-NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca -g -G #-use_fast_math
+NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca #-g -G #-use_fast_math
 
 
 #
