@@ -75,7 +75,7 @@ void advec_cell(int sweep_number, int dir)
     ops_par_loop(advec_cell_kernel3_xdir, "advec_cell_kernel3_xdir", clover_grid, 2, rangexy_inner_plus2x,
       ops_arg_dat(vol_flux_x, S2D_00, "double", OPS_READ),
       ops_arg_dat(work_array1, S2D_00_P10_M10_M20, "double", OPS_READ),
-      ops_arg_dat(xx, s2D_00_P10_STRID2D_X, "int", OPS_READ),
+      ops_arg_dat(xx, S2D_00_P10_STRID2D_X, "int", OPS_READ),
       ops_arg_dat(vertexdx, S2D_00_P10_M10_M20_STRID2D_X, "double", OPS_READ),
       ops_arg_dat(density1, S2D_00_P10_M10_M20, "double", OPS_READ),
       ops_arg_dat(energy1, S2D_00_P10_M10_M20, "double", OPS_READ),

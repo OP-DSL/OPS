@@ -55,7 +55,7 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop(calc_dt_kernel, "calc_dt_kernel", clover_grid, 2, rangexy_inner,
-    ops_arg_dat(celldx, s2D_00_P10_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celldx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
     ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
     ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),

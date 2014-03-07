@@ -165,6 +165,7 @@ void read_input()
                 states[number_of_states]->xvel = 0.0;
                 states[number_of_states]->yvel = 0.0;
 
+
                 token = strtok(NULL, " =");
                 while(token) {
                   if(strcmp(token,"xvel") == 0) {
@@ -250,10 +251,10 @@ void read_input()
   ops_fprintf(g_out,"\n");
 
   field = (field_type ) xmalloc(sizeof(field_type_core));
-  field->x_min = 0;
-  field->y_min = 0;
-  field->x_max = grid->x_cells;
-  field->y_max = grid->y_cells;
+  field->x_min = 0 +2; //+2 to account for the boundary
+  field->y_min = 0 +2; //+2 to account for the boundary
+  field->x_max = grid->x_cells +2; //+2 to account for the boundary
+  field->y_max = grid->y_cells +2; //+2 to account for the boundary
   field->left = 0;
   field->bottom = 0;
 

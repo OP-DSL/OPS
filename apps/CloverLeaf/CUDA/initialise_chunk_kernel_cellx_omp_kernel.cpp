@@ -76,7 +76,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, int dim, int* 
   xdim1 = args[1].dat->block_size[0];
   xdim2 = args[2].dat->block_size[0];
 
-  ops_halo_exchanges(args, 3);
+  ops_H_D_exchanges_cuda(args, 3);
 
   #pragma omp parallel for
   for ( int thr=0; thr<nthreads; thr++ ){
