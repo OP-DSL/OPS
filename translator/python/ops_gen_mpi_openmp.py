@@ -347,6 +347,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
 
+    code('ops_H_D_exchanges(args, '+str(nargs)+');\n')
+
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
@@ -489,6 +491,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'h);')
+
+    code('ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):

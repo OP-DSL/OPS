@@ -51,7 +51,7 @@ void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
   (void)args;
 }
 
-void ops_set_dirtybit(ops_arg *args, int nargs)
+void ops_set_dirtybit_host(ops_arg *args, int nargs)
 {
   (void)nargs;
   (void)args;

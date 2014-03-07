@@ -166,7 +166,7 @@ void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
     }
 }
 
-void ops_set_dirtybit(ops_arg *args, int nargs)
+void ops_set_dirtybit_host(ops_arg *args, int nargs)
 {
   //printf("in ops_set_dirtybit\n");
   for (int n=0; n<nargs; n++) {
@@ -177,6 +177,7 @@ void ops_set_dirtybit(ops_arg *args, int nargs)
     }
   }
 }
+
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
 {
