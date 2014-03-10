@@ -428,7 +428,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     FOR('i','0',str(nargs))
     FOR('n','0','ndim')
     code('start_add[i*ndim+n] = s[n];')
-    code('end_add[i*ndim+n]   = e[n];')
+    #code('end_add[i*ndim+n]   = e[n];')
     ENDFOR()
     ENDFOR()
     code('')
