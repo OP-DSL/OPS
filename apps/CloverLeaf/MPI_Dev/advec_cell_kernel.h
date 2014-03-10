@@ -33,7 +33,7 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  //int x_max=field->x_max;
+  int x_max=field->x_max;
 
   int upwind,donor,downwind,dif;
 
@@ -139,7 +139,7 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  //int y_max=field->y_max;
+  int y_max=field->y_max;
 
   int upwind,donor,downwind,dif;
 
