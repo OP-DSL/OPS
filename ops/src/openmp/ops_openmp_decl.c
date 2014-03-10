@@ -37,6 +37,30 @@
 
 #include <ops_lib_cpp.h>
 
+#ifndef __XDIMS__ //perhaps put this into a separate headder file
+#define __XDIMS__
+int xdim0;
+int xdim1;
+int xdim2;
+int xdim3;
+int xdim4;
+int xdim5;
+int xdim6;
+int xdim7;
+int xdim8;
+int xdim9;
+int xdim10;
+int xdim11;
+int xdim12;
+int xdim13;
+int xdim14;
+int xdim15;
+int xdim16;
+int xdim17;
+int xdim18;
+int xdim19;
+#endif /* __XDIMS__ */
+
 void
 ops_init ( int argc, char ** argv, int diags )
 {
