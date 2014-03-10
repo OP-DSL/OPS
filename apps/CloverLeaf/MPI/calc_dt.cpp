@@ -71,9 +71,13 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
     ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
 
+  //printf("*local_dt = %lf\n",*local_dt);
+
   //Extract the mimimum timestep information
   dtl_control = 10.01 * (jk_control - (int)(jk_control));
   jk_control = jk_control - (jk_control - (int)(jk_control));
+  //*jldt = ((int)jk_control)%x_max;
+  //*kldt = 1 + (jk_control/x_max);
   *jldt = ((int)jk_control)%(x_max-2);
   *kldt = 1 + (jk_control/(x_max-2));
 
@@ -84,19 +88,19 @@ void calc_dt(double* local_dt, char* local_control,
 
   if(*local_dt < dtmin) small = 1;
 
-  ops_par_loop(calc_dt_kernel_getx, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpointx,
+  /*ops_par_loop(calc_dt_kernel_getx, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpointx,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE));
 
   ops_par_loop(calc_dt_kernel_gety, "calc_dt_kernel_gety", clover_grid, 2, rangexy_getpointy,
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
-    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));
+    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));*/
 
-  /*ops_par_loop(calc_dt_kernel_get, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpoint,
+  ops_par_loop(calc_dt_kernel_get, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpoint,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
-    ops_arg_gbl(xl_pos, 1, "double", OPS_WRITE),
-    ops_arg_gbl(yl_pos, 1, "double", OPS_WRITE));*/
+    ops_arg_gbl(xl_pos, 1, "double", OPS_INC),
+    ops_arg_gbl(yl_pos, 1, "double", OPS_INC));
 
 
   if(small != 0) {

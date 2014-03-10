@@ -33,7 +33,7 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  int x_max=field->x_max;
+  //int x_max=field->x_max;
 
   int upwind,donor,downwind,dif;
 
@@ -100,7 +100,7 @@ inline void advec_cell_kernel4_xdir( double *density1, double *energy1,
                          const double *pre_vol, const double *post_vol,
                          double *pre_mass, double *post_mass,
                          double *advec_vol, double *post_ener,
-                         double *ener_flux) {
+                         const double *ener_flux) {
 
   pre_mass[OPS_ACC6(0,0)] = density1[OPS_ACC0(0,0)] * pre_vol[OPS_ACC4(0,0)];
   post_mass[OPS_ACC7(0,0)] = pre_mass[OPS_ACC6(0,0)] + mass_flux_x[OPS_ACC2(0,0)] - mass_flux_x[OPS_ACC2(1,0)];
@@ -139,7 +139,7 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  int y_max=field->y_max;
+  //int y_max=field->y_max;
 
   int upwind,donor,downwind,dif;
 
@@ -205,7 +205,7 @@ inline void advec_cell_kernel4_ydir( double *density1, double *energy1,
                          const double *pre_vol, const double *post_vol,
                          double *pre_mass, double *post_mass,
                          double *advec_vol, double *post_ener,
-                         double *ener_flux) {
+                         const double *ener_flux) {
 
   pre_mass[OPS_ACC6(0,0)] = density1[OPS_ACC0(0,0)] * pre_vol[OPS_ACC4(0,0)];
   post_mass[OPS_ACC7(0,0)] = pre_mass[OPS_ACC6(0,0)] + mass_flux_y[OPS_ACC2(0,0)] - mass_flux_y[OPS_ACC2(0,1)];

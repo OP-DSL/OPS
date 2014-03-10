@@ -102,6 +102,7 @@ extern int xdim15;
 extern int xdim16;
 extern int xdim17;
 
+
 inline int mult(int* s, int r)
 {
   int result = 1;

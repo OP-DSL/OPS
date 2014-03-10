@@ -64,27 +64,6 @@ void flux_calc();
 void advection(int);
 void reset_field();
 
-/*these should be in a header file as they are specific to the ops lib's MACRO API*/
-int xdim0;
-int xdim1;
-int xdim2;
-int xdim3;
-int xdim4;
-int xdim5;
-int xdim6;
-int xdim7;
-int xdim8;
-int xdim9;
-int xdim10;
-int xdim11;
-int xdim12;
-int xdim13;
-int xdim14;
-int xdim15;
-int xdim16;
-int xdim17;
-int xdim18;
-int xdim19;
 
 /******************************************************************************
 * Initialize Global constants and variables
@@ -189,6 +168,15 @@ int main(int argc, char **argv)
   int y_min = field->y_min;
   int y_max = field->y_max;
 
+  ops_decl_const("g_small", 1, "double", &g_small );
+  ops_decl_const("g_big", 1, "double", &g_big );
+  ops_decl_const("dtc_safe", 1, "double", &dtc_safe );
+  ops_decl_const("dtu_safe", 1, "double", &dtu_safe );
+  ops_decl_const("dtv_safe", 1, "double", &dtv_safe );
+  ops_decl_const("dtdiv_safe", 1, "double", &dtdiv_safe );
+  ops_decl_const("x_max", 1, "int", &x_max );
+  ops_decl_const("y_max", 1, "int", &y_max );
+
 
   /***************************************************************************
   **-----------------------------hydro loop---------------------------------**
@@ -201,6 +189,10 @@ int main(int argc, char **argv)
     step = step + 1;
 
     timestep();
+
+    //declare a global constant for dt ... as this chages for each iteration
+    //this should probably be a gbl OPS_READ for any kernel that uses dt
+    ops_decl_const("dt", 1, "double", &dt );
 
     PdV(TRUE);
 

@@ -5,11 +5,11 @@
 #include "definitions.h"
 
 
-void accelerate_kernel( double *density0, double *volume,
-                double *stepbymass, double *xvel0, double *xvel1,
-                double *xarea, double *pressure,
-                double *yvel0, double *yvel1,
-                double *yarea, double *viscosity) {
+void accelerate_kernel( const double *density0, const double *volume,
+                double *stepbymass, const double *xvel0, double *xvel1,
+                const double *xarea, const double *pressure,
+                const double *yvel0, double *yvel1,
+                const double *yarea, const double *viscosity) {
 
   double nodal_mass;
 

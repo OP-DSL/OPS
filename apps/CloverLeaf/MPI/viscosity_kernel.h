@@ -2,9 +2,9 @@
 #define VISCOSITY_KERNEL_H
 
 
-void viscosity_kernel( double *xvel0, double *yvel0,
-                       double *celldx, double *celldy,
-                       double *pressure, double *density0,
+void viscosity_kernel( const double *xvel0, const double *yvel0,
+                       const double *celldx, const double *celldy,
+                       const double *pressure, const double *density0,
                        double *viscosity) {
 
   double ugrad, vgrad,
@@ -23,7 +23,7 @@ void viscosity_kernel( double *xvel0, double *yvel0,
   ugrad = (xvel0[OPS_ACC0(1,0)] + xvel0[OPS_ACC0(1,1)]) - (xvel0[OPS_ACC0(0,0)] + xvel0[OPS_ACC0(0,1)]);
   vgrad = (yvel0[OPS_ACC1(0,1)] + yvel0[OPS_ACC1(1,1)]) - (yvel0[OPS_ACC1(0,0)] + yvel0[OPS_ACC1(1,0)]);
 
-  div = (celldx[0,0])*(ugrad) + (celldy[0,0])*(vgrad);
+  div = (celldx[OPS_ACC2(0,0)])*(ugrad) + (celldy[OPS_ACC2(0,0)])*(vgrad);
 
   strain2 = 0.5*(xvel0[OPS_ACC0(0,1)] + xvel0[OPS_ACC0(1,1)] - xvel0[OPS_ACC0(0,0)] - xvel0[OPS_ACC0(1,0)])/(celldy[OPS_ACC3(0,0)]) +
             0.5*(yvel0[OPS_ACC1(1,0)] + yvel0[OPS_ACC1(1,1)] - yvel0[OPS_ACC1(0,0)] - yvel0[OPS_ACC1(0,1)])/(celldx[OPS_ACC2(0,0)]);
