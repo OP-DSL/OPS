@@ -452,10 +452,10 @@ def ops_gen_mpi(master, date, consts, kernels):
   code('#include "ops_lib_mpi.h"')
   code('')
 
-  #constants for macros
-  for i in range(0,20):
-    code('int xdim'+str(i)+';')
-  code('')
+  #constants for macros -- now included in teh backend so no need to generate here
+  #for i in range(0,20):
+  #  code('int xdim'+str(i)+';')
+  #code('')
 
   comm('user kernel files')
 

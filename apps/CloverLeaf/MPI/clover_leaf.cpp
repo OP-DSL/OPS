@@ -64,28 +64,6 @@ void flux_calc();
 void advection(int);
 void reset_field();
 
-/*these should be in a header file as they are specific to the ops lib's MACRO API*/
-int xdim0;
-int xdim1;
-int xdim2;
-int xdim3;
-int xdim4;
-int xdim5;
-int xdim6;
-int xdim7;
-int xdim8;
-int xdim9;
-int xdim10;
-int xdim11;
-int xdim12;
-int xdim13;
-int xdim14;
-int xdim15;
-int xdim16;
-int xdim17;
-int xdim18;
-int xdim19;
-
 /******************************************************************************
 * Initialize Global constants and variables
 /******************************************************************************/
