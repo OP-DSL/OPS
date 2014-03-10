@@ -7,7 +7,10 @@ application code is transformed to enable it to be run with a number of
 parallelisations: OpenMP, CUDA and MPI and their combinations.
 
 
-#Directory Structure
+###Directory Structure
 
 * MPI_Dev - Developer version that uses only a header file to get the application
 running with MPI (also the sequential version is folded into this directory)
+
+* MPI - MPI and sequential version code generated through the OPS translator. This
+include platform specific optimisations such as verctorization
