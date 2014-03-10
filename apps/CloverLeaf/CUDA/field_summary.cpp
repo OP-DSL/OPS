@@ -61,7 +61,7 @@ void field_summary()
 
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
-  ops_par_loop(field_summary_kernel, "field_summary_kernel", 2, rangexy_inner,
+  ops_par_loop(field_summary_kernel, "field_summary_kernel", clover_grid, 2, rangexy_inner,
       ops_arg_dat(volume, S2D_00, "double", OPS_READ),
       ops_arg_dat(density0, S2D_00, "double", OPS_READ),
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
@@ -84,8 +84,8 @@ void field_summary()
   if(complete == TRUE) {
     if(test_problem == 1) {
       qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
-      ops_printf("Test problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      ops_fprintf(g_out,"Test problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
+      ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
+      ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
       if(qa_diff < 0.001) {
         ops_printf("This test is considered PASSED\n");
         ops_fprintf(g_out,"This test is considered PASSED\n");

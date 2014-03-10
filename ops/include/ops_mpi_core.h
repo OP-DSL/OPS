@@ -34,7 +34,7 @@
 
 /** @brief core header file for the ops MPI backend
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Headderfile for OPS MPI backend
+  * @details Headder file for OPS MPI backend
   */
 
 #include <mpi.h>
@@ -44,6 +44,54 @@
 #undef MPI_ROOT
 #endif
 #define MPI_ROOT 0
+
+#ifdef MAX_DEPTH
+#undef MAX_DEPTH
+#endif
+#define MAX_DEPTH 5
+
+
+//
+//Struct for holding the decomposition details of a dat on an MPI process
+//
+typedef struct {
+  // the decomposition is for this dat
+  ops_dat dat;
+  // product array -- used for MPI send/Receives
+  int* prod;
+  //MPI Types for send/receive -- these should be defined for the dat, not the block
+  MPI_Datatype* mpidat;
+  //max halo depths at the begining of each dimension -- these should be defined for the dat, not the block
+  int* d_m;
+  //max halo depths at the end of each dimension -- these should be defined for the dat, not the block
+  int* d_p;
+
+} sub_dat;
+
+typedef sub_dat * sub_dat_list;
+
+//
+//MPI Communicator for halo creation and exchange
+//
+
+extern MPI_Comm OPS_MPI_WORLD;
+extern MPI_Comm OPS_CART_COMM;
+extern int ops_comm_size;
+extern int ops_my_rank;
+
+//
+// list holding sub-block geometries
+//
+extern sub_block_list *OPS_sub_block_list;
+extern sub_dat_list *OPS_sub_dat_list;
+
+void ops_mpi_exit();
+
+/*******************************************************************************
+* External functions defined in ops_mpi_(cuda)_rt_support.c
+*******************************************************************************/
+void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+void ops_exchange_halo2(ops_arg* arg, int* d_pos,  int* d_neg /*depth*/);
 
 
 #endif /*__OPS_MPI_CORE_H*/

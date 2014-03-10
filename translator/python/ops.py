@@ -1,5 +1,35 @@
 #!/usr/bin/env python
 
+# Open source copyright declaration based on BSD open source template:
+# http://www.opensource.org/licenses/bsd-license.php
+#
+# This file is part of the OPS distribution.
+#
+# Copyright (c) 2013, Mike Giles and others. Please see the AUTHORS file in
+# the main source directory for a full list of copyright holders.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+# Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+# The name of Mike Giles may not be used to endorse or promote products
+# derived from this software without specific prior written permission.
+# THIS SOFTWARE IS PROVIDED BY Mike Giles ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL Mike Giles BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 """
 OPS source code transformation tool
 
@@ -32,10 +62,14 @@ import re
 import datetime
 
 # import SEQ, OpenMP and CUDA code generation functions
-#from ops_gen_seq import ops_gen_seq
-from ops_gen_seq_macro import ops_gen_seq_macro
-from ops_gen_openmp_macro import ops_gen_openmp_macro
-from ops_gen_cuda import ops_gen_cuda
+
+#from ops_gen_seq_macro import ops_gen_seq_macro # deprecated .. use ops_gen_mpi
+#from ops_gen_openmp_macro import ops_gen_openmp_macro # deprecated .. use ops_gen_mpi_openmp
+#from ops_gen_cuda import ops_gen_cuda # deprecated .. use ops_gen_mpi_cuda
+
+from ops_gen_mpi import ops_gen_mpi
+from ops_gen_mpi_openmp import ops_gen_mpi_openmp
+from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 
 
 # from http://stackoverflow.com/a/241506/396967
@@ -126,20 +160,33 @@ def get_arg_dat(arg_string, j):
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
+    #print dat_args_string
+    #num = len(dat_args_string.split(','))
+    #print num
 
     # check for syntax errors
-    if len(dat_args_string.split(',')) != 4:
-        print 'Error parsing op_arg_dat(%s): must have three arguments' \
-              % dat_args_string
-        return
+    if not(len(dat_args_string.split(',')) == 4 or len(dat_args_string.split(',')) == 5 ):
+      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
+      return
 
-    # split the dat_args_string into  6 and create a struct with the elements
-    # and type as op_arg_dat
-    temp_dat = {'type': 'ops_arg_dat',
-                'dat': dat_args_string.split(',')[0].strip(),
-                'sten': dat_args_string.split(',')[1].strip(),
-                'typ': dat_args_string.split(',')[2].strip(),
-                'acc': dat_args_string.split(',')[3].strip()}
+    if len(dat_args_string.split(',')) == 4:
+      # split the dat_args_string into  6 and create a struct with the elements
+      # and type as op_arg_dat
+      temp_dat = {'type': 'ops_arg_dat',
+                  'dat': dat_args_string.split(',')[0].strip(),
+                  'sten': dat_args_string.split(',')[1].strip(),
+                  'typ': dat_args_string.split(',')[2].strip(),
+                  'acc': dat_args_string.split(',')[3].strip()}
+    elif len(dat_args_string.split(',')) == 5:
+      # split the dat_args_string into  6 and create a struct with the elements
+      # and type as op_arg_dat
+      temp_dat = {'type': 'ops_arg_dat_opt',
+                  'dat': dat_args_string.split(',')[0].strip(),
+                  'sten': dat_args_string.split(',')[1].strip(),
+                  'typ': dat_args_string.split(',')[2].strip(),
+                  'acc': dat_args_string.split(',')[3].strip(),
+                  'opt': dat_args_string.split(',')[4].strip()}
+
 
     return temp_dat
 
@@ -219,8 +266,9 @@ def ops_par_loop_parse(text):
       temp = {'loc': i,
             'name1': arg_string.split(',')[0].strip(),
             'name2': arg_string.split(',')[1].strip(),
-            'dim': arg_string.split(',')[2].strip(),
-            'range': arg_string.split(',')[3].strip(),
+            'block': arg_string.split(',')[2].strip(),
+            'dim': arg_string.split(',')[3].strip(),
+            'range': arg_string.split(',')[4].strip(),
             'args': temp_args,
             'nargs': num_args}
       #print temp
@@ -338,6 +386,7 @@ def main():
         name = loop_args[i]['name1']
         nargs = loop_args[i]['nargs']
         dim   = loop_args[i]['dim']
+        block = loop_args[i]['block']
         _range   = loop_args[i]['range']
         print '\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'
         print 'dim: '+dim
@@ -357,7 +406,7 @@ def main():
           arg_type = loop_args[i]['args'][m]['type']
           args = loop_args[i]['args'][m]
 
-          if arg_type.strip() == 'ops_arg_dat':
+          if arg_type.strip() == 'ops_arg_dat' or arg_type.strip() == 'ops_arg_dat_opt':
             var[m] = args['dat']
             stens[m] = args['sten']
             typs[m] = args['typ']
@@ -526,7 +575,7 @@ def main():
             for k_iter in range(0, len(kernels_in_files[a - 1])):
                 k = kernels_in_files[a - 1][k_iter]
                 line = '\nvoid ops_par_loop_' + \
-                    kernels[k]['name'] + '(char const *, int , int*,\n'
+                    kernels[k]['name'] + '(char const *, ops_block, int , int*,\n'
                 for n in range(1, kernels[k]['nargs']):
                     line = line + '  ops_arg,\n'
                 line = line + '  ops_arg );\n'
@@ -550,6 +599,7 @@ def main():
           name = loop_args[curr_loop]['name1']
           line = str(' ops_par_loop_' + name + '(' +
                      loop_args[curr_loop]['name2'] + ', ' +
+                     loop_args[curr_loop]['block'] + ', ' +
                      loop_args[curr_loop]['dim'] + ', ' +
                      loop_args[curr_loop]['range'] + ',\n' + indent)
 
@@ -559,6 +609,12 @@ def main():
                   line = line + elem['type'] + '(' + elem['dat'] + \
                       ', ' + elem['sten'] + ', ' + elem['typ'] + \
                       ', ' + elem['acc'] + '),\n' + indent
+              if elem['type'] == 'ops_arg_dat_opt':
+                  line = line + elem['type'] + '(' + elem['dat'] + \
+                      ', ' + elem['sten'] + ', ' + elem['typ'] + \
+                      ', ' + elem['acc'] + \
+                      ', ' + elem['opt'] +'),\n' + indent
+                  #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
               elif elem['type'] == 'ops_arg_gbl':
                   line = line + elem['type'] + '(' + elem['data'] + \
                       ', ' + elem['dim'] + ', ' +  elem['typ'] + \
@@ -607,11 +663,14 @@ def main():
   # finally, generate target-specific kernel files
   #
 
-  #ops_gen_seq(str(sys.argv[1]), date, kernels)
-  #ops_gen_openmp(str(sys.argv[1]), date, kernels)
-  ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels)
+
+  #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi
+  #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
+  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
+
+  ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
 

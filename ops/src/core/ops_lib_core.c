@@ -62,6 +62,19 @@ int OPS_block_size_x = 0;
 int OPS_block_size_y = 0;
 
 /*
+* Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI backends
+*/
+
+int ops_comm_size;
+int ops_my_rank;
+
+sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
+                                   // geometries
+
+
+
+
+/*
 * Utility functions
 */
 static char * copy_str( char const * src )
@@ -134,8 +147,8 @@ void ops_exit_core( )
 {
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
-    free((char*)OPS_block_list[i]->name);
-    free((char*)OPS_block_list[i]->size);
+    free((char*)(OPS_block_list[i]->name));
+    free(OPS_block_list[i]->size);
     free(OPS_block_list[i]);
   }
   free(OPS_block_list);
@@ -155,7 +168,7 @@ void ops_exit_core( )
   }
 
   // free stencills
-  for ( int i = 0; i < OPS_block_index; i++ ) {
+  for ( int i = 0; i < OPS_stencil_index; i++ ) {
     free((char*)OPS_stencil_list[i]->name);
     free(OPS_stencil_list[i]->stencil);
     free(OPS_stencil_list[i]->stride);
@@ -208,7 +221,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 }
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, char *data, int type_size,
+                      int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
                       char const * name )
 {
@@ -234,11 +247,16 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   dat->offset =( int *)xmalloc(sizeof(int)*block->dims);
   memcpy(dat->offset,offset,sizeof(int)*block->dims);
 
+  dat->tail =( int *)xmalloc(sizeof(int)*block->dims);
+  memcpy(dat->tail,tail,sizeof(int)*block->dims);
+
   dat->data = (char *)data;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
+  dat->dirtybit = 0;
   dat->type = copy_str( type );
   dat->name = copy_str(name);
+  dat->e_dat = 0; //default to non-edge dat
 
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry* item;
@@ -260,7 +278,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 
 
 ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
-  int *block_size, int* offset,  char * data, int type_size, char const * type, char const * name )
+  int *block_size, int* offset,  int* tail, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
@@ -269,7 +287,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, data_size, block_size, offset, data, type_size, type, name );
+  return ops_decl_dat_core ( block, data_size, block_size, offset, tail, data, type_size, type, name );
 }
 
 
@@ -294,6 +312,10 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
 
   stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
   memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
+
+  //for (int i = 0; i < dims*points; i++)
+  //  printf("%d ",stencil->stencil[i]);
+  //printf("\n");
 
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
@@ -350,6 +372,7 @@ ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
     arg.data_d = NULL;
   }
   arg.acc = acc;
+  arg.opt = 1;
   return arg;
 }
 
@@ -365,6 +388,17 @@ ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
   return arg;
 }
 
+ops_arg ops_arg_idx_core () {
+  ops_arg arg;
+  arg.argtype = OPS_ARG_IDX;
+  arg.dat = NULL;
+  arg.data_d = NULL;
+  arg.stencil = NULL;
+  arg.dim = 0;
+  arg.data = NULL;
+  arg.acc = 0;
+  return arg;
+}
 
 void ops_diagnostic_output ( )
 {
@@ -381,7 +415,7 @@ void ops_diagnostic_output ( )
       printf("\n");
     }
 
-    printf ( "\n dats item/point [block_size] [offset]  block\n" );
+    printf ( "\n dats item/point [block_size] [offset][tail]  block\n" );
     printf ( " ------------------------------\n" );
     ops_dat_entry *item;
     TAILQ_FOREACH(item, &OPS_dat_list, entries) {
@@ -391,6 +425,8 @@ void ops_diagnostic_output ( )
       printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->offset[i] );
+      for (int i=0; i<(item->dat)->block->dims; i++)
+        printf ( "[%d]",(item->dat)->tail[i] );
 
       printf ( " %15s\n", (item->dat)->block->name );
     }
@@ -398,23 +434,6 @@ void ops_diagnostic_output ( )
   }
 }
 
-
-
-void ops_printf(const char* format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vprintf(format, argptr);
-  va_end(argptr);
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vfprintf(stream, format, argptr);
-  va_end(argptr);
-}
 
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)

@@ -157,7 +157,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, int dim, int* range,
   xdim6 = args[6].dat->block_size[0];
   xdim7 = args[7].dat->block_size[0];
 
-  ops_halo_exchanges(args, 8);
+  ops_H_D_exchanges_cuda(args, 8);
 
   #pragma omp parallel for
   for ( int thr=0; thr<nthreads; thr++ ){

@@ -109,7 +109,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, int dim, int*
   xdim3 = args[3].dat->block_size[0];
   xdim4 = args[4].dat->block_size[0];
 
-  ops_halo_exchanges(args, 5);
+  ops_H_D_exchanges_cuda(args, 5);
 
   #pragma omp parallel for
   for ( int thr=0; thr<nthreads; thr++ ){

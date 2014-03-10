@@ -63,8 +63,6 @@ extern int     fields[];
 //ops blocks
 
 extern ops_block clover_grid;
-extern ops_block clover_xedge;
-extern ops_block clover_yedge;
 
 //ops dats
 extern ops_dat density0;
@@ -149,7 +147,7 @@ extern ops_stencil S2D_10_M10_01_0M1;
 extern ops_stencil S2D_00_STRID2D_X;
 extern ops_stencil S2D_00_STRID2D_Y;
 
-extern ops_stencil s2D_00_P10_STRID2D_X;
+extern ops_stencil S2D_00_P10_STRID2D_X;
 extern ops_stencil S2D_00_0P1_STRID2D_Y;
 
 extern ops_stencil S2D_00_M10_STRID2D_X;

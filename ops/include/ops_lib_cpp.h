@@ -96,11 +96,19 @@ extern ops_block * OPS_block_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
 
+extern sub_block_list *OPS_sub_block_list;
+
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
 
-ops_dat ops_decl_dat_char (ops_block, int, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
+                           char* data, int type_size, char const * type, char const * name );
+
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
+ops_arg ops_arg_idx( );
+
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 void ops_decl_const_char( int, char const *, int, char *, char const* );
 
@@ -133,7 +141,7 @@ void ops_decl_const ( char const * name, int dim, char const * type, T * data )
   }
 }
 
-template < class T >
+/*template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
                       int *block_size, int* offset, T *data,
                       char const * type,
@@ -147,9 +155,59 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
   return ops_decl_dat_char(block, data_size, block_size, offset, (char *)data, sizeof(T), type, name );
 
+}*/
+
+
+template < class T >
+ops_dat ops_decl_dat ( ops_block block, int data_size,
+                      int *block_size, int* offset, int* tail, T *data,
+                      char const * type,
+                      char const * name )
+{
+
+  if ( type_error ( data, type ) ) {
+    printf ( "incorrect type specified for dataset \"%s\" \n", name );
+    exit ( 1 );
+  }
+
+  return ops_decl_dat_char(block, data_size, block_size, offset, tail, (char *)data, sizeof(T), type, name );
+
 }
+
 
 void ops_timers( double *cpu, double *et );
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 
-#endif /* __OP_LIB_CPP_H */
+
+
+//
+// wrapper functions to handle MPI global reductions
+//
+
+inline void ops_mpi_reduce(ops_arg* args, float *data)
+{
+  ops_mpi_reduce_float(args,data);
+}
+
+inline void ops_mpi_reduce(ops_arg* args, double *data)
+{
+  ops_mpi_reduce_double(args,data);
+}
+
+inline void ops_mpi_reduce(ops_arg* args, int *data)
+{
+  ops_mpi_reduce_int(args,data);
+}
+
+//needed as a dummy, "do nothing" routine for the non-mpi backends
+template <class T>
+void ops_mpi_reduce(ops_arg* args, T* data)
+{
+  //printf("should not be here\n");
+}
+
+
+
+
+
+#endif /* __OPS_LIB_CPP_H */

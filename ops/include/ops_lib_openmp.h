@@ -32,7 +32,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief header file declaring the functions for the ops sequential backend
+/** @brief header file declaring the functions for the ops openmp backend
   * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS API calls for the sequential backend
   */

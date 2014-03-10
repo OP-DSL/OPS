@@ -74,6 +74,7 @@ extern int OPS_hybrid_gpu;
 
 #define OPS_ARG_GBL 0
 #define OPS_ARG_DAT 1
+#define OPS_ARG_IDX 2
 
 typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
@@ -98,14 +99,18 @@ typedef struct
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
   int         size;        /* number of bytes per grid point*/
-  int         *block_size; /* size of the array in each block dimension*/
-  int         *offset;     /* starting index for each dimention*/
+  int         *block_size; /* size of the array in each block dimension -- including halo*/
+  int         *offset;     /* depth from the start of each dimention*/
+  int         *tail;       /* depth from the end of each dimention*/
   char        *data;       /* data on host */
   char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
-  char const *type;        /* datatype */
+  char const  *type;       /* datatype */
+  int         dirtybit; /* flag to indicate MPI halo exchange is needed*/
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
+  int         e_dat;    /* is this an edge dat?*/
+
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
@@ -142,6 +147,7 @@ typedef struct
   char        *data_d; /* data on device (for CUDA)*/
   ops_access   acc;    /* access type */
   ops_arg_type argtype;/* arg type */
+  int         opt;     /*falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional*/
 } ops_arg;
 
 typedef struct
@@ -153,8 +159,40 @@ typedef struct
   float       mpi_time; /* time spent in MPI calls */
 } ops_kernel;
 
+
+
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
+
+
+//
+//Struct for holding the decomposition details of a block on an MPI process
+//
+typedef struct {
+  // the decomposition is for this block
+  ops_block block;
+  //number of dimensions;
+  int ndim;
+  // my MPI rank in each dimension (in cart cords)
+  int* coords;
+  // previous neighbor in each dimension (in cart cords)
+  int* id_m;
+  // next neighbor in each dimension (in cart cords)
+  int* id_p;
+  // the size of the local sub-block in each dimension
+  int* sizes;
+  // the displacement from the start of the block in each dimension
+  int* disps;
+  // the global index of the starting element of the local sub-block in each dimension
+  int* istart;
+  // the global index of the starting element of the local sub-block
+  int* iend;
+
+} sub_block;
+
+typedef sub_block * sub_block_list;
+
+
 
 /*
 * min / max definitions
@@ -190,12 +228,12 @@ void ops_exit_core( void );
 ops_block ops_decl_block(int dims, int *size, char *name);
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, char *data, int type_size,
+                      int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
                       char const * name );
 
 ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
-                      int *block_size, int* offset,  char * data, int type_size,
+                      int *block_size, int* offset,  int* tail, char * data, int type_size,
                       char const * type, char const * name );
 
 void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
@@ -205,6 +243,7 @@ ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stri
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
+ops_arg ops_arg_idx_core( );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
@@ -222,11 +261,19 @@ void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 
 /* check if these should be placed here */
-void ops_set_dirtybit(ops_arg *args, int nargs);
+void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
+void ops_set_halo_dirtybit(ops_arg *arg);
+
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
-void ops_halo_exchanges(ops_arg *args, int nargs);
-void ops_halo_exchanges_cuda(ops_arg *args, int nargs);
+void ops_H_D_exchanges(ops_arg *args, int nargs);
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);
 
 int ops_is_root();
+
+void ops_partition(int dims, int* size, char* routine);
+
+void ops_mpi_reduce_float(ops_arg *args, float* data);
+void ops_mpi_reduce_double(ops_arg *args, double* data);
+void ops_mpi_reduce_int(ops_arg *args, int* data);
 
 #endif /* __OP_LIB_CORE_H */

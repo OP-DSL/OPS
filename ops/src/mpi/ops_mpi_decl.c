@@ -31,13 +31,37 @@
 */
 
 /** @brief ops mpi declaration
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi backend
   */
 
 #include <mpi.h>
 #include <ops_lib_cpp.h>
+#include <ops_mpi_core.h>
 
+#ifndef __XDIMS__ //perhaps put this into a separate headder file
+#define __XDIMS__
+int xdim0;
+int xdim1;
+int xdim2;
+int xdim3;
+int xdim4;
+int xdim5;
+int xdim6;
+int xdim7;
+int xdim8;
+int xdim9;
+int xdim10;
+int xdim11;
+int xdim12;
+int xdim13;
+int xdim14;
+int xdim15;
+int xdim16;
+int xdim17;
+int xdim18;
+int xdim19;
+#endif /* __XDIMS__ */
 
 void
 ops_init ( int argc, char ** argv, int diags )
@@ -47,13 +71,18 @@ ops_init ( int argc, char ** argv, int diags )
   if(!flag) {
     MPI_Init(&argc, &argv);
   }
+
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
+  MPI_Comm_rank(OPS_MPI_WORLD, &ops_my_rank);
+  MPI_Comm_size(OPS_MPI_WORLD, &ops_comm_size);
+
   ops_init_core ( argc, argv, diags );
 }
 
 void ops_exit()
 {
-  //op_mpi_exit();
-  //op_rt_exit();
+  ops_mpi_exit();
+  //ops_rt_exit();
   ops_exit_core();
 
   int flag = 0;
@@ -61,24 +90,93 @@ void ops_exit()
   if(!flag) MPI_Finalize();
 }
 
-ops_dat ops_decl_dat_char (ops_block block, int size, int *block_size,
-                           int* offset,  char* data, int type_size,
-                           char const * type, char const * name )
+ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
+                           int* d_p, char* data,
+                           int type_size, char const * type, char const * name )
 {
-  ops_dat dat;
+  int edge_dat = 0; //flag indicating that this is an edge dat
 
-  if(data != NULL) {
-    dat = ops_decl_dat_core(block, size, block_size, offset, data, type_size, type, name);
+  sub_block_list sb = OPS_sub_block_list[block->index]; //get sub-block geometries
+
+  int* sub_size = (int *)xmalloc(sizeof(int) * sb->ndim);
+
+  for(int n=0;n<sb->ndim;n++){
+    if(dat_size[n] != 1) { //i.e. this dat is a regular data block that needs to decomposed
+      //compute the local array sizes for this dat for this dimension
+      //including max halo depths
+
+      //do check to see if the sizes match with the blocks size
+      /** TO DO **/
+
+      //compute allocation size - which includes the halo
+      sub_size[n] = sb->sizes[n] - d_m[n] - d_p[n];
+    }
+    else { // this dat is a an edge data block that needs to be replicated on each MPI process
+      //apply the size as 1 for this dimension, later to be replicated on each process
+      sub_size[n] = 1;
+      edge_dat = 1;
+
+    }
   }
-  else {
-    dat = ops_decl_dat_temp_core (block, size, block_size, offset,
-                                           data, type_size, type, name );
-    int bytes = size*type_size;
-    for (int i=0; i<block->dims; i++) bytes = bytes*block_size[i];
-    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
-    //dat->data = (char*) malloc(bytes); //initialize data bits to 0
-    dat->user_managed = 0;
+
+/** ---- allocate an empty dat based on the local array sizes computed
+         above on each MPI process                                      ---- **/
+
+  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, d_p, data, type_size, type, name );
+  if( edge_dat == 1) dat->e_dat = 1; //this is an edge dat
+
+  int bytes = size*type_size;
+  for (int i=0; i<sb->ndim; i++) bytes = bytes*sub_size[i];
+  dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
+  dat->user_managed = 0;
+
+  //note that currently we assume replicated dats are read only or initialized just once
+  //what to do if not ?? How will the halos be handled
+
+  /** ---- Create MPI data types for halo exchange ---- **/
+
+  int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
+  int *prod = &prod_t[1];
+
+  prod[-1] = 1;
+  for(int n = 0; n<sb->ndim; n++) {
+    prod[n] = prod[n-1]*sub_size[n];
+    //prod[n] = prod[n-1]*(sb->sizes[n] - d_m[n] - d_p[n]);
   }
+
+  MPI_Datatype* stride = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
+
+  MPI_Datatype new_type_p; //create generic type for MPI comms
+  MPI_Type_contiguous(size*type_size, MPI_CHAR, &new_type_p);
+  MPI_Type_commit(&new_type_p);
+
+  for(int n = 0; n<sb->ndim; n++) {
+    for(int d = 0; d<MAX_DEPTH; d++) {
+      MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
+                      prod[n], new_type_p, &stride[MAX_DEPTH*n+d]);
+      MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
+      //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
+    }
+  }
+
+  //create list to hold sub-grid decomposition geometries for each mpi process
+  OPS_sub_dat_list = (sub_dat_list *)xrealloc(OPS_sub_dat_list, OPS_dat_index*sizeof(sub_dat_list));
+
+  //store away product array prod[] and MPI_Types for this ops_dat
+  sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
+  sd->dat = dat;
+  sd->prod = prod;
+  sd->mpidat = stride;
+
+  int* d_minus = (int *)xmalloc(sizeof(int)*sb->ndim);
+  int* d_plus = (int *)xmalloc(sizeof(int)*sb->ndim);
+  memcpy(d_minus,d_m,sizeof(int)*sb->ndim);
+  memcpy(d_plus,d_p,sizeof(int)*sb->ndim);
+
+  sd->d_m = d_minus;
+  sd->d_p = d_plus;
+
+  OPS_sub_dat_list[dat->index] = sd;
 
   return dat;
 }
@@ -88,9 +186,21 @@ ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_ac
   return ops_arg_dat_core( dat, stencil, acc );
 }
 
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag )
+{
+  ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->opt = flag;
+  return temp;
+}
+
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 {
   return ops_arg_gbl_core( data, dim, size, acc );
+}
+
+ops_arg ops_arg_idx()
+{
+  return ops_arg_idx_core( );
 }
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
@@ -110,4 +220,24 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
 void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
+}
+
+void ops_printf(const char* format, ...)
+{
+  if(ops_my_rank==MPI_ROOT) {
+    va_list argptr;
+    va_start(argptr, format);
+    vprintf(format, argptr);
+    va_end(argptr);
+  }
+}
+
+void ops_fprintf(FILE *stream, const char *format, ...)
+{
+  if(ops_my_rank==MPI_ROOT) {
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stream, format, argptr);
+    va_end(argptr);
+  }
 }

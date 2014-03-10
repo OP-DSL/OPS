@@ -29,7 +29,7 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc
-  CCFLAGS 	:= -vec-report -xSSE4.2
+  CCFLAGS 	:= -O3 -vec-report -xSSE4.2 
   #CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
@@ -79,10 +79,10 @@ cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
 
 mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_decl.c -o $(OBJ)/ops_mpi_decl.o
+	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl.o $(OBJ)/ops_mpi_rt_support.o \
-	$(OBJ)/ops_dummy_singlenode.o
+	$(OBJ)/ops_mpi_partition.o
 
 clean:
 	-rm -if $(OBJ)/*.o
