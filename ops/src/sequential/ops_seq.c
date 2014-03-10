@@ -37,7 +37,7 @@
 
 #include <ops_lib_cpp.h>
 
-#ifndef __XDIMS__
+#ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
 int xdim0;
 int xdim1;

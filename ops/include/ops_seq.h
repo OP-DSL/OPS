@@ -102,7 +102,6 @@ extern int xdim15;
 extern int xdim16;
 extern int xdim17;
 
-
 inline int mult(int* s, int r)
 {
   int result = 1;
@@ -166,7 +165,7 @@ void ops_par_loop(void (*kernel)(T0*),
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*1);
   int* end = (int*) xmalloc(sizeof(int)*ndim*1);
@@ -206,7 +205,7 @@ void ops_par_loop(void (*kernel)(T0*),
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -271,7 +270,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*2);
   int* end = (int*) xmalloc(sizeof(int)*ndim*2);
@@ -311,7 +310,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -379,7 +378,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*3);
   int* end = (int*) xmalloc(sizeof(int)*ndim*3);
@@ -419,7 +418,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -490,7 +489,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*4);
   int* end = (int*) xmalloc(sizeof(int)*ndim*4);
@@ -530,7 +529,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -608,7 +607,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*5);
   int* end = (int*) xmalloc(sizeof(int)*ndim*5);
@@ -648,7 +647,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -730,7 +729,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*6);
   int* end = (int*) xmalloc(sizeof(int)*ndim*6);
@@ -770,7 +769,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -855,7 +854,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*7);
   int* end = (int*) xmalloc(sizeof(int)*ndim*7);
@@ -895,7 +894,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 7; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -983,7 +982,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*8);
   int* end = (int*) xmalloc(sizeof(int)*ndim*8);
@@ -1023,7 +1022,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1118,7 +1117,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*9);
   int* end = (int*) xmalloc(sizeof(int)*ndim*9);
@@ -1158,7 +1157,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 9; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1257,7 +1256,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*10);
   int* end = (int*) xmalloc(sizeof(int)*ndim*10);
@@ -1297,7 +1296,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 10; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1399,7 +1398,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*11);
   int* end = (int*) xmalloc(sizeof(int)*ndim*11);
@@ -1439,7 +1438,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 11; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1544,7 +1543,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*12);
   int* end = (int*) xmalloc(sizeof(int)*ndim*12);
@@ -1584,7 +1583,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 12; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1696,7 +1695,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*13);
   int* end = (int*) xmalloc(sizeof(int)*ndim*13);
@@ -1736,7 +1735,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 13; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -1852,7 +1851,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*14);
   int* end = (int*) xmalloc(sizeof(int)*ndim*14);
@@ -1892,7 +1891,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 14; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -2011,7 +2010,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*15);
   int* end = (int*) xmalloc(sizeof(int)*ndim*15);
@@ -2051,7 +2050,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 15; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -2173,7 +2172,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*16);
   int* end = (int*) xmalloc(sizeof(int)*ndim*16);
@@ -2213,7 +2212,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 16; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -2342,7 +2341,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*17);
   int* end = (int*) xmalloc(sizeof(int)*ndim*17);
@@ -2382,7 +2381,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 17; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
@@ -2515,7 +2514,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   sub_block_list sb = OPS_sub_block_list[block->index];
 
 
-  //compute localy allocated range for the sub-block
+  //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
   int* start = (int*) xmalloc(sizeof(int)*ndim*18);
   int* end = (int*) xmalloc(sizeof(int)*ndim*18);
@@ -2555,7 +2554,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 18; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[i*ndim],
+      + address(ndim, args[i].dat->size, &start[i*ndim], 
         args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
