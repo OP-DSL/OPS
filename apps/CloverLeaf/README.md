@@ -16,3 +16,6 @@ running with MPI (also the sequential version is folded into this directory)
 include platform specific optimisations such as verctorization
 
 * MPI_OpenMP - MPI+OpenMP version, code generated through the OPS translator.
+
+* MPI_CUDA - MPI+CUDA version, code generated through the OPS translator. (currently
+there is no MPI support for this version)
