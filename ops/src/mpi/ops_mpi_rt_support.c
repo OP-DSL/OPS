@@ -114,8 +114,8 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
     MPI_Status status;
 
     for(int n=0;n<sb->ndim;n++){
-      int d_min = abs(d_neg[n]);
-
+      int d_min = 2 ;//abs(d_neg[n]);
+      d_pos[n] = 2; //hard coded for now .. change for dynamic halo depth
       if(dat->block_size[n] > 1 ) {//&& (d_pos[n] > 0 || d_min > 0) ) {
 
         i1 = (-d_m[n] - d_min) * prod[n-1];

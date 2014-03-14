@@ -155,6 +155,20 @@ inline int address(int ndim, int dat_size, int* start, int* size, int* stride, i
   }
   return base;
 }
+
+inline void stencil_depth(ops_stencil sten, int* d_pos, int* d_neg)
+{
+  for(int dim = 0;dim<sten->dims;dim++){
+    d_pos[dim] = 0; d_neg[dim] = 0;
+  }
+  for(int p=0;p<sten->points; p++) {
+    for(int dim = 0;dim<sten->dims;dim++){
+    d_pos[dim] = MAX(d_pos[dim],sten->stencil[sten->dims*p + dim]);
+    d_neg[dim] = MIN(d_neg[dim],sten->stencil[sten->dims*p + dim]);
+    }
+  }
+}
+
 """
 
 f.write(functions)
@@ -302,9 +316,13 @@ for nargs in range (1,maxargs+1):
     #f.write('    }\n')
     #f.write('  }\n\n')
 
+    f.write('   int d_pos[ndim];')
+    f.write('   int d_neg[ndim];')
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
-    f.write('    if(args[i].argtype == OPS_ARG_DAT)\n')
-    f.write('      ops_exchange_halo(&args[i],2);\n')
+    f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
+    f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
+    f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
+    f.write('    }\n')
     f.write('  }\n\n')
 
 
