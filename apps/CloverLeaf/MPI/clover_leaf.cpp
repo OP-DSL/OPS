@@ -226,13 +226,13 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
-      //break;
+      break;
      }
 
   }
 
   ops_timers_core(&ct1, &et1);
-  //ops_timing_output();
+  ops_timing_output();
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);

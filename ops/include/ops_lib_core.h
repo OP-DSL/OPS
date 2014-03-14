@@ -164,6 +164,7 @@ typedef struct
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
 
+extern int ops_current_kernel;
 
 //
 //Struct for holding the decomposition details of a block on an MPI process

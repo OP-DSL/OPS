@@ -260,6 +260,11 @@ for nargs in range (1,maxargs+1):
     #  '    }\n' +
     #  '  }\n\n')
 
+
+    #f.write('  double t1,t2,c1,c2;\n')
+    #f.write('  ops_timing_hash(name);\n')
+
+
     f.write('  #ifdef OPS_DEBUG\n')
     f.write('  ops_register_args(args, name);\n');
     f.write('  #endif\n\n')

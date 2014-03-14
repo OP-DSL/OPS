@@ -279,6 +279,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm('Timing')
     code('double t1,t2,c1,c2;')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('ops_timers_core(&c2,&t2);')
     code('')
 
     for n in range (0, nargs):
@@ -331,6 +332,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     code('ops_timers_core(&c1,&t1);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     code('')
 
     #code('ops_halo_exchanges(args, '+str(nargs)+');\n')
@@ -417,9 +419,17 @@ def ops_gen_mpi(master, date, consts, kernels):
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+
+    if reduction == 1 :
+
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+          code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
+
+      code('ops_timers_core(&c1,&t1);')
+      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
@@ -429,9 +439,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     comm('Update kernel record')
-    code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].count++;')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
