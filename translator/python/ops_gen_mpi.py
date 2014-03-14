@@ -298,8 +298,8 @@ def ops_gen_mpi(master, date, consts, kernels):
         ENDFOR()
         FOR('p','0','args['+str(n)+'].stencil->points')
         FOR('n','0','ndim')
-        code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]);');
-        code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]);');
+        code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
+        code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
         ENDFOR()
         ENDFOR()
 
