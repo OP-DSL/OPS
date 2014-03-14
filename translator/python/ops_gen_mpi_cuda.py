@@ -244,22 +244,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
     code('')
 
-    code('#define FIELD_DENSITY0 0')
-    code('#define FIELD_DENSITY1 1')
-    code('#define FIELD_ENERGY0 2')
-    code('#define FIELD_ENERGY1 3')
-    code('#define FIELD_PRESSURE 4')
-    code('#define FIELD_VISCOSITY 5')
-    code('#define FIELD_SOUNDSPEED 6')
-    code('#define FIELD_XVEL0 7')
-    code('#define FIELD_XVEL1 8')
-    code('#define FIELD_YVEL0 9')
-    code('#define FIELD_YVEL1 10')
-    code('#define FIELD_VOL_FLUX_X 11')
-    code('#define FIELD_VOL_FLUX_Y 12')
-    code('#define FIELD_MASS_FLUX_X 13')
-    code('#define FIELD_MASS_FLUX_Y 14')
-    code('#define NUM_FIELDS 15')
 
 ##########################################################################
 #  generate headder
@@ -293,22 +277,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     code('')
 
-    code('#undef FIELD_DENSITY0')
-    code('#undef FIELD_DENSITY1')
-    code('#undef FIELD_ENERGY0')
-    code('#undef FIELD_ENERGY1')
-    code('#undef FIELD_PRESSURE')
-    code('#undef FIELD_VISCOSITY')
-    code('#undef FIELD_SOUNDSPEED')
-    code('#undef FIELD_XVEL0')
-    code('#undef FIELD_XVEL1')
-    code('#undef FIELD_YVEL0')
-    code('#undef FIELD_YVEL1')
-    code('#undef FIELD_VOL_FLUX_X')
-    code('#undef FIELD_VOL_FLUX_Y')
-    code('#undef FIELD_MASS_FLUX_X')
-    code('#undef FIELD_MASS_FLUX_Y')
-    code('#undef NUM_FIELDS')
 
 ##########################################################################
 #  generate cuda kernel wrapper function
