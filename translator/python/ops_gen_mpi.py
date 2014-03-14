@@ -276,6 +276,11 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
     code('')
 
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('')
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
@@ -286,13 +291,16 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
-        #code('int max'+str(n)+'[2] = {0,0}; int min'+str(n)+'[2] = {0,0};')
-        #FOR('p','0','args['+str(n)+'].stencil->points')
-        #FOR('n','0','ndim')
-        #code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil[2*p + n]);');
-        #code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil[2*p + n]);');
-        #ENDFOR()
-        #ENDFOR()
+        code('int max'+str(n)+'[ndim]; int min'+str(n)+'[ndim];')
+        FOR('n','0','ndim')
+        code('max'+str(n)+'[n] = 0;min'+str(n)+'[n] = 0;')
+        ENDFOR()
+        FOR('p','0','args['+str(n)+'].stencil->points')
+        FOR('n','0','ndim')
+        code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]);');
+        code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]);');
+        ENDFOR()
+        ENDFOR()
 
         comm('set up initial pointers and exchange halos if nessasary')
 
@@ -313,8 +321,8 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
-        code('ops_exchange_halo(&args['+str(n)+'],2);')
+        code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
+        #code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
     code('')
 
@@ -322,9 +330,6 @@ def ops_gen_mpi(master, date, consts, kernels):
 
 
     code('')
-    comm('Timing')
-    code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c1,&t1);')
     code('')
 
@@ -339,8 +344,10 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('int n_x;')
 
     FOR('n_y','s[1]','e[1]')
-    FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
+    #FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
+    #FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
     #code('for( n_x=0; n_x<ROUND_DOWN((e[0]-s[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
+    code('for( n_x=s[0]; n_x<s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
     depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
