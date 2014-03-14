@@ -3,6 +3,22 @@
 
 //#include "data.h"
 
+#define FIELD_DENSITY0 0
+#define FIELD_DENSITY1 1
+#define FIELD_ENERGY0 2
+#define FIELD_ENERGY1 3
+#define FIELD_PRESSURE 4
+#define FIELD_VISCOSITY 5
+#define FIELD_SOUNDSPEED 6
+#define FIELD_XVEL0 7
+#define FIELD_XVEL1 8
+#define FIELD_YVEL0 9
+#define FIELD_YVEL1 10
+#define FIELD_VOL_FLUX_X 11
+#define FIELD_VOL_FLUX_Y 12
+#define FIELD_MASS_FLUX_X 13
+#define FIELD_MASS_FLUX_Y 14
+#define NUM_FIELDS 15
 
 inline void update_halo_kernel1_b2(double *density0, double *density1,
                           double *energy0, double *energy1,
@@ -301,4 +317,23 @@ inline void update_halo_kernel4_minus_2_b(double *vol_flux_y, double *mass_flux_
   if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-2)]);
   if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-2)]);
 }
+
+#undef FIELD_DENSITY0
+#undef FIELD_DENSITY1
+#undef FIELD_ENERGY0
+#undef FIELD_ENERGY1
+#undef FIELD_PRESSURE
+#undef FIELD_VISCOSITY
+#undef FIELD_SOUNDSPEED
+#undef FIELD_XVEL0
+#undef FIELD_XVEL1
+#undef FIELD_YVEL0
+#undef FIELD_YVEL1
+#undef FIELD_VOL_FLUX_X
+#undef FIELD_VOL_FLUX_Y
+#undef FIELD_MASS_FLUX_X
+#undef FIELD_MASS_FLUX_Y
+#undef NUM_FIELDS
+
+
 #endif
