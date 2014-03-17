@@ -345,11 +345,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('ops_timers_core(&c1,&t1);')
     code('')
 
-    code('int start_thread_add[ndim*nthreads*64];')
+
     code('')
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
 
+    code('int start_thread_add[ndim];')
     code('')
     code('int y_size = end[1]-start[1];')
     code('char *p_a['+str(nargs)+'];')
@@ -359,8 +360,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     comm('get addresss per thread')
-    code('start_thread_add[64*ndim*thr+0] = start[0];')
-    code('start_thread_add[64*ndim*thr+1] = start[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('start_thread_add[0] = start[0];')
+    code('start_thread_add[1] = start[1] + ((y_size-1)/nthreads+1)*thr;')
     code('')
 
 
@@ -370,13 +371,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         comm('set up initial pointers ')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start_thread_add[64*ndim*thr+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start_thread_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_thread_add[64*ndim*thr+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start_thread_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[0],')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
