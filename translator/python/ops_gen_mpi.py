@@ -217,13 +217,13 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    code('int ndim = dim;')
+    #code('int ndim = dim;')
     #code('int start[dim];')
     #code('int end[dim];')
-    code('int* start = (int *)xmalloc(sizeof(int)*ndim);')
-    code('int* end = (int *)xmalloc(sizeof(int)*ndim);')
+    code('int* start = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
+    code('int* end = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
 
-    FOR('n','0','ndim')
+    FOR('n','0',str(NDIM))
     code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')

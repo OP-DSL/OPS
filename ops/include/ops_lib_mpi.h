@@ -134,7 +134,6 @@ inline int add2(int* coords, int* size, int dim)
 
 inline int off2(int ndim, int dim, int* start, int* end, int* size, int* stride)
 {
-
   int i = 0;
   int c1[ndim];
   int c2[ndim];
