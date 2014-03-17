@@ -3,22 +3,6 @@
 
 //#include "data.h"
 
-#define FIELD_DENSITY0 0
-#define FIELD_DENSITY1 1
-#define FIELD_ENERGY0 2
-#define FIELD_ENERGY1 3
-#define FIELD_PRESSURE 4
-#define FIELD_VISCOSITY 5
-#define FIELD_SOUNDSPEED 6
-#define FIELD_XVEL0 7
-#define FIELD_XVEL1 8
-#define FIELD_YVEL0 9
-#define FIELD_YVEL1 10
-#define FIELD_VOL_FLUX_X 11
-#define FIELD_VOL_FLUX_Y 12
-#define FIELD_MASS_FLUX_X 13
-#define FIELD_MASS_FLUX_Y 14
-#define NUM_FIELDS 15
 
 inline void update_halo_kernel1_b2(double *density0, double *density1,
                           double *energy0, double *energy1,

@@ -115,46 +115,46 @@ extern int xdim16;
 extern int xdim17;
 
 
-inline int mult2(int* s, int r)
+inline int mult2(int* size, int dim)
 {
   int result = 1;
-  if(r > 0) {
-    for(int i = 0; i<r;i++) result *= s[i];
+  if(dim > 0) {
+    for(int i = 0; i<dim;i++) result *= size[i];
   }
   return result;
 }
 
-inline int add2(int* co, int* s, int r)
+inline int add2(int* coords, int* size, int dim)
 {
-  int result = co[0];
-  for(int i = 1; i<=r;i++) result += co[i]*mult2(s,i);
+  int result = coords[0];
+  for(int i = 1; i<=dim;i++) result += coords[i]*mult2(size,i);
   return result;
 }
 
 
-inline int off2(int ndim, int r, int* ps, int* pe, int* size, int* std)
+inline int off2(int ndim, int dim, int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
   int c1[ndim];
   int c2[ndim];
 
-  for(i=0; i<ndim; i++) c1[i] = ps[i];
-  c1[r] = ps[r] + 1*std[r];
+  for(i=0; i<ndim; i++) c1[i] = start[i];
+  c1[dim] = start[dim] + 1*stride[dim];
 
-  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
-  for(i=r; i<ndim; i++) c2[i] = ps[i];
+  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add2(c1, size, r) - add2(c2, size, r) + 1*(!std[r-1]);
+  int off =  add2(c1, size, dim) - add2(c2, size, dim) + 1*(!stride[dim-1]);
 
   return off;
 }
 
-inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+inline int address2(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult2(size, i) * (ps[i] * std[i] - off[i]);
+    base = base + dat_size * mult2(size, i) * (start[i] * stride[i] - off[i]);
   }
 
   /* for 2D the code generator hard codes the following */
@@ -165,22 +165,19 @@ inline int address2(int ndim, int dat_size, int* ps, int* size, int* std, int* o
 }
 
 
-inline int off2D(int r, int* ps, int* pe, int* size, int* std)
+inline int off2D(int dim, int* start, int* end, int* size, int* stride)
 {
   int i = 0;
   int c1[2]; int c2[2];
-  for(i=0; i<2; i++) c1[i] = ps[i];
-  c1[r] = ps[r] + 1*std[r];
+  for(i=0; i<2; i++) c1[i] = start[i];
+  c1[dim] = start[dim] + 1*stride[dim];
 
-  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
-  for(i=r; i<2; i++) c2[i] = ps[i];
+  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i=dim; i<2; i++) c2[i] = start[i];
 
-  int off =  add2(c1, size, r) - add2(c2, size, r) + 1*(!std[r-1]);
+  int off =  add2(c1, size, dim) - add2(c2, size, dim) + 1*(!stride[dim-1]);
   return off;
 }
-
-
-
 
 
 #endif
