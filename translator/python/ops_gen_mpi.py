@@ -248,10 +248,10 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        FOR('n','1','ndim')
-        code('offs['+str(n)+'][n] = off2(ndim, n, &start[0],')
+        #FOR('n','1','ndim')
+        code('offs['+str(n)+'][1] = off2(2, 1, &start[0],')
         code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-        ENDFOR()
+        #ENDFOR()
         #for d in range (1, NDIM):
         #  code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
         #  code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
