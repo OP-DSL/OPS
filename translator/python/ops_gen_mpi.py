@@ -179,10 +179,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     name2 = name[0:i-1]
     #print name2
 
-    #backend functions that should go to the sequential backend lib
-    #code('#include "ops_mpi_core.h"')
-    #code('#include "ops_lib_mpi.h"')
-
     comm('user function')
     code('#include "'+name2+'_kernel.h"')
     comm('')
@@ -243,14 +239,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     ENDIF()
     ENDFOR()
     code('')
-
-    #FOR('i','0',str(nargs))
-    #FOR('n','0','ndim')
-    #code('start[i*ndim+n] = s[n];')
-    #code('end[i*ndim+n]   = e[n];')
-    #ENDFOR()
-    #ENDFOR()
-    #code('')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')

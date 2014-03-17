@@ -188,7 +188,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       else:
         ng_args = ng_args + 1
 
-    #backend functions that should go to the sequential backend lib
     code('#ifdef _OPENMP')
     code('#include <omp.h>')
     code('#endif')
@@ -351,7 +350,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
 
-    code('int start_thread_add[ndim];')
+    code('')
+    comm('start index for each dimension')
+    for d in range (0, NDIM):
+      code('int start'+str(d)+';')
+
+
     code('')
     code('int y_size = end[1]-start[1];')
     code('char *p_a['+str(nargs)+'];')
@@ -361,8 +365,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     comm('get addresss per thread')
-    code('start_thread_add[0] = start[0];')
-    code('start_thread_add[1] = start[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('start0 = start[0];')
+    code('start1 = start[1] + ((y_size-1)/nthreads+1)*thr;')
     code('')
 
 
@@ -372,14 +376,14 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         comm('set up initial pointers ')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start_thread_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_thread_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
         #original address calculation via funcion call
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[0],')
+        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start0,')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
