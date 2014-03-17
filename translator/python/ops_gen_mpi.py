@@ -218,10 +218,10 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
-    #code('int start[ndim];')
-    #code('int end[ndim];')
-    code('int* start = (int *)xmalloc(sizeof(int)*ndim);')
-    code('int* end = (int *)xmalloc(sizeof(int)*ndim);')
+    code('int start[ndim];')
+    code('int end[ndim];')
+    #code('int* start = (int *)xmalloc(sizeof(int)*ndim);')
+    #code('int* end = (int *)xmalloc(sizeof(int)*ndim);')
 
     FOR('n','0','ndim')
     code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
@@ -419,7 +419,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('ops_set_halo_dirtybit(&args['+str(n)+']);')
 
-    code('free(start);free(end);')
+    #code('free(start);free(end);')
 
     code('')
     comm('Update kernel record')
