@@ -222,39 +222,28 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('compute localy allocated range for the sub-block')
     code('int ndim = sb->ndim;')
-    code('int start[ndim*'+str(nargs)+'];')
-    code('int end[ndim*'+str(nargs)+'];')
+    code('int start[ndim];\n');
+    code('int end[ndim];\n\n')
 
-    code('')
-    code('int s[ndim];')
-    code('int e[ndim];')
-    code('')
 
     FOR('n','0','ndim')
-    code('s[n] = sb->istart[n];e[n] = sb->iend[n]+1;')
-    IF('s[n] >= range[2*n]')
-    code('s[n] = 0;')
+    code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
+    IF('start[n] >= range[2*n]')
+    code('start[n] = 0;')
     ENDIF()
     ELSE()
-    code('s[n] = range[2*n] - s[n];')
+    code('start[n] = range[2*n] - start[n];')
     ENDIF()
 
-    IF('e[n] >= range[2*n+1]')
-    code('e[n] = range[2*n+1] - sb->istart[n];')
+    IF('end[n] >= range[2*n+1]')
+    code('end[n] = range[2*n+1] - sb->istart[n];')
     ENDIF()
     ELSE()
-    code('e[n] = sb->sizes[n];')
+    code('end[n] = sb->sizes[n];')
     ENDIF()
     ENDFOR()
     code('')
 
-    FOR('i','0',str(nargs))
-    FOR('n','0','ndim')
-    code('start[i*ndim+n] = s[n];')
-    code('end[i*ndim+n]   = e[n];')
-    ENDFOR()
-    ENDFOR()
-    code('')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
@@ -264,13 +253,14 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
+        #original offset calculation via funcion call
         #FOR('n','1','ndim')
         #code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
         #code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
         #ENDFOR()
         for d in range (1, NDIM):
-          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start['+str(n)+'*'+str(NDIM)+'],')
-          code('&end['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
+          code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
           code('')
 
     code('')
@@ -307,10 +297,10 @@ def ops_gen_mpi(master, date, consts, kernels):
         comm('set up initial pointers and exchange halos if nessasary')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start[ndim+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start[ndim+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
@@ -323,7 +313,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
         code('')
 
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
         #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
         code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
@@ -347,11 +337,11 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('int n_x;')
 
-    FOR('n_y','s[1]','e[1]')
-    #FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
-    #FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
-    #code('for( n_x=0; n_x<ROUND_DOWN((e[0]-s[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
-    code('for( n_x=s[0]; n_x<s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
+    FOR('n_y','start[1]','end[1]')
+    #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
+    #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
+    #code('for( n_x=0; n_x<ROUND_DOWN((end[0]-start[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
+    code('for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
     depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
@@ -384,8 +374,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
 
 
-    FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
-    #code('for(;n_x<(e[0]-s[0]);n_x++) {')
+    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
+    #code('for(;n_x<(end[0]-start[0]);n_x++) {')
     depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
