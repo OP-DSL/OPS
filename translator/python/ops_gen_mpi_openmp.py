@@ -229,13 +229,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    code('int ndim = sb->ndim;')
+    #code('int ndim = sb->ndim;')
     code('')
-    code('int start[ndim];')
-    code('int end[ndim];')
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
     code('')
 
-    FOR('n','0','ndim')
+    FOR('n','0',str(NDIM))
     code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
