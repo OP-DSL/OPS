@@ -262,6 +262,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
+        #original offset calculation via funcion call
         #FOR('n','1','ndim')
         #code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
         #code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
@@ -377,6 +378,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           code('(start_thread_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
+        #original address calculation via funcion call
         #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[0],')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:

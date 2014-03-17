@@ -226,8 +226,7 @@ void ops_par_loop(void (*kernel)(T0*),
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 1; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -322,8 +321,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 2; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -421,8 +419,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 3; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -523,8 +520,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 4; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -632,8 +628,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 5; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -745,8 +740,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 6; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -861,8 +855,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 7; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -980,8 +973,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 8; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1106,8 +1098,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 9; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1236,8 +1227,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 10; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1369,8 +1359,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 11; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1505,8 +1494,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 12; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1648,8 +1636,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 13; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1795,8 +1782,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 14; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -1945,8 +1931,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 15; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -2098,8 +2083,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 16; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -2258,8 +2242,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 17; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 
@@ -2422,8 +2405,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 18; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
-      stencil_depth(args[i].stencil, d_pos, d_neg);
-      ops_exchange_halo2(&args[i],d_pos,d_neg);
+      ops_exchange_halo(&args[i],2);
     }
   }
 

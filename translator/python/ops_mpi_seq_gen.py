@@ -325,8 +325,9 @@ for nargs in range (1,maxargs+1):
     f.write('   int d_neg[ndim];')
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
-    f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
-    f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
+    #f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
+    #f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
+    f.write('      ops_exchange_halo(&args[i],2);\n')
     f.write('    }\n')
     f.write('  }\n\n')
 
