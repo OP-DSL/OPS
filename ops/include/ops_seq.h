@@ -222,7 +222,7 @@ void ops_par_loop(void (*kernel)(T0*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 1; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -316,8 +316,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 2; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -413,9 +413,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 3; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -513,10 +513,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 4; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -620,11 +620,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 5; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -731,12 +731,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 6; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -845,13 +845,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 7; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -962,14 +962,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 8; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1086,15 +1086,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 9; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1214,16 +1214,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 10; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1345,17 +1345,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 11; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1479,18 +1479,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 12; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1620,19 +1620,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 13; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1765,20 +1765,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 14; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -1913,21 +1913,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0];
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 15; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -2064,22 +2064,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0];
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0];
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 16; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -2222,23 +2222,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0];
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0];
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0];
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 17; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {
@@ -2384,24 +2384,24 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0];
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0];
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0];
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0];
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0];
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0];
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0];
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0];
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0];
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0];
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0];
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0];
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0];
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0];
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0];
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0];
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0];
-  if (args[17].argtype == OPS_ARG_DAT)  xdim17 = args[17].dat->block_size[0];
+  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+  if (args[17].argtype == OPS_ARG_DAT)  xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
 
    int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 18; i++) {
     if(args[i].argtype == OPS_ARG_DAT) {

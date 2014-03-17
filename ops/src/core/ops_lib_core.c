@@ -218,7 +218,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
   (void)name;
 }
 
-ops_dat ops_decl_dat_core( ops_block block, int data_size,
+ops_dat ops_decl_dat_core( ops_block block, int dim,
                       int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
                       char const * name )
@@ -228,7 +228,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
     exit ( -1 );
   }
 
-  if ( data_size <= 0 ) {
+  if ( dim <= 0 ) {
     printf ( "ops_decl_dat error -- negative/zero number of items per grid point in data: %s\n", name );
     exit ( -1 );
   }
@@ -236,8 +236,8 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   ops_dat dat = ( ops_dat ) xmalloc ( sizeof ( ops_dat_core ) );
   dat->index = OPS_dat_index;
   dat->block = block;
-
-  dat->size = type_size*data_size;
+  dat->dim = dim;
+  dat->size = type_size*dim;
 
   dat->block_size =(int *)xmalloc(sizeof(int)*block->dims);
   memcpy(dat->block_size,block_size,sizeof(int)*block->dims);
@@ -278,17 +278,17 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 }
 
 
-ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
+ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
   int *block_size, int* offset,  int* tail, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
-  ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
+  ops_dat found_dat = search_dat(block, dim, block_size, offset, type, name);
   if ( found_dat != NULL) {
     printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, data_size, block_size, offset, tail, data, type_size, type, name );
+  return ops_decl_dat_core ( block, dim, block_size, offset, tail, data, type_size, type, name );
 }
 
 

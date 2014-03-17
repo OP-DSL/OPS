@@ -301,7 +301,7 @@ for nargs in range (1,maxargs+1):
 
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];\n')
+      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
     f.write('\n')
 
     #f.write('  //calculate max halodepth for each dat\n')
