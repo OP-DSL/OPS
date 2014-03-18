@@ -218,6 +218,8 @@ int main(int argc, char **argv)
     if((clover_time+g_small) > end_time || (step >= end_step)) {
       complete=TRUE;
       field_summary();
+      ops_fprintf(g_out,"\n\n Calculation complete\n");
+      ops_fprintf(g_out,"\n Clover is finishing\n");
       break;
     }
 
@@ -234,6 +236,7 @@ int main(int argc, char **argv)
   //ops_timing_output();
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+  ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);
 
   fclose(g_out);
   ops_exit();

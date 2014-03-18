@@ -72,8 +72,6 @@ sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
                                    // geometries
 
 
-
-
 /*
 * Utility functions
 */
@@ -220,7 +218,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
   (void)name;
 }
 
-ops_dat ops_decl_dat_core( ops_block block, int data_size,
+ops_dat ops_decl_dat_core( ops_block block, int dim,
                       int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
                       char const * name )
@@ -230,7 +228,7 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
     exit ( -1 );
   }
 
-  if ( data_size <= 0 ) {
+  if ( dim <= 0 ) {
     printf ( "ops_decl_dat error -- negative/zero number of items per grid point in data: %s\n", name );
     exit ( -1 );
   }
@@ -238,8 +236,8 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   ops_dat dat = ( ops_dat ) xmalloc ( sizeof ( ops_dat_core ) );
   dat->index = OPS_dat_index;
   dat->block = block;
-
-  dat->size = type_size*data_size;
+  dat->dim = dim;
+  dat->size = type_size*dim;
 
   dat->block_size =(int *)xmalloc(sizeof(int)*block->dims);
   memcpy(dat->block_size,block_size,sizeof(int)*block->dims);
@@ -254,6 +252,9 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
   dat->user_managed = 1;
   dat->dirty_hd = 0;
   dat->dirtybit = 0;
+  dat->dirty_dir =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
+  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir[i] = 1;
+
   dat->type = copy_str( type );
   dat->name = copy_str(name);
   dat->e_dat = 0; //default to non-edge dat
@@ -277,17 +278,17 @@ ops_dat ops_decl_dat_core( ops_block block, int data_size,
 }
 
 
-ops_dat ops_decl_dat_temp_core ( ops_block block, int data_size,
+ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
   int *block_size, int* offset,  int* tail, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
-  ops_dat found_dat = search_dat(block, data_size, block_size, offset, type, name);
+  ops_dat found_dat = search_dat(block, dim, block_size, offset, type, name);
   if ( found_dat != NULL) {
     printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, data_size, block_size, offset, tail, data, type_size, type, name );
+  return ops_decl_dat_core ( block, dim, block_size, offset, tail, data, type_size, type, name );
 }
 
 
@@ -546,30 +547,33 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
 void ops_timing_output()
 {
-  int maxlen = 0;
-  for (int i = 0; i < OPS_kern_max; i++) {
-    if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
-  }
-  char *buf = (char*)malloc((maxlen+50)*sizeof(char));
-  char buf2[50];
-  sprintf(buf,"Name");
-  for (int i = 4; i < maxlen;i++) strcat(buf," ");
-  printf("\n\n%s  Count Time     Bandwidth (GB/s)\n",buf);
+  if(ops_is_root()) {
+    int maxlen = 0;
+    for (int i = 0; i < OPS_kern_max; i++) {
+      if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
+    }
+    char *buf = (char*)malloc((maxlen+50)*sizeof(char));
+    char buf2[50];
+    sprintf(buf,"Name");
+    for (int i = 4; i < maxlen;i++) strcat(buf," ");
+    printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
 
-  sprintf(buf,"");
-  for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
-  printf("%s\n",buf);
-  double sumtime = 0.0f;
-  for (int k = 0; k < OPS_kern_max; k++) {
-    if (OPS_kernels[k].count < 1) continue;
-    sprintf(buf,"%s",OPS_kernels[k].name);
-    for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
+    sprintf(buf,"");
+    for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
+    printf("%s\n",buf);
+    double sumtime = 0.0f;
+    for (int k = 0; k < OPS_kern_max; k++) {
+      if (OPS_kernels[k].count < 1) continue;
+      sprintf(buf,"%s",OPS_kernels[k].name);
+      for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
 
-    sprintf(buf2,"%-5d %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
-    printf("%s%s\n",buf,buf2);
-    sumtime += OPS_kernels[k].time;
+      sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
+        OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+      printf("%s%s\n",buf,buf2);
+      sumtime += OPS_kernels[k].time;
+    }
+    printf("Total kernel time: %g\n",sumtime);
   }
-  printf("Total kernel time: %g\n",sumtime);
 }
 
 void ops_timers_core( double * cpu, double * et )

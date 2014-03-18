@@ -188,7 +188,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       else:
         ng_args = ng_args + 1
 
-    #backend functions that should go to the sequential backend lib
     code('#ifdef _OPENMP')
     code('#include <omp.h>')
     code('#endif')
@@ -230,38 +229,26 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    code('int ndim = sb->ndim;')
-    code('int start_add[ndim*'+str(nargs)+'];')
-    code('int end_add[ndim*'+str(nargs)+'];')
-
     code('')
-    code('int s[ndim];')
-    code('int e[ndim];')
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
     code('')
 
-    FOR('n','0','ndim')
-    code('s[n] = sb->istart[n];e[n] = sb->iend[n]+1;')
-    IF('s[n] >= range[2*n]')
-    code('s[n] = 0;')
+    FOR('n','0',str(NDIM))
+    code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
+    IF('start[n] >= range[2*n]')
+    code('start[n] = 0;')
     ENDIF()
     ELSE()
-    code('s[n] = range[2*n] - s[n];')
+    code('start[n] = range[2*n] - start[n];')
     ENDIF()
 
-    IF('e[n] >= range[2*n+1]')
-    code('e[n] = range[2*n+1] - sb->istart[n];')
+    IF('end[n] >= range[2*n+1]')
+    code('end[n] = range[2*n+1] - sb->istart[n];')
     ENDIF()
     ELSE()
-    code('e[n] = sb->sizes[n];')
+    code('end[n] = sb->sizes[n];')
     ENDIF()
-    ENDFOR()
-    code('')
-
-    FOR('i','0',str(nargs))
-    FOR('n','0','ndim')
-    code('start_add[i*ndim+n] = s[n];')
-    code('end_add[i*ndim+n]   = e[n];')
-    ENDFOR()
     ENDFOR()
     code('')
 
@@ -273,13 +260,14 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        #FOR('n','1','ndim')
-        #code('offs['+str(n)+'][n] = off2(ndim, n, &start_add['+str(n)+'*ndim],')
-        #code('&end_add['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+        #original offset calculation via funcion call
+        #FOR('n','1',str(NDIM))
+        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start['+str(n)+'*'+str(NDIM)'+],')
+        #code('&end['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
         #ENDFOR()
         for d in range (1, NDIM):
-          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start_add['+str(n)+'*'+str(NDIM)+'],')
-          code('&end_add['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
+          code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
           code('')
 
     code('')
@@ -338,12 +326,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];')
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
     code('')
 
     comm('Halo Exchanges')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
         code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
 
@@ -356,22 +344,28 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('ops_timers_core(&c1,&t1);')
     code('')
 
-    code('int start_thread_add[ndim*nthreads*64];')
+
     code('')
     code('#pragma omp parallel for')
     FOR('thr','0','nthreads')
 
     code('')
-    code('int y_size = e[1]-s[1];')
+    comm('start index for each dimension')
+    for d in range (0, NDIM):
+      code('int start'+str(d)+';')
+
+
+    code('')
+    code('int y_size = end[1]-start[1];')
     code('char *p_a['+str(nargs)+'];')
     code('')
-    code('int start = s[1] + ((y_size-1)/nthreads+1)*thr;')
-    code('int finish = s[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
+    code('int start_i = start[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('int finish_i = start[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
     code('')
 
     comm('get addresss per thread')
-    code('start_thread_add[64*ndim*thr+0] = s[0];')
-    code('start_thread_add[64*ndim*thr+1] = s[1] + ((y_size-1)/nthreads+1)*thr;')
+    code('start0 = start[0];')
+    code('start1 = start[1] + ((y_size-1)/nthreads+1)*thr;')
     code('')
 
 
@@ -381,13 +375,14 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         comm('set up initial pointers ')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start_thread_add[64*ndim*thr+0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_thread_add[64*ndim*thr+'+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start_thread_add[64*ndim*thr],')
+        #original address calculation via funcion call
+        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start0,')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
@@ -395,8 +390,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code('')
     code('')
 
-    FOR('n_y','start','finish')
-    FOR('n_x','s[0]','s[0]+(e[0]-s[0])/SIMD_VEC')
+    FOR('n_y','start_i','finish_i')
+    FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
@@ -429,7 +424,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ENDFOR()
     code('')
 
-    FOR('n_x','s[0]+((e[0]-s[0])/SIMD_VEC)*SIMD_VEC','e[0]')
+    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
     #depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '

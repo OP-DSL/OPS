@@ -5,6 +5,7 @@
 # OPS_COMPILER (gnu,intel,etc)
 #
 
+
 #
 # set paths for header files and libraries
 #
@@ -36,10 +37,15 @@ print:
 endif
 endif
 
-#
-# set flags for NVCC compilation and linking
-#
-NVCCFLAGS        = -O2 -arch=sm_20 -Xptxas=-v -Dlcm=ca #-g -G #-use_fast_math
+# flags for nvcc
+# set NV_ARCH to select the correct one
+ifndef NV_ARCH
+  MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
+  NV_ARCH=FERMI
+endif
+CODE_GEN_FERMI=-gencode arch=compute_20,code=sm_21
+CODE_GEN_KEPLER=-gencode arch=compute_35,code=sm_35
+NVCCFLAGS        = -O2 $(CODE_GEN_$(NV_ARCH)) -restrict #-g -G 
 
 
 #

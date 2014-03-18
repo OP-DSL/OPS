@@ -55,8 +55,8 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
   ops_dat dat = arg->dat;
 
   if(arg->opt == 1 && dat->dirtybit == 1) { //need to check OPS accs
-  //if( dat->dirtybit == 1) { //need to check OPS accs
-  // ops_printf("exchanging %s\n",arg->dat->name);
+
+    // ops_printf("exchanging %s\n",arg->dat->name);
 
     sub_block_list sb = OPS_sub_block_list[dat->block->index];
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
@@ -115,27 +115,37 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
 
     for(int n=0;n<sb->ndim;n++){
       int d_min = abs(d_neg[n]);
-
+      //d_pos[n] = 2; //hard coded for now .. change for dynamic halo depth
       if(dat->block_size[n] > 1 ) {//&& (d_pos[n] > 0 || d_min > 0) ) {
-
-        i1 = (-d_m[n] - d_min) * prod[n-1];
-        i2 = (-d_m[n]    ) * prod[n-1];
-        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d_min) * prod[n-1];
-        i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
 
         //send in positive direction, receive from negative direction
         //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-        if(d_min > 0)
-        MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d_min],sb->id_p[n],0,
-                     &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d_min],sb->id_m[n],0,
+        int actual_depth = 0;
+        for (int d = 0; d < d_min; d++) if(dat->dirty_dir[2*MAX_DEPTH*n + d] == 1) actual_depth = d;
+
+        i1 = (-d_m[n] - actual_depth) * prod[n-1];
+        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - actual_depth) * prod[n-1];
+
+        if(actual_depth > 0)
+        MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],0,
+                     &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],0,
                      OPS_CART_COMM, &status);
+        for (int d = 0; d < actual_depth; d++)  dat->dirty_dir[2*MAX_DEPTH*n + d] = 0;
+
+        actual_depth = 0;
+        for (int d = 0; d < d_pos[n]; d++) if(dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] == 1) actual_depth = d;
+
+        i2 = (-d_m[n]    ) * prod[n-1];
+        i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
 
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-        if(d_pos[n] > 0)
-        MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_m[n],1,
-                     &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d_pos[n]],sb->id_p[n],1,
+        if(actual_depth > 0)
+        MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],1,
+                     &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],1,
                      OPS_CART_COMM, &status);
+
+        for (int d = 0; d < actual_depth; d++)  dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] = 0;
 
       }
     }
@@ -228,6 +238,7 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
 void ops_set_halo_dirtybit(ops_arg *arg)
 {
   arg->dat->dirtybit = 1;
+  for(int i = 0; i<2*arg->dat->block->dims*MAX_DEPTH;i++) arg->dat->dirty_dir[i] = 1;
 }
 
 

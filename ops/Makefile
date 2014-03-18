@@ -52,7 +52,7 @@ endif
 
 .PHONY: clean mklib
 
-all: clean core seq openmp cuda mpi
+all: clean core seq openmp mpi cuda
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
 

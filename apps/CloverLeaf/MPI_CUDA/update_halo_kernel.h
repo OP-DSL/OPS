@@ -301,4 +301,23 @@ inline void update_halo_kernel4_minus_2_b(double *vol_flux_y, double *mass_flux_
   if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-2)]);
   if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-2)]);
 }
+
+#undef FIELD_DENSITY0
+#undef FIELD_DENSITY1
+#undef FIELD_ENERGY0
+#undef FIELD_ENERGY1
+#undef FIELD_PRESSURE
+#undef FIELD_VISCOSITY
+#undef FIELD_SOUNDSPEED
+#undef FIELD_XVEL0
+#undef FIELD_XVEL1
+#undef FIELD_YVEL0
+#undef FIELD_YVEL1
+#undef FIELD_VOL_FLUX_X
+#undef FIELD_VOL_FLUX_Y
+#undef FIELD_MASS_FLUX_X
+#undef FIELD_MASS_FLUX_Y
+#undef NUM_FIELDS
+
+
 #endif

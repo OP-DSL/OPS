@@ -112,50 +112,63 @@ for nargs in range (0,maxargs):
   f.write('extern int xdim'+str(nargs)+';\n')
 
 functions =  """
-inline int mult(int* s, int r)
+inline int mult(int* size, int dim)
 {
   int result = 1;
-  if(r > 0) {
-    for(int i = 0; i<r;i++) result *= s[i];
+  if(dim > 0) {
+    for(int i = 0; i<dim;i++) result *= size[i];
   }
   return result;
 }
 
-inline int add(int* co, int* s, int r)
+inline int add(int* coords, int* size, int dim)
 {
-  int result = co[0];
-  for(int i = 1; i<=r;i++) result += co[i]*mult(s,i);
+  int result = coords[0];
+  for(int i = 1; i<=dim;i++) result += coords[i]*mult(size,i);
   return result;
 }
 
 
-inline int off(int ndim, int r, int* ps, int* pe, int* size, int* std)
+inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int* c1 = (int*) xmalloc(sizeof(int)*ndim);
-  int* c2 = (int*) xmalloc(sizeof(int)*ndim);
+  int c1[ndim];
+  int c2[ndim];
 
-  for(i=0; i<ndim; i++) c1[i] = ps[i];
-  c1[r] = ps[r] + 1*std[r];
+  for(i=0; i<ndim; i++) c1[i] = start[i];
+  c1[dim] = start[dim] + 1*stride[dim];
 
-  for(i = 0; i<r; i++) std[i]!=0 ? c2[i] = pe[i]:c2[i] = ps[i]+1;
-  for(i=r; i<ndim; i++) c2[i] = ps[i];
+  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add(c1, size, r) - add(c2, size, r) + 1; //plus 1 to get the next element
+  int off =  add(c1, size, dim) - add(c2, size, dim) + 1; //plus 1 to get the next element
 
-  free(c1);free(c2);
   return off;
 }
 
-inline int address(int ndim, int dat_size, int* ps, int* size, int* std, int* off)
+inline int address(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult(size, i) * (ps[i] * std[i] - off[i]);
+    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - off[i]);
   }
   return base;
 }
+
+inline void stencil_depth(ops_stencil sten, int* d_pos, int* d_neg)
+{
+  for(int dim = 0;dim<sten->dims;dim++){
+    d_pos[dim] = 0; d_neg[dim] = 0;
+  }
+  for(int p=0;p<sten->points; p++) {
+    for(int dim = 0;dim<sten->dims;dim++){
+    d_pos[dim] = MAX(d_pos[dim],sten->stencil[sten->dims*p + dim]);
+    d_neg[dim] = MIN(d_neg[dim],sten->stencil[sten->dims*p + dim]);
+    }
+  }
+}
+
 """
 
 f.write(functions)
@@ -226,26 +239,31 @@ for nargs in range (1,maxargs+1):
 
 
     f.write('\n\n  //compute localy allocated range for the sub-block \n' +
-    '  int ndim = sb->ndim;\n' +
-    '  int* start = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');\n' +
-    '  int* end = (int*) xmalloc(sizeof(int)*ndim*'+str(nargs)+');\n\n')
-    f.write('  int s[ndim];\n');
-    f.write('  int e[ndim];\n\n')
+    '  int ndim = sb->ndim;\n' )
+    #'  int start[ndim*'+str(nargs)+'];\n' +
+    #'  int end[ndim*'+str(nargs)+'];\n\n')
+    f.write('  int start[ndim];\n');
+    f.write('  int end[ndim];\n\n')
 
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    s[n] = sb->istart[n];e[n] = sb->iend[n]+1;\n')
-    f.write('    if (s[n] >= range[2*n]) s[n] = 0;\n')
-    f.write('    else s[n] = range[2*n] - s[n];\n')
-    f.write('    if (e[n] >= range[2*n+1]) e[n] = range[2*n+1] - sb->istart[n];\n')
-    f.write('    else e[n] = sb->sizes[n];\n')
+    f.write('    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;\n')
+    f.write('    if (start[n] >= range[2*n]) start[n] = 0;\n')
+    f.write('    else start[n] = range[2*n] - start[n];\n')
+    f.write('    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];\n')
+    f.write('    else end[n] = sb->sizes[n];\n')
     f.write('  }\n')
 
-    f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
-      '    for(int n=0; n<ndim; n++) {\n' +
-      '      start[i*ndim+n] = s[n];\n' +
-      '      end[i*ndim+n]   = e[n];\n' +
-      '    }\n' +
-      '  }\n\n')
+    #f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
+    #  '    for(int n=0; n<ndim; n++) {\n' +
+    #  '      start[i*ndim+n] = s[n];\n' +
+    #  '      end[i*ndim+n]   = e[n];\n' +
+    #  '    }\n' +
+    #  '  }\n\n')
+
+
+    #f.write('  double t1,t2,c1,c2;\n')
+    #f.write('  ops_timing_hash(name);\n')
+
 
     f.write('  #ifdef OPS_DEBUG\n')
     f.write('  ops_register_args(args, name);\n');
@@ -255,7 +273,7 @@ for nargs in range (1,maxargs+1):
     f.write('    if(args[i].stencil!=NULL) {\n')
     f.write('      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension\n')
     f.write('      for(int n=1; n<ndim; n++) {\n')
-    f.write('        offs[i][n] = off(ndim, n, &start[i*ndim], &end[i*ndim],\n'+
+    f.write('        offs[i][n] = off(ndim, n, &start[0], &end[0],\n'+
             '                         args[i].dat->block_size, args[i].stencil->stride);\n')
     f.write('      }\n')
     f.write('    }\n')
@@ -265,18 +283,17 @@ for nargs in range (1,maxargs+1):
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if (args[i].argtype == OPS_ARG_DAT) {\n')
     f.write('      p_a[i] = (char *)args[i].data //base of 2D array\n')
-    f.write('      + address(ndim, args[i].dat->size, &start[i*ndim], \n'+
+    f.write('      + address(ndim, args[i].dat->size, &start[0], \n'+
             '        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);\n')
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
     f.write('      p_a[i] = (char *)args[i].data;\n')
     f.write('  }\n\n')
 
-    f.write('  free(start);free(end);\n\n');
 
     f.write('  int total_range = 1;\n')
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    count[n] = e[n]-s[n];  // number in each dimension\n')
+    f.write('    count[n] = end[n]-start[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
@@ -284,7 +301,7 @@ for nargs in range (1,maxargs+1):
 
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0];\n')
+      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
     f.write('\n')
 
     #f.write('  //calculate max halodepth for each dat\n')
@@ -304,9 +321,14 @@ for nargs in range (1,maxargs+1):
     #f.write('    }\n')
     #f.write('  }\n\n')
 
+    f.write('   int d_pos[ndim];')
+    f.write('   int d_neg[ndim];')
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
-    f.write('    if(args[i].argtype == OPS_ARG_DAT)\n')
+    f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
+    #f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
+    #f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
     f.write('      ops_exchange_halo(&args[i],2);\n')
+    f.write('    }\n')
     f.write('  }\n\n')
 
 
@@ -327,7 +349,7 @@ for nargs in range (1,maxargs+1):
     f.write('    int m = 0;    // max dimension with changed index\n')
 
     f.write('    while (count[m]==0) {\n')
-    f.write('      count[m] =  e[m]-s[m];// reset counter\n')
+    f.write('      count[m] =  end[m]-start[m];// reset counter\n')
     f.write('      m++;                        // next dimension\n')
     f.write('      count[m]--;                 // decrement counter\n')
     f.write('    }\n\n')

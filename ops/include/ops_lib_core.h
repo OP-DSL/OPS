@@ -76,6 +76,11 @@ extern int OPS_hybrid_gpu;
 #define OPS_ARG_DAT 1
 #define OPS_ARG_IDX 2
 
+#ifdef MAX_DEPTH
+#undef MAX_DEPTH
+#endif
+#define MAX_DEPTH 5
+
 typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
 
@@ -98,6 +103,7 @@ typedef struct
 {
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
+  int         dim;        /* number of elements per grid point*/
   int         size;        /* number of bytes per grid point*/
   int         *block_size; /* size of the array in each block dimension -- including halo*/
   int         *offset;     /* depth from the start of each dimention*/
@@ -106,8 +112,9 @@ typedef struct
   char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
   char const  *type;       /* datatype */
-  int         dirtybit; /* flag to indicate MPI halo exchange is needed*/
+  int         dirtybit;    /* flag to indicate MPI halo exchange is needed*/
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
+  int*        dirty_dir;   /* flag to indicate MPI halo exchange in a direction is needed*/
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;    /* is this an edge dat?*/
 
@@ -164,6 +171,7 @@ typedef struct
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
 
+extern int ops_current_kernel;
 
 //
 //Struct for holding the decomposition details of a block on an MPI process

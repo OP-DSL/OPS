@@ -45,10 +45,7 @@
 #endif
 #define MPI_ROOT 0
 
-#ifdef MAX_DEPTH
-#undef MAX_DEPTH
-#endif
-#define MAX_DEPTH 5
+
 
 
 //
