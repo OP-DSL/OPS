@@ -229,7 +229,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    #code('int ndim = sb->ndim;')
     code('')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
@@ -262,9 +261,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
         #original offset calculation via funcion call
-        #FOR('n','1','ndim')
-        #code('offs['+str(n)+'][n] = off2(ndim, n, &start['+str(n)+'*ndim],')
-        #code('&end['+str(n)+'*ndim],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
+        #FOR('n','1',str(NDIM))
+        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start['+str(n)+'*'+str(NDIM)'+],')
+        #code('&end['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
         #ENDFOR()
         for d in range (1, NDIM):
           code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
@@ -383,7 +382,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
         #original address calculation via funcion call
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start0,')
+        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start0,')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')

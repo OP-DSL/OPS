@@ -217,9 +217,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    #code('int ndim = dim;')
-    #code('int start[dim];')
-    #code('int end[dim];')
     code('int* start = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
     code('int* end = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
 
@@ -249,8 +246,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        #FOR('n','1','ndim')
-        #code('offs['+str(n)+'][n] = off2(ndim, n, &start[0],')
+        #FOR('n','1',str(NDIM))
+        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start[0],')
         #code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
         #ENDFOR()
         for d in range (1, NDIM):
@@ -278,14 +275,14 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
 
         #compute max halo depths using
-        #code('int max'+str(n)+'[ndim]; int min'+str(n)+'[ndim];')
-        #FOR('n','0','ndim')
+        #code('int max'+str(n)+'['+str(NDIM)+']; int min'+str(n)+'['+str(NDIM)+'];')
+        #FOR('n','0',str(NDIM))
         #code('max'+str(n)+'[n] = 0;min'+str(n)+'[n] = 0;')
         #ENDFOR()
         #FOR('p','0','args['+str(n)+'].stencil->points')
-        #FOR('n','0','ndim')
-        #code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
-        #code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil[ndim*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
+        #FOR('n','0',str(NDIM))
+        #code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
+        #code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]) * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
         #ENDFOR()
         #ENDFOR()
 
@@ -301,7 +298,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
         #original address calculation via funcion call
         #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-        #code('+ address2(ndim, args['+str(n)+'].dat->size, &start['+str(n)+'*ndim],')
+        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start['+str(n)+'*'+str(NDIM)+'],')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
       else:
