@@ -49,10 +49,10 @@ there is no MPI support for this version)
    all: clean core seq openmp mpi #cuda
 
 
-3. Build each of the Cloverleaf applications
+3. Build each of the Cloverleaf applications. e.g. for building MPI
 
-   e.g. for building MPI
    cd ~/OPS/apps/MPI
+
    make
 
 
