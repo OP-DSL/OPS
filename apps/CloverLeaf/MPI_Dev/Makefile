@@ -16,7 +16,7 @@ ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++
   CPPFLAGS	= -g -fPIC -DUNIX -Wall
   OMPFLAGS	= -fopenmp
-  MPICPP	= /usr/bin/mpiCC
+  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPIFLAGS	= $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),intel)
@@ -26,7 +26,7 @@ ifeq ($(OPS_COMPILER),intel)
   CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
-  MPICPP	= mpiCC
+  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPIFLAGS	= $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),pgi)

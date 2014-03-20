@@ -21,11 +21,11 @@ CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 
 ifeq ($(OPS_COMPILER),gnu)
   CC 	  	:= gcc
-  CCFLAGS 	:= -std=c99 -fPIC -DUNIX -Wall #-g
+  CCFLAGS 	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g
   CXX 	  	:= g++
-  CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall #-g -Wextra
-  MPICXX  	:= /usr/bin/mpiCC
-  MPIFLAGS	:= $(CXXFLAGS)
+  CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g -Wextra
+  MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc
@@ -34,7 +34,7 @@ ifeq ($(OPS_COMPILER),intel)
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
-  MPIFLAGS 	:= $(CXXFLAGS)
+  MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc
