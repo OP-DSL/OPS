@@ -20,3 +20,35 @@ include platform specific optimisations such as verctorization
 
 * MPI_CUDA - MPI+CUDA version, code generated through the OPS translator. (currently
 there is no MPI support for this version)
+
+####Building Cloverleaf
+
+1. set the following environmental variables (e.g. for compiling with Intel compilers)
+   
+   export OPS_COMPILER=intel 
+   export OPS_INSTALL_PATH=~/OPS/ops
+   export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
+
+2. Build the OPS backend libraries:
+
+   cd ~/OPS/ops/
+   make
+
+   For systems that does not have CUDA installed comment out the builing of the GPU backend library
+
+   i.e. change the folloing line 
+
+   all: clean core seq openmp mpi cuda
+
+   to 
+
+   all: clean core seq openmp mpi #cuda
+
+
+3. Build each of the Cloverleaf applications
+
+   e.g. for building MPI
+   cd ~/OPS/apps/MPI
+   make
+
+
