@@ -547,33 +547,42 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
 void ops_timing_output()
 {
-  if(ops_is_root()) {
-    int maxlen = 0;
-    for (int i = 0; i < OPS_kern_max; i++) {
-      if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
-    }
-    char *buf = (char*)malloc((maxlen+50)*sizeof(char));
-    char buf2[50];
-    sprintf(buf,"Name");
-    for (int i = 4; i < maxlen;i++) strcat(buf," ");
-    printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
-
-    sprintf(buf,"");
-    for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
-    printf("%s\n",buf);
-    double sumtime = 0.0f;
-    for (int k = 0; k < OPS_kern_max; k++) {
-      if (OPS_kernels[k].count < 1) continue;
-      sprintf(buf,"%s",OPS_kernels[k].name);
-      for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
-
-      sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
-        OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
-      printf("%s%s\n",buf,buf2);
-      sumtime += OPS_kernels[k].time;
-    }
-    printf("Total kernel time: %g\n",sumtime);
+  int maxlen = 0;
+  for (int i = 0; i < OPS_kern_max; i++) {
+    if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
   }
+  char *buf = (char*)malloc((maxlen+50)*sizeof(char));
+  char buf2[50];
+  sprintf(buf,"Name");
+  for (int i = 4; i < maxlen;i++) strcat(buf," ");
+  ops_printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
+
+  sprintf(buf,"");
+  for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
+  ops_printf("%s\n",buf);
+  double sumtime = 0.0f;
+  for (int k = 0; k < OPS_kern_max; k++) {
+    if (OPS_kernels[k].count < 1) continue;
+    sprintf(buf,"%s",OPS_kernels[k].name);
+    for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
+
+    double moments_mpi_time[2];
+    double moments_time[2];
+    ops_compute_moment(OPS_kernels[k].time, &moments_time[0], &moments_time[1]);
+    ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0], &moments_mpi_time[1]);
+
+    sprintf(buf2,"%-5d %-6f(%-6f) %-6f(%-6f)  %-13.2f", OPS_kernels[k].count, moments_time[0],
+      sqrt(moments_time[1] - moments_time[0]*moments_time[0]),
+      moments_mpi_time[0], sqrt(moments_mpi_time[1] - moments_mpi_time[0]*moments_mpi_time[0]),
+      OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+
+    //sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
+    //  OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+    ops_printf("%s%s\n",buf,buf2);
+    sumtime += OPS_kernels[k].time;
+  }
+  ops_printf("Total kernel time: %g\n",sumtime);
+
 }
 
 void ops_timers_core( double * cpu, double * et )

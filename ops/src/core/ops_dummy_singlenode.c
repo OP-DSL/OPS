@@ -102,3 +102,8 @@ void ops_mpi_reduce_int(ops_arg* args, int* data)
   (void)args;
   (void)data;
 }
+
+void ops_compute_moment(double t, double *first, double *second) {
+  *first = t;
+  *second = t*t;
+}

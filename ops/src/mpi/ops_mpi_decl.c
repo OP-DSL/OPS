@@ -241,3 +241,18 @@ void ops_fprintf(FILE *stream, const char *format, ...)
     va_end(argptr);
   }
 }
+
+void ops_compute_moment(double t, double *first, double *second) {
+  double times[2];
+  double times_reduced[2];
+  int comm_size;
+  times[0] = t;
+  times[1] = t*t;
+  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+  MPI_Reduce(times, times_reduced, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  *first = times_reduced[0]/(double)comm_size;
+  *second = times_reduced[1]/(double)comm_size;
+}
+
+

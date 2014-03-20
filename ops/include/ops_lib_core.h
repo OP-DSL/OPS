@@ -284,4 +284,6 @@ void ops_mpi_reduce_float(ops_arg *args, float* data);
 void ops_mpi_reduce_double(ops_arg *args, double* data);
 void ops_mpi_reduce_int(ops_arg *args, int* data);
 
+void ops_compute_moment(double t, double *first, double *second);
+
 #endif /* __OP_LIB_CORE_H */
