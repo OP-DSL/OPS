@@ -1,3 +1,4 @@
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/gihan/CloverLeaf/Cloverleaf-Oxford/OPS/ops
 export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
+export MPI_INSTALL_PATH=/home/gihan/openmpi-intel-ifort_and_icc/

@@ -237,7 +237,5 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
   for(int b=0; b<OPS_block_index; b++){ //for each block
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
-
-    sub_block_list sb_list = OPS_sub_block_list[block->index];
   }
 }

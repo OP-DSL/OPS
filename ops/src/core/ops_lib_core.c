@@ -269,7 +269,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
     exit ( -1 );
   }
   item->dat = dat;
-  Double_linked_list test; //Head of the double linked list
+  //Double_linked_list test; //Head of the double linked list
   //add item to the end of the list
   TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
   OPS_dat_index++;

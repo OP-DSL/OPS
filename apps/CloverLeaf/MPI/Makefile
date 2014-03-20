@@ -23,15 +23,23 @@ ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
   #CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt #-DOPS_DEBUG
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report
   CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt#-vec-report
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
-  MPICPP	= mpiCC
+  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPIFLAGS	= $(CCFLAGS)
+else
+ifeq ($(OPS_COMPILER),pgi)
+  CPP 		= pgCC
+  CCFLAGS 	= -O3 -Kieee
+  CPPFLAGS 	= $(CCFLAGS)
+  OMPFLAGS 	= -mp
+  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPIFLAGS 	= $(CPPFLAGS)
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 

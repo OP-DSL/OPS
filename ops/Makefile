@@ -33,15 +33,16 @@ ifeq ($(OPS_COMPILER),intel)
   #CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICXX 	:= mpiCC
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPIFLAGS 	:= $(CXXFLAGS)
 else
 ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc
+  CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CCFLAGS 	:= -O3
   CXX 		:= pgCC
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICXX 	:= /home/gihan/openmpi-pgi/bin/mpiCC
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPIFLAGS 	:= $(CXXFLAGS)
 else
 print:
@@ -71,9 +72,9 @@ openmp: mklib core $(OBJ)/ops_lib_core.o
 	ar -r $(LIB)/libops_openmp.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_openmp_decl.o $(OBJ)/ops_dummy_singlenode.o
 
 cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
-	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_INC) -I$(INC) \
+	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_decl.c -o $(OBJ)/ops_cuda_decl.o
-	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_INC) -I$(INC) \
+	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_rt_support.c -o $(OBJ)/ops_cuda_rt_support.o
 	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_decl.o
 
