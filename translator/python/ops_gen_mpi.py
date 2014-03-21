@@ -274,7 +274,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
-        #compute max halo depths using
+        #compute max halo depths using stencil
         code('int max'+str(n)+'['+str(NDIM)+']; int min'+str(n)+'['+str(NDIM)+'];')
         FOR('n','0',str(NDIM))
         code('max'+str(n)+'[n] = 0;min'+str(n)+'[n] = 0;')

@@ -125,14 +125,15 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       //d_pos[n] = 2; //hard coded for now .. change for dynamic halo depth
       if(dat->block_size[n] > 1 ) {//&& (d_pos[n] > 0 || d_min > 0) ) {
 
-        //send in positive direction, receive from negative direction
-        //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
         int actual_depth = 0;
         for (int d = 0; d <= d_min; d++) if(dat->dirty_dir[2*MAX_DEPTH*n + d] == 1) actual_depth = d;
 
         i1 = (-d_m[n] - actual_depth) * prod[n-1];
         i3 = (prod[n]/prod[n-1] - (-d_p[n]) - actual_depth) * prod[n-1];
-//printf("Exchange %s, dim %d min depth %d req %d\n",dat->name, n, actual_depth, d_min);
+        //printf("Exchange %s, dim %d min depth %d req %d\n",dat->name, n, actual_depth, d_min);
+
+        //send in positive direction, receive from negative direction
+        //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
         if(actual_depth > 0)
         MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],0,
                      &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],0,
@@ -144,7 +145,8 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
 
         i2 = (-d_m[n]    ) * prod[n-1];
         i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
-//printf("Exchange %s, dim %d max depth %d req %d\n",dat->name, n, actual_depth, d_pos[n]);
+        //printf("Exchange %s, dim %d max depth %d req %d\n",dat->name, n, actual_depth, d_pos[n]);
+
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
         if(actual_depth > 0)
