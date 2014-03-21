@@ -344,9 +344,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         ENDFOR()
 
     comm('Halo Exchanges')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
-        code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
+    #for n in range (0, nargs):
+      #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
+        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
 
