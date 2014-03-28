@@ -50,6 +50,7 @@ int ops_is_root()
   return (my_rank==MPI_ROOT);
 }
 
+/*fixed depth halo exchange*/
 void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
 {
   ops_dat dat = arg->dat;
@@ -102,6 +103,7 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
 
 }
 
+/*dynamic depth halo exchange*/
 void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
 {
   ops_dat dat = arg->dat;
@@ -119,14 +121,17 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
     int* prod = sd->prod;
     int size = dat->size;
     MPI_Status status;
+
     for(int n=0;n<sb->ndim;n++){
+
       int d_min = abs(d_neg[n]);
-      if (d_min > 2 || d_pos[n] > 2) printf("big stencil in %s\n",dat->name);
+      //if (d_min > 2 || d_pos[n] > 2) printf("big stencil in %s\n",dat->name);
       //d_pos[n] = 2; //hard coded for now .. change for dynamic halo depth
       if(dat->block_size[n] > 1 ) {//&& (d_pos[n] > 0 || d_min > 0) ) {
 
         int actual_depth = 0;
-        for (int d = 0; d <= d_min; d++) if(dat->dirty_dir[2*MAX_DEPTH*n + d] == 1) actual_depth = d;
+        for (int d = 0; d <= d_min; d++)
+          if(dat->dirty_dir[2*MAX_DEPTH*n + d] == 1) actual_depth = d;
 
         i1 = (-d_m[n] - actual_depth) * prod[n-1];
         i3 = (prod[n]/prod[n-1] - (-d_p[n]) - actual_depth) * prod[n-1];
@@ -138,10 +143,11 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],0,
                      &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],0,
                      OPS_CART_COMM, &status);
-        for (int d = 0; d <= actual_depth; d++)  dat->dirty_dir[2*MAX_DEPTH*n + d] = 0;
+        for (int d = 0; d <= actual_depth; d++) dat->dirty_dir[2*MAX_DEPTH*n + d] = 0;
 
         actual_depth = 0;
-        for (int d = 0; d <= d_pos[n]; d++) if(dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] == 1) actual_depth = d;
+        for (int d = 0; d <= d_pos[n]; d++)
+          if(dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] == 1) actual_depth = d;
 
         i2 = (-d_m[n]    ) * prod[n-1];
         i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
@@ -154,8 +160,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
                      &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],1,
                      OPS_CART_COMM, &status);
 
-        for (int d = 0; d <= actual_depth; d++)  dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] = 0;
-
+        for (int d = 0; d <= actual_depth; d++) dat->dirty_dir[2*MAX_DEPTH*n + MAX_DEPTH + d] = 0;
       }
     }
   }
