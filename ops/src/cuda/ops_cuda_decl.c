@@ -239,3 +239,8 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
   }
 }
+
+void ops_compute_moment(double t, double *first, double *second) {
+  *first = t;
+  *second = t*t;
+}
