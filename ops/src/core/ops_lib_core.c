@@ -252,8 +252,10 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->user_managed = 1;
   dat->dirty_hd = 0;
   dat->dirtybit = 0;
-  dat->dirty_dir =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
-  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir[i] = 1;
+  dat->dirty_dir_send =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
+  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_send[i] = 1;
+  dat->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
+  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_recv[i] = 1;
 
   dat->type = copy_str( type );
   dat->name = copy_str(name);
@@ -550,9 +552,12 @@ void ops_timing_output()
   int maxlen = 0;
   for (int i = 0; i < OPS_kern_max; i++) {
     if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
+    if (OPS_kernels[i].count > 0 && strlen(OPS_kernels[i].name)>50) {
+      printf("Too long\n");
+    }
   }
-  char *buf = (char*)malloc((maxlen+50)*sizeof(char));
-  char buf2[50];
+  char *buf = (char*)malloc((maxlen+80)*sizeof(char));
+  char buf2[80];
   sprintf(buf,"Name");
   for (int i = 4; i < maxlen;i++) strcat(buf," ");
   ops_printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);

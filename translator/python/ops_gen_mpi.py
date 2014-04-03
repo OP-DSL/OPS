@@ -306,7 +306,8 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
+        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
+        code('ops_exchange_halo3(&args['+str(n)+'],max'+str(n)+',min'+str(n)+',range);')
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
     code('')
@@ -414,7 +415,8 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code('ops_set_halo_dirtybit(&args['+str(n)+']);')
+        #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
+        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('free(start);free(end);')
 

@@ -81,6 +81,8 @@ extern int OPS_hybrid_gpu;
 #endif
 #define MAX_DEPTH 5
 
+#define OPS_MAX_DIM 5
+
 typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
 
@@ -114,7 +116,8 @@ typedef struct
   char const  *type;       /* datatype */
   int         dirtybit;    /* flag to indicate MPI halo exchange is needed*/
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
-  int*        dirty_dir;   /* flag to indicate MPI halo exchange in a direction is needed*/
+  int*        dirty_dir_send;   /* flag to indicate MPI halo exchange in a direction is needed*/
+  int*        dirty_dir_recv;   /* flag to indicate MPI halo exchange in a direction is needed*/
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;    /* is this an edge dat?*/
 
@@ -271,6 +274,8 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 /* check if these should be placed here */
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
 void ops_set_halo_dirtybit(ops_arg *arg);
+void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
+
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
