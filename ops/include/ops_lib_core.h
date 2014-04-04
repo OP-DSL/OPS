@@ -163,9 +163,13 @@ typedef struct
 {
   char       *name;     /* name of kernel function */
   int         count;    /* number of times called */
-  float       time;     /* total execution time */
+  double       time;     /* total execution time */
   float       transfer; /* bytes of data transfer (used) */
-  float       mpi_time; /* time spent in MPI calls */
+  double       mpi_time; /* time spent in MPI calls */
+//  double       mpi_gather;
+//  double       mpi_scatter;
+//  double       mpi_sendrecv;
+//  double       mpi_reduct;
 } ops_kernel;
 
 

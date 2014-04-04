@@ -63,6 +63,10 @@ int ops_buffer_recv_1_size=0;
 int ops_buffer_send_2_size=0;
 int ops_buffer_recv_2_size=0;
 
+extern double ops_gather_time;
+extern double ops_scatter_time;
+extern double ops_sendrecv_time;
+
 void ops_realloc_buffers(const ops_halo *halo1, const ops_halo *halo2) {
   int size = MAX(halo1->blocklength*halo1->count, halo2->blocklength*halo2->count);
   if (size > ops_buffer_size) {
@@ -529,12 +533,12 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   int send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;  
   if (send_recv_offsets[0]+send_size > ops_buffer_send_1_size) {
-    if (OP_diags>4) printf("Realloc ops_buffer_send_1\n");
+    if (OPS_diags>4) printf("Realloc ops_buffer_send_1\n");
     ops_buffer_send_1 = (char *)realloc(ops_buffer_send_1,send_recv_offsets[0]+4*send_size);
     ops_buffer_send_1_size = send_recv_offsets[0]+4*send_size;
   }
   if (send_recv_offsets[1]+recv_size > ops_buffer_recv_1_size) {
-    if (OP_diags>4) printf("Realloc ops_buffer_recv_1\n");
+    if (OPS_diags>4) printf("Realloc ops_buffer_recv_1\n");
     ops_buffer_recv_1 = (char *)realloc(ops_buffer_recv_1,send_recv_offsets[1]+4*recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0]+4*recv_size;
   }
@@ -580,12 +584,12 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
   recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
   if (send_recv_offsets[2]+send_size > ops_buffer_send_2_size) {
-    if (OP_diags>4) printf("Realloc ops_buffer_send_2\n");
+    if (OPS_diags>4) printf("Realloc ops_buffer_send_2\n");
     ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2,send_recv_offsets[2]+4*send_size);
     ops_buffer_send_2_size = send_recv_offsets[2]+4*send_size;
   }
   if (send_recv_offsets[3]+recv_size > ops_buffer_recv_2_size) {
-    if (OP_diags>4) printf("Realloc ops_buffer_recv_2\n");
+    if (OPS_diags>4) printf("Realloc ops_buffer_recv_2\n");
     ops_buffer_recv_2 = (char *)realloc(ops_buffer_recv_2,send_recv_offsets[3]+4*recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3]+4*recv_size;
   }
@@ -683,15 +687,26 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
+//  double c1,c2,t1,t2;
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
   for (int dim = 0; dim < OPS_MAX_DIM; dim++){
+//    ops_timers_core(&c1,&t1);
     int id_m=-1,id_p=-1;
+    int other_dims=1;
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT || !(args[i].acc==OPS_READ || args[i].acc==OPS_RW) || args[i].opt == 0 ) continue;
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if( dat_ndim <= dim || dat->block_size[dim] <= 1 ) continue;
+      for (int d2 = 0; d2 < dat_ndim; d2++) {
+        if (dim != d2)
+          other_dims = other_dims && intersection( range[2*dim]+MAX_DEPTH,
+                                         range[2*dim+1]-MAX_DEPTH,
+                                         OPS_sub_block_list[dat->block->index]->istart[dim],
+                                         OPS_sub_block_list[dat->block->index]->iend[dim]+1); //i.e. the intersection of the dependency range with my full range
+      }
+      if (other_dims==0) break;
       id_m = OPS_sub_block_list[dat->block->index]->id_m[dim];
       id_p = OPS_sub_block_list[dat->block->index]->id_p[dim];
       int d_pos=0,d_neg=0;
@@ -702,20 +717,26 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
-    
+//    ops_timers_core(&c2,&t2);
+//    ops_gather_time += t2-t1;
+    if (other_dims==0) continue;
+
     MPI_Request request[4];
-    MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,id_m,dim,
+    MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:-1,dim,
       OPS_CART_COMM, &request[0]);
-    MPI_Isend(ops_buffer_send_2,send_recv_offsets[2],MPI_BYTE,id_p,OPS_MAX_DIM+dim,
+    MPI_Isend(ops_buffer_send_2,send_recv_offsets[2],MPI_BYTE,send_recv_offsets[2]>0?id_p:-1,OPS_MAX_DIM+dim,
       OPS_CART_COMM, &request[1]);
-    MPI_Irecv(ops_buffer_recv_1,send_recv_offsets[1],MPI_BYTE,id_p,dim,
+    MPI_Irecv(ops_buffer_recv_1,send_recv_offsets[1],MPI_BYTE,send_recv_offsets[1]>0?id_p:-1,dim,
       OPS_CART_COMM, &request[2]);
-    MPI_Irecv(ops_buffer_recv_2,send_recv_offsets[3],MPI_BYTE,id_m,OPS_MAX_DIM+dim,
+    MPI_Irecv(ops_buffer_recv_2,send_recv_offsets[3],MPI_BYTE,send_recv_offsets[3]>0?id_m:-1,OPS_MAX_DIM+dim,
       OPS_CART_COMM, &request[3]);
       
     MPI_Status status[4];
     MPI_Waitall(2,&request[2],&status[2]);
     
+//    ops_timers_core(&c1,&t1);
+//    ops_sendrecv_time += t1-t2;
+
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT || !(args[i].acc==OPS_READ || args[i].acc==OPS_RW) || args[i].opt == 0) continue;
@@ -732,6 +753,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     }
     
     MPI_Waitall(2,&request[0],&status[0]);
+//    ops_timers_core(&c2,&t2);
+//    ops_scatter_time += t2-t1;
   }
 }
 

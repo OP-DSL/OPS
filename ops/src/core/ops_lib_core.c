@@ -72,6 +72,9 @@ sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
                                    // geometries
 
 
+double ops_gather_time=0.0;
+double ops_scatter_time=0.0;
+double ops_sendrecv_time=0.0;
 /*
 * Utility functions
 */
@@ -587,7 +590,7 @@ void ops_timing_output()
     sumtime += OPS_kernels[k].time;
   }
   ops_printf("Total kernel time: %g\n",sumtime);
-
+  //printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time, ops_scatter_time);
 }
 
 void ops_timers_core( double * cpu, double * et )
