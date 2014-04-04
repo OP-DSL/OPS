@@ -99,6 +99,10 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
   (void)iter_range;
 }
 
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
+  (void)args;
+  (void)range;
+}
 
 void ops_mpi_reduce_float(ops_arg* args, float* data)
 {

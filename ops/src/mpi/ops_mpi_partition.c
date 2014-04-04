@@ -39,6 +39,19 @@
 #include <mpi.h>
 #include <ops_lib_cpp.h>
 #include <ops_mpi_core.h>
+#include <math.h>
+
+extern int ops_buffer_size;
+extern char *ops_buffer_send_1;
+extern char *ops_buffer_recv_1;
+extern char *ops_buffer_send_2;
+extern char *ops_buffer_recv_2;
+extern int ops_buffer_send_1_size;
+extern int ops_buffer_recv_1_size;
+extern int ops_buffer_send_2_size;
+extern int ops_buffer_recv_2_size;
+
+
 
 MPI_Comm OPS_MPI_WORLD; // comm world for a single block
                         // -- need to have a communicator for each block in multi-block
@@ -134,7 +147,10 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
 {
   //create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
-
+  
+  int max_block_dim = 0;
+  int max_block_dims = 0;
+  
   for(int b=0; b<OPS_block_index; b++){ //for each block
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
@@ -154,9 +170,23 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
       n, sb_list->id_m[n], sb_list->id_p[n], sb_list->disps[n], sb_list->sizes[n],
       sb_list->istart[n], sb_list->iend[n]);
     printf("\n");
+    
+    max_block_dims = MAX(max_block_dims,sb_list->ndim);
+    for(int n=0; n<sb_list->ndim; n++) max_block_dim = MAX(max_block_dim,sb_list->sizes[n]);
+    
   }
   ops_printf("Finished block decomposition\n");
-
+  
+  //allocate send/recv buffer (double, 8 args, maximum depth)
+  ops_buffer_size = 8*8*MAX_DEPTH*pow(2*MAX_DEPTH+max_block_dim,max_block_dims-1);
+  ops_buffer_send_1=(char*)malloc(ops_buffer_size);
+  ops_buffer_recv_1=(char*)malloc(ops_buffer_size);
+  ops_buffer_send_2=(char*)malloc(ops_buffer_size);
+  ops_buffer_recv_2=(char*)malloc(ops_buffer_size);
+  ops_buffer_send_1_size = ops_buffer_size;
+  ops_buffer_recv_1_size = ops_buffer_size;
+  ops_buffer_send_2_size = ops_buffer_size;
+  ops_buffer_recv_2_size = ops_buffer_size;
 }
 
 //special case where iterating in 2D and accessing 1D edge, then all procs will need to
@@ -173,7 +203,12 @@ void ops_mpi_exit()
     free(OPS_sub_dat_list[i]->d_m);
     free(OPS_sub_dat_list[i]->d_p);
     free(&OPS_sub_dat_list[i]->prod[-1]);
+    free(OPS_sub_dat_list[i]->halos);
   }
   free(OPS_sub_dat_list);
+  free(ops_buffer_send_1);
+  free(ops_buffer_recv_1);
+  free(ops_buffer_send_2);
+  free(ops_buffer_recv_2);
   OPS_sub_dat_list = NULL;
 }

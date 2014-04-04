@@ -149,12 +149,16 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
   MPI_Datatype new_type_p; //create generic type for MPI comms
   MPI_Type_contiguous(size*type_size, MPI_CHAR, &new_type_p);
   MPI_Type_commit(&new_type_p);
-
+  ops_halo *halos=(ops_halo *)malloc(MAX_DEPTH*sb->ndim*sizeof(ops_halo));
+  
   for(int n = 0; n<sb->ndim; n++) {
     for(int d = 0; d<MAX_DEPTH; d++) {
       MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
                       prod[n], new_type_p, &stride[MAX_DEPTH*n+d]);
       MPI_Type_commit(&stride[MAX_DEPTH*n+d]);
+      halos[MAX_DEPTH*n+d].count = prod[sb->ndim - 1]/prod[n];
+      halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * size*type_size;
+      halos[MAX_DEPTH*n+d].stride = prod[n] * size*type_size;
       //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
     }
   }
@@ -167,6 +171,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
   sd->dat = dat;
   sd->prod = prod;
   sd->mpidat = stride;
+  sd->halos = halos;
 
   int* d_minus = (int *)xmalloc(sizeof(int)*sb->ndim);
   int* d_plus = (int *)xmalloc(sizeof(int)*sb->ndim);

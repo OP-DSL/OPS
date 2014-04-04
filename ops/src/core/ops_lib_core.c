@@ -256,7 +256,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_send[i] = 1;
   dat->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_recv[i] = 1;
-
+  
   dat->type = copy_str( type );
   dat->name = copy_str(name);
   dat->e_dat = 0; //default to non-edge dat

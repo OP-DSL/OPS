@@ -120,7 +120,6 @@ typedef struct
   int*        dirty_dir_recv;   /* flag to indicate MPI halo exchange in a direction is needed*/
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;    /* is this an edge dat?*/
-
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
