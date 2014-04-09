@@ -5,7 +5,7 @@
 \usepackage{listings}
 \usepackage{verbments}
 
-\date{Jan 2014}
+\date{April 2014}
 
  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
  \oddsidemargin 0.1in
@@ -52,7 +52,7 @@ detailed.
 
 Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
 applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
-due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
+due to the implicit connectivity between neighboring mesh elements (such as vertices, cells) in structured
 meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
 points using one or more ``stencils'' to access data.\\
 
@@ -111,6 +111,8 @@ face of another block.  This is awkward and hard to handle simply.
 \item \vspace{-0.3in}
 \end{routine}
 
+\subsection{Declaration routines}
+
 \begin{routine} {ops\_block ops\_decl\_block(int dims, int *size, char *name)}
 {This routine defines a structured grid block.}
 
@@ -119,13 +121,32 @@ face of another block.  This is awkward and hard to handle simply.
 \item[name]          a name used for output diagnostics
 \end{routine}
 
-\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, T *data, char *name)}
-{This routine defines a dataset.}
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, \\
+\hspace*{1.6in}int* d\_n, int* d\_p, T *data, char *name)}
+{This routine defines a dataset. }
 
 \item[block]         structured block
 \item[dim]           dimension of dataset (number of items per block element)
+\item[size]	     size of the dat in each dimension
+\item[d\_m]	     max offset from negative edge in each dimension
+\item[d\_p]	     max offset from positive edge in each dimension
 \item[data]          input data of type {\tt T}
 \item[name]          a name used for output diagnostics
+\end{routine}\vspace{-5pt}
+The depths \texttt{d\_m} and \texttt{d\_p} are used to indicate the offset from the edge in both the negative and
+positive directions of each dimension. In the current API, it is important that the application developer indicate to
+OPS, the maximum stencil depth a given \texttt{ops\_dat} is accessed within any of the subsequent loops over a block.
+This is to account for stencils accessing beyond the defined regions of the \texttt{ops\_dat} during an execution,
+particularly for distributed memory halo allocation within OPS. In the future OPS will be able to dynamically allocate
+the maximum necessary depths based on the stencils declared to be used on a given \texttt{ops\_dat}.\\
+
+
+\begin{routine} {ops\_decl\_const(char const* name, int dim, char const type, T* data)}{Declare a
+global constant}
+\item[name]       name of constant
+\item[dim]     dimension of the data
+\item[type]    data type
+\item[data]    constant data of type {\tt T}
 \end{routine}
 
 \begin{routine} {void ops\_diagnostic\_output()}
@@ -141,12 +162,13 @@ face of another block.  This is awkward and hard to handle simply.
 
 A parallel loop with N arguments has the following syntax:
 
-\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), char *name,
-                 int dims, int *range,\\
+\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), char *name, \\
+\hspace*{1.4in} ops\_block block, int dims, int *range,\\
 \hspace*{1.4in} ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
 
 \item[kernel]     user's kernel function with N arguments
 \item[name]       name of kernel function, used for output diagnostics
+\item[block]       ops\_block on which this loop iterates over
 \item[dims]       dimension of loop iteration
 \item[range]      iteration range array
 \item[args]       arguments
@@ -177,6 +199,7 @@ for OPS datasets.
 \item[type]    	  string representing the type of data held in dataset
 \item[acc]        access type
 \end{routine}
+
 
 
 \newpage
@@ -225,6 +248,8 @@ specification.
 dimension applications (with a stride of 0 for the relevant dimensions).
 
 
+
+
 \newpage
 \section{OPS User Kernels}
 
@@ -255,8 +280,8 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 \begin{pyglist}[language=c]
 int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; //x-y range
 
-ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
-             2, rangexy_inner_plus1,
+ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass", 
+             colver_grid, 2, rangexy_inner_plus1,
              ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(volume,   S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
