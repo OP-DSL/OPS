@@ -53,8 +53,13 @@ void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
 
 void ops_set_dirtybit_host(ops_arg *args, int nargs)
 {
-  (void)nargs;
-  (void)args;
+  for (int n=0; n<nargs; n++) {
+    if((args[n].argtype == OPS_ARG_DAT) &&
+       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
+      //printf("setting dirty bit on host\n");
+      args[n].dat->dirty_hd = 1;
+    }
+  }
 }
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
