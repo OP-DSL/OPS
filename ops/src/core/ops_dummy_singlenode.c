@@ -73,6 +73,12 @@ void ops_set_halo_dirtybit(ops_arg *arg)
   (void)arg;
 }
 
+void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
+{
+  (void)arg;
+  (void)iter_range;  
+}
+
 void ops_exchange_halo(ops_arg* arg, int d)
 {
   (void)arg;
@@ -83,6 +89,19 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
   (void)arg;
   (void)d_pos;
   (void)d_neg;
+}
+
+void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range)
+{
+  (void)arg;
+  (void)d_pos;
+  (void)d_neg;
+  (void)iter_range;
+}
+
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
+  (void)args;
+  (void)range;
 }
 
 void ops_mpi_reduce_float(ops_arg* args, float* data)
@@ -101,4 +120,9 @@ void ops_mpi_reduce_int(ops_arg* args, int* data)
 {
   (void)args;
   (void)data;
+}
+
+void ops_compute_moment(double t, double *first, double *second) {
+  *first = t;
+  *second = t*t;
 }

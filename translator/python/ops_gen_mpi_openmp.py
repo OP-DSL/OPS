@@ -329,10 +329,25 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
     code('')
 
-    comm('Halo Exchanges')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
-        code('ops_exchange_halo(&args['+str(n)+'],2);')
+      if arg_typ[n] == 'ops_arg_dat':
+        #compute max halo depths using stencil
+        code('int max'+str(n)+'['+str(NDIM)+']; int min'+str(n)+'['+str(NDIM)+'];')
+        FOR('n','0',str(NDIM))
+        code('max'+str(n)+'[n] = 0;min'+str(n)+'[n] = 0;')
+        ENDFOR()
+        FOR('p','0','args['+str(n)+'].stencil->points')
+        FOR('n','0',str(NDIM))
+        code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]);')# * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
+        code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]);')# * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
+        ENDFOR()
+        ENDFOR()
+
+    comm('Halo Exchanges')
+    #for n in range (0, nargs):
+      #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
+        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
+        #code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
 
     code('ops_H_D_exchanges(args, '+str(nargs)+');\n')
@@ -372,6 +387,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+
         comm('set up initial pointers ')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')

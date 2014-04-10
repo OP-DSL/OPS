@@ -459,12 +459,11 @@ def main():
             rep2 = True
             for arg in range(0, nargs):
                 rep2 = rep2 and \
-                    kernels[nk]['var'][arg] == var[arg] and \
                     kernels[nk]['stens'][arg] == stens[arg] and \
                     kernels[nk]['dims'][arg] == dims[arg] and \
                     kernels[nk]['typs'][arg] == typs[arg] and \
                     kernels[nk]['accs'][arg] == accs[arg]
-
+#                    kernels[nk]['var'][arg] == var[arg] and \
             if rep2:
               print 'repeated kernel with compatible arguments: ' + \
                     kernels[nk]['name'],
