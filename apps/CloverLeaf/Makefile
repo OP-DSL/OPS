@@ -71,7 +71,7 @@ endif
 ifdef DEBUG
   NVCC_FLAGS = -O0 -g -G
 else
-	NVCC_FLAGS = -O3
+	NVCC_FLAGS = -O3 
 endif
 
 
@@ -213,6 +213,22 @@ cloverleaf_cuda: ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cpp bu
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
+
+cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+		initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
+		update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+		calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+		advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
+		initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
+		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+		initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
+		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_cu.o -lcudart -lops_mpi_cuda -o cloverleaf_mpi_cuda
 
 ./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile

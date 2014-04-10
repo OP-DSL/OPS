@@ -45,13 +45,6 @@ extern int OPS_diags;
 // Timing
 double t1,t2,c1,c2;
 
-int ops_is_root()
-{
-  int my_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
-  return (my_rank==MPI_ROOT);
-}
-
 #define AGGREGATE
 int ops_buffer_size = 0;
 char *ops_buffer_send_1=NULL;
@@ -76,22 +69,6 @@ void ops_realloc_buffers(const ops_halo *halo1, const ops_halo *halo2) {
     ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2, size*sizeof(char));
     ops_buffer_recv_2 = (char *)realloc(ops_buffer_recv_2, size*sizeof(char));
     ops_buffer_size = size;
-  }
-}
-
-void ops_pack(const char *__restrict src, char *__restrict dest, const ops_halo *__restrict halo) {
-  for (unsigned int i = 0; i < halo->count; i ++) {
-    memcpy(dest, src, halo->blocklength);
-    src += halo->stride;
-    dest += halo->blocklength;
-  }
-}
-
-void ops_unpack(char *__restrict dest, const char *__restrict src, const ops_halo *__restrict halo) {
-  for (unsigned int i = 0; i < halo->count; i ++) {
-    memcpy(dest, src, halo->blocklength);
-    src += halo->blocklength;
-    dest += halo->stride;
   }
 }
 
@@ -130,12 +107,12 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
         i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
 #ifdef AGGREGATE        
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*n+d],&sd->halos[MAX_DEPTH*n+d]);
-        ops_pack(&dat->data[i3*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+d]);
+        ops_pack(dat, i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+d]);
         int exch_size = sd->halos[MAX_DEPTH*n+d].blocklength * sd->halos[MAX_DEPTH*n+d].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_p[n],0,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_m[n],0,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i1*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
+        ops_unpack(dat, i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
 #else        
         //send in positive direction, receive from negative direction
         //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
@@ -147,12 +124,12 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
         for (int d1 = 0; d1 <= d; d1++)  dat->dirty_dir_recv[2*MAX_DEPTH*n + d1] = 0;
 
 #ifdef AGGREGATE        
-        ops_pack(&dat->data[i2*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+d]);
+        ops_pack(dat, i2, ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+d]);
         exch_size = sd->halos[MAX_DEPTH*n+d].blocklength * sd->halos[MAX_DEPTH*n+d].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_m[n],1,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_p[n],1,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i4*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
+        ops_unpack(dat, i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
 #else
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
@@ -216,12 +193,12 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
 
 #ifdef AGGREGATE        
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*n+actual_depth],&sd->halos[MAX_DEPTH*n+actual_depth]);
-        ops_pack(&dat->data[i3*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
+        ops_pack(dat,i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
         int exch_size = sd->halos[MAX_DEPTH*n+actual_depth].blocklength * sd->halos[MAX_DEPTH*n+actual_depth].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_p[n],sb->ndim+n,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_m[n],sb->ndim+n,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i1*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
+        ops_unpack(dat,i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
 #else
         //send in positive direction, receive from negative direction
         //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
@@ -253,12 +230,12 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         
 #ifdef AGGREGATE        
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*n+actual_depth],&sd->halos[MAX_DEPTH*n+actual_depth]);
-        ops_pack(&dat->data[i2*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
+        ops_pack(dat,i2, ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
         exch_size = sd->halos[MAX_DEPTH*n+actual_depth].blocklength * sd->halos[MAX_DEPTH*n+actual_depth].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_m[n],n,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_p[n],n,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i4*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
+        ops_unpack(dat,i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
 #else
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
@@ -379,13 +356,13 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       
 #ifdef AGGREGATE        
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*dim+actual_depth_send],&sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
-        ops_pack(&dat->data[i2*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
+        ops_pack(dat,i2, ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
         int send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
         int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
         MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_m[dim],dim,
                      ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_p[dim],dim,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i4*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
+        ops_unpack(dat,i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
 #else
       //negative direction exchange
       MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_send],sb->id_m[dim],dim,
@@ -424,13 +401,13 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       }
 #ifdef AGGREGATE        
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*dim+actual_depth_send],&sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
-        ops_pack(&dat->data[i3*size], ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
+        ops_pack(dat,i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
         send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
         recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
         MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_p[dim],dim,
                      ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_m[dim],dim,
                      OPS_CART_COMM, &status);
-        ops_unpack(&dat->data[i1*size], ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
+        ops_unpack(dat,i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
 #else
       //positive direction exchange
       MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_send],sb->id_p[dim],ndim+dim,
@@ -545,7 +522,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   
   //Pack data
   if (actual_depth_send>0)
-    ops_pack(&dat->data[i2*size], ops_buffer_send_1+send_recv_offsets[0], &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
+    ops_pack(dat,i2, ops_buffer_send_1+send_recv_offsets[0], &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
   
   //increase offset
   send_recv_offsets[0] += send_size;
@@ -596,7 +573,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   
   //pack data
   if (actual_depth_send>0)
-    ops_pack(&dat->data[i3*size], ops_buffer_send_2+send_recv_offsets[2], &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
+    ops_pack(dat,i3, ops_buffer_send_2+send_recv_offsets[2], &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
 
   //increase offset
   send_recv_offsets[2] += send_size;
@@ -662,7 +639,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;  
   //Unpack data
   if (actual_depth_recv>0)
-    ops_unpack(&dat->data[i4*size], ops_buffer_recv_1+send_recv_offsets[1], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
+    ops_unpack(dat,i4, ops_buffer_recv_1+send_recv_offsets[1], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
   //increase offset
   send_recv_offsets[1] += recv_size;
   //clear dirtybits
@@ -679,7 +656,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
   //Unpack data
   if (actual_depth_recv>0)
-    ops_unpack(&dat->data[i1*size], ops_buffer_recv_2+send_recv_offsets[3], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
+    ops_unpack(dat,i1, ops_buffer_recv_2+send_recv_offsets[3], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
   //increase offset
   send_recv_offsets[3] += recv_size;
   //clear dirtybits
@@ -914,25 +891,6 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
       for (int d2 = beg; d2 < beg+right_halo_modified[dim]; d2++){
         arg->dat->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d2] = 1;
       }
-    }
-  }
-}
-
-
-void ops_H_D_exchanges(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_host(ops_arg *args, int nargs)
-{
-  //printf("in ops_set_dirtybit\n");
-  for (int n=0; n<nargs; n++) {
-    if((args[n].argtype == OPS_ARG_DAT) &&
-       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
-      //printf("setting dirty bit on host\n");
-      args[n].dat->dirty_hd = 1;
     }
   }
 }

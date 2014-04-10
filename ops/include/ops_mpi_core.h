@@ -52,13 +52,6 @@
 //Struct for holding the decomposition details of a dat on an MPI process
 //
 
-typedef struct
-{
-  int         count;       /* number of blocks */
-  int         blocklength; /*size of blocks */
-  int         stride;      /*stride between blocks */
-} ops_halo;
-
 typedef struct {
   // the decomposition is for this dat
   ops_dat dat;
@@ -96,9 +89,7 @@ void ops_mpi_exit();
 /*******************************************************************************
 * External functions defined in ops_mpi_(cuda)_rt_support.c
 *******************************************************************************/
-void ops_halo_exchanges(ops_arg* args, int nargs, int *range);
-void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
-void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
-void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_halo *__restrict halo);
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo);
 
 #endif /*__OPS_MPI_CORE_H*/

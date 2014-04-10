@@ -148,22 +148,6 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
-void ops_printf(const char* format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vprintf(format, argptr);
-  va_end(argptr);
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vfprintf(stream, format, argptr);
-  va_end(argptr);
-}
-
 void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   sub_block_list sb_list= (sub_block_list)xmalloc(sizeof(sub_block));
@@ -209,4 +193,22 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
   }
+}
+
+void ops_H_D_exchanges(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}
+
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}
+
+void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
 }

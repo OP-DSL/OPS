@@ -173,6 +173,13 @@ typedef struct
 } ops_kernel;
 
 
+typedef struct
+{
+  int         count;       /* number of blocks */
+  int         blocklength; /*size of blocks */
+  int         stride;      /*stride between blocks */
+} ops_halo;
+
 
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
@@ -278,7 +285,10 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
 void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
-
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range);
+void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
+void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
