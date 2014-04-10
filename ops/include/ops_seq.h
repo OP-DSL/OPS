@@ -224,12 +224,8 @@ void ops_par_loop(void (*kernel)(T0*),
 
   if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 1; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,1,range);
+  ops_H_D_exchanges(args, 1);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -252,8 +248,9 @@ void ops_par_loop(void (*kernel)(T0*),
 
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_dirtybit_host(args, 1)
+;}
 
 //
 //ops_par_loop routine for 2 arguments
@@ -319,12 +316,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
   if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 2; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges(args, 2);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -348,9 +341,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  ops_set_dirtybit_host(args, 2)
+;}
 
 //
 //ops_par_loop routine for 3 arguments
@@ -417,12 +411,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
   if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 3; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges(args, 3);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -447,10 +437,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  ops_set_dirtybit_host(args, 3)
+;}
 
 //
 //ops_par_loop routine for 4 arguments
@@ -518,12 +509,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
   if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 4; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,4,range);
+  ops_H_D_exchanges(args, 4);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -549,11 +536,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  ops_set_dirtybit_host(args, 4)
+;}
 
 //
 //ops_par_loop routine for 5 arguments
@@ -626,12 +614,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
   if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 5; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,5,range);
+  ops_H_D_exchanges(args, 5);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -659,12 +643,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  ops_set_dirtybit_host(args, 5)
+;}
 
 //
 //ops_par_loop routine for 6 arguments
@@ -738,12 +723,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
   if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 6; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,6,range);
+  ops_H_D_exchanges(args, 6);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -772,13 +753,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  ops_set_dirtybit_host(args, 6)
+;}
 
 //
 //ops_par_loop routine for 7 arguments
@@ -853,12 +835,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
   if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 7; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,7,range);
+  ops_H_D_exchanges(args, 7);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -888,14 +866,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  ops_set_dirtybit_host(args, 7)
+;}
 
 //
 //ops_par_loop routine for 8 arguments
@@ -971,12 +950,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
   if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 8; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,8,range);
+  ops_H_D_exchanges(args, 8);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1007,15 +982,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  ops_set_dirtybit_host(args, 8)
+;}
 
 //
 //ops_par_loop routine for 9 arguments
@@ -1096,12 +1072,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
   if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 9; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,9,range);
+  ops_H_D_exchanges(args, 9);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1134,16 +1106,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  ops_set_dirtybit_host(args, 9)
+;}
 
 //
 //ops_par_loop routine for 10 arguments
@@ -1225,12 +1198,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
   if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 10; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,10,range);
+  ops_H_D_exchanges(args, 10);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1264,17 +1233,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  ops_set_dirtybit_host(args, 10)
+;}
 
 //
 //ops_par_loop routine for 11 arguments
@@ -1357,12 +1327,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
   if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 11; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,11,range);
+  ops_H_D_exchanges(args, 11);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1397,18 +1363,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  ops_set_dirtybit_host(args, 11)
+;}
 
 //
 //ops_par_loop routine for 12 arguments
@@ -1492,12 +1459,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
   if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 12; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,12,range);
+  ops_H_D_exchanges(args, 12);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1533,19 +1496,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  ops_set_dirtybit_host(args, 12)
+;}
 
 //
 //ops_par_loop routine for 13 arguments
@@ -1634,12 +1598,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
   if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 13; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,13,range);
+  ops_H_D_exchanges(args, 13);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1677,20 +1637,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  ops_set_dirtybit_host(args, 13)
+;}
 
 //
 //ops_par_loop routine for 14 arguments
@@ -1780,12 +1741,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
   if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 14; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,14,range);
+  ops_H_D_exchanges(args, 14);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1824,21 +1781,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  ops_set_dirtybit_host(args, 14)
+;}
 
 //
 //ops_par_loop routine for 15 arguments
@@ -1929,12 +1887,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
   if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 15; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,15,range);
+  ops_H_D_exchanges(args, 15);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1974,22 +1928,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
+  ops_set_dirtybit_host(args, 15)
+;}
 
 //
 //ops_par_loop routine for 16 arguments
@@ -2081,12 +2036,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
   if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 16; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,16,range);
+  ops_H_D_exchanges(args, 16);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2127,23 +2078,24 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
+  ops_set_dirtybit_host(args, 16)
+;}
 
 //
 //ops_par_loop routine for 17 arguments
@@ -2240,12 +2192,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
   if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 17; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,17,range);
+  ops_H_D_exchanges(args, 17);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2288,24 +2236,25 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
+  ops_set_dirtybit_host(args, 17)
+;}
 
 //
 //ops_par_loop routine for 18 arguments
@@ -2403,12 +2352,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
   if (args[17].argtype == OPS_ARG_DAT)  xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
 
-   int d_pos[ndim];   int d_neg[ndim];  for (int i = 0; i < 18; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
+   ops_halo_exchanges(args,18,range);
+  ops_H_D_exchanges(args, 18);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2452,22 +2397,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
   if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
-  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[17]);
-}
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
+  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[17],range);
+  ops_set_dirtybit_host(args, 18)
+;}

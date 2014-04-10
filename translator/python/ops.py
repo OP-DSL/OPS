@@ -345,7 +345,7 @@ def main():
         for i in range(0, len(const_args)):
             #if const_args[i]['name2'][0] == '&':
             const_args[i]['name2'] = const_args[i]['name2']
-            const_args[i]['dim'] = int(const_args[i]['dim'])
+            const_args[i]['dim'] = const_args[i]['dim']
             const_args[i]['name'] = const_args[i]['name']
 
       # check for repeats
@@ -371,7 +371,7 @@ def main():
             # store away in master list
             if repeat == 0:
                 nconsts = nconsts + 1
-                temp = {'dim': const_args[i]['dim'],
+                temp = {'dim': const_args[i]['dim'].strip(),
                         'type': const_args[i]['type'].strip(),
                         'name': const_args[i]['name'].strip()}
                 consts.append(temp)
@@ -668,8 +668,8 @@ def main():
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
 
 
 

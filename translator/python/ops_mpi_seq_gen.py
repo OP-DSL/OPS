@@ -320,18 +320,19 @@ for nargs in range (1,maxargs+1):
     #f.write('        ops_exchange_halo(&args[i],max_depth);\n')
     #f.write('    }\n')
     #f.write('  }\n\n')
+    f.write('   ops_halo_exchanges(args,'+str(nargs)+',range);\n')
+    #f.write('   int d_pos[ndim];')
+    #f.write('   int d_neg[ndim];')
+    #f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
+    #f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
+    ##f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
+    ##f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
+    #f.write('      ops_exchange_halo(&args[i],2);\n')
+    #f.write('    }\n')
+    #f.write('  }\n\n')
 
-    f.write('   int d_pos[ndim];')
-    f.write('   int d_neg[ndim];')
-    f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
-    f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
-    #f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
-    #f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
-    f.write('      ops_exchange_halo(&args[i],2);\n')
-    f.write('    }\n')
-    f.write('  }\n\n')
 
-
+    f.write('  ops_H_D_exchanges(args, '+str(nargs)+');\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')
@@ -368,7 +369,8 @@ for nargs in range (1,maxargs+1):
 
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
+      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
+    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+')\n;')
 
 
     f.write('}')
