@@ -9,7 +9,7 @@ parallelisations: OpenMP, CUDA and MPI and their combinations.
 
 ####Directory Structure
 
-* MPI_Dev - Developer version that uses only a header file to get the application
+* ./ - Developer version that uses only a header file to get the application
 running as a sequential application and with unoptimized MPI. Used for application
 debugging before using the code generation tools of OPS.
 
@@ -49,9 +49,9 @@ there is no MPI support for this version)
    all: clean core seq openmp mpi #cuda
 
 
-3. Build each of the Cloverleaf applications. e.g. for building MPI
+3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP and CUDA
 
-   cd ~/OPS/apps/MPI
+   cd ~/OPS/apps/Cloverleaf/
 
    make
 
