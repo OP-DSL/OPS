@@ -284,7 +284,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     if reduction == True:
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+'*arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+          code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
 
     code('')
     code('#ifdef _OPENMP')
@@ -299,25 +299,25 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
+          code(typs[n]+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_WRITE:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = INFINITY_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
           FOR('d', '0',dims[n])
@@ -419,7 +419,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -448,7 +448,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -503,7 +503,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'h);')
+        code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
@@ -554,13 +554,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+      code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = consts[nc]['dim']
-        code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+        code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:
-        code('extern '+consts[nc]['type'][1:-1]+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+        code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
   code('')
 

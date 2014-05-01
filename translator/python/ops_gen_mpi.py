@@ -343,9 +343,9 @@ def ops_gen_mpi(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       if nargs <> 1 and n != nargs-1:
         text = text + ','
       else:
@@ -373,9 +373,9 @@ def ops_gen_mpi(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       if nargs <> 1 and n != nargs-1:
         text = text + ','
       else:
@@ -410,7 +410,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-          code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
+          code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
 
       code('ops_timers_core(&c1,&t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')

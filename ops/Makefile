@@ -48,11 +48,17 @@ else
 ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CCFLAGS 	:= -O3
+  CCFLAGS 	:= -O3 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   CXX 		:= pgCC
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+	NVCC  := nvcc
   MPIFLAGS 	:= $(CXXFLAGS)
+ifdef DEBUG
+	NVCCFLAGS := -O3 -arch=sm_35
+else
+	NVCCFLAGS := -O0 -g -G
+endif
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -98,7 +104,7 @@ mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o
 
 mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
+	$(MPICXX) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o

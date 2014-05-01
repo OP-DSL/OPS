@@ -699,13 +699,13 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     if (other_dims==0) continue;
 
     MPI_Request request[4];
-    MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:-1,dim,
+    MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:MPI_PROC_NULL,dim,
       OPS_CART_COMM, &request[0]);
-    MPI_Isend(ops_buffer_send_2,send_recv_offsets[2],MPI_BYTE,send_recv_offsets[2]>0?id_p:-1,OPS_MAX_DIM+dim,
+    MPI_Isend(ops_buffer_send_2,send_recv_offsets[2],MPI_BYTE,send_recv_offsets[2]>0?id_p:MPI_PROC_NULL,OPS_MAX_DIM+dim,
       OPS_CART_COMM, &request[1]);
-    MPI_Irecv(ops_buffer_recv_1,send_recv_offsets[1],MPI_BYTE,send_recv_offsets[1]>0?id_p:-1,dim,
+    MPI_Irecv(ops_buffer_recv_1,send_recv_offsets[1],MPI_BYTE,send_recv_offsets[1]>0?id_p:MPI_PROC_NULL,dim,
       OPS_CART_COMM, &request[2]);
-    MPI_Irecv(ops_buffer_recv_2,send_recv_offsets[3],MPI_BYTE,send_recv_offsets[3]>0?id_m:-1,OPS_MAX_DIM+dim,
+    MPI_Irecv(ops_buffer_recv_2,send_recv_offsets[3],MPI_BYTE,send_recv_offsets[3]>0?id_m:MPI_PROC_NULL,OPS_MAX_DIM+dim,
       OPS_CART_COMM, &request[3]);
       
     MPI_Status status[4];

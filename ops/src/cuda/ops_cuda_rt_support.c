@@ -278,3 +278,4 @@ void ops_cuda_exit ( )
 
   cudaDeviceReset ( );
 }
+

@@ -20,3 +20,15 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     dest += halo->stride;
   }
 }
+
+void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}
+
+void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}

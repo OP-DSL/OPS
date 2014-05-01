@@ -129,3 +129,4 @@ void ops_fprintf(FILE *stream, const char *format, ...)
   vfprintf(stream, format, argptr);
   va_end(argptr);
 }
+

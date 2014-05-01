@@ -286,14 +286,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('__global__ void ops_'+name+'(')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
-        code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+        code('const '+typs[n]+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
-        code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+        code(typs[n]+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code('const '+(str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+          if dims[n].isdigit() and int(dims[n])==1:
+            code('const '+typs[n]+' arg'+str(n)+',')
+          else:
+            code('const '+typs[n]+'* __restrict arg'+str(n)+',')
         else:
-          code((str(typs[n]).replace('"','')).strip()+'* __restrict arg'+str(n)+',')
+          code(typs[n]+'* __restrict arg'+str(n)+',')
 
     code('int size0,')
     code('int size1 ){')
@@ -303,16 +306,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code((str(typs[n]).replace('"','')).strip()+' arg'+str(n)+'_l['+str(dims[n])+'];')
+        code(typs[n]+' arg'+str(n)+'_l['+str(dims[n])+'];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+typs[n]+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY_'+typs[n]+';')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY_'+typs[n]+';')
 
 
     code('')
@@ -331,7 +334,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
-        text = text +'arg'+str(n)
+        if dims[n].isdigit() and int(dims[n])==1:
+          text = text +'&arg'+str(n)
+        else:
+          text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
 
@@ -453,7 +459,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+          code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
     code('')
 
     #set up CUDA grid and thread blocks
@@ -462,15 +468,19 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
 
     GBL_READ = False
+    GBL_READ_MDIM = False
     GBL_INC = False
     GBL_MAX = False
     GBL_MIN = False
     GBL_WRITE = False
+    
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           GBL_READ = True
+          if not dims[n].isdigit() or int(dims[n])>1:
+            GBL_READ_MDIM = True
         if accs[n] == OPS_INC:
           GBL_INC = True
         if accs[n] == OPS_MAX:
@@ -487,20 +497,20 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       code('int reduct_size = 0;')
       code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('int consts_bytes = 0;')
       code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
         else:
-          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-          code('reduct_size = MAX(reduct_size,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
+          code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('reallocConstArrays(consts_bytes);')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('reallocReductArrays(reduct_bytes);')
@@ -513,25 +523,26 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
         if accs[n] == OPS_INC:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+typs[n]+';')
         if accs[n] == OPS_MAX:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = -INFINITY_'+typs[n]+';')
         if accs[n] == OPS_MIN:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
-        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = INFINITY_'+typs[n]+';')
+        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
         code('')
 
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
           code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
           code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-          code('mvConstArraysToDevice(consts_bytes);')
+    if GBL_READ == True and GBL_READ_MDIM == True:
+      code('mvConstArraysToDevice(consts_bytes);')
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToDevice(reduct_bytes);')
@@ -587,7 +598,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('nshared = MAX(nshared,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+        code('nshared = MAX(nshared,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
@@ -603,9 +614,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       text = 'ops_'+name+'<<<grid, block >>> ( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+'],'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
       else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data_d,'
+        if dims[n].isdigit() and int(dims[n])==1:
+          text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
+        else:
+          text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
@@ -638,7 +652,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if reduction == 1 :
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-          code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
+          code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
       code('ops_timers_core(&c1,&t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
       
@@ -686,13 +700,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   comm(' global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code('__constant__ '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+      code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
       if consts[nc]['dim'].isdigit() and consts[nc]['dim'] > 0:
         num = str(consts[nc]['dim'])
-        code('__constant__ '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+        code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:
-        code('__constant__ '+consts[nc]['type'][1:-1]+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+        code('__constant__ '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
       
 
