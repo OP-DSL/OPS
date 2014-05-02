@@ -29,7 +29,7 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc
-  CCFLAGS 	:= -O3 -vec-report -xAVX 
+  CCFLAGS 	:= -O3 -vec-report -xSSE4.2
   #CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)

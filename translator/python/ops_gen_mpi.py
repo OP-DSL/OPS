@@ -312,7 +312,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
     code('')
-    
+
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
     code('ops_timers_core(&c1,&t1);')
@@ -452,6 +452,7 @@ def ops_gen_mpi(master, date, consts, kernels):
   comm('header')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_lib_mpi.h"')
+  code('#include "user_types.h"')
   code('')
 
   #constants for macros -- now included in teh backend so no need to generate here
