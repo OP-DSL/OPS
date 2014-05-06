@@ -106,11 +106,11 @@ int size, char *dat, char const *name){
 
 //user kernel files
 #include "calc_dt_kernel_openacc_kernel.cpp"
-#include "calc_dt_kernel_min_openacc_kernel.cpp"
 #include "calc_dt_kernel_print_openacc_kernel.cpp"
-#define OPS_GPU
 #include "field_summary_kernel_openacc_kernel.cpp"
 #include "calc_dt_kernel_get_openacc_kernel.cpp"
+#define OPS_GPU
+#include "calc_dt_kernel_min_openacc_kernel.cpp"
 #include "revert_kernel_openacc_kernel.cpp"
 #include "reset_field_kernel1_openacc_kernel.cpp"
 #include "reset_field_kernel2_openacc_kernel.cpp"

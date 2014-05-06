@@ -62,8 +62,10 @@ void initialise_chunk()
 
 
 
-  int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3};
-  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  //int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  //int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  int rangex[] = {x_min-2, x_max+3, 0, 1};
+  int rangey[] = {0, 1, y_min-2, y_max+3};
 
   ops_par_loop_initialise_chunk_kernel_x("initialise_chunk_kernel_x", clover_grid, 2, rangex,
                ops_arg_dat(vertexx, S2D_00_STRID2D_X, "double", OPS_WRITE),

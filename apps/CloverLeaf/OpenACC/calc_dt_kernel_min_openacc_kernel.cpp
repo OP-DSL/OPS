@@ -10,7 +10,7 @@ int xdim0_calc_dt_kernel_min;
 inline 
 void calc_dt_kernel_min(const double* dt_min ,
                     double* dt_min_val) {
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+  *dt_min_val = min(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 
 }
 
@@ -76,7 +76,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
 
   double p_a1 = *(double *)args[1].data;
 
-
+  printf("%g\n",p_a1);
   #ifdef OPS_GPU
   ops_H_D_exchanges_cuda(args, 2);
   #else
@@ -88,19 +88,24 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
   OPS_kernels[28].mpi_time += t1-t2;
 
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0) reduction(min:p_a1)
-  #pragma acc loop
+  #pragma acc parallel deviceptr(p_a0) //reduction(min:p_a1)
+
+  #pragma acc loop reduction(min:p_a1)
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
     #ifdef OPS_GPU
-    #pragma acc loop
+    #pragma acc loop reduction(min:p_a1)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel_min(  p_a0+ n_x*1+n_y*xdim0_calc_dt_kernel_min*1, &p_a1 );
+      p_a1 = min(p_a1,p_a0[n_x+n_y*xdim0_calc_dt_kernel_min]);
+//      *dt_min_val = min(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+//      calc_dt_kernel_min(  p_a0+ n_x*1+n_y*xdim0_calc_dt_kernel_min*1, &p_a1 );
 
     }
-  }
+ }
 
+
+  printf("%g\n",p_a1);
   *(double *)args[1].data = p_a1;
 
   ops_timers_core(&c2,&t2);

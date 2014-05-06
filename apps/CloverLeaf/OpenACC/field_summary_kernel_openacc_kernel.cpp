@@ -189,6 +189,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
   double p_a10 = *(double *)args[10].data;
 
 
+  printf("\n%g %g %g %g %g\n", p_a6,p_a7,p_a8,p_a9,p_a10);
   #ifdef OPS_GPU
   ops_H_D_exchanges_cuda(args, 11);
   #else
@@ -200,7 +201,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
   OPS_kernels[31].mpi_time += t1-t2;
 
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6) reduction(+:p_a7) reduction(+:p_a8) reduction(+:p_a9) reduction(+:p_a10)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6, p_a7, p_a8, p_a9, p_a10) 
   #pragma acc loop
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
