@@ -92,19 +92,16 @@ void build_field()
   zvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "zvel1");
 
   d_p[0]=-3;d_p[1]=-2;d_p[2]=-2;
-  printf("%d %d %d\n",size[0],size[1],size[2]);
   vol_flux_x  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_x");
   mass_flux_x = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_x");
   xarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xarea");
 
   d_p[0]=-2;d_p[1]=-3;d_p[2]=-2;
-  printf("%d %d %d\n",size[0],size[1],size[2]);
   vol_flux_y  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_y");
   mass_flux_y = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_y");
   yarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yarea");
 
   d_p[0]=-2;d_p[1]=-2;d_p[2]=-3;
-  printf("%d %d %d\n",size[0],size[1],size[2]);
   vol_flux_z  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_z");
   mass_flux_z = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_z");
   zarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "zarea");
@@ -162,7 +159,7 @@ void build_field()
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
   zz  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp2, "int", "zz");
   for(int i=sb->istart[2]-2; i<sb->iend[2]+3+1; i++)
-    ((int *)(zz->data))[i-d_m[1]-sb->istart[1]] = i - z_min;
+    ((int *)(zz->data))[i-d_m[2]-sb->istart[1]] = i - z_min;
   zz->dirty_hd=1;
 
   //
