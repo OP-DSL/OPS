@@ -170,7 +170,7 @@ void ops_par_loop(void (*kernel)(T0*),
      ops_arg arg0) {
 
   char *p_a[1];
-  int  offs[1][2];
+  int  offs[1][3];
 
   int  count[dim];
   ops_arg args[1] = { arg0};
@@ -222,7 +222,10 @@ void ops_par_loop(void (*kernel)(T0*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges(args, 1);
@@ -261,7 +264,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
      ops_arg arg0, ops_arg arg1) {
 
   char *p_a[2];
-  int  offs[2][2];
+  int  offs[2][3];
 
   int  count[dim];
   ops_arg args[2] = { arg0, arg1};
@@ -313,8 +316,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges(args, 2);
@@ -355,7 +364,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   char *p_a[3];
-  int  offs[3][2];
+  int  offs[3][3];
 
   int  count[dim];
   ops_arg args[3] = { arg0, arg1, arg2};
@@ -383,10 +392,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
-        printf("%d\n",n);
         offs[i][n] = off(ndim, n, &start[0], &end[0],
                          args[i].dat->block_size, args[i].stencil->stride);
-        printf("%d\n",n);
       }
     }
   }
@@ -409,9 +416,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
@@ -454,7 +470,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
   char *p_a[4];
-  int  offs[4][2];
+  int  offs[4][3];
 
   int  count[dim];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
@@ -506,10 +522,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges(args, 4);
@@ -557,7 +585,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4) {
 
   char *p_a[5];
-  int  offs[5][2];
+  int  offs[5][3];
 
   int  count[dim];
   ops_arg args[5] = { arg0, arg1, arg2, arg3,
@@ -610,11 +638,26 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,5,range);
   ops_H_D_exchanges(args, 5);
@@ -665,7 +708,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5) {
 
   char *p_a[6];
-  int  offs[6][2];
+  int  offs[6][3];
 
   int  count[dim];
   ops_arg args[6] = { arg0, arg1, arg2, arg3,
@@ -718,12 +761,30 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges(args, 6);
@@ -776,7 +837,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
   char *p_a[7];
-  int  offs[7][2];
+  int  offs[7][3];
 
   int  count[dim];
   ops_arg args[7] = { arg0, arg1, arg2, arg3,
@@ -829,13 +890,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,7,range);
   ops_H_D_exchanges(args, 7);
@@ -890,7 +972,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
   char *p_a[8];
-  int  offs[8][2];
+  int  offs[8][3];
 
   int  count[dim];
   ops_arg args[8] = { arg0, arg1, arg2, arg3,
@@ -943,14 +1025,38 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,8,range);
   ops_H_D_exchanges(args, 8);
@@ -1010,7 +1116,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8) {
 
   char *p_a[9];
-  int  offs[9][2];
+  int  offs[9][3];
 
   int  count[dim];
   ops_arg args[9] = { arg0, arg1, arg2, arg3,
@@ -1064,15 +1170,42 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,9,range);
   ops_H_D_exchanges(args, 9);
@@ -1135,7 +1268,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9) {
 
   char *p_a[10];
-  int  offs[10][2];
+  int  offs[10][3];
 
   int  count[dim];
   ops_arg args[10] = { arg0, arg1, arg2, arg3,
@@ -1189,16 +1322,46 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,10,range);
   ops_H_D_exchanges(args, 10);
@@ -1263,7 +1426,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
   char *p_a[11];
-  int  offs[11][2];
+  int  offs[11][3];
 
   int  count[dim];
   ops_arg args[11] = { arg0, arg1, arg2, arg3,
@@ -1317,17 +1480,50 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges(args, 11);
@@ -1394,7 +1590,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11) {
 
   char *p_a[12];
-  int  offs[12][2];
+  int  offs[12][3];
 
   int  count[dim];
   ops_arg args[12] = { arg0, arg1, arg2, arg3,
@@ -1448,18 +1644,54 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,12,range);
   ops_H_D_exchanges(args, 12);
@@ -1531,7 +1763,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12) {
 
   char *p_a[13];
-  int  offs[13][2];
+  int  offs[13][3];
 
   int  count[dim];
   ops_arg args[13] = { arg0, arg1, arg2, arg3,
@@ -1586,19 +1818,58 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,13,range);
   ops_H_D_exchanges(args, 13);
@@ -1673,7 +1944,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13) {
 
   char *p_a[14];
-  int  offs[14][2];
+  int  offs[14][3];
 
   int  count[dim];
   ops_arg args[14] = { arg0, arg1, arg2, arg3,
@@ -1728,20 +1999,62 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    ydim13 = args[13].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,14,range);
   ops_H_D_exchanges(args, 14);
@@ -1818,7 +2131,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14) {
 
   char *p_a[15];
-  int  offs[15][2];
+  int  offs[15][3];
 
   int  count[dim];
   ops_arg args[15] = { arg0, arg1, arg2, arg3,
@@ -1873,21 +2186,66 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    ydim13 = args[13].dat->block_size[1];
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    ydim14 = args[14].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,15,range);
   ops_H_D_exchanges(args, 15);
@@ -1966,7 +2324,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15) {
 
   char *p_a[16];
-  int  offs[16][2];
+  int  offs[16][3];
 
   int  count[dim];
   ops_arg args[16] = { arg0, arg1, arg2, arg3,
@@ -2021,22 +2379,70 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    ydim13 = args[13].dat->block_size[1];
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    ydim14 = args[14].dat->block_size[1];
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    ydim15 = args[15].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,16,range);
   ops_H_D_exchanges(args, 16);
@@ -2120,7 +2526,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16) {
 
   char *p_a[17];
-  int  offs[17][2];
+  int  offs[17][3];
 
   int  count[dim];
   ops_arg args[17] = { arg0, arg1, arg2, arg3,
@@ -2176,23 +2582,74 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    ydim13 = args[13].dat->block_size[1];
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    ydim14 = args[14].dat->block_size[1];
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    ydim15 = args[15].dat->block_size[1];
+  }
+  if (args[16].argtype == OPS_ARG_DAT) {
+    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    ydim16 = args[16].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,17,range);
   ops_H_D_exchanges(args, 17);
@@ -2279,7 +2736,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16, ops_arg arg17) {
 
   char *p_a[18];
-  int  offs[18][2];
+  int  offs[18][3];
 
   int  count[dim];
   ops_arg args[18] = { arg0, arg1, arg2, arg3,
@@ -2335,24 +2792,78 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
-  if (args[17].argtype == OPS_ARG_DAT)  xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    ydim0 = args[0].dat->block_size[1];
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    ydim1 = args[1].dat->block_size[1];
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    ydim2 = args[2].dat->block_size[1];
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    ydim3 = args[3].dat->block_size[1];
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    ydim4 = args[4].dat->block_size[1];
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    ydim5 = args[5].dat->block_size[1];
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    ydim6 = args[6].dat->block_size[1];
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    ydim7 = args[7].dat->block_size[1];
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    ydim8 = args[8].dat->block_size[1];
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    ydim9 = args[9].dat->block_size[1];
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    ydim10 = args[10].dat->block_size[1];
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    ydim11 = args[11].dat->block_size[1];
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    ydim12 = args[12].dat->block_size[1];
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    ydim13 = args[13].dat->block_size[1];
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    ydim14 = args[14].dat->block_size[1];
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    ydim15 = args[15].dat->block_size[1];
+  }
+  if (args[16].argtype == OPS_ARG_DAT) {
+    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    ydim16 = args[16].dat->block_size[1];
+  }
+  if (args[17].argtype == OPS_ARG_DAT) {
+    xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
+    ydim17 = args[17].dat->block_size[1];
+  }
 
    ops_halo_exchanges(args,18,range);
   ops_H_D_exchanges(args, 18);

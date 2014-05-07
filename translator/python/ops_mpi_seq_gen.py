@@ -133,8 +133,8 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[3];
+  int c2[3];
 
   for(i=0; i<ndim; i++) c1[i] = start[i];
   c1[dim] = start[dim] + 1*stride[dim];
@@ -222,7 +222,7 @@ for nargs in range (1,maxargs+1):
          f.write('\n    ')
 
     f.write('\n  char *p_a['+str(nargs)+'];')
-    f.write('\n  int  offs['+str(nargs)+'][2];\n')
+    f.write('\n  int  offs['+str(nargs)+'][3];\n')
     f.write('\n  int  count[dim];\n')
 
     f.write('  ops_arg args['+str(nargs)+'] = {')
@@ -242,8 +242,8 @@ for nargs in range (1,maxargs+1):
     '  int ndim = sb->ndim;\n' )
     #'  int start[ndim*'+str(nargs)+'];\n' +
     #'  int end[ndim*'+str(nargs)+'];\n\n')
-    f.write('  int start[ndim];\n');
-    f.write('  int end[ndim];\n\n')
+    f.write('  int start[3];\n');
+    f.write('  int end[3];\n\n')
 
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;\n')
@@ -300,13 +300,15 @@ for nargs in range (1,maxargs+1):
 
 
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
+      f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];\n')
+      f.write('  }\n')
     f.write('\n')
 
     #f.write('  //calculate max halodepth for each dat\n')
     #f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
-    #f.write('    int max_depth[ndim];\n')
+    #f.write('    int max_depth[3];\n')
     #f.write('    max_depth[0] = 0;\n')
     #f.write('    max_depth[1] = 0;\n')
     #f.write('    if(args[i].stencil!=NULL) {\n')
@@ -321,8 +323,8 @@ for nargs in range (1,maxargs+1):
     #f.write('    }\n')
     #f.write('  }\n\n')
     f.write('   ops_halo_exchanges(args,'+str(nargs)+',range);\n')
-    #f.write('   int d_pos[ndim];')
-    #f.write('   int d_neg[ndim];')
+    #f.write('   int d_pos[3];')
+    #f.write('   int d_neg[3];')
     #f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     #f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
     ##f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')

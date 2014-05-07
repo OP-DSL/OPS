@@ -79,7 +79,7 @@ void initialise_chunk()
                ops_arg_dat(celly, S3D_000_STRID3D_Y, "double", OPS_WRITE),
                ops_arg_dat(celldy, S3D_000_STRID3D_Y, "double", OPS_WRITE));
 
-  rangey[4] = z_min-2; rangey[5] = z_max+2;
+  rangez[4] = z_min-2; rangez[5] = z_max+2;
   ops_par_loop(initialise_chunk_kernel_cellz, "initialise_chunk_kernel_cellz", clover_grid, 3, rangez,
                ops_arg_dat(vertexz, S3D_000_00P1_STRID3D_Z, "double", OPS_READ),
                ops_arg_dat(cellz, S3D_000_STRID3D_Z, "double", OPS_WRITE),
