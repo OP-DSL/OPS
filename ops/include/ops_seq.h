@@ -123,8 +123,8 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[3];
+  int c2[3];
 
   for(i=0; i<ndim; i++) c1[i] = start[i];
   c1[dim] = start[dim] + 1*stride[dim];
@@ -180,8 +180,8 @@ void ops_par_loop(void (*kernel)(T0*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -271,8 +271,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -365,8 +365,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -383,8 +383,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     if(args[i].stencil!=NULL) {
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
+        printf("%d\n",n);
         offs[i][n] = off(ndim, n, &start[0], &end[0],
                          args[i].dat->block_size, args[i].stencil->stride);
+        printf("%d\n",n);
       }
     }
   }
@@ -462,8 +464,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -566,8 +568,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -674,8 +676,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -785,8 +787,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -899,8 +901,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1020,8 +1022,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1145,8 +1147,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1273,8 +1275,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1404,8 +1406,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1542,8 +1544,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1684,8 +1686,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1829,8 +1831,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1977,8 +1979,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -2132,8 +2134,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -2291,8 +2293,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
