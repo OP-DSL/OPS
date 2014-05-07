@@ -265,4 +265,5 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg6);
+  
 }

@@ -76,7 +76,7 @@ void buildOpenCLKernels() {
       printf(" compiling done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[0] = clCreateKernel(OPS_opencl_core.program, "viscosity_kernel.cl", &ret);
+    OPS_opencl_core.kernel[0] = clCreateKernel(OPS_opencl_core.program, "ops_viscosity_kernel", &ret);
     clSafeCall( ret );
 
     isbuilt = true;

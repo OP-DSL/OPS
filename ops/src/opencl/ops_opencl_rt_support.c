@@ -180,7 +180,7 @@ void openclDeviceInit( int argc, char ** argv )
   OPS_opencl_core.platform_id = (cl_platform_id*) malloc( OPS_opencl_core.n_platforms*sizeof(cl_uint) );
   clSafeCall( clGetPlatformIDs( OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL) );
 
-  int device_type = 1;
+  int device_type = 0;
   switch(device_type) {
     case 0://CPU:
       ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_CPU, 1,
@@ -237,6 +237,7 @@ void openclDeviceInit( int argc, char ** argv )
 
 void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
 {
+  //printf("Copying data from host to device\n");
   cl_int ret = 0;
   *data_d = (cl_mem) clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
   clSafeCall( ret );

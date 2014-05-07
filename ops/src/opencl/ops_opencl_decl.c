@@ -45,6 +45,8 @@
 #include <ops_lib_cpp.h>
 #include <ops_opencl_rt_support.h>
 
+extern ops_opencl_core OPS_opencl_core;
+
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
 int xdim0;
