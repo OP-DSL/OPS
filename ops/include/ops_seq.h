@@ -126,13 +126,17 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
   int c1[3];
   int c2[3];
 
-  for(i=0; i<ndim; i++) c1[i] = start[i];
-  c1[dim] = start[dim] + 1*stride[dim];
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i = 0; i<dim; i++) c2[i] = end[i];
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add(c1, size, dim) - add(c2, size, dim) + 1; //plus 1 to get the next element
+  for (i = 0; i < ndim; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add(c1, size, dim) - add(c2, size, dim);
 
   return off;
 }
