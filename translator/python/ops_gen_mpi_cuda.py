@@ -163,6 +163,45 @@ def remove_triling_w_space(text):
     if line_end < 0:
       return striped_test
 
+def parse_signature(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+  
+def check_accs(name, arg_list, arg_typ, text):
+  for n in range(0,len(arg_list)):
+    if arg_typ[n] == 'ops_arg_dat':
+      pos = 0
+      while 1:
+        #pos = pos + text[pos:].find(arg_list[n])
+        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        if match == None:
+          break
+        pos = pos + match.start(0)
+#        print text[pos:pos+len(arg_list[n])+10]
+        if pos < 0:
+          break
+        pos = pos + len(arg_list[n])
+        #print text[pos:pos+len(arg_list[n])+10]
+        pos = pos + text[pos:].find('OPS_ACC')
+        #print text[pos:pos+len(arg_list[n])+10]
+        pos2 = text[pos+7:].find('(')
+  #      print text[pos+7:pos+7+pos2]
+        num = int(text[pos+7:pos+7+pos2])
+        if num <> n:
+          print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+        pos = pos+7+pos2
 
 def ops_gen_mpi_cuda(master, date, consts, kernels):
 
@@ -263,10 +302,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-
+    
+    i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
+    arg_list = parse_signature(text[i2+len(name):i+j])
+    check_accs(name, arg_list, arg_typ, text[i+j:k])
     code('__device__')
     #file_text += text[i:k+2]
     code(text[i:k+2])

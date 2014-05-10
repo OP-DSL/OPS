@@ -13,7 +13,7 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
   double div, dsx, dsy, dsz, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, jk_control;
 
   dsx = celldx[OPS_ACC0(0,0,0)];
-  dsy = celldy[OPS_ACC2(0,0,0)];
+  dsy = celldy[OPS_ACC1(0,0,0)];
   dsz = celldz[OPS_ACC11(0,0,0)];
 
   cc = soundspeed[OPS_ACC2(0,0,0)] * soundspeed[OPS_ACC2(0,0,0)];
@@ -76,14 +76,14 @@ void calc_dt_kernel_print(const double *xvel0, const double *yvel0, const double
                         const double *density0, const double *energy0,
                         const double *pressure, const double *soundspeed) {
   printf("Cell velocities:\n");
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,0,0)], yvel0[OPS_ACC1(0,0,0)], zvel0[OPS_ACC1(0,0,0)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,0,0)], yvel0[OPS_ACC1(1,0,0)], zvel0[OPS_ACC1(0,0,0)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,1,0)], yvel0[OPS_ACC1(1,1,0)], zvel0[OPS_ACC1(0,0,0)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,1,0)], yvel0[OPS_ACC1(0,1,0)], zvel0[OPS_ACC1(0,0,0)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,0,1)], yvel0[OPS_ACC1(0,0,1)], zvel0[OPS_ACC1(0,0,1)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,0,1)], yvel0[OPS_ACC1(1,0,1)], zvel0[OPS_ACC1(0,0,1)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,1,1)], yvel0[OPS_ACC1(1,1,1)], zvel0[OPS_ACC1(0,0,1)]);
-  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,1,1)], yvel0[OPS_ACC1(0,1,1)], zvel0[OPS_ACC1(0,0,1)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,0,0)], yvel0[OPS_ACC1(0,0,0)], zvel0[OPS_ACC2(0,0,0)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,0,0)], yvel0[OPS_ACC1(1,0,0)], zvel0[OPS_ACC2(0,0,0)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,1,0)], yvel0[OPS_ACC1(1,1,0)], zvel0[OPS_ACC2(0,0,0)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,1,0)], yvel0[OPS_ACC1(0,1,0)], zvel0[OPS_ACC2(0,0,0)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,0,1)], yvel0[OPS_ACC1(0,0,1)], zvel0[OPS_ACC2(0,0,1)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,0,1)], yvel0[OPS_ACC1(1,0,1)], zvel0[OPS_ACC2(0,0,1)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(1,1,1)], yvel0[OPS_ACC1(1,1,1)], zvel0[OPS_ACC2(0,0,1)]);
+  printf("%E, %E, %E \n",xvel0[OPS_ACC0(0,1,1)], yvel0[OPS_ACC1(0,1,1)], zvel0[OPS_ACC2(0,0,1)]);
   
   printf("density, energy, pressure, soundspeed = %lf, %lf, %lf, %lf \n",
     density0[OPS_ACC3(0,0,0)], energy0[OPS_ACC4(0,0,0)], pressure[OPS_ACC5(0,0,0)], soundspeed[OPS_ACC6(0,0,0)]);

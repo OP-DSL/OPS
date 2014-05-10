@@ -14,14 +14,14 @@ void accelerate_kernel( const double *density0, const double *volume,
                 const double *zarea) {
 
   double nodal_mass = 0.0;
-  nodal_mass =(density0[OPS_ACC0(-1,-1, 0)] * volume[OPS_ACC0(-1,-1, 0)] +
-               density0[OPS_ACC0( 0,-1, 0)] * volume[OPS_ACC0( 0,-1, 0)] +
-               density0[OPS_ACC0( 0, 0, 0)] * volume[OPS_ACC0( 0, 0, 0)] +
-               density0[OPS_ACC0(-1, 0, 0)] * volume[OPS_ACC0(-1, 0, 0)] +
-               density0[OPS_ACC0(-1,-1,-1)] * volume[OPS_ACC0(-1,-1,-1)] +
-               density0[OPS_ACC0( 0,-1,-1)] * volume[OPS_ACC0( 0,-1,-1)] +
-               density0[OPS_ACC0( 0, 0,-1)] * volume[OPS_ACC0( 0, 0,-1)] +
-               density0[OPS_ACC0(-1, 0,-1)] * volume[OPS_ACC0(-1, 0,-1)]) * 0.125;
+  nodal_mass =(density0[OPS_ACC0(-1,-1, 0)] * volume[OPS_ACC1(-1,-1, 0)] +
+               density0[OPS_ACC0( 0,-1, 0)] * volume[OPS_ACC1( 0,-1, 0)] +
+               density0[OPS_ACC0( 0, 0, 0)] * volume[OPS_ACC1( 0, 0, 0)] +
+               density0[OPS_ACC0(-1, 0, 0)] * volume[OPS_ACC1(-1, 0, 0)] +
+               density0[OPS_ACC0(-1,-1,-1)] * volume[OPS_ACC1(-1,-1,-1)] +
+               density0[OPS_ACC0( 0,-1,-1)] * volume[OPS_ACC1( 0,-1,-1)] +
+               density0[OPS_ACC0( 0, 0,-1)] * volume[OPS_ACC1( 0, 0,-1)] +
+               density0[OPS_ACC0(-1, 0,-1)] * volume[OPS_ACC1(-1, 0,-1)]) * 0.125;
   
   stepbymass[OPS_ACC2(0,0,0)] = 0.25*dt / nodal_mass;
 
