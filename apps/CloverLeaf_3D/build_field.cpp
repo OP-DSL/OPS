@@ -234,13 +234,13 @@ void build_field()
 
   S3D_000         = ops_decl_stencil( 3, 1, s3D_000, "0,0,0");
   
-  S3D_000_P100    = ops_decl_stencil( 3, 1, s3D_000_P100, "0,0,0:1,0,0");
-  S3D_000_0P10    = ops_decl_stencil( 3, 1, s3D_000_0P10, "0,0,0:0,1,0");
-  S3D_000_00P1    = ops_decl_stencil( 3, 1, s3D_000_00P1, "0,0,0:0,0,1");
+  S3D_000_P100    = ops_decl_stencil( 3, 2, s3D_000_P100, "0,0,0:1,0,0");
+  S3D_000_0P10    = ops_decl_stencil( 3, 2, s3D_000_0P10, "0,0,0:0,1,0");
+  S3D_000_00P1    = ops_decl_stencil( 3, 2, s3D_000_00P1, "0,0,0:0,0,1");
   
-  S3D_000_M100    = ops_decl_stencil( 3, 1, s3D_000_M100, "0,0,0:-1,0,0");
-  S3D_000_0M10    = ops_decl_stencil( 3, 1, s3D_000_0M10, "0,0,0:0,-1,0");
-  S3D_000_00M1    = ops_decl_stencil( 3, 1, s3D_000_00M1, "0,0,0:0,0,-1");
+  S3D_000_M100    = ops_decl_stencil( 3, 2, s3D_000_M100, "0,0,0:-1,0,0");
+  S3D_000_0M10    = ops_decl_stencil( 3, 2, s3D_000_0M10, "0,0,0:0,-1,0");
+  S3D_000_00M1    = ops_decl_stencil( 3, 2, s3D_000_00M1, "0,0,0:0,0,-1");
   
   S3D_000_f0M1M1 = ops_decl_stencil( 3, 4, s3D_000_f0M1M1, "f0,0,0:0,-1,-1");
   S3D_000_fM10M1 = ops_decl_stencil( 3, 4, s3D_000_fM10M1, "f0,0,0:-1,0,-1");
@@ -290,9 +290,11 @@ void build_field()
   S3D_000_P100_P200_M100 = ops_decl_stencil( 3, 4, s3D_000_P100_P200_M100, "0,0,0:1,0,0:2,0,0:-1,0,0");
   S3D_000_0P10_0P20_0M10 = ops_decl_stencil( 3, 4, s3D_000_0P10_0P20_0M10, "0,0,0:1,0,0:0,2,0:0,-1,0");
   S3D_000_00P1_00P2_00M1 = ops_decl_stencil( 3, 4, s3D_000_00P1_00P2_00M1, "0,0,0:1,0,0:0,0,2:0,0,-1");
-  S3D_000_P100_M100_M200 = ops_decl_stencil( 3, 4, s3D_000_P100_P200_M100, "0,0,0:1,0,0:-1,0,0:-2,0,0");
-  S3D_000_0P10_0M10_0M20 = ops_decl_stencil( 3, 4, s3D_000_0P10_0P20_0M10, "0,0,0:1,0,0:0,-1,0:0,-2,0");
-  S3D_000_00P1_00M1_00M2 = ops_decl_stencil( 3, 4, s3D_000_00P1_00P2_00M1, "0,0,0:1,0,0:0,0,-1:0,0,-2");
+  
+  S3D_000_P100_M100_M200 = ops_decl_stencil( 3, 4, s3D_000_P100_M100_M200, "0,0,0:1,0,0:-1,0,0:-2,0,0");
+  S3D_000_0P10_0M10_0M20 = ops_decl_stencil( 3, 4, s3D_000_0P10_0M10_0M20, "0,0,0:1,0,0:0,-1,0:0,-2,0");
+  S3D_000_00P1_00M1_00M2 = ops_decl_stencil( 3, 4, s3D_000_00P1_00M1_00M2, "0,0,0:1,0,0:0,0,-1:0,0,-2");
+  
   S3D_P100_M100_0P10_0M10_00P1_00M1 = ops_decl_stencil( 3, 6, s3D_P100_M100_0P10_0M10_00P1_00M1, "1,0,0:-1,0,0:0,1,0:0,0,-1:0,0,1:0,0,-1");
 
   S3D_000_STRID3D_X = ops_decl_strided_stencil( 3, 1, s3D_000, stride3D_x, "s2D_000_stride3D_x");

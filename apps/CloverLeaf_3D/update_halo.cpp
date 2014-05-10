@@ -285,23 +285,23 @@ void update_halo(int* fields, int depth)
   //
 
   if(depth == 2)
-  ops_par_loop(update_halo_kernel2_yvel_minus_4_top, "update_halo_kernel2_yvel_plus_4_top", clover_grid, 3, rangexy_b2b,
+  ops_par_loop(update_halo_kernel2_yvel_minus_4_bot, "update_halo_kernel2_yvel_plus_4_bot", clover_grid, 3, rangexy_b2b,
                ops_arg_dat_opt(yvel0, S3D_000_0P40, "double", OPS_RW, fields[FIELD_YVEL0]),
                ops_arg_dat_opt(yvel1, S3D_000_0P40, "double", OPS_RW, fields[FIELD_YVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel2_yvel_minus_2_top, "update_halo_kernel2_yvel_plus_2_top", clover_grid, 3, rangexy_b1b,
+  ops_par_loop(update_halo_kernel2_yvel_minus_2_bot, "update_halo_kernel2_yvel_plus_2_bot", clover_grid, 3, rangexy_b1b,
                ops_arg_dat_opt(yvel0, S3D_000_0P20, "double", OPS_RW, fields[FIELD_YVEL0]),
                ops_arg_dat_opt(yvel1, S3D_000_0P20, "double", OPS_RW, fields[FIELD_YVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
   if(depth == 2)
-  ops_par_loop(update_halo_kernel2_yvel_minus_4_bot, "update_halo_kernel2_yvel_minus_4_bot", clover_grid, 3, rangexy_t2b,
+  ops_par_loop(update_halo_kernel2_yvel_minus_4_top, "update_halo_kernel2_yvel_minus_4_top", clover_grid, 3, rangexy_t2b,
                ops_arg_dat_opt(yvel0, S3D_000_0M40, "double", OPS_RW, fields[FIELD_YVEL0]),
                ops_arg_dat_opt(yvel1, S3D_000_0M40, "double", OPS_RW, fields[FIELD_YVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel2_yvel_minus_2_bot, "update_halo_kernel2_yvel_minus_2_bot", clover_grid, 3, rangexy_t1b,
+  ops_par_loop(update_halo_kernel2_yvel_minus_2_top, "update_halo_kernel2_yvel_minus_2_top", clover_grid, 3, rangexy_t1b,
                ops_arg_dat_opt(yvel0, S3D_000_0M20, "double", OPS_RW, fields[FIELD_YVEL0]),
                ops_arg_dat_opt(yvel1, S3D_000_0M20, "double", OPS_RW, fields[FIELD_YVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
@@ -356,23 +356,23 @@ void update_halo(int* fields, int depth)
   //
 
   if(depth == 2)
-  ops_par_loop(update_halo_kernel2_zvel_plus_4_top, "update_halo_kernel2_zvel_plus_4_top", clover_grid, 3, rangexy_b2b,
+  ops_par_loop(update_halo_kernel2_zvel_plus_4_bot, "update_halo_kernel2_zvel_plus_4_bot", clover_grid, 3, rangexy_b2b,
                ops_arg_dat_opt(zvel0, S3D_000_0P40, "double", OPS_RW, fields[FIELD_ZVEL0]),
                ops_arg_dat_opt(zvel1, S3D_000_0P40, "double", OPS_RW, fields[FIELD_ZVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel2_zvel_plus_2_top, "update_halo_kernel2_zvel_plus_2_top", clover_grid, 3, rangexy_b1b,
+  ops_par_loop(update_halo_kernel2_zvel_plus_2_bot, "update_halo_kernel2_zvel_plus_2_bot", clover_grid, 3, rangexy_b1b,
                ops_arg_dat_opt(zvel0, S3D_000_0P20, "double", OPS_RW, fields[FIELD_ZVEL0]),
                ops_arg_dat_opt(zvel1, S3D_000_0P20, "double", OPS_RW, fields[FIELD_ZVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
   if(depth == 2)
-  ops_par_loop(update_halo_kernel2_zvel_plus_4_bot, "update_halo_kernel2_zvel_minus_4_bot", clover_grid, 3, rangexy_t2b,
+  ops_par_loop(update_halo_kernel2_zvel_plus_4_top, "update_halo_kernel2_zvel_minus_4_top", clover_grid, 3, rangexy_t2b,
                ops_arg_dat_opt(zvel0, S3D_000_0M40, "double", OPS_RW, fields[FIELD_ZVEL0]),
                ops_arg_dat_opt(zvel1, S3D_000_0M40, "double", OPS_RW, fields[FIELD_ZVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel2_zvel_plus_2_bot, "update_halo_kernel2_zvel_minus_2_bot", clover_grid, 3, rangexy_t1b,
+  ops_par_loop(update_halo_kernel2_zvel_plus_2_top, "update_halo_kernel2_zvel_minus_2_top", clover_grid, 3, rangexy_t1b,
                ops_arg_dat_opt(zvel0, S3D_000_0M20, "double", OPS_RW, fields[FIELD_ZVEL0]),
                ops_arg_dat_opt(zvel1, S3D_000_0M20, "double", OPS_RW, fields[FIELD_ZVEL1]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
@@ -497,14 +497,14 @@ void update_halo(int* fields, int depth)
   int rangexy_front2c[] = {x_min-depth,x_max+depth,y_min-depth,y_max+depth,z_max+1,z_max+2};
   if(depth ==2)
   ops_par_loop(update_halo_kernel3_plus_4_front, "update_halo_kernel3_plus_4_front", clover_grid, 3, rangexy_front2c,
-              ops_arg_dat_opt(vol_flux_x, S3D_000_0M40, "double", OPS_RW, fields[FIELD_VOL_FLUX_X]),
-              ops_arg_dat_opt(mass_flux_x, S3D_000_0M40, "double", OPS_RW, fields[FIELD_MASS_FLUX_X]),
+              ops_arg_dat_opt(vol_flux_x, S3D_000_00M4, "double", OPS_RW, fields[FIELD_VOL_FLUX_X]),
+              ops_arg_dat_opt(mass_flux_x, S3D_000_00M4, "double", OPS_RW, fields[FIELD_MASS_FLUX_X]),
               ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
   int rangexy_front1c[] = {x_min-depth,x_max+depth,y_min-depth,y_max+depth,z_max,z_max+1};
   ops_par_loop(update_halo_kernel3_plus_2_front, "update_halo_kernel3_plus_2_front", clover_grid, 3, rangexy_front1c,
-              ops_arg_dat_opt(vol_flux_x, S3D_000_0M20, "double", OPS_RW, fields[FIELD_VOL_FLUX_X]),
-              ops_arg_dat_opt(mass_flux_x, S3D_000_0M20, "double", OPS_RW, fields[FIELD_MASS_FLUX_X]),
+              ops_arg_dat_opt(vol_flux_x, S3D_000_00M2, "double", OPS_RW, fields[FIELD_VOL_FLUX_X]),
+              ops_arg_dat_opt(mass_flux_x, S3D_000_00M2, "double", OPS_RW, fields[FIELD_MASS_FLUX_X]),
               ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
             
   //
