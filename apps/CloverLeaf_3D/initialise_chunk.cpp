@@ -47,9 +47,13 @@ void initialise_chunk()
   int z_min = field.z_min;
   int z_max = field.z_max;
 
-  int rangex[] = {x_min-2, x_max+3, 0, 1, 0, 1};
-  int rangey[] = {0, 1, y_min-2, y_max+3, 0, 1};
-  int rangez[] = {0, 1, 0, 1, x_min-2, z_max+3};
+//TODO: this should be fixed:
+  int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
+  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
+  int rangez[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
+//  int rangex[] = {x_min-2, x_max+3, 0, 1, 0, 1};
+//  int rangey[] = {0, 1, y_min-2, y_max+3, 0, 1};
+//  int rangez[] = {0, 1, 0, 1, z_min-2, z_max+3};
 
   ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 3, rangex,
                ops_arg_dat(vertexx, S3D_000_STRID3D_X, "double", OPS_WRITE),

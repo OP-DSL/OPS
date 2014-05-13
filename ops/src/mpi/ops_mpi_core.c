@@ -43,26 +43,42 @@
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
-int xdim0;
-int xdim1;
-int xdim2;
-int xdim3;
-int xdim4;
-int xdim5;
-int xdim6;
-int xdim7;
-int xdim8;
-int xdim9;
-int xdim10;
-int xdim11;
-int xdim12;
-int xdim13;
-int xdim14;
-int xdim15;
-int xdim16;
-int xdim17;
-int xdim18;
-int xdim19;
+  int xdim0;
+  int ydim0;
+  int xdim1;
+  int ydim1;
+  int xdim2;
+  int ydim2;
+  int xdim3;
+  int ydim3;
+  int xdim4;
+  int ydim4;
+  int xdim5;
+  int ydim5;
+  int xdim6;
+  int ydim6;
+  int xdim7;
+  int ydim7;
+  int xdim8;
+  int ydim8;
+  int xdim9;
+  int ydim9;
+  int xdim10;
+  int ydim10;
+  int xdim11;
+  int ydim11;
+  int xdim12;
+  int ydim12;
+  int xdim13;
+  int ydim13;
+  int xdim14;
+  int ydim14;
+  int xdim15;
+  int ydim15;
+  int xdim16;
+  int ydim16;
+  int xdim17;
+  int ydim17;
 #endif /* __XDIMS__ */
 
 void ops_timers(double * cpu, double * et)

@@ -349,7 +349,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
         MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_m[dim],665,
           &they_send,1,MPI_INT,sb->id_p[dim],665,OPS_CART_COMM, &status);
         if (sb->id_p[dim]>=0 && actual_depth_recv != they_send) {
-          printf("Right recv mismatch\n");
+          printf("\nRight recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
           MPI_Abort(OPS_CART_COMM,-1);
         }
       }
@@ -395,7 +395,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
         MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_p[dim],666,
           &they_send,1,MPI_INT,sb->id_m[dim],666,OPS_CART_COMM, &status);
         if (sb->id_m[dim]>=0 && actual_depth_recv != they_send) {
-          printf("Left recv mismatch\n");
+          printf("\nLeft recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
           MPI_Abort(OPS_CART_COMM,-1);
         }
       }
@@ -678,10 +678,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if( dat_ndim <= dim || dat->block_size[dim] <= 1 ) continue;
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
-          other_dims = other_dims && intersection( range[2*dim]+MAX_DEPTH,
-                                         range[2*dim+1]-MAX_DEPTH,
-                                         OPS_sub_block_list[dat->block->index]->istart[dim],
-                                         OPS_sub_block_list[dat->block->index]->iend[dim]+1); //i.e. the intersection of the dependency range with my full range
+          other_dims = other_dims && intersection( range[2*d2]+MAX_DEPTH,
+                                         range[2*d2+1]-MAX_DEPTH,
+                                         OPS_sub_block_list[dat->block->index]->istart[d2],
+                                         OPS_sub_block_list[dat->block->index]->iend[d2]+1); //i.e. the intersection of the dependency range with my full range
       }
       if (other_dims==0) break;
       id_m = OPS_sub_block_list[dat->block->index]->id_m[dim];
