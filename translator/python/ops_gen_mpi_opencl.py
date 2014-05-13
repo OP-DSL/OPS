@@ -203,7 +203,7 @@ def find_consts(text, consts):
   
 
 def parse_signature(text2):
-  #text2 = text.replace('const','')
+  text2 = text2.replace('const','')
   text2 = text2.replace('int','__global int')
   text2 = text2.replace('float','__global float')
   text2 = text2.replace('double','__global double')
