@@ -25,7 +25,7 @@ extern double dt;
 #include "advec_cell_kernel2_ydir_seq_kernel.cpp"
 #include "advec_cell_kernel3_ydir_seq_kernel.cpp"
 #include "advec_cell_kernel4_ydir_seq_kernel.cpp"
-#include "advec_mom_kernel_x1_seq_kernel.cpp"
+/*#include "advec_mom_kernel_x1_seq_kernel.cpp"
 #include "advec_mom_kernel_y1_seq_kernel.cpp"
 #include "advec_mom_kernel_x2_seq_kernel.cpp"
 #include "advec_mom_kernel_y2_seq_kernel.cpp"
@@ -36,7 +36,7 @@ extern double dt;
 #include "advec_mom_kernel_mass_flux_y_seq_kernel.cpp"
 #include "advec_mom_kernel_post_pre_advec_y_seq_kernel.cpp"
 #include "advec_mom_kernel1_y_nonvector_seq_kernel.cpp"
-#include "advec_mom_kernel2_y_seq_kernel.cpp"
+#include "advec_mom_kernel2_y_seq_kernel.cpp"*/
 #include "calc_dt_kernel_seq_kernel.cpp"
 #include "calc_dt_kernel_min_seq_kernel.cpp"
 #include "calc_dt_kernel_get_seq_kernel.cpp"
