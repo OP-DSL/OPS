@@ -305,4 +305,5 @@ void ops_mpi_reduce_int(ops_arg *args, int* data);
 
 void ops_compute_moment(double t, double *first, double *second);
 
+void ops_dump3(ops_dat dat, const char *name);
 #endif /* __OP_LIB_CORE_H */

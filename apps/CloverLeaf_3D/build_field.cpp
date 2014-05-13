@@ -83,7 +83,7 @@ void build_field()
   soundspeed  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "soundspeed");
   volume      = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "volume");
 
-  d_p[0]=-3;d_p[1]=-3;
+  d_p[0]=-3;d_p[1]=-3;d_p[2]=-3;
   xvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel0");
   xvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel1");
   yvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");

@@ -441,6 +441,40 @@ void ops_diagnostic_output ( )
 }
 
 
+void ops_dump3(ops_dat dat, const char* name) {
+  char str[100];
+  strcpy(str,"./dump/");
+  strcat(str,name);
+  strcat(str,"_");
+  strcat(str,dat->name);
+  //const char* file_name = dat->name;
+  FILE *fp;
+  if ( (fp = fopen(str,"w")) == NULL) {
+    printf("can't open file %s\n",str);
+    exit(2);
+  }
+  int x_end = dat->tail[0]==-3 ? dat->block_size[0]+dat->tail[0] : dat->block_size[0]+dat->tail[0]-1;
+  int y_end = dat->tail[1]==-3 ? dat->block_size[1]+dat->tail[1] : dat->block_size[1]+dat->tail[1]-1;
+  int z_end = dat->tail[2]==-3 ? dat->block_size[2]+dat->tail[2] : dat->block_size[2]+dat->tail[2]-1;
+  for (int z = -dat->offset[2]; z < z_end; z++) {
+    for (int y = -dat->offset[1]; y < y_end; y++) {
+      for (int x = -dat->offset[0]; x < x_end; x++) {
+        fprintf(fp,"%d %d %d %.17g\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
+          *(double*)(dat->data+8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)));
+/*        fprintf(fp,"%d %d %d %c%c%c%c%c%c%c%c\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+0],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+1],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+2],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+3],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+4],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+5],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+6],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+7]);*/
+      }
+    }
+  }
+  fclose(fp);
+}
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {

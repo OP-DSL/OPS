@@ -372,7 +372,11 @@ for nargs in range (1,maxargs+1):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_GBL && args['+str(n)+'].acc != OPS_READ)')
       f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
-
+  
+    f.write('  #ifdef OPS_DEBUG\n')
+    for n in range (0, nargs):
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ) ops_dump3(args['+str(n)+'].dat,name);\n')
+    f.write('  #endif\n')
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
       f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')

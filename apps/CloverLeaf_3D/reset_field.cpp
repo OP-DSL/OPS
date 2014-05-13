@@ -64,5 +64,4 @@ void reset_field()
     ops_arg_dat(yvel1, S3D_000, "double", OPS_READ),
     ops_arg_dat(zvel0, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(zvel1, S3D_000, "double", OPS_READ));
-
 }

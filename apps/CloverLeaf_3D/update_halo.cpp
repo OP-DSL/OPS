@@ -590,55 +590,59 @@ void update_halo(int* fields, int depth)
   //vol_flux_z, mass_flux_z has the same ranges
   //
 
+  int rangexy_b2e[] = {x_min-depth,x_max+depth,y_min-2,y_min-1,z_min-depth,z_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel5_plus_4_a, "update_halo_kernel5_plus_4_a", clover_grid, 3, rangexy_b2d,
+  ops_par_loop(update_halo_kernel5_plus_4_a, "update_halo_kernel5_plus_4_a", clover_grid, 3, rangexy_b2e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_0P40, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_0P40, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel5_plus_2_a, "update_halo_kernel5_plus_2_a", clover_grid, 3, rangexy_b1d,
+  int rangexy_b1e[] = {x_min-depth,x_max+depth,y_min-1,y_min,z_min-depth,z_max+1+depth};
+  ops_par_loop(update_halo_kernel5_plus_2_a, "update_halo_kernel5_plus_2_a", clover_grid, 3, rangexy_b1e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_0P20, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_0P20, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
+  int rangexy_t2e[] = {x_min-depth,x_max+depth,y_max+1,y_max+2,z_min-depth,z_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel5_plus_4_b, "update_halo_kernel5_plus_4_b", clover_grid, 3, rangexy_t2d,
+  ops_par_loop(update_halo_kernel5_plus_4_b, "update_halo_kernel5_plus_4_b", clover_grid, 3, rangexy_t2e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_0M40, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_0M40, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  ops_par_loop(update_halo_kernel5_plus_2_b, "update_halo_kernel5_plus_2_b", clover_grid, 3, rangexy_t1d,
+  int rangexy_t1e[] = {x_min-depth,x_max+depth,y_max+0,y_max+1,z_min-depth,z_max+1+depth};
+  ops_par_loop(update_halo_kernel5_plus_2_b, "update_halo_kernel5_plus_2_b", clover_grid, 3, rangexy_t1e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_0M20, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_0M20, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  int rangexy_l2c_a[] = {x_min-2,x_min-1,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
+  int rangexy_l2e[] = {x_min-2,x_min-1,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel5_plus_4_left, "update_halo_kernel5_plus_4_left", clover_grid, 3, rangexy_l2c_a,
+  ops_par_loop(update_halo_kernel5_plus_4_left, "update_halo_kernel5_plus_4_left", clover_grid, 3, rangexy_l2e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_P400, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_P400, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  int rangexy_l1c_a[] = {x_min-1,x_min,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
-  ops_par_loop(update_halo_kernel5_plus_2_left, "update_halo_kernel5_plus_2_left", clover_grid, 3, rangexy_l1c_a,
+  int rangexy_l1e[] = {x_min-1,x_min,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
+  ops_par_loop(update_halo_kernel5_plus_2_left, "update_halo_kernel5_plus_2_left", clover_grid, 3, rangexy_l1e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_P200, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_P200, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  int rangexy_r2c_a[] = {x_max+1,x_max+2,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
+  int rangexy_r2e[] = {x_max+1,x_max+2,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
   if(depth ==2)
-  ops_par_loop(update_halo_kernel5_plus_4_right, "update_halo_kernel5_plus_4_right", clover_grid, 3, rangexy_r2c_a,
+  ops_par_loop(update_halo_kernel5_plus_4_right, "update_halo_kernel5_plus_4_right", clover_grid, 3, rangexy_r2e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_M400, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_M400, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-  int rangexy_r1c_a[] = {x_max,x_max+1,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
-  ops_par_loop(update_halo_kernel5_plus_2_right, "update_halo_kernel5_plus_2_right",clover_grid, 3, rangexy_r1c_a,
+  int rangexy_r1e[] = {x_max,x_max+1,y_min-depth,y_max+depth,z_min-depth,z_max+1+depth};
+  ops_par_loop(update_halo_kernel5_plus_2_right, "update_halo_kernel5_plus_2_right",clover_grid, 3, rangexy_r1e,
                ops_arg_dat_opt(vol_flux_z, S3D_000_M200, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_M200, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
-   if(depth ==2)
+   if(depth ==2) //TODO: is this really the same range? x should have +1
    ops_par_loop(update_halo_kernel5_minus_4_back, "update_halo_kernel5_minus_4_back", clover_grid, 3, rangexy_back2c,
                ops_arg_dat_opt(vol_flux_z, S3D_000_00P4, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_00P4, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
@@ -649,13 +653,14 @@ void update_halo(int* fields, int depth)
                ops_arg_dat_opt(mass_flux_z, S3D_000_00P2, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
+   int rangexy_front2d[] = {x_min-depth,x_max+depth,y_min-depth,y_max+depth,z_max+2,z_max+3};
    if(depth ==2)
-   ops_par_loop(update_halo_kernel5_minus_4_front, "update_halo_kernel5_minus_4_front", clover_grid, 3, rangexy_front2c,
+   ops_par_loop(update_halo_kernel5_minus_4_front, "update_halo_kernel5_minus_4_front", clover_grid, 3, rangexy_front2d,
                ops_arg_dat_opt(vol_flux_z, S3D_000_00M4, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_00M4, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
-
-   ops_par_loop(update_halo_kernel5_minus_2_front, "update_halo_kernel5_minus_2_front", clover_grid, 3, rangexy_front1c,
+   int rangexy_front1d[] = {x_min-depth,x_max+depth,y_min-depth,y_max+depth,z_max+1,z_max+2};
+   ops_par_loop(update_halo_kernel5_minus_2_front, "update_halo_kernel5_minus_2_front", clover_grid, 3, rangexy_front1d,
                ops_arg_dat_opt(vol_flux_z, S3D_000_00M2, "double", OPS_RW, fields[FIELD_VOL_FLUX_Z]),
                ops_arg_dat_opt(mass_flux_z, S3D_000_00M2, "double", OPS_RW, fields[FIELD_MASS_FLUX_Z]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));

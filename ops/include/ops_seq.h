@@ -255,6 +255,9 @@ void ops_par_loop(void (*kernel)(T0*),
 
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   ops_set_dirtybit_host(args, 1)
 ;}
@@ -354,6 +357,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   ops_set_dirtybit_host(args, 2)
@@ -459,6 +466,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -570,6 +582,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -692,6 +710,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -820,6 +845,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -954,6 +987,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1094,6 +1136,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1245,6 +1297,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1402,6 +1465,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1565,6 +1640,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1734,6 +1822,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -1914,6 +2016,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -2100,6 +2217,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -2292,6 +2425,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -2490,6 +2640,24 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -2699,6 +2867,25 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
@@ -2914,6 +3101,26 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
   if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
+  if (args[17].argtype == OPS_ARG_DAT && args[17].acc != OPS_READ) ops_dump3(args[17].dat,name);
+  #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);

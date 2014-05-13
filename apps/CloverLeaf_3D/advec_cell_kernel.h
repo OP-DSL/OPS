@@ -248,7 +248,7 @@ inline void advec_cell_kernel3_zdir( const double *vol_flux_z, const double *pre
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
-  int x_max=field.x_max;
+  int z_max=field.z_max;
 
   int upwind,donor,downwind,dif;
 
@@ -287,7 +287,7 @@ inline void advec_cell_kernel3_zdir( const double *vol_flux_z, const double *pre
   else
     limiter=0.0;
     
-  mass_flux_z[OPS_ACC6(0,0,0)] = (vol_flux_z[OPS_ACC0(0,0,0)]) * ( density1[OPS_ACC4(0,0,donor)] + limiter );
+  mass_flux_z[OPS_ACC6(0,0,0)] = vol_flux_z[OPS_ACC0(0,0,0)] * ( density1[OPS_ACC4(0,0,donor)] + limiter );
 
   sigmam = fabs(mass_flux_z[OPS_ACC6(0,0,0)])/( density1[OPS_ACC4(0,0,donor)] * pre_vol[OPS_ACC1(0,0,donor)]);
   diffuw = energy1[OPS_ACC5(0,0,donor)] - energy1[OPS_ACC5(0,0,upwind)];
