@@ -159,7 +159,7 @@ void build_field()
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
   zz  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp2, "int", "zz");
   for(int i=sb->istart[2]-2; i<sb->iend[2]+3+1; i++)
-    ((int *)(zz->data))[i-d_m[2]-sb->istart[1]] = i - z_min;
+    ((int *)(zz->data))[i-d_m[2]-sb->istart[2]] = i - z_min;
   zz->dirty_hd=1;
 
   //

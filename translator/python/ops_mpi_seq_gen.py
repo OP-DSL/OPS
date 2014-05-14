@@ -299,6 +299,7 @@ for nargs in range (1,maxargs+1):
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    count[n] = end[n]-start[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
+    f.write('    total_range *= (count[n]<0?0:1);\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
 
@@ -326,7 +327,6 @@ for nargs in range (1,maxargs+1):
     #f.write('        ops_exchange_halo(&args[i],max_depth);\n')
     #f.write('    }\n')
     #f.write('  }\n\n')
-    f.write('   ops_halo_exchanges(args,'+str(nargs)+',range);\n')
     #f.write('   int d_pos[3];')
     #f.write('   int d_neg[3];')
     #f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
@@ -338,6 +338,7 @@ for nargs in range (1,maxargs+1):
     #f.write('  }\n\n')
 
 
+    f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
     f.write('  ops_H_D_exchanges(args, '+str(nargs)+');\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
@@ -380,7 +381,8 @@ for nargs in range (1,maxargs+1):
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
       f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
-    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+')\n;')
+#      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
+    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
 
     f.write('}')

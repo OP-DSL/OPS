@@ -252,6 +252,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   memcpy(dat->tail,tail,sizeof(int)*block->dims);
 
   dat->data = (char *)data;
+  dat->data_d = NULL;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
   dat->dirtybit = 0;

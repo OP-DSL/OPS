@@ -223,6 +223,7 @@ void ops_par_loop(void (*kernel)(T0*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -231,7 +232,7 @@ void ops_par_loop(void (*kernel)(T0*),
     ydim0 = args[0].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,1,range);
+  ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges(args, 1);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -259,8 +260,8 @@ void ops_par_loop(void (*kernel)(T0*),
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  ops_set_dirtybit_host(args, 1)
-;}
+  ops_set_dirtybit_host(args, 1);
+}
 
 //
 //ops_par_loop routine for 2 arguments
@@ -320,6 +321,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -332,7 +334,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     ydim1 = args[1].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,2,range);
+  ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges(args, 2);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -363,8 +365,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  ops_set_dirtybit_host(args, 2)
-;}
+  ops_set_dirtybit_host(args, 2);
+}
 
 //
 //ops_par_loop routine for 3 arguments
@@ -424,6 +426,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -440,7 +443,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     ydim2 = args[2].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,3,range);
+  ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -474,8 +477,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  ops_set_dirtybit_host(args, 3)
-;}
+  ops_set_dirtybit_host(args, 3);
+}
 
 //
 //ops_par_loop routine for 4 arguments
@@ -535,6 +538,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -555,7 +559,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     ydim3 = args[3].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,4,range);
+  ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges(args, 4);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -592,8 +596,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
   if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  ops_set_dirtybit_host(args, 4)
-;}
+  ops_set_dirtybit_host(args, 4);
+}
 
 //
 //ops_par_loop routine for 5 arguments
@@ -657,6 +661,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -681,7 +686,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim4 = args[4].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,5,range);
+  ops_halo_exchanges(args,5,range);
   ops_H_D_exchanges(args, 5);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -722,8 +727,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
   if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
   if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  ops_set_dirtybit_host(args, 5)
-;}
+  ops_set_dirtybit_host(args, 5);
+}
 
 //
 //ops_par_loop routine for 6 arguments
@@ -787,6 +792,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -815,7 +821,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim5 = args[5].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,6,range);
+  ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges(args, 6);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -859,8 +865,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
   if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
   if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  ops_set_dirtybit_host(args, 6)
-;}
+  ops_set_dirtybit_host(args, 6);
+}
 
 //
 //ops_par_loop routine for 7 arguments
@@ -924,6 +930,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -956,7 +963,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim6 = args[6].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,7,range);
+  ops_halo_exchanges(args,7,range);
   ops_H_D_exchanges(args, 7);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1003,8 +1010,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
   if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
   if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  ops_set_dirtybit_host(args, 7)
-;}
+  ops_set_dirtybit_host(args, 7);
+}
 
 //
 //ops_par_loop routine for 8 arguments
@@ -1068,6 +1075,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1104,7 +1112,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim7 = args[7].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,8,range);
+  ops_halo_exchanges(args,8,range);
   ops_H_D_exchanges(args, 8);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1154,8 +1162,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
   if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
   if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  ops_set_dirtybit_host(args, 8)
-;}
+  ops_set_dirtybit_host(args, 8);
+}
 
 //
 //ops_par_loop routine for 9 arguments
@@ -1223,6 +1231,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1263,7 +1272,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim8 = args[8].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,9,range);
+  ops_halo_exchanges(args,9,range);
   ops_H_D_exchanges(args, 9);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1317,8 +1326,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
   if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
   if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  ops_set_dirtybit_host(args, 9)
-;}
+  ops_set_dirtybit_host(args, 9);
+}
 
 //
 //ops_par_loop routine for 10 arguments
@@ -1386,6 +1395,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1430,7 +1440,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim9 = args[9].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,10,range);
+  ops_halo_exchanges(args,10,range);
   ops_H_D_exchanges(args, 10);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1487,8 +1497,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
   if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
   if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  ops_set_dirtybit_host(args, 10)
-;}
+  ops_set_dirtybit_host(args, 10);
+}
 
 //
 //ops_par_loop routine for 11 arguments
@@ -1556,6 +1566,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1604,7 +1615,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim10 = args[10].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,11,range);
+  ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges(args, 11);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1664,8 +1675,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
   if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
   if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  ops_set_dirtybit_host(args, 11)
-;}
+  ops_set_dirtybit_host(args, 11);
+}
 
 //
 //ops_par_loop routine for 12 arguments
@@ -1733,6 +1744,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1785,7 +1797,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim11 = args[11].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,12,range);
+  ops_halo_exchanges(args,12,range);
   ops_H_D_exchanges(args, 12);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1848,8 +1860,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
   if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
   if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  ops_set_dirtybit_host(args, 12)
-;}
+  ops_set_dirtybit_host(args, 12);
+}
 
 //
 //ops_par_loop routine for 13 arguments
@@ -1921,6 +1933,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -1977,7 +1990,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim12 = args[12].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,13,range);
+  ops_halo_exchanges(args,13,range);
   ops_H_D_exchanges(args, 13);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2044,8 +2057,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
   if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
   if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  ops_set_dirtybit_host(args, 13)
-;}
+  ops_set_dirtybit_host(args, 13);
+}
 
 //
 //ops_par_loop routine for 14 arguments
@@ -2117,6 +2130,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -2177,7 +2191,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim13 = args[13].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,14,range);
+  ops_halo_exchanges(args,14,range);
   ops_H_D_exchanges(args, 14);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2247,8 +2261,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
   if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
   if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  ops_set_dirtybit_host(args, 14)
-;}
+  ops_set_dirtybit_host(args, 14);
+}
 
 //
 //ops_par_loop routine for 15 arguments
@@ -2320,6 +2334,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -2384,7 +2399,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim14 = args[14].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,15,range);
+  ops_halo_exchanges(args,15,range);
   ops_H_D_exchanges(args, 15);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2457,8 +2472,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
   if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
   if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  ops_set_dirtybit_host(args, 15)
-;}
+  ops_set_dirtybit_host(args, 15);
+}
 
 //
 //ops_par_loop routine for 16 arguments
@@ -2530,6 +2545,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -2598,7 +2614,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim15 = args[15].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,16,range);
+  ops_halo_exchanges(args,16,range);
   ops_H_D_exchanges(args, 16);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2674,8 +2690,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
   if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
   if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  ops_set_dirtybit_host(args, 16)
-;}
+  ops_set_dirtybit_host(args, 16);
+}
 
 //
 //ops_par_loop routine for 17 arguments
@@ -2751,6 +2767,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -2823,7 +2840,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim16 = args[16].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,17,range);
+  ops_halo_exchanges(args,17,range);
   ops_H_D_exchanges(args, 17);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2903,8 +2920,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
   if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
   if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
-  ops_set_dirtybit_host(args, 17)
-;}
+  ops_set_dirtybit_host(args, 17);
+}
 
 //
 //ops_par_loop routine for 18 arguments
@@ -2980,6 +2997,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
@@ -3056,7 +3074,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     ydim17 = args[17].dat->block_size[1];
   }
 
-   ops_halo_exchanges(args,18,range);
+  ops_halo_exchanges(args,18,range);
   ops_H_D_exchanges(args, 18);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -3139,5 +3157,5 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
   if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
   if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[17],range);
-  ops_set_dirtybit_host(args, 18)
-;}
+  ops_set_dirtybit_host(args, 18);
+}

@@ -742,13 +742,13 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
     double result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_MPI_WORLD);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_CART_COMM);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MAX, OPS_MPI_WORLD);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MAX, OPS_CART_COMM);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_MPI_WORLD);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_CART_COMM);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_MPI_WORLD);
+      MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_CART_COMM);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0.0)
@@ -770,13 +770,13 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
     float result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM, OPS_MPI_WORLD);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM, OPS_CART_COMM);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MAX, OPS_MPI_WORLD);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MAX, OPS_CART_COMM);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MIN, OPS_MPI_WORLD);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MIN, OPS_CART_COMM);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result, arg->dim, MPI_FLOAT, OPS_MPI_WORLD);
+      MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result, arg->dim, MPI_FLOAT, OPS_CART_COMM);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0.0f)
@@ -797,13 +797,13 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
     int result[arg->dim*ops_comm_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM, OPS_MPI_WORLD);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM, OPS_CART_COMM);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MAX, OPS_MPI_WORLD);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MAX, OPS_CART_COMM);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MIN, OPS_MPI_WORLD);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MIN, OPS_CART_COMM);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result, arg->dim, MPI_INT, OPS_MPI_WORLD);
+      MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result, arg->dim, MPI_INT, OPS_CART_COMM);
       for (int i = 1; i < ops_comm_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0)
