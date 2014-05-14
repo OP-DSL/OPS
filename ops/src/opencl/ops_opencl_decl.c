@@ -228,3 +228,40 @@ void ops_compute_moment(double t, double *first, double *second) {
   *second = t*t;
 }
 
+void ops_decl_const_char ( int dim, char const * type, int size, char * dat,
+                         char const * name )
+{
+  //#warning "const_d is not kept track of, therefore it will not be freed up!"
+  // Add constant to constant array
+  // Create temporary cl_mem array for constants
+  
+  cl_mem *const_tmp;
+  const_tmp = (cl_mem*) malloc((OPS_opencl_core.n_constants)*sizeof(cl_mem));
+  // Copy already existing constant to const_tmp
+  for(int i=0; i<OPS_opencl_core.n_constants; i++)
+    const_tmp[i] = OPS_opencl_core.constant[i];
+
+  // Allocate memory on host for a larger array of constant data structure
+  cl_int ret = 0;
+  if(OPS_opencl_core.n_constants != 0) 
+    free(OPS_opencl_core.constant);
+  
+  OPS_opencl_core.n_constants++;
+  OPS_opencl_core.constant = (cl_mem*) malloc((OPS_opencl_core.n_constants)*sizeof(cl_mem));
+
+  // Copy already existing pointers
+  for(int i=0; i<OPS_opencl_core.n_constants-1; i++)
+    OPS_opencl_core.constant[i] = const_tmp[i];
+  
+  // Allocate new memory space for the new constant
+  OPS_opencl_core.constant[OPS_opencl_core.n_constants-1] = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*size, NULL, &ret);
+  clSafeCall( ret );
+
+  // Write the new constant to the memory of the device
+  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant[OPS_opencl_core.n_constants-1], CL_TRUE, 0, dim*size, (void*) dat, 0, NULL, NULL) );
+  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+}
+
+
+

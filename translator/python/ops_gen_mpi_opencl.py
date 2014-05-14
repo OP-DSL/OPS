@@ -683,9 +683,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       nkernel_args = nkernel_args+1
       
     for c in range(0, len(found_consts)):
-      #code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+\
-           consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+      if consts[found_consts[c]]['type'][1:-1] is 'int' or consts[found_consts[c]]['type'][1:-1] is 'double' or consts[found_consts[c]]['type'][1:-1] is 'float':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
+             consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+      else:
+        #code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof('+\
+        #     consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
+        
       nkernel_args = nkernel_args+1
       
      
@@ -871,14 +876,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   }
   
 //this needs to be a platform specific copy symbol to device function
-void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
+/*void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
 {
   (void)dim;
   (void)type;
   (void)typeSize;
   (void)data;
   (void)name;
-}
+}*/
 
   """
   depth = -2
