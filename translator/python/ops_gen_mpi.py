@@ -353,6 +353,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #code('for( n_x=0; n_x<ROUND_DOWN((end[0]-start[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
+    code('#pragma novector')
     code('for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
     depth = depth+2
 
