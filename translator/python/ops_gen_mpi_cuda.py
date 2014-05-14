@@ -290,7 +290,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
-        if NDIM==2:
+        if NDIM==3:
           code('__constant__ int ydim'+str(n)+'_'+name+';')
     code('')
 
@@ -708,7 +708,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
       else:
-        if dims[n].isdigit() and int(dims[n])==1:
+        if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
           text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
         else:
           text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
