@@ -147,7 +147,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 
-def remove_triling_w_space(text):
+def remove_trailing_w_space(text):
   line_start = 0
   line = ""
   line_end = 0
@@ -232,15 +232,29 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
-
+    NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * nargs * 2
-    #print stride
-    for n in range (0, nargs):
-      if str(stens[n]).find('STRID2D_X') > 0:
-        stride[2*n+1] = 0
-      elif str(stens[n]).find('STRID2D_Y') > 0:
-        stride[2*n] = 0
+    stride = [1] * nargs * NDIM
+    
+    
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[NDIM*n] = 0
+
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_X') > 0:
+          stride[NDIM*n+1] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+1] = 0
 
 
     reduct = 0
@@ -276,12 +290,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
+        if NDIM==2:
+          code('__constant__ int ydim'+str(n)+'_'+name+';')
     code('')
 
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==2:
+          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==3:
+          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
 
 
@@ -295,7 +314,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     fid.close()
     text = comment_remover(text)
 
-    text = remove_triling_w_space(text)
+    text = remove_trailing_w_space(text)
 
     i = text.find(name)
     if(i < 0):
@@ -341,7 +360,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           code(typs[n]+'* __restrict arg'+str(n)+',')
 
     code('int size0,')
-    code('int size1 ){')
+    if NDIM==2:
+      code('int size1 ){')
+    if NDIM==3:
+      code('int size1,')
+      code('int size2 ){')
+      
     depth = depth + 2
 
     #local variable to hold reductions on GPU
@@ -361,16 +385,24 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
     code('')
+    if NDIM==3:
+      code('int idx_z = blockDim.z * blockIdx.z + threadIdx.z;')
     code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('arg'+str(n)+' += idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+name+';')
+        if NDIM==2:
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+';')
+        elif NDIM==3:
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
 
     code('')
     n_per_line = 5
-    IF('idx_x < size0 && idx_y < size1')
+    if NDIM==2:
+      IF('idx_x < size0 && idx_y < size1')
+    elif NDIM==3:
+      IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
     text = name+'('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -395,17 +427,21 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code(text)
     ENDIF()
 
-    #reduction accross blocks
+    #reduction across blocks
+    if NDIM==2:
+      cont = 'blockIdx.x + blockIdx.y*gridDim.x'
+    elif NDIM==3:
+      cont = 'blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y'
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
 
 
     code('')
@@ -475,11 +511,15 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     code('int x_size = MAX(0,end_add[0]-start_add[0]);')
     code('int y_size = MAX(0,end_add[1]-start_add[1]);')
+    if NDIM==3:
+      code('int z_size = MAX(0,end_add[2]-start_add[2]);')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];')
     code('')
 
     #timing structs
@@ -493,6 +533,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
+        if NDIM==3:
+          code('cudaMemcpyToSymbol( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
     ENDIF()
 
     code('')
@@ -505,7 +547,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
 
     #set up CUDA grid and thread blocks
-    code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
+    if NDIM==2:
+      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
+    if NDIM==3:
+      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);')
     code('dim3 block(OPS_block_size_x,OPS_block_size_y,1);')
     code('')
 
@@ -533,7 +578,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+      if NDIM==2:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+      elif NDIM==3:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('int reduct_size = 0;')
@@ -601,15 +649,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
     comm('')
+    comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers')
-
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
+          for d2 in range (0,d):
+            line = line + depth*' '+'  args['+str(n)+'].dat->block_size['+str(d2)+'] *\n'
+          code(line[:-1])
+          code('  (start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
@@ -665,7 +715,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
-    text = text +'x_size, y_size);'
+    if NDIM==2:
+      text = text +'x_size, y_size);'
+    elif NDIM==3:
+      text = text +'x_size, y_size, z_size);'
     code(text);
 
     code('')
@@ -732,6 +785,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
   file_text =''
   comm('header')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_cuda_rt_support.h"')
   code('#include "ops_cuda_reduction.h"')

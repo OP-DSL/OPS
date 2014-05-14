@@ -89,7 +89,7 @@ def comment_remover(text):
     )
     return re.sub(pattern, replacer, text)
 
-def remove_triling_w_space(text):
+def remove_trailing_w_space(text):
   line_start = 0
   line = ""
   line_end = 0
@@ -317,7 +317,7 @@ def main():
       text = f.read()
 
       #get rid of all comments
-      text = remove_triling_w_space(comment_remover(text))
+      text = remove_trailing_w_space(comment_remover(text))
       #text = comment_remover(text)
 
       #
@@ -630,8 +630,8 @@ def main():
           endofcall = text.find(';', locs[loc])
           name = const_args[curr_const]['name']
           fid.write(indent[0:-2] + 'ops_decl_const2( '+ name.strip() +
-            ',' + str(const_args[curr_const]['dim']) + ',' +
-            const_args[curr_const]['type'] + ',' +
+            ',' + str(const_args[curr_const]['dim']) + ', "' +
+            const_args[curr_const]['type'] + '",' +
             const_args[curr_const]['name2'].strip() + ');')
           loc_old = endofcall + 1
           continue
@@ -669,8 +669,8 @@ def main():
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
 
 

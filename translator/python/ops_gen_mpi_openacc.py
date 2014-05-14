@@ -147,7 +147,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 
-def remove_triling_w_space(text):
+def remove_trailing_w_space(text):
   line_start = 0
   line = ""
   line_end = 0
@@ -257,7 +257,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     fid.close()
     text = comment_remover(text)
 
-    text = remove_triling_w_space(text)
+    text = remove_trailing_w_space(text)
 
     i = text.find(name)
     if(i < 0):

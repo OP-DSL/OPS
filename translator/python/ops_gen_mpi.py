@@ -231,9 +231,10 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    code('int* start = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
-    code('int* end = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
-
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
+    code('')
+    
     FOR('n','0',str(NDIM))
     code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
     IF('start[n] >= range[2*n]')
@@ -260,10 +261,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        #FOR('n','1',str(NDIM))
-        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start[0],')
-        #code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-        #ENDFOR()
         for d in range (1, NDIM):
           code('offs['+str(n)+']['+str(d)+'] = off'+str(NDIM)+'D('+str(d)+', &start[0],')
           if d == 1:
@@ -288,6 +285,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
+    comm('set up initial pointers and exchange halos if nessasary')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
@@ -302,8 +300,6 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]);')# * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
         #ENDFOR()
         #ENDFOR()
-
-        comm('set up initial pointers and exchange halos if nessasary')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
@@ -452,7 +448,6 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
-    code('free(start);free(end);')
     code('')
     code('#ifdef OPS_DEBUG')
     for n in range (0,nargs):
