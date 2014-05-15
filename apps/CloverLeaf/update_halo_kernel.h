@@ -174,45 +174,45 @@ inline void update_halo_kernel2_xvel_minus_2_b(double *xvel0, double *xvel1, con
 ///
 
 inline void update_halo_kernel2_yvel_plus_4_a(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(4,0)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(4,0)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(4,0)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(4,0)];
 }
 
 inline void update_halo_kernel2_yvel_plus_2_a(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(2,0)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(2,0)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(2,0)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(2,0)];
 }
 
 inline void update_halo_kernel2_yvel_plus_4_b(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(-4,0)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(-4,0)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(-4,0)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(-4,0)];
 }
 
 inline void update_halo_kernel2_yvel_plus_2_b(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(-2,0)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(-2,0)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(-2,0)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(-2,0)];
 }
 
 ///
 
 inline void update_halo_kernel2_yvel_minus_4_a(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,4)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,4)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,4)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,4)];
 }
 
 inline void update_halo_kernel2_yvel_minus_2_a(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,2)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,2)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,2)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,2)];
 }
 
 inline void update_halo_kernel2_yvel_minus_4_b(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,-4)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,-4)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,-4)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,-4)];
 }
 
 inline void update_halo_kernel2_yvel_minus_2_b(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_XVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,-2)];
-  if(fields[FIELD_XVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,-2)];
+  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,-2)];
+  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,-2)];
 }
 
 
