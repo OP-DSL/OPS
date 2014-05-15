@@ -13,9 +13,9 @@ extern double dt;
 //#include "revert_kernel_seq_kernel.cpp"
 //#include "reset_field_kernel1_seq_kernel.cpp"
 //#include "reset_field_kernel2_seq_kernel.cpp"
-#include "ideal_gas_kernel_seq_kernel.cpp"
-#include "PdV_kernel_predict_seq_kernel.cpp"
-#include "PdV_kernel_nopredict_seq_kernel.cpp"
+//#include "ideal_gas_kernel_seq_kernel.cpp"
+//#include "PdV_kernel_predict_seq_kernel.cpp"
+//#include "PdV_kernel_nopredict_seq_kernel.cpp"
 //#include "accelerate_kernel_seq_kernel.cpp"
 
 /*#include "advec_cell_kernel1_xdir_seq_kernel.cpp"
@@ -28,7 +28,7 @@ extern double dt;
 #include "advec_cell_kernel4_ydir_seq_kernel.cpp"*/
 
 
-#include "advec_mom_kernel_x1_seq_kernel.cpp"
+/*#include "advec_mom_kernel_x1_seq_kernel.cpp"
 #include "advec_mom_kernel_y1_seq_kernel.cpp"
 #include "advec_mom_kernel_x2_seq_kernel.cpp"
 #include "advec_mom_kernel_y2_seq_kernel.cpp"
@@ -39,14 +39,14 @@ extern double dt;
 #include "advec_mom_kernel_mass_flux_y_seq_kernel.cpp"
 #include "advec_mom_kernel_post_pre_advec_y_seq_kernel.cpp"
 #include "advec_mom_kernel1_y_nonvector_seq_kernel.cpp"
-#include "advec_mom_kernel2_y_seq_kernel.cpp"
+#include "advec_mom_kernel2_y_seq_kernel.cpp"*/
 #include "calc_dt_kernel_seq_kernel.cpp"
 #include "calc_dt_kernel_min_seq_kernel.cpp"
 #include "calc_dt_kernel_get_seq_kernel.cpp"
 #include "calc_dt_kernel_print_seq_kernel.cpp"
 #include "field_summary_kernel_seq_kernel.cpp"
-#include "flux_calc_kernelx_seq_kernel.cpp"
-#include "flux_calc_kernely_seq_kernel.cpp"
+//#include "flux_calc_kernelx_seq_kernel.cpp"
+//#include "flux_calc_kernely_seq_kernel.cpp"
 //#include "viscosity_kernel_seq_kernel.cpp"
 #include "initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "initialise_chunk_kernel_y_seq_kernel.cpp"
