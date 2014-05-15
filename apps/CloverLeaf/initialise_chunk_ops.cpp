@@ -60,8 +60,8 @@ void initialise_chunk()
   int y_min = field.y_min;
   int y_max = field.y_max;
 
-  int rangex[] = {x_min-2, x_max+3, 0, 1};
-  int rangey[] = {0, 1, y_min-2, y_max+3};
+  int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3};
 
 
 
