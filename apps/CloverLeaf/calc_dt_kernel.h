@@ -12,7 +12,7 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
 
   dsx = celldx[OPS_ACC0(0,0)];
-  dsy = celldy[OPS_ACC2(0,0)];
+  dsy = celldy[OPS_ACC1(0,0)];
 
   cc = soundspeed[OPS_ACC2(0,0)] * soundspeed[OPS_ACC2(0,0)];
   cc = cc + 2.0 * viscosity[OPS_ACC3(0,0)]/density0[OPS_ACC4(0,0)];

@@ -5,7 +5,7 @@ inline void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
                           const double *volume,
                           const double *vol_flux_x, const double *vol_flux_y) {
 
-  post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC4(0,1)] -  vol_flux_y[OPS_ACC3(0,0)];
+  post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC4(0,1)] -  vol_flux_y[OPS_ACC4(0,0)];
   pre_vol[OPS_ACC0(0,0)] = post_vol[OPS_ACC1(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
 
 }
@@ -67,7 +67,7 @@ inline void advec_mom_kernel_post_pre_advec_x( double *node_mass_post, const dou
                               density1[OPS_ACC2(-1,0)]  * post_vol[OPS_ACC1(-1,0)]  );
 
   //node_flux accessed with: {0,0, -1,0}
-  node_mass_pre[OPS_ACC3(0,0)] = node_mass_post[OPS_ACC1(0,0)] - node_flux[OPS_ACC4(-1,0)] + node_flux[OPS_ACC4(0,0)];
+  node_mass_pre[OPS_ACC3(0,0)] = node_mass_post[OPS_ACC0(0,0)] - node_flux[OPS_ACC4(-1,0)] + node_flux[OPS_ACC4(0,0)];
 
 }
 
