@@ -99,6 +99,15 @@ f.write(top)
 #
 
 f.write('#ifndef OPS_ACC_MACROS\n')
+f.write('#ifdef OPS_3D\n')
+f.write('#ifndef OPS_DEBUG\n')
+for nargs in range (0,maxargs):
+  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (x+xdim'+str(nargs)+'*(y)+xdim'+str(nargs)+'*ydim'+str(nargs)+'*(z))\n')
+f.write('#else\n\n')
+for nargs in range (0,maxargs):
+  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (ops_stencil_check_3d('+str(nargs)+', x, y, z, xdim'+str(nargs)+', ydim'+str(nargs)+'))\n')
+f.write('#endif\n')
+f.write('#else\n')
 f.write('#ifndef OPS_DEBUG\n')
 for nargs in range (0,maxargs):
   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (x+xdim'+str(nargs)+'*(y))\n')
@@ -106,11 +115,16 @@ f.write('#else\n\n')
 for nargs in range (0,maxargs):
   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (ops_stencil_check_2d('+str(nargs)+', x, y, xdim'+str(nargs)+', -1))\n')
 f.write('#endif\n')
+f.write('#endif\n')
 f.write('#endif\n\n')
 
 for nargs in range (0,maxargs):
   f.write('extern int xdim'+str(nargs)+';\n')
 
+f.write('#ifdef OPS_3D\n')
+for nargs in range (0,maxargs):
+  f.write('extern int ydim'+str(nargs)+';\n')
+f.write('#endif\n')
 functions =  """
 inline int mult(int* size, int dim)
 {
@@ -307,7 +321,9 @@ for nargs in range (1,maxargs+1):
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
       f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('    #ifdef OPS_3D\n')
       f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];\n')
+      f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
 

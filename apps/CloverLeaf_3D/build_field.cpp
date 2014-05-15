@@ -26,6 +26,7 @@
 #include <math.h>
 
 // OPS header file
+#define OPS_3D
 #include "ops_seq.h"
 
 
