@@ -240,7 +240,12 @@ cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cp
 				nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. \
 				-c -o ./CUDA/cloverleaf_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
-ACC_KERNELS = clover_leaf_openacc_kernels.cpp
+ACC_KERNELS = clover_leaf_kernels.cpp
+
+./OpenACC/clover_leaf_kernels.o:	./OpenACC/$(ACC_KERNELS) \
+				Makefile
+				$(MPICPP) -acc -ta=tesla:cc3x $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				-I. ./OpenACC/$(ACC_KERNELS) -c -o ./OpenACC/clover_leaf_kernels.o
 
 cloverleaf_openacc: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
@@ -250,16 +255,17 @@ cloverleaf_openacc: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp ini
                 initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
-                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
-	        $(MPICPP) -acc -ta=tesla:cc3x,keepgpu $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB)  clover_leaf.cpp start.cpp build_field.cpp \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h \
+								./OpenACC/clover_leaf_kernels.o
+	        $(MPICPP) -acc -ta=tesla:cc3x $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB)  clover_leaf.cpp start.cpp build_field.cpp \
                 read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-								advec_mom_ops.cpp -I. ./OpenACC/$(ACC_KERNELS) -lcudart -lops_cuda -o cloverleaf_openacc
+								advec_mom_ops.cpp -I. ./OpenACC/clover_leaf_kernels.o -lcudart -lops_cuda -o cloverleaf_openacc
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc ./CUDA/*.o *.o
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc ./CUDA/*.o ./OpenACC/*.o *.o

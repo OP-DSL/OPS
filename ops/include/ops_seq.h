@@ -297,6 +297,12 @@ void ops_par_loop(void (*kernel)(T0*),
     #endif
   }
 
+  for (int i = 0; i < 1; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges(args, 1);
   for (int nt=0; nt<total_range; nt++) {
@@ -324,7 +330,7 @@ void ops_par_loop(void (*kernel)(T0*),
   #ifdef OPS_DEBUG
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
   ops_set_dirtybit_host(args, 1);
 }
 
@@ -403,6 +409,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     #endif
   }
 
+  for (int i = 0; i < 2; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges(args, 2);
   for (int nt=0; nt<total_range; nt++) {
@@ -432,8 +444,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
   ops_set_dirtybit_host(args, 2);
 }
 
@@ -518,6 +530,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     #endif
   }
 
+  for (int i = 0; i < 3; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
   for (int nt=0; nt<total_range; nt++) {
@@ -549,9 +567,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
   ops_set_dirtybit_host(args, 3);
 }
 
@@ -642,6 +660,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     #endif
   }
 
+  for (int i = 0; i < 4; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges(args, 4);
   for (int nt=0; nt<total_range; nt++) {
@@ -675,10 +699,10 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
   if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
   ops_set_dirtybit_host(args, 4);
 }
 
@@ -779,6 +803,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 5; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,5,range);
   ops_H_D_exchanges(args, 5);
   for (int nt=0; nt<total_range; nt++) {
@@ -815,11 +845,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
   if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
   ops_set_dirtybit_host(args, 5);
 }
 
@@ -926,6 +956,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 6; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges(args, 6);
   for (int nt=0; nt<total_range; nt++) {
@@ -964,12 +1000,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
   if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
   ops_set_dirtybit_host(args, 6);
 }
 
@@ -1082,6 +1118,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 7; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,7,range);
   ops_H_D_exchanges(args, 7);
   for (int nt=0; nt<total_range; nt++) {
@@ -1122,13 +1164,13 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
   if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
   ops_set_dirtybit_host(args, 7);
 }
 
@@ -1247,6 +1289,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 8; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,8,range);
   ops_H_D_exchanges(args, 8);
   for (int nt=0; nt<total_range; nt++) {
@@ -1289,14 +1337,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
   if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
   ops_set_dirtybit_host(args, 8);
 }
 
@@ -1425,6 +1473,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 9; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,9,range);
   ops_H_D_exchanges(args, 9);
   for (int nt=0; nt<total_range; nt++) {
@@ -1470,15 +1524,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
   if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
   ops_set_dirtybit_host(args, 9);
 }
 
@@ -1613,6 +1667,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 10; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,10,range);
   ops_H_D_exchanges(args, 10);
   for (int nt=0; nt<total_range; nt++) {
@@ -1660,16 +1720,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
   if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
   ops_set_dirtybit_host(args, 10);
 }
 
@@ -1810,6 +1870,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 11; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges(args, 11);
   for (int nt=0; nt<total_range; nt++) {
@@ -1859,17 +1925,17 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
   if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
   ops_set_dirtybit_host(args, 11);
 }
 
@@ -2016,6 +2082,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 12; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,12,range);
   ops_H_D_exchanges(args, 12);
   for (int nt=0; nt<total_range; nt++) {
@@ -2067,18 +2139,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
   if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
   ops_set_dirtybit_host(args, 12);
 }
 
@@ -2235,6 +2307,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 13; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,13,range);
   ops_H_D_exchanges(args, 13);
   for (int nt=0; nt<total_range; nt++) {
@@ -2289,19 +2367,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
   if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
   ops_set_dirtybit_host(args, 13);
 }
 
@@ -2464,6 +2542,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 14; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,14,range);
   ops_H_D_exchanges(args, 14);
   for (int nt=0; nt<total_range; nt++) {
@@ -2520,20 +2604,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
   if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
   ops_set_dirtybit_host(args, 14);
 }
 
@@ -2702,6 +2786,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 15; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,15,range);
   ops_H_D_exchanges(args, 15);
   for (int nt=0; nt<total_range; nt++) {
@@ -2760,21 +2850,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
   if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
   ops_set_dirtybit_host(args, 15);
 }
 
@@ -2949,6 +3039,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 16; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,16,range);
   ops_H_D_exchanges(args, 16);
   for (int nt=0; nt<total_range; nt++) {
@@ -3009,22 +3105,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
   if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
   ops_set_dirtybit_host(args, 16);
 }
 
@@ -3209,6 +3305,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 17; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,17,range);
   ops_H_D_exchanges(args, 17);
   for (int nt=0; nt<total_range; nt++) {
@@ -3272,23 +3374,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
   if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
   ops_set_dirtybit_host(args, 17);
 }
 
@@ -3479,6 +3581,12 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     #endif
   }
 
+  for (int i = 0; i < 18; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
   ops_halo_exchanges(args,18,range);
   ops_H_D_exchanges(args, 18);
   for (int nt=0; nt<total_range; nt++) {
@@ -3544,23 +3652,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
   if (args[17].argtype == OPS_ARG_DAT && args[17].acc != OPS_READ) ops_dump3(args[17].dat,name);
   #endif
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
-  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[17],range);
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
+  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[17]);
   ops_set_dirtybit_host(args, 18);
 }
