@@ -85,7 +85,7 @@ endif
 # master to make all versions
 #
 
-all: clean cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_openacc
+all: clean cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_openacc cloverleaf_mpi_openacc
 
 
 cloverleaf_dev_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
@@ -272,9 +272,27 @@ cloverleaf_openacc: $(openacc_obj_list) clover_leaf.cpp start.cpp build_field.cp
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o cloverleaf_openacc
+
+cloverleaf_mpi_openacc: $(openacc_obj_list) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
+                update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+                calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+                advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
+                initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+                update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+                PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
+	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+								 clover_leaf.cpp start.cpp build_field.cpp \
+                read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
+                ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+                viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+                flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o cloverleaf_mpi_openacc
+
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc ./CUDA/*.o ./OpenACC/*.o *.o
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o
