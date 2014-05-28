@@ -330,12 +330,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     depth = depth +2
     for c in range(0, len(found_consts)):
       code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
+    text = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and n < nargs-1:
-        code('int xdim'+str(n)+'_'+name+',')
-      if arg_typ[n] == 'ops_arg_dat' and n == nargs-1:
-        code('int xdim'+str(n)+'_'+name+')')
-
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text + 'int xdim'+str(n)+'_'+name
+      elif arg_typ[n] == 'ops_arg_gbl':
+        text = text[0:-2]
+      if n < nargs-1:
+        text = text + ',\n'
+      elif n == nargs-1:
+        text = text + ')\n'
+    code(text)
                    
     depth =depth-1        
     code(body)
@@ -435,14 +440,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #reduction accross blocks
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
+        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        #code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
+        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        #code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
+        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        #code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
 
 
     code('')
@@ -708,11 +716,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       
      
     for n in range (0, nargs):
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
-      nkernel_args = nkernel_args+1
+      if arg_typ[n] == 'ops_arg_dat':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
+        nkernel_args = nkernel_args+1
     for n in range (0, nargs):
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
-      nkernel_args = nkernel_args+1
+      if arg_typ[n] == 'ops_arg_dat':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
+        nkernel_args = nkernel_args+1
     
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
