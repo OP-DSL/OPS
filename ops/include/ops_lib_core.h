@@ -50,16 +50,6 @@
 
 #include "ops_util.h"
 
-/*
-* essential typedefs
-*/
-
-typedef unsigned int uint;
-typedef long long ll;
-typedef unsigned long long ull;
-
-
-extern int OPS_hybrid_gpu;
 
 /*
 * enum list for ops_par_loop
@@ -82,6 +72,39 @@ extern int OPS_hybrid_gpu;
 #define MAX_DEPTH 5
 
 #define OPS_MAX_DIM 5
+
+/*
+ * * zero constants
+ * */
+
+#define ZERO_double 0.0;
+#define INFINITY_double INFINITY;
+#define ZERO_float 0.0f;
+#define INFINITY_float INFINITY;
+#define ZERO_int 0;
+#define INFINITY_int INFINITY;
+#define ZERO_uint 0;
+#define INFINITY_uint INFINITY;
+#define ZERO_ll 0;
+#define INFINITY_ll INFINITY;
+#define ZERO_ull 0;
+#define INFINITY_ull INFINITY;
+#define ZERO_bool 0;
+
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+* essential typedefs
+*/
+
+typedef unsigned int uint;
+typedef long long ll;
+typedef unsigned long long ull;
 
 typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
@@ -173,11 +196,14 @@ typedef struct
 } ops_kernel;
 
 
+typedef struct
+{
+  int         count;       /* number of blocks */
+  int         blocklength; /*size of blocks */
+  int         stride;      /*stride between blocks */
+} ops_halo;
 
-extern int OPS_kern_max, OPS_kern_curr;
-extern ops_kernel * OPS_kernels;
 
-extern int ops_current_kernel;
 
 //
 //Struct for holding the decomposition details of a block on an MPI process
@@ -232,8 +258,44 @@ typedef sub_block * sub_block_list;
 
 
 /*******************************************************************************
+* Global constants
+*******************************************************************************/
+
+extern int OPS_hybrid_gpu;
+extern int OPS_kern_max, OPS_kern_curr;
+extern ops_kernel * OPS_kernels;
+
+extern int ops_current_kernel;
+
+extern int OPS_diags;
+
+extern int OPS_block_index, OPS_block_max,
+           OPS_dat_index, OPS_dat_max;
+
+extern ops_block * OPS_block_list;
+extern Double_linked_list OPS_dat_list; //Head of the double linked list
+extern ops_arg *OPS_curr_args;
+
+extern sub_block_list *OPS_sub_block_list;
+
+/*******************************************************************************
 * Core lib function prototypes
 *******************************************************************************/
+
+
+void ops_init( int argc, char **argv, int diags_level );
+void ops_exit();
+
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
+                           char* data, int type_size, char const * type, char const * name );
+
+ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
+ops_arg ops_arg_idx( );
+
+ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
+void ops_decl_const_char( int, char const *, int, char *, char const* );
 
 void ops_init_core( int argc, char **argv, int diags_level );
 
@@ -265,6 +327,8 @@ void ops_fprintf(FILE *stream, const char *format, ...);
 void ops_diagnostic_output( );
 void ops_timing_output();
 
+void ops_timers( double *cpu, double *et );
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
 void ops_timing_realloc ( int, const char * );
@@ -273,12 +337,16 @@ float ops_compute_transfer(int dims, int *range, ops_arg *arg);
 
 void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
+int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1);
 
 /* check if these should be placed here */
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
 void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
-
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range);
+void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
+void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
+void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
@@ -293,5 +361,11 @@ void ops_mpi_reduce_double(ops_arg *args, double* data);
 void ops_mpi_reduce_int(ops_arg *args, int* data);
 
 void ops_compute_moment(double t, double *first, double *second);
+
+void ops_dump3(ops_dat dat, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __OP_LIB_CORE_H */

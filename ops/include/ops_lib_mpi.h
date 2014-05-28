@@ -37,10 +37,51 @@
   * @details Declares the OPS API calls for the sequential backend
   */
 
-#include "ops_lib_cpp.h"
 #include "ops_mpi_core.h"
 
 #ifndef OPS_ACC_MACROS
+#ifdef OPS_3D
+#ifndef OPS_DEBUG
+#define OPS_ACC0(x,y,z) (x+xdim0*(y)+ydim0*xdim0*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1*(y)+ydim1*xdim1*(z))
+#define OPS_ACC2(x,y,z) (x+xdim2*(y)+ydim2*xdim2*(z))
+#define OPS_ACC3(x,y,z) (x+xdim3*(y)+ydim3*xdim3*(z))
+#define OPS_ACC4(x,y,z) (x+xdim4*(y)+ydim4*xdim4*(z))
+#define OPS_ACC5(x,y,z) (x+xdim5*(y)+ydim5*xdim5*(z))
+#define OPS_ACC6(x,y,z) (x+xdim6*(y)+ydim6*xdim6*(z))
+#define OPS_ACC7(x,y,z) (x+xdim7*(y)+ydim7*xdim7*(z))
+#define OPS_ACC8(x,y,z) (x+xdim8*(y)+ydim8*xdim8*(z))
+#define OPS_ACC9(x,y,z) (x+xdim9*(y)+ydim9*xdim9*(z))
+#define OPS_ACC10(x,y,z) (x+xdim10*(y)+ydim10*xdim10*(z))
+#define OPS_ACC11(x,y,z) (x+xdim11*(y)+ydim11*xdim11*(z))
+#define OPS_ACC12(x,y,z) (x+xdim12*(y)+ydim12*xdim12*(z))
+#define OPS_ACC13(x,y,z) (x+xdim13*(y)+ydim13*xdim13*(z))
+#define OPS_ACC14(x,y,z) (x+xdim14*(y)+ydim14*xdim14*(z))
+#define OPS_ACC15(x,y,z) (x+xdim15*(y)+ydim15*xdim15*(z))
+#define OPS_ACC16(x,y,z) (x+xdim16*(y)+ydim16*xdim16*(z))
+#define OPS_ACC17(x,y,z) (x+xdim17*(y)+ydim17*xdim17*(z))
+#else
+
+#define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+#define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
+#define OPS_ACC2(x,y,z) (ops_stencil_check_3d(2, x, y, z, xdim2, ydim2))
+#define OPS_ACC3(x,y,z) (ops_stencil_check_3d(3, x, y, z, xdim3, ydim3))
+#define OPS_ACC4(x,y,z) (ops_stencil_check_3d(4, x, y, z, xdim4, ydim4))
+#define OPS_ACC5(x,y,z) (ops_stencil_check_3d(5, x, y, z, xdim5, ydim5))
+#define OPS_ACC6(x,y,z) (ops_stencil_check_3d(6, x, y, z, xdim6, ydim6))
+#define OPS_ACC7(x,y,z) (ops_stencil_check_3d(7, x, y, z, xdim7, ydim7))
+#define OPS_ACC8(x,y,z) (ops_stencil_check_3d(8, x, y, z, xdim8, ydim8))
+#define OPS_ACC9(x,y,z) (ops_stencil_check_3d(9, x, y, z, xdim9, ydim9))
+#define OPS_ACC10(x,y,z) (ops_stencil_check_3d(10, x, y, z, xdim10, ydim10))
+#define OPS_ACC11(x,y,z) (ops_stencil_check_3d(11, x, y, z, xdim11, ydim11))
+#define OPS_ACC12(x,y,z) (ops_stencil_check_3d(12, x, y, z, xdim12, ydim12))
+#define OPS_ACC13(x,y,z) (ops_stencil_check_3d(13, x, y, z, xdim13, ydim13))
+#define OPS_ACC14(x,y,z) (ops_stencil_check_3d(14, x, y, z, xdim14, ydim14))
+#define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
+#define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
+#define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
+#endif
+#else
 #ifndef OPS_DEBUG
 #define OPS_ACC0(x,y) (x+xdim0*(y))
 #define OPS_ACC1(x,y) (x+xdim1*(y))
@@ -82,6 +123,7 @@
 #define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
 #endif
 #endif
+#endif
 
 
 #ifndef SIMD_VEC
@@ -94,26 +136,47 @@
 #define ROUND_DOWN(N,step) (((N)/(step))*(step))
 #endif
 
-
 extern int xdim0;
+extern int ydim0;
 extern int xdim1;
+extern int ydim1;
 extern int xdim2;
+extern int ydim2;
 extern int xdim3;
+extern int ydim3;
 extern int xdim4;
+extern int ydim4;
 extern int xdim5;
+extern int ydim5;
 extern int xdim6;
+extern int ydim6;
 extern int xdim7;
+extern int ydim7;
 extern int xdim8;
+extern int ydim8;
 extern int xdim9;
+extern int ydim9;
 extern int xdim10;
+extern int ydim10;
 extern int xdim11;
+extern int ydim11;
 extern int xdim12;
+extern int ydim12;
 extern int xdim13;
+extern int ydim13;
 extern int xdim14;
+extern int ydim14;
 extern int xdim15;
+extern int ydim15;
 extern int xdim16;
+extern int ydim16;
 extern int xdim17;
+extern int ydim17;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 inline int mult2(int* size, int dim)
 {
@@ -138,13 +201,17 @@ inline int off2(int ndim, int dim, int* start, int* end, int* size, int* stride)
   int c1[ndim];
   int c2[ndim];
 
-  for(i=0; i<ndim; i++) c1[i] = start[i];
-  c1[dim] = start[dim] + 1*stride[dim];
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i = 0; i<dim; i++) c2[i] = end[i];
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add2(c1, size, dim) - add2(c2, size, dim) + 1*(!stride[dim-1]);
+  for (i = 0; i < ndim; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add2(c1, size, dim) - add2(c2, size, dim);
 
   return off;
 }
@@ -167,16 +234,45 @@ inline int address2(int ndim, int dat_size, int* start, int* size, int* stride, 
 inline int off2D(int dim, int* start, int* end, int* size, int* stride)
 {
   int i = 0;
-  int c1[2]; int c2[2];
-  for(i=0; i<2; i++) c1[i] = start[i];
-  c1[dim] = start[dim] + 1*stride[dim];
+  int c1[2];
+  int c2[2];
 
-  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<2; i++) c1[i] = start[i];
+
+  for(i = 0; i<dim; i++) c2[i] = end[i];
   for(i=dim; i<2; i++) c2[i] = start[i];
 
-  int off =  add2(c1, size, dim) - add2(c2, size, dim) + 1*(!stride[dim-1]);
+  for (i = 0; i < 2; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add2(c1, size, dim) - add2(c2, size, dim);
   return off;
 }
 
+inline int off3D(int dim, int* start, int* end, int* size, int* stride)
+{
+  int i = 0;
+  int c1[3];
+  int c2[3];
+
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<3; i++) c1[i] = start[i];
+
+  for(i = 0; i<dim; i++) c2[i] = end[i];
+  for(i=dim; i<3; i++) c2[i] = start[i];
+
+  for (i = 0; i < 3; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add2(c1, size, dim) - add2(c2, size, dim);
+  return off;
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

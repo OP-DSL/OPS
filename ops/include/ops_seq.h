@@ -41,6 +41,48 @@
 
 
 #ifndef OPS_ACC_MACROS
+#ifdef OPS_3D
+#ifndef OPS_DEBUG
+#define OPS_ACC0(x,y,z) (x+xdim0*(y)+xdim0*ydim0*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1*(y)+xdim1*ydim1*(z))
+#define OPS_ACC2(x,y,z) (x+xdim2*(y)+xdim2*ydim2*(z))
+#define OPS_ACC3(x,y,z) (x+xdim3*(y)+xdim3*ydim3*(z))
+#define OPS_ACC4(x,y,z) (x+xdim4*(y)+xdim4*ydim4*(z))
+#define OPS_ACC5(x,y,z) (x+xdim5*(y)+xdim5*ydim5*(z))
+#define OPS_ACC6(x,y,z) (x+xdim6*(y)+xdim6*ydim6*(z))
+#define OPS_ACC7(x,y,z) (x+xdim7*(y)+xdim7*ydim7*(z))
+#define OPS_ACC8(x,y,z) (x+xdim8*(y)+xdim8*ydim8*(z))
+#define OPS_ACC9(x,y,z) (x+xdim9*(y)+xdim9*ydim9*(z))
+#define OPS_ACC10(x,y,z) (x+xdim10*(y)+xdim10*ydim10*(z))
+#define OPS_ACC11(x,y,z) (x+xdim11*(y)+xdim11*ydim11*(z))
+#define OPS_ACC12(x,y,z) (x+xdim12*(y)+xdim12*ydim12*(z))
+#define OPS_ACC13(x,y,z) (x+xdim13*(y)+xdim13*ydim13*(z))
+#define OPS_ACC14(x,y,z) (x+xdim14*(y)+xdim14*ydim14*(z))
+#define OPS_ACC15(x,y,z) (x+xdim15*(y)+xdim15*ydim15*(z))
+#define OPS_ACC16(x,y,z) (x+xdim16*(y)+xdim16*ydim16*(z))
+#define OPS_ACC17(x,y,z) (x+xdim17*(y)+xdim17*ydim17*(z))
+#else
+
+#define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+#define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
+#define OPS_ACC2(x,y,z) (ops_stencil_check_3d(2, x, y, z, xdim2, ydim2))
+#define OPS_ACC3(x,y,z) (ops_stencil_check_3d(3, x, y, z, xdim3, ydim3))
+#define OPS_ACC4(x,y,z) (ops_stencil_check_3d(4, x, y, z, xdim4, ydim4))
+#define OPS_ACC5(x,y,z) (ops_stencil_check_3d(5, x, y, z, xdim5, ydim5))
+#define OPS_ACC6(x,y,z) (ops_stencil_check_3d(6, x, y, z, xdim6, ydim6))
+#define OPS_ACC7(x,y,z) (ops_stencil_check_3d(7, x, y, z, xdim7, ydim7))
+#define OPS_ACC8(x,y,z) (ops_stencil_check_3d(8, x, y, z, xdim8, ydim8))
+#define OPS_ACC9(x,y,z) (ops_stencil_check_3d(9, x, y, z, xdim9, ydim9))
+#define OPS_ACC10(x,y,z) (ops_stencil_check_3d(10, x, y, z, xdim10, ydim10))
+#define OPS_ACC11(x,y,z) (ops_stencil_check_3d(11, x, y, z, xdim11, ydim11))
+#define OPS_ACC12(x,y,z) (ops_stencil_check_3d(12, x, y, z, xdim12, ydim12))
+#define OPS_ACC13(x,y,z) (ops_stencil_check_3d(13, x, y, z, xdim13, ydim13))
+#define OPS_ACC14(x,y,z) (ops_stencil_check_3d(14, x, y, z, xdim14, ydim14))
+#define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
+#define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
+#define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
+#endif
+#else
 #ifndef OPS_DEBUG
 #define OPS_ACC0(x,y) (x+xdim0*(y))
 #define OPS_ACC1(x,y) (x+xdim1*(y))
@@ -82,6 +124,7 @@
 #define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
 #endif
 #endif
+#endif
 
 extern int xdim0;
 extern int xdim1;
@@ -101,6 +144,26 @@ extern int xdim14;
 extern int xdim15;
 extern int xdim16;
 extern int xdim17;
+#ifdef OPS_3D
+extern int ydim0;
+extern int ydim1;
+extern int ydim2;
+extern int ydim3;
+extern int ydim4;
+extern int ydim5;
+extern int ydim6;
+extern int ydim7;
+extern int ydim8;
+extern int ydim9;
+extern int ydim10;
+extern int ydim11;
+extern int ydim12;
+extern int ydim13;
+extern int ydim14;
+extern int ydim15;
+extern int ydim16;
+extern int ydim17;
+#endif
 
 inline int mult(int* size, int dim)
 {
@@ -123,16 +186,20 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[3];
+  int c2[3];
 
-  for(i=0; i<ndim; i++) c1[i] = start[i];
-  c1[dim] = start[dim] + 1*stride[dim];
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i = 0; i<dim; i++) c2[i] = end[i];
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add(c1, size, dim) - add(c2, size, dim) + 1; //plus 1 to get the next element
+  for (i = 0; i < ndim; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add(c1, size, dim) - add(c2, size, dim);
 
   return off;
 }
@@ -170,7 +237,7 @@ void ops_par_loop(void (*kernel)(T0*),
      ops_arg arg0) {
 
   char *p_a[1];
-  int  offs[1][2];
+  int  offs[1][3];
 
   int  count[dim];
   ops_arg args[1] = { arg0};
@@ -180,8 +247,8 @@ void ops_par_loop(void (*kernel)(T0*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -219,12 +286,24 @@ void ops_par_loop(void (*kernel)(T0*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,1,range);
+  for (int i = 0; i < 1; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges(args, 1);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -248,9 +327,12 @@ void ops_par_loop(void (*kernel)(T0*),
 
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  ops_set_dirtybit_host(args, 1)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  ops_set_dirtybit_host(args, 1);
+}
 
 //
 //ops_par_loop routine for 2 arguments
@@ -261,7 +343,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
      ops_arg arg0, ops_arg arg1) {
 
   char *p_a[2];
-  int  offs[2][2];
+  int  offs[2][3];
 
   int  count[dim];
   ops_arg args[2] = { arg0, arg1};
@@ -271,8 +353,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -310,13 +392,30 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,2,range);
+  for (int i = 0; i < 2; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges(args, 2);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -341,10 +440,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  ops_set_dirtybit_host(args, 2)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  ops_set_dirtybit_host(args, 2);
+}
 
 //
 //ops_par_loop routine for 3 arguments
@@ -355,7 +458,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   char *p_a[3];
-  int  offs[3][2];
+  int  offs[3][3];
 
   int  count[dim];
   ops_arg args[3] = { arg0, arg1, arg2};
@@ -365,8 +468,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -404,14 +507,36 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,3,range);
+  for (int i = 0; i < 3; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -437,11 +562,16 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  ops_set_dirtybit_host(args, 3)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  ops_set_dirtybit_host(args, 3);
+}
 
 //
 //ops_par_loop routine for 4 arguments
@@ -452,7 +582,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
   char *p_a[4];
-  int  offs[4][2];
+  int  offs[4][3];
 
   int  count[dim];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
@@ -462,8 +592,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -501,15 +631,42 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,4,range);
+  for (int i = 0; i < 4; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges(args, 4);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -536,12 +693,18 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  ops_set_dirtybit_host(args, 4)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  ops_set_dirtybit_host(args, 4);
+}
 
 //
 //ops_par_loop routine for 5 arguments
@@ -555,7 +718,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4) {
 
   char *p_a[5];
-  int  offs[5][2];
+  int  offs[5][3];
 
   int  count[dim];
   ops_arg args[5] = { arg0, arg1, arg2, arg3,
@@ -566,8 +729,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -605,16 +768,48 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,5,range);
+  for (int i = 0; i < 5; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,5,range);
   ops_H_D_exchanges(args, 5);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -643,13 +838,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  ops_set_dirtybit_host(args, 5)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  ops_set_dirtybit_host(args, 5);
+}
 
 //
 //ops_par_loop routine for 6 arguments
@@ -663,7 +865,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5) {
 
   char *p_a[6];
-  int  offs[6][2];
+  int  offs[6][3];
 
   int  count[dim];
   ops_arg args[6] = { arg0, arg1, arg2, arg3,
@@ -674,8 +876,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -713,17 +915,54 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,6,range);
+  for (int i = 0; i < 6; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges(args, 6);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -753,14 +992,22 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  ops_set_dirtybit_host(args, 6)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  ops_set_dirtybit_host(args, 6);
+}
 
 //
 //ops_par_loop routine for 7 arguments
@@ -774,7 +1021,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
   char *p_a[7];
-  int  offs[7][2];
+  int  offs[7][3];
 
   int  count[dim];
   ops_arg args[7] = { arg0, arg1, arg2, arg3,
@@ -785,8 +1032,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -824,18 +1071,60 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,7,range);
+  for (int i = 0; i < 7; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,7,range);
   ops_H_D_exchanges(args, 7);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -866,15 +1155,24 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  ops_set_dirtybit_host(args, 7)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  ops_set_dirtybit_host(args, 7);
+}
 
 //
 //ops_par_loop routine for 8 arguments
@@ -888,7 +1186,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
   char *p_a[8];
-  int  offs[8][2];
+  int  offs[8][3];
 
   int  count[dim];
   ops_arg args[8] = { arg0, arg1, arg2, arg3,
@@ -899,8 +1197,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -938,19 +1236,66 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,8,range);
+  for (int i = 0; i < 8; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,8,range);
   ops_H_D_exchanges(args, 8);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -982,16 +1327,26 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  ops_set_dirtybit_host(args, 8)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  ops_set_dirtybit_host(args, 8);
+}
 
 //
 //ops_par_loop routine for 9 arguments
@@ -1008,7 +1363,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8) {
 
   char *p_a[9];
-  int  offs[9][2];
+  int  offs[9][3];
 
   int  count[dim];
   ops_arg args[9] = { arg0, arg1, arg2, arg3,
@@ -1020,8 +1375,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1059,20 +1414,72 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,9,range);
+  for (int i = 0; i < 9; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,9,range);
   ops_H_D_exchanges(args, 9);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1106,17 +1513,28 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  ops_set_dirtybit_host(args, 9)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  ops_set_dirtybit_host(args, 9);
+}
 
 //
 //ops_par_loop routine for 10 arguments
@@ -1133,7 +1551,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9) {
 
   char *p_a[10];
-  int  offs[10][2];
+  int  offs[10][3];
 
   int  count[dim];
   ops_arg args[10] = { arg0, arg1, arg2, arg3,
@@ -1145,8 +1563,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1184,21 +1602,78 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,10,range);
+  for (int i = 0; i < 10; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,10,range);
   ops_H_D_exchanges(args, 10);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1233,18 +1708,30 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  ops_set_dirtybit_host(args, 10)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  ops_set_dirtybit_host(args, 10);
+}
 
 //
 //ops_par_loop routine for 11 arguments
@@ -1261,7 +1748,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
   char *p_a[11];
-  int  offs[11][2];
+  int  offs[11][3];
 
   int  count[dim];
   ops_arg args[11] = { arg0, arg1, arg2, arg3,
@@ -1273,8 +1760,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1312,22 +1799,84 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,11,range);
+  for (int i = 0; i < 11; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges(args, 11);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1363,19 +1912,32 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  ops_set_dirtybit_host(args, 11)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  ops_set_dirtybit_host(args, 11);
+}
 
 //
 //ops_par_loop routine for 12 arguments
@@ -1392,7 +1954,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11) {
 
   char *p_a[12];
-  int  offs[12][2];
+  int  offs[12][3];
 
   int  count[dim];
   ops_arg args[12] = { arg0, arg1, arg2, arg3,
@@ -1404,8 +1966,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1443,23 +2005,90 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,12,range);
+  for (int i = 0; i < 12; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,12,range);
   ops_H_D_exchanges(args, 12);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1496,20 +2125,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  ops_set_dirtybit_host(args, 12)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  ops_set_dirtybit_host(args, 12);
+}
 
 //
 //ops_par_loop routine for 13 arguments
@@ -1529,7 +2172,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12) {
 
   char *p_a[13];
-  int  offs[13][2];
+  int  offs[13][3];
 
   int  count[dim];
   ops_arg args[13] = { arg0, arg1, arg2, arg3,
@@ -1542,8 +2185,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1581,24 +2224,96 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,13,range);
+  for (int i = 0; i < 13; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,13,range);
   ops_H_D_exchanges(args, 13);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1637,21 +2352,36 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  ops_set_dirtybit_host(args, 13)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  ops_set_dirtybit_host(args, 13);
+}
 
 //
 //ops_par_loop routine for 14 arguments
@@ -1671,7 +2401,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13) {
 
   char *p_a[14];
-  int  offs[14][2];
+  int  offs[14][3];
 
   int  count[dim];
   ops_arg args[14] = { arg0, arg1, arg2, arg3,
@@ -1684,8 +2414,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1723,25 +2453,102 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    #ifdef OPS_3D
+    ydim13 = args[13].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,14,range);
+  for (int i = 0; i < 14; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,14,range);
   ops_H_D_exchanges(args, 14);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1781,22 +2588,38 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  ops_set_dirtybit_host(args, 14)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  ops_set_dirtybit_host(args, 14);
+}
 
 //
 //ops_par_loop routine for 15 arguments
@@ -1816,7 +2639,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14) {
 
   char *p_a[15];
-  int  offs[15][2];
+  int  offs[15][3];
 
   int  count[dim];
   ops_arg args[15] = { arg0, arg1, arg2, arg3,
@@ -1829,8 +2652,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -1868,26 +2691,108 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    #ifdef OPS_3D
+    ydim13 = args[13].dat->block_size[1];
+    #endif
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    #ifdef OPS_3D
+    ydim14 = args[14].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,15,range);
+  for (int i = 0; i < 15; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,15,range);
   ops_H_D_exchanges(args, 15);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -1928,23 +2833,40 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  ops_set_dirtybit_host(args, 15)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  ops_set_dirtybit_host(args, 15);
+}
 
 //
 //ops_par_loop routine for 16 arguments
@@ -1964,7 +2886,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15) {
 
   char *p_a[16];
-  int  offs[16][2];
+  int  offs[16][3];
 
   int  count[dim];
   ops_arg args[16] = { arg0, arg1, arg2, arg3,
@@ -1977,8 +2899,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -2016,27 +2938,114 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    #ifdef OPS_3D
+    ydim13 = args[13].dat->block_size[1];
+    #endif
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    #ifdef OPS_3D
+    ydim14 = args[14].dat->block_size[1];
+    #endif
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    #ifdef OPS_3D
+    ydim15 = args[15].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,16,range);
+  for (int i = 0; i < 16; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,16,range);
   ops_H_D_exchanges(args, 16);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2078,24 +3087,42 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  ops_set_dirtybit_host(args, 16)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  ops_set_dirtybit_host(args, 16);
+}
 
 //
 //ops_par_loop routine for 17 arguments
@@ -2118,7 +3145,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16) {
 
   char *p_a[17];
-  int  offs[17][2];
+  int  offs[17][3];
 
   int  count[dim];
   ops_arg args[17] = { arg0, arg1, arg2, arg3,
@@ -2132,8 +3159,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -2171,28 +3198,120 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    #ifdef OPS_3D
+    ydim13 = args[13].dat->block_size[1];
+    #endif
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    #ifdef OPS_3D
+    ydim14 = args[14].dat->block_size[1];
+    #endif
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    #ifdef OPS_3D
+    ydim15 = args[15].dat->block_size[1];
+    #endif
+  }
+  if (args[16].argtype == OPS_ARG_DAT) {
+    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    #ifdef OPS_3D
+    ydim16 = args[16].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,17,range);
+  for (int i = 0; i < 17; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,17,range);
   ops_H_D_exchanges(args, 17);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2236,25 +3355,44 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
-  ops_set_dirtybit_host(args, 17)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
+  ops_set_dirtybit_host(args, 17);
+}
 
 //
 //ops_par_loop routine for 18 arguments
@@ -2277,7 +3415,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16, ops_arg arg17) {
 
   char *p_a[18];
-  int  offs[18][2];
+  int  offs[18][3];
 
   int  count[dim];
   ops_arg args[18] = { arg0, arg1, arg2, arg3,
@@ -2291,8 +3429,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[ndim];
-  int end[ndim];
+  int start[3];
+  int end[3];
 
   for (int n=0; n<ndim; n++) {
     start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
@@ -2330,29 +3468,126 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int n=0; n<ndim; n++) {
     count[n] = end[n]-start[n];  // number in each dimension
     total_range *= count[n];
+    total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  if (args[0].argtype == OPS_ARG_DAT)  xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
-  if (args[1].argtype == OPS_ARG_DAT)  xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
-  if (args[2].argtype == OPS_ARG_DAT)  xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
-  if (args[3].argtype == OPS_ARG_DAT)  xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
-  if (args[4].argtype == OPS_ARG_DAT)  xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
-  if (args[5].argtype == OPS_ARG_DAT)  xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
-  if (args[6].argtype == OPS_ARG_DAT)  xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
-  if (args[7].argtype == OPS_ARG_DAT)  xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
-  if (args[8].argtype == OPS_ARG_DAT)  xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
-  if (args[9].argtype == OPS_ARG_DAT)  xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
-  if (args[10].argtype == OPS_ARG_DAT)  xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
-  if (args[11].argtype == OPS_ARG_DAT)  xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
-  if (args[12].argtype == OPS_ARG_DAT)  xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
-  if (args[13].argtype == OPS_ARG_DAT)  xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
-  if (args[14].argtype == OPS_ARG_DAT)  xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
-  if (args[15].argtype == OPS_ARG_DAT)  xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
-  if (args[16].argtype == OPS_ARG_DAT)  xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
-  if (args[17].argtype == OPS_ARG_DAT)  xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
+  if (args[0].argtype == OPS_ARG_DAT) {
+    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    #ifdef OPS_3D
+    ydim0 = args[0].dat->block_size[1];
+    #endif
+  }
+  if (args[1].argtype == OPS_ARG_DAT) {
+    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    #ifdef OPS_3D
+    ydim1 = args[1].dat->block_size[1];
+    #endif
+  }
+  if (args[2].argtype == OPS_ARG_DAT) {
+    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    #ifdef OPS_3D
+    ydim2 = args[2].dat->block_size[1];
+    #endif
+  }
+  if (args[3].argtype == OPS_ARG_DAT) {
+    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    #ifdef OPS_3D
+    ydim3 = args[3].dat->block_size[1];
+    #endif
+  }
+  if (args[4].argtype == OPS_ARG_DAT) {
+    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    #ifdef OPS_3D
+    ydim4 = args[4].dat->block_size[1];
+    #endif
+  }
+  if (args[5].argtype == OPS_ARG_DAT) {
+    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    #ifdef OPS_3D
+    ydim5 = args[5].dat->block_size[1];
+    #endif
+  }
+  if (args[6].argtype == OPS_ARG_DAT) {
+    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    #ifdef OPS_3D
+    ydim6 = args[6].dat->block_size[1];
+    #endif
+  }
+  if (args[7].argtype == OPS_ARG_DAT) {
+    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    #ifdef OPS_3D
+    ydim7 = args[7].dat->block_size[1];
+    #endif
+  }
+  if (args[8].argtype == OPS_ARG_DAT) {
+    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    #ifdef OPS_3D
+    ydim8 = args[8].dat->block_size[1];
+    #endif
+  }
+  if (args[9].argtype == OPS_ARG_DAT) {
+    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    #ifdef OPS_3D
+    ydim9 = args[9].dat->block_size[1];
+    #endif
+  }
+  if (args[10].argtype == OPS_ARG_DAT) {
+    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    #ifdef OPS_3D
+    ydim10 = args[10].dat->block_size[1];
+    #endif
+  }
+  if (args[11].argtype == OPS_ARG_DAT) {
+    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    #ifdef OPS_3D
+    ydim11 = args[11].dat->block_size[1];
+    #endif
+  }
+  if (args[12].argtype == OPS_ARG_DAT) {
+    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    #ifdef OPS_3D
+    ydim12 = args[12].dat->block_size[1];
+    #endif
+  }
+  if (args[13].argtype == OPS_ARG_DAT) {
+    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    #ifdef OPS_3D
+    ydim13 = args[13].dat->block_size[1];
+    #endif
+  }
+  if (args[14].argtype == OPS_ARG_DAT) {
+    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    #ifdef OPS_3D
+    ydim14 = args[14].dat->block_size[1];
+    #endif
+  }
+  if (args[15].argtype == OPS_ARG_DAT) {
+    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    #ifdef OPS_3D
+    ydim15 = args[15].dat->block_size[1];
+    #endif
+  }
+  if (args[16].argtype == OPS_ARG_DAT) {
+    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    #ifdef OPS_3D
+    ydim16 = args[16].dat->block_size[1];
+    #endif
+  }
+  if (args[17].argtype == OPS_ARG_DAT) {
+    xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
+    #ifdef OPS_3D
+    ydim17 = args[17].dat->block_size[1];
+    #endif
+  }
 
-   ops_halo_exchanges(args,18,range);
+  for (int i = 0; i < 18; i++) {
+    if(args[i].argtype == OPS_ARG_DAT) {
+      ops_exchange_halo(&args[i],2);
+    }
+  }
+
+  ops_halo_exchanges(args,18,range);
   ops_H_D_exchanges(args, 18);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -2397,23 +3632,43 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
   if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
-  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[0],range);
-  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[1],range);
-  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[2],range);
-  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[3],range);
-  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[4],range);
-  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[5],range);
-  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[6],range);
-  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[7],range);
-  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[8],range);
-  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[9],range);
-  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[10],range);
-  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[11],range);
-  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[12],range);
-  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[13],range);
-  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[14],range);
-  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[15],range);
-  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[16],range);
-  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit3(&args[17],range);
-  ops_set_dirtybit_host(args, 18)
-;}
+  #ifdef OPS_DEBUG
+  if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
+  if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
+  if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
+  if (args[3].argtype == OPS_ARG_DAT && args[3].acc != OPS_READ) ops_dump3(args[3].dat,name);
+  if (args[4].argtype == OPS_ARG_DAT && args[4].acc != OPS_READ) ops_dump3(args[4].dat,name);
+  if (args[5].argtype == OPS_ARG_DAT && args[5].acc != OPS_READ) ops_dump3(args[5].dat,name);
+  if (args[6].argtype == OPS_ARG_DAT && args[6].acc != OPS_READ) ops_dump3(args[6].dat,name);
+  if (args[7].argtype == OPS_ARG_DAT && args[7].acc != OPS_READ) ops_dump3(args[7].dat,name);
+  if (args[8].argtype == OPS_ARG_DAT && args[8].acc != OPS_READ) ops_dump3(args[8].dat,name);
+  if (args[9].argtype == OPS_ARG_DAT && args[9].acc != OPS_READ) ops_dump3(args[9].dat,name);
+  if (args[10].argtype == OPS_ARG_DAT && args[10].acc != OPS_READ) ops_dump3(args[10].dat,name);
+  if (args[11].argtype == OPS_ARG_DAT && args[11].acc != OPS_READ) ops_dump3(args[11].dat,name);
+  if (args[12].argtype == OPS_ARG_DAT && args[12].acc != OPS_READ) ops_dump3(args[12].dat,name);
+  if (args[13].argtype == OPS_ARG_DAT && args[13].acc != OPS_READ) ops_dump3(args[13].dat,name);
+  if (args[14].argtype == OPS_ARG_DAT && args[14].acc != OPS_READ) ops_dump3(args[14].dat,name);
+  if (args[15].argtype == OPS_ARG_DAT && args[15].acc != OPS_READ) ops_dump3(args[15].dat,name);
+  if (args[16].argtype == OPS_ARG_DAT && args[16].acc != OPS_READ) ops_dump3(args[16].dat,name);
+  if (args[17].argtype == OPS_ARG_DAT && args[17].acc != OPS_READ) ops_dump3(args[17].dat,name);
+  #endif
+  if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
+  if (args[1].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[1]);
+  if (args[2].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[2]);
+  if (args[3].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[3]);
+  if (args[4].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[4]);
+  if (args[5].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[5]);
+  if (args[6].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[6]);
+  if (args[7].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[7]);
+  if (args[8].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[8]);
+  if (args[9].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[9]);
+  if (args[10].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[10]);
+  if (args[11].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[11]);
+  if (args[12].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[12]);
+  if (args[13].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[13]);
+  if (args[14].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[14]);
+  if (args[15].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[15]);
+  if (args[16].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[16]);
+  if (args[17].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[17]);
+  ops_set_dirtybit_host(args, 18);
+}

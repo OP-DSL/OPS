@@ -39,18 +39,6 @@
 
 #include "ops_lib_core.h"
 
-void ops_H_D_exchanges(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
 void ops_set_dirtybit_host(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++) {
@@ -60,12 +48,6 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
       args[n].dat->dirty_hd = 1;
     }
   }
-}
-
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
 }
 
 int ops_is_root()
@@ -131,3 +113,20 @@ void ops_compute_moment(double t, double *first, double *second) {
   *first = t;
   *second = t*t;
 }
+
+void ops_printf(const char* format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
+  vprintf(format, argptr);
+  va_end(argptr);
+}
+
+void ops_fprintf(FILE *stream, const char *format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
+  vfprintf(stream, format, argptr);
+  va_end(argptr);
+}
+

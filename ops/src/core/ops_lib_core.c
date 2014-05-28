@@ -252,6 +252,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   memcpy(dat->tail,tail,sizeof(int)*block->dims);
 
   dat->data = (char *)data;
+  dat->data_d = NULL;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
   dat->dirtybit = 0;
@@ -441,6 +442,40 @@ void ops_diagnostic_output ( )
 }
 
 
+void ops_dump3(ops_dat dat, const char* name) {
+  char str[100];
+  strcpy(str,"./dump/");
+  strcat(str,name);
+  strcat(str,"_");
+  strcat(str,dat->name);
+  //const char* file_name = dat->name;
+  FILE *fp;
+  if ( (fp = fopen(str,"w")) == NULL) {
+    printf("can't open file %s\n",str);
+    exit(2);
+  }
+  int x_end = dat->tail[0]==-3 ? dat->block_size[0]+dat->tail[0] : dat->block_size[0]+dat->tail[0]-1;
+  int y_end = dat->tail[1]==-3 ? dat->block_size[1]+dat->tail[1] : dat->block_size[1]+dat->tail[1]-1;
+  int z_end = dat->tail[2]==-3 ? dat->block_size[2]+dat->tail[2] : dat->block_size[2]+dat->tail[2]-1;
+  for (int z = -dat->offset[2]; z < z_end; z++) {
+    for (int y = -dat->offset[1]; y < y_end; y++) {
+      for (int x = -dat->offset[0]; x < x_end; x++) {
+        fprintf(fp,"%d %d %d %.17g\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
+          *(double*)(dat->data+8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)));
+/*        fprintf(fp,"%d %d %d %c%c%c%c%c%c%c%c\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+0],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+1],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+2],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+3],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+4],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+5],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+6],
+                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+7]);*/
+      }
+    }
+  }
+  fclose(fp);
+}
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
@@ -667,4 +702,23 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
     }
   }
   return idx0+dim0*(idx1);
+}
+int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[3*i] == idx0 &&
+          OPS_curr_args[arg_idx].stencil->stencil[3*i+1] == idx1 &&
+          OPS_curr_args[arg_idx].stencil->stencil[3*i+2] == idx2) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d,%d,%d) not found in declaration %s in loop %s arg %d\n",
+             idx0, idx1, idx2, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx);
+      exit(-1);
+    }
+  }
+  return idx0+dim0*(idx1)+dim0*dim1*(idx2);
 }

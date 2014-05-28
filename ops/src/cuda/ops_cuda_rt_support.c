@@ -166,19 +166,6 @@ void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
     }
 }
 
-void ops_set_dirtybit_host(ops_arg *args, int nargs)
-{
-  //printf("in ops_set_dirtybit\n");
-  for (int n=0; n<nargs; n++) {
-    if((args[n].argtype == OPS_ARG_DAT) &&
-       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
-      //printf("setting dirty bit on host\n");
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-}
-
-
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++) {
@@ -291,38 +278,4 @@ void ops_cuda_exit ( )
 
   cudaDeviceReset ( );
 }
-
-int ops_is_root()
-{
-  return 1;
-}
-
-void ops_set_halo_dirtybit(ops_arg *arg)
-{
-  (void)arg;
-}
-
-void ops_exchange_halo(ops_arg* arg, int d)
-{
-  (void)arg;
-}
-
-void ops_mpi_reduce_float(ops_arg* args, float* data)
-{
-  (void)args;
-  (void)data;
-}
-
-void ops_mpi_reduce_double(ops_arg* args, double* data)
-{
-  (void)args;
-  (void)data;
-}
-
-void ops_mpi_reduce_int(ops_arg* args, int* data)
-{
-  (void)args;
-  (void)data;
-}
-
 

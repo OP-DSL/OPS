@@ -39,9 +39,53 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 
-#include <ops_lib_cpp.h>
+#include <ops_lib_core.h>
 #include <ops_cuda_rt_support.h>
 
+
+#ifndef __XDIMS__ //perhaps put this into a separate headder file
+#define __XDIMS__
+  int xdim0;
+  int ydim0;
+  int xdim1;
+  int ydim1;
+  int xdim2;
+  int ydim2;
+  int xdim3;
+  int ydim3;
+  int xdim4;
+  int ydim4;
+  int xdim5;
+  int ydim5;
+  int xdim6;
+  int ydim6;
+  int xdim7;
+  int ydim7;
+  int xdim8;
+  int ydim8;
+  int xdim9;
+  int ydim9;
+  int xdim10;
+  int ydim10;
+  int xdim11;
+  int ydim11;
+  int xdim12;
+  int ydim12;
+  int xdim13;
+  int ydim13;
+  int xdim14;
+  int ydim14;
+  int xdim15;
+  int ydim15;
+  int xdim16;
+  int ydim16;
+  int xdim17;
+  int ydim17;
+  int xdim18;
+  int ydim18;
+  int xdim19;
+  int ydim19;
+#endif /* __XDIMS__ */
 
 void ops_init ( int argc, char ** argv, int diags )
 {
@@ -151,22 +195,6 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
-void ops_printf(const char* format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vprintf(format, argptr);
-  va_end(argptr);
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vfprintf(stream, format, argptr);
-  va_end(argptr);
-}
-
 void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   sub_block_list sb_list= (sub_block_list)xmalloc(sizeof(sub_block));
@@ -212,9 +240,4 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
   }
-}
-
-void ops_compute_moment(double t, double *first, double *second) {
-  *first = t;
-  *second = t*t;
 }

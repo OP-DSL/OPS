@@ -150,15 +150,29 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
-
+    
+    NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * nargs * 2
+    stride = [1] * nargs * NDIM
 
-    for n in range (0, nargs):
-      if str(stens[n]).find('STRID2D_X') > 0:
-        stride[2*n+1] = 0
-      elif str(stens[n]).find('STRID2D_Y') > 0:
-        stride[2*n] = 0
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[NDIM*n] = 0
+
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_X') > 0:
+          stride[NDIM*n+1] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+1] = 0
 
 
     reduction = 0
@@ -212,7 +226,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     depth = 2
 
     code('');
-    code('int  offs['+str(nargs)+'][2];')
+    code('int  offs['+str(nargs)+']['+str(NDIM)+'];')
 
     #code('ops_printf("In loop \%s\\n","'+name+'");')
 
@@ -261,30 +275,28 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        #original offset calculation via funcion call
-        #FOR('n','1',str(NDIM))
-        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start['+str(n)+'*'+str(NDIM)'+],')
-        #code('&end['+str(n)+'*'+str(NDIM)+'],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-        #ENDFOR()
         for d in range (1, NDIM):
-          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
-          code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-          code('')
+          code('offs['+str(n)+']['+str(d)+'] = off'+str(NDIM)+'D('+str(d)+', &start[0],')
+          if d == 1:
+            code('    &end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'];')
+          if d == 2:
+            code('    &end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'] - offs['+str(n)+']['+str(d-2)+'];')
+        code('')
 
     code('')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
+        for d in range (0, NDIM):
+          code('int off'+str(n)+'_'+str(d)+' = offs['+str(n)+']['+str(d)+'];')
         code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
     if reduction == True:
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+'*arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+          code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
 
     code('')
     code('#ifdef _OPENMP')
@@ -299,25 +311,25 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code((str(typs[n]).replace('"','')).strip()+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
+          code(typs[n]+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_WRITE:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = ZERO_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = -INFINITY_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
           FOR('d', '0',dims[n])
-          code('arg_gbl'+str(n)+'[d+64*thr] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+          code('arg_gbl'+str(n)+'[d+64*thr] = INFINITY_'+typs[n]+';')
           ENDFOR()
         elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
           FOR('d', '0',dims[n])
@@ -328,6 +340,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];')
     code('')
 
     # for n in range (0, nargs):
@@ -367,38 +381,38 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     FOR('thr','0','nthreads')
 
     code('')
-    comm('start index for each dimension')
-    for d in range (0, NDIM):
-      code('int start'+str(d)+';')
-
-
-    code('')
-    code('int y_size = end[1]-start[1];')
+    if NDIM==2:
+      outer = 'y'
+    if NDIM==3:
+      outer = 'z'
+    code('int '+outer+'_size = end['+str(NDIM-1)+']-start['+str(NDIM-1)+'];')
     code('char *p_a['+str(nargs)+'];')
     code('')
-    code('int start_i = start[1] + ((y_size-1)/nthreads+1)*thr;')
-    code('int finish_i = start[1] + MIN(((y_size-1)/nthreads+1)*(thr+1),y_size);')
+    code('int start_i = start['+str(NDIM-1)+'] + (('+outer+'_size-1)/nthreads+1)*thr;')
+    code('int finish_i = start['+str(NDIM-1)+'] + MIN((('+outer+'_size-1)/nthreads+1)*(thr+1),'+outer+'_size);')
     code('')
 
-    comm('get addresss per thread')
-    code('start0 = start[0];')
-    code('start1 = start[1] + ((y_size-1)/nthreads+1)*thr;')
+    comm('get address per thread')
+    for d in range(0,NDIM-1):
+      code('int start'+str(d)+' = start['+str(d)+'];')
+    code('int start'+str(NDIM-1)+' = start_i;')
     code('')
 
 
-
+    comm('set up initial pointers ')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-
-        comm('set up initial pointers ')
-
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
+          for d2 in range (0,d):
+            line = line + depth*' '+'  args['+str(n)+'].dat->block_size['+str(d2)+'] *\n'
+          code(line[:-1])
+          code('  (start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
+        
         #original address calculation via funcion call
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start0,')
         #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
@@ -408,7 +422,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code('')
     code('')
 
-    FOR('n_y','start_i','finish_i')
+    if NDIM==3:
+      FOR('n_z','start_i','finish_i')
+      FOR('n_y','start[1]','end[1]')
+    if NDIM==2:
+      FOR('n_y','start_i','finish_i')
     FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #depth = depth+2
 
@@ -419,7 +437,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -437,7 +455,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1)*SIMD_VEC;')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0)*SIMD_VEC;')
 
     ENDFOR()
     code('')
@@ -448,7 +466,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -466,7 +484,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     comm('shift pointers to data x direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')
 
     ENDFOR()
     code('')
@@ -475,9 +493,17 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     comm('shift pointers to data y direction')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
     ENDFOR()
 
+    if NDIM==3:
+      comm('shift pointers to data z direction')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+            #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[NDIM*n])+');')
+            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+      ENDFOR()
+      
     ENDFOR() #end of OMP parallel loop
 
 
@@ -503,7 +529,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'h);')
+        code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
@@ -513,7 +539,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
 
-
+    code('')
+    code('#ifdef OPS_DEBUG')
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
+        code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
+    code('#endif')
     code('')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
@@ -544,6 +575,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   depth = 0
   file_text =''
   comm('header')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_lib_mpi.h"')
   if os.path.exists('./user_types.h'):
@@ -554,13 +587,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+      code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = consts[nc]['dim']
-        code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+        code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:
-        code('extern '+consts[nc]['type'][1:-1]+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+        code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
   code('')
 

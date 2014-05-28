@@ -70,6 +70,7 @@ import datetime
 from ops_gen_mpi import ops_gen_mpi
 from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
+from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 
 
 # from http://stackoverflow.com/a/241506/396967
@@ -88,7 +89,7 @@ def comment_remover(text):
     )
     return re.sub(pattern, replacer, text)
 
-def remove_triling_w_space(text):
+def remove_trailing_w_space(text):
   line_start = 0
   line = ""
   line_end = 0
@@ -131,7 +132,7 @@ def ops_decl_const_parse(text):
           'loc': m.start(),
           'name': args[0].strip(),
           'dim': args[1].strip(),
-          'type': args[2].strip(),
+          'type': (args[2].replace('"','')).strip(),
           'name2': args[3].strip()
     })
 
@@ -175,7 +176,7 @@ def get_arg_dat(arg_string, j):
       temp_dat = {'type': 'ops_arg_dat',
                   'dat': dat_args_string.split(',')[0].strip(),
                   'sten': dat_args_string.split(',')[1].strip(),
-                  'typ': dat_args_string.split(',')[2].strip(),
+                  'typ': (dat_args_string.split(',')[2].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[3].strip()}
     elif len(dat_args_string.split(',')) == 5:
       # split the dat_args_string into  6 and create a struct with the elements
@@ -183,7 +184,7 @@ def get_arg_dat(arg_string, j):
       temp_dat = {'type': 'ops_arg_dat_opt',
                   'dat': dat_args_string.split(',')[0].strip(),
                   'sten': dat_args_string.split(',')[1].strip(),
-                  'typ': dat_args_string.split(',')[2].strip(),
+                  'typ': (dat_args_string.split(',')[2].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[3].strip(),
                   'opt': dat_args_string.split(',')[4].strip()}
 
@@ -208,7 +209,7 @@ def get_arg_gbl(arg_string, k):
     temp_gbl = {'type': 'ops_arg_gbl',
                 'data': gbl_args_string.split(',')[0].strip(),
                 'dim': gbl_args_string.split(',')[1].strip(),
-                'typ': gbl_args_string.split(',')[2].strip(),
+                'typ': (gbl_args_string.split(',')[2].replace('"','')).strip(),
                 'acc': gbl_args_string.split(',')[3].strip()}
 
     return temp_gbl
@@ -316,7 +317,7 @@ def main():
       text = f.read()
 
       #get rid of all comments
-      text = remove_triling_w_space(comment_remover(text))
+      text = remove_trailing_w_space(comment_remover(text))
       #text = comment_remover(text)
 
       #
@@ -606,18 +607,18 @@ def main():
               elem = loop_args[curr_loop]['args'][arguments]
               if elem['type'] == 'ops_arg_dat':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', ' + elem['typ'] + \
-                      ', ' + elem['acc'] + '),\n' + indent
+                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      '", ' + elem['acc'] + '),\n' + indent
               if elem['type'] == 'ops_arg_dat_opt':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', ' + elem['typ'] + \
-                      ', ' + elem['acc'] + \
+                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      '", ' + elem['acc'] + \
                       ', ' + elem['opt'] +'),\n' + indent
                   #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
               elif elem['type'] == 'ops_arg_gbl':
                   line = line + elem['type'] + '(' + elem['data'] + \
-                      ', ' + elem['dim'] + ', ' +  elem['typ'] + \
-                      ', ' +  elem['acc'] + '),\n' + indent
+                      ', ' + elem['dim'] + ', "' +  elem['typ'] + \
+                      '", ' +  elem['acc'] + '),\n' + indent
 
           fid.write(line[0:-len(indent) - 2] + ');')
 
@@ -629,8 +630,8 @@ def main():
           endofcall = text.find(';', locs[loc])
           name = const_args[curr_const]['name']
           fid.write(indent[0:-2] + 'ops_decl_const2( '+ name.strip() +
-            ',' + str(const_args[curr_const]['dim']) + ',' +
-            const_args[curr_const]['type'] + ',' +
+            ',' + str(const_args[curr_const]['dim']) + ', "' +
+            const_args[curr_const]['type'] + '",' +
             const_args[curr_const]['name2'].strip() + ');')
           loc_old = endofcall + 1
           continue
@@ -670,6 +671,7 @@ def main():
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
 
 
 

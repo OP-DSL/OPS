@@ -99,6 +99,15 @@ f.write(top)
 #
 
 f.write('#ifndef OPS_ACC_MACROS\n')
+f.write('#ifdef OPS_3D\n')
+f.write('#ifndef OPS_DEBUG\n')
+for nargs in range (0,maxargs):
+  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (x+xdim'+str(nargs)+'*(y)+xdim'+str(nargs)+'*ydim'+str(nargs)+'*(z))\n')
+f.write('#else\n\n')
+for nargs in range (0,maxargs):
+  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (ops_stencil_check_3d('+str(nargs)+', x, y, z, xdim'+str(nargs)+', ydim'+str(nargs)+'))\n')
+f.write('#endif\n')
+f.write('#else\n')
 f.write('#ifndef OPS_DEBUG\n')
 for nargs in range (0,maxargs):
   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (x+xdim'+str(nargs)+'*(y))\n')
@@ -106,11 +115,16 @@ f.write('#else\n\n')
 for nargs in range (0,maxargs):
   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (ops_stencil_check_2d('+str(nargs)+', x, y, xdim'+str(nargs)+', -1))\n')
 f.write('#endif\n')
+f.write('#endif\n')
 f.write('#endif\n\n')
 
 for nargs in range (0,maxargs):
   f.write('extern int xdim'+str(nargs)+';\n')
 
+f.write('#ifdef OPS_3D\n')
+for nargs in range (0,maxargs):
+  f.write('extern int ydim'+str(nargs)+';\n')
+f.write('#endif\n')
 functions =  """
 inline int mult(int* size, int dim)
 {
@@ -133,16 +147,20 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[3];
+  int c2[3];
 
-  for(i=0; i<ndim; i++) c1[i] = start[i];
-  c1[dim] = start[dim] + 1*stride[dim];
+  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
+  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) stride[i]!=0 ? c2[i] = end[i]:c2[i] = start[i]+1;
+  for(i = 0; i<dim; i++) c2[i] = end[i];
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
-  int off =  add(c1, size, dim) - add(c2, size, dim) + 1; //plus 1 to get the next element
+  for (i = 0; i < ndim; i++) {
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+  }
+  int off =  add(c1, size, dim) - add(c2, size, dim);
 
   return off;
 }
@@ -222,7 +240,7 @@ for nargs in range (1,maxargs+1):
          f.write('\n    ')
 
     f.write('\n  char *p_a['+str(nargs)+'];')
-    f.write('\n  int  offs['+str(nargs)+'][2];\n')
+    f.write('\n  int  offs['+str(nargs)+'][3];\n')
     f.write('\n  int  count[dim];\n')
 
     f.write('  ops_arg args['+str(nargs)+'] = {')
@@ -242,8 +260,8 @@ for nargs in range (1,maxargs+1):
     '  int ndim = sb->ndim;\n' )
     #'  int start[ndim*'+str(nargs)+'];\n' +
     #'  int end[ndim*'+str(nargs)+'];\n\n')
-    f.write('  int start[ndim];\n');
-    f.write('  int end[ndim];\n\n')
+    f.write('  int start[3];\n');
+    f.write('  int end[3];\n\n')
 
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;\n')
@@ -295,18 +313,23 @@ for nargs in range (1,maxargs+1):
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    count[n] = end[n]-start[n];  // number in each dimension\n')
     f.write('    total_range *= count[n];\n')
+    f.write('    total_range *= (count[n]<0?0:1);\n')
     f.write('  }\n')
     f.write('  count[dim-1]++;     // extra in last to ensure correct termination\n\n')
 
 
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
+      f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('    #ifdef OPS_3D\n')
+      f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];\n')
+      f.write('    #endif\n')
+      f.write('  }\n')
     f.write('\n')
 
     #f.write('  //calculate max halodepth for each dat\n')
     #f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
-    #f.write('    int max_depth[ndim];\n')
+    #f.write('    int max_depth[3];\n')
     #f.write('    max_depth[0] = 0;\n')
     #f.write('    max_depth[1] = 0;\n')
     #f.write('    if(args[i].stencil!=NULL) {\n')
@@ -320,18 +343,18 @@ for nargs in range (1,maxargs+1):
     #f.write('        ops_exchange_halo(&args[i],max_depth);\n')
     #f.write('    }\n')
     #f.write('  }\n\n')
-    f.write('   ops_halo_exchanges(args,'+str(nargs)+',range);\n')
-    #f.write('   int d_pos[ndim];')
-    #f.write('   int d_neg[ndim];')
-    #f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
-    #f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
+    #f.write('   int d_pos[3];')
+    #f.write('   int d_neg[3];')
+    f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
+    f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
     ##f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
     ##f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
-    #f.write('      ops_exchange_halo(&args[i],2);\n')
-    #f.write('    }\n')
-    #f.write('  }\n\n')
+    f.write('      ops_exchange_halo(&args[i],2);\n')
+    f.write('    }\n')
+    f.write('  }\n\n')
 
 
+    f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
     f.write('  ops_H_D_exchanges(args, '+str(nargs)+');\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
@@ -366,11 +389,16 @@ for nargs in range (1,maxargs+1):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_GBL && args['+str(n)+'].acc != OPS_READ)')
       f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
-
+  
+    f.write('  #ifdef OPS_DEBUG\n')
+    for n in range (0, nargs):
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ) ops_dump3(args['+str(n)+'].dat,name);\n')
+    f.write('  #endif\n')
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
-    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+')\n;')
+#      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
+      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
+    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
 
     f.write('}')

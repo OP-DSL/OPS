@@ -50,7 +50,6 @@
 #include <device_launch_parameters.h>
 #include <device_functions.h>
 
-#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
 
 

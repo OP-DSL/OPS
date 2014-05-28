@@ -1,0 +1,17 @@
+numawrap*
+clover.in
+clover.out
+*_cu.o
+*.o
+cloverleaf_seq
+cloverleaf_mpi
+cloverleaf_openmp
+cloverleaf_cuda
+cloverleaf_openacc
+cloverleaf_mpi_openmp
+cloverleaf_mpi_cuda
+cloverleaf_mpi_openacc
+cloverleaf_dev_seq
+cloverleaf_dev_mpi
+*.n001.*
+ops/lib

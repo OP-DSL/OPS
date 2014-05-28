@@ -36,32 +36,7 @@
   */
 
 #include <mpi.h>
-#include <ops_lib_cpp.h>
 #include <ops_mpi_core.h>
-
-#ifndef __XDIMS__ //perhaps put this into a separate headder file
-#define __XDIMS__
-int xdim0;
-int xdim1;
-int xdim2;
-int xdim3;
-int xdim4;
-int xdim5;
-int xdim6;
-int xdim7;
-int xdim8;
-int xdim9;
-int xdim10;
-int xdim11;
-int xdim12;
-int xdim13;
-int xdim14;
-int xdim15;
-int xdim16;
-int xdim17;
-int xdim18;
-int xdim19;
-#endif /* __XDIMS__ */
 
 void
 ops_init ( int argc, char ** argv, int diags )
@@ -186,28 +161,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
   return dat;
 }
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
-{
-  return ops_arg_dat_core( dat, stencil, acc );
-}
-
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag )
-{
-  ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
-  (&temp)->opt = flag;
-  return temp;
-}
-
-ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
-{
-  return ops_arg_gbl_core( data, dim, size, acc );
-}
-
-ops_arg ops_arg_idx()
-{
-  return ops_arg_idx_core( );
-}
-
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
   ops_print_dat_to_txtfile_core(dat, file_name);
@@ -222,42 +175,8 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
   (void)name;
 }
 
-void ops_timers(double * cpu, double * et)
+void ops_H_D_exchanges(ops_arg *args, int nargs)
 {
-    ops_timers_core(cpu,et);
+  (void)nargs;
+  (void)args;
 }
-
-void ops_printf(const char* format, ...)
-{
-  if(ops_my_rank==MPI_ROOT) {
-    va_list argptr;
-    va_start(argptr, format);
-    vprintf(format, argptr);
-    va_end(argptr);
-  }
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  if(ops_my_rank==MPI_ROOT) {
-    va_list argptr;
-    va_start(argptr, format);
-    vfprintf(stream, format, argptr);
-    va_end(argptr);
-  }
-}
-
-void ops_compute_moment(double t, double *first, double *second) {
-  double times[2];
-  double times_reduced[2];
-  int comm_size;
-  times[0] = t;
-  times[1] = t*t;
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-  MPI_Reduce(times, times_reduced, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  *first = times_reduced[0]/(double)comm_size;
-  *second = times_reduced[1]/(double)comm_size;
-}
-
-
