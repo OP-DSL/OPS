@@ -673,8 +673,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if( dat_ndim <= dim || dat->block_size[dim] <= 1 ) continue;
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
-          other_dims = other_dims && intersection( range[2*d2]+MAX_DEPTH,
-                                         range[2*d2+1]-MAX_DEPTH,
+          other_dims = other_dims && intersection( range[2*d2]-MAX_DEPTH,
+                                         range[2*d2+1]+MAX_DEPTH,
                                          OPS_sub_block_list[dat->block->index]->istart[d2],
                                          OPS_sub_block_list[dat->block->index]->iend[d2]+1); //i.e. the intersection of the dependency range with my full range
       }
