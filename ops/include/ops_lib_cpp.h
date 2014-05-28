@@ -41,7 +41,6 @@
 
 #include <ops_lib_core.h>
 
-
 /*
 * run-time type-checking routines
 */
@@ -67,50 +66,6 @@ inline int type_error (const ull * a, const char *type ) {
 inline int type_error (const bool * a, const char *type ) {
   (void)a; return (strcmp ( type, "bool" ) && strcmp ( type, "bool:soa" ));
 }
-
-/*
-* zero constants
-*/
-
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
-
-
-extern int OPS_diags;
-
-extern int OPS_block_index, OPS_block_max,
-           OPS_dat_index, OPS_dat_max;
-
-extern ops_block * OPS_block_list;
-extern Double_linked_list OPS_dat_list; //Head of the double linked list
-extern ops_arg *OPS_curr_args;
-
-extern sub_block_list *OPS_sub_block_list;
-
-void ops_init( int argc, char **argv, int diags_level );
-void ops_exit();
-
-ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
-                           char* data, int type_size, char const * type, char const * name );
-
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
-ops_arg ops_arg_idx( );
-
-ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
-void ops_decl_const_char( int, char const *, int, char *, char const* );
 
 
 template < class T >
@@ -173,11 +128,6 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
   return ops_decl_dat_char(block, data_size, block_size, offset, tail, (char *)data, sizeof(T), type, name );
 
 }
-
-
-void ops_timers( double *cpu, double *et );
-void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
-
 
 
 //

@@ -36,7 +36,6 @@
   */
 
 #include <mpi.h>
-#include <ops_lib_cpp.h>
 #include <ops_mpi_core.h>
 
 #include <cuda.h>

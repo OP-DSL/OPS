@@ -38,6 +38,7 @@
   */
 
 #include <mpi.h>
+#include <ops_lib_core.h>
 
 /** Define the root MPI process **/
 #ifdef MPI_ROOT
@@ -46,6 +47,9 @@
 #define MPI_ROOT 0
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 //
@@ -92,4 +96,7 @@ void ops_mpi_exit();
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_halo *__restrict halo);
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__OPS_MPI_CORE_H*/

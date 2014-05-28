@@ -44,7 +44,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS 	= -O2 -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O3 -Kieee -Minline -Minform=severe
+  CCFLAGS 	= -O3 -Kieee -Minline -Minform=severe -Minfo=all
 endif
   CPPFLAGS 	= $(CCFLAGS)
   OMPFLAGS 	= -mp
@@ -240,9 +240,15 @@ cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cp
 				nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. \
 				-c -o ./CUDA/cloverleaf_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
-ACC_KERNELS = clover_leaf_openacc_kernels.cpp
+openacc_file_list = $(shell find OpenACC/ -name "*.cpp" | tr "\n" " ")
+openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 
-cloverleaf_openacc: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/clover_leaf_common.h Makefile
+				@echo "Compiling kernel" $*.cpp
+				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
+
+cloverleaf_openacc: $(openacc_obj_list) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
                 update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
                 calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
@@ -251,15 +257,16 @@ cloverleaf_openacc: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp ini
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
-	        $(MPICPP) -acc -ta=tesla:cc3x,keepgpu $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB)  clover_leaf.cpp start.cpp build_field.cpp \
+	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+								 clover_leaf.cpp start.cpp build_field.cpp \
                 read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-								advec_mom_ops.cpp -I. ./OpenACC/$(ACC_KERNELS) -lcudart -lops_cuda -o cloverleaf_openacc
+								advec_mom_ops.cpp -I. $(openacc_obj_list) -lcudart -lops_cuda -o cloverleaf_openacc
 #
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc ./CUDA/*.o *.o
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_openacc ./CUDA/*.o ./OpenACC/*.o *.o

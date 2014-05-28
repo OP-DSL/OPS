@@ -193,16 +193,28 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
-
+    NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * nargs * 2
-    #print stride
-    for n in range (0, nargs):
-      if str(stens[n]).find('STRID2D_X') > 0:
-        stride[2*n+1] = 0
-      elif str(stens[n]).find('STRID2D_Y') > 0:
-        stride[2*n] = 0
+    stride = [1] * nargs * NDIM
 
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[NDIM*n] = 0
+
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_X') > 0:
+          stride[NDIM*n+1] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+1] = 0
 
     reduct = 0
     for n in range (0, nargs):
@@ -214,6 +226,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     file_text = ''
     depth = 0
     n_per_line = 2
+    if NDIM==3:
+      n_per_line = 1
 
     i = name.find('kernel')
     name2 = name[0:i-1]
@@ -234,16 +248,26 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 #  generate constants and MACROS
 ##########################################################################
 
+    code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
+    code('')
+    if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
+      code('//#define OPS_GPU')
+      code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
+        if NDIM==3:
+          code('int ydim'+str(n)+'_'+name+';')
 #        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
     code('')
 
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==2:
+          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==3:
+          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
 
 
@@ -344,6 +368,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     code('int x_size = MAX(0,end_add[0]-start_add[0]);')
     code('int y_size = MAX(0,end_add[1]-start_add[1]);')
+    if NDIM==3:
+      code('int z_size = MAX(0,end_add[2]-start_add[2]);')
     code('')
     
     #timing structs
@@ -358,6 +384,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->block_size[1];')
     ENDIF()
     code('')
             
@@ -416,15 +444,18 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       
       
     comm('')
+    comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers')
-
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('  (start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
+          for d2 in range (0,d):
+            line = line + depth*' '+'  args['+str(n)+'].dat->block_size['+str(d2)+'] *\n'
+          code(line[:-1])
+          code('  (start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+
         code('#ifdef OPS_GPU')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data_d + base'+str(n)+');')
         code('#else')
@@ -478,17 +509,35 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           line = line + ' reduction(+:p_a'+str(n)+')'
     code('#ifdef OPS_GPU')
     code(line)
-    code('#pragma acc loop')
+    line = '#pragma acc loop'
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          line = line + ' reduction(min:p_a'+str(n)+')'
+        if accs[n] == OPS_MAX:
+          line = line + ' reduction(max:p_a'+str(n)+')'
+        if accs[n] == OPS_INC:
+          line = line + ' reduction(+:p_a'+str(n)+')'
+        if accs[n] == OPS_WRITE: #this may not be correct
+          line = line + ' reduction(+:p_a'+str(n)+')'
+    code(line)
     code('#endif')
+    if NDIM==3:
+      FOR('n_z','0','z_size')
+      code('#ifdef OPS_GPU')
+      code(line)
+      code('#endif')
     FOR('n_y','0','y_size')
     code('#ifdef OPS_GPU')
-    code('#pragma acc loop')
+    code(line)
     code('#endif')
     FOR('n_x','0','x_size')
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' p_a'+str(n)+'+ n_x*'+str(stride[2*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[2*n+1])
+        text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+        if NDIM == 3:
+          text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       else:
         if accs[n] == OPS_READ:
           text = text +' p_a'+str(n)+''
@@ -498,11 +547,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         text = text + ','
       else:
         text = text +' );\n'
-      if n%n_per_line == 1 and n <> nargs-1:
+      if n%n_per_line == 0 and n <> nargs-1:
         text = text +'\n          '
     code(text);
     ENDFOR()
     ENDFOR()
+    if NDIM==3:
+      ENDFOR()
     code('')
     
     for n in range (0, nargs):
@@ -584,6 +635,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
       
 
+  fid = open('./OpenACC/'+master.split('.')[0]+'_common.h','w')
+  fid.write('//\n// auto-generated by op2.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
+  fid.write(file_text)
+  fid.close()
+  file_text =''
+  code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
   code('')
   code('void ops_decl_const_char2(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
@@ -609,17 +666,16 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
   code('}')
   code('')
 
-  code('')
-  comm('user kernel files')
+  #code('')
+  #comm('user kernel files')
 
-  kernel_name_list = ['generate_chunk_kernel']
+  #kernel_name_list = ['generate_chunk_kernel']
 
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code('#include "'+kernels[nk]['name']+'_openacc_kernel.cpp"')
-      kernel_name_list.append(kernels[nk]['name'])
+  #for nk in range(0,len(kernels)):
+  #  if kernels[nk]['name'] not in kernel_name_list :
+  #    code('#include "'+kernels[nk]['name']+'_openacc_kernel.cpp"')
+  #    kernel_name_list.append(kernels[nk]['name'])
 
-  master = master.split('.')[0]
   fid = open('./OpenACC/'+master.split('.')[0]+'_kernels.cpp','w')
   fid.write('//\n// auto-generated by op2.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
   fid.write(file_text)

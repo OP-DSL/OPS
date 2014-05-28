@@ -35,7 +35,7 @@
   * @details Implements the OPS API calls for the sequential backend
   */
 
-#include <ops_lib_cpp.h>
+#include <ops_lib_core.h>
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__

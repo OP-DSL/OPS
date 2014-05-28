@@ -25,10 +25,11 @@ ifeq ($(OPS_COMPILER),gnu)
   CXX 	  	:= g++
   CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g -Wextra
   MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),intel)
-  CC 		:= icc
+  CC 		:= icc -std=c99
 ifdef DEBUG
   CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
 else
@@ -37,24 +38,26 @@ endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 	NVCC  := nvcc
-ifdef DEBUG
+ifndef DEBUG
 	NVCCFLAGS := -O3 -arch=sm_35
 else
 	NVCCFLAGS := -O0 -g -G
 endif
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CC 		:= pgcc
+  CC 		:= pgcc -c99
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CCFLAGS 	:= -O3 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   CXX 		:= pgCC
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -c99
 	NVCC  := nvcc
   MPIFLAGS 	:= $(CXXFLAGS)
-ifdef DEBUG
+ifndef DEBUG
 	NVCCFLAGS := -O3 -arch=sm_35
 else
 	NVCCFLAGS := -O0 -g -G
@@ -73,41 +76,41 @@ mklib:
 	@mkdir -p $(LIB) $(OBJ)
 
 core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.c $(SRC)/externlib/ops_util.c
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lib_core.c -o $(OBJ)/ops_lib_core.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.c -o $(OBJ)/ops_util.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lib_core.c -o $(OBJ)/ops_lib_core.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.c -o $(OBJ)/ops_util.o
 
 seq: mklib core $(OBJ)/ops_lib_core.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o
 
 openmp: mklib core $(OBJ)/ops_lib_core.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/openmp/ops_openmp_decl.c -o $(OBJ)/ops_openmp_decl.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/openmp/ops_openmp_decl.c -o $(OBJ)/ops_openmp_decl.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	ar -r $(LIB)/libops_openmp.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_openmp_decl.o $(OBJ)/ops_dummy_singlenode.o
 
 cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
-	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
+	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_decl.c -o $(OBJ)/ops_cuda_decl.o
-	$(CXX) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
+	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_rt_support.c -o $(OBJ)/ops_cuda_rt_support.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o
 
 mpi: mklib core $(OBJ)/ops_lib_core.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_decl.c -o $(OBJ)/ops_mpi_decl.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_host.c -o $(OBJ)/ops_mpi_rt_support_host.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_decl.c -o $(OBJ)/ops_mpi_decl.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_host.c -o $(OBJ)/ops_mpi_rt_support_host.o
 	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl.o $(OBJ)/ops_mpi_rt_support.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o
 
 mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
-	$(MPICXX) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
+	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
+	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(OBJ)/ops_mpi_rt_support_cuda.o
 	ar -r $(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda.o $(OBJ)/ops_mpi_rt_support.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition.o $(OBJ)/ops_cuda_rt_support.o

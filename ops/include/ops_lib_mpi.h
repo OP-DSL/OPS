@@ -37,7 +37,6 @@
   * @details Declares the OPS API calls for the sequential backend
   */
 
-#include "ops_lib_cpp.h"
 #include "ops_mpi_core.h"
 
 #ifndef OPS_ACC_MACROS
@@ -175,6 +174,10 @@ extern int xdim17;
 extern int ydim17;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 inline int mult2(int* size, int dim)
 {
   int result = 1;
@@ -268,5 +271,8 @@ inline int off3D(int dim, int* start, int* end, int* size, int* stride)
   return off;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

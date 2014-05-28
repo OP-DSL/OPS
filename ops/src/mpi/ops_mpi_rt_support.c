@@ -95,7 +95,6 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
     int* d_m = sd->d_m;
     int* d_p = sd->d_p;
     int* prod = sd->prod;
-    int size = dat->size;
     MPI_Status status;
 
     for(int n=0;n<sb->ndim;n++){
@@ -163,7 +162,6 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
     int* d_m = sd->d_m;
     int* d_p = sd->d_p;
     int* prod = sd->prod;
-    int size = dat->size;
     MPI_Status status;
 
     for(int n=0;n<sb->ndim;n++){
@@ -280,7 +278,6 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
     int* d_m = sd->d_m;
     int* d_p = sd->d_p;
     int* prod = sd->prod;
-    int size = dat->size;
     MPI_Status status;
     int ndim = sb->ndim;
 
@@ -434,7 +431,6 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   int* d_m = sd->d_m;
   int* d_p = sd->d_p;
   int* prod = sd->prod;
-  int size = dat->size;
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
@@ -493,7 +489,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
 
   //set up initial pointers
   int i2 = (-d_m[dim]    ) * prod[dim-1];
-  int i4 = (prod[dim]/prod[dim-1] - (-d_p[dim])    ) * prod[dim-1];
+  //int i4 = (prod[dim]/prod[dim-1] - (-d_p[dim])    ) * prod[dim-1];
 
   if (OPS_diags>5) { //Consistency checking
     int they_send;
@@ -543,7 +539,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
     if(dat->dirty_dir_recv[2*MAX_DEPTH*dim + d] == 1) actual_depth_recv = d;
 
   //set up initial pointers
-  int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
+  //int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
   int i3 = (prod[dim]/prod[dim-1] - (-d_p[dim]) - actual_depth_send) * prod[dim-1];
 
   if (OPS_diags>5) { //Consistency checking
@@ -594,7 +590,6 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   int* d_m = sd->d_m;
   int* d_p = sd->d_p;
   int* prod = sd->prod;
-  int size = dat->size;
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
@@ -828,7 +823,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
   if(arg->opt == 0) return;
   ops_dat dat = arg->dat;
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  //sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int left_boundary_modified[OPS_MAX_DIM] = {0};
   int left_halo_modified[OPS_MAX_DIM] = {0};
   int right_boundary_modified[OPS_MAX_DIM] = {0};

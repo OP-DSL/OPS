@@ -39,6 +39,10 @@
 #include <ops_lib_core.h>
 #include <ops_cuda_rt_support.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
@@ -113,3 +117,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
   }
  cutilSafeCall(cudaDeviceSynchronize()); 
 }
+#ifdef __cplusplus
+}
+#endif
