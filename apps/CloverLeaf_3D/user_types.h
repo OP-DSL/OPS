@@ -55,6 +55,7 @@ typedef struct
   int x_min, y_min, x_max ,y_max, z_min, z_max;
 } field_type;
 
+#ifdef __cplusplus
 inline int type_error (const field_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "field_type" ) && strcmp ( type, "field_type:soa" ));
 }
@@ -66,5 +67,6 @@ inline int type_error (const grid_type * a, const char *type ) {
 inline int type_error (const state_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "state_type" ) && strcmp ( type, "state_type:soa" ));
 }
+#endif
 
 #endif
