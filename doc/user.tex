@@ -5,7 +5,7 @@
 \usepackage{listings}
 \usepackage{verbments}
 
-\date{April 2014}
+\date{Jan 2014}
 
  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
  \oddsidemargin 0.1in
@@ -52,7 +52,7 @@ detailed.
 
 Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
 applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
-due to the implicit connectivity between neighboring mesh elements (such as vertices, cells) in structured
+due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
 meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
 points using one or more ``stencils'' to access data.\\
 
@@ -111,49 +111,125 @@ face of another block.  This is awkward and hard to handle simply.
 \item \vspace{-0.3in}
 \end{routine}
 
-\subsection{Declaration routines}
-
-\begin{routine} {ops\_block ops\_decl\_block(int dims, int *size, char *name)}
-{This routine defines a structured grid block.}
-
-\item[dims]          dimension of the set
-\item[size]          size of the set in each dimension
-\item[name]          a name used for output diagnostics
-\end{routine}
-
-\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, \\
-\hspace*{1.6in}int* d\_n, int* d\_p, T *data, char *name)}
-{This routine defines a dataset. }
-
-\item[block]         structured block
-\item[dim]           dimension of dataset (number of items per block element)
-\item[size]	     size of the dat in each dimension
-\item[d\_m]	     max offset from negative edge in each dimension
-\item[d\_p]	     max offset from positive edge in each dimension
-\item[data]          input data of type {\tt T}
-\item[name]          a name used for output diagnostics
-\end{routine}\vspace{-5pt}
-The depths \texttt{d\_m} and \texttt{d\_p} are used to indicate the offset from the edge in both the negative and
-positive directions of each dimension. In the current API, it is important that the application developer indicate to
-OPS, the maximum stencil depth a given \texttt{ops\_dat} is accessed within any of the subsequent loops over a block.
-This is to account for stencils accessing beyond the defined regions of the \texttt{ops\_dat} during an execution,
-particularly for distributed memory halo allocation within OPS. In the future OPS will be able to dynamically allocate
-the maximum necessary depths based on the stencils declared to be used on a given \texttt{ops\_dat}.\\
-
-
-\begin{routine} {ops\_decl\_const(char const* name, int dim, char const type, T* data)}{Declare a
-global constant}
-\item[name]       name of constant
-\item[dim]     dimension of the data
-\item[type]    data type
-\item[data]    constant data of type {\tt T}
-\end{routine}
 
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
 \item \vspace{-0.3in}
 \end{routine}
 
+\begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
+{This routine defines a structured grid block.}
+
+\item[dims]          dimension of the set
+% \item[size]          size of the set in each dimension
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *d\_m, int *d\_p, \\T *data, char
+*type, char *name)}
+{This routine defines a dataset.}
+
+\item[block]         structured block
+\item[dim]           dimension of dataset (number of items per block element)
+\item[size]      size in each dimension of the block
+\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
+\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
+\item[data]          input data of type {\tt T}
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\noindent The depths \texttt{d\_m} and \texttt{d\_p} are a current workaround that is used to indicate the offset from
+the edge (in both the negative and positive directions of each dimension). In the current API, it is important that the
+application developer indicate to OPS, the maximum stencil depth a given \texttt{ops\_dat} is accessed within any of the
+subsequent loops over a block. This is to account for stencils accessing beyond the defined regions of the
+\texttt{ops\_dat} during an execution, particularly for distributed memory halo allocation within OPS. In the future OPS
+will be able to dynamically allocate the maximum necessary depths based on the stencils declared to be used on a given
+\texttt{ops\_dat}, eliminating the need to declare \texttt{d\_m} and \texttt{d\_p}.
+
+
+\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *d\_m, int *d\_p, char *file, char *type, char *name)}
+{This routine defines a dataset to be read in from a named hdf5 file}
+
+\item[block]         structured block
+\item[dim]           dimension of dataset (number of items per block element)
+\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
+\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
+\item[file]      hdf5 file to read and obtain the data from
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          name of the dat used for output diagnostics
+\end{routine}
+
+\begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, int *from\_dir, int *to\_dir)}
+{This routine defines a halo relationship between two datasets defined on two different blocks.}
+
+\item[from]         origin dataset
+\item[to]           destination dataset
+\item[iter\_size]          defines an iteration size (number of indices to iterate over in each direction)
+\item[from\_base]      indices of starting point in "from" dataset
+\item[to\_base]          indices of starting point in "to" dataset
+\item[from\_dir]          direction of incrementing for “from” for each dimension of iter\_size
+\item[to\_dir]           direction of incrementing for “to” for each dimension of iter\_size
+\end{routine}
+
+(Simple example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from base = [1,0,0], to base = [-1,0,0], from dir = [0,1,2], to dir = [0,1,2]. In more complex case this allows for transfers between blocks with different orientations.)
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
+{This routine defines a collection of halos. Semantically, When an exchange is triggered for all halos in a group, there is no ordering defined in which they are carried out.}
+
+\item[nhalos]         number of halos in {\tt halos}
+\item[halos]           array of halos
+\end{routine}
+
+\subsubsection{Convenience functions}
+
+Since in many cases blocks and their datasets are perfectly aligned, it is convenient to define the relationship between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halos(ops\_block from, ops\_block to, int *from\_face, int depth)}
+{This routine defines a connection between two blocks that are oriented the same way and share a face, and all their datasets have the same dimensions on that face. It will return an {\tt ops\_halo\_group} with {\tt ops\_halo}s defined between matching datasets. \textbf{Should this be symmetric?}}
+
+\item[from]         origin block
+\item[to]           target block
+\item[from\_face]           an array specifying the invariant dimension and a side - it may contain a single non-zero value, either -1 or +1 (beginning and end of iteration range)
+\item[depth]         number of halo layers
+\end{routine}
+
+(For example in 2D if (0,0) is the bottom left corner of blocks, then {\tt from\_face}=[1,0] would define a connection between the right face of the origin block and the left face of the destination block.)
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
+{This routine defines a collection of halos. When an exchange is triggered for all halos in a group, there is no ordering defined in which they are carried out.}
+
+\item[nhalos]         number of halos in {\tt halos}
+\item[halos]           array of halos
+\end{routine}
+
+Halo groups (\texttt{ops\_halo\_group}) are intended to be sets, so for their manipulation a number of functions ar introduced:
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group\_empty()}
+{This routine defines an empty halo group.}
+\item[returns]    an empty halo group
+\end{routine}
+
+\begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
+{Adds an {ops\_halo} to a halo group}
+
+\item[group]         the halo group to add to
+\item[halo]           the halo to add
+\end{routine}
+
+\begin{routine} {ops\_halo\_group ops\_halo\_group\_union(ops\_halo\_group group1, ops\_halo\_group group2)}
+{Takes the union of two halo groups and returns a new halo group.}
+
+\item[group1]         the first halo group
+\item[group2]         the second halo group
+\end{routine}
+
+\subsection{Halo exchange}
+\begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
+{This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on the exchanged data.}
+
+\item[group]         the halo group
+\end{routine}
 
 
 \newpage
@@ -162,17 +238,19 @@ global constant}
 
 A parallel loop with N arguments has the following syntax:
 
-\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), char *name, \\
-\hspace*{1.4in} ops\_block block, int dims, int *range,\\
-\hspace*{1.4in} ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
+\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), \\
+                 \hspace*{1.4in} char *name, ops\_blck block, int dims, int *range,\\
+\hspace*{1.4in}  ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
 
 \item[kernel]     user's kernel function with N arguments
 \item[name]       name of kernel function, used for output diagnostics
-\item[block]       ops\_block on which this loop iterates over
+\item[block]      the ops\_block over which this loop executes
 \item[dims]       dimension of loop iteration
 \item[range]      iteration range array
 \item[args]       arguments
 \end{routine}
+
+
 
 
 \vspace{0.2in}
@@ -187,7 +265,7 @@ for OPS datasets.
 \begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
 \item[data]       data array
 \item[dim]        array dimension
-\item[type]    	  string representing the type of data held in data
+\item[type]       string representing the type of data held in data
 \item[acc]        access type
 \end{routine}
 
@@ -196,7 +274,7 @@ for OPS datasets.
                  ops\_access acc)}{}
 \item[dat]        dataset
 \item[stencil]    stencil for accessing data
-\item[type]    	  string representing the type of data held in dataset
+\item[type]       string representing the type of data held in dataset
 \item[acc]        access type
 \end{routine}
 
@@ -211,7 +289,7 @@ for OPS datasets.
 \item[dims]     dimension of loop iteration
 \item[points]   number of points in the stencil
 \item[stencil]  stencil for accessing data
-\item[name]	string representing the name of the stencil
+\item[name] string representing the name of the stencil
 \end{routine}
 
 
@@ -221,7 +299,7 @@ for OPS datasets.
 \item[points]     number of points in the stencil
 \item[stencil]    stencil for accessing data
 \item[stride]     stride for accessing data
-\item[name]	string representing the name of the stencil
+\item[name] string representing the name of the stencil
 \end{routine}
 
 \vspace{0.2in}
@@ -248,13 +326,11 @@ specification.
 dimension applications (with a stride of 0 for the relevant dimensions).
 
 
-
-
 \newpage
 \section{OPS User Kernels}
 
 \noindent In OPS, the elemental operation carried out per mesh/grid point is specified as an outlined function called
-a \textit{user kernel}. An example is given in \figurename{ \ref{fig:example}}.
+a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.
 \begin{figure}[h]\small
 \vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
 \begin{pyglist}[language=c]
@@ -280,8 +356,8 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 \begin{pyglist}[language=c]
 int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; //x-y range
 
-ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass", 
-             colver_grid, 2, rangexy_inner_plus1,
+ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
+             clover_grid, 2, rangexy_inner_plus1,
              ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(volume,   S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
@@ -302,6 +378,7 @@ related to the stencil specified) to access the relevant element.
 \end{thebibliography}
 
 \end{document}
+
 
 
 
