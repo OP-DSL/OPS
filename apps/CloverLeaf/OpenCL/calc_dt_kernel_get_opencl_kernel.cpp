@@ -63,18 +63,20 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
+  int r_bytes2 = reduct_bytes/sizeof(double); 
   arg2.data = OPS_reduct_h + reduct_bytes;
-  arg2.data_d = OPS_reduct_d + reduct_bytes;
+  arg2.data_d = OPS_reduct_d;// + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
+  
+  int r_bytes3 = reduct_bytes/sizeof(double);
   arg3.data = OPS_reduct_h + reduct_bytes;
-  arg3.data_d = OPS_reduct_d + reduct_bytes;
+  arg3.data_d = OPS_reduct_d;// + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
+  
 
   mvReductArraysToDevice(reduct_bytes);
   int dat0 = args[0].dat->size;
@@ -111,6 +113,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 9, sizeof(cl_int), (void*) &y_size ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 10, nthread*sizeof(double), NULL));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 11, nthread*sizeof(double), NULL));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 12, sizeof(cl_int), (void*) &r_bytes2 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 13, sizeof(cl_int), (void*) &r_bytes3 ));
 
   //call/enque opencl kernel wrapper function
   clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[32], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );

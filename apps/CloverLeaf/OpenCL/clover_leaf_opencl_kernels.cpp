@@ -27,7 +27,7 @@ extern double dt;
 
   extern ops_opencl_core OPS_opencl_core;
 
-  #define MAX_SOURCE_SIZE (32*0x1000000)
+  #define MAX_SOURCE_SIZE (33*0x1000000)
   
   void buildOpenCLKernels() {
     static bool isbuilt = false;
@@ -35,11 +35,11 @@ extern double dt;
     if(!isbuilt) {
       clSafeCall( clUnloadCompiler() );
   
-      OPS_opencl_core.n_kernels = 32;
-      OPS_opencl_core.kernel = (cl_kernel*) malloc(32*sizeof(cl_kernel));  
+      OPS_opencl_core.n_kernels = 33;
+      OPS_opencl_core.kernel = (cl_kernel*) malloc(33*sizeof(cl_kernel));  
       
       cl_int ret;
-      char* source_filename[32] = {
+      char* source_filename[33] = {
           "./OpenCL/viscosity_kernel.cl",
           "./OpenCL/accelerate_kernel.cl",
           "./OpenCL/revert_kernel.cl",
@@ -71,17 +71,17 @@ extern double dt;
           "./OpenCL/advec_cell_kernel3_ydir.cl",
           "./OpenCL/advec_cell_kernel4_ydir.cl",
           "./OpenCL/calc_dt_kernel.cl",
-          "./OpenCL/calc_dt_kernel_min.cl"
-          //"./OpenCL/calc_dt_kernel_get.cl"
+          "./OpenCL/calc_dt_kernel_min.cl",
+          "./OpenCL/calc_dt_kernel_get.cl"
           //"./OpenCL/calc_dt_kernel_print.cl"
       };
   
       // Load the kernel source code into the array source_str
       FILE *fid;
-      char *source_str[32];
-      size_t source_size[32];
+      char *source_str[33];
+      size_t source_size[33];
   
-      for(int i=0; i<32; i++) {
+      for(int i=0; i<33; i++) {
         fid = fopen(source_filename[i], "r");
         if (!fid) {
           fprintf(stderr, "Can't open the kernel source file!\n");
@@ -105,7 +105,7 @@ extern double dt;
       printf(" compiling sources \n");
   
         // Create a program from the source
-        OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 32, (const char **) &source_str, (const size_t *) &source_size, &ret);
+        OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 33, (const char **) &source_str, (const size_t *) &source_size, &ret);
         clSafeCall( ret );
   
         // Build the program
@@ -200,8 +200,8 @@ extern double dt;
       clSafeCall( ret );
       OPS_opencl_core.kernel[31] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_min", &ret);
       clSafeCall( ret );
-      //OPS_opencl_core.kernel[32] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_get", &ret);
-      //clSafeCall( ret );
+      OPS_opencl_core.kernel[32] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_get", &ret);
+      clSafeCall( ret );
       //OPS_opencl_core.kernel[33] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_print", &ret);
       //clSafeCall( ret );
             
@@ -254,5 +254,5 @@ extern double dt;
 #include "advec_cell_kernel4_ydir_opencl_kernel.cpp"
 #include "calc_dt_kernel_opencl_kernel.cpp"
 #include "calc_dt_kernel_min_opencl_kernel.cpp"
-//#include "calc_dt_kernel_get_opencl_kernel.cpp"
+#include "calc_dt_kernel_get_opencl_kernel.cpp"
 //#include "calc_dt_kernel_print_opencl_kernel.cpp"

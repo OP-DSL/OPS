@@ -3,6 +3,7 @@
 //
 
 #include "user_types.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a<b) ? (a) : (b))
@@ -44,7 +45,7 @@
 
 //user function
 
-void calc_dt_kernel_get( __global double* cellx,  __global double* celly, __global double* xl_pos, __global double* yl_pos,
+void calc_dt_kernel_get( __global double* cellx,  __global double* celly, double* xl_pos, double* yl_pos,
 int xdim0_calc_dt_kernel_get,
 int xdim1_calc_dt_kernel_get)
 
@@ -71,8 +72,12 @@ int xdim1_calc_dt_kernel_get)
  int size0,
  int size1,
 __local double *scratch2, 
-__local double *scratch3, ){
+__local double *scratch3,
+int r_bytes2,
+int r_bytes3){
 
+   arg2 += r_bytes2;
+   arg3 += r_bytes3;
    double arg2_l[1];
    double arg3_l[1];
    for (int d=0; d<1; d++) arg2_l[d] = ZERO_double;
@@ -89,7 +94,7 @@ __local double *scratch3, ){
                     xdim0_calc_dt_kernel_get,
                     xdim1_calc_dt_kernel_get);
    }
-   reduce_double(arg1_2[0], scratch2, arg2, OPS_INC);
-   reduce_double(arg1_3[0], scratch3, arg3, OPS_INC);
+   reduce_double(arg2_l[0], scratch2, arg2, OPS_INC);
+   reduce_double(arg3_l[0], scratch3, arg3, OPS_INC);
 
  }
