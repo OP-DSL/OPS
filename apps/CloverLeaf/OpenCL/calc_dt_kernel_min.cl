@@ -68,8 +68,7 @@ void calc_dt_kernel_min( __global double* dt_min ,
    
    double arg1_l[1];
    
-   for (int d=0; d<1; d++)
-       arg1_l[d] = INFINITY_double;
+   for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
 
    int idx_y = get_global_id(1);
    int idx_x = get_global_id(0);

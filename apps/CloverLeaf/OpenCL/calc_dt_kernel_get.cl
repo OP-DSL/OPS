@@ -14,6 +14,14 @@
 #define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 
+#define OPS_READ 0
+#define OPS_WRITE 1
+#define OPS_RW 2
+#define OPS_INC 3
+#define OPS_MIN 4
+#define OPS_MAX 5
+
+
 #define ZERO_double 0.0;
 #define INFINITY_double INFINITY;
 #define ZERO_float 0.0f;
@@ -61,7 +69,9 @@ int xdim1_calc_dt_kernel_get)
  const int base0,
  const int base1,
  int size0,
- int size1 ){
+ int size1,
+__local double *scratch2, 
+__local double *scratch3, ){
 
    double arg2_l[1];
    double arg3_l[1];
@@ -74,12 +84,12 @@ int xdim1_calc_dt_kernel_get)
    if (idx_x < size0 && idx_y < size1) {
      calc_dt_kernel_get(&arg0[base0 + idx_x * 1 + idx_y * 0 * xdim0_calc_dt_kernel_get],
                     &arg1[base1 + idx_x * 0 + idx_y * 1 * xdim1_calc_dt_kernel_get],
-                    &arg2[get_group_id(0)*1*64],   
-                    &arg3[get_group_id(0)*1*64],
+                    arg2_l,   
+                    arg3_l,
                     xdim0_calc_dt_kernel_get,
                     xdim1_calc_dt_kernel_get);
    }
-   //arg2[get_group_id(0)*1*64] += arg2_l[0];
-   //arg3[get_group_id(0)*1*64] += arg3_l[0];
+   reduce_double(arg1_2[0], scratch2, arg2, OPS_INC);
+   reduce_double(arg1_3[0], scratch3, arg3, OPS_INC);
 
  }

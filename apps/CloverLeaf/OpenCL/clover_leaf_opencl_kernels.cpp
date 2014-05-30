@@ -115,8 +115,8 @@ extern double dt;
         if (pPath!=NULL)
           sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
         else {
-          //printf("Path = %s\n",pPath);
-          sprintf(buildOpts,"-cl-mad-enable -I/home/mudalige/Cloverleaf/OPS/ops/include -DOPS_WARPSIZE=%d", 32);
+          printf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+          exit(EXIT_FAILURE);
         }
         
         ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);

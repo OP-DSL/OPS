@@ -66,14 +66,14 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   arg2.data = OPS_reduct_h + reduct_bytes;
   arg2.data_d = OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1*64] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
+  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
   arg3.data = OPS_reduct_h + reduct_bytes;
   arg3.data_d = OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1*64] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
+  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
 
   mvReductArraysToDevice(reduct_bytes);
@@ -97,14 +97,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
 
   ops_H_D_exchanges_cuda(args, 4);
 
-  /*int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
-
-  nshared = MAX(nshared,sizeof(double)*1);
-  nshared = MAX(nshared,sizeof(double)*1);
-
-  nshared = MAX(nshared*nthread,reduct_size*nthread);*/
-
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
@@ -116,6 +109,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 7, sizeof(cl_int), (void*) &base1 ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 8, sizeof(cl_int), (void*) &x_size ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 9, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 10, nthread*sizeof(double), NULL));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 11, nthread*sizeof(double), NULL));
 
   //call/enque opencl kernel wrapper function
   clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[32], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
@@ -124,14 +119,14 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
-      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1*64];
+      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1];
     }
   }
   arg2.data = (char *)arg2h;
 
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
-      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1*64];
+      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
     }
   }
   arg3.data = (char *)arg3h;

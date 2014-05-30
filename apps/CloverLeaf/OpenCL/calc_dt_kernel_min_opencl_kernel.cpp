@@ -53,7 +53,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
   int reduct_bytes = 0;
   //int reduct_size = 0;
 
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
   //reduct_size = MAX(reduct_size,sizeof(double)*1);
 
   reallocReductArrays(reduct_bytes);
