@@ -53,12 +53,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
-  int reduct_size = 0;
+  //int reduct_size = 0;
 
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-  reduct_size = MAX(reduct_size,sizeof(double)*1);
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
+  //reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
+  //reduct_size = MAX(reduct_size,sizeof(double)*1);
 
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
@@ -66,14 +66,14 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   arg2.data = OPS_reduct_h + reduct_bytes;
   arg2.data_d = OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1*64] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
 
   arg3.data = OPS_reduct_h + reduct_bytes;
   arg3.data_d = OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1*64] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double)*64);
 
 
   mvReductArraysToDevice(reduct_bytes);
@@ -97,13 +97,13 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
 
   ops_H_D_exchanges_cuda(args, 4);
 
-  int nshared = 0;
+  /*int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
 
   nshared = MAX(nshared,sizeof(double)*1);
   nshared = MAX(nshared,sizeof(double)*1);
 
-  nshared = MAX(nshared*nthread,reduct_size*nthread);
+  nshared = MAX(nshared*nthread,reduct_size*nthread);*/
 
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[32], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
@@ -124,14 +124,14 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
-      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1];
+      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1*64];
     }
   }
   arg2.data = (char *)arg2h;
 
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
-      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
+      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1*64];
     }
   }
   arg3.data = (char *)arg3h;

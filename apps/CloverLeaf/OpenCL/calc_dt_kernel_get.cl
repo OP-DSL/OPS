@@ -36,7 +36,7 @@
 
 //user function
 
-void calc_dt_kernel_get( __global double* cellx,  __global double* celly, double* xl_pos, double* yl_pos,
+void calc_dt_kernel_get( __global double* cellx,  __global double* celly, __global double* xl_pos, __global double* yl_pos,
 int xdim0_calc_dt_kernel_get,
 int xdim1_calc_dt_kernel_get)
 
@@ -74,13 +74,12 @@ int xdim1_calc_dt_kernel_get)
    if (idx_x < size0 && idx_y < size1) {
      calc_dt_kernel_get(&arg0[base0 + idx_x * 1 + idx_y * 0 * xdim0_calc_dt_kernel_get],
                     &arg1[base1 + idx_x * 0 + idx_y * 1 * xdim1_calc_dt_kernel_get],
-                    arg2_l,
-                    arg3_l,
-                    
+                    &arg2[get_group_id(0)*1*64],   
+                    &arg3[get_group_id(0)*1*64],
                     xdim0_calc_dt_kernel_get,
                     xdim1_calc_dt_kernel_get);
    }
-   arg2[get_group_id(0)*1*64] += arg2_l[0];
-   arg3[get_group_id(0)*1*64] += arg3_l[0];
+   //arg2[get_group_id(0)*1*64] += arg2_l[0];
+   //arg3[get_group_id(0)*1*64] += arg3_l[0];
 
  }

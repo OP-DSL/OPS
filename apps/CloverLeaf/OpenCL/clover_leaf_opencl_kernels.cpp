@@ -110,7 +110,7 @@ extern double dt;
   
         // Build the program
         char buildOpts[255];
-        sprintf(buildOpts,"-cl-mad-enable -DOPS_WARPSIZE=%d", 32);
+        sprintf(buildOpts,"-cl-mad-enable -I/home/mudalige/Cloverleaf/OPS/ops/include -DOPS_WARPSIZE=%d", 32);
         ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
   
         if(ret != CL_SUCCESS) {

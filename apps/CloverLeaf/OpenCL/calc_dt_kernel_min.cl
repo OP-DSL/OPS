@@ -3,6 +3,7 @@
 //
 
 #include "user_types.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a<b) ? (a) : (b))
@@ -13,6 +14,13 @@
 #ifndef SIGN
 #define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
+
+#define OPS_READ 0
+#define OPS_WRITE 1
+#define OPS_RW 2
+#define OPS_INC 3
+#define OPS_MIN 4
+#define OPS_MAX 5
 
 #define ZERO_double 0.0;
 #define INFINITY_double INFINITY;
@@ -36,8 +44,8 @@
 //user function
 
 void calc_dt_kernel_min( __global double* dt_min ,
-                     double* dt_min_val,
-  int xdim0_calc_dt_kernel_min)
+                                  double* dt_min_val,
+                                  int xdim0_calc_dt_kernel_min)
 
   {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
@@ -55,10 +63,18 @@ void calc_dt_kernel_min( __global double* dt_min ,
  int xdim0_calc_dt_kernel_min,
  const int base0,
  int size0,
- int size1 ){
+ int size1,
+ __local double *scratch ){
 
+   //#define SIMD_LENGTH 8 // SP
+   #define SIMD_LENGTH 4 // DP
+   
    double arg1_l[1];
-   for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
+   
+   for (int d=0; d<1; d++)
+     //for( int lane=0; lane<SIMD_LENGTH; lane++)
+       //arg1_l[d + lane] = INFINITY_double;
+       arg1_l[d] = INFINITY_double;
 
    int idx_y = get_global_id(1);
    int idx_x = get_global_id(0);
@@ -67,7 +83,12 @@ void calc_dt_kernel_min( __global double* dt_min ,
      calc_dt_kernel_min(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min],
                     arg1_l,                    
                     xdim0_calc_dt_kernel_min);
+     //calc_dt_kernel_min(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min],
+     //               &arg1[get_group_id(0)*1*64],                    
+     //               xdim0_calc_dt_kernel_min);
    }
-   arg1[get_group_id(0)*1*64] += arg1_l[0];
+
+   //arg1[get_group_id(0)*1*64 + get_local_id(0)%SIMD_LENGTH] = MIN(arg1_l[0], arg1[get_group_id(0)*1*64 + get_local_id(0)%SIMD_LENGTH]);
+   reduce_double(arg1_l[0], scratch, arg1, OPS_MIN);
 
  }
