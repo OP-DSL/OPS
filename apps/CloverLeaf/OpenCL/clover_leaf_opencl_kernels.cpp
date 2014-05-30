@@ -110,7 +110,15 @@ extern double dt;
   
         // Build the program
         char buildOpts[255];
-        sprintf(buildOpts,"-cl-mad-enable -I/home/mudalige/Cloverleaf/OPS/ops/include -DOPS_WARPSIZE=%d", 32);
+        char* pPath = NULL;
+        pPath = getenv ("OPS_INSTALL_PATH");
+        if (pPath!=NULL)
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
+        else {
+          //printf("Path = %s\n",pPath);
+          sprintf(buildOpts,"-cl-mad-enable -I/home/mudalige/Cloverleaf/OPS/ops/include -DOPS_WARPSIZE=%d", 32);
+        }
+        
         ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
   
         if(ret != CL_SUCCESS) {

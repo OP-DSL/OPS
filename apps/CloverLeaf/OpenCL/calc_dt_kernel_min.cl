@@ -65,15 +65,10 @@ void calc_dt_kernel_min( __global double* dt_min ,
  int size0,
  int size1,
  __local double *scratch ){
-
-   //#define SIMD_LENGTH 8 // SP
-   #define SIMD_LENGTH 4 // DP
    
    double arg1_l[1];
    
    for (int d=0; d<1; d++)
-     //for( int lane=0; lane<SIMD_LENGTH; lane++)
-       //arg1_l[d + lane] = INFINITY_double;
        arg1_l[d] = INFINITY_double;
 
    int idx_y = get_global_id(1);
@@ -83,12 +78,6 @@ void calc_dt_kernel_min( __global double* dt_min ,
      calc_dt_kernel_min(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min],
                     arg1_l,                    
                     xdim0_calc_dt_kernel_min);
-     //calc_dt_kernel_min(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min],
-     //               &arg1[get_group_id(0)*1*64],                    
-     //               xdim0_calc_dt_kernel_min);
    }
-
-   //arg1[get_group_id(0)*1*64 + get_local_id(0)%SIMD_LENGTH] = MIN(arg1_l[0], arg1[get_group_id(0)*1*64 + get_local_id(0)%SIMD_LENGTH]);
    reduce_double(arg1_l[0], scratch, arg1, OPS_MIN);
-
  }
