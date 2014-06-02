@@ -375,10 +375,16 @@ void reallocReductArrays ( int reduct_bytes )
 void mvConstArraysToDevice ( int consts_bytes )
 {
   OPS_gbl_changed=0;
-  for(int i = 0; i<consts_bytes; i++)
-  {
-    if (OPS_consts_h[i] != OPS_gbl_prev[i]) OPS_gbl_changed=1;
+  if(OPS_gbl_prev != NULL)
+    for(int i = 0; i<consts_bytes; i++) { 
+      if (OPS_consts_h[i] != OPS_gbl_prev[i]) OPS_gbl_changed=1;
+    }
+  else 
+  {  
+    OPS_gbl_changed = 1;
+    OPS_gbl_prev = (char *)malloc(consts_bytes);
   }
+  
   if (OPS_gbl_changed) {
     clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
       (cl_mem) OPS_consts_d, CL_TRUE, 0, consts_bytes, (void*) OPS_consts_h, 0, NULL, NULL) );

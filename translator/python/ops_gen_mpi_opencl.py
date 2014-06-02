@@ -337,7 +337,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     # detect global variables and remove __global from the function signature for these
     sig2 = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
       else:
         sig2 = sig2 + sig.split(',')[n].strip()+', '
@@ -407,8 +407,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+',')
     for n in range (0, nargs):
-       if arg_typ[n] == 'ops_arg_dat':
-         code('const int base'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('const int base'+str(n)+',')
 
     code('int size0,')
     code('int size1 ){')
@@ -707,12 +707,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
       nkernel_args = nkernel_args+1
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
         nkernel_args = nkernel_args+1
-        if accs[n] != OPS_READ:
-          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
-          nkernel_args = nkernel_args+1
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
+        nkernel_args = nkernel_args+1
       
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'][1:-1] is 'int' or consts[found_consts[c]]['type'][1:-1] is 'double' or consts[found_consts[c]]['type'][1:-1] is 'float':
