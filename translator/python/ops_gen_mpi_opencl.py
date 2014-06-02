@@ -186,19 +186,13 @@ def arg_parse(text, j):
 
 def find_consts(text, consts):
   found_consts = []
-  #i = 0
+  
   for cn in range(0,len(consts)):
-    #print consts[cn]['name'][1:-1]
     pattern = consts[cn]['name'][1:-1]
-    #if re.search(consts[cn]['name'][1:-1], text):
     if re.search('\\b'+pattern+'\\b', text):
       print "found " + consts[cn]['name'][1:-1]
       found_consts.append(cn)
-      #i = i + 1
-  #if i > 0:
-  #  return found_consts
-  #else:
-  #  return []
+  
   return found_consts
   
 
@@ -340,6 +334,15 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     sig = text[i:loc]+','   
     sig = parse_signature(sig)
     
+    # detect global variables and remove __global from the function signature for these
+    sig2 = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
+      else:
+        sig2 = sig2 + sig.split(',')[n].strip()+', '
+    #print sig2
+    
     #find body of function
     j2 = text[loc+1:].find('{')
     k2 = para_parse(text, loc+j2, '{', '}')
@@ -349,7 +352,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     found_consts = find_consts(body,consts)
     #print found_consts
     
-    code(sig) # function signature
+    code(sig2) # function signature
     depth = depth +2
     for c in range(0, len(found_consts)):
       code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
