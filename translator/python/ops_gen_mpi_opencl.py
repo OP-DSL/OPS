@@ -277,6 +277,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     name2 = name[0:i-1]
         
     code('#include "user_types.h"')
+    code('#include "ops_opencl_reduction.h"')
     #generate MACROS
     comm('')
     code('#ifndef MIN')
@@ -288,6 +289,28 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#ifndef SIGN')
     code('#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))')
     code('#endif')
+    
+    code('#define OPS_READ 0')
+    code('#define OPS_WRITE 1')
+    code('#define OPS_RW 2')
+    code('#define OPS_INC 3')
+    code('#define OPS_MIN 4')
+    code('#define OPS_MAX 5')
+    
+    code('#define ZERO_double 0.0;')
+    code('#define INFINITY_double INFINITY;')
+    code('#define ZERO_float 0.0f;')
+    code('#define INFINITY_float INFINITY;')
+    code('#define ZERO_int 0;')
+    code('#define INFINITY_int INFINITY;')
+    code('#define ZERO_uint 0;')
+    code('#define INFINITY_uint INFINITY;')
+    code('#define ZERO_ll 0;')
+    code('#define INFINITY_ll INFINITY;')
+    code('#define ZERO_ull 0;')
+    code('#define INFINITY_ull INFINITY;')
+    code('#define ZERO_bool 0;')        
+    
     code('')
     code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
     code('')
@@ -359,7 +382,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('__kernel void ops_'+name+'(')
     #currently the read only vars have not been generated differently
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
+      if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
         code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
         code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
@@ -368,18 +391,21 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
         else:
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+          code('__local '+(str(typs[n]).replace('"','')).strip()+'* scratch'+str(n)+',')
+          code('int r_bytes'+str(n)+',')
     
     for c in range(0, len(found_consts)):
-      #print "CONSTANT "+consts[found_consts[c]]['type'][1:-1]
       if consts[found_consts[c]]['type'][1:-1]=='int' or consts[found_consts[c]]['type'][1:-1]=='double' or consts[found_consts[c]]['type'][1:-1]=='float':
         code(consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
       else:
         code('__constant struct '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
       
     for n in range (0, nargs):
-      code('int xdim'+str(n)+'_'+name+',')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('int xdim'+str(n)+'_'+name+',')
     for n in range (0, nargs):
-      code('const int base'+str(n)+',')
+       if arg_typ[n] == 'ops_arg_dat':
+         code('const int base'+str(n)+',')
 
     code('int size0,')
     code('int size1 ){')
@@ -389,6 +415,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('arg'+str(n)+' += r_bytes'+str(n)+';')
         code((str(typs[n]).replace('"','')).strip()+' arg'+str(n)+'_l['+str(dims[n])+'];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
@@ -427,11 +454,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     text = (len(name2)+depth+3)*' '
     for n in range (0, nargs):
-     text = text + 'xdim'+str(n)+'_'+name
-     if n <> nargs-1:
-       text = text+',\n  '+indent
-     else:
-       text = text +');'
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text + 'xdim'+str(n)+'_'+name
+      if n <> nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
+        text = text+',\n  '+indent
+      elif n == nargs-1:
+        text = text +');'
+
     
     code(text)  
       
@@ -440,17 +469,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #reduction accross blocks
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
-        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        #code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_INC);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
-        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        #code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_MIN);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('arg'+str(n)+'[get_group_id(0)*1*64] += arg'+str(n)+'_l[0];')
-        #code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        #code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_MAX);')
 
 
     code('')
@@ -583,7 +606,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
-      code('int reduct_size = 0;')
       code('')
 
     if GBL_READ == True:
@@ -595,8 +617,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         if accs[n] == OPS_READ:
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
         else:
-          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-          code('reduct_size = MAX(reduct_size,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
     code('')
 
     if GBL_READ == True:
@@ -608,8 +629,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('int r_bytes'+str(n)+' = reduct_bytes/sizeof('+(str(typs[n]).replace('"','')).strip()+');') 
         code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
-        code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
+        code('arg'+str(n)+'.data_d = OPS_reduct_d;// + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
         if accs[n] == OPS_INC:
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
@@ -643,8 +665,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
         code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
-    code('')
-    code('cl_mem p_a['+str(nargs)+'];')
 
     comm('')
     for n in range (0, nargs):
@@ -660,34 +680,16 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
         code('')
 
-
-    #for n in range (0, nargs):
-    #  if arg_typ[n] == 'ops_arg_dat':
-    #    code('p_a['+str(n)+'] = &args['+str(n)+'].data_d[')
-    #    code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
-    #    code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
-    #    code('')
-
-
     code('')
-    #code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
     code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
     code('')
 
 
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-       code('int nshared = 0;')
        code('int nthread = OPS_block_size_x*OPS_block_size_y;')
        code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('nshared = MAX(nshared,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
-    code('')
-    
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
-      code('')
+       
     
     #upload gloabal constants to device
     for c in range(0, len(found_consts)):
@@ -702,14 +704,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
       nkernel_args = nkernel_args+1
+      if arg_typ[n] == 'ops_arg_gbl':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
+        nkernel_args = nkernel_args+1
+        if accs[n] != OPS_READ:
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
       
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'][1:-1] is 'int' or consts[found_consts[c]]['type'][1:-1] is 'double' or consts[found_consts[c]]['type'][1:-1] is 'float':
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
              consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
       else:
-        #code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof('+\
-        #     consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
         
       nkernel_args = nkernel_args+1
@@ -874,7 +879,15 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   
         // Build the program
         char buildOpts[255];
-        sprintf(buildOpts,"-cl-mad-enable -DOPS_WARPSIZE=%d", 32);
+        char* pPath = NULL;
+        pPath = getenv ("OPS_INSTALL_PATH");
+        if (pPath!=NULL)
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
+        else {
+          sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
+          exit(EXIT_FAILURE);
+        }
+        
         ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
   
         if(ret != CL_SUCCESS) {
