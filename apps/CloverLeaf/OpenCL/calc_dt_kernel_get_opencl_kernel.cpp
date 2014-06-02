@@ -47,7 +47,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
 
-
   double *arg2h = (double *)arg2.data;
   double *arg3h = (double *)arg3.data;
   int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
