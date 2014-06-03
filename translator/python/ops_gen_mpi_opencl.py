@@ -270,6 +270,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     i = name.find('kernel')
     name2 = name[0:i-1]
         
+    code('')
+    code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
+    code('')
+    
     code('#include "user_types.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
@@ -305,9 +309,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#define INFINITY_ull INFINITY;')
     code('#define ZERO_bool 0;')        
     
-    code('')
-    code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
-    code('')
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
@@ -399,7 +401,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'][1:-1]=='int' or consts[found_consts[c]]['type'][1:-1]=='double' or consts[found_consts[c]]['type'][1:-1]=='float':
-        code(consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
+        code('__global '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
       else:
         code('__constant struct '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
       
