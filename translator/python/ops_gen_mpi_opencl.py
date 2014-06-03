@@ -195,12 +195,15 @@ def find_consts(text, consts):
   
   return found_consts
   
-
+import re
 def parse_signature(text2):
+  
   text2 = text2.replace('const','')
   text2 = text2.replace('int','__global int')
+  #text2 = re.sub('[\s]int','__global int',text2)
   text2 = text2.replace('float','__global float')
   text2 = text2.replace('double','__global double')
+  #text2 = re.sub('double','__global double',text2)
   return text2
   
 
@@ -329,12 +332,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-
+    
+       
     i = text[0:i].rfind('\n') #reverse find
     #find function signature
     loc = arg_parse(text, i + 1)
-    sig = text[i:loc]+','   
-    sig = parse_signature(sig)
+    sig = text[i:loc]+','
+    sig_name= sig[0:sig.find('(')]
+    #print sig_name
+    sig_arg = sig[sig.find('(')+1:]
+    #print sig_arg
+    sig = sig_name+'('+parse_signature(sig_arg)
     
     # detect global variables and remove __global from the function signature for these
     sig2 = ''
@@ -343,6 +351,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
       else:
         sig2 = sig2 + sig.split(',')[n].strip()+', '
+      if n%4 == 2:
+        sig2 = sig2 + '\n'
     #print sig2
     
     #find body of function
