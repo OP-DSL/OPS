@@ -77,9 +77,9 @@ void field_summary()
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out,"\n Time %lf\n",clover_time);
-  ops_fprintf(g_out,"              %-10s  %-10s  %-10s  %-10s  %-15s  %-15s  %-s\n",
+  ops_fprintf(g_out,"              %10s  %10s  %10s  %10s  %15s  %15s  %s\n",
   " Volume"," Mass"," Density"," Pressure"," Internal Energy","Kinetic Energy","Total Energy");
-  ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-.3E",
+  ops_fprintf(g_out," step:   %3d   %10.3E  %10.3E  %10.3E  %10.3E  %15.3E  %15.3E  %.3E",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
   if(complete == TRUE) {

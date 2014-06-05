@@ -105,6 +105,8 @@ void start()
 
   field_summary();
 
+  ops_fprintf(g_out,"\n\n Starting the calculation\n");
+
   //ops_exit();//exit for now
   //exit(0);
 }

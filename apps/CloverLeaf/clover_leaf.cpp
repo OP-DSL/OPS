@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,5);
-  ops_printf(" Clover version %f\n", g_version);
+  ops_printf(" Clover Version %1.3f\n", g_version);
 
 
   /**---------------------initialize and generate chunk----------------------**/

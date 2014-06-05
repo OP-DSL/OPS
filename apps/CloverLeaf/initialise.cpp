@@ -50,7 +50,7 @@ void initialise()
   }
 
   ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out,"Clover version %f\n", g_version);
+  ops_fprintf(g_out,"Clover Version %1.3f\n", g_version);
   ops_printf("Output file %s opened. All output will go there\n", out_file);
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Clover will run from the following input:-\n");
@@ -89,6 +89,5 @@ void initialise()
 
   read_input();
 
-  ops_fprintf(g_out," Starting the calculation\n");
   fclose(g_in);
 }

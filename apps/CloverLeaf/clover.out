@@ -1,5 +1,5 @@
 
-Clover version 1.000000
+Clover Version 1.000
 
  Clover will run from the following input:-
 
@@ -28,22 +28,23 @@ Clover version 1.000000
 
  Reading input file
 
- Reading specification for state 1
+ Reading specification for state            1
 
-        state density: 2.000000e-01
-         state energy: 1.000000e+00
+        state density   2.0000E-01
+         state energy   1.0000E+00
 
 
- Reading specification for state 2
+ Reading specification for state            2
 
-        state density: 1.000000e+00
-         state energy: 2.500000e+00
-       state geometry: rectangular
-           state xmin: 0.000000e+00
-           state xmax: 5.000000e+00
-           state ymin: 0.000000e+00
-           state ymax: 2.000000e+00
+        state density   1.0000E+00
+         state energy   2.5000E+00
+       state geometry rectangular
+           state xmin   0.0000E+00
+           state xmax   5.0000E+00
+           state ymin   0.0000E+00
+           state ymax   2.0000E+00
 
+<<<<<<< HEAD
               x_cells: 960
               y_cells: 960
                  xmin: 0.000000e+00
@@ -56,9 +57,8 @@ Clover version 1.000000
              end_time: 1.550000e+01
              end_step: 1.550000e+01
 
- Input read finished
+ Input read finished.
 
- Starting the calculation
  Setting up initial geometry
 
 
@@ -4217,3 +4217,5 @@ Clover version 1.000000
  Clover is finishing
 
 Total Wall time 52.993123
+                      Volume            Mass         Density        Pressure Internal Energy  Kinetic Energy    Total Energy
+ step:      0      1.000E+02       2.800E+01       2.800E-01       1.720E-01       4.300E+01       0.000E+00       4.300E+01
