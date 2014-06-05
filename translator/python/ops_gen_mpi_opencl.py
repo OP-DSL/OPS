@@ -33,7 +33,7 @@ OPS OpenCL code generator
 
 This routine is called by ops.py which parses the input files
 
-It produces a file xxx_opencl_kernel.cpp for each kernel,
+It produces a file xxx_opencl_kernel.cpp and a XX_kernel.cl for each kernel,
 plus a master kernel file
 
 """
@@ -136,7 +136,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
 ##########################################################################
-#  create new kernel file
+#  create new kernel files **_kernel.cl
 ##########################################################################
 
   for nk in range (0,len(kernels)):
@@ -168,7 +168,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
 ##########################################################################
-#  start with seq kernel function
+#  start with opencl kernel function
 ##########################################################################
 
     g_m = 0;
@@ -181,10 +181,18 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #print name2
 
     comm('user function')
-    code('#include "'+name2+'_kernel.h"')
-    comm('')
+    code('')
+    #need to parse the user kernel --- to be code generated 
+    #code('#include "'+name2+'_kernel.h"')
+    #comm('')
+    
+##########################################################################
+#  generate opencl host stub function
+##########################################################################
+    code('')
     comm(' host stub function')
-    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+
+    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -199,10 +207,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     depth = 2
 
     code('');
-    code('char *p_a['+str(nargs)+'];')
-    code('int  offs['+str(nargs)+'][2];')
-
-    #code('ops_printf("In loop \%s\\n","'+name+'");')
 
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
@@ -210,226 +214,248 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       if nargs <> 1 and n != nargs-1:
         text = text +','
       else:
-        text = text +'};\n\n'
+        text = text +'};\n'
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
 
-    code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('sub_block_list sb = OPS_sub_block_list[Block->index];')
 
     comm('compute localy allocated range for the sub-block')
-    code('int* start = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
-    code('int* end = (int *)xmalloc(sizeof(int)*'+str(NDIM)+');')
+
+    code('int start_add['+str(NDIM)+'];')
+    code('int end_add['+str(NDIM)+'];')
+
 
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
-    IF('start[n] >= range[2*n]')
-    code('start[n] = 0;')
+    code('start_add[n] = sb->istart[n];end_add[n] = sb->iend[n]+1;')
+    IF('start_add[n] >= range[2*n]')
+    code('start_add[n] = 0;')
     ENDIF()
     ELSE()
-    code('start[n] = range[2*n] - start[n];')
+    code('start_add[n] = range[2*n] - start_add[n];')
     ENDIF()
 
-    IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->istart[n];')
+    IF('end_add[n] >= range[2*n+1]')
+    code('end_add[n] = range[2*n+1] - sb->istart[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->sizes[n];')
+    code('end_add[n] = sb->sizes[n];')
     ENDIF()
     ENDFOR()
     code('')
 
-    code('#ifdef OPS_DEBUG')
-    code('ops_register_args(args, "'+name+'");')
-    code('#endif')
+    code('')
+    code('int x_size = end_add[0]-start_add[0];')
+    code('int y_size = end_add[1]-start_add[1];')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('offs['+str(n)+'][0] = args['+str(n)+'].stencil->stride[0]*1;  //unit step in x dimension')
-        #FOR('n','1',str(NDIM))
-        #code('offs['+str(n)+'][n] = off2('+str(NDIM)+', n, &start[0],')
-        #code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-        #ENDFOR()
-        for d in range (1, NDIM):
-          code('offs['+str(n)+']['+str(d)+'] = off2D('+str(d)+', &start[0],')
-          code('&end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride);')
-          code('')
-
-    code('')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
     code('')
 
+    #timing structs
+    code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('ops_timers_core(&c2,&t2);')
+    code('ops_timers_core(&c1,&t1);')
+    code('')
+
+    #set up OpenCL grid and thread blocks
+    comm('set up OpenCL thread blocks')
+    code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
+    code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+    code('')
+    
+    #setup reduction variables
+    code('')
+    for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+    
+    GBL_READ = False
+    GBL_INC = False
+    GBL_MAX = False
+    GBL_MIN = False
+    GBL_WRITE = False
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          GBL_READ = True
+        if accs[n] == OPS_INC:
+          GBL_INC = True
+        if accs[n] == OPS_MAX:
+          GBL_MAX = True
+        if accs[n] == OPS_MIN:
+          GBL_MIN = True
+        if accs[n] == OPS_WRITE:
+          GBL_WRITE = True
+
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+      code('int maxblocks = nblocks;')
+      code('int reduct_bytes = 0;')
+      code('int reduct_size = 0;')
+      code('')
+
+    if GBL_READ == True:
+      code('int consts_bytes = 0;')
+      code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        else:
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+          code('reduct_size = MAX(reduct_size,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+    code('')
+
+    if GBL_READ == True:
+      code('reallocConstArrays(consts_bytes);')
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('reallocReductArrays(reduct_bytes);')
+      code('reduct_bytes = 0;')
+      code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
+        code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
+        code('for (int b=0; b<maxblocks; b++)')
+        if accs[n] == OPS_INC:
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+        if accs[n] == OPS_MAX:
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+        if accs[n] == OPS_MIN:
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        code('')
+
     code('')
 
     for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('consts_bytes = 0;')
+          code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+          code('mvConstArraysToDevice(consts_bytes);')
+
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('mvReductArraysToDevice(reduct_bytes);')
+
+
+    #set up initial pointers    
+    for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
+        #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
+        #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
         code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
 
     code('')
+    code('cl_mem p_a['+str(nargs)+'];')
+
+    comm('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-
-        #compute max halo depths using stencil
-        #code('int max'+str(n)+'['+str(NDIM)+']; int min'+str(n)+'['+str(NDIM)+'];')
-        #FOR('n','0',str(NDIM))
-        #code('max'+str(n)+'[n] = 0;min'+str(n)+'[n] = 0;')
-        #ENDFOR()
-        #FOR('p','0','args['+str(n)+'].stencil->points')
-        #FOR('n','0',str(NDIM))
-        #code('max'+str(n)+'[n] = MAX(max'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]);')# * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
-        #code('min'+str(n)+'[n] = MIN(min'+str(n)+'[n],args['+str(n)+'].stencil->stencil['+str(NDIM)+'*p + n]);')# * ((range[2*n+1]-range[2*n]) == 1 ? 0 : 1);');
-        #ENDFOR()
-        #ENDFOR()
-
-        comm('set up initial pointers and exchange halos if nessasary')
+        comm('set up initial pointers')
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
-
-        #original address calculation via funcion call
-        #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start['+str(n)+'*'+str(NDIM)+'],')
-        #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
-
-      else:
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        code('base0 = base'+str(n)+'/dat'+str(n)+';')
         code('')
 
-      #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
-        #code('ops_exchange_halo3(&args['+str(n)+'],max'+str(n)+',min'+str(n)+',range);')
-        #code('ops_exchange_halo(&args['+str(n)+'],2);')
+
+    #for n in range (0, nargs):
+    #  if arg_typ[n] == 'ops_arg_dat':
+    #    code('p_a['+str(n)+'] = &args['+str(n)+'].data_d[')
+    #    code('+ args['+str(n)+'].dat->size * args['+str(n)+'].dat->block_size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
+    #    code('+ args['+str(n)+'].dat->size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
+    #    code('')
+
+
+    code('')
+    #code('ops_halo_exchanges_cuda(args, '+str(nargs)+');')
+    code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
+    code('')
+
+
+    #set up shared memory for reduction
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+       code('int nshared = 0;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
+       code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('nshared = MAX(nshared,sizeof('+(str(typs[n]).replace('"','')).strip()+')*'+str(dims[n])+');')
+    code('')
+    
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
       code('')
-    code('')
     
-    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    #set up argements in order to do the kernel call
+    nkernel_args = 0
+    for n in range (0, nargs):
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+      nkernel_args = nkernel_args+1
+      
+    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_double), (void*) &dt ));')
+    nkernel_args = nkernel_args+1
+    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
+    nkernel_args = nkernel_args+1
+    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+    nkernel_args = nkernel_args+1
+    for n in range (0, nargs):
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
+      nkernel_args = nkernel_args+1
+    for n in range (0, nargs):
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
+      nkernel_args = nkernel_args+1
+    
+    #kernel call
     code('')
+    comm('call/enque opencl kernel wrapper function')
+    code('clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
+    code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    code('')
+
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('mvReductArraysToHost(reduct_bytes);')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        FOR('b','0','maxblocks')
+        FOR('d','0',str(dims[n]))
+        if accs[n] == OPS_INC:
+          code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + ((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+        elif accs[n] == OPS_MAX:
+          code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        elif accs[n] == OPS_MIN:
+          code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        ENDFOR()
+        ENDFOR()
+        code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
+        code('')
+
+    code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
     code('ops_H_D_exchanges(args, '+str(nargs)+');')
-    code('')
-    code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
-    code('')
-
-    #code('ops_halo_exchanges(args, '+str(nargs)+');\n')
-
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
-    code('')
-
-    code('int n_x;')
-
-    FOR('n_y','start[1]','end[1]')
-    #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
-    #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
-    #code('for( n_x=0; n_x<ROUND_DOWN((end[0]-start[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
-    code('for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
-    depth = depth+2
-
-    comm('call kernel function, passing in pointers to data -vectorised')
-    if reduction == 0:
-      code('#pragma simd')
-    FOR('i','0','SIMD_VEC')
-    text = name+'( '
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']+ i*'+str(stride[2*n])
-      else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
-      if nargs <> 1 and n != nargs-1:
-        text = text + ','
-      else:
-        text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
-        text = text +'\n          '
-    code(text);
-    ENDFOR()
-    code('')
-
-
-    comm('shift pointers to data x direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1)*SIMD_VEC;')
-
-    ENDFOR()
-    code('')
-
-
-    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
-    #code('for(;n_x<(end[0]-start[0]);n_x++) {')
-    depth = depth+2
-    comm('call kernel function, passing in pointers to data - remainder')
-    text = name+'( '
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
-      else:
-        text = text +' ('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']'
-      if nargs <> 1 and n != nargs-1:
-        text = text + ','
-      else:
-        text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
-        text = text +'\n          '
-    code(text);
-
-    code('')
-
-
-    comm('shift pointers to data x direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
-
-    ENDFOR()
-    code('')
-
-
-    comm('shift pointers to data y direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-          #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[2*n])+');')
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
-    ENDFOR()
-
-    
-    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
-    
-    code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
-
-    if reduction == 1 :
-
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-          code('ops_mpi_reduce(&arg'+str(n)+',('+(str(typs[n]).replace('"','')).strip()+' *)p_a['+str(n)+']);')
-
-      code('ops_timers_core(&c1,&t1);')
-      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
-        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
-
-    code('free(start);free(end);')
 
     code('')
     comm('Update kernel record')
+    code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
@@ -459,6 +485,19 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
+  
+  comm('global constants')
+  for nc in range (0,len(consts)):
+    if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
+      code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+    else:
+      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
+        num = consts[nc]['dim']
+        code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+      else:
+        code('extern '+consts[nc]['type'][1:-1]+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+
+  code('')
   
   kernel_name_list = []
   kernel_list_text = ''
@@ -563,7 +602,7 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
 }
 
   """
-  depth = 0
+  depth = -2
   code(opencl_build)
   
   
