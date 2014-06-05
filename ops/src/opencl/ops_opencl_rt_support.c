@@ -75,6 +75,7 @@ int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
 
 ops_opencl_core OPS_opencl_core;
+int OPS_cl_device = 0; //select CPU by default
 
 //
 // Get return (error) messages from OpenCL run-time
@@ -174,20 +175,20 @@ void openclDeviceInit( int argc, char ** argv )
 
   clSafeCall( clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms) );
 
-  if(OPS_diags >5)
+  if(OPS_diags >0)
     ops_printf("num_platforms = %i \n",(int) OPS_opencl_core.n_platforms);
 
   OPS_opencl_core.platform_id = (cl_platform_id*) malloc( OPS_opencl_core.n_platforms*sizeof(cl_uint) );
   clSafeCall( clGetPlatformIDs( OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL) );
 
-  int device_type = 0;
+  int device_type = OPS_cl_device;
   switch(device_type) {
     case 0://CPU:
       ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_CPU, 1,
         &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
       break;
     case 1://GPU:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_GPU, 1,
+      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[1], CL_DEVICE_TYPE_GPU, 1,
         &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
       break;
   }
@@ -199,7 +200,7 @@ void openclDeviceInit( int argc, char ** argv )
     ops_printf("No OpenCL platform or device is available! Exiting.\n");
     exit(-1);
   }
-  ops_printf("\nNo. of device on platform = %d\n", OPS_opencl_core.n_devices);
+  ops_printf("\nNo. of devices on platform = %d\n", OPS_opencl_core.n_devices);
 
   ops_printf("\nChosen device: \n");
   clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL) );

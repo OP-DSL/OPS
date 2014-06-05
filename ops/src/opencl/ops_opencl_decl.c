@@ -79,7 +79,15 @@ void ops_init ( int argc, char ** argv, int diags )
     printf ( " OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
     exit ( -1 );
   }
-
+  for ( int n = 1; n < argc; n++ )
+  {
+    if ( strncmp ( argv[n], "OPS_CL_DEVICE=", 14 ) == 0 )
+    {
+      OPS_cl_device = atoi ( argv[n] + 14 );
+      printf ( "\n OPS_cl_device = %d \n", OPS_cl_device );
+    }
+  }
+    
   openclDeviceInit ( argc, argv );
 }
 

@@ -13,12 +13,8 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
-  buildOpenCLKernels();
-
   int  offs[7][2];
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
-
-  
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   //compute localy allocated range for the sub-block

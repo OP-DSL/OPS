@@ -37,7 +37,7 @@ else
 endif
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
-  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS	= $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),pgi)

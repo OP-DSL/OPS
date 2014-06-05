@@ -18,6 +18,8 @@
 #define FIELD_MASS_FLUX_Y 14
 #define NUM_FIELDS        15
 
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
+
 typedef struct
 {
       int defined;  //logical

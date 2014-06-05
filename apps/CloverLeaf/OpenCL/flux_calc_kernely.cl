@@ -70,7 +70,7 @@ int xdim3_flux_calc_kernely)
  __global double* arg1,
  __global double* arg2,
  __global double* arg3,
- double *dt,
+ __global double *dt,
  int xdim0_flux_calc_kernely,
  int xdim1_flux_calc_kernely,
  int xdim2_flux_calc_kernely,

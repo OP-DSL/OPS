@@ -128,7 +128,7 @@ int xdim11_PdV_kernel_predict)
  __global double* arg9,
  __global double* arg10,
  __global double* arg11,
- double *dt,
+ __global double *dt,
  int xdim0_PdV_kernel_predict,
  int xdim1_PdV_kernel_predict,
  int xdim2_PdV_kernel_predict,

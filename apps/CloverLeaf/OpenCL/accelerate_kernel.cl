@@ -128,7 +128,7 @@ int xdim10_accelerate_kernel)
  __global double* arg8,
  __global double* arg9,
  __global double* arg10,
- double *dt,
+ __global double *dt,
  int xdim0_accelerate_kernel,
  int xdim1_accelerate_kernel,
  int xdim2_accelerate_kernel,

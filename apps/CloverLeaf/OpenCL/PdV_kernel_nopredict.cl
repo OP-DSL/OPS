@@ -136,7 +136,7 @@ int xdim13_PdV_kernel_nopredict)
  __global double* arg11,
  __global double* arg12,
  __global double* arg13,
- double *dt,
+ __global double *dt,
  int xdim0_PdV_kernel_nopredict,
  int xdim1_PdV_kernel_nopredict,
  int xdim2_PdV_kernel_nopredict,

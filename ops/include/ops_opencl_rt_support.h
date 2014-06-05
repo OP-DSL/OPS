@@ -63,7 +63,7 @@ typedef struct{
   //cl_mem *data_d; // cl_mem struct corresponding to ops_core_dat char* data_d
 } ops_opencl_core;
 
-
+extern int OPS_cl_device;
 
 
 #include <ops_lib_cpp.h>
@@ -88,6 +88,8 @@ extern char * OPS_consts_h,
 
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
+
+
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__,__LINE__)
 

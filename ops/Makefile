@@ -38,8 +38,8 @@ else
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 	NVCC  := nvcc
 ifndef DEBUG
