@@ -125,8 +125,7 @@ int main(int argc, char **argv)
 
     timestep();
 
-
-      ops_decl_const2( "dt",1, "double",&dt);
+    ops_decl_const2( "dt",1,"double",&dt);
 
     PdV(TRUE);
 

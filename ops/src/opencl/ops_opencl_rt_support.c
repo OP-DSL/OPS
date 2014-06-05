@@ -31,7 +31,7 @@
 */
 
 /** @brief ops opencl specific runtime support functions
-  * @author Gihan Mudalige
+  * @author Gihan Mudalige and Istvan Reguly (adapting OP2 OpenCL backend by Endre Lazslo)
   * @details Implements opencl backend runtime support functions
   */
 
