@@ -16,7 +16,7 @@ extern double dt;
 #include "ideal_gas_kernel_seq_kernel.cpp"
 #include "PdV_kernel_predict_seq_kernel.cpp"
 #include "PdV_kernel_nopredict_seq_kernel.cpp"
-#include "accelerate_kernel_seq_kernel.cpp"
+//#include "accelerate_kernel_seq_kernel.cpp"
 #include "advec_cell_kernel1_xdir_seq_kernel.cpp"
 #include "advec_cell_kernel2_xdir_seq_kernel.cpp"
 #include "advec_cell_kernel3_xdir_seq_kernel.cpp"

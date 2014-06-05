@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   while(1) {
 
     step = step + 1;
-
+    
     timestep();
 
     ops_decl_const2( "dt",1,"double",&dt);

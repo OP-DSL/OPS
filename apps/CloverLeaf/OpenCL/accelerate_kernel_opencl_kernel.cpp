@@ -5,7 +5,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, 
  ops_arg arg9, ops_arg arg10) {
 
   buildOpenCLKernels();
-
+  
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
   sub_block_list sb = OPS_sub_block_list[Block->index];
