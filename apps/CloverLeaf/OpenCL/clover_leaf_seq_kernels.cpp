@@ -10,7 +10,7 @@
 extern double dt;
 
 //user kernel files
-#include "revert_kernel_seq_kernel.cpp"
+//#include "revert_kernel_seq_kernel.cpp"
 #include "reset_field_kernel1_seq_kernel.cpp"
 #include "reset_field_kernel2_seq_kernel.cpp"
 #include "ideal_gas_kernel_seq_kernel.cpp"

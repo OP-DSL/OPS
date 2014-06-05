@@ -207,11 +207,6 @@ def parse_signature(text2):
   text2 = text2.replace('int','__global int')
   text2 = text2.replace('float','__global float')
   text2 = text2.replace('double','__global double')
-  #text2 = text2.replace('*','')
-  #text2 = text2.replace(')','')
-  #text2 = text2.replace('(','')
-  #text2 = text2.replace('\n','')
-  #text2 = re.sub('\[[0-9]*\]','',text2)
   return text2
   
 
@@ -760,6 +755,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
+  code('#include "user_types.h"')
   
   comm('global constants')
   for nc in range (0,len(consts)):
