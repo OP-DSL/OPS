@@ -38,6 +38,10 @@ void update_halo(int* fields, int depth);
 void viscosity_func();
 void calc_dt(double*, char*,
              double*, double*, int*, int*);
+extern"C" {
+void fortfunc2_(double* time, int* step,char* dtl_control, int* len, double* dt, int* jdt,
+                int* kdt,double* x_pos, double* y_pos, char* buf);
+}
 
 void timestep()
 {
@@ -103,7 +107,6 @@ void timestep()
 
   update_halo(fields,1);
 
-  //dtl_control = (char *)xmalloc(8*sizeof(char ));
   calc_dt(&dtlp, dtl_control, &xl_pos, &yl_pos, &jldt, &kldt);
 
 
@@ -119,13 +122,21 @@ void timestep()
   dt = MIN(MIN(dt, (dtold * dtrise)), dtmax);
   //CALL clover_min(dt)
 
+
+  char buffer[350];
+  if(ops_is_root()){
+    int len = strlen(dtl_control);
+    fortfunc2_(&clover_time,&step,dtl_control,&len,&dt,&jdt,&kdt,&x_pos,&y_pos,buffer);
+  }
+
   if(dt < dtmin) small=1;
   ops_printf(
   "\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
     step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
-  ops_fprintf(g_out,
-  "\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
-    step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+  //ops_fprintf(g_out,
+  //"\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
+  //  step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+  ops_fprintf(g_out,"\n%s",buffer);
 
   if(small == 1) {
     ops_printf("timestep :small timestep\n");
