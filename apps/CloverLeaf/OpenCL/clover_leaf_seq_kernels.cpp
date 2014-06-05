@@ -46,7 +46,7 @@ extern double dt;
 #include "calc_dt_kernel_get_seq_kernel.cpp"*/
 #include "calc_dt_kernel_print_seq_kernel.cpp"
 
-#include "field_summary_kernel_seq_kernel.cpp"
+//#include "field_summary_kernel_seq_kernel.cpp"
 //#include "flux_calc_kernelx_seq_kernel.cpp"
 //#include "flux_calc_kernely_seq_kernel.cpp"
 //#include "viscosity_kernel_seq_kernel.cpp"
