@@ -42,12 +42,13 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   //Timing
   double t1,t2,c1,c2;
   ops_timing_realloc(34,"viscosity_kernel");
-  ops_timers_core(&c1,&t1);
+  
  
 
   //dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
   //dim3 block(OPS_block_size_x,OPS_block_size_y,1);
-
+  OPS_block_size_x = 1024;
+  OPS_block_size_y = 1; 
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
     
@@ -119,12 +120,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
 
   ops_H_D_exchanges_cuda(args, 7);
-
-  //if (OPS_diags>1) cutilSafeCall(cudaDeviceSynchronize());
-  //ops_set_dirtybit_cuda(args, 7);
-
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
+  ops_timers_core(&c1,&t1);
   
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[0], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[0], 1, sizeof(cl_mem), (void*) &arg1.data_d )); 
@@ -169,11 +165,14 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   //call/enque opencl kernel wrapper function
   clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[0], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-  ops_set_dirtybit_cuda(args, 7);
   
+    
+  //Update kernel record
+  ops_timers_core(&c2,&t2);
+  
+  ops_set_dirtybit_cuda(args, 7);
   ops_H_D_exchanges(args, 7);
   
-  ops_timers_core(&c2,&t2);
   OPS_kernels[34].count++;
   OPS_kernels[34].time += t2-t1;
   OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg0);
