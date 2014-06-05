@@ -367,7 +367,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code(sig2) # function signature
     depth = depth +2
     for c in range(0, len(found_consts)):
-      code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      code(consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
     text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -410,10 +410,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('int r_bytes'+str(n)+',')
     
     for c in range(0, len(found_consts)):
-      if consts[found_consts[c]]['type'][1:-1]=='int' or consts[found_consts[c]]['type'][1:-1]=='double' or consts[found_consts[c]]['type'][1:-1]=='float':
-        code('__global '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
+      if consts[found_consts[c]]['type']=='int' or consts[found_consts[c]]['type']=='double' or consts[found_consts[c]]['type']=='float':
+        code('__global '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
       else:
-        code('__constant struct '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
+        code('__constant struct '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
       
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -708,7 +708,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     #upload gloabal constants to device
     for c in range(0, len(found_consts)):
-      const_type = consts[found_consts[c]]['type'][1:-1]
+      const_type = consts[found_consts[c]]['type']
       const_dim = consts[found_consts[c]]['dim']
       code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
       code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
@@ -726,9 +726,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         nkernel_args = nkernel_args+1
       
     for c in range(0, len(found_consts)):
-      if consts[found_consts[c]]['type'][1:-1] is 'int' or consts[found_consts[c]]['type'][1:-1] is 'double' or consts[found_consts[c]]['type'][1:-1] is 'float':
+      if consts[found_consts[c]]['type'] is 'int' or consts[found_consts[c]]['type'] is 'double' or consts[found_consts[c]]['type'] is 'float':
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
-             consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+             consts[found_consts[c]]['type']+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
       else:
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
         
@@ -816,13 +816,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   comm('global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+      code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = consts[nc]['dim']
-        code('extern '+consts[nc]['type'][1:-1]+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+        code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:
-        code('extern '+consts[nc]['type'][1:-1]+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+        code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
   code('')
   
