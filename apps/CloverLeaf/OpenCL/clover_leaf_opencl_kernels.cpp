@@ -27,7 +27,7 @@ extern double dt;
 
   extern ops_opencl_core OPS_opencl_core;
 
-  #define MAX_SOURCE_SIZE (74*0x1000000)
+  #define MAX_SOURCE_SIZE (73*0x1000000)
   
   void buildOpenCLKernels() {
     static bool isbuilt = false;
@@ -35,11 +35,11 @@ extern double dt;
     if(!isbuilt) {
       clSafeCall( clUnloadCompiler() );
   
-      OPS_opencl_core.n_kernels = 74;
-      OPS_opencl_core.kernel = (cl_kernel*) malloc(74*sizeof(cl_kernel));  
+      OPS_opencl_core.n_kernels = 73;
+      OPS_opencl_core.kernel = (cl_kernel*) malloc(73*sizeof(cl_kernel));  
       
       cl_int ret;
-      char* source_filename[74] = {
+      char* source_filename[73] = {
           "./OpenCL/viscosity_kernel.cl",
           "./OpenCL/accelerate_kernel.cl",
           "./OpenCL/revert_kernel.cl",
@@ -112,16 +112,16 @@ extern double dt;
           "./OpenCL/update_halo_kernel4_plus_2_b.cl",
           "./OpenCL/calc_dt_kernel.cl",
           "./OpenCL/calc_dt_kernel_min.cl",
-          "./OpenCL/calc_dt_kernel_get.cl",
-          "./OpenCL/calc_dt_kernel_print.cl"
+          "./OpenCL/calc_dt_kernel_get.cl"
+          //"./OpenCL/calc_dt_kernel_print.cl"
       };
   
       // Load the kernel source code into the array source_str
       FILE *fid;
-      char *source_str[74];
-      size_t source_size[74];
+      char *source_str[73];
+      size_t source_size[73];
   
-      for(int i=0; i<74; i++) {
+      for(int i=0; i<73; i++) {
         fid = fopen(source_filename[i], "r");
         if (!fid) {
           fprintf(stderr, "Can't open the kernel source file!\n");
@@ -145,7 +145,7 @@ extern double dt;
       printf(" compiling sources \n");
   
         // Create a program from the source
-        OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 74, (const char **) &source_str, (const size_t *) &source_size, &ret);
+        OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 73, (const char **) &source_str, (const size_t *) &source_size, &ret);
         clSafeCall( ret );
   
         // Build the program
@@ -322,8 +322,8 @@ extern double dt;
       clSafeCall( ret );
       OPS_opencl_core.kernel[72] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_get", &ret);
       clSafeCall( ret );
-      OPS_opencl_core.kernel[73] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_print", &ret);
-      clSafeCall( ret );
+      //OPS_opencl_core.kernel[73] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_print", &ret);
+      //clSafeCall( ret );
             
       isbuilt = true;
     }
@@ -415,4 +415,4 @@ extern double dt;
 #include "calc_dt_kernel_opencl_kernel.cpp"
 #include "calc_dt_kernel_min_opencl_kernel.cpp"
 #include "calc_dt_kernel_get_opencl_kernel.cpp"
-#include "calc_dt_kernel_print_opencl_kernel.cpp"
+//#include "calc_dt_kernel_print_opencl_kernel.cpp"
