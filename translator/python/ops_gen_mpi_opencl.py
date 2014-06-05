@@ -276,6 +276,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     i = name.find('kernel')
     name2 = name[0:i-1]
         
+    code('#include "user_types.h"')
     #generate MACROS
     comm('')
     code('#ifndef MIN')
@@ -364,7 +365,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
     
     for c in range(0, len(found_consts)):
-      code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      #print "CONSTANT "+consts[found_consts[c]]['type'][1:-1]
+      if consts[found_consts[c]]['type'][1:-1]=='int' or consts[found_consts[c]]['type'][1:-1]=='double' or consts[found_consts[c]]['type'][1:-1]=='float':
+        code(consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
+      else:
+        code('__constant struct '+consts[found_consts[c]]['type'][1:-1]+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
       
     for n in range (0, nargs):
       code('int xdim'+str(n)+'_'+name+',')
@@ -412,7 +417,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       
     
     for c in range(0, len(found_consts)):
-      text = text + consts[found_consts[c]]['name'][1:-1]+','
+      text = text + '*'+consts[found_consts[c]]['name'][1:-1]+','
     code(text)
     
     text = (len(name2)+depth+3)*' '
@@ -675,6 +680,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
       code('')
+    
+    #upload gloabal constants to device
+    for c in range(0, len(found_consts)):
+      const_type = consts[found_consts[c]]['type'][1:-1]
+      const_dim = consts[found_consts[c]]['dim']
+      code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+      code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
+    code('')
     
     #set up argements in order to do the kernel call
     nkernel_args = 0
