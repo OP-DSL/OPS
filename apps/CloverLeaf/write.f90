@@ -26,7 +26,7 @@ subroutine fortfunc2(time,step,dtl_control,l,dt,jdt, kdt,  x_pos,y_pos,buf)
   CHARACTER(LEN=350):: buf
   CHARACTER(LEN=340) :: temp0
   dtl_control =TRIM(ADJUSTL(dtl_control))
-  WRITE(temp0,"(' Step ', i7,' time ', f11.7,' control ',a8,'    timestep  ',1pe9.2,i8,',',i8,' x ',1pe9.2,' y ',1pe9.2)") &
+  WRITE(temp0,"(' step ', i7,' time ', f11.7,' control ',a8,'    timestep  ',1pe9.2,i8,',',i8,' x ',1pe9.2,' y ',1pe9.2)") &
                       step,time,dtl_control(1:l),dt,jdt,kdt,x_pos,y_pos
   temp0 = ADJUSTL(temp0)
   WRITE(buf,*)temp0//CHAR(0)

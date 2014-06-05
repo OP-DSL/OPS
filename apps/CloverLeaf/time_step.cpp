@@ -133,10 +133,11 @@ void timestep()
   ops_printf(
   "\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
     step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
+  //ops_printf("%s",buffer);
   //ops_fprintf(g_out,
   //"\n Step %d time %11.7lf control %s timestep  %3.2E  %d, %d x  %E  y %E",
   //  step,   clover_time,    dtl_control,dt,          jdt, kdt,  x_pos,y_pos);
-  ops_fprintf(g_out,"\n%s",buffer);
+  ops_fprintf(g_out,"%s\n",buffer);
 
   if(small == 1) {
     ops_printf("timestep :small timestep\n");

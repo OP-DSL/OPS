@@ -68,7 +68,6 @@ void start()
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Generating chunks\n");
-  ops_fprintf(g_out,"\n");
 
   generate();
 
@@ -99,13 +98,13 @@ void start()
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Problem initialised and generated\n");
-  ops_fprintf(g_out,"\n");
+
 
   /**----------------------------field_summary-------------------------------**/
 
   field_summary();
 
-  ops_fprintf(g_out,"\n\n Starting the calculation\n");
+  ops_fprintf(g_out,"\n Starting the calculation\n");
 
   //ops_exit();//exit for now
   //exit(0);
