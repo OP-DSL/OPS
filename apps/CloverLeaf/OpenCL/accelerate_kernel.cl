@@ -114,8 +114,6 @@ __global double* arg8,
 __global double* arg9,
 __global double* arg10,
 double dt,
-int size0,
-int size1,
 int xdim0_accelerate_kernel,
 int xdim1_accelerate_kernel,
 int xdim2_accelerate_kernel,
@@ -137,7 +135,9 @@ const int base6,
 const int base7,
 const int base8,
 const int base9,
-const int base10){
+const int base10,
+int size0,
+int size1){
 
 
   int idx_y = get_global_id(1);

@@ -121,6 +121,69 @@ def mult(text, i, n):
 
   return text
 
+def para_parse(text, j, op_b, cl_b):
+    """Parsing code block, i.e. text to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+
+    while 1:
+      if text[loc2] == op_b:
+            depth = depth + 1
+
+      elif text[loc2] == cl_b:
+            depth = depth - 1
+            if depth == 0:
+                return loc2
+      loc2 = loc2 + 1
+
+def comment_remover(text):
+    """Remove comments from text"""
+
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return ''
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    return re.sub(pattern, replacer, text)
+
+
+def remove_triling_w_space(text):
+  line_start = 0
+  line = ""
+  line_end = 0
+  striped_test = ''
+  count = 0
+  while 1:
+    line_end =  text.find("\n",line_start+1)
+    line = text[line_start:line_end]
+    line = line.rstrip()
+    striped_test = striped_test + line +'\n'
+    line_start = line_end + 1
+    line = ""
+    if line_end < 0:
+      return striped_test
+
+def arg_parse(text, j):
+    """Parsing arguments in op_par_loop to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    while 1:
+        if text[loc2] == '(':
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                return loc2
+        loc2 = loc2 + 1
+        
 def ops_gen_mpi_opencl(master, date, consts, kernels):
 
   global dims, stens
@@ -178,17 +241,181 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     i = name.find('kernel')
     name2 = name[0:i-1]
-    #print name2
-
-    comm('user function')
+        
+    #generate MACROS
+    comm('')
+    code('#ifndef MIN')
+    code('#define MIN(a,b) ((a<b) ? (a) : (b))')
+    code('#endif')
+    code('#ifndef MAX')
+    code('#define MAX(a,b) ((a>b) ? (a) : (b))')
+    code('#endif')
+    code('#ifndef SIGN')
+    code('#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))')
+    code('#endif')
     code('')
-    #need to parse the user kernel --- to be code generated 
-    #code('#include "'+name2+'_kernel.h"')
-    #comm('')
+    code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+    code('')
+    
+    
+    code('')
+    comm('user function')
+    fid = open(name2+'_kernel.h', 'r')
+    text = fid.read()
+    fid.close()
+    text = comment_remover(text)
+
+    text = remove_triling_w_space(text)
+
+    i = text.find(name)
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
+
+    i = text[0:i].rfind('\n') #reverse find
+    #find function signature
+    loc = arg_parse(text, i + 1)
+    
+    #j = text[i:].find('(')
+    #k = para_parse(text, i+j, '(', ')')
+    code(text[i:loc]+',')
+    depth = depth +2
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and n < nargs-1:
+        code('int xdim'+str(n)+'_'+name+',')
+      if arg_typ[n] == 'ops_arg_dat' and n == nargs-1:
+        code('int xdim'+str(n)+'_'+name+')')
+    
+      
+    
+    #find body of function
+    j2 = text[loc+1:].find('{')
+    k2 = para_parse(text, loc+j2, '{', '}')
+    depth =depth-1
+    code(text[loc+1:k2+2])
+    code('')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#undef OPS_ACC'+str(n))
+    code('')
+    code('')
+    
+
+##########################################################################
+#  generate opencl kernel wrapper function
+##########################################################################
+    code('__kernel void ops_'+name+'(')
+    #currently the read only vars have not been generated differently
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
+        code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+      elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
+        code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+        else:
+          code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+    
+    for n in range (0, nargs):
+      code('int xdim'+str(n)+'_'+name+',')
+    for n in range (0, nargs):
+      code('const int base'+str(n)+',')
+
+    code('int size0,')
+    code('int size1 ){')
+    depth = depth + 2
+
+    #local variable to hold reductions on GPU
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code((str(typs[n]).replace('"','')).strip()+' arg'+str(n)+'_l['+str(dims[n])+'];')
+
+    # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY_'+(str(typs[n]).replace('"','')).strip()+';')
+
+
+    code('')
+    code('int idx_y = get_global_id(1);')
+    code('int idx_x = get_global_id(0);')
+    code('')
+
+
+    indent = (len(name2)+depth+8)*' '
+    n_per_line = 5
+    IF('idx_x < size0 && idx_y < size1')
+    text = name+'('
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+name2+']'
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        text = text +'arg'+str(n)
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        text = text +'arg'+str(n)+'_l'
+      
+      if n <> nargs-1:
+        text = text+',\n  '+indent
+      else:
+        text = text +','
+            
+    code(text)
+    text = (len(name2)+depth+3)*' '
+    for n in range (0, nargs):
+     text = text + 'xdim'+str(n)+'_'+name
+     if n <> nargs-1:
+       text = text+',\n  '+indent
+     else:
+       text = text +');'
+    code(text)  
+      
+    ENDIF()
+
+    #reduction accross blocks
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+blockIdx.x + blockIdx.y*gridDim.x],arg'+str(n)+'_l[d]);')
+
+
+    code('')
+    depth = depth - 2
+    code('}')
+    
+    
+    if not os.path.exists('./OpenCL'):
+      os.makedirs('./OpenCL')
+    fid = open('./OpenCL/'+name2+'_kernel.cl','w')
+    date = datetime.datetime.now()
+    fid.write('//\n// auto-generated by ops.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
+    fid.write(file_text)
+    fid.close()
+    
     
 ##########################################################################
 #  generate opencl host stub function
 ##########################################################################
+    g_m = 0;
+    file_text = ''
+    depth = 0
     code('')
     comm(' host stub function')
 
@@ -411,17 +638,18 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       nkernel_args = nkernel_args+1
       
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_double), (void*) &dt ));')
-    nkernel_args = nkernel_args+1
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
-    nkernel_args = nkernel_args+1
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
-    nkernel_args = nkernel_args+1
+    nkernel_args = nkernel_args+1    
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
       nkernel_args = nkernel_args+1
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
       nkernel_args = nkernel_args+1
+    
+    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
+    nkernel_args = nkernel_args+1
+    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+    nkernel_args = nkernel_args+1
     
     #kernel call
     code('')

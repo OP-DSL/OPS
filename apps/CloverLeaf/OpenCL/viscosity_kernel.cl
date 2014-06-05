@@ -102,8 +102,6 @@ __global double*  arg3,
 __global double*  arg4,
 __global double*  arg5,
 __global double* arg6,
-int size0,
-int size1,
 int xdim0_viscosity_kernel,
 int xdim1_viscosity_kernel,
 int xdim2_viscosity_kernel,
@@ -117,7 +115,9 @@ const int base2,
 const int base3,
 const int base4,
 const int base5,
-const int base6){
+const int base6,
+int size0,
+int size1){
   
 
   int idx_y = get_global_id(1);
