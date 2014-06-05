@@ -74,7 +74,6 @@ void field_summary()
   char buffer[350];
   if(ops_is_root()){
     fortfunc_(&clover_time,&step,&vol,&mass,&press,&ie,&ke,buffer);
-    //printf("\n%s",buffer);
   }
 
 

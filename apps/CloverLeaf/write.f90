@@ -10,7 +10,6 @@ subroutine fortfunc(time,step,vol,mass,press,ie,ke,buf)
   temp0 = ADJUSTL(temp0)
   WRITE(temp1,'(a20,7a16,1a,a6,i7,7e16.4,a1)')C_NEW_LINE//'             ','Volume','Mass','Density','Pressure','Internal Energy','Kinetic Energy','Total Energy',''//C_NEW_LINE,'step:',step,vol,mass,mass/vol,press/vol,ie,ke,ie+ke,''//C_NEW_LINE
   WRITE(buf,*)temp0//temp1//CHAR(0)
-  !buf = TRIM(buf)
   return
   end
 

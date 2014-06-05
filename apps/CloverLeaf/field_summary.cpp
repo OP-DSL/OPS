@@ -40,7 +40,7 @@
 #include "field_summary_kernel.h"
 
 extern"C" {
-void fortfunc_(int *ii, float *ff);
+void fortfunc_(double* time,int *step,double *vol,double *mass,double *press,double *ie,double *ke, char* buf);
 }
 
 void ideal_gas(int predict);
@@ -77,17 +77,18 @@ void field_summary()
       ops_arg_gbl(&ke, 1, "double", OPS_INC),
       ops_arg_gbl(&press, 1, "double", OPS_INC));
 
-  //printf("mass = %lf\n",mass);
+  char buffer[350];
+  if(ops_is_root()){
+    fortfunc_(&clover_time,&step,&vol,&mass,&press,&ie,&ke,buffer);
+  }
 
-  ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out,"\n Time   %1.14E\n",clover_time);
-  ops_fprintf(g_out,"                 %11s     %11s     %11s     %11s %15s %15s %15s\n",
-  " Volume"," Mass"," Density"," Pressure","Internal Energy","Kinetic Energy","Total Energy");
-  ops_fprintf(g_out," step:   %4d     %10.3E      %10.3E      %10.3E      %10.3E %15.3E %15.3E %15.3E",
-          step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
-
-  if(ops_is_root())
-    fortfunc_(&step,&mass);
+  //ops_fprintf(g_out,"\n");
+  //ops_fprintf(g_out,"\n Time   %1.14E\n",clover_time);
+  //ops_fprintf(g_out,"                 %11s     %11s     %11s     %11s %15s %15s %15s\n",
+  //" Volume"," Mass"," Density"," Pressure","Internal Energy","Kinetic Energy","Total Energy");
+  //ops_fprintf(g_out," step:   %4d     %10.3E      %10.3E      %10.3E      %10.3E %15.3E %15.3E %15.3E",
+  //        step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
+  ops_fprintf(g_out,"\n%s\n",buffer);
 
   if(complete == TRUE) {
     if(test_problem == 1) {
