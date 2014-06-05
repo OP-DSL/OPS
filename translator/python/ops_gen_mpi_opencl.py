@@ -641,7 +641,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
           code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
-        code('base0 = base'+str(n)+'/dat'+str(n)+';')
+        code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
         code('')
 
 
