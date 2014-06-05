@@ -111,23 +111,27 @@ int xdim2_viscosity_kernel,
 int xdim3_viscosity_kernel,
 int xdim4_viscosity_kernel,
 int xdim5_viscosity_kernel,
-int xdim6_viscosity_kernel){
+int xdim6_viscosity_kernel,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6){
   
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
-  
-  arg0[idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel];
-  arg1[idx_x * 1 + idx_y * 1 * xdim1_viscosity_kernel];
-  arg2[idx_x * 1 + idx_y * 0 * xdim2_viscosity_kernel];
-  arg3[idx_x * 0 + idx_y * 1 * xdim3_viscosity_kernel];
-  arg4[idx_x * 1 + idx_y * 1 * xdim4_viscosity_kernel];
-  arg5[idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel];
-  arg6[idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel];
 
   if (idx_x < size0 && idx_y < size1) {
-    viscosity_kernel(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6,
+    viscosity_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel], 
+                     &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_viscosity_kernel], 
+                     &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_viscosity_kernel], 
+                     &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_viscosity_kernel],
+                     &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_viscosity_kernel],
+                     &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel],
+                     &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel],
                    xdim0_viscosity_kernel,
                    xdim1_viscosity_kernel,
                    xdim2_viscosity_kernel,
