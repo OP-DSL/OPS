@@ -41,8 +41,8 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   
   //Timing
   double t1,t2,c1,c2;
-  //ops_timing_realloc(34,"viscosity_kernel");
-  //ops_timers_core(&c1,&t1);
+  ops_timing_realloc(34,"viscosity_kernel");
+  ops_timers_core(&c1,&t1);
  
 
   //dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
@@ -124,7 +124,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   //ops_set_dirtybit_cuda(args, 7);
 
   //Update kernel record
-  //ops_timers_core(&c2,&t2);
+  ops_timers_core(&c2,&t2);
   
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[0], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[0], 1, sizeof(cl_mem), (void*) &arg1.data_d )); 
@@ -172,6 +172,17 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   ops_set_dirtybit_cuda(args, 7);
   
   ops_H_D_exchanges(args, 7);
+  
+  ops_timers_core(&c2,&t2);
+  OPS_kernels[34].count++;
+  OPS_kernels[34].time += t2-t1;
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg6); 
 
   
 }

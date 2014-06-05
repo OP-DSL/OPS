@@ -315,6 +315,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
+    code('ops_H_D_exchanges(args, '+str(nargs)+');')
+    code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     code('')
@@ -403,6 +405,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
     ENDFOR()
 
+    
+    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
+    
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
 

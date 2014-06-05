@@ -127,8 +127,8 @@ const int base6){
   if (idx_x < size0 && idx_y < size1) {
     viscosity_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel], 
                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_viscosity_kernel], 
-                     &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_viscosity_kernel], 
-                     &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_viscosity_kernel],
+                     &arg2[base2 + idx_x * 1 + idx_y * 0 * xdim2_viscosity_kernel], 
+                     &arg3[base3 + idx_x * 0 + idx_y * 1 * xdim3_viscosity_kernel],
                      &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_viscosity_kernel],
                      &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel],
                      &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel],

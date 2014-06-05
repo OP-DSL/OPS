@@ -1,4 +1,5 @@
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/mudalige/CloverLeaf/OPS/
+#export MPI_INSTALL_PATH=/opt/openmpi-1.6.4-intel/
 export MPI_INSTALL_PATH=/opt/openmpi-1.6.4-intel/
 export OPENCL_INSTALL_PATH=/usr/local/cuda-5.5/
