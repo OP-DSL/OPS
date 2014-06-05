@@ -5,6 +5,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
  buildOpenCLKernels();
- printf("*********************in here\n");
+ //printf("*********************in here\n");
 
 }

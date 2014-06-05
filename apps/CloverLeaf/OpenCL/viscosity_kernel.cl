@@ -25,10 +25,10 @@ __constant int xdim6_viscosity_kernel;
 
 //user function
 
-inline void viscosity_kernel( __local double *xvel0, __local double *yvel0,
-                       __local double *celldx, __local double *celldy,
-                       __local double *pressure, __local double *density0,
-                       __local double *viscosity) {
+void viscosity_kernel( __global double *xvel0, __global double *yvel0,
+                       __global double *celldx, __global double *celldy,
+                       __global double *pressure, __global double *density0,
+                       __global double *viscosity) {
 
   double ugrad, vgrad,
          grad2,
@@ -91,18 +91,18 @@ inline void viscosity_kernel( __local double *xvel0, __local double *yvel0,
 // OpenCL kernel function
 
 __kernel void ops_viscosity_kernel(
-__local double* __restrict arg0,
-__local double* __restrict arg1,
-__local double* __restrict arg2,
-__local double* __restrict arg3,
-__local double* __restrict arg4,
-__local double* __restrict arg5,
-__local double* arg6,
+__global double*  arg0,
+__global double*  arg1,
+__global double*  arg2,
+__global double*  arg3,
+__global double*  arg4,
+__global double*  arg5,
+__global double* arg6,
 int size0,
 int size1 ){
 
 
-  int idx_y = 0;//blockDim.y * blockIdx.y + threadIdx.y;
+  /*int idx_y = 0;//blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = 0;//blockDim.x * blockIdx.x + threadIdx.x;
 
   arg0 += idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel;
@@ -113,9 +113,9 @@ int size1 ){
   arg5 += idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel;
   arg6 += idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel;
 
-  if (idx_x < size0 && idx_y < size1) {
+  if (idx_x < size0 && idx_y < size1) {*/
     viscosity_kernel(arg0, arg1, arg2, arg3,
                    arg4, arg5, arg6);
-  }
+  //}
 
 }
