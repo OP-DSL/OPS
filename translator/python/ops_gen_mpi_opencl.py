@@ -183,7 +183,38 @@ def arg_parse(text, j):
             if depth == 0:
                 return loc2
         loc2 = loc2 + 1
-        
+
+def find_consts(text, consts):
+  found_consts = []
+  #i = 0
+  for cn in range(0,len(consts)):
+    #print consts[cn]['name'][1:-1]
+    pattern = consts[cn]['name'][1:-1]
+    #if re.search(consts[cn]['name'][1:-1], text):
+    if re.search('\\b'+pattern+'\\b', text):
+      print "found " + consts[cn]['name'][1:-1]
+      found_consts.append(cn)
+      #i = i + 1
+  #if i > 0:
+  #  return found_consts
+  #else:
+  #  return []
+  return found_consts
+  
+
+def parse_signature(text2):
+  #text2 = text.replace('const','')
+  text2 = text2.replace('int','__global int')
+  text2 = text2.replace('float','__global float')
+  text2 = text2.replace('double','__global double')
+  #text2 = text2.replace('*','')
+  #text2 = text2.replace(')','')
+  #text2 = text2.replace('(','')
+  #text2 = text2.replace('\n','')
+  #text2 = re.sub('\[[0-9]*\]','',text2)
+  return text2
+  
+
 def ops_gen_mpi_opencl(master, date, consts, kernels):
 
   global dims, stens
@@ -259,8 +290,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-    code('')
-    
+    code('')    
     
     code('')
     comm('user function')
@@ -280,24 +310,31 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     i = text[0:i].rfind('\n') #reverse find
     #find function signature
     loc = arg_parse(text, i + 1)
+    sig = text[i:loc]+','   
+    sig = parse_signature(sig)
     
-    #j = text[i:].find('(')
-    #k = para_parse(text, i+j, '(', ')')
-    code(text[i:loc]+',')
+    #find body of function
+    j2 = text[loc+1:].find('{')
+    k2 = para_parse(text, loc+j2, '{', '}')
+    
+    body = text[loc+1:k2+2] # body of function
+    
+    found_consts = find_consts(body,consts)
+    #print found_consts
+    
+    code(sig) # function signature
     depth = depth +2
+    for c in range(0, len(found_consts)):
+      code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and n < nargs-1:
         code('int xdim'+str(n)+'_'+name+',')
       if arg_typ[n] == 'ops_arg_dat' and n == nargs-1:
         code('int xdim'+str(n)+'_'+name+')')
-    
-      
-    
-    #find body of function
-    j2 = text[loc+1:].find('{')
-    k2 = para_parse(text, loc+j2, '{', '}')
-    depth =depth-1
-    code(text[loc+1:k2+2])
+
+                   
+    depth =depth-1        
+    code(body)
     code('')
     code('')
     for n in range (0, nargs):
@@ -323,6 +360,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         else:
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
     
+    for c in range(0, len(found_consts)):
+      code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      
     for n in range (0, nargs):
       code('int xdim'+str(n)+'_'+name+',')
     for n in range (0, nargs):
@@ -360,18 +400,18 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     text = name+'('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+name2+']'
+        text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+name2+'_kernel]'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
+      text = text+',\n  '+indent
       
-      if n <> nargs-1:
-        text = text+',\n  '+indent
-      else:
-        text = text +','
-            
+    
+    for c in range(0, len(found_consts)):
+      text = text + consts[found_consts[c]]['name'][1:-1]+','
     code(text)
+    
     text = (len(name2)+depth+3)*' '
     for n in range (0, nargs):
      text = text + 'xdim'+str(n)+'_'+name
@@ -379,6 +419,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
        text = text+',\n  '+indent
      else:
        text = text +');'
+    
     code(text)  
       
     ENDIF()
@@ -434,7 +475,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     depth = 2
 
     code('');
-
+    code('buildOpenCLKernels();')
+    
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
@@ -637,8 +679,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
       nkernel_args = nkernel_args+1
       
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_double), (void*) &dt ));')
-    nkernel_args = nkernel_args+1    
+    for c in range(0, len(found_consts)):
+      #code(consts[found_consts[c]]['type'][1:-1]+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+\
+           consts[found_consts[c]]['type'][1:-1]+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+      nkernel_args = nkernel_args+1
+      
+     
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
       nkernel_args = nkernel_args+1

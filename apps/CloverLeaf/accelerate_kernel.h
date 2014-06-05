@@ -19,7 +19,7 @@ void accelerate_kernel( const double *density0, const double *volume,
     + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
     + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
+  stepbymass[OPS_ACC2(0,0)] = 0.5*dt/ nodal_mass;
 
   //{0,0, -1,0, 0,-1, -1,-1};
   //{0,0, 0,-1};
