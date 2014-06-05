@@ -69,7 +69,7 @@ void field_summary()
 
 
   ops_fprintf(g_out,"\n");
-  ops_fprintf(g_out,"\n Time %lf\n",clover_time);
+  ops_fprintf(g_out,"\n Time   %1.14E\n",clover_time);
   ops_fprintf(g_out,"                 %11s     %11s     %11s     %11s %15s %15s %15s\n",
   " Volume"," Mass"," Density"," Pressure","Internal Energy","Kinetic Energy","Total Energy");
   ops_fprintf(g_out," step:   %4d     %10.3E      %10.3E      %10.3E      %10.3E %15.3E %15.3E %15.3E",
