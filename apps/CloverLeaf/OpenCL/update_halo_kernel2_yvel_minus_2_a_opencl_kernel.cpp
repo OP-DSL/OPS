@@ -97,7 +97,7 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_a(char const *name, ops_block
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 3);
-  ops_H_D_exchanges(args, 3);
+  //ops_H_D_exchanges(args, 3);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

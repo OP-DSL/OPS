@@ -103,7 +103,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
   arg1.data = (char *)arg1h;
 
   ops_set_dirtybit_cuda(args, 2);
-  ops_H_D_exchanges(args, 2);
+  //ops_H_D_exchanges(args, 2);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

@@ -109,7 +109,7 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block Block, int dim
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 4);
-  ops_H_D_exchanges(args, 4);
+  //ops_H_D_exchanges(args, 4);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

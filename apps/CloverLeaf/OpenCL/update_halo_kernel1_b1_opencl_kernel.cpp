@@ -158,7 +158,7 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block Block, int 
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 8);
-  ops_H_D_exchanges(args, 8);
+  //ops_H_D_exchanges(args, 8);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

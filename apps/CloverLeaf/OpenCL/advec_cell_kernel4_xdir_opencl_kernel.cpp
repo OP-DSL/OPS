@@ -195,7 +195,7 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block Block, int
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 11);
-  ops_H_D_exchanges(args, 11);
+  //ops_H_D_exchanges(args, 11);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

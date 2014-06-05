@@ -146,7 +146,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 7);
-  ops_H_D_exchanges(args, 7);
+  //ops_H_D_exchanges(args, 7);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

@@ -134,7 +134,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 6);
-  ops_H_D_exchanges(args, 6);
+  //ops_H_D_exchanges(args, 6);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

@@ -125,7 +125,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 5);
-  ops_H_D_exchanges(args, 5);
+  //ops_H_D_exchanges(args, 5);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

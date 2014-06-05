@@ -103,7 +103,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block Bloc
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   ops_set_dirtybit_cuda(args, 3);
-  ops_H_D_exchanges(args, 3);
+  //ops_H_D_exchanges(args, 3);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

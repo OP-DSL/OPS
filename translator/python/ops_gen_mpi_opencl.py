@@ -775,7 +775,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('')
 
     code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
-    code('ops_H_D_exchanges(args, '+str(nargs)+');')
+    #code('ops_H_D_exchanges(args, '+str(nargs)+');')
 
     code('')
     comm('Update kernel record')
