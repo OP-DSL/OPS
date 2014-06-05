@@ -39,6 +39,10 @@
 //Cloverleaf kernels
 #include "field_summary_kernel.h"
 
+extern"C" {
+void fortfunc_(int *ii, float *ff);
+}
+
 void ideal_gas(int predict);
 
 void field_summary()
@@ -81,6 +85,9 @@ void field_summary()
   " Volume"," Mass"," Density"," Pressure","Internal Energy","Kinetic Energy","Total Energy");
   ops_fprintf(g_out," step:   %4d     %10.3E      %10.3E      %10.3E      %10.3E %15.3E %15.3E %15.3E",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
+
+  if(ops_is_root())
+    fortfunc_(&step,&mass);
 
   if(complete == TRUE) {
     if(test_problem == 1) {

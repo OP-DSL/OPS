@@ -35,6 +35,10 @@ void ops_par_loop_field_summary_kernel(char const *, ops_block, int , int*,
 
 //#include "field_summary_kernel.h"
 
+extern"C" {
+void fortfunc_(int *ii, double *ff);
+}
+
 void ideal_gas(int predict);
 
 void field_summary()
@@ -67,6 +71,8 @@ void field_summary()
                ops_arg_gbl(&ke, 1, "double", OPS_INC),
                ops_arg_gbl(&press, 1, "double", OPS_INC));
 
+  if(ops_is_root())
+    fortfunc_(&step,&mass);
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out,"\n Time   %1.14E\n",clover_time);
