@@ -84,7 +84,7 @@ void field_summary()
   //" Volume"," Mass"," Density"," Pressure","Internal Energy","Kinetic Energy","Total Energy");
   //ops_fprintf(g_out," step:   %4d     %10.3E      %10.3E      %10.3E      %10.3E %15.3E %15.3E %15.3E",
   //        step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
-  ops_fprintf(g_out,"\n%s",buffer);
+  ops_fprintf(g_out,"\n%s\n",buffer);
 
   if(complete == TRUE) {
     if(test_problem == 1) {

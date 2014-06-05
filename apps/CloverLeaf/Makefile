@@ -136,12 +136,13 @@ cloverleaf_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initial
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h
+		ifort -free -c write.f90 -o write.o
 	        $(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o cloverleaf_mpi
+		advec_mom_ops.cpp write.o -L/opt/intel/composerxe/lib/intel64/ -lifcore -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o cloverleaf_mpi
 
 #
 # OpenMP version

@@ -123,7 +123,7 @@ void timestep()
   //CALL clover_min(dt)
 
 
-  char buffer[350];
+  char buffer[144];
   if(ops_is_root()){
     int len = strlen(dtl_control);
     fortfunc2_(&clover_time,&step,dtl_control,&len,&dt,&jdt,&kdt,&x_pos,&y_pos,buffer);
