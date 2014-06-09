@@ -34,7 +34,7 @@ typedef struct
 } state_type;
 
 
-typedef struct
+typedef struct grid_type
 {
   double  xmin, ymin, xmax, ymax;
   int x_cells, y_cells;
