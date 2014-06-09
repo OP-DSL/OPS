@@ -367,8 +367,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code(sig2) # function signature
     depth = depth +2
     for c in range(0, len(found_consts)):
-      code(consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
-      
+      if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
+        code(consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      else:
+        code('__constant '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')
     text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -465,7 +467,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       
     
     for c in range(0, len(found_consts)):
-      text = text + '*'+consts[found_consts[c]]['name'][1:-1]+','
+      if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
+        text = text + '*'+consts[found_consts[c]]['name'][1:-1]+','
+      else:
+        text = text + consts[found_consts[c]]['name'][1:-1]+','
     code(text)
     
     text = (len(name2)+depth+3)*' '
@@ -711,7 +716,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
       const_dim = consts[found_consts[c]]['dim']
-      code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+      if const_dim.isdigit() and int(const_dim)==1:
+        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')  
+      else:        
+        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) '+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
       code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
     code('')
     
