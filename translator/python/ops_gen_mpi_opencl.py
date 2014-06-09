@@ -835,6 +835,44 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
   code('')
   
+  code('extern ops_opencl_core OPS_opencl_core;')
+  code('')
+  comm('this needs to be a platform specific copy symbol to device function')
+  code('void ops_decl_const_char( int dim, char const * type, int typeSize, char * dat, char const * name ) {')
+  depth =depth + 2
+  code('cl_int ret = 0;')
+  IF('OPS_opencl_core.constant == NULL')
+  code('OPS_opencl_core.constant = (cl_mem*) malloc(('+str(len(consts))+')*sizeof(cl_mem));')
+  FOR('i','0',str(len(consts)))
+  code('OPS_opencl_core.constant[i] = NULL;')
+  ENDFOR()
+  ENDIF()
+    
+  for nc in range(0,len(consts)):
+    IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
+    IF('OPS_opencl_core.constant['+str(nc)+'] == NULL')
+    code('OPS_opencl_core.constant['+str(nc)+'] = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*typeSize, NULL, &ret);')
+    code('clSafeCall( ret );')        
+    ENDIF()
+    comm('Write the new constant to the memory of the device')
+    code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(nc)+'], CL_TRUE, 0, dim*typeSize, (void*) dat, 0, NULL, NULL) );')
+    code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
+    code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    ENDIF()
+    code('else')
+
+  code('{')
+  depth = depth + 2
+  code('printf("error: unknown const name\\n"); exit(1);')
+  ENDIF()
+  depth = depth - 2
+  code('}')
+    
+      
+    
+    
+  
+  
   kernel_name_list = []
   kernel_list_text = ''
   kernel_list__build_text = ''
@@ -933,21 +971,15 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       isbuilt = true;
     }
     
-  }
-  
-//this needs to be a platform specific copy symbol to device function
-/*void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
-{
-  (void)dim;
-  (void)type;
-  (void)typeSize;
-  (void)data;
-  (void)name;
-}*/
+  }  
 
   """
+
+  
   depth = -2
   code(opencl_build)
+  
+  
   
   
   comm('user kernel files')

@@ -236,7 +236,7 @@ void ops_compute_moment(double t, double *first, double *second) {
   *second = t*t;
 }
 
-void ops_decl_const_char ( int dim, char const * type, int size, char * dat,
+/*void ops_decl_const_char ( int dim, char const * type, int size, char * dat,
                          char const * name )
 {
   //#warning "const_d is not kept track of, therefore it will not be freed up!"
@@ -269,7 +269,7 @@ void ops_decl_const_char ( int dim, char const * type, int size, char * dat,
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant[OPS_opencl_core.n_constants-1], CL_TRUE, 0, dim*size, (void*) dat, 0, NULL, NULL) );
   clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-}
+}*/
 
 
 

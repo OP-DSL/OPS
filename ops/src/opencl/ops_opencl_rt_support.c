@@ -172,6 +172,7 @@ void openclDeviceInit( int argc, char ** argv )
   // Get platform and device information
   OPS_opencl_core.platform_id = NULL;
   OPS_opencl_core.device_id = NULL;
+  OPS_opencl_core.constant = NULL;
 
   clSafeCall( clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms) );
 
