@@ -368,6 +368,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     depth = depth +2
     for c in range(0, len(found_consts)):
       code(consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
+      
     text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
