@@ -309,7 +309,7 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
 }
 
 
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
+void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++) {
     if((args[n].argtype == OPS_ARG_DAT) &&

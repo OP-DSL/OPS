@@ -589,7 +589,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     comm('Timing')
     code('double t1,t2,c1,c2;')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('ops_timers_core(&c1,&t1);')
+    code('ops_timers_core(&c2,&t2);')
     code('')
 
     #set up OpenCL grid and thread blocks
@@ -692,17 +692,31 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers')
 
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        #code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        #code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        #for d in range (1, NDIM):
+        #  code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
+        #  code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+
+        #code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
+        #code('')
+        
+        code('int base'+str(n)+' = 1 * ')
         code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
         for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+'  + dat'+str(n)+' * args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
+          code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
           code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
-        code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
+        #code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
         code('')
+        
 
     code('')
     code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
+    #code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('')    
+    code('ops_timers_core(&c1,&t1);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     code('')
 
 
@@ -783,7 +797,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    code('ops_set_dirtybit_cuda(args, '+str(nargs)+');')
+    code('ops_set_dirtybit_opencl(args, '+str(nargs)+');')
     #code('ops_H_D_exchanges(args, '+str(nargs)+');')
 
     code('')

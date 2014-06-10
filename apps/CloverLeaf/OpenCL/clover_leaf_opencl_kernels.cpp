@@ -328,7 +328,8 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * dat, 
         char* pPath = NULL;
         pPath = getenv ("OPS_INSTALL_PATH");
         if (pPath!=NULL)
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
+          sprintf(buildOpts," -cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
+          //sprintf(buildOpts," -cl-opt-disable -I%s/include -DOPS_WARPSIZE=%d", pPath, 32);
         else {
           sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
           exit(EXIT_FAILURE);

@@ -349,6 +349,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
 void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
 
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
+void ops_set_dirtybit_opencl(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
 void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);
 
