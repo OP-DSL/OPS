@@ -18,6 +18,6 @@ and the preprocessor, and is structured as follows:
   block structured mesh application - Cloverleaf originally 
   developed at https://github.com/Warwick-PCAV/CloverLeaf
 
-* translator: Pyton OPS preprocessor for C/C++ API
+* translator: Python OPS preprocessor for C/C++ API
 
 * doc: Documentation
