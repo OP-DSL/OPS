@@ -52,7 +52,7 @@
 #include <CL/cl_ext.h>
 #endif
 
-#include <math_constants.h>
+//#include <math_constants.h>
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
@@ -230,7 +230,7 @@ void openclDeviceInit( int argc, char ** argv )
     exit(-1);
   }
   clSafeCall( clReleaseMemObject(test_d) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   // Number of constants in constant array
@@ -244,7 +244,7 @@ void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
   *data_d = (cl_mem) clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
   clSafeCall( ret );
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) *data_d, CL_TRUE, 0, size, *data_h, 0, NULL, NULL) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
@@ -257,7 +257,7 @@ void ops_download_dat(ops_dat dat) {
 
   //printf("downloading to host from device %d bytes\n",bytes);
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
 }
@@ -270,7 +270,7 @@ void ops_upload_dat(ops_dat dat) {
   //printf("uploading to device from host %d bytes\n",bytes);
 
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
 
@@ -390,7 +390,7 @@ void mvConstArraysToDevice ( int consts_bytes )
   if (OPS_gbl_changed) {
     clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
       (cl_mem) OPS_consts_d, CL_TRUE, 0, consts_bytes, (void*) OPS_consts_h, 0, NULL, NULL) );
-    clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+    //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
     memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
   }
@@ -400,7 +400,7 @@ void mvReductArraysToDevice ( int reduct_bytes )
 {
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
     (cl_mem) OPS_reduct_d, CL_TRUE, 0, reduct_bytes, (void*) OPS_reduct_h, 0, NULL, NULL) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
@@ -408,7 +408,7 @@ void mvReductArraysToHost ( int reduct_bytes )
 {
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue,
     (cl_mem) OPS_reduct_d, CL_TRUE, 0, reduct_bytes, (void*) OPS_reduct_h, 0, NULL, NULL) );
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
@@ -421,7 +421,7 @@ void ops_opencl_exit ( )
   {
     clReleaseMemObject((cl_mem)(item->dat)->data_d);
   }
-  clSafeCall( clFlush(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   clSafeCall( clReleaseCommandQueue(OPS_opencl_core.command_queue) );
   clSafeCall( clReleaseContext(OPS_opencl_core.context) );
