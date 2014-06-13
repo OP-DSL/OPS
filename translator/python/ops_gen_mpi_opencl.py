@@ -198,7 +198,8 @@ def find_consts(text, consts):
 import re
 def parse_signature(text2):
   
-  text2 = text2.replace('const','')
+  #text2 = text2.replace('const','')
+  text2 = text2.replace('*','* restrict ')
   text2 = text2.replace('int','__global int')
   #text2 = re.sub('[\s]int','__global int',text2)
   text2 = text2.replace('float','__global float')
@@ -368,13 +369,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     depth = depth +2
     for c in range(0, len(found_consts)):
       if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
-        code(consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
+        code('const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
       else:
-        code('__constant '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')
+        code('__constant const'+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')
     text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text + 'int xdim'+str(n)+'_'+name
+        text = text + 'const int xdim'+str(n)+'_'+name
       elif arg_typ[n] == 'ops_arg_gbl':
         text = text[0:-2]
       if n < nargs-1:
@@ -401,32 +402,32 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #currently the read only vars have not been generated differently
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
-        code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+        code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
-        code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+        code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+          code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
         else:
-          code('__global '+(str(typs[n]).replace('"','')).strip()+'* arg'+str(n)+',')
+          code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
           code('__local '+(str(typs[n]).replace('"','')).strip()+'* scratch'+str(n)+',')
           code('int r_bytes'+str(n)+',')
     
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type']=='int' or consts[found_consts[c]]['type']=='double' or consts[found_consts[c]]['type']=='float':
-        code('__global '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')      
+        code('__global const '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')      
       else:
-        code('__constant struct '+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]+',')        
+        code('__constant const struct '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')        
       
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+'_'+name+',')
+        code('const int xdim'+str(n)+'_'+name+',')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('const int base'+str(n)+',')
 
-    code('int size0,')
-    code('int size1 ){')
+    code('const int size0,')
+    code('const int size1 ){')
     depth = depth + 2
 
     #local variable to hold reductions on GPU
