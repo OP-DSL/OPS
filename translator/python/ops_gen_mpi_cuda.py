@@ -741,7 +741,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    code('if (OPS_diags>1) cutilSafeCall(cudaDeviceSynchronize());')
+    if not 'update' in name:
+      code('if (OPS_diags>1) cutilSafeCall(cudaDeviceSynchronize());')
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
     if reduction == 1 :
