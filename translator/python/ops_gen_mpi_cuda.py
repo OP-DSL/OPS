@@ -529,6 +529,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c2,&t2);')
     code('')
+    
     IF('OPS_kernels['+str(nk)+'].count == 0')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -741,10 +742,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    if not 'update' in name:
-      code('if (OPS_diags>1) cutilSafeCall(cudaDeviceSynchronize());')
+    IF('OPS_diags>1')
+    code('cutilSafeCall(cudaDeviceSynchronize());')
+    ENDIF()
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    
     if reduction == 1 :
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:

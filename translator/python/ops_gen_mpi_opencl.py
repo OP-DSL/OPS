@@ -877,8 +877,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     comm('call/enque opencl kernel wrapper function')
     code('clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
-    if not 'update' in name:
-      code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    IF('OPS_diags>1')
+    code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    ENDIF()
     code('')
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
@@ -1030,8 +1031,7 @@ void buildOpenCLKernels() {
   comm('user kernel files')
 
   for nk in range(0,len(kernel_name_list)):
-    if not 'calc_dt_kernel_print' in name:
-      code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
+    code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
   
    
   master = master.split('.')[0]
