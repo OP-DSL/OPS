@@ -95,7 +95,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_gbl(yl_pos, 1, "double", OPS_INC));
 
 
-  if(small == 0) {
+  if(small != 0) {
     ops_printf("Timestep information:\n");
     ops_printf("j, k                 : %d, %d\n",*jldt,*kldt);
     ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
