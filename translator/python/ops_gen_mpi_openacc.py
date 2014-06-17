@@ -231,7 +231,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     i = name.find('kernel')
     name2 = name[0:i-1]
-    #print name2
 
     reduction = False
     ng_args = 0
@@ -250,7 +249,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
-    if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
+    if not (('generate_chunk' in name)):
       code('#define OPS_GPU')
       code('')
     for n in range (0, nargs):
@@ -322,7 +321,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
+          if dims[n] == 1:
+            code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
+          else:
+            code(typs[n]+' p_a'+str(n)+'_l['+str(dims[n])+'];')
+            code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'_l[d] = p_a'+str(n)+'[d];')
     line = '#pragma acc parallel deviceptr('
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -391,7 +394,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
+          if dims[n] == 1:
+            code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
+          else:
+            code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'[d] = p_a'+str(n)+'_l[d];')
     depth = depth-2
     code('}')
 

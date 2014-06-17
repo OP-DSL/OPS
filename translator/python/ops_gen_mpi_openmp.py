@@ -311,7 +311,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+' arg_gbl'+str(n)+'['+dims[n]+' * 64 * 64];')
+          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * 64];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
@@ -516,13 +516,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         if arg_typ[n] == 'ops_arg_gbl':
           FOR('d','0',dims[n])
           if accs[n] == OPS_INC:
-            code('arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
+            code('arg'+str(n)+'h[d] += arg_gbl'+str(n)+'[64*thr+d];')
           elif accs[n] == OPS_MIN:
-            code('arg'+str(n)+'h[0] = MIN(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+            code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d], arg_gbl'+str(n)+'[64*thr+d]);')
           elif accs[n] == OPS_MAX:
-            code('arg'+str(n)+'h[0] = MAX(arg'+str(n)+'h[0], arg_gbl'+str(n)+'[64*thr]);')
+            code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d], arg_gbl'+str(n)+'[64*thr+d]);')
           elif accs[n] == OPS_WRITE:
-            code('if(arg_gbl'+str(n)+'[64*thr] != 0.0) arg'+str(n)+'h[0] += arg_gbl'+str(n)+'[64*thr];')
+            code('if(arg_gbl'+str(n)+'[64*thr+d] != 0.0) arg'+str(n)+'h[d] += arg_gbl'+str(n)+'[64*thr+d];')
           ENDFOR()
       ENDFOR()
 
