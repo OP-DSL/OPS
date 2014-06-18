@@ -72,14 +72,19 @@ void calc_dt_kernel_gety(double* celly,double* yl_pos) {
 
 void calc_dt_kernel_print(const double *xvel0, const double *yvel0,
                         const double *density0, const double *energy0,
-                        const double *pressure, const double *soundspeed) {
-  printf("Cell velocities:\n");
-  printf("%E, %E \n",xvel0[OPS_ACC0(1,0)], yvel0[OPS_ACC1(1,0)]); //xvel0(jldt  ,kldt  ),yvel0(jldt  ,kldt  )
-  printf("%E, %E \n",xvel0[OPS_ACC0(-1,0)], yvel0[OPS_ACC1(-1,0)]); //xvel0(jldt+1,kldt  ),yvel0(jldt+1,kldt  )
-  printf("%E, %E \n",xvel0[OPS_ACC0(0,1)], yvel0[OPS_ACC1(0,1)]); //xvel0(jldt+1,kldt+1),yvel0(jldt+1,kldt+1)
-  printf("%E, %E \n",xvel0[OPS_ACC0(0,-1)], yvel0[OPS_ACC1(0,-1)]); //xvel0(jldt  ,kldt+1),yvel0(jldt  ,kldt+1)
+                        const double *pressure, const double *soundspeed, double *output) {
+  output[0] = xvel0[OPS_ACC0(1,0)];
+  output[1] = yvel0[OPS_ACC1(1,0)];
+  output[2] = xvel0[OPS_ACC0(-1,0)];
+  output[3] = yvel0[OPS_ACC1(-1,0)];
+  output[4] = xvel0[OPS_ACC0(0,1)];
+  output[5] = yvel0[OPS_ACC1(0,1)];
+  output[6] = xvel0[OPS_ACC0(0,-1)];
+  output[7] = yvel0[OPS_ACC1(0,-1)];
+  output[8] = density0[OPS_ACC2(0,0)];
+  output[9] = energy0[OPS_ACC3(0,0)];
+  output[10]= pressure[OPS_ACC4(0,0)];
+  output[11]= soundspeed[OPS_ACC5(0,0)];
 
-  printf("density, energy, pressure, soundspeed = %lf, %lf, %lf, %lf \n",
-    density0[OPS_ACC2(0,0)], energy0[OPS_ACC3(0,0)], pressure[OPS_ACC4(0,0)], soundspeed[OPS_ACC5(0,0)]);
 }
 #endif
