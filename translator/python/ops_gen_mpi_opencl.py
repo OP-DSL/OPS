@@ -245,6 +245,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
 
+    if ('initialise' in name) or ('generate' in name):
+      print 'WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host'
+      continue
+
     #parse stencil to locate strided access
     stride = [1] * nargs * 2
 
@@ -997,12 +1001,13 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
       kernel_name_list.append(kernels[nk]['name'])
-      kernel_list_text = kernel_list_text + '"./OpenCL/'+kernel_name_list[nk]+'.cl"'
-      if nk != len(kernels)-1:
-        kernel_list_text = kernel_list_text+',\n'+indent
-      kernel_list__build_text = kernel_list__build_text + \
-      'OPS_opencl_core.kernel['+str(nk)+'] = clCreateKernel(OPS_opencl_core.program, "ops_'+kernel_name_list[nk]+'", &ret);\n      '+\
-      'clSafeCall( ret );\n      '  
+      if not (('initialise' in kernels[nk]['name']) or ('generate' in kernels[nk]['name'])):
+        kernel_list_text = kernel_list_text + '"./OpenCL/'+kernel_name_list[nk]+'.cl"'
+        if nk != len(kernels)-1:
+          kernel_list_text = kernel_list_text+',\n'+indent
+        kernel_list__build_text = kernel_list__build_text + \
+        'OPS_opencl_core.kernel['+str(nk)+'] = clCreateKernel(OPS_opencl_core.program, "ops_'+kernel_name_list[nk]+'", &ret);\n      '+\
+        'clSafeCall( ret );\n      '  
   
 
   opencl_build = """
@@ -1031,7 +1036,8 @@ void buildOpenCLKernels() {
   comm('user kernel files')
 
   for nk in range(0,len(kernel_name_list)):
-    code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
+    if not (('initialise' in kernel_name_list[nk]) or ('generate' in kernel_name_list[nk])):
+      code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
   
    
   master = master.split('.')[0]
