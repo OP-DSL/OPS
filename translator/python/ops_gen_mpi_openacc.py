@@ -249,7 +249,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
-    if not (('generate_chunk' in name)):
+    if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
       code('#define OPS_GPU')
       code('')
     for n in range (0, nargs):
@@ -321,7 +321,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          if dims[n] == 1:
+          if dims[n].isdigit() and int(dims[n]) == 1:
             code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
           else:
             code(typs[n]+' p_a'+str(n)+'_l['+str(dims[n])+'];')
@@ -379,7 +379,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         if accs[n] == OPS_READ:
           text = text +' p_a'+str(n)+''
         else:
-          text = text +' &p_a'+str(n)+'_l'
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            text = text +' &p_a'+str(n)+'_l'
+          else:
+            text = text +' p_a'+str(n)+'_l'
       if nargs <> 1 and n != nargs-1:
         text = text + ','
       else:
@@ -394,7 +397,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          if dims[n] == 1:
+          if dims[n].isdigit() and int(dims[n]) == 1:
             code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
           else:
             code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'[d] = p_a'+str(n)+'_l[d];')
