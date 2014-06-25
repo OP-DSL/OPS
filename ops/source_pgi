@@ -1,0 +1,15 @@
+#export PATH=/opt/pgi/linux86-64/14.2/bin:$PATH
+export PATH=/home/mudalige/openmpi-pgi/bin:$PATH
+export LD_LIBRARY_PATH=/home/mudalige/openmpi-pgi/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/lib64:/rubydisk2/pgi/linux86-64/2013/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/opt/cgnslib_2.4-pgi/lib:$LD_LIBRARY_PATH
+export PARMETIS_INSTALL_PATH=/opt/Parmetis-4-pgi
+export PTSCOTCH_INSTALL_PATH=/opt/PT-Scotch-pgi
+export HDF5_INSTALL_PATH=/opt/hdf5-1.8.10-pgi
+export MPI_INSTALL_PATH=/home/mudalige/openmpi-pgi/
+export CGNS_INSTALL_PATH=/opt/cgnslib_2.4-pgi
+export OP2_COMPILER=pgi
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=~/OPS/ops
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.0
+export CUDA_PATH=/usr/local/cuda-6.0
