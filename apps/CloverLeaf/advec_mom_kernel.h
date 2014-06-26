@@ -147,7 +147,7 @@ inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double
 
   //node_flux accessed with: {0,0}
   //node_mass_pre accessed with: {0,0, 1,0}
-  //celldx is accessed with {0,0, 1,0, -1,0, -2,0} striding in x
+  //celldx is accessed with {0,0, 1,0, -1,0} striding in x
   //vel1 is accessed with {0,0, 1,0, 2,0, -1,0}
 
   double sigma, wind, width;
@@ -249,7 +249,7 @@ inline void advec_mom_kernel1_y_nonvector( const double *node_flux, const double
 
   //node_flux accessed with: {0,0}
   //node_mass_pre accessed with: {0,0, 0,1}
-  //celldy is accessed with {0,0, 0,1, 0,-1, 0,-2} striding in y
+  //celldy is accessed with {0,0, 0,1, 0,-1} striding in y
   //vel1 is accessed with {0,0, 0,1, 0,2, 0,-1}
 
   double sigma, wind, width;

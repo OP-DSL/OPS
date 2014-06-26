@@ -114,7 +114,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_arg_dat(density0, S3D_000, "double", OPS_READ),
     ops_arg_dat(energy0, S3D_000, "double", OPS_READ),
     ops_arg_dat(pressure, S3D_000, "double", OPS_READ),
-    ops_arg_dat(soundspeed, S3D_000, "double", OPS_READ)
+    ops_arg_dat(soundspeed, S3D_000, "double", OPS_READ),
     ops_arg_gbl(output, 28, "double", OPS_INC));
   
     printf("Cell velocities:\n");
