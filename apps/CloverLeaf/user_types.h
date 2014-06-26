@@ -34,14 +34,14 @@ typedef struct
 } state_type;
 
 
-typedef struct
+typedef struct grid_type
 {
   double  xmin, ymin, xmax, ymax;
   int x_cells, y_cells;
 } grid_type;
 
 
-typedef struct
+typedef struct field_type
 {
   int left, right, bottom, top ,left_boundary, right_boundary,
       bottom_boundary, top_boundary;
@@ -49,7 +49,7 @@ typedef struct
 } field_type;
 
 #ifdef __cplusplus
-
+#ifndef __OPENCL_VERSION__
 inline int type_error (const field_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "field_type" ) && strcmp ( type, "field_type:soa" ));
 }
@@ -61,6 +61,7 @@ inline int type_error (const grid_type * a, const char *type ) {
 inline int type_error (const state_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "state_type" ) && strcmp ( type, "state_type:soa" ));
 }
+#endif
 
 #endif
 

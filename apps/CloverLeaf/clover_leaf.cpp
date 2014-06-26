@@ -136,7 +136,7 @@ int main(int argc, char **argv)
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,5);
+  ops_init(argc,argv,1);
   ops_printf(" Clover version %f\n", g_version);
 
 
@@ -154,8 +154,8 @@ int main(int argc, char **argv)
   ops_decl_const("dtdiv_safe", 1, "double", &dtdiv_safe );
   ops_decl_const("field", 1, "field_type", &field );
   ops_decl_const("grid", 1, "grid_type", &grid );
-  ops_decl_const("states",number_of_states, "state_type", states );
   ops_decl_const("number_of_states",1,"int",&number_of_states);
+  ops_decl_const("states",number_of_states, "state_type", states );  
   ops_decl_const("g_circ",1,"int",&g_circ);
   ops_decl_const("g_point",1,"int",&g_point);
   ops_decl_const("g_rect",1,"int",&g_rect);
@@ -206,11 +206,15 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 70) {
+     if(step == 1) {
+       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+       //exit(0);
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);
       //break;
+      //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
+      //exit(0);
      }
 
   }

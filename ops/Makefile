@@ -14,6 +14,7 @@ LIB = lib
 OBJ = obj
 
 CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
+OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 
 #
 # compiler settings
@@ -37,8 +38,8 @@ else
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 	NVCC  := nvcc
 ifndef DEBUG
@@ -71,7 +72,8 @@ endif
 
 .PHONY: clean mklib
 
-all: clean core seq openmp mpi cuda mpi_cuda
+all: clean core seq openmp mpi cuda mpi_cuda opencl
+
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
 
@@ -114,6 +116,14 @@ mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(OBJ)/ops_mpi_rt_support_cuda.o
 	ar -r $(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda.o $(OBJ)/ops_mpi_rt_support.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition.o $(OBJ)/ops_cuda_rt_support.o
+
+opencl: mklib core $(SRC)/opencl/ops_opencl_decl.c $(OBJ)/ops_lib_core.o
+	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
+        -c $(SRC)/opencl/ops_opencl_decl.c -o $(OBJ)/ops_opencl_decl.o
+	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
+        -c $(SRC)/opencl/ops_opencl_rt_support.c -o $(OBJ)/ops_opencl_rt_support.o
+	ar -r $(LIB)/libops_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_opencl_decl.o
+
 
 clean:
 	-rm -if $(OBJ)/*.o

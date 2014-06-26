@@ -97,9 +97,9 @@
   ops_stencil S2D_00_0M1_STRID2D_Y;
 
   ops_stencil S2D_00_P10_M10_M20;
-  ops_stencil S2D_00_P10_M10_M20_STRID2D_X;
+  ops_stencil S2D_00_P10_M10_STRID2D_X;
   ops_stencil S2D_00_0P1_0M1_0M2;
-  ops_stencil S2D_00_0P1_0M1_0M2_STRID2D_Y;
+  ops_stencil S2D_00_0P1_0M1_STRID2D_Y;
 
   ops_stencil S2D_00_P10_P20_M10;
   ops_stencil S2D_00_0P1_0P2_0M1;

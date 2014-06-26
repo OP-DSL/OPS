@@ -49,7 +49,7 @@ void accelerate()
 
 
   int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; // inner range plus 1
-
+  
   ops_par_loop(accelerate_kernel, "accelerate_kernel", clover_grid, 2, rangexy_inner_plus1,
     ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
     ops_arg_dat(volume, S2D_00_M10_0M1_M1M1, "double", OPS_READ),

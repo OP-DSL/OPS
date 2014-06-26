@@ -112,7 +112,7 @@ void cutilDeviceInit( int argc, char ** argv )
     cutilSafeCall ( cudaGetDeviceProperties ( &deviceProp, deviceId ) );
     printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
   } else {
-    printf ( "\n Using CPU\n" );
+    //printf ( "\n Using CPU\n" );
   }
 }
 

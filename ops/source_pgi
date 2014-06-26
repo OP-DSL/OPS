@@ -1,0 +1,8 @@
+#A rough example of environmental variables for compiling with PGI compilers
+export PATH=/home/mudalige/openmpi-pgi/bin:$PATH
+export LD_LIBRARY_PATH=/home/mudalige/openmpi-pgi/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/lib64:/rubydisk2/pgi/linux86-64/2013/lib:$LD_LIBRARY_PATH
+export MPI_INSTALL_PATH=/home/mudalige/openmpi-pgi/
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=~/OPS/ops
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.0

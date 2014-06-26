@@ -224,10 +224,10 @@ void build_field()
   S2D_10_M10_01_0M1 = ops_decl_stencil( 2, 4, s2D_10_M10_01_0M1, "1,0:-1,0:0,1:0,-1");
 
   S2D_00_P10_M10_M20 = ops_decl_stencil( 2, 4, s2D_00_P10_M10_M20, "0,0:1,0:-1,0:-2,0");
-  S2D_00_P10_M10_M20_STRID2D_X = ops_decl_strided_stencil( 2, 4, s2D_00_P10_M10_M20, stride2D_x, "self_stride2D_x");
+  S2D_00_P10_M10_STRID2D_X = ops_decl_strided_stencil( 2, 3, s2D_00_P10_M10, stride2D_x, "self_stride2D_x");
 
   S2D_00_0P1_0M1_0M2 = ops_decl_stencil( 2, 4, s2D_00_0P1_0M1_0M2, "0,0:0,1:0-1:0,-2");
-  S2D_00_0P1_0M1_0M2_STRID2D_Y = ops_decl_strided_stencil( 2, 4, s2D_00_0P1_0M1_0M2, stride2D_y, "self_stride2D_y");
+  S2D_00_0P1_0M1_STRID2D_Y = ops_decl_strided_stencil( 2, 3, s2D_00_0P1_0M1, stride2D_y, "self_stride2D_y");
 
   S2D_00_P10_P20_M10 = ops_decl_stencil( 2, 4, s2D_00_P10_P20_M10, "0,0:1,0:2,0:-1,0}");
   S2D_00_0P1_0P2_0M1 = ops_decl_stencil( 2, 4, s2D_00_0P1_0P2_0M1, "0,0,:0,1,:0,2,:0,-1");

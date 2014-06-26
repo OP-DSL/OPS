@@ -39,8 +39,8 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
 
   int upwind,donor,downwind,dif;
 
-  //pre_vol accessed with: {0,0, 1,0, -1,0, -2,0};
-  //vertexdx accessed with: {0,0, 1,0, -1,0, -2,0};
+  //pre_vol accessed with: {0,0, -1,0};
+  //vertexdx accessed with: {0,0, 1,0, -1,0};
   //density1, energy1 accessed with: {0,0, 1,0, -1,0, -2,0};
   //xx accessed with: {0,0 ,1,0}
 
@@ -145,8 +145,8 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
 
   int upwind,donor,downwind,dif;
 
-  //pre_vol accessed with: {0,0, 0,1, 0,-1, 0,-2};
-  //vertexdy accessed with: {0,0, 0,1, 0,-1, 0,-2};
+  //pre_vol accessed with: {0,0, 0,-1};
+  //vertexdy accessed with: {0,0, 0,1, 0,-1};
   //density1, energy1 accessed with: {0,0, 0,1, 0,-1, 0,-2};
   //yy accessed with: {0,0 ,0,1}
 

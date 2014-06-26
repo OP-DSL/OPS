@@ -234,3 +234,9 @@ void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
   (void)nargs;
   (void)args;
 }
+
+void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
+{
+  (void)nargs;
+  (void)args;
+}
