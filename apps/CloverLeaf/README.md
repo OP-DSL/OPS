@@ -23,7 +23,7 @@ there is no MPI support for this version)
 
 ####Building Cloverleaf
 
-1. set the following environmental variables (e.g. for compiling with Intel compilers)
+1. set the following environmental variables : e.g. for compiling with Intel compilers
 
    export OPS_COMPILER=intel
 
@@ -32,6 +32,8 @@ there is no MPI support for this version)
    export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
 
    export MPI_INSTALL_PATH=/opt/openmpi-intel/
+   
+   export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0
 
 2. Build the OPS backend libraries:
 
@@ -49,7 +51,7 @@ there is no MPI support for this version)
    all: clean core seq openmp mpi #cuda
 
 
-3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP and CUDA
+3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP, CUDA, MPI+CUDA, OpenCL and OpenACC (if your compiler supports OpenACC)
 
    cd ~/OPS/apps/Cloverleaf/
 
