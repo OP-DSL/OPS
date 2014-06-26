@@ -1,3 +1,4 @@
+#A rough example of environmental variables for compiling with Intel compilers
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS_rebase/OPS/ops
 #export MPI_INSTALL_PATH=/opt/openmpi-1.6.4-intel/
