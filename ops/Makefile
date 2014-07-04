@@ -64,8 +64,25 @@ else
 	NVCCFLAGS := -O0 -g -G
 endif
 else
+ifeq ($(OPS_COMPILER),cray)
+  CC        := cc
+  CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CCFLAGS   := -O3 -hgnu
+  CXX       := CC
+  CXXFLAGS  := $(CCFLAGS)
+  MPICXX    := CC
+  MPICC     := cc
+    NVCC  := nvcc
+  MPIFLAGS  := $(CXXFLAGS)
+ifndef DEBUG
+    NVCCFLAGS := -O3 -arch=sm_35
+else
+    NVCCFLAGS := -O0 -g -G
+endif
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
