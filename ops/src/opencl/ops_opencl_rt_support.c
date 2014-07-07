@@ -188,8 +188,8 @@ void openclDeviceInit( int argc, char ** argv )
       ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_CPU, 1,
         &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
       break;
-    case 1://GPU:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[1], CL_DEVICE_TYPE_GPU, 1,
+    case 1://GPU or PHI:
+      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[1], CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR, 1,
         &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
       break;
   }

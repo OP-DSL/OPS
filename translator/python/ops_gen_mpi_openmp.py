@@ -308,10 +308,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #setup reduction variables
     if reduction == True:
       comm('allocate and initialise arrays for global reduction')
-      comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
+      comm('assumes a max of 256 threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * 64];')
+          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * 256];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
