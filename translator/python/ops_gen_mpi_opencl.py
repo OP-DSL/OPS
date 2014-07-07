@@ -1018,7 +1018,7 @@ void buildOpenCLKernels() {
   static bool isbuilt = false;
 
   if(!isbuilt) {
-    clSafeCall( clUnloadCompiler() );
+    //clSafeCall( clUnloadCompiler() );
 
     OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
     OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
