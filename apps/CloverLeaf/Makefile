@@ -14,7 +14,8 @@ CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
 CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 
 OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
-OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL #-lintelocl
+OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL 
+#OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++

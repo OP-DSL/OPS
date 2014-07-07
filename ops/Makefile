@@ -35,6 +35,7 @@ ifdef DEBUG
   CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
 else
   CCFLAGS 	:= -O3 -vec-report -xAVX 
+  #CCFLAGS 	:= -O3 -vec-report -mmic # for native execution on the Phi
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
