@@ -35,19 +35,25 @@ ifdef DEBUG
   CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
 else
   CCFLAGS 	:= -O3 -vec-report -xAVX 
-  #CCFLAGS 	:= -O3 -vec-report -mmic # for native execution on the Phi
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-	NVCC  := nvcc
-ifndef DEBUG
-	NVCCFLAGS := -O3 -arch=sm_35
 else
-	NVCCFLAGS := -O0 -g -G
+ifeq ($(OPS_COMPILER),mic)
+  CC    := icc -std=c99
+ifdef DEBUG
+  CCFLAGS   := -O0 -g  -mmic -#-vec-report -xSSE4.2
+else
+  CCFLAGS   := -O3 -vec-report -mmic -mcmodel=medium
 endif
+  CXX     := icpc
+  CXXFLAGS  := $(CCFLAGS)
+  MPICC   := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX  := $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS  := $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc -c99
@@ -57,13 +63,7 @@ ifeq ($(OPS_COMPILER),pgi)
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -c99
-	NVCC  := nvcc
   MPIFLAGS 	:= $(CXXFLAGS)
-ifndef DEBUG
-	NVCCFLAGS := -O3 -arch=sm_35
-else
-	NVCCFLAGS := -O0 -g -G
-endif
 else
 ifeq ($(OPS_COMPILER),cray)
   CC        := cc
@@ -73,19 +73,21 @@ ifeq ($(OPS_COMPILER),cray)
   CXXFLAGS  := $(CCFLAGS)
   MPICXX    := CC
   MPICC     := cc
-    NVCC  := nvcc
   MPIFLAGS  := $(CXXFLAGS)
-ifndef DEBUG
-    NVCCFLAGS := -O3 -arch=sm_35
-else
-    NVCCFLAGS := -O0 -g -G
-endif
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
 endif
 endif
 endif
+endif
+endif
+
+NVCC  := nvcc
+ifndef DEBUG
+    NVCCFLAGS := -O3 -arch=sm_35
+else
+    NVCCFLAGS := -O0 -g -G
 endif
 
 .PHONY: clean mklib
