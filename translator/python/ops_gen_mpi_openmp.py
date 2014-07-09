@@ -182,6 +182,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
+  
 
 ##########################################################################
 #  create new kernel file
@@ -383,10 +384,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #setup reduction variables
     if reduction == True:
       comm('allocate and initialise arrays for global reduction')
-      comm('assumes a max of 256 threads with a cacche line size of 64 bytes')
+      comm('assumes a max of MAX_REDUCT_THREADS threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * 256];')
+          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * MAX_REDUCT_THREADS];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
@@ -667,6 +668,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')
+  
+  comm('set max number of OMP threads for reductions')
+  code('#ifndef MAX_REDUCT_THREADS')
+  code('#define MAX_REDUCT_THREADS 64')
+  code('#endif')
 
   comm('global constants')
 
