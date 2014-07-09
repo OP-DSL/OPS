@@ -755,7 +755,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         if accs[n] == OPS_READ:
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
         else:
-          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
+          #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')
 
     if GBL_READ == True:
@@ -1017,7 +1018,7 @@ void buildOpenCLKernels() {
   static bool isbuilt = false;
 
   if(!isbuilt) {
-    clSafeCall( clUnloadCompiler() );
+    //clSafeCall( clUnloadCompiler() );
 
     OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
     OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));

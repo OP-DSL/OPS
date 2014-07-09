@@ -122,6 +122,53 @@ def mult(text, i, n):
 
   return text
 
+def remove_trailing_w_space(text):
+  line_start = 0
+  line = ""
+  line_end = 0
+  striped_test = ''
+  count = 0
+  while 1:
+    line_end =  text.find("\n",line_start+1)
+    line = text[line_start:line_end]
+    line = line.rstrip()
+    striped_test = striped_test + line +'\n'
+    line_start = line_end + 1
+    line = ""
+    if line_end < 0:
+      return striped_test
+
+def para_parse(text, j, op_b, cl_b):
+    """Parsing code block, i.e. text to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+
+    while 1:
+      if text[loc2] == op_b:
+            depth = depth + 1
+
+      elif text[loc2] == cl_b:
+            depth = depth - 1
+            if depth == 0:
+                return loc2
+      loc2 = loc2 + 1
+
+def comment_remover(text):
+    """Remove comments from text"""
+
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return ''
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    return re.sub(pattern, replacer, text)
+
 def ops_gen_mpi_openmp(master, date, consts, kernels):
 
   global dims, stens
@@ -135,6 +182,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
+  
 
 ##########################################################################
 #  create new kernel file
@@ -206,9 +254,31 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('#ifdef _OPENMP')
     code('#include <omp.h>')
     code('#endif')
-
+    code('')
     comm('user function')
-    code('#include "'+name2+'_kernel.h"')
+    fid = open(name2+'_kernel.h', 'r')
+    text = fid.read()
+    fid.close()
+    text = comment_remover(text)
+
+    text = remove_trailing_w_space(text)
+
+    i = text.find(name)
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
+
+    i = text[0:i].rfind('\n') #reverse find
+    j = text[i:].find('{')
+    k = para_parse(text, i+j, '{', '}')
+    m = text.find(name)
+    l = text[i:m].find('inline')
+    if(l<0):
+      code('inline '+text[i:k+2])
+    else:
+      code(text[i:k+2])
+    code('')
     comm('')
     comm(' host stub function')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
@@ -225,6 +295,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code(text);
     depth = 2
 
+    code('')
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('ops_timers_core(&c1,&t1);')
+    code('')
     code('');
     code('int  offs['+str(nargs)+']['+str(NDIM)+'];')
 
@@ -308,10 +384,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #setup reduction variables
     if reduction == True:
       comm('allocate and initialise arrays for global reduction')
-      comm('assumes a max of 64 threads with a cacche line size of 64 bytes')
+      comm('assumes a max of MAX_REDUCT_THREADS threads with a cacche line size of 64 bytes')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * 64];')
+          code(typs[n]+' arg_gbl'+str(n)+'[MAX('+dims[n]+' , 64) * MAX_REDUCT_THREADS];')
 
       FOR('thr','0','nthreads')
       for n in range (0, nargs):
@@ -368,13 +444,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     code('ops_H_D_exchanges(args, '+str(nargs)+');\n')
 
-    code('')
-    comm('Timing')
-    code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('ops_timers_core(&c1,&t1);')
-    code('')
 
+    code('')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code('')
 
     code('')
     code('#pragma omp parallel for')
@@ -437,7 +511,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+        if accs[n] <> OPS_READ:
+          text = text +' ('+typs[n]+' * restrict)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+        else:
+          text = text +' (const '+typs[n]+' * restrict)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -466,7 +543,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
+        if accs[n] <> OPS_READ:
+          text = text +' ('+typs[n]+' * restrict)p_a['+str(n)+']'
+        else:
+          text = text +' (const '+typs[n]+' * restrict)p_a['+str(n)+']'
+          
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -506,6 +587,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       
     ENDFOR() #end of OMP parallel loop
 
+
+    code('')
+    code('ops_timers_core(&c1,&t1);')
+    code('OPS_kernels['+str(nk)+'].time += t1-t2;')
+    code('')
 
     #generate code for combining the reductions
     if reduction == True:
@@ -549,7 +635,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].count++;')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
@@ -582,6 +668,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')
+  
+  comm('set max number of OMP threads for reductions')
+  code('#ifndef MAX_REDUCT_THREADS')
+  code('#define MAX_REDUCT_THREADS 64')
+  code('#endif')
 
   comm('global constants')
 
