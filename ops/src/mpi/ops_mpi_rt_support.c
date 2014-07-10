@@ -882,7 +882,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
       }
     }
     if (right_halo_modified[dim]>0 && other_dims) {
-      int beg = 1 + (iter_range[2*dim] >= sb->iend[dim]+1 ? iter_range[2*dim] - sb->iend[dim]+1 : 0);
+      int beg = 1 + (iter_range[2*dim] >= sb->iend[dim]+1 ? iter_range[2*dim] - (sb->iend[dim]+1) : 0);
       for (int d2 = beg; d2 < beg+right_halo_modified[dim]; d2++){
         arg->dat->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d2] = 1;
       }
