@@ -113,6 +113,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
 
 
   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges(args, 3);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[134].mpi_time += t1-t2;
@@ -163,6 +164,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
       p_a[1]= p_a[1] + (dat1 * off1_2);
       p_a[2]= p_a[2] + (dat2 * off2_2);
     }
+    ops_set_dirtybit_host(args, 3);
     ops_timers_core(&c2,&t2);
     OPS_kernels[134].time += t2-t1;
     ops_set_halo_dirtybit3(&args[1],range);

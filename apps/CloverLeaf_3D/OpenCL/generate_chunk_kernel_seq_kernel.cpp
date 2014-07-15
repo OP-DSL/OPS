@@ -283,7 +283,8 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
   ops_halo_exchanges(args,11,range);
-
+  ops_H_D_exchanges(args, 11);
+  
   ops_timers_core(&c1,&t1);
   OPS_kernels[137].mpi_time += t1-t2;
 
@@ -385,6 +386,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
       p_a[9]= p_a[9] + (dat9 * off9_2);
       p_a[10]= p_a[10] + (dat10 * off10_2);
     }
+    ops_set_dirtybit_host(args, 11);
     ops_timers_core(&c2,&t2);
     OPS_kernels[137].time += t2-t1;
     ops_set_halo_dirtybit3(&args[3],range);

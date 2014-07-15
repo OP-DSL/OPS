@@ -198,6 +198,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
 
   ops_halo_exchanges(args,7,range);
+  ops_H_D_exchanges(args, 7);  
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[136].mpi_time += t1-t2;
@@ -274,6 +275,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
       p_a[5]= p_a[5] + (dat5 * off5_2);
       p_a[6]= p_a[6] + (dat6 * off6_2);
     }
+    ops_set_dirtybit_host(args, 7);
     ops_timers_core(&c2,&t2);
     OPS_kernels[136].time += t2-t1;
     ops_set_halo_dirtybit3(&args[0],range);
