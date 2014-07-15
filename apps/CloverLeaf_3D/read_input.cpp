@@ -63,12 +63,12 @@ void read_input()
   dtinit = 0.1;
   dtmax = 1.0;
   dtmin = 0.0000001;
-  dtrise = 1.5;
-  dtc_safe = 0.7;
+  dtrise = 1.05;
+  dtc_safe = 0.75;
   dtu_safe = 0.5;
   dtv_safe = 0.5;
   dtw_safe = 0.5;
-  dtdiv_safe = 0.7;
+  dtdiv_safe = 0.5;
 
   use_vector_loops = TRUE;
 

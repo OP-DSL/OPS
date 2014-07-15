@@ -106,7 +106,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array1, S3D_000, "double", OPS_WRITE),
         ops_arg_dat(work_array2, S3D_000, "double", OPS_WRITE),
         ops_arg_dat(volume, S3D_000, "double", OPS_READ),
-        ops_arg_dat(vol_flux_x, S3D_000_P100, "double", OPS_READ),
+        ops_arg_dat(vol_flux_z, S3D_000_00P1, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S3D_000_0P10, "double", OPS_READ));
     }
     else {
@@ -115,7 +115,7 @@ void advec_cell(int sweep_number, int dir)
         ops_arg_dat(work_array2, S3D_000, "double", OPS_WRITE),
         ops_arg_dat(volume, S3D_000, "double", OPS_READ),
         ops_arg_dat(vol_flux_y, S3D_000_0P10, "double", OPS_READ),
-        ops_arg_dat(vol_flux_z, S3D_000_00P1, "double", OPS_READ));
+        ops_arg_dat(vol_flux_x, S3D_000_P100, "double", OPS_READ));
     }
   }
 
