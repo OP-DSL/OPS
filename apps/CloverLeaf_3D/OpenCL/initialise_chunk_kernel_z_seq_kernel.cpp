@@ -111,10 +111,9 @@ void ops_par_loop_initialise_chunk_kernel_z(char const *name, ops_block block, i
     (start[2] * args[2].stencil->stride[2] - args[2].dat->offset[2]);
   p_a[2] = (char *)args[2].data + base2;
 
-
-  ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
-  
+  ops_halo_exchanges(args,3,range);
+
   ops_timers_core(&c1,&t1);
   OPS_kernels[132].mpi_time += t1-t2;
 

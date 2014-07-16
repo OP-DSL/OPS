@@ -56,7 +56,8 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
 
   //dt_min is work_array1
   dt_min[OPS_ACC10(0,0,0)] = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
-  //printf("dt_min %lf, dtct %lf ",dt_min[OPS_ACC10(0,0,0)], dtct);
+  //if(dt_min[OPS_ACC10(0,0,0)]<0)
+  //  printf("dt_min %lf, dtct %lf, dtut %lf, dtvt %lf, dtdivt %lf, dtwt %lf ",dt_min[OPS_ACC10(0,0,0)], dtct, dtut, dtvt,dtdivt, dtwt);
   //printf("dsx %lf, dsy %lf ",dsx,dsy);
 }
 

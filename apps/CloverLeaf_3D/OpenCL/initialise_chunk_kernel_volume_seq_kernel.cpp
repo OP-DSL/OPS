@@ -196,9 +196,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
     (start[2] * args[6].stencil->stride[2] - args[6].dat->offset[2]);
   p_a[6] = (char *)args[6].data + base6;
 
-
+  ops_H_D_exchanges(args, 7);
   ops_halo_exchanges(args,7,range);
-  ops_H_D_exchanges(args, 7);  
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[136].mpi_time += t1-t2;

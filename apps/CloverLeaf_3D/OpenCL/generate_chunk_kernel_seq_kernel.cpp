@@ -281,10 +281,9 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     (start[2] * args[10].stencil->stride[2] - args[10].dat->offset[2]);
   p_a[10] = (char *)args[10].data + base10;
 
-
-  ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges(args, 11);
-  
+  ops_halo_exchanges(args,11,range);
+
   ops_timers_core(&c1,&t1);
   OPS_kernels[137].mpi_time += t1-t2;
 

@@ -434,6 +434,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #         ENDFOR()
     #         ENDFOR()
 
+    code('ops_H_D_exchanges(args, '+str(nargs)+');\n')
     comm('Halo Exchanges')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     #for n in range (0, nargs):
@@ -442,7 +443,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
     code('')
 
-    code('ops_H_D_exchanges(args, '+str(nargs)+');\n')
+    
 
 
     code('')
