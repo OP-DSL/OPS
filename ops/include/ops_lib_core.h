@@ -313,7 +313,6 @@ void ops_halo_transfer(ops_halo_group group);
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
-ops_arg ops_arg_idx_core( );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);

@@ -424,7 +424,7 @@ ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
   return arg;
 }
 
-ops_arg ops_arg_idx_core () {
+ops_arg ops_arg_idx () {
   ops_arg arg;
   arg.argtype = OPS_ARG_IDX;
   arg.dat = NULL;

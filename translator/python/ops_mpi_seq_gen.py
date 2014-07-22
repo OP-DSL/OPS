@@ -126,6 +126,9 @@ for nargs in range (0,maxargs):
   f.write('extern int ydim'+str(nargs)+';\n')
 f.write('#endif\n')
 functions =  """
+
+static int arg_idx[OPS_MAX_DIM];
+
 inline int mult(int* size, int dim)
 {
   int result = 1;
@@ -258,7 +261,7 @@ for nargs in range (1,maxargs+1):
 
     f.write('  #ifdef OPS_MPI\n')
     f.write('  sub_block_list sb = OPS_sub_block_list[block->index];\n')
-    f.write('  //compute localy allocated range for the sub-block \n' +
+    f.write('  //compute locally allocated range for the sub-block \n' +
             '  int ndim = sb->ndim;\n' )
     f.write('  for (int n=0; n<ndim; n++) {\n')
     f.write('    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];\n')
@@ -302,6 +305,14 @@ for nargs in range (1,maxargs+1):
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
     f.write('      p_a[i] = (char *)args[i].data;\n')
+    f.write('    else if (args[i].argtype == OPS_ARG_IDX) {\n')
+    f.write('  #ifdef OPS_MPI\n')
+    f.write('      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];\n')
+    f.write('  #else //OPS_MPI\n')
+    f.write('      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];\n')
+    f.write('  #endif //OPS_MPI\n')
+    f.write('      p_a[i] = (char *)arg_idx;\n')
+    f.write('    }\n')
     f.write('  }\n\n')
 
 
@@ -378,6 +389,14 @@ for nargs in range (1,maxargs+1):
     f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
     f.write('        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);\n')
+    f.write('      else if (args[i].argtype == OPS_ARG_IDX) {\n')
+    f.write('        arg_idx[m]++;\n')
+    f.write('  #ifdef OPS_MPI\n')
+    f.write('        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];\n')
+    f.write('  #else //OPS_MPI\n')
+    f.write('        for (int d = 0; d < m; d++) arg_idx[d] = start[d];\n')
+    f.write('  #endif //OPS_MPI\n')
+    f.write('      }\n')
     f.write('    }\n')
     f.write('  }\n\n')
 

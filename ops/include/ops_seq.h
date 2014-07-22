@@ -165,6 +165,9 @@ extern int ydim16;
 extern int ydim17;
 #endif
 
+
+static int arg_idx[OPS_MAX_DIM];
+
 inline int mult(int* size, int dim)
 {
   int result = 1;
@@ -247,7 +250,7 @@ void ops_par_loop(void (*kernel)(T0*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -281,11 +284,19 @@ void ops_par_loop(void (*kernel)(T0*),
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -322,6 +333,14 @@ void ops_par_loop(void (*kernel)(T0*),
     for (int i=0; i<1; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -353,7 +372,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -387,11 +406,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -434,6 +461,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     for (int i=0; i<2; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -468,7 +503,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -502,11 +537,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -555,6 +598,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     for (int i=0; i<3; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -592,7 +643,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -626,11 +677,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -685,6 +744,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     for (int i=0; i<4; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -729,7 +796,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -763,11 +830,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -829,6 +904,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<5; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -876,7 +959,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -910,11 +993,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -982,6 +1073,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<6; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1032,7 +1131,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -1066,11 +1165,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 7; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -1144,6 +1251,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<7; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1197,7 +1312,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -1231,11 +1346,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -1315,6 +1438,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<8; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1375,7 +1506,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -1409,11 +1540,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 9; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -1500,6 +1639,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<9; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1563,7 +1710,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -1597,11 +1744,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 10; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -1694,6 +1849,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<10; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1760,7 +1923,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -1794,11 +1957,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 11; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -1897,6 +2068,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<11; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -1966,7 +2145,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -2000,11 +2179,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 12; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -2109,6 +2296,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<12; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -2185,7 +2380,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -2219,11 +2414,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 13; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -2335,6 +2538,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<13; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -2414,7 +2625,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -2448,11 +2659,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 14; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -2570,6 +2789,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<14; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -2652,7 +2879,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -2686,11 +2913,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 15; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -2814,6 +3049,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<15; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -2899,7 +3142,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -2933,11 +3176,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 16; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -3067,6 +3318,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<16; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -3159,7 +3418,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -3193,11 +3452,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 17; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -3334,6 +3601,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<17; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 
@@ -3429,7 +3704,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -3463,11 +3738,19 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 18; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->elem_size, &start[0],
+      + address(ndim, args[i].dat->elem_size, &start[0], 
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
+    else if (args[i].argtype == OPS_ARG_IDX) {
+  #ifdef OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      p_a[i] = (char *)arg_idx;
+    }
   }
 
   int total_range = 1;
@@ -3610,6 +3893,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     for (int i=0; i<18; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
         p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
+      else if (args[i].argtype == OPS_ARG_IDX) {
+        arg_idx[m]++;
+  #ifdef OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+  #else //OPS_MPI
+        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+  #endif //OPS_MPI
+      }
     }
   }
 

@@ -152,9 +152,3 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 {
   return ops_arg_gbl_core( data, dim, size, acc );
 }
-
-ops_arg ops_arg_idx()
-{
-  return ops_arg_idx_core( );
-}
-
