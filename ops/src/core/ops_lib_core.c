@@ -393,6 +393,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
     halo->from_dir[i] = i+1;
     halo->to_dir[i] = i+1;
   }
+  return halo;
 }
 
 ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {

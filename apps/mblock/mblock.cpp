@@ -57,6 +57,7 @@ int main(int argc, char **argv)
 
   //declare blocks
   ops_block grid0 = ops_decl_block(2, "grid0");
+  ops_block grid1 = ops_decl_block(2, "grid1");
 
   //declare stencils
   int s2D_00[]         = {0,0};
@@ -70,6 +71,81 @@ int main(int argc, char **argv)
   double* temp = NULL;
 
   ops_dat data0 = ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "data0");
+  ops_dat data1 = ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, "double", "data1");
+
+
+  //straightforward matching orientation halos data0 - data1 in x
+  ops_halo_group halos0;
+  {
+    int halo_iter[] = {2,20};
+    int base_from[] = {18,0};
+    int base_to[] = {-2,0};
+    int dir[] = {1,2};
+    ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir);
+    base_from[0] = 0; base_to[0] = 20;
+    ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir);
+    ops_halo grp[] = {h0,h1};
+    halos0 = ops_decl_halo_group(2,grp);
+  }
+
+  //straightforward matching orientation halos data0 - data1 in y
+  ops_halo_group halos1;
+  {
+    int halo_iter[] = {20,2};
+    int base_from[] = {0,18};
+    int base_to[] = {0,-2};
+    int dir[] = {1,2};
+    ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir);
+    base_from[1] = 0; base_to[1] = 20;
+    ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir);
+    ops_halo grp[] = {h0,h1};
+    halos1 = ops_decl_halo_group(2,grp);
+  }
+
+  //reverse data1 - data0 in x
+  ops_halo_group halos2;
+  {
+    int halo_iter[] = {2,20};
+    int base_from[] = {0,0};
+    int base_to[] = {20,0};
+    int dir[] = {1,2};
+    int dir_to[] = {1,-2};
+    ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to);
+    base_from[0] = 18; base_to[0] = -2;
+    ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir);
+    ops_halo grp[] = {h0,h1};
+    halos2 = ops_decl_halo_group(2,grp);
+  }
+
+  //reverse data1 - data0 in y
+  ops_halo_group halos3;
+  {
+    int halo_iter[] = {20,2};
+    int base_from[] = {0,0};
+    int base_to[] = {0,20};
+    int dir[] = {1,2};
+    int dir_to[] = {-1,2};
+    ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to);
+    base_from[1] = 18; base_to[1] = -2;
+    ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir);
+    ops_halo grp[] = {h0,h1};
+    halos3 = ops_decl_halo_group(2,grp);
+  }
+
+  //rotated data0-data1 x<->y
+  ops_halo_group halos4;
+  {
+    int halo_iter[] = {2,20};
+    int base_from[] = {18,0};
+    int base_to[] = {0,-2};
+    int dir[] = {1,2};
+    int dir_to[] = {2,1};
+    ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to);
+    base_from[0] = 0; base_to[0] = 20; base_to[1] = 0;
+    ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir);
+    ops_halo grp[] = {h0,h1};
+    halos4 = ops_decl_halo_group(2,grp);
+  }
 
   ops_partition("");
 
@@ -84,6 +160,15 @@ int main(int argc, char **argv)
   ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid0, 2, iter_range,
                ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
+  ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid1, 2, iter_range,
+               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
+
+  ops_halo_transfer(halos0);
+  ops_halo_transfer(halos1);
+  ops_halo_transfer(halos2);
+  ops_halo_transfer(halos3);
+  ops_halo_transfer(halos4);
 
 
   ops_timers_core(&ct1, &et1);

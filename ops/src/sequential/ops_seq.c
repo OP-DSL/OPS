@@ -124,24 +124,25 @@ void ops_halo_transfer(ops_halo_group group) {
     //copy to linear buffer from source
     int ranges[OPS_MAX_DIM*2];
     int step[OPS_MAX_DIM];
+    int buf_strides[OPS_MAX_DIM];
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->from_dir[i] > 0) {
-        ranges[2*i] = halo->from_base[i];
-        ranges[2*i+1] = halo->from_base[i] + halo->iter_size[abs(halo->from_dir[i])-1];
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i] = halo->from_base[i] + halo->iter_size[abs(halo->from_dir[i])-1]+1;
-        ranges[2*i+1] = halo->from_base[i]+1;
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = -1;
       }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->from_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
     }
-    int offset = 0;
     for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
-      for (int j = ranges[2]; (step[1]==1 ? k < ranges[3] : k > ranges[3]); k += step[1]) {
-        for (int i = ranges[0]; (step[0]==1 ? k < ranges[1] : k > ranges[1]); k += step[0]) {
-          memcpy(ops_halo_buffer + halo->from->elem_size*offset,
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          memcpy(ops_halo_buffer + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->from->elem_size,
                  halo->from->data + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
-          offset++;
         }
       }
     }
@@ -149,22 +150,22 @@ void ops_halo_transfer(ops_halo_group group) {
     //copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->to_dir[i] > 0) {
-        ranges[2*i] = halo->to_base[i];
-        ranges[2*i+1] = halo->to_base[i] + halo->iter_size[abs(halo->to_dir[i])-1];
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i] = halo->to_base[i] + halo->iter_size[abs(halo->to_dir[i])-1]+1;
-        ranges[2*i+1] = halo->to_base[i]+1;
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = -1;
       }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->to_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
     }
-    offset = 0;
     for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
-      for (int j = ranges[2]; (step[1]==1 ? k < ranges[3] : k > ranges[3]); k += step[1]) {
-        for (int i = ranges[0]; (step[0]==1 ? k < ranges[1] : k > ranges[1]); k += step[0]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
           memcpy(halo->to->data + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-                 ops_halo_buffer + halo->to->elem_size*offset, halo->to->elem_size);
-          offset++;
+                 ops_halo_buffer + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
         }
       }
     }

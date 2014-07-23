@@ -55,6 +55,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
   grp->nhalos = nhalos;
   grp->halos = halos; //TODO: make a copy?
   grp->index = OPS_halo_group_index++;
+  return grp;
 }
 
 int ops_is_root()
