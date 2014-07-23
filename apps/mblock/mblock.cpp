@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 
 
   //straightforward matching orientation halos data0 - data1 in x
+  //last two x lines of data0 and first two of data1
   ops_halo_group halos0;
   {
     int halo_iter[] = {2,20};
@@ -89,6 +90,7 @@ int main(int argc, char **argv)
   }
 
   //straightforward matching orientation halos data0 - data1 in y
+  //last two y lines of data0 and first two of data1
   ops_halo_group halos1;
   {
     int halo_iter[] = {20,2};
@@ -103,6 +105,7 @@ int main(int argc, char **argv)
   }
 
   //reverse data1 - data0 in x
+  //last two x lines of data0 and first two of data1, but data1 is flipped in y
   ops_halo_group halos2;
   {
     int halo_iter[] = {2,20};
@@ -118,6 +121,7 @@ int main(int argc, char **argv)
   }
 
   //reverse data1 - data0 in y
+  //last two y lines of data0 and first two of data1, but data1 is flipped in x
   ops_halo_group halos3;
   {
     int halo_iter[] = {20,2};
@@ -133,6 +137,7 @@ int main(int argc, char **argv)
   }
 
   //rotated data0-data1 x<->y
+  //last two x lines of data0 to first two y lines of data1 (and back)
   ops_halo_group halos4;
   {
     int halo_iter[] = {2,20};

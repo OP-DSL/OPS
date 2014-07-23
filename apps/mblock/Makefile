@@ -118,7 +118,8 @@ endif
 # master to make all versions
 #
 
-TARGETS = mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda mblock_opencl #mblock_openacc mblock_mpi_openacc
+TARGETS = mblock_dev_seq
+# mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda mblock_opencl #mblock_openacc mblock_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += mblock_openacc mblock_mpi_openacc
