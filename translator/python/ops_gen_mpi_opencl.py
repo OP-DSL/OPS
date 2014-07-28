@@ -422,7 +422,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type']=='int' or consts[found_consts[c]]['type']=='double' or consts[found_consts[c]]['type']=='float':
-        code('__global const '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')      
+        code('const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
       else:
         code('__constant const struct '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')        
       
@@ -477,10 +477,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     
     for c in range(0, len(found_consts)):
-      if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
-        text = text + '*'+consts[found_consts[c]]['name'][1:-1]
+      #if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
+      if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
+        text = text + consts[found_consts[c]]['name'][1:-1]
       else:
-        text = text + ''+consts[found_consts[c]]['name'][1:-1]
+        text = text + '*'+consts[found_consts[c]]['name'][1:-1]
       if c != len(found_consts)-1:
         text = text+',\n  '+indent
 
@@ -813,7 +814,6 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
           code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
-        #code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
         code('')
         
 
@@ -836,11 +836,13 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
       const_dim = consts[found_consts[c]]['dim']
-      if const_dim.isdigit() and int(const_dim)==1:
-        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')  
-      else:        
-        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) '+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
-      code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
+      #if const_dim.isdigit() and int(const_dim)==1:
+        #code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+      #  code('')
+      #else:
+      if not (consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float'):
+        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+        code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
     code('')
     
     #set up argements in order to do the kernel call
@@ -855,19 +857,19 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         nkernel_args = nkernel_args+1
       
     for c in range(0, len(found_consts)):
-      if consts[found_consts[c]]['type'] is 'int' or consts[found_consts[c]]['type'] is 'double' or consts[found_consts[c]]['type'] is 'float':
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
-             consts[found_consts[c]]['type']+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+      if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
+        #code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
+        #     consts[found_consts[c]]['type']+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+consts[found_consts[c]]['type']+\
+             '), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
       else:
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
+        #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
         
       nkernel_args = nkernel_args+1
       
-     
-    #for n in range (0, nargs):
-    #  if arg_typ[n] == 'ops_arg_dat':
-    #    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &xdim'+str(n)+' ));')
-    #    nkernel_args = nkernel_args+1
+   
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
