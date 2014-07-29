@@ -146,10 +146,10 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
 {
   //create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
-  
+
   int max_block_dim = 0;
   int max_block_dims = 0;
-  
+
   for(int b=0; b<OPS_block_index; b++){ //for each block
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
@@ -169,19 +169,19 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
       n, sb_list->id_m[n], sb_list->id_p[n], sb_list->disps[n], sb_list->sizes[n],
       sb_list->istart[n], sb_list->iend[n]);
     printf("\n");
-    
+
     max_block_dims = MAX(max_block_dims,sb_list->ndim);
     for(int n=0; n<sb_list->ndim; n++) max_block_dim = MAX(max_block_dim,sb_list->sizes[n]);
-    
+
   }
   ops_printf("Finished block decomposition\n");
-  
+
   //allocate send/recv buffer (double, 8 args, maximum depth)
   ops_buffer_size = 8*8*MAX_DEPTH*pow(2*MAX_DEPTH+max_block_dim,max_block_dims-1);
-  ops_buffer_send_1=(char*)malloc(ops_buffer_size);
-  ops_buffer_recv_1=(char*)malloc(ops_buffer_size);
-  ops_buffer_send_2=(char*)malloc(ops_buffer_size);
-  ops_buffer_recv_2=(char*)malloc(ops_buffer_size);
+  ops_comm_realloc(&ops_buffer_send_1,ops_buffer_size*sizeof(char),0);
+  ops_comm_realloc(&ops_buffer_recv_1,ops_buffer_size*sizeof(char),0);
+  ops_comm_realloc(&ops_buffer_send_2,ops_buffer_size*sizeof(char),0);
+  ops_comm_realloc(&ops_buffer_recv_2,ops_buffer_size*sizeof(char),0);
   ops_buffer_send_1_size = ops_buffer_size;
   ops_buffer_recv_1_size = ops_buffer_size;
   ops_buffer_send_2_size = ops_buffer_size;
