@@ -205,9 +205,5 @@ void ops_mpi_exit()
     free(OPS_sub_dat_list[i]->halos);
   }
   free(OPS_sub_dat_list);
-  free(ops_buffer_send_1);
-  free(ops_buffer_recv_1);
-  free(ops_buffer_send_2);
-  free(ops_buffer_recv_2);
   OPS_sub_dat_list = NULL;
 }

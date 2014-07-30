@@ -43,6 +43,10 @@
 #include <math_constants.h>
 #include <ops_cuda_rt_support.h>
 extern char *halo_buffer_d;
+extern char *ops_buffer_send_1;
+extern char *ops_buffer_recv_1;
+extern char *ops_buffer_send_2;
+extern char *ops_buffer_recv_2;
   
 void ops_init_cuda ( int argc, char ** argv, int diags )
 {
@@ -97,12 +101,22 @@ void ops_exit()
 {
   ops_mpi_exit();
   if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-  ops_cuda_exit();
-  ops_exit_core();
-
+  if (OPS_gpu_direct) {
+    cutilSafeCall(cudaFree(ops_buffer_send_1));
+    cutilSafeCall(cudaFree(ops_buffer_recv_1));
+    cutilSafeCall(cudaFree(ops_buffer_send_2));
+    cutilSafeCall(cudaFree(ops_buffer_recv_2));
+  } else {
+    free(ops_buffer_send_1);
+    free(ops_buffer_recv_1);
+    free(ops_buffer_send_2);
+    free(ops_buffer_recv_2);
+  }
   int flag = 0;
   MPI_Finalized(&flag);
   if(!flag) MPI_Finalize();
+  ops_cuda_exit();
+  ops_exit_core();
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,

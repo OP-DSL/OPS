@@ -101,6 +101,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
   }
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest,halo_buffer_d,halo->count*halo->blocklength,cudaMemcpyDeviceToHost));
+  else
+    cutilSafeCall(cudaDeviceSynchronize());
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo) {
@@ -111,8 +113,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     halo_buffer_size = halo->count*halo->blocklength*4;
   }
 
-  char *device_buf=NULL;
-  if (OPS_gpu_direct) device_buf = dest;
+  const char *device_buf=NULL;
+  if (OPS_gpu_direct) device_buf = src;
   else device_buf = halo_buffer_d;
 
   if (!OPS_gpu_direct)
@@ -134,6 +136,7 @@ void ops_comm_realloc(char **ptr, int size, int prev) {
     if (*ptr == NULL) {
       cutilSafeCall(cudaMalloc((void**)ptr, size));
     } else {
+      printf("Warning: cuda cache realloc\n");
       char *ptr2;
       cutilSafeCall(cudaMalloc((void**)&ptr2, size));
       cutilSafeCall(cudaMemcpy(ptr2, *ptr, prev, cudaMemcpyDeviceToDevice));
