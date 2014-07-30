@@ -71,9 +71,9 @@ void initialise()
     ops_fprintf(g_in," ymax=2.0\n");
     ops_fprintf(g_in," zmax=2.0\n");
     ops_fprintf(g_in," initial_timestep=0.04\n");
-    ops_fprintf(g_in," timestep_rise=1.5\n");
+    ops_fprintf(g_in," timestep_rise=1.05\n");
     ops_fprintf(g_in," max_timestep=0.04\n");
-    ops_fprintf(g_in," end_time=3.0\n");
+    ops_fprintf(g_in," end_step=75\n");
     ops_fprintf(g_in," test_problem 1\n");
     ops_fprintf(g_in,"*endclover\n");
     fclose(g_in);
