@@ -869,7 +869,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
           for d2 in range (0,d):
-            line = line + ' args['+str(n)+'].dat->block_size['+str(d-1)+'] * '
+            line = line + ' args['+str(n)+'].dat->block_size['+str(d2)+'] * '
           code(line[:-1])
           #code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')          
           code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')

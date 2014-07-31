@@ -50,6 +50,7 @@
 #include "../MPI/advec_cell_kernel2_zdir_seq_kernel.cpp"
 #include "../MPI/advec_cell_kernel3_zdir_seq_kernel.cpp"
 #include "../MPI/advec_cell_kernel4_zdir_seq_kernel.cpp"
+
 #include "../MPI/update_halo_kernel1_b2_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_b1_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_t2_seq_kernel.cpp"
@@ -134,12 +135,13 @@
 #include "../MPI/update_halo_kernel5_minus_2_back_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel5_minus_4_front_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel5_minus_2_front_seq_kernel.cpp"
+
 #include "../MPI/field_summary_kernel_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
-#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"*/
-#include "../MPI/initialise_chunk_kernel_x_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
+*/#include "../MPI/initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_z_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_cellx_seq_kernel.cpp"
