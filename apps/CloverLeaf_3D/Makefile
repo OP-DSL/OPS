@@ -94,7 +94,7 @@ endif
 ifdef DEBUG
   NVCC_FLAGS = -O0 -g -G
 else
-	NVCC_FLAGS = -O3 
+  NVCC_FLAGS = -O3 -restrict #--fmad false
 endif
 
 
