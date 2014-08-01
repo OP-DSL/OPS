@@ -295,9 +295,16 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     name2 = name[0:i-1]
         
     code('')
+    
+    code('#if OCL_FMA')
+    code('#pragma OPENCL FP_CONTRACT ON')
+    code('#else')
+    code('#pragma OPENCL FP_CONTRACT OFF')
+    code('#endif')
     code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
     code('')
     
+
     code('#include "user_types.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
@@ -577,10 +584,18 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     
     opencl_build_kernel = """
+#if OCL_FMA_SWITCH
+#define OCL_FMA 1
+#else
+#define OCL_FMA 0
+#endif
+
+
 static bool isbuilt_"""+kernel_name_list[nk]+""" = false;
 
 void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
-  
+
+  //int ocl_fma = OCL_FMA;
   if(!isbuilt_"""+kernel_name_list[nk]+""") {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );       
@@ -613,7 +628,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       fclose(fid);
     }
     
-    printf("Compiling """+kernel_name_list[nk]+""" source -- start \\n");
+    printf("Compiling """+kernel_name_list[nk]+""" %d source -- start \\n",OCL_FMA);
 
       // Create a program from the source
       OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
@@ -624,7 +639,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       char* pPath = NULL;
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
-        sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+        if(OCL_FMA)
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA=1 -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+        else
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA=0 -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);
