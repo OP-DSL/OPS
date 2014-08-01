@@ -296,7 +296,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         
     code('')
     
-    code('#if OCL_FMA')
+    code('#ifdef OCL_FMA')
     code('#pragma OPENCL FP_CONTRACT ON')
     code('#else')
     code('#pragma OPENCL FP_CONTRACT OFF')
@@ -584,7 +584,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     
     
     opencl_build_kernel = """
-#if OCL_FMA_SWITCH
+#ifdef OCL_FMA_SWITCH_ON
 #define OCL_FMA 1
 #else
 #define OCL_FMA 0
@@ -640,9 +640,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA=1 -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
         else
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA=0 -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);

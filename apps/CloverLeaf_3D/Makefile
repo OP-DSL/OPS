@@ -98,7 +98,7 @@ else
 endif
 
 #switch on FMA instructions in OpenCL
-OCL_FLAGS=-DOCL_FMA_SWITCH=0
+OCL_FLAGS=-DOCL_FMA_SWITCH_ON
 
 
 #
