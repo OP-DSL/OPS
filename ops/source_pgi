@@ -4,5 +4,5 @@ export LD_LIBRARY_PATH=/opt/openmpi-1.8-pgi142/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/usr/lib64:/rubydisk2/pgi/linux86-64/2013/lib:$LD_LIBRARY_PATH
 export MPI_INSTALL_PATH=/opt/openmpi-1.8-pgi142/
 export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS_rebase/OPS/ops
+export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS/OPS/ops
 export CUDA_INSTALL_PATH=/usr/local/cuda-6.0
