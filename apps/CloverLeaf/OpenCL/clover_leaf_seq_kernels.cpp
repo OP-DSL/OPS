@@ -6,9 +6,6 @@
 #include "ops_lib_cpp.h"
 #include "ops_lib_mpi.h"
 
-//global constants
-extern double dt;
-
 //user kernel files
 //#include "revert_kernel_seq_kernel.cpp"
 //#include "reset_field_kernel1_seq_kernel.cpp"
