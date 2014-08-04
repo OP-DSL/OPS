@@ -495,10 +495,12 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==2:
-          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
+          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
         elif NDIM==3:
-          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[2*n])+' + idx_y * '+str(stride[2*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
-          '+ idx_z * '+str(stride[2*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
+          text = text + '&arg'+str(n)+'[base'+str(n)+\
+          ' + idx_x * '+str(stride[NDIM*n])+\
+          ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
+          ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
@@ -562,8 +564,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         if NDIM==3:
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-          arg_values = arg_values + ', ydim'+str(n)
-        
+          arg_values = arg_values + ', ydim'+str(n)       
         
       if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
         arg_text = arg_text + ',\n'+depth*' '

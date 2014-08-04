@@ -6,6 +6,7 @@
 #define OPS_3D
 #include "ops_lib_cpp.h"
 #include "ops_lib_mpi.h"
+#include "user_types.h"
 
 //user kernel files
 /*#include "../MPI/viscosity_kernel_seq_kernel.cpp"
@@ -133,11 +134,11 @@
 #include "../MPI/update_halo_kernel5_minus_2_back_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel5_minus_4_front_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel5_minus_2_front_seq_kernel.cpp"
-#include "../MPI/field_summary_kernel_seq_kernel.cpp"*/
+#include "../MPI/field_summary_kernel_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"*/
 #include "../MPI/initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_z_seq_kernel.cpp"
