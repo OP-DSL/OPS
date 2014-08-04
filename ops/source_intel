@@ -2,7 +2,6 @@
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS/OPS/ops
 #export MPI_INSTALL_PATH=/opt/openmpi-1.6.4-intel/
->>>>>>> f608c46... Minor changes to Makefile
 export CUDA_INSTALL_PATH=/usr/local/cuda-6.0/
 export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0/
 export MPI_INSTALL_PATH=/opt/intel/impi/4.1.3.048/intel64
