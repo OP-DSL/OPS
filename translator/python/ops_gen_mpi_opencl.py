@@ -220,7 +220,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
-  NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
+  NDIM = 2 #the dimension of the application, set to 2 by default. Will be updated later from loops
 
 ##########################################################################
 #  create new kernel files **_kernel.cl
@@ -249,15 +249,31 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       print 'WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host'
       continue
 
+    #reset dimension of the application
+    NDIM = int(dim)
+    
     #parse stencil to locate strided access
-    stride = [1] * nargs * 2
+    stride = [1] * nargs * NDIM
 
-    for n in range (0, nargs):
-      if str(stens[n]).find('STRID2D_X') > 0:
-        stride[2*n+1] = 0
-      elif str(stens[n]).find('STRID2D_Y') > 0:
-        stride[2*n] = 0
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[NDIM*n] = 0
 
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_X') > 0:
+          stride[NDIM*n+1] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[NDIM*n] = 0
+          stride[NDIM*n+1] = 0
+          
 
     reduction = 0
     for n in range (0, nargs):
@@ -320,7 +336,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==2:
+          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+        if NDIM==3:
+          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')    
     
     code('')
@@ -432,7 +451,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('const int base'+str(n)+',')
 
     code('const int size0,')
-    code('const int size1 ){')
+    if NDIM==2:
+      code('const int size1 ){')
+    if NDIM==3:
+      code('const int size1,')
+      code('const int size2 ){')
+      
+      
     depth = depth + 2
 
     #local variable to hold reductions on GPU
@@ -453,6 +478,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
     code('')
+    if NDIM==3:
+      code('int idx_z = get_global_id(2);')
     code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
@@ -460,7 +487,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     indent = (len(name2)+depth+8)*' '
     n_per_line = 5
-    IF('idx_x < size0 && idx_y < size1')
+    if NDIM==2:
+      IF('idx_x < size0 && idx_y < size1')
+    elif NDIM==3:
+      IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
     text = name+'('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -679,13 +709,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
 
     code('')
-    code('int x_size = end_add[0]-start_add[0];')
-    code('int y_size = end_add[1]-start_add[1];')
+    code('int x_size = MAX(0,end_add[0]-start_add[0]);')
+    code('int y_size = MAX(0,end_add[1]-start_add[1]);')
+    if NDIM==3:
+      code('int z_size = MAX(0,end_add[2]-start_add[2]);')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];')        
     code('')
 
     comm('build opencl kernel if not already built')
@@ -712,7 +746,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     #set up OpenCL grid and thread blocks
     comm('set up OpenCL thread blocks')
-    code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
+    if NDIM==2:
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
+    if NDIM==3:
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};')
     code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
     code('')
     
@@ -723,6 +760,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
     
     GBL_READ = False
+    GBL_READ_MDIM = False
     GBL_INC = False
     GBL_MAX = False
     GBL_MIN = False
@@ -732,6 +770,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           GBL_READ = True
+          if not dims[n].isdigit() or int(dims[n])>1:
+            GBL_READ_MDIM = True
         if accs[n] == OPS_INC:
           GBL_INC = True
         if accs[n] == OPS_MAX:
@@ -742,7 +782,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+      if NDIM==2:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+      if NDIM==3:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('')
@@ -879,6 +922,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     nkernel_args = nkernel_args+1
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
     nkernel_args = nkernel_args+1
+    if NDIM==3:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
+      nkernel_args = nkernel_args+1
     
     #kernel call
     code('')
@@ -940,6 +986,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   depth = 0
   file_text =''
   comm('header')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#include "stdlib.h"')
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')

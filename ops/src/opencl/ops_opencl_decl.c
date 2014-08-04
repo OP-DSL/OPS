@@ -69,6 +69,26 @@ int xdim16;
 int xdim17;
 int xdim18;
 int xdim19;
+int ydim0;
+int ydim1;
+int ydim2;
+int ydim3;
+int ydim4;
+int ydim5;
+int ydim6;
+int ydim7;
+int ydim8;
+int ydim9;
+int ydim10;
+int ydim11;
+int ydim12;
+int ydim13;
+int ydim14;
+int ydim15;
+int ydim16;
+int ydim17;
+int ydim18;
+int ydim19;
 #endif /* __XDIMS__ */
 
 void ops_init ( int argc, char ** argv, int diags )
