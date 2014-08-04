@@ -1,8 +1,7 @@
 #A rough example of environmental variables for compiling with PGI compilers
-export PATH=/opt/openmpi-1.8-pgi142/:$PATH
-export PATH=/opt/pgi/linux86-64/14.2/bin/:$PATH
-export LD_LIBRARY_PATH=/opt/pgi/linux86-64/14.2/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/opt/openmpi-1.8-pgi142/$LD_LIBRARY_PATH
+export PATH=/opt/openmpi-1.8-pgi142/bin:$PATH
+export LD_LIBRARY_PATH=/opt/openmpi-1.8-pgi142/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/lib64:/rubydisk2/pgi/linux86-64/2013/lib:$LD_LIBRARY_PATH
 export MPI_INSTALL_PATH=/opt/openmpi-1.8-pgi142/
 export OPS_COMPILER=pgi
 export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS_rebase/OPS/ops
