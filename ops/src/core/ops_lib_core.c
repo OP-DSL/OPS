@@ -48,7 +48,7 @@ int OPS_kern_max=0, OPS_kern_curr=0;
 ops_kernel * OPS_kernels=NULL;
 ops_arg *OPS_curr_args=NULL;
 const char *OPS_curr_name=NULL;
-int OPS_hybrid_gpu = 0;
+int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -131,6 +131,12 @@ void ops_init_core( int argc, char ** argv, int diags )
     {
       OPS_block_size_y = atoi ( argv[n] + 17 );
       printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+    }
+
+    if ( strncmp ( argv[n], "-gpudirect", 10 ) == 0 )
+    {
+      OPS_gpu_direct = 1;
+      ops_printf ( "\n GPU Direct enabled\n" );
     }
   }
 
@@ -260,7 +266,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_send[i] = 1;
   dat->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_recv[i] = 1;
-  
+
   dat->type = copy_str( type );
   dat->name = copy_str(name);
   dat->e_dat = 0; //default to non-edge dat
@@ -600,7 +606,7 @@ void ops_timing_output()
     sprintf(buf,"Name");
     for (int i = 4; i < maxlen;i++) strcat(buf," ");
     ops_printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
-  
+
     sprintf(buf,"");
     for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
     ops_printf("%s\n",buf);
@@ -609,17 +615,17 @@ void ops_timing_output()
       if (OPS_kernels[k].count < 1) continue;
       sprintf(buf,"%s",OPS_kernels[k].name);
       for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
-  
+
       double moments_mpi_time[2];
       double moments_time[2];
       ops_compute_moment(OPS_kernels[k].time, &moments_time[0], &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0], &moments_mpi_time[1]);
-  
+
       sprintf(buf2,"%-5d %-6f(%-6f) %-6f(%-6f)  %-13.2f", OPS_kernels[k].count, moments_time[0],
         sqrt(moments_time[1] - moments_time[0]*moments_time[0]),
         moments_mpi_time[0], sqrt(moments_mpi_time[1] - moments_mpi_time[0]*moments_mpi_time[0]),
         OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
-  
+
       //sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
       //  OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
       ops_printf("%s%s\n",buf,buf2);

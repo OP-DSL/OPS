@@ -81,42 +81,77 @@ __global__ void ops_cuda_unpacker_1(const char * __restrict src, char *__restric
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_halo *__restrict halo) {
   const char * __restrict src = dat->data_d+src_offset*dat->size;
-  if (halo_buffer_size<halo->count*halo->blocklength) {
+  if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
     halo_buffer_size = halo->count*halo->blocklength*4;
   }
+  char *device_buf=NULL;
+  if (OPS_gpu_direct) device_buf = dest;
+  else device_buf = halo_buffer_d;
+
   if (halo->blocklength%4 == 0) {
     int num_threads = 128;
     int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
-    ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)halo_buffer_d,halo->count, halo->blocklength/4, halo->stride/4);
+    ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)device_buf,halo->count, halo->blocklength/4, halo->stride/4);
   } else {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
-    ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,halo_buffer_d,halo->count, halo->blocklength, halo->stride);
+    ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
   }
-  cutilSafeCall(cudaMemcpy(dest,halo_buffer_d,halo->count*halo->blocklength,cudaMemcpyDeviceToHost));
+  if (!OPS_gpu_direct)
+    cutilSafeCall(cudaMemcpy(dest,halo_buffer_d,halo->count*halo->blocklength,cudaMemcpyDeviceToHost));
+  else
+    cutilSafeCall(cudaDeviceSynchronize());
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo) {
   char * __restrict dest = dat->data_d+dest_offset*dat->size;
-  if (halo_buffer_size<halo->count*halo->blocklength) {
+  if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
     halo_buffer_size = halo->count*halo->blocklength*4;
   }
-  cutilSafeCall(cudaMemcpy(halo_buffer_d,src,halo->count*halo->blocklength,cudaMemcpyHostToDevice));
+
+  const char *device_buf=NULL;
+  if (OPS_gpu_direct) device_buf = src;
+  else device_buf = halo_buffer_d;
+
+  if (!OPS_gpu_direct)
+    cutilSafeCall(cudaMemcpy(halo_buffer_d,src,halo->count*halo->blocklength,cudaMemcpyHostToDevice));
   if (halo->blocklength%4 == 0) {
     int num_threads = 128;
     int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
-    ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)halo_buffer_d,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
+    ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
   } else {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
-    ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(halo_buffer_d,dest,halo->count, halo->blocklength, halo->stride);
+    ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
   }
- cutilSafeCall(cudaDeviceSynchronize()); 
+ //cutilSafeCall(cudaDeviceSynchronize());
 }
+
+void ops_comm_realloc(char **ptr, int size, int prev) {
+  if (OPS_gpu_direct) {
+    if (*ptr == NULL) {
+      cutilSafeCall(cudaMalloc((void**)ptr, size));
+    } else {
+      printf("Warning: cuda cache realloc\n");
+      char *ptr2;
+      cutilSafeCall(cudaMalloc((void**)&ptr2, size));
+      cutilSafeCall(cudaMemcpy(ptr2, *ptr, prev, cudaMemcpyDeviceToDevice));
+      cutilSafeCall(cudaFree(*ptr));
+      *ptr = ptr2;
+    }
+  } else {
+    if (*ptr == NULL) {
+      *ptr = (char *)malloc(size);
+    } else {
+      *ptr = (char*)realloc(*ptr, size);
+    }
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -38,3 +38,11 @@ void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
   (void)nargs;
   (void)args;
 }
+
+void ops_comm_realloc(char **ptr, int size, int prev) {
+  if (*ptr == NULL) {
+    *ptr = (char *)malloc(size);
+  } else {
+    *ptr = (char*)realloc(*ptr, size);
+  }
+}

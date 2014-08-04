@@ -261,7 +261,7 @@ typedef sub_block * sub_block_list;
 * Global constants
 *******************************************************************************/
 
-extern int OPS_hybrid_gpu;
+extern int OPS_hybrid_gpu, OPS_gpu_direct;
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel * OPS_kernels;
 
