@@ -391,7 +391,7 @@ void mvConstArraysToDevice ( int consts_bytes )
     clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
       (cl_mem) OPS_consts_d, CL_TRUE, 0, consts_bytes, (void*) OPS_consts_h, 0, NULL, NULL) );
     //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
-    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+    //clSafeCall( clFinish(OPS_opencl_core.command_queue) );
     memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
   }
 }
@@ -399,9 +399,9 @@ void mvConstArraysToDevice ( int consts_bytes )
 void mvReductArraysToDevice ( int reduct_bytes )
 {
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
-    (cl_mem) OPS_reduct_d, CL_TRUE, 0, reduct_bytes, (void*) OPS_reduct_h, 0, NULL, NULL) );
+    (cl_mem) OPS_reduct_d, CL_FALSE, 0, reduct_bytes, (void*) OPS_reduct_h, 0, NULL, NULL) );
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
-  clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
 void mvReductArraysToHost ( int reduct_bytes )
@@ -409,7 +409,7 @@ void mvReductArraysToHost ( int reduct_bytes )
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue,
     (cl_mem) OPS_reduct_d, CL_TRUE, 0, reduct_bytes, (void*) OPS_reduct_h, 0, NULL, NULL) );
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
-  clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  //clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
 
