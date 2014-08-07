@@ -738,17 +738,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('#endif //OPS_MPI')
 
     code('')
-    code('int x_size = MAX(0,end_add[0]-start_add[0]);')
-    code('int y_size = MAX(0,end_add[1]-start_add[1]);')
+    code('int x_size = MAX(0,end[0]-start[0]);')
+    code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
-      code('int z_size = MAX(0,end_add[2]-start_add[2]);')
+      code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
-          code('int ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];')        
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')        
     code('')
 
     comm('build opencl kernel if not already built')
@@ -879,19 +879,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
 
     comm('')
+    comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        comm('set up initial pointers')
         code('int base'+str(n)+' = 1 * ')
-        code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
-        
+        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
           for d2 in range (0,d):
-            line = line + ' args['+str(n)+'].dat->block_size['+str(d2)+'] * '
+            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] * '
           code(line[:-1])
-          #code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')          
-          code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
 
         code('')
 
