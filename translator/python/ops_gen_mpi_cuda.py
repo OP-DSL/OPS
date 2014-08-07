@@ -455,7 +455,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -554,7 +554,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
     if NDIM==3:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);')
-    code('dim3 block(OPS_block_size_x,OPS_block_size_y,1);')
+    code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);')
     code('')
 
     GBL_READ = False
@@ -703,9 +703,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     comm('call kernel wrapper function, passing in pointers to data')
     n_per_line = 2
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      text = 'ops_'+name+'<<<grid, block, nshared >>> ( '
+      text = 'ops_'+name+'<<<grid, tblock, nshared >>> ( '
     else:
-      text = 'ops_'+name+'<<<grid, block >>> ( '
+      text = 'ops_'+name+'<<<grid, tblock >>> ( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
@@ -797,8 +797,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#include "ops_cuda_reduction.h"')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
+  code('#ifdef OPS_MPI')
+  code('#include "ops_mpi_core.h"')
+  code('#endif')
   code('')
-
   comm(' global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:

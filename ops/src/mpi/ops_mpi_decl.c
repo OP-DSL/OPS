@@ -87,7 +87,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   //store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
   sd->dat = dat;
-  sd->dirtybit = 0;
+  sd->dirtybit = 1;
   sd->dirty_dir_send =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
