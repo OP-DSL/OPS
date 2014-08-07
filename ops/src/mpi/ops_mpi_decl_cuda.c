@@ -127,7 +127,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
 /** ---- allocate an empty dat based on the local array sizes computed
          above on each MPI process                                      ---- **/
 
-  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, d_p, data, type_size, type, name );
+  ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
 
   dat->user_managed = 0;
 
@@ -141,8 +141,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   //store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd= (sub_dat_list)xmalloc(sizeof(sub_dat));
   sd->dat = dat;
-  sd->mpidat = stride;
-  sd->dirtybit = 0;
+  sd->dirtybit = 1;
   sd->dirty_dir_send =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);

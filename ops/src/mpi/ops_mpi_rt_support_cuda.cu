@@ -36,7 +36,7 @@
   */
 
 
-#include <ops_lib_core.h>
+#include <ops_mpi_core.h>
 #include <ops_cuda_rt_support.h>
 
 #ifdef __cplusplus
