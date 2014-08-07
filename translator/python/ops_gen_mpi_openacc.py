@@ -481,33 +481,39 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     comm('compute localy allocated range for the sub-block')
 
-    code('int start_add['+str(NDIM)+'];')
-    code('int end_add['+str(NDIM)+'];')
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
 
 
+    code('#ifdef OPS_MPI')
+    code('#error this is not block, but dataset')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start_add[n] = sb->istart[n];end_add[n] = sb->iend[n]+1;')
-    IF('start_add[n] >= range[2*n]')
-    code('start_add[n] = 0;')
+    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    IF('start[n] >= range[2*n]')
+    code('start[n] = 0;')
     ENDIF()
     ELSE()
-    code('start_add[n] = range[2*n] - start_add[n];')
+    code('start[n] = range[2*n] - start[n];')
     ENDIF()
-
-    IF('end_add[n] >= range[2*n+1]')
-    code('end_add[n] = range[2*n+1] - sb->istart[n];')
+    IF('end[n] >= range[2*n+1]')
+    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
     ENDIF()
     ELSE()
-    code('end_add[n] = sb->sizes[n];')
+    code('end[n] = sb->gbl_size[n];')
     ENDIF()
     ENDFOR()
-    code('')
+    code('#else //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    ENDFOR()
+    code('#endif //OPS_MPI')
 
     code('')
-    code('int x_size = MAX(0,end_add[0]-start_add[0]);')
-    code('int y_size = MAX(0,end_add[1]-start_add[1]);')
+    code('int x_size = MAX(0,end[0]-start[0]);')
+    code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
-      code('int z_size = MAX(0,end_add[2]-start_add[2]);')
+      code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
     
     #timing structs
@@ -521,9 +527,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     IF('OPS_kernels['+str(nk)+'].count == 0')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
-          code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->block_size[1];')
+          code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
     ENDIF()
     code('')
             
@@ -553,7 +559,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
         #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
     code('')
     for n in range (0, nargs):
@@ -586,13 +592,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('  (start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
-            line = line + depth*' '+'  args['+str(n)+'].dat->block_size['+str(d2)+'] *\n'
+            line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
 
         code('#ifdef OPS_GPU')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data_d + base'+str(n)+');')
@@ -617,9 +623,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('')
     code('#ifdef OPS_GPU')
-    code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
+    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('#else')
-    code('ops_H_D_exchanges(args, '+str(nargs)+');')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('#endif')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')

@@ -52,6 +52,37 @@ extern "C" {
 #endif
 
 
+
+//
+//Struct for holding the decomposition details of a block on an MPI process
+//
+typedef struct {
+  // the decomposition is for this block
+  ops_block block;
+  //number of dimensions;
+  int ndim;
+  // my MPI rank in each dimension (in cart cords)
+  int* coords;
+  // previous neighbor in each dimension (in cart cords)
+  int* id_m;
+  // next neighbor in each dimension (in cart cords)
+  int* id_p;
+} sub_block;
+
+typedef sub_block * sub_block_list;
+
+
+//
+//Struct duplicating information in MPI_Datatypes for (strided) halo access
+//
+
+typedef struct
+{
+  int         count;       /* number of blocks */
+  int         blocklength; /*size of blocks */
+  int         stride;      /*stride between blocks */
+} ops_halo;
+
 //
 //Struct for holding the decomposition details of a dat on an MPI process
 //
@@ -64,11 +95,24 @@ typedef struct {
   //MPI Types for send/receive -- these should be defined for the dat, not the block
   MPI_Datatype* mpidat;
   //max halo depths at the begining of each dimension -- these should be defined for the dat, not the block
-  int* d_m;
+  int d_m[OPS_MAX_DIM];
   //max halo depths at the end of each dimension -- these should be defined for the dat, not the block
-  int* d_p;
+  int d_p[OPS_MAX_DIM];
   //data structures describing halo access
   ops_halo* halos;
+  // the size of the local sub-block in each dimension, "owned"
+  int gbl_size[OPS_MAX_DIM];
+  // the displacement from the start of the block in each dimension
+  int gbl_disp[OPS_MAX_DIM];
+  // the actual local size, includes halos, padding etc.
+  int size[OPS_MAX_DIM];
+  //flag to indicate MPI halo exchange is needed
+  int         dirtybit;
+  //flag to indicate MPI halo exchange in a direction is needed
+  int*        dirty_dir_send;
+  //flag to indicate MPI halo exchange in a direction is needed
+  int*        dirty_dir_recv;
+
 } sub_dat;
 
 typedef sub_dat * sub_dat_list;
@@ -83,7 +127,7 @@ extern int ops_comm_size;
 extern int ops_my_rank;
 
 //
-// list holding sub-block geometries
+// list holding sub-block and sub-dat geometries
 //
 extern sub_block_list *OPS_sub_block_list;
 extern sub_dat_list *OPS_sub_dat_list;

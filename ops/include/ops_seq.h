@@ -204,11 +204,11 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
   return off;
 }
 
-inline int address(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
+inline int address(int ndim, int dat_size, int* start, int* size, int* stride, int* base_off, int *d_m)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - off[i]);
+    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - base_off[i] - d_m[i]);
   }
   return base;
 }
@@ -237,26 +237,32 @@ void ops_par_loop(void (*kernel)(T0*),
      ops_arg arg0) {
 
   char *p_a[1];
-  int  offs[1][3];
+  int  offs[1][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[1] = { arg0};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -266,7 +272,7 @@ void ops_par_loop(void (*kernel)(T0*),
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -275,8 +281,8 @@ void ops_par_loop(void (*kernel)(T0*),
   for (int i = 0; i < 1; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -291,20 +297,14 @@ void ops_par_loop(void (*kernel)(T0*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 1; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,1,range);
-  ops_H_D_exchanges(args, 1);
+  ops_H_D_exchanges_host(args, 1);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -321,13 +321,13 @@ void ops_par_loop(void (*kernel)(T0*),
     // shift pointers to data
     for (int i=0; i<1; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   #endif
   if (args[0].argtype == OPS_ARG_DAT)  ops_set_halo_dirtybit(&args[0]);
@@ -343,26 +343,32 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
      ops_arg arg0, ops_arg arg1) {
 
   char *p_a[2];
-  int  offs[2][3];
+  int  offs[2][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[2] = { arg0, arg1};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -372,7 +378,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -381,8 +387,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   for (int i = 0; i < 2; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -397,26 +403,20 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 2; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,2,range);
-  ops_H_D_exchanges(args, 2);
+  ops_H_D_exchanges_host(args, 2);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -433,14 +433,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     // shift pointers to data
     for (int i=0; i<2; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
   if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   #endif
@@ -458,26 +458,32 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   char *p_a[3];
-  int  offs[3][3];
+  int  offs[3][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[3] = { arg0, arg1, arg2};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -487,7 +493,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -496,8 +502,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   for (int i = 0; i < 3; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -512,32 +518,26 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 3; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,3,range);
-  ops_H_D_exchanges(args, 3);
+  ops_H_D_exchanges_host(args, 3);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -554,7 +554,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     // shift pointers to data
     for (int i=0; i<3; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -562,7 +562,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -582,26 +582,32 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
      ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
   char *p_a[4];
-  int  offs[4][3];
+  int  offs[4][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -611,7 +617,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -620,8 +626,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   for (int i = 0; i < 4; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -636,38 +642,32 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 4; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,4,range);
-  ops_H_D_exchanges(args, 4);
+  ops_H_D_exchanges_host(args, 4);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -684,7 +684,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     // shift pointers to data
     for (int i=0; i<4; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -693,7 +693,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -718,27 +718,33 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4) {
 
   char *p_a[5];
-  int  offs[5][3];
+  int  offs[5][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[5] = { arg0, arg1, arg2, arg3,
                      arg4};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -748,7 +754,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -757,8 +763,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 5; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -773,44 +779,38 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 5; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,5,range);
-  ops_H_D_exchanges(args, 5);
+  ops_H_D_exchanges_host(args, 5);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -828,7 +828,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<5; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -838,7 +838,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -865,27 +865,33 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5) {
 
   char *p_a[6];
-  int  offs[6][3];
+  int  offs[6][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[6] = { arg0, arg1, arg2, arg3,
                      arg4, arg5};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -895,7 +901,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -904,8 +910,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 6; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -920,50 +926,44 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 6; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,6,range);
-  ops_H_D_exchanges(args, 6);
+  ops_H_D_exchanges_host(args, 6);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -981,7 +981,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<6; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -992,7 +992,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1021,27 +1021,33 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
   char *p_a[7];
-  int  offs[7][3];
+  int  offs[7][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[7] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1051,7 +1057,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1060,8 +1066,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 7; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1076,56 +1082,50 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 7; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,7,range);
-  ops_H_D_exchanges(args, 7);
+  ops_H_D_exchanges_host(args, 7);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1143,7 +1143,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<7; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -1155,7 +1155,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1186,27 +1186,33 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
   char *p_a[8];
-  int  offs[8][3];
+  int  offs[8][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[8] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1216,7 +1222,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1225,8 +1231,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 8; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1241,62 +1247,56 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 8; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,8,range);
-  ops_H_D_exchanges(args, 8);
+  ops_H_D_exchanges_host(args, 8);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1314,7 +1314,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<8; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -1327,7 +1327,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1363,28 +1363,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8) {
 
   char *p_a[9];
-  int  offs[9][3];
+  int  offs[9][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[9] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1394,7 +1400,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1403,8 +1409,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 9; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1419,68 +1425,62 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 9; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,9,range);
-  ops_H_D_exchanges(args, 9);
+  ops_H_D_exchanges_host(args, 9);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1499,7 +1499,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<9; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -1513,7 +1513,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1551,28 +1551,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9) {
 
   char *p_a[10];
-  int  offs[10][3];
+  int  offs[10][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[10] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1582,7 +1588,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1591,8 +1597,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 10; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1607,74 +1613,68 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 10; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,10,range);
-  ops_H_D_exchanges(args, 10);
+  ops_H_D_exchanges_host(args, 10);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1693,7 +1693,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<10; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -1708,7 +1708,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1748,28 +1748,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
   char *p_a[11];
-  int  offs[11][3];
+  int  offs[11][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[11] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1779,7 +1785,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1788,8 +1794,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 11; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -1804,80 +1810,74 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 11; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,11,range);
-  ops_H_D_exchanges(args, 11);
+  ops_H_D_exchanges_host(args, 11);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -1896,7 +1896,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<11; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -1912,7 +1912,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -1954,28 +1954,34 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11) {
 
   char *p_a[12];
-  int  offs[12][3];
+  int  offs[12][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[12] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -1985,7 +1991,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -1994,8 +2000,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 12; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -2010,86 +2016,80 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 12; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,12,range);
-  ops_H_D_exchanges(args, 12);
+  ops_H_D_exchanges_host(args, 12);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2108,7 +2108,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<12; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -2125,7 +2125,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -2172,7 +2172,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12) {
 
   char *p_a[13];
-  int  offs[13][3];
+  int  offs[13][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[13] = { arg0, arg1, arg2, arg3,
@@ -2180,21 +2180,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -2204,7 +2210,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -2213,8 +2219,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 13; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -2229,92 +2235,86 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 13; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,13,range);
-  ops_H_D_exchanges(args, 13);
+  ops_H_D_exchanges_host(args, 13);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2334,7 +2334,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<13; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -2352,7 +2352,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -2401,7 +2401,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13) {
 
   char *p_a[14];
-  int  offs[14][3];
+  int  offs[14][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[14] = { arg0, arg1, arg2, arg3,
@@ -2409,21 +2409,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -2433,7 +2439,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -2442,8 +2448,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 14; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -2458,98 +2464,92 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
     #ifdef OPS_3D
-    ydim13 = args[13].dat->block_size[1];
+    ydim13 = args[13].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 14; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,14,range);
-  ops_H_D_exchanges(args, 14);
+  ops_H_D_exchanges_host(args, 14);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2569,7 +2569,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<14; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -2588,7 +2588,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -2639,7 +2639,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14) {
 
   char *p_a[15];
-  int  offs[15][3];
+  int  offs[15][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[15] = { arg0, arg1, arg2, arg3,
@@ -2647,21 +2647,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -2671,7 +2677,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -2680,8 +2686,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 15; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -2696,104 +2702,98 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
     #ifdef OPS_3D
-    ydim13 = args[13].dat->block_size[1];
+    ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
     #ifdef OPS_3D
-    ydim14 = args[14].dat->block_size[1];
+    ydim14 = args[14].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 15; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,15,range);
-  ops_H_D_exchanges(args, 15);
+  ops_H_D_exchanges_host(args, 15);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -2813,7 +2813,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<15; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -2833,7 +2833,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -2886,7 +2886,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15) {
 
   char *p_a[16];
-  int  offs[16][3];
+  int  offs[16][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[16] = { arg0, arg1, arg2, arg3,
@@ -2894,21 +2894,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14, arg15};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -2918,7 +2924,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -2927,8 +2933,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 16; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -2943,110 +2949,104 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
     #ifdef OPS_3D
-    ydim13 = args[13].dat->block_size[1];
+    ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
     #ifdef OPS_3D
-    ydim14 = args[14].dat->block_size[1];
+    ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
     #ifdef OPS_3D
-    ydim15 = args[15].dat->block_size[1];
+    ydim15 = args[15].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 16; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,16,range);
-  ops_H_D_exchanges(args, 16);
+  ops_H_D_exchanges_host(args, 16);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -3066,7 +3066,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<16; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -3087,7 +3087,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -3145,7 +3145,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16) {
 
   char *p_a[17];
-  int  offs[17][3];
+  int  offs[17][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[17] = { arg0, arg1, arg2, arg3,
@@ -3154,21 +3154,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg12, arg13, arg14, arg15,
                      arg16};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -3178,7 +3184,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -3187,8 +3193,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 17; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -3203,116 +3209,110 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
     #ifdef OPS_3D
-    ydim13 = args[13].dat->block_size[1];
+    ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
     #ifdef OPS_3D
-    ydim14 = args[14].dat->block_size[1];
+    ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
     #ifdef OPS_3D
-    ydim15 = args[15].dat->block_size[1];
+    ydim15 = args[15].dat->size[1];
     #endif
   }
   if (args[16].argtype == OPS_ARG_DAT) {
-    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    xdim16 = args[16].dat->size[0]*args[16].dat->dim;
     #ifdef OPS_3D
-    ydim16 = args[16].dat->block_size[1];
+    ydim16 = args[16].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 17; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,17,range);
-  ops_H_D_exchanges(args, 17);
+  ops_H_D_exchanges_host(args, 17);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -3333,7 +3333,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<17; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -3355,7 +3355,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);
@@ -3415,7 +3415,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
      ops_arg arg16, ops_arg arg17) {
 
   char *p_a[18];
-  int  offs[18][3];
+  int  offs[18][OPS_MAX_DIM];
 
   int  count[dim];
   ops_arg args[18] = { arg0, arg1, arg2, arg3,
@@ -3424,21 +3424,27 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg12, arg13, arg14, arg15,
                      arg16, arg17};
 
+  int start[OPS_MAX_DIM];
+  int end[OPS_MAX_DIM];
+
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-
-
   //compute localy allocated range for the sub-block 
   int ndim = sb->ndim;
-  int start[3];
-  int end[3];
-
   for (int n=0; n<ndim; n++) {
-    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;
+    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
-    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];
-    else end[n] = sb->sizes[n];
+    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];
+    else end[n] = sb->gbl_size[n];
   }
+  #else //!OPS_MPI
+  int ndim = block->dims;
+  for (int n=0; n<ndim; n++) {
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, name);
   #endif
@@ -3448,7 +3454,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension
       for(int n=1; n<ndim; n++) {
         offs[i][n] = off(ndim, n, &start[0], &end[0],
-                         args[i].dat->block_size, args[i].stencil->stride);
+                         args[i].dat->size, args[i].stencil->stride);
       }
     }
   }
@@ -3457,8 +3463,8 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   for (int i = 0; i < 18; i++) {
     if (args[i].argtype == OPS_ARG_DAT) {
       p_a[i] = (char *)args[i].data //base of 2D array
-      + address(ndim, args[i].dat->size, &start[0], 
-        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);
+      + address(ndim, args[i].dat->elem_size, &start[0], 
+        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);
     }
     else if (args[i].argtype == OPS_ARG_GBL)
       p_a[i] = (char *)args[i].data;
@@ -3473,122 +3479,116 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->block_size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
     #ifdef OPS_3D
-    ydim0 = args[0].dat->block_size[1];
+    ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->block_size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
     #ifdef OPS_3D
-    ydim1 = args[1].dat->block_size[1];
+    ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->block_size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
     #ifdef OPS_3D
-    ydim2 = args[2].dat->block_size[1];
+    ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->block_size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
     #ifdef OPS_3D
-    ydim3 = args[3].dat->block_size[1];
+    ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->block_size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
     #ifdef OPS_3D
-    ydim4 = args[4].dat->block_size[1];
+    ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->block_size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
     #ifdef OPS_3D
-    ydim5 = args[5].dat->block_size[1];
+    ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->block_size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
     #ifdef OPS_3D
-    ydim6 = args[6].dat->block_size[1];
+    ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->block_size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
     #ifdef OPS_3D
-    ydim7 = args[7].dat->block_size[1];
+    ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->block_size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
     #ifdef OPS_3D
-    ydim8 = args[8].dat->block_size[1];
+    ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->block_size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
     #ifdef OPS_3D
-    ydim9 = args[9].dat->block_size[1];
+    ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->block_size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
     #ifdef OPS_3D
-    ydim10 = args[10].dat->block_size[1];
+    ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->block_size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
     #ifdef OPS_3D
-    ydim11 = args[11].dat->block_size[1];
+    ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->block_size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
     #ifdef OPS_3D
-    ydim12 = args[12].dat->block_size[1];
+    ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->block_size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
     #ifdef OPS_3D
-    ydim13 = args[13].dat->block_size[1];
+    ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->block_size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
     #ifdef OPS_3D
-    ydim14 = args[14].dat->block_size[1];
+    ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->block_size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
     #ifdef OPS_3D
-    ydim15 = args[15].dat->block_size[1];
+    ydim15 = args[15].dat->size[1];
     #endif
   }
   if (args[16].argtype == OPS_ARG_DAT) {
-    xdim16 = args[16].dat->block_size[0]*args[16].dat->dim;
+    xdim16 = args[16].dat->size[0]*args[16].dat->dim;
     #ifdef OPS_3D
-    ydim16 = args[16].dat->block_size[1];
+    ydim16 = args[16].dat->size[1];
     #endif
   }
   if (args[17].argtype == OPS_ARG_DAT) {
-    xdim17 = args[17].dat->block_size[0]*args[17].dat->dim;
+    xdim17 = args[17].dat->size[0]*args[17].dat->dim;
     #ifdef OPS_3D
-    ydim17 = args[17].dat->block_size[1];
+    ydim17 = args[17].dat->size[1];
     #endif
   }
 
-  for (int i = 0; i < 18; i++) {
-    if(args[i].argtype == OPS_ARG_DAT) {
-      ops_exchange_halo(&args[i],2);
-    }
-  }
-
   ops_halo_exchanges(args,18,range);
-  ops_H_D_exchanges(args, 18);
+  ops_H_D_exchanges_host(args, 18);
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
@@ -3609,7 +3609,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     // shift pointers to data
     for (int i=0; i<18; i++) {
       if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);
+        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);
     }
   }
 
@@ -3632,7 +3632,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
   if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
-  #ifdef OPS_DEBUG
+  #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
   if (args[2].argtype == OPS_ARG_DAT && args[2].acc != OPS_READ) ops_dump3(args[2].dat,name);

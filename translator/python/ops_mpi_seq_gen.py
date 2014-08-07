@@ -165,11 +165,11 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
   return off;
 }
 
-inline int address(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
+inline int address(int ndim, int dat_size, int* start, int* size, int* stride, int* base_off, int *d_m)
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - off[i]);
+    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - base_off[i] - d_m[i]);
   }
   return base;
 }
@@ -240,7 +240,7 @@ for nargs in range (1,maxargs+1):
          f.write('\n    ')
 
     f.write('\n  char *p_a['+str(nargs)+'];')
-    f.write('\n  int  offs['+str(nargs)+'][3];\n')
+    f.write('\n  int  offs['+str(nargs)+'][OPS_MAX_DIM];\n')
     f.write('\n  int  count[dim];\n')
 
     f.write('  ops_arg args['+str(nargs)+'] = {')
@@ -253,30 +253,26 @@ for nargs in range (1,maxargs+1):
         if n%n_per_line == 3 and n <> nargs-1:
           f.write('\n                    ')
 
+    f.write('  int start[OPS_MAX_DIM];\n');
+    f.write('  int end[OPS_MAX_DIM];\n\n')
+
+    f.write('  #ifdef OPS_MPI\n')
     f.write('  sub_block_list sb = OPS_sub_block_list[block->index];\n')
-
-
-    f.write('\n\n  //compute localy allocated range for the sub-block \n' +
-    '  int ndim = sb->ndim;\n' )
-    #'  int start[ndim*'+str(nargs)+'];\n' +
-    #'  int end[ndim*'+str(nargs)+'];\n\n')
-    f.write('  int start[3];\n');
-    f.write('  int end[3];\n\n')
-
+    f.write('  //compute localy allocated range for the sub-block \n' +
+            '  int ndim = sb->ndim;\n' )
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    start[n] = sb->istart[n];end[n] = sb->iend[n]+1;\n')
+    f.write('    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];\n')
     f.write('    if (start[n] >= range[2*n]) start[n] = 0;\n')
     f.write('    else start[n] = range[2*n] - start[n];\n')
-    f.write('    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->istart[n];\n')
-    f.write('    else end[n] = sb->sizes[n];\n')
+    f.write('    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];\n')
+    f.write('    else end[n] = sb->gbl_size[n];\n')
     f.write('  }\n')
-
-    #f.write('  for(int i = 0; i<'+str(nargs)+'; i++) {\n' +
-    #  '    for(int n=0; n<ndim; n++) {\n' +
-    #  '      start[i*ndim+n] = s[n];\n' +
-    #  '      end[i*ndim+n]   = e[n];\n' +
-    #  '    }\n' +
-    #  '  }\n\n')
+    f.write('  #else //!OPS_MPI\n')
+    f.write('  int ndim = block->dims;\n')
+    f.write('  for (int n=0; n<ndim; n++) {\n')
+    f.write('    start[n] = range[2*n];end[n] = range[2*n+1];\n')
+    f.write('  }\n')
+    f.write('  #endif //OPS_MPI\n\n')
 
 
     #f.write('  double t1,t2,c1,c2;\n')
@@ -291,8 +287,8 @@ for nargs in range (1,maxargs+1):
     f.write('    if(args[i].stencil!=NULL) {\n')
     f.write('      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension\n')
     f.write('      for(int n=1; n<ndim; n++) {\n')
-    f.write('        offs[i][n] = off(ndim, n, &start[0], &end[0],\n'+
-            '                         args[i].dat->block_size, args[i].stencil->stride);\n')
+    f.write('        offs[i][n] = off(ndim, n, &start[0], &end[0],\n')
+    f.write('                         args[i].dat->size, args[i].stencil->stride);\n')
     f.write('      }\n')
     f.write('    }\n')
     f.write('  }\n\n')
@@ -301,8 +297,8 @@ for nargs in range (1,maxargs+1):
     f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
     f.write('    if (args[i].argtype == OPS_ARG_DAT) {\n')
     f.write('      p_a[i] = (char *)args[i].data //base of 2D array\n')
-    f.write('      + address(ndim, args[i].dat->size, &start[0], \n'+
-            '        args[i].dat->block_size, args[i].stencil->stride, args[i].dat->offset);\n')
+    f.write('      + address(ndim, args[i].dat->elem_size, &start[0], \n')
+    f.write('        args[i].dat->size, args[i].stencil->stride, args[i].dat->base, args[i].dat->d_m);\n')
     f.write('    }\n')
     f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
     f.write('      p_a[i] = (char *)args[i].data;\n')
@@ -320,9 +316,9 @@ for nargs in range (1,maxargs+1):
 
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
-      f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;\n')
       f.write('    #ifdef OPS_3D\n')
-      f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];\n')
+      f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
       f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
@@ -345,17 +341,17 @@ for nargs in range (1,maxargs+1):
     #f.write('  }\n\n')
     #f.write('   int d_pos[3];')
     #f.write('   int d_neg[3];')
-    f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
-    f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
+    #f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
+    #f.write('    if(args[i].argtype == OPS_ARG_DAT) {\n')
     ##f.write('      stencil_depth(args[i].stencil, d_pos, d_neg);\n')
     ##f.write('      ops_exchange_halo2(&args[i],d_pos,d_neg);\n')
-    f.write('      ops_exchange_halo(&args[i],2);\n')
-    f.write('    }\n')
-    f.write('  }\n\n')
+    #f.write('      ops_exchange_halo(&args[i],2);\n')
+    #f.write('    }\n')
+    #f.write('  }\n\n')
 
 
     f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
-    f.write('  ops_H_D_exchanges(args, '+str(nargs)+');\n')
+    f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')
@@ -381,7 +377,7 @@ for nargs in range (1,maxargs+1):
     f.write('    // shift pointers to data\n')
     f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
-    f.write('        p_a[i] = p_a[i] + (args[i].dat->size * offs[i][m]);\n')
+    f.write('        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);\n')
     f.write('    }\n')
     f.write('  }\n\n')
 
@@ -390,7 +386,7 @@ for nargs in range (1,maxargs+1):
       f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
   
-    f.write('  #ifdef OPS_DEBUG\n')
+    f.write('  #ifdef OPS_DEBUG_DUMP\n')
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ) ops_dump3(args['+str(n)+'].dat,name);\n')
     f.write('  #endif\n')

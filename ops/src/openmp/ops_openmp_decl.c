@@ -203,8 +203,6 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
   //create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
 
-  OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
-
   for(int b=0; b<OPS_block_index; b++){ //for each block
     ops_block block=OPS_block_list[b];
     ops_decomp(block, g_ndim, g_sizes); //for now there is only one block

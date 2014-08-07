@@ -252,8 +252,8 @@ void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
 void ops_download_dat(ops_dat dat) {
 
   //if (!OPS_hybrid_gpu) return;
-  int bytes = dat->size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
+  int bytes = dat->elem_size;
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
 
   //printf("downloading to host from device %d bytes\n",bytes);
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
@@ -265,8 +265,8 @@ void ops_download_dat(ops_dat dat) {
 void ops_upload_dat(ops_dat dat) {
 
   //if (!OPS_hybrid_gpu) return;
-  int bytes = dat->size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->block_size[i];
+  int bytes = dat->elem_size;
+  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
   //printf("uploading to device from host %d bytes\n",bytes);
 
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
@@ -276,7 +276,7 @@ void ops_upload_dat(ops_dat dat) {
 
 }
 
-void ops_H_D_exchanges(ops_arg *args, int nargs)
+void ops_H_D_exchanges_host(ops_arg *args, int nargs)
 {
   //printf("in ops_H_D_exchanges\n");
   for (int n=0; n<nargs; n++)
@@ -287,7 +287,7 @@ void ops_H_D_exchanges(ops_arg *args, int nargs)
     }
 }
 
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
+void ops_H_D_exchanges_device(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++)
     if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
@@ -309,7 +309,7 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
 }
 
 
-void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
+void ops_set_dirtybit_device(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++) {
     if((args[n].argtype == OPS_ARG_DAT) &&

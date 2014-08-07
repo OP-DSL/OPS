@@ -147,6 +147,11 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
   sd->prod = prod;
   sd->mpidat = stride;
   sd->halos = halos;
+  sd->dirtybit = 0;
+  sd->dirty_dir_send =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
+  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
+  sd->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
+  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_recv[i] = 1;
 
   int* d_minus = (int *)xmalloc(sizeof(int)*sb->ndim);
   int* d_plus = (int *)xmalloc(sizeof(int)*sb->ndim);

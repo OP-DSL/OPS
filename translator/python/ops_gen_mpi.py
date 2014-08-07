@@ -117,7 +117,7 @@ def ENDIF():
 def mult(text, i, n):
   text = text + '1'
   for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->block_size['+str(nn)+']'
+    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
 
   return text
 
@@ -228,30 +228,34 @@ def ops_gen_mpi(master, date, consts, kernels):
         text = text +'\n                    '
     code(text);
 
-    code('sub_block_list sb = OPS_sub_block_list[block->index];')
-
     comm('compute localy allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
     code('')
     
+    code('#ifdef OPS_MPI')
+    code('#error this is not block, but dataset')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->istart[n];end[n] = sb->iend[n]+1;')
+    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
     ENDIF()
     ELSE()
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
-
     IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->istart[n];')
+    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->sizes[n];')
+    code('end[n] = sb->gbl_size[n];')
     ENDIF()
     ENDFOR()
-    code('')
+    code('#else //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    ENDFOR()
+    code('#endif //OPS_MPI')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
@@ -264,9 +268,9 @@ def ops_gen_mpi(master, date, consts, kernels):
         for d in range (1, NDIM):
           code('offs['+str(n)+']['+str(d)+'] = off'+str(NDIM)+'D('+str(d)+', &start[0],')
           if d == 1:
-            code('    &end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'];')
+            code('    &end[0],args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'];')
           if d == 2:
-            code('    &end[0],args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'] - offs['+str(n)+']['+str(d-2)+'];')
+            code('    &end[0],args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'] - offs['+str(n)+']['+str(d-2)+'];')
         code('')
 
     code('')
@@ -282,10 +286,10 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         for d in range (0, NDIM):
           code('int off'+str(n)+'_'+str(d)+' = offs['+str(n)+']['+str(d)+'];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
     code('')
-    comm('set up initial pointers and exchange halos if nessasary')
+    comm('set up initial pointers and exchange halos if necessary')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
@@ -302,20 +306,20 @@ def ops_gen_mpi(master, date, consts, kernels):
         #ENDFOR()
 
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
-            line = line + depth*' '+'  args['+str(n)+'].dat->block_size['+str(d2)+'] *\n'
+            line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
         #original address calculation via funcion call
         #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->size, &start['+str(n)+'*'+str(NDIM)+'],')
-        #code('args['+str(n)+'].dat->block_size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
+        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start['+str(n)+'*'+str(NDIM)+'],')
+        #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
       else:
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
@@ -328,7 +332,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('')
     code('')
     
-    code('ops_H_D_exchanges(args,'+str(nargs)+');')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
     code('ops_timers_core(&c1,&t1);')
@@ -340,9 +344,9 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
-          code('ydim'+str(n)+' = args['+str(n)+'].dat->block_size[1];')
+          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
 
     code('int n_x;')
