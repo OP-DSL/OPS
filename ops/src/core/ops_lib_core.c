@@ -512,8 +512,61 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     printf("error writing to %s\n",file_name);
     exit(2);
   }
-
-  if(dat->block->dims == 2) {
+  
+  if(dat->block->dims == 3) {
+    if( strcmp(dat->type,"double") == 0 ) {
+      for(int i = 0; i < dat->block_size[2]; i++ ) {
+        for(int j = 0; j < dat->block_size[1]; j++ ) {
+          for(int k = 0; k < dat->block_size[0]; k++ ) {
+            if (fprintf(fp, " %3.10lf",
+              ((double *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
+                                    j*dat->block_size[0]+k])<0) {
+              printf("error writing to %s\n",file_name);
+              exit(2);
+              }
+          }
+          fprintf(fp,"\n");
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else if( strcmp(dat->type,"float") == 0 ) {
+      for(int i = 0; i < dat->block_size[2]; i++ ) {
+        for(int j = 0; j < dat->block_size[1]; j++ ) {
+          for(int k = 0; k < dat->block_size[0]; k++ ) {
+            if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
+                                      j*dat->block_size[0]+k])<0) {
+              printf("error writing to %s\n",file_name);
+              exit(2);
+              }
+          }
+          fprintf(fp,"\n");
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else if( strcmp(dat->type,"int") == 0 ) {
+      for(int i = 0; i < dat->block_size[2]; i++ ) {
+        for(int j = 0; j < dat->block_size[1]; j++ ) {
+          for(int k = 0; k < dat->block_size[0]; k++ ) {
+            if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
+                                      j*dat->block_size[0]+k])<0) {
+              printf("error writing to %s\n",file_name);
+              exit(2);
+            }
+          }
+          fprintf(fp,"\n");
+        }
+        fprintf(fp,"\n");
+      }
+    }
+    else {
+      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      exit(2);
+    }
+    fprintf(fp,"\n");
+  }
+  else if(dat->block->dims == 2) {
     if( strcmp(dat->type,"double") == 0 ) {
       for(int i = 0; i < dat->block_size[1]; i++ ) {
         for(int j = 0; j < dat->block_size[0]; j++ ) {

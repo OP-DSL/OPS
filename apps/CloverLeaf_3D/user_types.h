@@ -48,7 +48,7 @@ typedef struct
 } grid_type;
 
 
-typedef struct
+typedef struct field_type
 {
   int left, right, bottom, top, back, front, left_boundary, right_boundary,
       bottom_boundary, top_boundary, back_boundary, front_boundary;

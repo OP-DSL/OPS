@@ -328,6 +328,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('')
     code('')
     
+    code('ops_H_D_exchanges(args,'+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
     code('ops_timers_core(&c1,&t1);')
@@ -444,6 +445,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('ops_timers_core(&c1,&t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
+    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
