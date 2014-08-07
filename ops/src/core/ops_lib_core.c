@@ -49,6 +49,7 @@ ops_kernel * OPS_kernels=NULL;
 ops_arg *OPS_curr_args=NULL;
 const char *OPS_curr_name=NULL;
 int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
+int OPS_halo_group_index=0, OPS_halo_index=0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -258,6 +259,13 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   for(int n=0;n<block->dims;n++) dat->d_m[n] = d_m[n];
   for(int n=0;n<block->dims;n++) dat->d_p[n] = d_p[n];
 
+  for(int n=block->dims; n < OPS_MAX_DIM;n++) {
+    dat->size[n] = 1;
+    dat->base[n] = 0;
+    dat->d_m[n] = 0;
+    dat->d_p[n] = 0;
+  }
+
   dat->data = (char *)data;
   dat->data_d = NULL;
   dat->user_managed = 1;
@@ -366,7 +374,26 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
   return stencil;
 }
 
-
+ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
+  halo->index = OPS_halo_index++;
+  halo->from = from;
+  halo->to = to;
+  for (int i = 0; i < from->block->dims; i++) {
+    halo->iter_size[i] = iter_size[i];
+    halo->from_base[i] = from_base[i];
+    halo->to_base[i] = to_base[i];
+    halo->from_dir[i] = from_dir[i];
+    halo->to_dir[i] = to_dir[i];
+  }
+  for (int i = from->block->dims; i < OPS_MAX_DIM; i++) {
+    halo->iter_size[i] = 1;
+    halo->from_base[i] = 0;
+    halo->to_base[i] = 0;
+    halo->from_dir[i] = i+1;
+    halo->to_dir[i] = i+1;
+  }
+}
 
 ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   ops_arg arg;

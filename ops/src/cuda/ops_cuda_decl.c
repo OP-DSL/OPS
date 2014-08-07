@@ -130,7 +130,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
                            int* d_p, char* data,
                            int type_size, char const * type, char const * name )
 {
-  
+
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
@@ -146,6 +146,9 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   return dat;
 }
 
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+}
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {

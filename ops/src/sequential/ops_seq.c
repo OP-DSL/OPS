@@ -36,6 +36,8 @@
   */
 
 #include <ops_lib_core.h>
+char *ops_halo_buffer = NULL;
+int ops_halo_buffer_size = 0;
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
@@ -108,6 +110,66 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   return dat;
 }
 
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+}
+
+void ops_halo_transfer(ops_halo_group group) {
+  for (int h = 0; h < group->nhalos; h++) {
+    ops_halo halo = group->halos[h];
+    int size = halo->from->elem_size * halo->iter_size[0];
+    for (int i = 1; i < halo->from->block->dims; i++) size *= halo->iter_size[i];
+    if (size > ops_halo_buffer_size) {ops_halo_buffer = (char *)realloc(ops_halo_buffer, size); ops_halo_buffer_size = size;}
+
+    //copy to linear buffer from source
+    int ranges[OPS_MAX_DIM*2];
+    int step[OPS_MAX_DIM];
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->from_dir[i] > 0) {
+        ranges[2*i] = halo->from_base[i];
+        ranges[2*i+1] = halo->from_base[i] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i] = halo->from_base[i] + halo->iter_size[abs(halo->from_dir[i])-1]+1;
+        ranges[2*i+1] = halo->from_base[i]+1;
+        step[i] = -1;
+      }
+    }
+    int offset = 0;
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? k < ranges[3] : k > ranges[3]); k += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? k < ranges[1] : k > ranges[1]); k += step[0]) {
+          memcpy(ops_halo_buffer + halo->from->elem_size*offset,
+                 halo->from->data + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
+          offset++;
+        }
+      }
+    }
+
+    //copy from linear buffer to target
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->to_dir[i] > 0) {
+        ranges[2*i] = halo->to_base[i];
+        ranges[2*i+1] = halo->to_base[i] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i] = halo->to_base[i] + halo->iter_size[abs(halo->to_dir[i])-1]+1;
+        ranges[2*i+1] = halo->to_base[i]+1;
+        step[i] = -1;
+      }
+    }
+    offset = 0;
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? k < ranges[3] : k > ranges[3]); k += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? k < ranges[1] : k > ranges[1]); k += step[0]) {
+          memcpy(halo->to->data + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
+                 ops_halo_buffer + halo->to->elem_size*offset, halo->to->elem_size);
+          offset++;
+        }
+      }
+    }
+  }
+}
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {

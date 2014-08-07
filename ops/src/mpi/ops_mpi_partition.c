@@ -179,7 +179,7 @@ void ops_decomp_dats(sub_block *sb) {
     MPI_Datatype new_type_p; //create generic type for MPI comms
     MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
     MPI_Type_commit(&new_type_p);
-    sd->halos=(ops_halo *)malloc(MAX_DEPTH*sb->ndim*sizeof(ops_halo));
+    sd->halos=(ops_int_halo *)malloc(MAX_DEPTH*sb->ndim*sizeof(ops_int_halo));
 
     for(int n = 0; n<sb->ndim; n++) {
       for(int d = 0; d<MAX_DEPTH; d++) {

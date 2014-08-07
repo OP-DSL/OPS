@@ -201,6 +201,29 @@ typedef struct
 //  double       mpi_reduct;
 } ops_kernel;
 
+typedef struct
+{
+  ops_dat from;
+  ops_dat to;
+  int iter_size[OPS_MAX_DIM];
+  int from_base[OPS_MAX_DIM];
+  int to_base[OPS_MAX_DIM];
+  int from_dir[OPS_MAX_DIM];
+  int to_dir[OPS_MAX_DIM];
+  int index;
+} ops_halo_core;
+
+typedef ops_halo_core * ops_halo;
+
+typedef struct
+{
+  int nhalos;
+  ops_halo *halos;
+  int index;
+} ops_halo_group_core;
+
+typedef ops_halo_group_core * ops_halo_group;
+
 /*
 * min / max definitions
 */
@@ -237,7 +260,8 @@ extern int ops_current_kernel;
 extern int OPS_diags;
 
 extern int OPS_block_index, OPS_block_max,
-           OPS_dat_index, OPS_dat_max;
+           OPS_dat_index, OPS_dat_max,
+           OPS_halo_group_index, OPS_halo_index;
 
 extern ops_block_descriptor * OPS_block_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
@@ -281,6 +305,11 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
+
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);
+ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos);
+void ops_halo_transfer(ops_halo_group group);
 
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );

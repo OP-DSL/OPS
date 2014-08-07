@@ -50,6 +50,13 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
   }
 }
 
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
+  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  grp->nhalos = nhalos;
+  grp->halos = halos; //TODO: make a copy?
+  grp->index = OPS_halo_group_index++;
+}
+
 int ops_is_root()
 {
   return 1;
@@ -63,7 +70,7 @@ void ops_set_halo_dirtybit(ops_arg *arg)
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
 {
   (void)arg;
-  (void)iter_range;  
+  (void)iter_range;
 }
 
 void ops_exchange_halo(ops_arg* arg, int d)

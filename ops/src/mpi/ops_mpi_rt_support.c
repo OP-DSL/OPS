@@ -60,7 +60,7 @@ extern double ops_gather_time;
 extern double ops_scatter_time;
 extern double ops_sendrecv_time;
 
-void ops_realloc_buffers(const ops_halo *halo1, const ops_halo *halo2) {
+void ops_realloc_buffers(const ops_int_halo *halo1, const ops_int_halo *halo2) {
   int size = MAX(halo1->blocklength*halo1->count, halo2->blocklength*halo2->count);
   if (size > ops_buffer_size) {
     size = size*2;
