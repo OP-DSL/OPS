@@ -186,18 +186,18 @@ def arg_parse(text, j):
 
 def find_consts(text, consts):
   found_consts = []
-  
+
   for cn in range(0,len(consts)):
     pattern = consts[cn]['name'][1:-1]
     if re.search('\\b'+pattern+'\\b', text):
       print "found " + consts[cn]['name'][1:-1]
       found_consts.append(cn)
-  
+
   return found_consts
-  
+
 import re
 def parse_signature(text2):
-  
+
   #text2 = text2.replace('const','')
   text2 = text2.replace('*','* restrict ')
   text2 = text2.replace('int','__global int')
@@ -206,7 +206,7 @@ def parse_signature(text2):
   text2 = text2.replace('double','__global double')
   #text2 = re.sub('double','__global double',text2)
   return text2
-  
+
 
 def ops_gen_mpi_opencl(master, date, consts, kernels):
 
@@ -233,7 +233,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
       kernel_name_list.append(kernels[nk]['name'])
-      
+
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
     name  = kernels[nk]['name']
@@ -293,7 +293,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     i = name.find('kernel')
     name2 = name[0:i-1]
-        
+
     code('')
     
     code('#ifdef OCL_FMA')
@@ -303,7 +303,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#endif')
     code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
     code('')
-    
 
     code('#include "user_types.h"')
     code('#include "ops_opencl_reduction.h"')
@@ -318,14 +317,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#ifndef SIGN')
     code('#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))')
     code('#endif')
-    
+
     code('#define OPS_READ 0')
     code('#define OPS_WRITE 1')
     code('#define OPS_RW 2')
     code('#define OPS_INC 3')
     code('#define OPS_MIN 4')
     code('#define OPS_MAX 5')
-    
+
     code('#define ZERO_double 0.0;')
     code('#define INFINITY_double INFINITY;')
     code('#define ZERO_float 0.0f;')
@@ -338,8 +337,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#define INFINITY_ll INFINITY;')
     code('#define ZERO_ull 0;')
     code('#define INFINITY_ull INFINITY;')
-    code('#define ZERO_bool 0;')        
-    
+    code('#define ZERO_bool 0;')
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -363,8 +362,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-    
-       
+
+
     i = text[0:i].rfind('\n') #reverse find
     #find function signature
     loc = arg_parse(text, i + 1)
@@ -375,7 +374,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #print sig_arg
     sig = sig_name+'('+parse_signature(sig_arg)
     sig = sig[:-1]
-    
+
     # detect global variables and remove __global from the function signature for these
     sig2 = ''
     for n in range (0, nargs):
@@ -390,17 +389,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #find body of function
     j2 = text[loc+1:].find('{')
     k2 = para_parse(text, loc+j2, '{', '}')
-    
+
     body = text[loc+1:k2+2] # body of function
-    
+
     found_consts = find_consts(body,consts)
     #print found_consts
-    
+
     j = sig2.rfind(',')
     if len(found_consts) == 0:
-      sig2 = sig2[0:j]+')'    
+      sig2 = sig2[0:j]+')'
     code(sig2) # function signature
-    
+
     depth = depth +2
     text = ''
     for c in range(0, len(found_consts)):
@@ -412,12 +411,12 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         text = text + ',\n'
       else:
         text = text + ')\n'
-    
-    
-    code(text)    
-    
-    
-    depth =depth-1        
+
+
+    code(text)
+
+
+    depth =depth-1
     code(body)
     code('')
     code('')
@@ -426,7 +425,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('#undef OPS_ACC'+str(n))
     code('')
     code('')
-    
+
 
 ##########################################################################
 #  generate opencl kernel wrapper function
@@ -445,13 +444,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
           code('__local '+(str(typs[n]).replace('"','')).strip()+'* scratch'+str(n)+',')
           code('int r_bytes'+str(n)+',')
-    
+
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type']=='int' or consts[found_consts[c]]['type']=='double' or consts[found_consts[c]]['type']=='float':
         code('const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]+',')
       else:
-        code('__constant const struct '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')        
-      
+        code('__constant const struct '+consts[found_consts[c]]['type']+' * restrict '+consts[found_consts[c]]['name'][1:-1]+',')
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -516,9 +515,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         text = text+',\n  '+indent
       elif len(found_consts) > 0:
         text = text +',\n  '+indent
-      
-    
-    
+
+
+
     for c in range(0, len(found_consts)):
       #if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
       if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
@@ -529,7 +528,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         text = text+',\n  '+indent
 
     code(text+');')
-      
+
     ENDIF()
 
     #reduction accross blocks
@@ -545,8 +544,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('')
     depth = depth - 2
     code('}')
-         
-    
+
+
     if not os.path.exists('./OpenCL'):
       os.makedirs('./OpenCL')
     fid = open('./OpenCL/'+kernel_name_list[nk]+'.cl','w')
@@ -554,11 +553,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     fid.write('//\n// auto-generated by ops.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
     fid.write(file_text)
     fid.close()
-    
+
 ##########################################################################
 #  generate opencl kernel build function
 ##########################################################################
-    
+
     kernel_list_text = '"./OpenCL/'+kernel_name_list[nk]+'.cl"'
     arg_text = ''
     compile_line = ''
@@ -572,17 +571,16 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
           arg_values = arg_values + ', ydim'+str(n)       
-        
       if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
         arg_text = arg_text + ',\n'+depth*' '
         arg_values = arg_values + ','
       else:
         arg_text = arg_text + ''
         arg_values = arg_values + ''
-        
-    compile_line = compile_line + '"'  
-    
-    
+
+    compile_line = compile_line + '"'
+
+
     opencl_build_kernel = """
 #ifdef OCL_FMA_SWITCH_ON
 #define OCL_FMA 1
@@ -598,7 +596,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_"""+kernel_name_list[nk]+""") {
     buildOpenCLKernels();
-    //clSafeCall( clUnloadCompiler() );       
+    //clSafeCall( clUnloadCompiler() );
     cl_int ret;
     char* source_filename[1] = {"""+kernel_list_text+"""};
 
@@ -613,7 +611,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         fprintf(stderr, "Can't open the kernel source file!\\n");
         exit(1);
       }
-      
+
       source_str[i] = (char*)malloc(4*0x1000000);
       source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
       if(source_size[i] != 4*0x1000000) {
@@ -647,7 +645,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);
       }
-      
+
       ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
@@ -666,16 +664,16 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     // Create the OpenCL kernel
     OPS_opencl_core.kernel["""+str(nk)+"""] = clCreateKernel(OPS_opencl_core.program, "ops_"""+kernel_name_list[nk]+"""", &ret);
-    clSafeCall( ret );\n      
+    clSafeCall( ret );\n
     isbuilt_"""+kernel_name_list[nk]+""" = true;
   }
-  
-}  
+
+}
 
 """
-    
-  
-    
+
+
+
 ##########################################################################
 #  generate opencl host stub function
 ##########################################################################
@@ -698,7 +696,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
          text = text +'\n'
     code(text);
     depth = 2
-    
+
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
@@ -717,10 +715,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
 
     code('#ifdef OPS_MPI')
-    code('#error this is not block, but dataset')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
     ENDIF()
@@ -728,10 +725,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
     IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
+    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->gbl_size[n];')
+    code('end[n] = sb->decomp_size[n];')
     ENDIF()
     ENDFOR()
     code('#else //OPS_MPI')
@@ -767,9 +764,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         arg_text = arg_text + ',\n'+depth*' '
       else:
         arg_text = arg_text + ''
-      
+
     code(arg_text+');')
-    
+
     #timing structs
     code('')
     comm('Timing')
@@ -786,13 +783,13 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};')
     code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
     code('')
-    
+
     #setup reduction variables
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
-    
+
     GBL_READ = False
     GBL_READ_MDIM = False
     GBL_INC = False
@@ -846,7 +843,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('int r_bytes'+str(n)+' = reduct_bytes/sizeof('+(str(typs[n]).replace('"','')).strip()+');') 
+        code('int r_bytes'+str(n)+' = reduct_bytes/sizeof('+(str(typs[n]).replace('"','')).strip()+');')
         code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
         code('arg'+str(n)+'.data_d = OPS_reduct_d;// + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
@@ -875,7 +872,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('mvReductArraysToDevice(reduct_bytes);')
 
 
-    #set up initial pointers    
+    #set up initial pointers
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
@@ -897,12 +894,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
 
         code('')
-        
+
 
     code('')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     #code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-    code('')    
+    code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     code('')
@@ -912,8 +909,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
        code('int nthread = OPS_block_size_x*OPS_block_size_y;')
        code('')
-       
-    
+
+
     #upload gloabal constants to device
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
@@ -926,7 +923,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
         code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
     code('')
-    
+
     #set up argements in order to do the kernel call
     nkernel_args = 0
     for n in range (0, nargs):
@@ -937,7 +934,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
         nkernel_args = nkernel_args+1
-      
+
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
         #code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
@@ -949,14 +946,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
         
       nkernel_args = nkernel_args+1
-      
-   
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
         nkernel_args = nkernel_args+1
-    
+
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
@@ -964,7 +959,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if NDIM==3:
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
       nkernel_args = nkernel_args+1
-    
+
     #kernel call
     code('')
     comm('call/enque opencl kernel wrapper function')
@@ -1031,7 +1026,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
   code('#include "user_types.h"')
-  
+
   comm('global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
@@ -1044,7 +1039,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
   code('')
-  
+
   code('extern ops_opencl_core OPS_opencl_core;')
   code('')
   comm('this needs to be a platform specific copy symbol to device function')
@@ -1057,12 +1052,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('OPS_opencl_core.constant[i] = NULL;')
   ENDFOR()
   ENDIF()
-    
+
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
     IF('OPS_opencl_core.constant['+str(nc)+'] == NULL')
     code('OPS_opencl_core.constant['+str(nc)+'] = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*typeSize, NULL, &ret);')
-    code('clSafeCall( ret );')        
+    code('clSafeCall( ret );')
     ENDIF()
     comm('Write the new constant to the memory of the device')
     code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(nc)+'], CL_TRUE, 0, dim*typeSize, (void*) dat, 0, NULL, NULL) );')
@@ -1077,12 +1072,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   ENDIF()
   depth = depth - 2
   code('}')
-    
-      
-    
-    
-  
-  
+
+
+
+
+
+
   kernel_name_list = []
   kernel_list_text = ''
   kernel_list__build_text = ''
@@ -1096,8 +1091,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           kernel_list_text = kernel_list_text+',\n'+indent
         kernel_list__build_text = kernel_list__build_text + \
         'OPS_opencl_core.kernel['+str(nk)+'] = clCreateKernel(OPS_opencl_core.program, "ops_'+kernel_name_list[nk]+'", &ret);\n      '+\
-        'clSafeCall( ret );\n      '  
-  
+        'clSafeCall( ret );\n      '
+
 
   opencl_build = """
 extern ops_opencl_core OPS_opencl_core;
@@ -1112,23 +1107,23 @@ void buildOpenCLKernels() {
     OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
   }
   isbuilt = true;
-}  
+}
   """
 
-  
+
   depth = -2
   code(opencl_build)
-  
-  
-  
-  
+
+
+
+
   comm('user kernel files')
 
   for nk in range(0,len(kernel_name_list)):
     if not (('initialise' in kernel_name_list[nk]) or ('generate' in kernel_name_list[nk])):
       code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
-  
-   
+
+
   master = master.split('.')[0]
   fid = open('./OpenCL/'+master.split('.')[0]+'_opencl_kernels.cpp','w')
   fid.write('//\n// auto-generated by op2.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')

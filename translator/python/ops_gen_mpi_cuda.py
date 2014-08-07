@@ -178,7 +178,7 @@ def parse_signature(text):
   for n in range(0,len(args)):
     arg_list.append(args[n].strip())
   return arg_list
-  
+
 def check_accs(name, arg_list, arg_typ, text):
   for n in range(0,len(arg_list)):
     if arg_typ[n] == 'ops_arg_dat':
@@ -235,8 +235,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
-    
-    
+
+
     if NDIM == 2:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID2D_X') > 0:
@@ -321,7 +321,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-    
+
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
@@ -365,7 +365,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if NDIM==3:
       code('int size1,')
       code('int size2 ){')
-      
+
     depth = depth + 2
 
     #local variable to hold reductions on GPU
@@ -488,10 +488,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('int end['+str(NDIM)+'];')
 
     code('#ifdef OPS_MPI')
-    code('#error this is not block, but dataset')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
     ENDIF()
@@ -499,10 +498,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
     IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
+    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->gbl_size[n];')
+    code('end[n] = sb->decomp_size[n];')
     ENDIF()
     ENDFOR()
     code('#else //OPS_MPI')
@@ -532,7 +531,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c2,&t2);')
     code('')
-    
+
     IF('OPS_kernels['+str(nk)+'].count == 0')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -564,7 +563,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     GBL_MAX = False
     GBL_MIN = False
     GBL_WRITE = False
-    
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -749,14 +748,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     ENDIF()
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
-    
+
     if reduction == 1 :
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
           code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
       code('ops_timers_core(&c1,&t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
-      
+
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
@@ -811,7 +810,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       else:
         code('__constant__ '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
-      
+
 
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')

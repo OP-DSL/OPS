@@ -182,7 +182,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
-  
+
 
 ##########################################################################
 #  create new kernel file
@@ -198,7 +198,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
-    
+
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
@@ -325,10 +325,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     code('#ifdef OPS_MPI')
-    code('#error this is not block, but dataset')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
     ENDIF()
@@ -336,10 +335,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
     IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
+    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->gbl_size[n];')
+    code('end[n] = sb->decomp_size[n];')
     ENDIF()
     ENDFOR()
     code('#else //OPS_MPI')
@@ -492,7 +491,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           code('  (start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
-        
+
         #original address calculation via funcion call
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start0,')
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
@@ -553,7 +552,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           text = text +' ('+typs[n]+' * )p_a['+str(n)+']'
         else:
           text = text +' (const '+typs[n]+' * )p_a['+str(n)+']'
-          
+
       else:
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
 
@@ -590,7 +589,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
             #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[NDIM*n])+');')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
       ENDFOR()
-      
+
     ENDFOR() #end of OMP parallel loop
 
 
@@ -674,7 +673,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')
-  
+
   comm('set max number of OMP threads for reductions')
   code('#ifndef MAX_REDUCT_THREADS')
   code('#define MAX_REDUCT_THREADS 64')

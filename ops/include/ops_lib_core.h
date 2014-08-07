@@ -156,7 +156,7 @@ typedef struct ops_dat_entry_core ops_dat_entry;
 typedef TAILQ_HEAD(, ops_dat_entry_core) Double_linked_list;
 
 
-typedef struct 
+typedef struct
 {
   ops_block_core *block;
   Double_linked_list datasets;
@@ -316,6 +316,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
 void ops_H_D_exchanges_device(ops_arg *args, int nargs);
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
 
 int ops_is_root();
 

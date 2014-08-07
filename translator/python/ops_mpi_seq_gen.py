@@ -261,11 +261,11 @@ for nargs in range (1,maxargs+1):
     f.write('  //compute localy allocated range for the sub-block \n' +
             '  int ndim = sb->ndim;\n' )
     f.write('  for (int n=0; n<ndim; n++) {\n')
-    f.write('    start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];\n')
+    f.write('    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];\n')
     f.write('    if (start[n] >= range[2*n]) start[n] = 0;\n')
     f.write('    else start[n] = range[2*n] - start[n];\n')
-    f.write('    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->gbl_disp[n];\n')
-    f.write('    else end[n] = sb->gbl_size[n];\n')
+    f.write('    if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];\n')
+    f.write('    else end[n] = sb->decomp_size[n];\n')
     f.write('  }\n')
     f.write('  #else //!OPS_MPI\n')
     f.write('  int ndim = block->dims;\n')
@@ -278,7 +278,7 @@ for nargs in range (1,maxargs+1):
     #f.write('  double t1,t2,c1,c2;\n')
     #f.write('  ops_timing_hash(name);\n')
 
-
+    #f.write('  ops_printf("%s\\n",name);\n')
     f.write('  #ifdef OPS_DEBUG\n')
     f.write('  ops_register_args(args, name);\n');
     f.write('  #endif\n\n')
@@ -350,8 +350,8 @@ for nargs in range (1,maxargs+1):
     #f.write('  }\n\n')
 
 
-    f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
     f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
+    f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')
@@ -385,15 +385,15 @@ for nargs in range (1,maxargs+1):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_GBL && args['+str(n)+'].acc != OPS_READ)')
       f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
     f.write('\n')
-  
+
     f.write('  #ifdef OPS_DEBUG_DUMP\n')
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ) ops_dump3(args['+str(n)+'].dat,name);\n')
     f.write('  #endif\n')
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT)')
-#      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
-      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
+      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ)')
+      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
+#      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
     f.write('  ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
 

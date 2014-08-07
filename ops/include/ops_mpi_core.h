@@ -62,11 +62,14 @@ typedef struct {
   //number of dimensions;
   int ndim;
   // my MPI rank in each dimension (in cart cords)
-  int* coords;
+  int coords[OPS_MAX_DIM];
   // previous neighbor in each dimension (in cart cords)
-  int* id_m;
+  int id_m[OPS_MAX_DIM];
   // next neighbor in each dimension (in cart cords)
-  int* id_p;
+  int id_p[OPS_MAX_DIM];
+  // finest level decomposed details
+  int decomp_disp[OPS_MAX_DIM];
+  int decomp_size[OPS_MAX_DIM];
 } sub_block;
 
 typedef sub_block * sub_block_list;
@@ -94,18 +97,17 @@ typedef struct {
   int* prod;
   //MPI Types for send/receive -- these should be defined for the dat, not the block
   MPI_Datatype* mpidat;
-  //max halo depths at the begining of each dimension -- these should be defined for the dat, not the block
-  int d_m[OPS_MAX_DIM];
-  //max halo depths at the end of each dimension -- these should be defined for the dat, not the block
-  int d_p[OPS_MAX_DIM];
   //data structures describing halo access
   ops_halo* halos;
   // the size of the local sub-block in each dimension, "owned"
-  int gbl_size[OPS_MAX_DIM];
+  int decomp_size[OPS_MAX_DIM];
   // the displacement from the start of the block in each dimension
-  int gbl_disp[OPS_MAX_DIM];
-  // the actual local size, includes halos, padding etc.
-  int size[OPS_MAX_DIM];
+  int decomp_disp[OPS_MAX_DIM];
+
+  // global information
+  int gbl_size[OPS_MAX_DIM];
+  int gbl_base[OPS_MAX_DIM];
+
   //flag to indicate MPI halo exchange is needed
   int         dirtybit;
   //flag to indicate MPI halo exchange in a direction is needed

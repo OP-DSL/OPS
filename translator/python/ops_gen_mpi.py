@@ -232,12 +232,11 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
     code('')
-    
+
     code('#ifdef OPS_MPI')
-    code('#error this is not block, but dataset')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
     code('start[n] = 0;')
     ENDIF()
@@ -245,10 +244,10 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
     IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
+    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
-    code('end[n] = sb->gbl_size[n];')
+    code('end[n] = sb->decomp_size[n];')
     ENDIF()
     ENDFOR()
     code('#else //OPS_MPI')
@@ -331,7 +330,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
     code('')
-    
+
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
@@ -350,10 +349,10 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
 
     code('int n_x;')
-    
+
     if NDIM==3:
       FOR('n_z','start[2]','end[2]')
-    
+
     FOR('n_y','start[1]','end[1]')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
@@ -428,7 +427,7 @@ def ops_gen_mpi(master, date, consts, kernels):
           #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_1) - '+str(stride[NDIM*n])+');')
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
     ENDFOR()
-    
+
     if NDIM==3:
       comm('shift pointers to data z direction')
       for n in range (0, nargs):

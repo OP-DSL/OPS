@@ -46,3 +46,9 @@ void ops_comm_realloc(char **ptr, int size, int prev) {
     *ptr = (char*)realloc(*ptr, size);
   }
 }
+
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size ) {
+  (void)data_d;
+  (void)data_h;
+  (void)size;
+}

@@ -240,6 +240,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->block = block;
   dat->dim = dim;
   dat->elem_size = type_size*dim;
+  dat->e_dat = 0; //default to non-edge dat
 
   for(int n=0;n<block->dims;n++){
     if(dataset_size[n] != 1) {
@@ -253,17 +254,16 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   }
 
   for(int n=0;n<block->dims;n++) dat->base[n] = base[n];
-  
+
   for(int n=0;n<block->dims;n++) dat->d_m[n] = d_m[n];
   for(int n=0;n<block->dims;n++) dat->d_p[n] = d_p[n];
-  
+
   dat->data = (char *)data;
   dat->data_d = NULL;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
   dat->type = copy_str( type );
   dat->name = copy_str(name);
-  dat->e_dat = 0; //default to non-edge dat
 
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry* item;
