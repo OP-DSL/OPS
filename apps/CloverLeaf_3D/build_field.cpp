@@ -62,10 +62,7 @@ void build_field()
   /**----------------------------OPS Declarations----------------------------**/
 
   int dims[3] = {x_cells+5, y_cells+5, z_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
-  clover_grid = ops_decl_block(3, dims, "clover grid");
-
-  //decompose the block
-  ops_partition(3, dims, "3D_BLOCK_DECOMPSE");
+  clover_grid = ops_decl_block(3, "clover grid");
 
   //
   //declare data on blocks
@@ -73,96 +70,89 @@ void build_field()
   int d_p[3] = {-2,-2,-2}; //max halo depths for the dat in the possitive direction
   int d_m[3] = {-2,-2,-2}; //max halo depths for the dat in the negative direction
   int size[3] = {x_cells+5, y_cells+5, z_cells+5}; //size of the dat -- should be identical to the block on which its define on
+  int base[3] = {0,0,0};
   double* temp = NULL;
 
-  density0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "density0");
-  density1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "density1");
-  energy0     = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "energy0");
-  energy1     = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "energy1");
-  pressure    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "pressure");
-  viscosity   = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "viscosity");
-  soundspeed  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "soundspeed");
-  volume      = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "volume");
+  density0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density0");
+  density1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density1");
+  energy0     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy0");
+  energy1     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy1");
+  pressure    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "pressure");
+  viscosity   = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "viscosity");
+  soundspeed  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "soundspeed");
+  volume      = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "volume");
 
-  d_p[0]=-3;d_p[1]=-3;d_p[2]=-3;
-  xvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel0");
-  xvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xvel1");
-  yvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel0");
-  yvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yvel1");
-  zvel0    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "zvel0");
-  zvel1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "zvel1");
+  size[0]++; size[1]++;size[2]++;
+  xvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel0");
+  xvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel1");
+  yvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel0");
+  yvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel1");
+  zvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zvel0");
+  zvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zvel1");
 
-  d_p[0]=-3;d_p[1]=-2;d_p[2]=-2;
-  vol_flux_x  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_x");
-  mass_flux_x = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_x");
-  xarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "xarea");
+  work_array1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array1");
+  work_array2    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array2");
+  work_array3    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array3");
+  work_array4    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array4");
+  work_array5    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array5");
+  work_array6    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array6");
+  work_array7    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array7");
+  
+  size[0] = x_cells+6; size[1] = y_cells+5; size[2] = z_cells+5;
+  vol_flux_x  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_x");
+  mass_flux_x = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_x");
+  xarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xarea");
 
-  d_p[0]=-2;d_p[1]=-3;d_p[2]=-2;
-  vol_flux_y  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_y");
-  mass_flux_y = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_y");
-  yarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "yarea");
+  size[0] = x_cells+5; size[1] = y_cells+6; size[2] = z_cells+5;
+  vol_flux_y  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_y");
+  mass_flux_y = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_y");
+  yarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yarea");
 
-  d_p[0]=-2;d_p[1]=-2;d_p[2]=-3;
-  vol_flux_z  = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "vol_flux_z");
-  mass_flux_z = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "mass_flux_z");
-  zarea       = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "zarea");
-
-  d_p[0]=-3;d_p[1]=-3;
-  work_array1    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array1");
-  work_array2    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array2");
-  work_array3    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array3");
-  work_array4    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array4");
-  work_array5    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array5");
-  work_array6    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array6");
-  work_array7    = ops_decl_dat(clover_grid, 1, size, d_m, d_p, temp, "double", "work_array7");
+  size[0] = x_cells+5; size[1] = y_cells+5; size[2] = z_cells+6;
+  vol_flux_z  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_z");
+  mass_flux_z = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_z");
+  zarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zarea");
 
   int size2[3] = {x_cells+5,1,1};
   d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-2;d_p[1]=0;d_p[2]=0;
-  cellx    = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "cellx");
-  celldx   = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "celldx");
+  cellx    = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp, "double", "cellx");
+  celldx   = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp, "double", "celldx");
 
   int size3[3] = {1,y_cells+5,1};
   d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-2;d_p[2]=0;
-  celly    = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "celly");
-  celldy   = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "celldy");
+  celly    = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celly");
+  celldy   = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celldy");
   
   int size4[3] = {1,1,z_cells+5};
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-2;
-  cellz    = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "cellz");
-  celldz   = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "celldz");
+  cellz    = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "cellz");
+  celldz   = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "celldz");
 
+  int size5[3] = {x_cells+6,1,1};
   d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
-  vertexx  = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "vertexx");
-  vertexdx = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp, "double", "vertexdx");
+  vertexx  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexx");
+  vertexdx = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexdx");
 
+  int size6[3] = {1,y_cells+6,1};
   d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
-  vertexy  = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "vertexy");
-  vertexdy = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp, "double", "vertexdy");
+  vertexy  = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp, "double", "vertexy");
+  vertexdy = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp, "double", "vertexdy");
 
+  int size7[3] = {1,1,z_cells+6};
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
-  vertexz  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexz");
-  vertexdz = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp, "double", "vertexdz");
-
-  //contains x indicies from 0 to xmax+3 -- needed for initialization
-  sub_block_list sb = OPS_sub_block_list[0];
+  vertexz  = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp, "double", "vertexz");
+  vertexdz = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp, "double", "vertexdz");
 
   int* temp2 = NULL;
   d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
-  xx  = ops_decl_dat(clover_grid, 1, size2, d_m, d_p, temp2, "int", "xx");
-  for(int i=sb->istart[0]-2; i<sb->iend[0]+3+1; i++)
-    ((int *)(xx->data))[i-d_m[0]-sb->istart[0]] = i - x_min;
-  xx->dirty_hd=1;
+  xx  = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp2, "int", "xx");
   
   d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
-  yy  = ops_decl_dat(clover_grid, 1, size3, d_m, d_p, temp2, "int", "yy");
-  for(int i=sb->istart[1]-2; i<sb->iend[1]+3+1; i++)
-    ((int *)(yy->data))[i-d_m[1]-sb->istart[1]] = i - y_min;
-  yy->dirty_hd=1;
+  yy  = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp2, "int", "yy");
+  
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
-  zz  = ops_decl_dat(clover_grid, 1, size4, d_m, d_p, temp2, "int", "zz");
-  for(int i=sb->istart[2]-2; i<sb->iend[2]+3+1; i++)
-    ((int *)(zz->data))[i-d_m[2]-sb->istart[2]] = i - z_min;
-  zz->dirty_hd=1;
+  zz  = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp2, "int", "zz");
+
 
   //
   //Declare commonly used stencils
@@ -314,6 +304,37 @@ void build_field()
   S3D_000_P100_M100_M200_STRID3D_X = ops_decl_strided_stencil( 3, 4, s3D_000_P100_P200_M100, stride3D_x, "0,0,0:1,0,0:-1,0,0:-2,0,0");
   S3D_000_0P10_0M10_0M20_STRID3D_Y = ops_decl_strided_stencil( 3, 4, s3D_000_0P10_0P20_0M10, stride3D_y, "0,0,0:1,0,0:0,-1,0:0,-2,0");
   S3D_000_00P1_00M1_00M2_STRID3D_Z = ops_decl_strided_stencil( 3, 4, s3D_000_00P1_00P2_00M1, stride3D_z, "0,0,0:1,0,0:0,0,-1:0,0,-2");
+  
+  
+  //decompose the block
+  ops_partition("3D_BLOCK_DECOMPSE");
+  #ifdef OPS_MPI
+  sub_block_list sb = OPS_sub_block_list[0];  
+  for(int i=sb->decomp_disp[0]-2; i<sb->decomp_disp[0]+sb->decomp_size[0]+2; i++)
+    ((int *)(xx->data))[i-d_m[0]-sb->decomp_disp[0]] = i - x_min;
+  #else
+  for(int i=-2; i<x_max+6; i++)
+    ((int *)(xx->data))[i-d_m[0]] = i - x_min;
+  #endif
+  xx->dirty_hd=1;
+  
+  #ifdef OPS_MPI
+  for(int i=sb->decomp_disp[1]-2; i<sb->decomp_disp[1]+sb->decomp_size[1]+2; i++)
+    ((int *)(yy->data))[i-d_m[1]-sb->decomp_disp[1]] = i - y_min;
+  #else
+  for(int i=-2; i<y_max+6; i++)
+    ((int *)(yy->data))[i-d_m[1]] = i - y_min;
+  #endif
+  yy->dirty_hd=1;
+  
+  #ifdef OPS_MPI
+  for(int i=sb->decomp_disp[2]-2; i<sb->decomp_disp[2]+sb->decomp_size[2]+2; i++)
+    ((int *)(zz->data))[i-d_m[2]-sb->decomp_disp[2]] = i - z_min;
+  #else
+  for(int i=-2; i<z_max+6; i++)
+    ((int *)(zz->data))[i-d_m[2]] = i - z_min;
+  #endif
+  zz->dirty_hd=1;
   
   //print ops blocks and dats details
   ops_diagnostic_output();

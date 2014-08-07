@@ -102,7 +102,6 @@ void build_field()
   mass_flux_y = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_y");
   yarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yarea");
 
-
   int size2[2] = {x_cells+5,1};
   d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
   cellx    = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp, "double", "cellx");
