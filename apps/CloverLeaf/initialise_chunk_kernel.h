@@ -42,6 +42,13 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
   vertexdy[OPS_ACC2(0,0)] = (double)d_y;
 }
 
+void initialise_chunk_kernel_xx(int *xx, int *idx) {
+  xx[OPS_ACC0(0,0)] = idx[0]-2;
+}
+
+void initialise_chunk_kernel_yy(int *yy, int *idx) {
+  yy[OPS_ACC0(0,0)] = idx[1]-2;
+}
 
 
 void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
