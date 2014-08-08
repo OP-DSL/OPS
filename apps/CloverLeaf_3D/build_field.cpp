@@ -145,13 +145,13 @@ void build_field()
 
   int* temp2 = NULL;
   d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
-  xx  = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp2, "int", "xx");
+  xx  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp2, "int", "xx");
   
   d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
-  yy  = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp2, "int", "yy");
+  yy  = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp2, "int", "yy");
   
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
-  zz  = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp2, "int", "zz");
+  zz  = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp2, "int", "zz");
 
 
   //
@@ -308,6 +308,8 @@ void build_field()
   
   //decompose the block
   ops_partition("3D_BLOCK_DECOMPSE");
+  
+  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[0];  
   for(int i=sb->decomp_disp[0]-2; i<sb->decomp_disp[0]+sb->decomp_size[0]+2; i++)
@@ -318,6 +320,7 @@ void build_field()
   #endif
   xx->dirty_hd=1;
   
+  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
   #ifdef OPS_MPI
   for(int i=sb->decomp_disp[1]-2; i<sb->decomp_disp[1]+sb->decomp_size[1]+2; i++)
     ((int *)(yy->data))[i-d_m[1]-sb->decomp_disp[1]] = i - y_min;
@@ -327,6 +330,7 @@ void build_field()
   #endif
   yy->dirty_hd=1;
   
+  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;  
   #ifdef OPS_MPI
   for(int i=sb->decomp_disp[2]-2; i<sb->decomp_disp[2]+sb->decomp_size[2]+2; i++)
     ((int *)(zz->data))[i-d_m[2]-sb->decomp_disp[2]] = i - z_min;
