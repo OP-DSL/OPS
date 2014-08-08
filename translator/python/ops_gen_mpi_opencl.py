@@ -251,7 +251,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     #reset dimension of the application
     NDIM = int(dim)
-    
+
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
@@ -273,13 +273,18 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
-          
+
 
     reduction = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
+
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
 
 
 ##########################################################################
@@ -295,7 +300,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     name2 = name[0:i-1]
 
     code('')
-    
+
     code('#ifdef OCL_FMA')
     code('#pragma OPENCL FP_CONTRACT ON')
     code('#else')
@@ -346,8 +351,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
         if NDIM==3:
           code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
-    code('')    
-    
+    code('')
+
     code('')
     comm('user function')
     fid = open(name2+'_kernel.h', 'r')
@@ -456,14 +461,20 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('const int base'+str(n)+',')
 
+
+    if arg_idx:
+      if NDIM==2:
+        code('int arg_idx0, int arg_idx1,')
+      elif NDIM==3:
+        code('int arg_idx0, int arg_idx1, int arg_idx2,')
     code('const int size0,')
     if NDIM==2:
       code('const int size1 ){')
     if NDIM==3:
       code('const int size1,')
       code('const int size2 ){')
-      
-      
+
+
     depth = depth + 2
 
     #local variable to hold reductions on GPU
@@ -489,6 +500,12 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('arg_idx[0] = arg_idx0+idx_x;')
+      code('arg_idx[1] = arg_idx1+idx_y;')
+      if NDIM==3:
+        code('arg_idx[2] = arg_idx2+idx_z;')
 
 
     indent = (len(name2)+depth+8)*' '
@@ -511,6 +528,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
+      elif arg_typ[n] == 'ops_arg_idx':
+        text = text +'arg_idx'
+
       if n <> nargs-1 :
         text = text+',\n  '+indent
       elif len(found_consts) > 0:
@@ -570,7 +590,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         if NDIM==3:
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-          arg_values = arg_values + ', ydim'+str(n)       
+          arg_values = arg_values + ', ydim'+str(n)
       if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
         arg_text = arg_text + ',\n'+depth*' '
         arg_values = arg_values + ','
@@ -625,7 +645,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       }
       fclose(fid);
     }
-    
+
     printf("Compiling """+kernel_name_list[nk]+""" %d source -- start \\n",OCL_FMA);
 
       // Create a program from the source
@@ -744,11 +764,23 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+    code('')
+
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
-          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')        
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
 
     comm('build opencl kernel if not already built')
@@ -942,12 +974,21 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       else:
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
         #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
-        
+
       nkernel_args = nkernel_args+1
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
+        nkernel_args = nkernel_args+1
+
+    if arg_idx:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[0] ));')
+      nkernel_args = nkernel_args+1
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+      nkernel_args = nkernel_args+1
+      if NDIM==3:
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
         nkernel_args = nkernel_args+1
 
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
@@ -1124,6 +1165,6 @@ void buildOpenCLKernels() {
 
   master = master.split('.')[0]
   fid = open('./OpenCL/'+master.split('.')[0]+'_opencl_kernels.cpp','w')
-  fid.write('//\n// auto-generated by op2.py on '+date.strftime("%Y-%m-%d %H:%M")+'\n//\n\n')
+  fid.write('//\n// auto-generated by op2.py//\n\n')
   fid.write(file_text)
   fid.close()

@@ -97,7 +97,7 @@ void build_field()
   work_array5    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array5");
   work_array6    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array6");
   work_array7    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array7");
-  
+
   size[0] = x_cells+6; size[1] = y_cells+5; size[2] = z_cells+5;
   vol_flux_x  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_x");
   mass_flux_x = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_x");
@@ -122,35 +122,35 @@ void build_field()
   d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-2;d_p[2]=0;
   celly    = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celly");
   celldy   = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celldy");
-  
+
   int size4[3] = {1,1,z_cells+5};
   d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-2;
   cellz    = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "cellz");
   celldz   = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "celldz");
 
   int size5[3] = {x_cells+6,1,1};
-  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
+  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-2;d_p[1]=0;d_p[2]=0;
   vertexx  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexx");
   vertexdx = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexdx");
 
   int size6[3] = {1,y_cells+6,1};
-  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
+  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-2;d_p[2]=0;
   vertexy  = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp, "double", "vertexy");
   vertexdy = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp, "double", "vertexdy");
 
   int size7[3] = {1,1,z_cells+6};
-  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
+  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-2;
   vertexz  = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp, "double", "vertexz");
   vertexdz = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp, "double", "vertexdz");
 
   int* temp2 = NULL;
-  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
+  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-2;d_p[1]=0;d_p[2]=0;
   xx  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp2, "int", "xx");
-  
-  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
+
+  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-2;d_p[2]=0;
   yy  = ops_decl_dat(clover_grid, 1, size6, base, d_m, d_p, temp2, "int", "yy");
-  
-  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;
+
+  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-2;
   zz  = ops_decl_dat(clover_grid, 1, size7, base, d_m, d_p, temp2, "int", "zz");
 
 
@@ -158,19 +158,19 @@ void build_field()
   //Declare commonly used stencils
   //
   int s3D_000[]         = {0,0,0};
-  
+
   int s3D_000_P100[]      = {0,0,0, 1,0,0};
   int s3D_000_0P10[]      = {0,0,0, 0,1,0};
   int s3D_000_00P1[]      = {0,0,0, 0,0,1};
-  
+
   int s3D_000_M100[]      = {0,0,0, -1,0,0};
   int s3D_000_0M10[]      = {0,0,0, 0,-1,0};
   int s3D_000_00M1[]      = {0,0,0, 0,0,-1};
-  
+
   int s3D_000_P100_M100[]      = {0,0,0, 1,0,0, -1,0,0};
   int s3D_000_0P10_0M10[]      = {0,0,0, 0,1,0, 0,-1,0};
   int s3D_000_00P1_00M1[]      = {0,0,0, 0,0,1, 0,0,-1};
-  
+
   int s3D_000_f0M1M1[]     = {0,0,0, 0,-1,0, 0,0,-1, 0,-1,-1};
   int s3D_000_fM10M1[]     = {0,0,0, -1,0,0, 0,0,-1, -1,0,-1};
   int s3D_000_fM1M10[]     = {0,0,0, 0,-1,0, -1,0,0, -1,-1,0};
@@ -178,9 +178,9 @@ void build_field()
   int s3D_000_f0P1P1[]     = {0,0,0, 0,1,0, 0,0,1, 0,1,1};
   int s3D_000_fP10P1[]     = {0,0,0, 1,0,0, 0,0,1, 1,0,1};
   int s3D_000_fP1P10[]     = {0,0,0, 0,1,0, 1,0,0, 1,1,0};
-  
+
   int s3D_000_fP1P1P1[]    = {0,0,0, 1,0,0, 1,1,0, 1,1,1, 0,1,0, 0,1,1, 0,0,1, 1,0,1};
- 
+
   int s3D_000_fP1M1M1[]    = {0,0,0, 1,0,0, 1,-1,0, 1,-1,-1, 0,-1,0, 0,-1,-1, 0,0,-1, 1,0,-1};
   int s3D_000_fM1P1M1[]    = {0,0,0, -1,0,0, -1,1,0, -1,1,-1, 0,1,0, 0,1,-1, 0,0,-1, -1,0,-1};
   int s3D_000_fM1M1P1[]    = {0,0,0, -1,0,0, -1,-1,0, -1,-1,1, 0,-1,0, 0,-1,1, 0,0,1, -1,0,1};
@@ -188,16 +188,16 @@ void build_field()
   int s3D_000_fM1P1P1[]    = {0,0,0, -1,0,0, -1,1,0, -1,1,1, 0,1,0,  0,1,1,  0,0,1,  -1,0,1};
   int s3D_000_fP1M1P1[]    = {0,0,0, 1,0,0, 1,-1,0,  1,-1,1, 0,-1,0, 0,-1,1, 0,0,1,  1,0,1};
   int s3D_000_fP1P1M1[]    = {0,0,0, 1,0,0, 1,1,0,   1,1,-1, 0,1,0,  0,1,-1, 0,0,-1, 1,0,-1};
- 
+
   int s3D_000_fM1M1M1[]    = {0,0,0, -1,0,0, -1,-1,0, -1,-1,-1, 0,-1,0, 0,-1,-1, 0,0,-1, -1,0,-1};
-  
+
   int s3D_000_P100_P200_M100[] = {0,0,0, 1,0,0, 2,0,0, -1,0,0};
   int s3D_000_0P10_0P20_0M10[] = {0,0,0, 0,1,0, 0,2,0, 0,-1,0};
   int s3D_000_00P1_00P2_00M1[] = {0,0,0, 0,0,1, 0,0,2, 0,0,-1};
   int s3D_000_P100_M100_M200[] = {0,0,0, 1,0,0, -1,0,0, -2,0,0};
   int s3D_000_0P10_0M10_0M20[] = {0,0,0, 0,1,0, 0,-1,0, 0,-2,0};
   int s3D_000_00P1_00M1_00M2[] = {0,0,0, 0,0,1, 0,0,-1, 0,0,-2};
-  
+
   int s3D_P100_M100_0P10_0M10_00P1_00M1[] = {1,0,0, -1,0,0, 0,1,0, 0,-1,0, 0,0,1, 0,0,-1};
 
   int s3D_000_P200[]     = {0,0,0, 2,0,0};
@@ -225,24 +225,24 @@ void build_field()
 
 
   S3D_000         = ops_decl_stencil( 3, 1, s3D_000, "0,0,0");
-  
+
   S3D_000_P100    = ops_decl_stencil( 3, 2, s3D_000_P100, "0,0,0:1,0,0");
   S3D_000_0P10    = ops_decl_stencil( 3, 2, s3D_000_0P10, "0,0,0:0,1,0");
   S3D_000_00P1    = ops_decl_stencil( 3, 2, s3D_000_00P1, "0,0,0:0,0,1");
-  
+
   S3D_000_M100    = ops_decl_stencil( 3, 2, s3D_000_M100, "0,0,0:-1,0,0");
   S3D_000_0M10    = ops_decl_stencil( 3, 2, s3D_000_0M10, "0,0,0:0,-1,0");
   S3D_000_00M1    = ops_decl_stencil( 3, 2, s3D_000_00M1, "0,0,0:0,0,-1");
-  
+
   S3D_000_f0M1M1 = ops_decl_stencil( 3, 4, s3D_000_f0M1M1, "f0,0,0:0,-1,-1");
   S3D_000_fM10M1 = ops_decl_stencil( 3, 4, s3D_000_fM10M1, "f0,0,0:-1,0,-1");
   S3D_000_fM1M10 = ops_decl_stencil( 3, 4, s3D_000_fM1M10, "f0,0,0:-1,-1,0");
-  
+
   S3D_000_f0P1P1 = ops_decl_stencil( 3, 4, s3D_000_f0P1P1, "f0,0,0:0,1,1");
   S3D_000_fP10P1 = ops_decl_stencil( 3, 4, s3D_000_fP10P1, "f0,0,0:1,0,1");
   S3D_000_fP1P10 = ops_decl_stencil( 3, 4, s3D_000_fP1P10, "f0,0,0:1,1,0");
-  
-  
+
+
   S3D_000_fP1P1P1 = ops_decl_stencil( 3, 8, s3D_000_fP1P1P1, "f0,0,0:1,1,1");
 
   S3D_000_fP1M1M1 = ops_decl_stencil( 3, 8, s3D_000_fP1M1M1, "f0,0,0:1,-1,-1");
@@ -254,11 +254,11 @@ void build_field()
   S3D_000_fP1P1M1 = ops_decl_stencil( 3, 8, s3D_000_fP1P1M1, "f0,0,0:1,1,-1");
 
   S3D_000_fM1M1M1 = ops_decl_stencil( 3, 8, s3D_000_fM1M1M1, "f0,0,0:-1,-1,-1");
-  
+
   S3D_000_P200     = ops_decl_stencil( 3, 2, s3D_000_P200, "0,0,0:2,0,0");
   S3D_000_0P20     = ops_decl_stencil( 3, 2, s3D_000_0P20, "0,0,0:0,2,0");
   S3D_000_00P2     = ops_decl_stencil( 3, 2, s3D_000_00P2, "0,0,0:0,0,2");
-  
+
   S3D_000_M200     = ops_decl_stencil( 3, 2, s3D_000_M200, "0,0,0:-2,0,0");
   S3D_000_0M20     = ops_decl_stencil( 3, 2, s3D_000_0M20, "0,0,0:0,-2,0");
   S3D_000_00M2     = ops_decl_stencil( 3, 2, s3D_000_00M2, "0,0,0:0,0,-2");
@@ -282,11 +282,11 @@ void build_field()
   S3D_000_P100_P200_M100 = ops_decl_stencil( 3, 4, s3D_000_P100_P200_M100, "0,0,0:1,0,0:2,0,0:-1,0,0");
   S3D_000_0P10_0P20_0M10 = ops_decl_stencil( 3, 4, s3D_000_0P10_0P20_0M10, "0,0,0:1,0,0:0,2,0:0,-1,0");
   S3D_000_00P1_00P2_00M1 = ops_decl_stencil( 3, 4, s3D_000_00P1_00P2_00M1, "0,0,0:1,0,0:0,0,2:0,0,-1");
-  
+
   S3D_000_P100_M100_M200 = ops_decl_stencil( 3, 4, s3D_000_P100_M100_M200, "0,0,0:1,0,0:-1,0,0:-2,0,0");
   S3D_000_0P10_0M10_0M20 = ops_decl_stencil( 3, 4, s3D_000_0P10_0M10_0M20, "0,0,0:1,0,0:0,-1,0:0,-2,0");
   S3D_000_00P1_00M1_00M2 = ops_decl_stencil( 3, 4, s3D_000_00P1_00M1_00M2, "0,0,0:1,0,0:0,0,-1:0,0,-2");
-  
+
   S3D_P100_M100_0P10_0M10_00P1_00M1 = ops_decl_stencil( 3, 6, s3D_P100_M100_0P10_0M10_00P1_00M1, "1,0,0:-1,0,0:0,1,0:0,0,-1:0,0,1:0,0,-1");
 
   S3D_000_STRID3D_X = ops_decl_strided_stencil( 3, 1, s3D_000, stride3D_x, "s2D_000_stride3D_x");
@@ -296,7 +296,7 @@ void build_field()
   S3D_000_P100_STRID3D_X = ops_decl_strided_stencil( 3, 2, s3D_000_P100, stride3D_x, "s3D_000_P100_stride3D_x");
   S3D_000_0P10_STRID3D_Y = ops_decl_strided_stencil( 3, 2, s3D_000_0P10, stride3D_y, "s3D_000_0P10_stride3D_y");
   S3D_000_00P1_STRID3D_Z = ops_decl_strided_stencil( 3, 2, s3D_000_00P1, stride3D_z, "s3D_000_00P1_stride3D_z");
-  
+
   S3D_000_P100_M100_STRID3D_X = ops_decl_strided_stencil( 3, 3, s3D_000_P100_M100, stride3D_x, "s3D_000_P100_M100_stride3D_x");
   S3D_000_0P10_0M10_STRID3D_Y = ops_decl_strided_stencil( 3, 3, s3D_000_0P10_0M10, stride3D_y, "s3D_000_0P10_0M10_stride3D_y");
   S3D_000_00P1_00M1_STRID3D_Z = ops_decl_strided_stencil( 3, 3, s3D_000_00P1_00M1, stride3D_z, "s3D_000_00P1_00M1_stride3D_z");
@@ -304,42 +304,8 @@ void build_field()
   S3D_000_P100_M100_M200_STRID3D_X = ops_decl_strided_stencil( 3, 4, s3D_000_P100_P200_M100, stride3D_x, "0,0,0:1,0,0:-1,0,0:-2,0,0");
   S3D_000_0P10_0M10_0M20_STRID3D_Y = ops_decl_strided_stencil( 3, 4, s3D_000_0P10_0P20_0M10, stride3D_y, "0,0,0:1,0,0:0,-1,0:0,-2,0");
   S3D_000_00P1_00M1_00M2_STRID3D_Z = ops_decl_strided_stencil( 3, 4, s3D_000_00P1_00P2_00M1, stride3D_z, "0,0,0:1,0,0:0,0,-1:0,0,-2");
-  
-  
-  //decompose the block
-  ops_partition("3D_BLOCK_DECOMPSE");
-  
-  d_m[0]=-2;d_m[1]=0;d_m[2]=0;d_p[0]=-3;d_p[1]=0;d_p[2]=0;
-  #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[0];  
-  for(int i=sb->decomp_disp[0]-2; i<sb->decomp_disp[0]+sb->decomp_size[0]+2; i++)
-    ((int *)(xx->data))[i-d_m[0]-sb->decomp_disp[0]] = i - x_min;
-  #else
-  for(int i=-2; i<x_max+6; i++)
-    ((int *)(xx->data))[i-d_m[0]] = i - x_min;
-  #endif
-  xx->dirty_hd=1;
-  
-  d_m[0]=0;d_m[1]=-2;d_m[2]=0;d_p[0]=0;d_p[1]=-3;d_p[2]=0;
-  #ifdef OPS_MPI
-  for(int i=sb->decomp_disp[1]-2; i<sb->decomp_disp[1]+sb->decomp_size[1]+2; i++)
-    ((int *)(yy->data))[i-d_m[1]-sb->decomp_disp[1]] = i - y_min;
-  #else
-  for(int i=-2; i<y_max+6; i++)
-    ((int *)(yy->data))[i-d_m[1]] = i - y_min;
-  #endif
-  yy->dirty_hd=1;
-  
-  d_m[0]=0;d_m[1]=0;d_m[2]=-2;d_p[0]=0;d_p[1]=0;d_p[2]=-3;  
-  #ifdef OPS_MPI
-  for(int i=sb->decomp_disp[2]-2; i<sb->decomp_disp[2]+sb->decomp_size[2]+2; i++)
-    ((int *)(zz->data))[i-d_m[2]-sb->decomp_disp[2]] = i - z_min;
-  #else
-  for(int i=-2; i<z_max+6; i++)
-    ((int *)(zz->data))[i-d_m[2]] = i - z_min;
-  #endif
-  zz->dirty_hd=1;
-  
+
+  ops_partition("3D_BLOCK_DECOMPOSE");
   //print ops blocks and dats details
   ops_diagnostic_output();
 

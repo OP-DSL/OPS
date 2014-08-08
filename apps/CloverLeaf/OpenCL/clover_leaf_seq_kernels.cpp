@@ -47,6 +47,8 @@
 //#include "flux_calc_kernelx_seq_kernel.cpp"
 //#include "flux_calc_kernely_seq_kernel.cpp"
 //#include "viscosity_kernel_seq_kernel.cpp"
+#include "../MPI/initialise_chunk_kernel_xx_seq_kernel.cpp"
+#include "../MPI/initialise_chunk_kernel_yy_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_cellx_seq_kernel.cpp"

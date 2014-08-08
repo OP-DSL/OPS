@@ -237,27 +237,6 @@ void build_field()
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
 
-  d_m[0]=-2;d_m[1]=0;d_p[0]=-3;d_p[1]=0;
-  #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[0];
-  for(int i=sb->decomp_disp[0]-2; i<sb->decomp_disp[0]+sb->decomp_size[0]+2; i++)
-    ((int *)(xx->data))[i-d_m[0]-sb->decomp_disp[0]] = i - x_min;
-  #else
-  for(int i=-2; i<x_max+6; i++)
-    ((int *)(xx->data))[i-d_m[0]] = i - x_min;
-  #endif
-  xx->dirty_hd=1;
-
-  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-3;
-  #ifdef OPS_MPI
-  for(int i=sb->decomp_disp[1]-2; i<sb->decomp_disp[1]+sb->decomp_size[1]+2; i++)
-    ((int *)(yy->data))[i-d_m[1]-sb->decomp_disp[1]] = i - y_min;
-  #else
-  for(int i=-2; i<y_max+6; i++)
-    ((int *)(yy->data))[i-d_m[1]] = i - y_min;
-  #endif
-  yy->dirty_hd=1;
-
   //print ops blocks and dats details
   ops_diagnostic_output();
 
