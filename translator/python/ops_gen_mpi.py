@@ -178,7 +178,10 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
-
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
 
 ##########################################################################
 #  start with seq kernel function
@@ -273,6 +276,17 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
     code('')
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+
+
     code('')
 
     comm('Timing')
@@ -320,10 +334,12 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start['+str(n)+'*'+str(NDIM)+'],')
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
         code('')
-
+      elif arg_typ[n] == 'ops_arg_idx':
+        code('p_a['+str(n)+'] = (char *)arg_idx;')
+        code('')
       #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
         #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
         #code('ops_exchange_halo3(&args['+str(n)+'],max'+str(n)+',min'+str(n)+',range);')
@@ -362,7 +378,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
-    if reduction == 0:
+    if reduction == 0 and arg_idx == 0:
       code('#pragma simd')
     FOR('i','0','SIMD_VEC')
     text = name+'( '
@@ -378,6 +394,8 @@ def ops_gen_mpi(master, date, consts, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
+    if arg_idx:
+      code('arg_idx[0]++;')
     ENDFOR()
     code('')
 
@@ -417,6 +435,8 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')
 
+    if arg_idx:
+      code('arg_idx[0]++;')
     ENDFOR()
     code('')
 
@@ -426,6 +446,15 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
           #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_1) - '+str(stride[NDIM*n])+');')
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+    if arg_idx:
+      code('#ifdef OPS_MPI')
+      for n in range (0,1):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,1):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+      code('arg_idx[1]++;')
     ENDFOR()
 
     if NDIM==3:
@@ -434,6 +463,16 @@ def ops_gen_mpi(master, date, consts, kernels):
         if arg_typ[n] == 'ops_arg_dat':
             #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[NDIM*n])+');')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+
+      if arg_idx:
+        code('#ifdef OPS_MPI')
+        for n in range (0,2):
+          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('#else //OPS_MPI')
+        for n in range (0,2):
+          code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+        code('#endif //OPS_MPI')
+        code('arg_idx[2]++;')
       ENDFOR()
 
     code('ops_timers_core(&c2,&t2);')

@@ -228,7 +228,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
-
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
 
 ##########################################################################
 #  start with omp kernel function
@@ -476,6 +479,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('int start'+str(NDIM-1)+' = start_i;')
     code('')
 
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start'+str(n)+';')
+      code('#endif //OPS_MPI')
 
     comm('set up initial pointers ')
     for n in range (0, nargs):
@@ -494,8 +506,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         #original address calculation via funcion call
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start0,')
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+      elif arg_typ[n] == 'ops_arg_idx':
+        code('p_a['+str(n)+'] = (char *)arg_idx;')
 
       code('')
     code('')
@@ -509,7 +523,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
-    if reduction == 0:
+    if reduction == 0 and arg_idx == 0:
       code('#pragma simd')
     FOR('i','0','SIMD_VEC')
     text = name+'( '
@@ -519,8 +533,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
         else:
           text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
+      elif arg_typ[n] == 'ops_arg_idx':
+        text = text +' arg_idx'
 
       if nargs <> 1 and n != nargs-1:
         text = text + ','
@@ -529,6 +545,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if n%n_per_line == 2 and n <> nargs-1:
         text = text +'\n          '
     code(text);
+    if arg_idx==1:
+      code('arg_idx[0]++;')
     ENDFOR()
     code('')
 
@@ -551,9 +569,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
           text = text +' ('+typs[n]+' * )p_a['+str(n)+']'
         else:
           text = text +' (const '+typs[n]+' * )p_a['+str(n)+']'
-
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         text = text +' &arg_gbl'+str(n)+'[64*thr]'
+      elif arg_typ[n] == 'ops_arg_idx':
+        text = text +' arg_idx'
 
       if nargs <> 1 and n != nargs-1:
         text = text + ','
@@ -571,6 +590,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
           code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')
 
+    if arg_idx==1:
+      code('arg_idx[0]++;')
     ENDFOR()
     code('')
 
@@ -579,6 +600,16 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+
+    if arg_idx:
+      code('#ifdef OPS_MPI')
+      for n in range (0,1):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
+      code('#else //OPS_MPI')
+      for n in range (0,1):
+        code('arg_idx['+str(n)+'] = start'+str(n)+';')
+      code('#endif //OPS_MPI')
+      code('arg_idx[1]++;')
     ENDFOR()
 
     if NDIM==3:
@@ -587,6 +618,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         if arg_typ[n] == 'ops_arg_dat':
             #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * (off'+str(n)+'_2) - '+str(stride[NDIM*n])+');')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+      if arg_idx:
+        code('#ifdef OPS_MPI')
+        for n in range (0,2):
+          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
+        code('#else //OPS_MPI')
+        for n in range (0,2):
+          code('arg_idx['+str(n)+'] = start'+str(n)+';')
+        code('#endif //OPS_MPI')
+        code('arg_idx[2]++;')
       ENDFOR()
 
     ENDFOR() #end of OMP parallel loop

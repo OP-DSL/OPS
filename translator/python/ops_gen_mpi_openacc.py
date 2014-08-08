@@ -242,6 +242,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         ng_args = ng_args + 1
 
 
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
 
 ##########################################################################
 #  generate constants and MACROS
@@ -312,6 +316,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     depth = depth+2
     for n in range (0, nargs):
       code(typs[n]+' *p_a'+str(n)+',')
+    if arg_idx:
+      if NDIM == 2:
+        code('int arg_idx0, int arg_idx1,')
+      elif NDIM == 3:
+        code('int arg_idx0, int arg_idx1, int arg_idx2,')
+
     if NDIM == 2:
       code('int x_size, int y_size) {')
     if NDIM == 3:
@@ -369,13 +379,19 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code(line)
     code('#endif')
     FOR('n_x','0','x_size')
+    if arg_idx:
+      if NDIM==2:
+        code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
+      elif NDIM==3:
+        code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
+
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
         if NDIM == 3:
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           text = text +' p_a'+str(n)+''
         else:
@@ -383,6 +399,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
             text = text +' &p_a'+str(n)+'_l'
           else:
             text = text +' p_a'+str(n)+'_l'
+      elif arg_typ[n] == 'ops_arg_idx':
+        text = text +'arg_idx'
+
       if nargs <> 1 and n != nargs-1:
         text = text + ','
       else:
@@ -515,6 +534,18 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+    code('')
+
+
     #timing structs
     code('')
     comm('Timing')
@@ -637,6 +668,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     depth = depth+2
     for n in range (0, nargs):
       code('p_a'+str(n)+',')
+    if arg_idx:
+      if NDIM==2:
+        code('arg_idx[0], arg_idx[1],')
+      elif NDIM==3:
+        code('arg_idx[0], arg_idx[1], arg_idx[2],')
     if NDIM == 2:
       code('x_size, y_size);')
     if NDIM == 3:

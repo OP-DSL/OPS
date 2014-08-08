@@ -40,10 +40,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "mblock_kernel.h"
-
 // OPS header file
 #include "ops_seq.h"
+
+#include "mblock_populate_kernel.h"
 
 /******************************************************************************
 * Main program

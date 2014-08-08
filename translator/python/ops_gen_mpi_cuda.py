@@ -281,7 +281,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       else:
         ng_args = ng_args + 1
 
-
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
 
 ##########################################################################
 #  generate constants and MACROS
@@ -358,6 +361,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
             code('const '+typs[n]+'* __restrict arg'+str(n)+',')
         else:
           code(typs[n]+'* __restrict arg'+str(n)+',')
+      elif arg_typ[n] == 'ops_arg_idx':
+        if NDIM==2:
+          code('int arg_idx0, int arg_idx1,')
+        elif NDIM==3:
+          code('int arg_idx0, int arg_idx1, int arg_idx2,')
+
 
     code('int size0,')
     if NDIM==2:
@@ -390,6 +399,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('arg_idx[0] = arg_idx0+idx_x;')
+      code('arg_idx[1] = arg_idx1+idx_y;')
+      if NDIM==3:
+        code('arg_idx[2] = arg_idx2+idx_z;')
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==2:
@@ -414,6 +430,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
+      elif arg_typ[n] == 'ops_arg_idx':
+        text = text +'arg_idx'
+
 
       if nargs <> 1 and n <> nargs-1:
         if n%n_per_line <> 3:
@@ -516,6 +535,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if NDIM==3:
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
+
+
+    if arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -709,11 +739,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
-      else:
+      elif arg_typ[n] == 'ops_arg_gbl':
         if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
           text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
         else:
           text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
+      elif arg_typ[n] == 'ops_arg_idx':
+        if NDIM==2:
+          text = text + ' arg_idx[0], arg_idx[1],'
+        elif NDIM==3:
+          text = text + ' arg_idx[0], arg_idx[1], arg_idx[2],'
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
