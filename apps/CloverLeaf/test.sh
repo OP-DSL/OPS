@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#cd ../../ops/
-#source source_intel
-#make
-#cd -
-#make
+cd ../../ops/
+source source_intel
+make
+cd -
+make
 #============================ Test Cloverleaf 2D ==========================================================
 echo '============> Running OpenMP'
-#KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out
 tail -n 1 perf_out
 grep "step:   2955" clover.out
 echo '============> Running MPI+OpenMP'

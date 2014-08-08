@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#cd ../../ops/
-#source source_intel
-#make
-#cd -
+cd ../../ops/
+source source_intel
+make
+cd -
 make
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
@@ -51,13 +51,13 @@ grep "step:   2954" clover.out
 grep "step:   2955" clover.out
 rm perf_out
 
-#cd -
-#source source_pgi
-#make cuda
 cd -
-#make cloverleaf_openacc
+source source_pgi
+make cuda
+cd -
+make cloverleaf_openacc
 echo '============> Running OpenACC'
-#./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 tail -n 1 perf_out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
