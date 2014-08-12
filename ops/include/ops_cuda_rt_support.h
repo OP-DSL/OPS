@@ -94,7 +94,8 @@ void ops_cuda_exit( );
 
 void ops_halo_copy_dh(const char * src, char * dest, int size);
 void ops_halo_copy_hd(const char * src, char * dest, int size);
-void ops_halo_copy(const char * src, char * dest, int size, cudaStream_t stream);
+//void ops_halo_copy(const char * src, char * dest, int size, cudaStream_t stream);
+void ops_halo_copy(char * dest, char * src, int size);
 
 #ifdef __cplusplus
 }
