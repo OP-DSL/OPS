@@ -223,7 +223,7 @@ void ops_halo_transfer(ops_halo_group group) {
           //cudaError_t result;
           //result = cudaStreamCreate(&stream1);
           
-          printf(" src device -> dest host\n");
+          //printf(" src device -> dest host\n");
           //ops_halo_copy(ops_halo_buffer_d + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->from->elem_size,
           //       halo->from->data_d + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size,
           //       stream1);
@@ -234,6 +234,8 @@ void ops_halo_transfer(ops_halo_group group) {
       }
     }
 
+    cutilSafeCall ( cudaDeviceSynchronize ( ) );
+    
     //copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->to_dir[i] > 0) {
@@ -254,7 +256,7 @@ void ops_halo_transfer(ops_halo_group group) {
           //cudaStream_t stream1;
           //cudaError_t result;
           //result = cudaStreamCreate(&stream1);
-          printf(" src host -> dest device \n");
+          //printf(" src host -> dest device \n");
           //ops_halo_copy(halo->to->data_d + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
           //     ops_halo_buffer_d + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->to->elem_size, halo->to->elem_size,
           //     stream1);
@@ -264,6 +266,8 @@ void ops_halo_transfer(ops_halo_group group) {
         }
       }
     }
+    
+    cutilSafeCall ( cudaDeviceSynchronize ( ) );
   }   
   
 }
