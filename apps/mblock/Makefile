@@ -84,7 +84,7 @@ endif
   MPIFLAGS  = $(CPPFLAGS)
 else
 print:
-  @echo "unrecognised value for OPS_COMPILER"
+	@echo "unrecognised value for OPS_COMPILER"
 endif
 endif
 endif

@@ -92,6 +92,10 @@ void mvReductArraysToDevice( int reduct_bytes );
 void mvReductArraysToHost( int reduct_bytes );
 void ops_cuda_exit( );
 
+void ops_halo_copy_dh(const char * src, char * dest, int size);
+void ops_halo_copy_hd(const char * src, char * dest, int size);
+void ops_halo_copy(const char * src, char * dest, int size, cudaStream_t stream);
+
 #ifdef __cplusplus
 }
 #endif

@@ -42,6 +42,9 @@
 #include <ops_lib_core.h>
 #include <ops_cuda_rt_support.h>
 
+char *ops_halo_buffer = NULL;
+char *ops_halo_buffer_d = NULL;
+int ops_halo_buffer_size = 0;
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
@@ -147,7 +150,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
 }
 
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+  ops_halo halo = ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+  return halo;
 }
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
@@ -176,4 +180,87 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 
 void ops_partition(char* routine)
 {
+}
+
+
+void ops_halo_transfer(ops_halo_group group) {
+  printf("In CUDA block halo transfer\n"); 
+  
+  for (int h = 0; h < group->nhalos; h++) {
+    ops_halo halo = group->halos[h];
+    int size = halo->from->elem_size * halo->iter_size[0];
+    for (int i = 1; i < halo->from->block->dims; i++) size *= halo->iter_size[i];
+    if (size > ops_halo_buffer_size) {
+      //ops_halo_buffer = (char *)realloc(ops_halo_buffer, size); 
+      cutilSafeCall(cudaFree(ops_halo_buffer_d));
+      cutilSafeCall(cudaMalloc((void**)&ops_halo_buffer_d, size));
+      ops_halo_buffer_size = size;
+      cutilSafeCall(cudaDeviceSynchronize( ));
+    }
+
+    //copy to linear buffer from source
+    int ranges[OPS_MAX_DIM*2];
+    int step[OPS_MAX_DIM];
+    int buf_strides[OPS_MAX_DIM];
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->from_dir[i] > 0) {
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->from_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+    
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          cudaStream_t stream1;
+          cudaError_t result;
+          result = cudaStreamCreate(&stream1);
+          //ops_halo_copy(const char * dest, char * src, int size);
+          printf(" src device -> dest host\n");
+          ops_halo_copy(ops_halo_buffer_d + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->from->elem_size,
+                 halo->from->data_d + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size,
+                 stream1);
+          result = cudaStreamDestroy(stream1);        
+        }
+      }
+    }
+
+    //copy from linear buffer to target
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->to_dir[i] > 0) {
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->to_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          cudaStream_t stream1;
+          cudaError_t result;
+          result = cudaStreamCreate(&stream1);
+          //ops_halo_copy(const char * src, char * dest, int count, int size);
+          printf(" src host -> dest device \n");
+          ops_halo_copy(halo->to->data_d + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
+               ops_halo_buffer_d + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->to->elem_size, halo->to->elem_size,
+               stream1);
+          result = cudaStreamDestroy(stream1);
+        }
+      }
+    }
+  }   
+  
 }

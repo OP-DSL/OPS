@@ -674,8 +674,8 @@ void ops_timing_output()
         printf("Too long\n");
       }
     }
-    char *buf = (char*)malloc((maxlen+80)*sizeof(char));
-    char buf2[80];
+    char *buf = (char*)malloc((maxlen+180)*sizeof(char));
+    char buf2[180];
     sprintf(buf,"Name");
     for (int i = 4; i < maxlen;i++) strcat(buf," ");
     ops_printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
