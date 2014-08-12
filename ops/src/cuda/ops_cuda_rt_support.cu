@@ -61,15 +61,6 @@ __global__ void copy_kernel(char *dest, char *src, int size ) {
     memcpy(&dest[tid],&src[tid],size);
 }
 
-/*__global__ void kernel(int **in, int **out, int len, int N)
-{
-    int idx = threadIdx.x + blockIdx.x*blockDim.x;
-
-    for(; idx<N; idx+=gridDim.x*blockDim.x)
-        memcpy(out[idx], in[idx], sizeof(int)*len);
-
-}*/
-
 void ops_halo_copy_dh(const char * dest, char * src, int size){
   printf("In CUDA ops_halo_copy_dh\n");
   

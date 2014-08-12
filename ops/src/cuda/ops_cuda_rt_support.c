@@ -182,7 +182,6 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs)
 
 void ops_cuda_get_data( ops_dat dat )
 {
-  //if (!OPS_hybrid_gpu) return;
   if (dat->dirty_hd == 2) dat->dirty_hd = 0;
   else return;
   int bytes = dat->elem_size;

@@ -268,6 +268,6 @@ void ops_halo_transfer(ops_halo_group group) {
     }
     
     cutilSafeCall ( cudaDeviceSynchronize ( ) );
-  }   
-  
+    halo->to->dirty_hd = 2;
+  }  
 }
