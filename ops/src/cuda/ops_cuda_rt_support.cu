@@ -55,36 +55,9 @@
 
 __global__ void copy_kernel(char *dest, char *src, int size ) {
   int tid = blockIdx.x;
-  //if (tid < 32) 
-    //for(int i=0; i<size; i++)
-    //  dest[tid+i] = src[tid+i];
-    memcpy(&dest[tid],&src[tid],size);
+  memcpy(&dest[tid],&src[tid],size);
 }
 
-void ops_halo_copy_dh(const char * dest, char * src, int size){
-  printf("In CUDA ops_halo_copy_dh\n");
-  
-  cutilSafeCall(cudaMemcpy((void *)dest,src,size,cudaMemcpyDeviceToHost));
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
-}
-
-void ops_halo_copy_hd(const char * dest, char * src, int size){
-  printf("In CUDA ops_halo_copy_hd\n");
-  
-  cutilSafeCall(cudaMemcpy((void *)dest,src,size,cudaMemcpyHostToDevice));
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
-}
-
-//void ops_halo_copy(const char * dest, char * src, int size, cudaStream_t stream){
-void ops_halo_copy(char * dest, char * src, int size){
-  //printf("In CUDA ops_halo_copy\n");
-  
-  //cutilSafeCall(cudaMemcpy((void *)dest,src,size,cudaMemcpyDeviceToDevice));
-  //cutilSafeCall ( cudaDeviceSynchronize ( ) );
-  
-  //cutilSafeCall(cudaMemcpyAsync((void *)dest,src,size,cudaMemcpyDeviceToDevice,stream));
-  //cutilSafeCall ( cudaDeviceSynchronize ( ) );
-  
-  copy_kernel<<<1,1>>>(dest,src,size);  
-  
+void ops_cuda_halo_copy(char * dest, char * src, int size){
+    copy_kernel<<<1,1>>>(dest,src,size);  
 }
