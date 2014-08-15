@@ -1,0 +1,75 @@
+\documentclass[11pt]{article}
+\usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{graphicx}
+% \usepackage[footnotesize]{subfigure}
+\usepackage{listings}
+\usepackage{verbments}
+
+\date{Aug 2014}
+
+ \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
+ \oddsidemargin 0.1in
+ \textheight 9.25in  \textwidth 6.00in
+ \parskip 5pt plus 1pt minus 1pt
+ \def \baselinestretch {1.25}   % one-and-a-half spaced
+ \setlength {\unitlength} {0.75in}
+
+\newenvironment{routine}[2]
+{\vspace{.0in}{\noindent\bf\hspace{-5pt}  #1}{\\ \noindent #2}
+\begin{list}{}{
+\renewcommand{\makelabel}[1]{{\tt  ##1 } \hfil}
+\itemsep 0pt plus 1pt minus 1pt
+\leftmargin  1.5in
+\rightmargin 0.0in
+\labelwidth  1.1in
+\itemindent  0.0in
+\listparindent  0.0in
+\labelsep    0.05in}
+}{\end{list}}
+%
+
+\begin{document}
+
+\title{OPS Distributed Memory Parallelization \\Developer Documentation}
+\author{Mike Giles, Gihan Mudalige, Istvan Reguly}
+\maketitle
+
+\newpage
+
+
+\tableofcontents
+
+
+\newpage
+\section{Introduction}
+
+
+OPS is a high-level framework with associated libraries and preprocessors to generate parallel executables for
+applications on \textbf{multi-block structured grids}. Multi-block structured grids consists of an unstructured
+collection of structured meshes/grids. This document details initial design and implementation of the distributed
+memory parallelization (based on MPI) in OPS. Many of the design decision in the library structure follows that of the
+OP2 high-level library for unstructured mesh applications~\cite{op2}. However the structured mesh domain is distinct
+from the unstructured mesh applications domain due to the implicit connectivity between neighbouring mesh elements (such
+as vertices, cells) in structured meshes/grids. Operations involve looping over a ``rectangular'' multi-dimensional set
+of grid points using one or more ``stencils'' to access data.
+
+A key aspect of an OPS application is that it can be developed purely from a traditional sequential execution point of
+view and the developer need not consider any platform specific parallelization. The multi-core (OpenMP) and
+many-core (CUDA, OpenACC, OpenCL) parallelizations are single (shared memory) node implementations. These
+parallelizations are fine-grained. However, the size of the problem that can be solved on a single node is limited by
+its compute and main-memory capacity. The compute capacity is important to solve a problem within an acceptable time to
+solution. The many-core parallelizations, such as CUDA, are even more restricted on a single GPU's global memory
+capacity. Thus it is essential to have a distributed memory based parallel implementation to solve large problems
+without being limited by the resources on a single CPU or GPU node. The idea then is to layer the more coarse grained
+distributed memory parallelization on top of the thread level parallelization so that both can be utilized.
+
+\begin{thebibliography}{1}
+\bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
+\end{thebibliography}
+
+\end{document}
+
+
+
+
+
