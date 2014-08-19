@@ -53,11 +53,137 @@
 #include <ops_cuda_rt_support.h>
 
 
-__global__ void copy_kernel(char *dest, char *src, int size ) {
+/*__global__ void copy_kernel(char *dest, char *src, int size ) {
   int tid = blockIdx.x;
   memcpy(&dest[tid],&src[tid],size);
+}*/
+
+
+__global__ void copy_kernel_tobuf(char * dest, char * src, 
+                 int rx_s, int rx_e,
+                 int ry_s, int ry_e,
+                 int rz_s, int rz_e,
+                 int x_step, int y_step, int z_step,
+                 int size_x,int size_y,int size_z,
+                 int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                 int elem_size){
+
+  int idx_z = rz_s + z_step*(blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step*(blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step*(blockDim.x * blockIdx.x + threadIdx.x);
+  
+  if ((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&
+      (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&
+      (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {
+  
+      src += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;  
+      dest  += ((idx_z-rz_s)*z_step*buf_strides_z+ (idx_y-ry_s)*y_step*buf_strides_y + (idx_x-rx_s)*x_step*buf_strides_x)*elem_size;
+      memcpy(dest,src,elem_size);
+  }
 }
 
-void ops_cuda_halo_copy(char * dest, char * src, int size){
-    copy_kernel<<<1,1>>>(dest,src,size);  
+__global__ void copy_kernel_frombuf(char * dest, char * src, 
+                 int rx_s, int rx_e,
+                 int ry_s, int ry_e,
+                 int rz_s, int rz_e,
+                 int x_step, int y_step, int z_step,
+                 int size_x,int size_y,int size_z,
+                 int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                 int elem_size){
+
+  int idx_z = rz_s + z_step*(blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step*(blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step*(blockDim.x * blockIdx.x + threadIdx.x);
+  
+  if ((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&
+      (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&
+      (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {
+  
+      dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;  
+      src  += ((idx_z-rz_s)*z_step*buf_strides_z+ (idx_y-ry_s)*y_step*buf_strides_y + (idx_x-rx_s)*x_step*buf_strides_x)*elem_size;
+      memcpy(dest,src,elem_size);
+  }
 }
+  
+  
+void ops_cuda_halo_copy_tobuf(char * dest, char * src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int size_x,int size_y,int size_z,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                        int size) {
+
+  int thr_x = abs(rx_s-rx_e);
+  int blk_x = 1;
+  if (abs(rx_s-rx_e)>8) {
+    blk_x = (thr_x-1)/8+1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s-ry_e);
+  int blk_y = 1;
+  if (abs(ry_s-ry_e)>8) {
+    blk_y = (thr_y-1)/8+1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s-rz_e);
+  int blk_z = 1;
+  if (abs(rz_s-rz_e)>8) {
+    blk_z = (thr_z-1)/8+1;
+    thr_z = 8;
+  }
+    
+  dim3 grid(blk_x,blk_y,blk_z);
+  dim3 tblock(thr_x,thr_y,thr_z);
+  copy_kernel_tobuf<<<grid, tblock>>>(dest, src, 
+                                  rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
+                                  x_step, y_step, z_step,
+                                  size_x, size_y, size_z,
+                                  buf_strides_x, buf_strides_y, buf_strides_z,
+                                  size);  
+}
+
+  
+void ops_cuda_halo_copy_frombuf(char * dest, char * src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int size_x,int size_y,int size_z,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                        int size) {
+
+  int thr_x = abs(rx_s-rx_e);
+  int blk_x = 1;
+  if (abs(rx_s-rx_e)>8) {
+    blk_x = (thr_x-1)/8+1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s-ry_e);
+  int blk_y = 1;
+  if (abs(ry_s-ry_e)>8) {
+    blk_y = (thr_y-1)/8+1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s-rz_e);
+  int blk_z = 1;
+  if (abs(rz_s-rz_e)>8) {
+    blk_z = (thr_z-1)/8+1;
+    thr_z = 8;
+  }
+    
+  dim3 grid(blk_x,blk_y,blk_z);
+  dim3 tblock(thr_x,thr_y,thr_z);
+  copy_kernel_frombuf<<<grid, tblock>>>(dest, src, 
+                                  rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
+                                  x_step, y_step, z_step,
+                                  size_x, size_y, size_z,
+                                  buf_strides_x, buf_strides_y, buf_strides_z,
+                                  size);  
+}
+  
+  
+  
+  
+

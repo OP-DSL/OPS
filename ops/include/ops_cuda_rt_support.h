@@ -94,7 +94,25 @@ void ops_cuda_exit( );
 
 void ops_halo_copy_dh(const char * src, char * dest, int size);
 void ops_halo_copy_hd(const char * src, char * dest, int size);
-void ops_cuda_halo_copy(char * dest, char * src, int size);
+//void ops_cuda_halo_copy(char * dest, char * src, int size);
+
+void ops_cuda_halo_copy_tobuf(char * dest, char * src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int size_x,int size_y,int size_z,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                        int size);
+
+void ops_cuda_halo_copy_frombuf(char * dest, char * src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int size_x,int size_y,int size_z,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                        int size);
 
 #ifdef __cplusplus
 }
