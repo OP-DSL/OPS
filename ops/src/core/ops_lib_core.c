@@ -49,18 +49,21 @@ ops_kernel * OPS_kernels=NULL;
 ops_arg *OPS_curr_args=NULL;
 const char *OPS_curr_name=NULL;
 int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
-int OPS_halo_group_index=0, OPS_halo_index=0;
+int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
+    OPS_halo_index = 0, OPS_halo_max = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
 */
 
 ops_block_descriptor * OPS_block_list;
+ops_halo * OPS_halo_list;
+ops_halo_group * OPS_halo_group_list;
 ops_stencil * OPS_stencil_list;
 Double_linked_list OPS_dat_list; //Head of the double linked list
 
-int OPS_block_size_x = 0;
-int OPS_block_size_y = 0;
+int OPS_block_size_x = 32;
+int OPS_block_size_y = 4;
 
 
 double ops_gather_time=0.0;
@@ -136,11 +139,6 @@ void ops_init_core( int argc, char ** argv, int diags )
     }
   }
 
-
-
-  if (OPS_block_size_x == 0) OPS_block_size_x = 16;
-  if (OPS_block_size_y == 0) OPS_block_size_y = 16;
-
   /*Initialize the double linked list to hold ops_dats*/
   TAILQ_INIT(&OPS_dat_list);
 
@@ -148,22 +146,28 @@ void ops_init_core( int argc, char ** argv, int diags )
 
 void ops_exit_core( )
 {
+  ops_dat_entry *item;
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
     free((char*)(OPS_block_list[i].block->name));
+    while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
+      TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
+      free(item);
+    }
     free(OPS_block_list[i].block);
   }
   free(OPS_block_list);
   OPS_block_list = NULL;
 
   /*free doubly linked list holding the ops_dats */
-  ops_dat_entry *item;
+
   while ((item = TAILQ_FIRST(&OPS_dat_list))) {
     if ((item->dat)->user_managed == 0)
       free((item->dat)->data);
     free((char*)(item->dat)->name);
     free((char*)(item->dat)->type);
     TAILQ_REMOVE(&OPS_dat_list, item, entries);
+    free(item->dat);
     free(item);
   }
 
@@ -176,6 +180,15 @@ void ops_exit_core( )
   }
   free(OPS_stencil_list);
   OPS_stencil_list = NULL;
+
+  for (int i = 0; i < OPS_halo_index; i++) {
+    free(OPS_halo_list[i]);
+  }
+
+  for (int i = 0; i < OPS_halo_group_index; i++) {
+    //free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_halo_group_list[i]);
+  }
 
   // reset initial values
   OPS_block_index = 0;
@@ -287,6 +300,14 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   //add item to the end of the list
   TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
   OPS_dat_index++;
+
+  //Another entry for a different list
+  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  if (item == NULL) {
+    printf ( " op_decl_dat error -- error allocating memory to double linked list entry\n" );
+    exit ( -1 );
+  }
+  item->dat = dat;
   TAILQ_INSERT_TAIL(&OPS_block_list[block->index].datasets, item, entries);
   OPS_block_list[block->index].num_datasets++;
 
@@ -375,6 +396,16 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
 }
 
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  if ( OPS_halo_index == OPS_halo_max ) {
+    OPS_halo_max += 10;
+    OPS_halo_list = (ops_halo *) realloc(OPS_halo_list,OPS_halo_max * sizeof(ops_halo));
+
+    if ( OPS_halo_list == NULL ) {
+      printf ( " ops_decl_halo_core error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
   ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index++;
   halo->from = from;
@@ -393,6 +424,8 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
     halo->from_dir[i] = i+1;
     halo->to_dir[i] = i+1;
   }
+
+  OPS_halo_list[OPS_halo_index++] = halo;
   return halo;
 }
 
@@ -531,7 +564,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     printf("error writing to %s\n",file_name);
     exit(2);
   }
-  
+
   if(dat->block->dims == 3) {
     if( strcmp(dat->type,"double") == 0 ) {
       for(int i = 0; i < dat->size[2]; i++ ) {
@@ -661,7 +694,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   fclose(fp);
-  
+
 }
 
 void ops_timing_output()
@@ -706,6 +739,7 @@ void ops_timing_output()
     }
     ops_printf("Total kernel time: %g\n",sumtime);
     //printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time, ops_scatter_time);
+    free(buf);
   }
 }
 

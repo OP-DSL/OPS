@@ -128,6 +128,8 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
     n == ndim-1? ops_printf(" ") : ops_printf("x ");
   }
   ops_printf("\n");
+  free(pdims);
+  free(periodic);
 }
 
 void ops_decomp_dats(sub_block *sb) {
@@ -262,7 +264,15 @@ void ops_mpi_exit()
     i = (item->dat)->index;
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->halos);
+    for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      for(int d = 0; d<MAX_DEPTH; d++) {
+        MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
+      }
+    }
     free(OPS_sub_dat_list[i]->mpidat);
+    free(OPS_sub_dat_list[i]->dirty_dir_send);
+    free(OPS_sub_dat_list[i]->dirty_dir_recv);
+    free(OPS_sub_dat_list[i]);
   }
   free(OPS_sub_dat_list);
   OPS_sub_dat_list = NULL;
