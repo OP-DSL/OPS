@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ../../ops/
-source source_intel
+source ./source_intel
 make
 cd -
 make
@@ -54,13 +54,13 @@ rm perf_out
 
 
 cd -
-source source_pgi
+source ./source_pgi
 make cuda
 cd -
 make cloverleaf_openacc
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#tail -n 1 perf_out
+tail -n 1 perf_out
 grep "Total Wall time" clover.out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
