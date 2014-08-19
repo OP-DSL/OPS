@@ -51,10 +51,21 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
 }
 
 ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
+  if ( OPS_halo_group_index == OPS_halo_group_max ) {
+    OPS_halo_group_max += 10;
+    OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
+
+    if ( OPS_halo_group_list == NULL ) {
+      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
   grp->halos = halos; //TODO: make a copy?
   grp->index = OPS_halo_group_index++;
+  OPS_halo_group_list[OPS_halo_group_index++] = grp;
+
   return grp;
 }
 
