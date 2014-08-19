@@ -141,7 +141,7 @@ void ops_halo_transfer(ops_halo_group group) {
     for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
       for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
-          memcpy(ops_halo_buffer + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->from->elem_size,
+          memcpy(ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
                  halo->from->data + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
         }
       }
@@ -165,7 +165,7 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
           memcpy(halo->to->data + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-                 ops_halo_buffer + ((k-ranges[4])*buf_strides[2]+ (j-ranges[2])*buf_strides[1] + (i-ranges[0])*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
+                 ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
         }
       }
     }
