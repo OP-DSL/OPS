@@ -43,6 +43,13 @@ int halo_buffer_size = 0;
 cl_mem halo_buffer_d = NULL;
 extern ops_opencl_core OPS_opencl_core;
 
+
+cl_kernel packer1_kernel;
+cl_kernel packer4_kernel;
+cl_kernel unpacker1_kernel;
+cl_kernel unpacker4_kernel;
+
+
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   
   cl_int ret = 0;
@@ -59,11 +66,37 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
   if (halo->blocklength%4 == 0) {
     int num_threads = 128;
     int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
+    
+    size_t globalWorkSize[3] = {num_blocks, 1, 1};
+    size_t localWorkSize[3] =  {num_threads, 1, 1};
+
     //ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)device_buf,halo->count, halo->blocklength/4, halo->stride/4);
+    clSafeCall( clSetKernelArg(packer4_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(packer4_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
+    clSafeCall( clSetKernelArg(packer4_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
+    int blk_length = halo->blocklength/4;
+    int stride = halo->stride/4;
+    clSafeCall( clSetKernelArg(packer4_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
+    clSafeCall( clSetKernelArg(packer4_kernel, 4, sizeof(cl_int), (void*) &stride));    
+    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, packer4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+
+    
   } else {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
+    
+    size_t globalWorkSize[3] = {num_blocks, 1, 1};
+    size_t localWorkSize[3] =  {num_threads, 1, 1};
+    
     //ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
+    clSafeCall( clSetKernelArg(packer1_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(packer1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
+    clSafeCall( clSetKernelArg(packer1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
+    int blk_length = halo->blocklength;
+    int stride = halo->stride;
+    clSafeCall( clSetKernelArg(packer1_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
+    clSafeCall( clSetKernelArg(packer1_kernel, 4, sizeof(cl_int), (void*) &stride));    
+    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, packer1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, dest, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );  
@@ -83,16 +116,41 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
 
   cl_mem device_buf=halo_buffer_d;
   
-  clSafeCall(  clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, src, 0, NULL, NULL) );
+  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, src, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) ); 
   if (halo->blocklength%4 == 0) {
     int num_threads = 128;
     int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
+    
+    size_t globalWorkSize[3] = {num_blocks, 1, 1};
+    size_t localWorkSize[3] =  {num_threads, 1, 1};
+    
     //ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
+    int blk_length = halo->blocklength/4;
+    int stride = halo->stride/4;
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 4, sizeof(cl_int), (void*) &stride));    
+    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    
   } else {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
+    
+    size_t globalWorkSize[3] = {num_blocks, 1, 1};
+    size_t localWorkSize[3] =  {num_threads, 1, 1};
+    
     //ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
+    int blk_length = halo->blocklength;
+    int stride = halo->stride;
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 4, sizeof(cl_int), (void*) &stride));    
+    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
 }
 
