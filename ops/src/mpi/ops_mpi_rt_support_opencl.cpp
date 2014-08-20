@@ -50,12 +50,50 @@ cl_kernel unpacker1_kernel;
 cl_kernel unpacker4_kernel;
 
 const char packer1_kernel_src[] = "__kernel void ops_opencl_packer1() { }";
+const char packer4_kernel_src[] = "__kernel void ops_opencl_packer4() { }";
+const char unpacker1_kernel_src[] = "__kernel void ops_opencl_unpacker1() { }";
+const char unpacker4_kernel_src[] = "__kernel void ops_opencl_unpacker4() { }";
+
+const char buildOpts[] = "-cl-mad-enable";
 
 static bool isbuilt_packer1_kernel = false;
+static bool isbuilt_packer4_kernel = false;
+static bool isbuilt_unpacker1_kernel = false;
+static bool isbuilt_unpacker4_kernel = false;
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   
   cl_int ret = 0;
+  if(!isbuilt_packer1_kernel){
+    //attempt to attach sources to program (not compile)
+    OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &packer1_kernel_src, 0, &ret);
+    if (ret != CL_SUCCESS) {
+      fprintf(stderr, "Error: Unable to create program from source.\n");
+      clSafeCall(ret);
+      return;
+    }
+    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+    // Create the OpenCL kernel
+    packer1_kernel = clCreateKernel(OPS_opencl_core.program, "ops_opencl_packer1", &ret);
+    clSafeCall( ret );
+    isbuilt_packer1_kernel = true;
+  }  
+  
+  if(!isbuilt_packer4_kernel){
+    //attempt to attach sources to program (not compile)
+    OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &packer4_kernel_src, 0, &ret);
+    if (ret != CL_SUCCESS) {
+      fprintf(stderr, "Error: Unable to create program from source.\n");
+      clSafeCall(ret);
+      return;
+    }
+    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+    // Create the OpenCL kernel
+    packer4_kernel = clCreateKernel(OPS_opencl_core.program, "ops_opencl_packer4", &ret);
+    clSafeCall( ret );
+    isbuilt_packer4_kernel = true;
+  } 
+  
   const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
   
   if (halo_buffer_size<halo->count*halo->blocklength) {    
@@ -109,6 +147,36 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
   
   cl_int ret = 0;
+  if(!isbuilt_unpacker1_kernel){
+    //attempt to attach sources to program (not compile)
+    OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &unpacker1_kernel_src, 0, &ret);
+    if (ret != CL_SUCCESS) {
+      fprintf(stderr, "Error: Unable to create program from source.\n");
+      clSafeCall(ret);
+      return;
+    }
+    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+    // Create the OpenCL kernel
+    unpacker1_kernel = clCreateKernel(OPS_opencl_core.program, "ops_opencl_unpacker1", &ret);
+    clSafeCall( ret );
+    isbuilt_unpacker1_kernel = true;
+  }  
+  
+  if(!isbuilt_unpacker4_kernel){
+    //attempt to attach sources to program (not compile)
+    OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &unpacker4_kernel_src, 0, &ret);
+    if (ret != CL_SUCCESS) {
+      fprintf(stderr, "Error: Unable to create program from source.\n");
+      clSafeCall(ret);
+      return;
+    }
+    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+    // Create the OpenCL kernel
+    unpacker4_kernel = clCreateKernel(OPS_opencl_core.program, "ops_opencl_unpacker4", &ret);
+    clSafeCall( ret );
+    isbuilt_unpacker4_kernel = true;
+  }
+  
   char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
   
   if (halo_buffer_size<halo->count*halo->blocklength) {
