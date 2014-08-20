@@ -66,7 +66,7 @@ typedef struct{
 extern int OPS_cl_device;
 
 
-#include <ops_lib_cpp.h>
+//#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
 
 

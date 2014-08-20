@@ -30,92 +30,73 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi+cuda declaration
+/** @brief ops mpi+opencl declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi+cuda backend
   */
-
+  
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-#include <cuda.h>
-#include <cuda_runtime_api.h>
 #include <math_constants.h>
-#include <ops_cuda_rt_support.h>
+#include <ops_opencl_rt_support.h>
+
 extern char *halo_buffer_d;
 extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_cuda ( int argc, char ** argv, int diags )
+
+void ops_init_opencl ( int argc, char ** argv, int diags )
 {
   ops_init_core ( argc, argv, diags );
-
+  
   if ((OPS_block_size_x*OPS_block_size_y) > 1024) {
     printf ( " OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
     exit ( -1 );
   }
+  for ( int n = 1; n < argc; n++ )
+  {
+    if ( strncmp ( argv[n], "OPS_CL_DEVICE=", 14 ) == 0 )
+    {
+      OPS_cl_device = atoi ( argv[n] + 14 );
+      printf ( "\n OPS_cl_device = %d \n", OPS_cl_device );
+    }
+  }
 
-#if CUDART_VERSION < 3020
-#error : "must be compiled using CUDA 3.2 or later"
-#endif
-
-#ifdef CUDA_NO_SM_13_DOUBLE_INTRINSICS
-#warning : " *** no support for double precision arithmetic *** "
-#endif
-
-  cutilDeviceInit ( argc, argv );
-
-// \warning add -DSET_CUDA_CACHE_CONFIG to compiling line
-// for this file when implementing C OPS.
-//
-
-#ifdef SET_CUDA_CACHE_CONFIG
-  cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferShared ) );
-#else
-  cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferL1 ) );
-#endif
-
-  printf ( "\n 16/48 L1/shared \n" );
-
+  openclDeviceInit ( argc, argv );
 }
 
 void
 ops_init ( int argc, char ** argv, int diags )
 {
   int flag = 0;
-  MPI_Initialized(&flag);
+  MPI_Initialized(&flag);                                    
   if(!flag) {
     MPI_Init(&argc, &argv);
   }
 
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
-  MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
-  MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
+  MPI_Comm_rank(OPS_MPI_WORLD, &ops_my_rank);
+  MPI_Comm_size(OPS_MPI_WORLD, &ops_comm_size);
 
-  ops_init_cuda ( argc, argv, diags );
+  ops_init_opencl ( argc, argv, diags );
 }
 
 void ops_exit()
 {
   ops_mpi_exit();
-  if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-  if (OPS_gpu_direct) {
-    cutilSafeCall(cudaFree(ops_buffer_send_1));
-    cutilSafeCall(cudaFree(ops_buffer_recv_1));
-    cutilSafeCall(cudaFree(ops_buffer_send_2));
-    cutilSafeCall(cudaFree(ops_buffer_recv_2));
-  } else {
-    free(ops_buffer_send_1);
-    free(ops_buffer_recv_1);
-    free(ops_buffer_send_2);
-    free(ops_buffer_recv_2);
-  }
+  if (halo_buffer_d!=NULL) clReleaseMemObject((cl_mem)(halo_buffer_d));
+  free(ops_buffer_send_1);
+  free(ops_buffer_recv_1);
+  free(ops_buffer_send_2);
+  free(ops_buffer_recv_2);
+  
   int flag = 0;
   MPI_Finalized(&flag);
   if(!flag) MPI_Finalize();
-  ops_cuda_exit();
+  ops_opencl_exit();
   ops_exit_core();
 }
 
@@ -146,19 +127,14 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_recv[i] = 1;
-  for(int i = 0; i<OPS_MAX_DIM; i++) {sd->d_ip[i] = 0; sd->d_im[i] = 0;}
 
   OPS_sub_dat_list[dat->index] = sd;
 
   return dat;
 }
 
-ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
-}
-
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
-  ops_cuda_get_data(dat);
+  ops_opencl_get_data(dat);
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
