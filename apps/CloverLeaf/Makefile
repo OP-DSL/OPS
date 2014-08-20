@@ -358,7 +358,7 @@ cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp star
 		$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/cloverleaf_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
-cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
                 initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
                 update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
                 calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
@@ -372,11 +372,11 @@ cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp 
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp ./OpenCL/cloverleaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl -o cloverleaf_mpi_opencl
+                advec_mom_ops.cpp ./OpenCL/cloverleaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl -o cloverleaf_mpi_opencl
 
-./OpenCL/cloverleaf_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
+./OpenCL/cloverleaf_mpi_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
 	      	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
-                -c -o ./OpenCL/cloverleaf_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
+                -c -o ./OpenCL/cloverleaf_mpi_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
 
 #

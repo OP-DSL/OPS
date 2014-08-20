@@ -157,105 +157,14 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *
 }
 
 
-/*
-void openclDeviceInit( int argc, char ** argv )
-{
-  (void)argc;
-  (void)argv;
-
-  cl_int ret;
-  char buffer[10240];
-  cl_bool available = false;
-  float *test_h1 = (float*) malloc(sizeof(float));
-  float *test_h2 = (float*) malloc(sizeof(float));
-  cl_mem test_d = NULL;
-
-  // Get platform and device information
-  OPS_opencl_core.platform_id = NULL;
-  OPS_opencl_core.device_id = NULL;
-  OPS_opencl_core.constant = NULL;
-
-  clSafeCall( clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms) );
-
-  if(OPS_diags >0)
-    ops_printf("num_platforms = %i \n",(int) OPS_opencl_core.n_platforms);
-
-  OPS_opencl_core.platform_id = (cl_platform_id*) malloc( OPS_opencl_core.n_platforms*sizeof(cl_uint) );
-  clSafeCall( clGetPlatformIDs( OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL) );
-
-  int device_type = OPS_cl_device;
-  switch(device_type) {
-    case 0://CPU:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_CPU, 1,
-        &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
-      break;
-    case 1://GPU or PHI:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[1], CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR, 1,
-        &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
-      break;
-  }
-
-  if(OPS_diags >5)
-    ops_printf("ret clGetDeviceIDs(.,%d,...) = %d\n", device_type,ret);
-
-  if(OPS_opencl_core.n_platforms == 0 && OPS_opencl_core.n_devices == 0) {
-    ops_printf("No OpenCL platform or device is available! Exiting.\n");
-    exit(-1);
-  }
-  ops_printf("\nNo. of devices on platform = %d\n", OPS_opencl_core.n_devices);
-
-  ops_printf("\nChosen device: \n");
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL) );
-  ops_printf("\nCL_DEVICE_VENDOR = %s \n", buffer);
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_NAME, sizeof(buffer), buffer, NULL) );
-  ops_printf("\nCL_DEVICE_NAME = %s \n", buffer);
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL) );
-  ops_printf("\nCL_DEVICE_AVAILABLE = %s \n", available ? "true" : "false");
-
-  // Create an OpenCL context
-  OPS_opencl_core.context = clCreateContext( NULL, 1, &OPS_opencl_core.device_id, &pfn_notify, NULL, &ret);
-  clSafeCall( ret );
-
-  // Create a command queue
-  OPS_opencl_core.command_queue = clCreateCommandQueue(OPS_opencl_core.context, OPS_opencl_core.device_id, CL_QUEUE_PROFILING_ENABLE, &ret);
-  clSafeCall( ret );
-
-  // Make a read/write test
-  test_h1[0] = 1986;
-  test_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, sizeof(float), NULL, &ret);
-  clSafeCall( ret );
-  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, test_d, CL_TRUE, 0, sizeof(float), (void*)test_h1, 0, NULL, NULL) );
-  clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, test_d, CL_TRUE, 0, sizeof(float), (void*)test_h2, 0, NULL, NULL) );
-  if(test_h1[0] != test_h2[0]) {
-    printf("Error during buffer read/write test! Exiting \n");
-    exit(-1);
-  }
-  clSafeCall( clReleaseMemObject(test_d) );
-  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
-  clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-
-  // Number of constants in constant array
-  OPS_opencl_core.n_constants = 0;
-}
-*/
-
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
 void openclDeviceInit( int argc, char ** argv )
 {
   (void)argc;
   (void)argv;
 
-  //&OPS_opencl_core.device_id == cl_device_id *device,
-  //OPS_opencl_core.context == cl_context *context,
-  //OPS_opencl_core.command_queue == cl_command_queue *queue,
-
-
-  //num_plats = OPS_opencl_core.n_platforms
-  //num_devs = OPS_opencl_core.n_devices
-  //cl_platform_id  *platforms == OPS_opencl_core.platform_id[1]
-  //cl_device_id    *devices == OPS_opencl_core.devices[1]
-
   char *dev_name;
+  OPS_opencl_core.n_constants = 0;
   OPS_opencl_core.n_platforms = 0;
   OPS_opencl_core.n_devices   = 0;
   OPS_opencl_core.platform_id = NULL;
@@ -286,8 +195,6 @@ void openclDeviceInit( int argc, char ** argv )
 
   //read in platform ids from runtime
   clSafeCall(clGetPlatformIDs(OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL));
-
-
 
   for (int p=0; p<OPS_opencl_core.n_platforms; p++) {
     //search for requested device : CPU, GPUs and ACCELERATORS (i.e Xeon Phi)

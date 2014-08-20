@@ -40,16 +40,66 @@
 
 
 int halo_buffer_size = 0;
-char *halo_buffer_d = NULL;
+cl_mem halo_buffer_d = NULL;
+extern ops_opencl_core OPS_opencl_core;
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+  
+  cl_int ret = 0;
+  const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
+  
+  if (halo_buffer_size<halo->count*halo->blocklength) {    
+    if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
+    halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, halo->count*halo->blocklength*4,NULL, &ret);
+    halo_buffer_size = halo->count*halo->blocklength*4;
+  }
+  
+  cl_mem device_buf = halo_buffer_d;
 
+  if (halo->blocklength%4 == 0) {
+    int num_threads = 128;
+    int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
+    //ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)device_buf,halo->count, halo->blocklength/4, halo->stride/4);
+  } else {
+    int num_threads = 128;
+    int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
+    //ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
+  }
+  clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, dest, 0, NULL, NULL) );
+  clSafeCall( clFinish(OPS_opencl_core.command_queue) );  
+  
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
   
+  cl_int ret = 0;
+  char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
+  
+  if (halo_buffer_size<halo->count*halo->blocklength) {
+    if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
+    halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, halo->count*halo->blocklength*4,NULL, &ret);
+    halo_buffer_size = halo->count*halo->blocklength*4;
+  }
+
+  cl_mem device_buf=halo_buffer_d;
+  
+  clSafeCall(  clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, src, 0, NULL, NULL) );
+  clSafeCall( clFinish(OPS_opencl_core.command_queue) ); 
+  if (halo->blocklength%4 == 0) {
+    int num_threads = 128;
+    int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
+    //ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
+  } else {
+    int num_threads = 128;
+    int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
+    //ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
+  }
 }
 
 void ops_comm_realloc(char **ptr, int size, int prev) {
-  
+  if (*ptr == NULL) {
+    *ptr = (char *)malloc(size);
+  } else {
+    *ptr = (char*)realloc(*ptr, size);
+  }
 }

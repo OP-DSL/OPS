@@ -99,7 +99,6 @@ int main(int argc, char **argv)
 
   initialise();
 
-
   ops_decl_const2( "g_small",1, "double",&g_small);
   ops_decl_const2( "g_big",1, "double",&g_big);
   ops_decl_const2( "dtc_safe",1, "double",&dtc_safe);
