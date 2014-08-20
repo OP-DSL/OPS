@@ -115,7 +115,7 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
 template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
-                      int *block_size, int* offset, int* tail, T *data,
+                      int *block_size, int* base, int* d_m, int* d_p, T *data,
                       char const * type,
                       char const * name )
 {
@@ -125,7 +125,7 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
     exit ( 1 );
   }
 
-  return ops_decl_dat_char(block, data_size, block_size, offset, tail, (char *)data, sizeof(T), type, name );
+  return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p, (char *)data, sizeof(T), type, name );
 
 }
 

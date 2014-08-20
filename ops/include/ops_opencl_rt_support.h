@@ -96,7 +96,6 @@ extern int OPS_block_size_y;
 
 void openclDeviceInit( int argc, char ** argv);
 void __clSafeCall( cl_int ret, const char * file, const int line );
-void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
 void ops_opencl_get_data( ops_dat dat );
 void reallocConstArrays( int consts_bytes );
 void reallocReductArrays( int reduct_bytes );

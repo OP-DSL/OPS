@@ -39,6 +39,9 @@
 void initialise_chunk()
 {
   //initialize sizes using global values
+  int x_cells = grid.x_cells;
+  int y_cells = grid.y_cells;
+  int z_cells = grid.z_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;
@@ -50,9 +53,20 @@ void initialise_chunk()
   int rangex[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
   int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
   int rangez[] = {x_min-2, x_max+3, y_min-2, y_max+3, z_min-2, z_max+3};
-//  int rangex[] = {x_min-2, x_max+3, 0, 1, 0, 1};
-//  int rangey[] = {0, 1, y_min-2, y_max+3, 0, 1};
-//  int rangez[] = {0, 1, 0, 1, z_min-2, z_max+3};
+
+  int rangefull[] = {-2, x_cells+8, -2, y_cells+8, -2, z_cells+8};
+
+  ops_par_loop(initialise_chunk_kernel_xx, "initialise_chunk_kernel_xx", clover_grid, 3, rangefull,
+               ops_arg_dat(xx, S3D_000_STRID3D_X, "int", OPS_WRITE),
+               ops_arg_idx());
+
+  ops_par_loop(initialise_chunk_kernel_yy, "initialise_chunk_kernel_yy", clover_grid, 3, rangefull,
+               ops_arg_dat(yy, S3D_000_STRID3D_Y, "int", OPS_WRITE),
+               ops_arg_idx());
+
+  ops_par_loop(initialise_chunk_kernel_zz, "initialise_chunk_kernel_zz", clover_grid, 3, rangefull,
+               ops_arg_dat(zz, S3D_000_STRID3D_Z, "int", OPS_WRITE),
+               ops_arg_idx());
 
   ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 3, rangex,
                ops_arg_dat(vertexx, S3D_000_STRID3D_X, "double", OPS_WRITE),

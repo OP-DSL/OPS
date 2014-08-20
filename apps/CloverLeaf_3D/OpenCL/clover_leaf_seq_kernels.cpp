@@ -142,6 +142,9 @@
 #include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
 */
+#include "../MPI/initialise_chunk_kernel_xx_seq_kernel.cpp"
+#include "../MPI/initialise_chunk_kernel_yy_seq_kernel.cpp"
+#include "../MPI/initialise_chunk_kernel_zz_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_x_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_y_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_z_seq_kernel.cpp"

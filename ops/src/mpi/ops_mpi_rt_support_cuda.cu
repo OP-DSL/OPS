@@ -36,7 +36,7 @@
   */
 
 
-#include <ops_lib_core.h>
+#include <ops_mpi_core.h>
 #include <ops_cuda_rt_support.h>
 
 #ifdef __cplusplus
@@ -79,8 +79,8 @@ __global__ void ops_cuda_unpacker_1(const char * __restrict src, char *__restric
 }
 
 
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_halo *__restrict halo) {
-  const char * __restrict src = dat->data_d+src_offset*dat->size;
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+  const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
   if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
@@ -105,8 +105,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
     cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo) {
-  char * __restrict dest = dat->data_d+dest_offset*dat->size;
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
+  char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
   if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
@@ -150,6 +150,7 @@ void ops_comm_realloc(char **ptr, int size, int prev) {
       *ptr = (char*)realloc(*ptr, size);
     }
   }
+ cutilSafeCall(cudaDeviceSynchronize());
 }
 
 #ifdef __cplusplus

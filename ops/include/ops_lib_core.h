@@ -71,7 +71,7 @@
 #endif
 #define MAX_DEPTH 5
 
-#define OPS_MAX_DIM 5
+#define OPS_MAX_DIM 3
 
 /*
  * * zero constants
@@ -118,7 +118,6 @@ typedef struct
 {
   int         index;  /* index */
   int         dims;   /* dimension of block, 2D,3D .. etc*/
-  int         *size;  /* size of block in each dimension */
   char const  *name;  /* name of block */
 } ops_block_core;
 
@@ -129,18 +128,16 @@ typedef struct
   int         index;       /* index */
   ops_block   block;       /* block on which data is defined */
   int         dim;        /* number of elements per grid point*/
-  int         size;        /* number of bytes per grid point*/
-  int         *block_size; /* size of the array in each block dimension -- including halo*/
-  int         *offset;     /* depth from the start of each dimention*/
-  int         *tail;       /* depth from the end of each dimention*/
+  int         elem_size;        /* number of bytes per grid point*/
+  int         size[OPS_MAX_DIM]; /* size of the array in each block dimension -- including halo*/
+  int         base[OPS_MAX_DIM];      /* base offset to 0,0,... from the start of each dimension*/
+  int         d_m[OPS_MAX_DIM];       /* halo depth in each dimension, negative direction (at 0 end)*/
+  int         d_p[OPS_MAX_DIM];       /* halo depth in each dimension, positive direction (at size end)*/
   char        *data;       /* data on host */
   char        *data_d;     /* data on device */
   char const  *name;       /* name of dataset */
   char const  *type;       /* datatype */
-  int         dirtybit;    /* flag to indicate MPI halo exchange is needed*/
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
-  int*        dirty_dir_send;   /* flag to indicate MPI halo exchange in a direction is needed*/
-  int*        dirty_dir_recv;   /* flag to indicate MPI halo exchange in a direction is needed*/
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;    /* is this an edge dat?*/
 } ops_dat_core;
@@ -157,6 +154,15 @@ struct ops_dat_entry_core{
 typedef struct ops_dat_entry_core ops_dat_entry;
 
 typedef TAILQ_HEAD(, ops_dat_entry_core) Double_linked_list;
+
+
+typedef struct
+{
+  ops_block_core *block;
+  Double_linked_list datasets;
+  int num_datasets;
+
+} ops_block_descriptor;
 
 typedef struct
 {
@@ -195,44 +201,28 @@ typedef struct
 //  double       mpi_reduct;
 } ops_kernel;
 
+typedef struct
+{
+  ops_dat from;
+  ops_dat to;
+  int iter_size[OPS_MAX_DIM];
+  int from_base[OPS_MAX_DIM];
+  int to_base[OPS_MAX_DIM];
+  int from_dir[OPS_MAX_DIM];
+  int to_dir[OPS_MAX_DIM];
+  int index;
+} ops_halo_core;
+
+typedef ops_halo_core * ops_halo;
 
 typedef struct
 {
-  int         count;       /* number of blocks */
-  int         blocklength; /*size of blocks */
-  int         stride;      /*stride between blocks */
-} ops_halo;
+  int nhalos;
+  ops_halo *halos;
+  int index;
+} ops_halo_group_core;
 
-
-
-//
-//Struct for holding the decomposition details of a block on an MPI process
-//
-typedef struct {
-  // the decomposition is for this block
-  ops_block block;
-  //number of dimensions;
-  int ndim;
-  // my MPI rank in each dimension (in cart cords)
-  int* coords;
-  // previous neighbor in each dimension (in cart cords)
-  int* id_m;
-  // next neighbor in each dimension (in cart cords)
-  int* id_p;
-  // the size of the local sub-block in each dimension
-  int* sizes;
-  // the displacement from the start of the block in each dimension
-  int* disps;
-  // the global index of the starting element of the local sub-block in each dimension
-  int* istart;
-  // the global index of the starting element of the local sub-block
-  int* iend;
-
-} sub_block;
-
-typedef sub_block * sub_block_list;
-
-
+typedef ops_halo_group_core * ops_halo_group;
 
 /*
 * min / max definitions
@@ -270,13 +260,15 @@ extern int ops_current_kernel;
 extern int OPS_diags;
 
 extern int OPS_block_index, OPS_block_max,
-           OPS_dat_index, OPS_dat_max;
+           OPS_dat_index, OPS_dat_max,
+           OPS_halo_group_index, OPS_halo_group_max,
+           OPS_halo_index, OPS_halo_max;
 
-extern ops_block * OPS_block_list;
+extern ops_block_descriptor * OPS_block_list;
+extern ops_halo * OPS_halo_list;
+extern ops_halo_group * OPS_halo_group_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
-
-extern sub_block_list *OPS_sub_block_list;
 
 /*******************************************************************************
 * Core lib function prototypes
@@ -286,8 +278,8 @@ extern sub_block_list *OPS_sub_block_list;
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
 
-ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* base, int* d_m, int* d_p,
                            char* data, int type_size, char const * type, char const * name );
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
@@ -301,15 +293,15 @@ void ops_init_core( int argc, char **argv, int diags_level );
 
 void ops_exit_core( void );
 
-ops_block ops_decl_block(int dims, int *size, char *name);
+ops_block ops_decl_block(int dims, char *name);
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* offset, int* tail, char *data, int type_size,
+                      int *block_size, int* base, int* d_m, int* d_p, char *data, int type_size,
                       char const * type,
                       char const * name );
 
 ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
-                      int *block_size, int* offset,  int* tail, char * data, int type_size,
+                      int *block_size, int* base,  int* d_m, int* d_p, char * data, int type_size,
                       char const * type, char const * name );
 
 void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
@@ -317,9 +309,13 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
 
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);
+ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos);
+void ops_halo_transfer(ops_halo_group group);
+
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
-ops_arg ops_arg_idx_core( );
 
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
@@ -348,14 +344,14 @@ void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
 void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
 void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
 
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
-void ops_set_dirtybit_opencl(ops_arg *args, int nargs);
-void ops_H_D_exchanges(ops_arg *args, int nargs);
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);
+void ops_set_dirtybit_device(ops_arg *args, int nargs);
+void ops_H_D_exchanges_host(ops_arg *args, int nargs);
+void ops_H_D_exchanges_device(ops_arg *args, int nargs);
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
 
 int ops_is_root();
 
-void ops_partition(int dims, int* size, char* routine);
+void ops_partition(char* routine);
 
 void ops_mpi_reduce_float(ops_arg *args, float* data);
 void ops_mpi_reduce_double(ops_arg *args, double* data);

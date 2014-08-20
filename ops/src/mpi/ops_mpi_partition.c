@@ -60,6 +60,17 @@ MPI_Comm OPS_CART_COMM; // cartesian comm world
 // a comm world for each block in multi-block
 
 
+/*
+* Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI backends
+*/
+
+int ops_comm_size;
+int ops_my_rank;
+
+sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
+                                   // geometries
+
+
 sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
                                  // details
 
@@ -68,6 +79,10 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 {
   //g_dim  - global number of dimensions .. will be the same on each local mpi process
   //g_sizes - global dimension sizes, i.e. size in each dimension of the global mesh
+
+  sub_block *sb= (sub_block *)xmalloc(sizeof(sub_block));
+  sb->block = block;
+  sb->ndim = g_ndim;
 
 /** ---- create cartesian processor grid ---- **/
 
@@ -86,51 +101,25 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
 /** ---- determine subgrid dimensions and displacements ---- **/
 
   int my_cart_rank;
-  int *coords = (int *) xmalloc(ndim*sizeof(int));
-  int *disps = (int *) xmalloc(ndim*sizeof(int));
-  int *sizes = (int *) xmalloc(ndim*sizeof(int));
-
 
   MPI_Comm_rank(OPS_CART_COMM, &my_cart_rank);
-  MPI_Cart_coords( OPS_CART_COMM, my_cart_rank, ndim, coords);
+  MPI_Cart_coords( OPS_CART_COMM, my_cart_rank, ndim, sb->coords);
 
   for(int n=0; n<ndim; n++){
-    disps[n] = (coords[n] * g_sizes[n])/pdims[n];
-    sizes[n]  = ((coords[n]+1)*g_sizes[n])/pdims[n] - disps[n];
-    g_sizes[n] = sizes[n];
+    sb->decomp_disp[n] = (sb->coords[n] * g_sizes[n])/pdims[n];
+    sb->decomp_size[n]  = ((sb->coords[n]+1)*g_sizes[n])/pdims[n] - sb->decomp_disp[n];
+    g_sizes[n] = sb->decomp_size[n];
   }
 
 /** ---- get IDs of neighbours ---- **/
 
-  int *id_m = (int *) xmalloc(ndim*sizeof(int));
-  int *id_p = (int *) xmalloc(ndim*sizeof(int));
   for(int n=0; n<ndim; n++)
-    MPI_Cart_shift(OPS_CART_COMM, n, 1, &id_m[n], &id_p[n]);
+    MPI_Cart_shift(OPS_CART_COMM, n, 1, &(sb->id_m[n]), &(sb->id_p[n]));
 
-
-/** ---- calculate subgrid start and end indicies ---- **/
-
-  int *istart = (int *) xmalloc(ndim*sizeof(int));
-  int *iend = (int *) xmalloc(ndim*sizeof(int));
-  for(int n=0; n<ndim; n++){
-    istart[n] = disps[n];
-    iend[n] = istart[n]+sizes[n]-1;
-  }
 
 /** ---- Store subgrid decomposition geometries ---- **/
 
-  sub_block_list sb_list= (sub_block_list)xmalloc(sizeof(sub_block));
-  sb_list->block = block;
-  sb_list->ndim = ndim;
-  sb_list->coords = coords;
-  sb_list->id_m = id_m;
-  sb_list->id_p = id_p;
-  sb_list->sizes = sizes;
-  sb_list->disps = disps;
-  sb_list->istart = istart;
-  sb_list->iend = iend;
-
-  OPS_sub_block_list[block->index] = sb_list;
+  OPS_sub_block_list[block->index] = sb;
 
   MPI_Barrier(OPS_MPI_WORLD);
   ops_printf("block \"%s\" decomposed on to a processor grid of ",block->name);
@@ -139,10 +128,76 @@ void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
     n == ndim-1? ops_printf(" ") : ops_printf("x ");
   }
   ops_printf("\n");
+  free(pdims);
+  free(periodic);
 }
 
+void ops_decomp_dats(sub_block *sb) {
+  ops_block block = sb->block;
+  ops_dat_entry *item, *tmp_item;
+  for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets)); item != NULL; item = tmp_item) {
+    tmp_item = TAILQ_NEXT(item, entries);
+    ops_dat dat = item->dat;
+    sub_dat *sd = OPS_sub_dat_list[dat->index];
 
-void ops_partition(int g_ndim, int* g_sizes, char* routine)
+    //aggregate size and prod array
+    int *prod_t = (int *) xmalloc((sb->ndim+1)*sizeof(int));
+    int *prod = &prod_t[1];
+    prod[-1] = 1;
+    sd->prod = prod;
+
+    for (int d = 0; d < block->dims; d++) {
+      sd->gbl_base[d] = dat->base[d];
+      sd->gbl_size[d] = dat->size[d];
+
+      //special treatment if it's an edge dataset in this direction
+      if (dat->e_dat && (dat->size[d] == 1)) {
+        if (dat->base[d]!=0) {printf("Dataset %s is an edge dataset, but has a non-0 base\n", dat->name); exit(-1);}
+        prod[d] = prod[d-1];
+        sd->decomp_disp[d] = 0;
+        sd->decomp_size[d] = 1;
+        continue;
+      }
+
+      int zerobase_gbl_size = dat->size[d] + dat->d_m[d] + dat->d_p[d] + dat->base[d];
+      sd->decomp_disp[d] = sb->decomp_disp[d];
+      sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
+      if(sb->id_m[d] != MPI_PROC_NULL) {
+        //if not negative end, then base should be 0
+        dat->base[d] = 0;
+      }
+      dat->size[d] = sd->decomp_size[d] - dat->base[d] - dat->d_m[d] - dat->d_p[d]; //TODO: block halo doubles as intra-block halo
+      prod[d] = prod[d-1]*dat->size[d];
+    }
+
+    //Allocate datasets
+    //TODO: read HDF5, what if it was already allocated - re-distribute
+    dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+    ops_cpHostToDevice ( (void**)&(dat->data_d), (void**)&(dat->data_d), prod[sb->ndim-1]*dat->elem_size);
+
+    //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block
+    sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
+
+    MPI_Datatype new_type_p; //create generic type for MPI comms
+    MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
+    MPI_Type_commit(&new_type_p);
+    sd->halos=(ops_int_halo *)malloc(MAX_DEPTH*sb->ndim*sizeof(ops_int_halo));
+
+    for(int n = 0; n<sb->ndim; n++) {
+      for(int d = 0; d<MAX_DEPTH; d++) {
+        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
+                        prod[n], new_type_p, &(sd->mpidat[MAX_DEPTH*n+d]));
+        MPI_Type_commit(&(sd->mpidat[MAX_DEPTH*n+d]));
+        sd->halos[MAX_DEPTH*n+d].count = prod[sb->ndim - 1]/prod[n];
+        sd->halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * dat->elem_size;
+        sd->halos[MAX_DEPTH*n+d].stride = prod[n] * dat->elem_size;
+        //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
+      }
+    }
+  }
+}
+
+void ops_partition(char* routine)
 {
   //create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
@@ -151,28 +206,36 @@ void ops_partition(int g_ndim, int* g_sizes, char* routine)
   int max_block_dims = 0;
 
   for(int b=0; b<OPS_block_index; b++){ //for each block
-    ops_block block=OPS_block_list[b];
-    ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
+    ops_block block=OPS_block_list[b].block;
+    int max_sizes[OPS_MAX_DIM] = {0};
+    ops_dat_entry *item, *tmp_item;
+    for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets)); item != NULL; item = tmp_item) {
+      tmp_item = TAILQ_NEXT(item, entries);
+      for (int d = 0; d < block->dims; d++)
+        max_sizes[d] = MAX(item->dat->size[d]+item->dat->base[d]+item->dat->d_m[d]+item->dat->d_p[d],max_sizes[d]);
+    }
+    //decompose based on maximum dataset size defined on this block
+    ops_decomp(block, block->dims, max_sizes); //for now there is only one block
 
-    sub_block_list sb_list = OPS_sub_block_list[block->index];
+    sub_block *sb = OPS_sub_block_list[block->index];
+
+    ops_decomp_dats(sb);
 
     printf(" ===========================================================================\n" );
     printf(" rank %d (",ops_my_rank);
-    for(int n=0; n<sb_list->ndim; n++)
-      printf("%d ",sb_list->coords[n]);
+    for(int n=0; n<sb->ndim; n++)
+      printf("%d ",sb->coords[n]);
     printf(")\n");
     printf( " ------------------------------\n" );
     printf(" %5s  :  %9s  :  %9s  :  %5s  :  %5s  :  %5s  :  %5s\n",
       "dim", "prev_rank", "next_rank", "disp", "size","start",  "end");
-    for(int n=0; n<sb_list->ndim; n++)
-    printf(" %5d  :  %9d  :  %9d  :  %5d  :  %5d  :  %5d  :  %5d\n",
-      n, sb_list->id_m[n], sb_list->id_p[n], sb_list->disps[n], sb_list->sizes[n],
-      sb_list->istart[n], sb_list->iend[n]);
+    for(int n=0; n<sb->ndim; n++)
+    printf(" %5d  :  %9d  :  %9d  :  %5d  :  %5d\n",
+      n, sb->id_m[n], sb->id_p[n], sb->decomp_disp[n], sb->decomp_size[n]);
     printf("\n");
 
-    max_block_dims = MAX(max_block_dims,sb_list->ndim);
-    for(int n=0; n<sb_list->ndim; n++) max_block_dim = MAX(max_block_dim,sb_list->sizes[n]);
-
+    max_block_dims = MAX(max_block_dims,sb->ndim);
+    for(int n=0; n<sb->ndim; n++) max_block_dim = MAX(max_block_dim,sb->decomp_size[n]);
   }
   ops_printf("Finished block decomposition\n");
 
@@ -199,10 +262,17 @@ void ops_mpi_exit()
   int i;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     i = (item->dat)->index;
-    free(OPS_sub_dat_list[i]->d_m);
-    free(OPS_sub_dat_list[i]->d_p);
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->halos);
+    for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      for(int d = 0; d<MAX_DEPTH; d++) {
+        MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
+      }
+    }
+    free(OPS_sub_dat_list[i]->mpidat);
+    free(OPS_sub_dat_list[i]->dirty_dir_send);
+    free(OPS_sub_dat_list[i]->dirty_dir_recv);
+    free(OPS_sub_dat_list[i]);
   }
   free(OPS_sub_dat_list);
   OPS_sub_dat_list = NULL;

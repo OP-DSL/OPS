@@ -17,7 +17,7 @@ void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx)
   //if(vertexx[OPS_ACC0(0,0,0)] < 0) {
     //printf("vertexx[OPS_ACC0(0,0,0)] = %lf\n",vertexx[OPS_ACC0(0,0,0)]);
     //printf("vertexx[OPS_ACC0(0,0,0)] = %lf, d_x = %lf, min_x = %lf, xx[OPS_ACC1(0,0,0)] = %d, x_min = %d\n",
-    //       vertexx[OPS_ACC0(0,0,0)],d_x,min_x,xx[OPS_ACC1(0,0,0)],x_min);    
+    //       vertexx[OPS_ACC0(0,0,0)],d_x,min_x,xx[OPS_ACC1(0,0,0)],x_min);
   //}
 }
 
@@ -31,7 +31,7 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
 
   vertexy[OPS_ACC0(0,0,0)] = min_y + d_y * (yy[OPS_ACC1(0,0,0)] - y_min);
   vertexdy[OPS_ACC2(0,0,0)] = (double)d_y;
-  
+
 }
 
 void initialise_chunk_kernel_z(double *vertexz, const int *zz, double *vertexdz) {
@@ -46,13 +46,26 @@ void initialise_chunk_kernel_z(double *vertexz, const int *zz, double *vertexdz)
   vertexdz[OPS_ACC2(0,0,0)] = (double)d_z;
 }
 
+void initialise_chunk_kernel_xx(int *xx, int *idx) {
+  xx[OPS_ACC0(0,0,0)] = idx[0]-2;
+}
+
+void initialise_chunk_kernel_yy(int *yy, int *idx) {
+  yy[OPS_ACC0(0,0,0)] = idx[1]-2;
+}
+
+void initialise_chunk_kernel_zz(int *zz, int *idx) {
+  zz[OPS_ACC0(0,0,0)] = idx[2]-2;
+}
+
+
 void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
   double d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   cellx[OPS_ACC1(0,0,0)]  = 0.5*( vertexx[OPS_ACC0(0,0,0)] + vertexx[OPS_ACC0(1,0,0)] );
   celldx[OPS_ACC2(0,0,0)]  = d_x;
   //if(cellx[OPS_ACC1(0,0,0)] < 0) {
     //printf("cellx[OPS_ACC1(0,0,0)] = %lf\n",cellx[OPS_ACC1(0,0,0)]);
-    //printf("vertexx[OPS_ACC1(0,0,0)] = %lf\n",vertexx[OPS_ACC1(0,0,0)]);    
+    //printf("vertexx[OPS_ACC1(0,0,0)] = %lf\n",vertexx[OPS_ACC1(0,0,0)]);
   //}
 }
 
@@ -62,7 +75,7 @@ void initialise_chunk_kernel_celly(const double *vertexy, double* celly, double 
   celldy[OPS_ACC2(0,0,0)]  = d_y;
   if(celldy[OPS_ACC2(0,0,0)] < 0) {
     //printf("celldy[OPS_ACC2(0,0,0)] = %lf\n",celldy[OPS_ACC2(0,0,0)]);
-    //printf("vertexy[OPS_ACC1(0,0,0)] = %lf\n",vertexy[OPS_ACC1(0,0,0)]);    
+    //printf("vertexy[OPS_ACC1(0,0,0)] = %lf\n",vertexy[OPS_ACC1(0,0,0)]);
   }
 }
 
@@ -72,7 +85,7 @@ void initialise_chunk_kernel_cellz(const double *vertexz, double* cellz, double 
   celldz[OPS_ACC2(0,0,0)]  = d_z;
   //if(celldz[OPS_ACC2(0,0,0)] < 0) {
     //printf("celldz[OPS_ACC2(0,0,0)] = %lf\n",celldz[OPS_ACC2(0,0,0)]);
-    //printf("vertexz[OPS_ACC0(0,0,0)] = %lf\n",vertexz[OPS_ACC0(0,0,0)]);    
+    //printf("vertexz[OPS_ACC0(0,0,0)] = %lf\n",vertexz[OPS_ACC0(0,0,0)]);
   //}
 }
 

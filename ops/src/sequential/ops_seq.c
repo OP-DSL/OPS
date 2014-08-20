@@ -36,6 +36,8 @@
   */
 
 #include <ops_lib_core.h>
+char *ops_halo_buffer = NULL;
+int ops_halo_buffer_size = 0;
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
@@ -90,49 +92,85 @@ void ops_exit ()
 }
 
 
-ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int* d_m,
+ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, int* d_m,
                            int* d_p, char* data,
                            int type_size, char const * type, char const * name )
 {
-  int edge_dat = 0; //flag indicating that this is an edge dat
 
-  sub_block_list sb = OPS_sub_block_list[block->index]; //get sub-block geometries
+  /** ----             allocate an empty dat             ---- **/
 
-  int* sub_size = (int *)xmalloc(sizeof(int) * sb->ndim);
+  ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
 
-  for(int n=0;n<sb->ndim;n++){
-    if(dat_size[n] != 1) { //i.e. this dat is a regular data block that needs to decomposed
-      //compute the local array sizes for this dat for this dimension
-      //including max halo depths
-
-      //do check to see if the sizes match with the blocks size
-      /** TO DO **/
-
-      //compute allocation size - which includes the halo
-      sub_size[n] = sb->sizes[n] - d_m[n] - d_p[n];
-    }
-    else { // this dat is a an edge data block that needs to be replicated on each MPI process
-      //apply the size as 1 for this dimension, later to be replicated on each process
-      sub_size[n] = 1;
-      edge_dat = 1;
-
-    }
-  }
-
-  /** ---- allocate an empty dat based on the local array sizes computed
-         above on each MPI process                                      ---- **/
-
-  ops_dat dat = ops_decl_dat_temp_core(block, size, sub_size, d_m, d_p, data, type_size, type, name );
-  if( edge_dat == 1) dat->e_dat = 1; //this is an edge dat
-
+  //Allocate memory immediately
   int bytes = size*type_size;
-  for (int i=0; i<sb->ndim; i++) bytes = bytes*sub_size[i];
+  for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
 
   return dat;
 }
 
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+}
+
+void ops_halo_transfer(ops_halo_group group) {
+  for (int h = 0; h < group->nhalos; h++) {
+    ops_halo halo = group->halos[h];
+    int size = halo->from->elem_size * halo->iter_size[0];
+    for (int i = 1; i < halo->from->block->dims; i++) size *= halo->iter_size[i];
+    if (size > ops_halo_buffer_size) {ops_halo_buffer = (char *)realloc(ops_halo_buffer, size); ops_halo_buffer_size = size;}
+
+    //copy to linear buffer from source
+    int ranges[OPS_MAX_DIM*2];
+    int step[OPS_MAX_DIM];
+    int buf_strides[OPS_MAX_DIM];
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->from_dir[i] > 0) {
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->from_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          memcpy(ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
+                 halo->from->data + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
+        }
+      }
+    }
+
+    //copy from linear buffer to target
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->to_dir[i] > 0) {
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->to_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+    for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          memcpy(halo->to->data + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
+                 ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
+        }
+      }
+    }
+  }
+}
 
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
 {
@@ -170,73 +208,24 @@ void ops_timers(double * cpu, double * et)
     ops_timers_core(cpu,et);
 }
 
-void ops_decomp(ops_block block, int g_ndim, int* g_sizes)
+void ops_partition(char* routine)
 {
-  sub_block_list sb_list= (sub_block_list)xmalloc(sizeof(sub_block));
-  int *coords = (int *) xmalloc(g_ndim*sizeof(int));
-  int *disps = (int *) xmalloc(g_ndim*sizeof(int));
-  int *sizes = (int *) xmalloc(g_ndim*sizeof(int));
-  int *id_m = (int *) xmalloc(g_ndim*sizeof(int));
-  int *id_p = (int *) xmalloc(g_ndim*sizeof(int));
-  int *istart = (int *) xmalloc(g_ndim*sizeof(int));
-  int *iend = (int *) xmalloc(g_ndim*sizeof(int));
-
-  for(int n=0; n<g_ndim; n++){
-    coords[n] = 0;
-    disps[n]  = 0;
-    sizes[n]  = g_sizes[n];
-    istart[n] = 0;
-    iend[n]   = g_sizes[n] -1;
-    id_m[n]   = -2;
-    id_p[n]   = -2;
-  }
-
-  sb_list->block = block;
-  sb_list->ndim = g_ndim;
-  sb_list->coords = coords;
-  sb_list->id_m = id_m;
-  sb_list->id_p = id_p;
-  sb_list->sizes = sizes;
-  sb_list->disps = disps;
-  sb_list->istart = istart;
-  sb_list->iend = iend;
-
-  OPS_sub_block_list[block->index] = sb_list;
 }
 
-void ops_partition(int g_ndim, int* g_sizes, char* routine)
-{
-  //create list to hold sub-grid decomposition geometries for each mpi process
-  OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
-
-  OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));
-
-  for(int b=0; b<OPS_block_index; b++){ //for each block
-    ops_block block=OPS_block_list[b];
-    ops_decomp(block, g_ndim, g_sizes); //for now there is only one block
-  }
-}
-
-void ops_H_D_exchanges(ops_arg *args, int nargs)
+void ops_H_D_exchanges_host(ops_arg *args, int nargs)
 {
   (void)nargs;
   (void)args;
 }
 
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs)
+void ops_H_D_exchanges_device(ops_arg *args, int nargs)
 {
   (void)nargs;
   (void)args;
 }
 
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
-{
-  (void)nargs;
-  (void)args;
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size ) {
+  (void)data_d;
+  (void)data_h;
+  (void)size;
 }

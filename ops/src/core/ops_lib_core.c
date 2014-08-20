@@ -49,27 +49,21 @@ ops_kernel * OPS_kernels=NULL;
 ops_arg *OPS_curr_args=NULL;
 const char *OPS_curr_name=NULL;
 int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
+int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
+    OPS_halo_index = 0, OPS_halo_max = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
 */
 
-ops_block * OPS_block_list;
+ops_block_descriptor * OPS_block_list;
+ops_halo * OPS_halo_list;
+ops_halo_group * OPS_halo_group_list;
 ops_stencil * OPS_stencil_list;
 Double_linked_list OPS_dat_list; //Head of the double linked list
 
-int OPS_block_size_x = 0;
-int OPS_block_size_y = 0;
-
-/*
-* Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI backends
-*/
-
-int ops_comm_size;
-int ops_my_rank;
-
-sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
-                                   // geometries
+int OPS_block_size_x = 32;
+int OPS_block_size_y = 4;
 
 
 double ops_gather_time=0.0;
@@ -93,7 +87,7 @@ int compare_blocks(ops_block block1, ops_block block2)
   else return 0;
 }
 
-ops_dat search_dat(ops_block block, int size, int *block_size, int* offset,
+ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int* offset,
   char const * type, char const * name)
 {
   ops_dat_entry* item;
@@ -103,7 +97,7 @@ ops_dat search_dat(ops_block block, int size, int *block_size, int* offset,
     ops_dat item_dat = item->dat;
 
     if (strcmp(item_dat->name,name) == 0 && /* there are other components to compare*/
-       (item_dat->size) == size && compare_blocks(item_dat->block, block) == 1 &&
+       (item_dat->elem_size) == elem_size && compare_blocks(item_dat->block, block) == 1 &&
        strcmp(item_dat->type,type) == 0 ) {
        return item_dat;
     }
@@ -138,12 +132,12 @@ void ops_init_core( int argc, char ** argv, int diags )
       OPS_gpu_direct = 1;
       ops_printf ( "\n GPU Direct enabled\n" );
     }
+    if ( strncmp ( argv[n], "OPS_DIAGS=", 10 ) == 0 )
+    {
+      OPS_diags = atoi ( argv[n] + 10 );
+      printf ( "\n OPS_diags = %d \n", OPS_diags );
+    }
   }
-
-
-
-  if (OPS_block_size_x == 0) OPS_block_size_x = 16;
-  if (OPS_block_size_y == 0) OPS_block_size_y = 16;
 
   /*Initialize the double linked list to hold ops_dats*/
   TAILQ_INIT(&OPS_dat_list);
@@ -152,25 +146,28 @@ void ops_init_core( int argc, char ** argv, int diags )
 
 void ops_exit_core( )
 {
+  ops_dat_entry *item;
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
-    free((char*)(OPS_block_list[i]->name));
-    free(OPS_block_list[i]->size);
-    free(OPS_block_list[i]);
+    free((char*)(OPS_block_list[i].block->name));
+    while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
+      TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
+      free(item);
+    }
+    free(OPS_block_list[i].block);
   }
   free(OPS_block_list);
   OPS_block_list = NULL;
 
-  /*free doubl linked list holding the ops_dats */
-  ops_dat_entry *item;
+  /*free doubly linked list holding the ops_dats */
+
   while ((item = TAILQ_FIRST(&OPS_dat_list))) {
     if ((item->dat)->user_managed == 0)
       free((item->dat)->data);
-    free((item->dat)->block_size);
-    free((item->dat)->offset);
     free((char*)(item->dat)->name);
     free((char*)(item->dat)->type);
     TAILQ_REMOVE(&OPS_dat_list, item, entries);
+    free(item->dat);
     free(item);
   }
 
@@ -184,13 +181,22 @@ void ops_exit_core( )
   free(OPS_stencil_list);
   OPS_stencil_list = NULL;
 
+  for (int i = 0; i < OPS_halo_index; i++) {
+    free(OPS_halo_list[i]);
+  }
+
+  for (int i = 0; i < OPS_halo_group_index; i++) {
+    //free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_halo_group_list[i]);
+  }
+
   // reset initial values
   OPS_block_index = 0;
   OPS_dat_index = 0;
   OPS_block_max = 0;
 }
 
-ops_block ops_decl_block(int dims, int *size, char *name)
+ops_block ops_decl_block(int dims, char *name)
 {
   if ( dims < 0 ) {
     printf ( " ops_decl_block error -- negative/zero dimension size for block: %s\n", name );
@@ -199,7 +205,7 @@ ops_block ops_decl_block(int dims, int *size, char *name)
 
   if ( OPS_block_index == OPS_block_max ) {
     OPS_block_max += 10;
-    OPS_block_list = (ops_block *) realloc(OPS_block_list,OPS_block_max * sizeof(ops_block));
+    OPS_block_list = (ops_block_descriptor *) realloc(OPS_block_list,OPS_block_max * sizeof(ops_block_descriptor));
 
     if ( OPS_block_list == NULL ) {
       printf ( " ops_decl_block error -- error reallocating memory\n" );
@@ -210,10 +216,11 @@ ops_block ops_decl_block(int dims, int *size, char *name)
   ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
   block->index = OPS_block_index;
   block->dims = dims;
-  block->size =(int *)xmalloc(sizeof(int)*dims);
-  memcpy(block->size,size,sizeof(int)*dims);
   block->name = copy_str(name);
-  OPS_block_list[OPS_block_index++] = block;
+  OPS_block_list[OPS_block_index].block = block;
+  OPS_block_list[OPS_block_index].num_datasets = 0;
+  TAILQ_INIT(&(OPS_block_list[OPS_block_index].datasets));
+  OPS_block_index++;
 
   return block;
 }
@@ -228,7 +235,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 }
 
 ops_dat ops_decl_dat_core( ops_block block, int dim,
-                      int *block_size, int* offset, int* tail, char *data, int type_size,
+                      int *dataset_size, int* base, int* d_m, int* d_p, char *data, int type_size,
                       char const * type,
                       char const * name )
 {
@@ -246,30 +253,38 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
-  dat->size = type_size*dim;
+  dat->elem_size = type_size*dim;
+  dat->e_dat = 0; //default to non-edge dat
 
-  dat->block_size =(int *)xmalloc(sizeof(int)*block->dims);
-  memcpy(dat->block_size,block_size,sizeof(int)*block->dims);
+  for(int n=0;n<block->dims;n++){
+    if(dataset_size[n] != 1) {
+      //compute total size - which includes the block halo
+      dat->size[n] = dataset_size[n] - d_m[n] - d_p[n];
+    }
+    else {
+      dat->size[n] = 1;
+      dat->e_dat = 1;
+    }
+  }
 
-  dat->offset =( int *)xmalloc(sizeof(int)*block->dims);
-  memcpy(dat->offset,offset,sizeof(int)*block->dims);
+  for(int n=0;n<block->dims;n++) dat->base[n] = base[n];
 
-  dat->tail =( int *)xmalloc(sizeof(int)*block->dims);
-  memcpy(dat->tail,tail,sizeof(int)*block->dims);
+  for(int n=0;n<block->dims;n++) dat->d_m[n] = d_m[n];
+  for(int n=0;n<block->dims;n++) dat->d_p[n] = d_p[n];
+
+  for(int n=block->dims; n < OPS_MAX_DIM;n++) {
+    dat->size[n] = 1;
+    dat->base[n] = 0;
+    dat->d_m[n] = 0;
+    dat->d_p[n] = 0;
+  }
 
   dat->data = (char *)data;
   dat->data_d = NULL;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
-  dat->dirtybit = 0;
-  dat->dirty_dir_send =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
-  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_send[i] = 1;
-  dat->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
-  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) dat->dirty_dir_recv[i] = 1;
-
   dat->type = copy_str( type );
   dat->name = copy_str(name);
-  dat->e_dat = 0; //default to non-edge dat
 
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry* item;
@@ -286,21 +301,31 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
   OPS_dat_index++;
 
+  //Another entry for a different list
+  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  if (item == NULL) {
+    printf ( " op_decl_dat error -- error allocating memory to double linked list entry\n" );
+    exit ( -1 );
+  }
+  item->dat = dat;
+  TAILQ_INSERT_TAIL(&OPS_block_list[block->index].datasets, item, entries);
+  OPS_block_list[block->index].num_datasets++;
+
   return dat;
 }
 
 
 ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
-  int *block_size, int* offset,  int* tail, char * data, int type_size, char const * type, char const * name )
+  int *dataset_size, int* base, int* d_m, int* d_p, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
-  ops_dat found_dat = search_dat(block, dim, block_size, offset, type, name);
+  ops_dat found_dat = search_dat(block, dim, dataset_size, base, type, name);
   if ( found_dat != NULL) {
     printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, dim, block_size, offset, tail, data, type_size, type, name );
+  return ops_decl_dat_core ( block, dim, dataset_size, base, d_m, d_p, data, type_size, type, name );
 }
 
 
@@ -370,7 +395,39 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
   return stencil;
 }
 
+ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  if ( OPS_halo_index == OPS_halo_max ) {
+    OPS_halo_max += 10;
+    OPS_halo_list = (ops_halo *) realloc(OPS_halo_list,OPS_halo_max * sizeof(ops_halo));
 
+    if ( OPS_halo_list == NULL ) {
+      printf ( " ops_decl_halo_core error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
+  halo->index = OPS_halo_index++;
+  halo->from = from;
+  halo->to = to;
+  for (int i = 0; i < from->block->dims; i++) {
+    halo->iter_size[i] = iter_size[i];
+    halo->from_base[i] = from_base[i];
+    halo->to_base[i] = to_base[i];
+    halo->from_dir[i] = from_dir[i];
+    halo->to_dir[i] = to_dir[i];
+  }
+  for (int i = from->block->dims; i < OPS_MAX_DIM; i++) {
+    halo->iter_size[i] = 1;
+    halo->from_base[i] = 0;
+    halo->to_base[i] = 0;
+    halo->from_dir[i] = i+1;
+    halo->to_dir[i] = i+1;
+  }
+
+  OPS_halo_list[OPS_halo_index++] = halo;
+  return halo;
+}
 
 ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   ops_arg arg;
@@ -401,7 +458,7 @@ ops_arg ops_arg_gbl_core ( char * data, int dim, int size, ops_access acc ) {
   return arg;
 }
 
-ops_arg ops_arg_idx_core () {
+ops_arg ops_arg_idx () {
   ops_arg arg;
   arg.argtype = OPS_ARG_IDX;
   arg.dat = NULL;
@@ -419,27 +476,27 @@ void ops_diagnostic_output ( )
     printf ( "\n OPS diagnostic output\n" );
     printf ( " --------------------\n" );
 
-    printf ( "\n block dimension [dims]\n" );
+    printf ( "\n block dimension\n" );
     printf ( " -------------------\n" );
     for ( int n = 0; n < OPS_block_index; n++ ) {
-      printf ( " %15s %15dD ", OPS_block_list[n]->name, OPS_block_list[n]->dims );
-      for (int i=0; i<OPS_block_list[n]->dims; i++)
-        printf ( "[%d]",OPS_block_list[n]->size[i] );
+      printf ( " %15s %15dD ", OPS_block_list[n].block->name, OPS_block_list[n].block->dims );
       printf("\n");
     }
 
-    printf ( "\n dats item/point [block_size] [offset][tail]  block\n" );
+    printf ( "\n dats item/point [block_size] [base][d_m][d_p]  block\n" );
     printf ( " ------------------------------\n" );
     ops_dat_entry *item;
     TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-      printf ( " %15s %15d ", (item->dat)->name, (item->dat)->size );
+      printf ( " %15s %15d ", (item->dat)->name, (item->dat)->dim );
       for (int i=0; i<(item->dat)->block->dims; i++)
-        printf ( "[%d]",(item->dat)->block_size[i] );
+        printf ( "[%d]",(item->dat)->size[i] );
       printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
-        printf ( "[%d]",(item->dat)->offset[i] );
+        printf ( "[%d]",(item->dat)->base[i] );
       for (int i=0; i<(item->dat)->block->dims; i++)
-        printf ( "[%d]",(item->dat)->tail[i] );
+        printf ( "[%d]",(item->dat)->d_m[i] );
+      for (int i=0; i<(item->dat)->block->dims; i++)
+        printf ( "[%d]",(item->dat)->d_p[i] );
 
       printf ( " %15s\n", (item->dat)->block->name );
     }
@@ -449,7 +506,8 @@ void ops_diagnostic_output ( )
 
 
 void ops_dump3(ops_dat dat, const char* name) {
-  char str[100];
+  //TODO: this has to be backend-specific
+/*  char str[100];
   strcpy(str,"./dump/");
   strcat(str,name);
   strcat(str,"_");
@@ -468,23 +526,17 @@ void ops_dump3(ops_dat dat, const char* name) {
       for (int x = -dat->offset[0]; x < x_end; x++) {
         fprintf(fp,"%d %d %d %.17g\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
           *(double*)(dat->data+8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)));
-/*        fprintf(fp,"%d %d %d %c%c%c%c%c%c%c%c\n",x+dat->offset[0],y+dat->offset[1],z+dat->offset[2],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+0],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+1],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+2],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+3],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+4],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+5],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+6],
-                   dat->data[8*(x+dat->block_size[0]*y+dat->block_size[1]*dat->block_size[0]*z)+7]);*/
+
       }
     }
   }
   fclose(fp);
+  */
 }
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
+  //TODO: this has to be backend-specific
   FILE *fp;
   if ( (fp = fopen(file_name,"a")) == NULL) {
     printf("can't open file %s\n",file_name);
@@ -501,26 +553,26 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
 
   for(int i = 0; i < dat->block->dims; i++) {
-    if (fprintf(fp,"[%d]", dat->block_size[i])<0) {
+    if (fprintf(fp,"[%d]", dat->size[i])<0) {
       printf("error writing to %s\n",file_name);
       exit(2);
     }
   }
   fprintf(fp,"\n");
 
-  if (fprintf(fp,"size %d \n", dat->size)<0) {
+  if (fprintf(fp,"size %d \n", dat->elem_size)<0) {
     printf("error writing to %s\n",file_name);
     exit(2);
   }
-  
+
   if(dat->block->dims == 3) {
     if( strcmp(dat->type,"double") == 0 ) {
-      for(int i = 0; i < dat->block_size[2]; i++ ) {
-        for(int j = 0; j < dat->block_size[1]; j++ ) {
-          for(int k = 0; k < dat->block_size[0]; k++ ) {
+      for(int i = 0; i < dat->size[2]; i++ ) {
+        for(int j = 0; j < dat->size[1]; j++ ) {
+          for(int k = 0; k < dat->size[0]; k++ ) {
             if (fprintf(fp, " %3.10lf",
-              ((double *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
-                                    j*dat->block_size[0]+k])<0) {
+              ((double *)dat->data)[i*dat->size[1]*dat->size[0]+
+                                    j*dat->size[0]+k])<0) {
               printf("error writing to %s\n",file_name);
               exit(2);
               }
@@ -531,11 +583,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else if( strcmp(dat->type,"float") == 0 ) {
-      for(int i = 0; i < dat->block_size[2]; i++ ) {
-        for(int j = 0; j < dat->block_size[1]; j++ ) {
-          for(int k = 0; k < dat->block_size[0]; k++ ) {
-            if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
-                                      j*dat->block_size[0]+k])<0) {
+      for(int i = 0; i < dat->size[2]; i++ ) {
+        for(int j = 0; j < dat->size[1]; j++ ) {
+          for(int k = 0; k < dat->size[0]; k++ ) {
+            if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->size[1]*dat->size[0]+
+                                      j*dat->size[0]+k])<0) {
               printf("error writing to %s\n",file_name);
               exit(2);
               }
@@ -546,11 +598,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else if( strcmp(dat->type,"int") == 0 ) {
-      for(int i = 0; i < dat->block_size[2]; i++ ) {
-        for(int j = 0; j < dat->block_size[1]; j++ ) {
-          for(int k = 0; k < dat->block_size[0]; k++ ) {
-            if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->block_size[1]*dat->block_size[0]+
-                                      j*dat->block_size[0]+k])<0) {
+      for(int i = 0; i < dat->size[2]; i++ ) {
+        for(int j = 0; j < dat->size[1]; j++ ) {
+          for(int k = 0; k < dat->size[0]; k++ ) {
+            if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->size[1]*dat->size[0]+
+                                      j*dat->size[0]+k])<0) {
               printf("error writing to %s\n",file_name);
               exit(2);
             }
@@ -568,10 +620,10 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   }
   else if(dat->block->dims == 2) {
     if( strcmp(dat->type,"double") == 0 ) {
-      for(int i = 0; i < dat->block_size[1]; i++ ) {
-        for(int j = 0; j < dat->block_size[0]; j++ ) {
+      for(int i = 0; i < dat->size[1]; i++ ) {
+        for(int j = 0; j < dat->size[0]; j++ ) {
           if (fprintf(fp, " %3.10lf",
-            ((double *)dat->data)[i*dat->block_size[0]+j])<0) {
+            ((double *)dat->data)[i*dat->size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
           }
@@ -580,9 +632,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else if( strcmp(dat->type,"float") == 0 ) {
-      for(int i = 0; i < dat->block_size[1]; i++ ) {
-        for(int j = 0; j < dat->block_size[0]; j++ ) {
-          if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->block_size[0]+j])<0) {
+      for(int i = 0; i < dat->size[1]; i++ ) {
+        for(int j = 0; j < dat->size[0]; j++ ) {
+          if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
           }
@@ -591,9 +643,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else if( strcmp(dat->type,"int") == 0 ) {
-      for(int i = 0; i < dat->block_size[1]; i++ ) {
-        for(int j = 0; j < dat->block_size[0]; j++ ) {
-          if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->block_size[0]+j])<0) {
+      for(int i = 0; i < dat->size[1]; i++ ) {
+        for(int j = 0; j < dat->size[0]; j++ ) {
+          if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->size[0]+j])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
           }
@@ -609,7 +661,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   }
   else if(dat->block->dims == 1) {
     if( strcmp(dat->type,"double") == 0 ) {
-      for(int j = 0; j < dat->block_size[0]; j++ ) {
+      for(int j = 0; j < dat->size[0]; j++ ) {
         if (fprintf(fp, "%3.10lf ", ((double *)dat->data)[j])<0) {
           printf("error writing to %s\n",file_name);
           exit(2);
@@ -618,7 +670,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       fprintf(fp,"\n");
     }
     else if( strcmp(dat->type,"float") == 0 ) {
-      for(int j = 0; j < dat->block_size[0]; j++ ) {
+      for(int j = 0; j < dat->size[0]; j++ ) {
         if (fprintf(fp, "%e ", ((float *)dat->data)[j])<0) {
           printf("error writing to %s\n",file_name);
           exit(2);
@@ -627,7 +679,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       fprintf(fp,"\n");
     }
     else if( strcmp(dat->type,"int") == 0 ) {
-      for(int j = 0; j < dat->block_size[0]; j++ ) {
+      for(int j = 0; j < dat->size[0]; j++ ) {
         if (fprintf(fp, "%d ", ((int *)dat->data)[j])<0) {
           printf("error writing to %s\n",file_name);
           exit(2);
@@ -642,6 +694,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   fclose(fp);
+
 }
 
 void ops_timing_output()
@@ -654,8 +707,8 @@ void ops_timing_output()
         printf("Too long\n");
       }
     }
-    char *buf = (char*)malloc((maxlen+80)*sizeof(char));
-    char buf2[80];
+    char *buf = (char*)malloc((maxlen+180)*sizeof(char));
+    char buf2[180];
     sprintf(buf,"Name");
     for (int i = 4; i < maxlen;i++) strcat(buf," ");
     ops_printf("\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
@@ -686,6 +739,7 @@ void ops_timing_output()
     }
     ops_printf("Total kernel time: %g\n",sumtime);
     //printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time, ops_scatter_time);
+    free(buf);
   }
 }
 
@@ -737,7 +791,7 @@ float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
     if (arg->stencil->stride[i] != 0)
       size *= (range[2*i+1]-range[2*i]);
   }
-  size *= arg->dat->size*((arg->argtype==OPS_READ || arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
+  size *= arg->dat->elem_size*((arg->argtype==OPS_READ || arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
   return size;
 }
 
