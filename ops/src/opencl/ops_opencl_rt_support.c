@@ -347,7 +347,6 @@ void openclDeviceInit( int argc, char ** argv )
         return;
       }
 
-
       //alloc space for device name and '\0'
       dev_name = (char *)calloc(dev_name_len+1, sizeof(char));
       //attempt to get device name
@@ -377,7 +376,6 @@ void openclDeviceInit( int argc, char ** argv )
 
   fprintf(stderr, "Error: No available devices found.\n");
   return;
-
 }
 
 
@@ -418,8 +416,6 @@ void ops_upload_dat(ops_dat dat) {
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-
-
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs)
@@ -462,7 +458,6 @@ void ops_opencl_get_data( ops_dat dat )
   if (dat->dirty_hd == 2) dat->dirty_hd = 0;
   else return;
   ops_download_dat(dat);
-
 }
 
 
