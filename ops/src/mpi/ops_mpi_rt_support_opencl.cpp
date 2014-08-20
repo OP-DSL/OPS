@@ -49,6 +49,9 @@ cl_kernel packer4_kernel;
 cl_kernel unpacker1_kernel;
 cl_kernel unpacker4_kernel;
 
+const char packer1_kernel_src[] = "__kernel void ops_opencl_packer1() { }";
+
+static bool isbuilt_packer1_kernel = false;
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   
@@ -126,7 +129,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     size_t localWorkSize[3] =  {num_threads, 1, 1};
     
     //ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
-    clSafeCall( clSetKernelArg(unpacker4_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(unpacker4_kernel, 0, sizeof(cl_mem), (void*) dest ));
     clSafeCall( clSetKernelArg(unpacker4_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(unpacker4_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength/4;
@@ -143,7 +146,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     size_t localWorkSize[3] =  {num_threads, 1, 1};
     
     //ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
-    clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) dest ));
     clSafeCall( clSetKernelArg(unpacker1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(unpacker1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength;
