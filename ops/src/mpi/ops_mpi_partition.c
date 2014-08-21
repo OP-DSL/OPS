@@ -294,7 +294,7 @@ void ops_decomp_dats(sub_block *sb) {
     //Allocate datasets
     //TODO: read HDF5, what if it was already allocated - re-distribute
     dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
-    ops_cpHostToDevice ( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
+    ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
 
     //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block
     sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
