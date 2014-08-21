@@ -228,6 +228,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
+    print name, reduction
+
     arg_idx = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -249,7 +251,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ng_args = 0
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = True
       else:
         ng_args = ng_args + 1
@@ -534,7 +536,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         else:
           text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
       elif arg_typ[n] == 'ops_arg_gbl':
-        text = text +' &arg_gbl'+str(n)+'[64*thr]'
+        if accs[n] <> OPS_READ:
+          text = text +' &arg_gbl'+str(n)+'[64*thr]'
+        else:
+          text = text +' ('+typs[n]+' * )p_a['+str(n)+']'
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +' arg_idx'
 
@@ -570,7 +575,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         else:
           text = text +' (const '+typs[n]+' * )p_a['+str(n)+']'
       elif arg_typ[n] == 'ops_arg_gbl':
-        text = text +' &arg_gbl'+str(n)+'[64*thr]'
+        if accs[n] <> OPS_READ:
+          text = text +' &arg_gbl'+str(n)+'[64*thr]'
+        else:
+          text = text +' ('+typs[n]+' * )p_a['+str(n)+']'
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +' arg_idx'
 
@@ -638,7 +646,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     #generate code for combining the reductions
-    if reduction == True:
+    if reduction == 1:
       code('')
       comm(' combine reduction data')
       FOR('thr','0','nthreads')
