@@ -58,11 +58,11 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,2);
 
-  int logical_size_x = 10000;
-  int logical_size_y = 10000;
-  int ngrid_x = 10;
-  int ngrid_y = 10;
-  int n_iter = 10000;
+  int logical_size_x = 50;
+  int logical_size_y = 50;
+  int ngrid_x = 2;
+  int ngrid_y = 2;
+  int n_iter = 1000;
   dx = 0.01;
   dy = 0.01;
   ops_decl_const("dx",1,"double",&dx);
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
   //populate forcing, reference solution and boundary conditions
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
-      int iter_range[] = {-1,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]+1};
+      int iter_range[] = {-1,sizes[2*(i+ngrid_x*j)]+1,-1,sizes[2*(i+ngrid_x*j)+1]+1};
       ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks[i+ngrid_x*j], 2, iter_range,
                ops_arg_gbl(&disps[2*(i+ngrid_x*j)], 1, "int", OPS_READ),   //dispx
                ops_arg_gbl(&disps[2*(i+ngrid_x*j)+1], 1, "int", OPS_READ), //dispy
@@ -202,6 +202,19 @@ int main(int argc, char **argv)
       }
     }
   }
+
+  double err = 0.0;
+  for (int j = 0; j < ngrid_y; j++) {
+    for (int i = 0; i < ngrid_x; i++) {
+      int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+      ops_par_loop(poisson_error_kernel, "poisson_error_kernel", blocks[i+ngrid_x*j], 2, iter_range,
+               ops_arg_dat(u[i+ngrid_x*j],    S2D_00, "double", OPS_READ),
+               ops_arg_dat(ref[i+ngrid_x*j] , S2D_00, "double", OPS_READ),
+               ops_arg_gbl(&err, 1, "double", OPS_INC));
+    }
+  }
+
+  ops_printf("Total error: %g\n",err);
 
   ops_timers_core(&ct1, &et1);
   ops_timing_output();

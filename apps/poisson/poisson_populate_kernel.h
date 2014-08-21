@@ -25,4 +25,8 @@ void poisson_update_kernel(const double *u2, double *u) {
   u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
 }
 
+void poisson_error_kernel(const double *u, const double *ref, double *err) {
+  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+}
+
 #endif //poisson_KERNEL_H
