@@ -91,8 +91,9 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
   p_a[2] = (char *)args[2].data + base2;
 
 
-  ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges(args, 3);
+  ops_halo_exchanges(args,3,range);
+  
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[74].mpi_time += t1-t2;

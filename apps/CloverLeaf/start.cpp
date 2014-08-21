@@ -63,7 +63,10 @@ void start()
   /**---------------------------Initialize Chunks----------------------------**/
 
   initialise_chunk();
-
+  int status;
+  MPI_Barrier(MPI_COMM_WORLD);
+  ops_exit();
+  
   /**---------------------------Generating Chunks----------------------------**/
 
   ops_fprintf(g_out,"\n");
@@ -71,7 +74,8 @@ void start()
   ops_fprintf(g_out,"\n");
 
   generate();
-
+  
+  //MPI_Abort(MPI_COMM_WORLD,status);
   //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
 

@@ -94,9 +94,6 @@ int main(int argc, char **argv)
   ops_init(argc,argv,1);
   ops_printf(" Clover version %f\n", g_version);
   
-  //exit(-1);
-
-
   initialise();
 
   ops_decl_const2( "g_small",1, "double",&g_small);

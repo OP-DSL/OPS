@@ -234,7 +234,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
-
+  printf("end ideal gas\n");
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[2],range);
   ops_set_halo_dirtybit3(&args[3],range);
