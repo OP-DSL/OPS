@@ -576,7 +576,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     #setup reduction variables
     code('')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
     code('')
 

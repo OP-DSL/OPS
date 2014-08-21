@@ -531,6 +531,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_lib_mpi.h"')
+  if os.path.exists('./user_types.h'):
+    code('#include "user_types.h"')
   code('')
 
   comm(' global constants')
