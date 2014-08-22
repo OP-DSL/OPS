@@ -44,22 +44,25 @@ cl_mem halo_buffer_d = NULL;
 extern ops_opencl_core OPS_opencl_core;
 
 
-static cl_kernel packer1_kernel;
-static cl_kernel packer4_kernel;
-static cl_kernel unpacker1_kernel;
-static cl_kernel unpacker4_kernel;
+cl_kernel packer1_kernel;
+cl_kernel packer4_kernel;
+cl_kernel unpacker1_kernel;
+cl_kernel unpacker4_kernel;
 
 const char packer1_kernel_src[] = "__kernel void ops_opencl_packer1("
                                   "__global const char* restrict src,  __global char* restrict dest,"
                                   "const int count,"
                                   "const int len,"
-                                  "const int stride) {"
+                                  "const int stride,"
+                                  "const int src_offset,"
+                                  "const int elem_size"
+                                  ") {"
                                   //"  printf(\"executing packer1_kernel_src\\n\");"
-                                  /*"  int idx = get_global_id(0);"
+                                  "  int idx = get_global_id(0);"
                                   "  int block = get_group_id(0);"
                                   "  if (idx < count*len) {"
-                                  "    dest[idx] = src[stride*block + idx%len];"
-                                  "  }"*/
+                                  "    dest[idx] = src[src_offset*elem_size + stride*block + idx%len];"
+                                  "  }"
                                   "}\n";
 const char packer4_kernel_src[] = "__kernel void ops_opencl_packer4("
                                   "__global const int* restrict src,  __global int* restrict dest,"
@@ -79,12 +82,15 @@ const char unpacker1_kernel_src[] = "__kernel void ops_opencl_unpacker1("
                                   "__global const char* restrict src,  __global char* restrict dest,"
                                   "const int count,"
                                   "const int len,"
-                                  "const int stride) {"
+                                  "const int stride,"
+                                  "const int dest_offset,"
+                                  "const int elem_size"
+                                  ") {"
                                   //"  printf(\"executing unpacker1_kernel_src\\n\");"
                                   "  int idx = get_global_id(0);"
                                   "  int block = get_group_id(0);"
                                   "  if (idx < count*len) {"
-                                  "    dest[stride*block + idx%len] = src[idx];"
+                                  "    dest[dest_offset*elem_size +stride*block + idx%len] = src[idx];"
                                   "  }"
                                   "}\n";
 
@@ -102,14 +108,14 @@ const char unpacker4_kernel_src[] = "__kernel void ops_opencl_unpacker4("
                                   "  }"
                                   "}\n";
 
-/*
+
 static bool isbuilt_packer1_kernel = false;
 static bool isbuilt_packer4_kernel = false;
 static bool isbuilt_unpacker1_kernel = false;
 static bool isbuilt_unpacker4_kernel = false;
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
-  return;
+  
   cl_int ret = 0;
   if(!isbuilt_packer1_kernel){
 
@@ -148,7 +154,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
     clSafeCall( ret );
     free(source_str[0]);
     isbuilt_packer1_kernel = true;
-    printf("in packer1\n");
+    printf("in packer1 build\n");
   }
 
   if(!isbuilt_packer4_kernel){
@@ -186,11 +192,11 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
     clSafeCall( ret );
     free(source_str[0]);
     isbuilt_packer4_kernel = true;
-    printf("in packer4\n");
+    printf("in packer4 build\n");
   }
-
+    
   const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
-
+  
   if (halo_buffer_size < halo->count*halo->blocklength) {
     printf("alloc start packer\n");
     if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
@@ -199,52 +205,56 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
     printf("alloc end packer\n");
   }
   else printf("no alloc packer\n");
-
+  
   cl_mem device_buf = halo_buffer_d;
 
-  if (halo->blocklength%4 == 0) {
+  /*if (halo->blocklength%4 == 0) {
     printf("in packer4\n");
     int num_threads = 128;
     int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads*num_blocks, 1, 1};
     size_t localWorkSize[3] =  {num_threads, 1, 1};
-
+    
     //ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)device_buf,halo->count, halo->blocklength/4, halo->stride/4);
-    clSafeCall( clSetKernelArg(packer4_kernel, 0, sizeof(cl_mem), (void*) src ));
+    //clSafeCall( clSetKernelArg(packer4_kernel, 0, sizeof(cl_mem), (void*) src ));
     clSafeCall( clSetKernelArg(packer4_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(packer4_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength/4;
     int stride = halo->stride/4;
     clSafeCall( clSetKernelArg(packer4_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
     clSafeCall( clSetKernelArg(packer4_kernel, 4, sizeof(cl_int), (void*) &stride));
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, packer4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    //clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, packer4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
 
-  } else {
+  } else {*/
     printf("in packer1\n");
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads*num_blocks, 1, 1};
     size_t localWorkSize[3] =  {num_threads, 1, 1};
-
+    cl_mem test;
     //ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
-    clSafeCall( clSetKernelArg(packer1_kernel, 0, sizeof(cl_mem), (void*) src ));
+    //clSafeCall( clSetKernelArg(packer1_kernel, 0, sizeof(cl_mem), (void*) src ));
+    clSafeCall( clSetKernelArg(packer1_kernel, 0, sizeof(cl_mem), (void*) &dat->data_d ));
     clSafeCall( clSetKernelArg(packer1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(packer1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength;
     int stride = halo->stride;
     clSafeCall( clSetKernelArg(packer1_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
     clSafeCall( clSetKernelArg(packer1_kernel, 4, sizeof(cl_int), (void*) &stride));
+    clSafeCall( clSetKernelArg(packer1_kernel, 5, sizeof(cl_int), (void*) &src_offset));   
+    clSafeCall( clSetKernelArg(packer1_kernel, 6, sizeof(cl_int), (void*) &dat->elem_size ));    
     clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, packer1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
-  }
+  //}
+  
   clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, dest, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
-  return;
+  
   cl_int ret = 0;
   if(!isbuilt_unpacker1_kernel){
 
@@ -323,7 +333,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     free(source_str[0]);
     isbuilt_unpacker4_kernel = true;
   }
-
+  
   char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
 
   if (halo_buffer_size < halo->count*halo->blocklength) {
@@ -339,7 +349,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
 
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) device_buf, CL_TRUE, 0, halo->count*halo->blocklength, src, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-  if (halo->blocklength%4 == 0) {
+  /*if (halo->blocklength%4 == 0) {
     printf("in unpacker4\n");
 
     int num_threads = 128;
@@ -349,16 +359,16 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     size_t localWorkSize[3] =  {num_threads, 1, 1};
 
     //ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
-    clSafeCall( clSetKernelArg(unpacker4_kernel, 0, sizeof(cl_mem), (void*) dest ));
+    //clSafeCall( clSetKernelArg(unpacker4_kernel, 0, sizeof(cl_mem), (void*) dest ));
     clSafeCall( clSetKernelArg(unpacker4_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(unpacker4_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength/4;
     int stride = halo->stride/4;
     clSafeCall( clSetKernelArg(unpacker4_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
     clSafeCall( clSetKernelArg(unpacker4_kernel, 4, sizeof(cl_int), (void*) &stride));
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    //clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker4_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
 
-  } else {
+  } else {*/
     printf("in unpacker1\n");
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
@@ -367,19 +377,22 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     size_t localWorkSize[3] =  {num_threads, 1, 1};
 
     //ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
-    clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) dest ));
+    //clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) dest ));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 0, sizeof(cl_mem), (void*) &dat->data_d ));
     clSafeCall( clSetKernelArg(unpacker1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
     clSafeCall( clSetKernelArg(unpacker1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength;
     int stride = halo->stride;
     clSafeCall( clSetKernelArg(unpacker1_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
     clSafeCall( clSetKernelArg(unpacker1_kernel, 4, sizeof(cl_int), (void*) &stride));
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 5, sizeof(cl_int), (void*) &dest_offset));   
+    clSafeCall( clSetKernelArg(unpacker1_kernel, 6, sizeof(cl_int), (void*) &dat->elem_size ));  
     clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
-  }
+  //}
 }
-*/
 
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+
+/*void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   const char * __restrict src = dat->data+src_offset*dat->elem_size;
   for (unsigned int i = 0; i < halo->count; i ++) {
     memcpy(dest, src, halo->blocklength);
@@ -398,7 +411,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
   }
   //printf("copy done 2\n");
 }
-
+*/
 void ops_comm_realloc(char **ptr, int size, int prev) {
   if (*ptr == NULL) {
     *ptr = (char *)xmalloc(size);
