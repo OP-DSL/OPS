@@ -531,7 +531,23 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_lib_mpi.h"')
+  if os.path.exists('./user_types.h'):
+    code('#include "user_types.h"')
   code('')
+
+  comm(' global constants')
+  for nc in range (0,len(consts)):
+    if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
+      code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+#      code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
+    else:
+      if consts[nc]['dim'].isdigit() and consts[nc]['dim'] > 0:
+        num = str(consts[nc]['dim'])
+        code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+#        code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
+      else:
+        code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+#        code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
 
   #constants for macros -- now included in teh backend so no need to generate here
   #for i in range(0,20):
