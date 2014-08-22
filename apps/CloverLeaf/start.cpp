@@ -62,12 +62,12 @@ void start()
 
   /**---------------------------Initialize Chunks----------------------------**/
   
-  initialise_chunk();
+  //initialise_chunk();
   
-  int status;
-  MPI_Barrier(MPI_COMM_WORLD);
-  ops_exit();
-  exit(0);
+  //int status;
+  //MPI_Barrier(MPI_COMM_WORLD);
+  //ops_exit();
+  //exit(0);
   
   
   

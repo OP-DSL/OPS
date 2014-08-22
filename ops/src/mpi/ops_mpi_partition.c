@@ -313,7 +313,7 @@ void ops_decomp_dats(sub_block *sb) {
         sd->halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * dat->elem_size;
         sd->halos[MAX_DEPTH*n+d].stride = prod[n] * dat->elem_size;
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
-        printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride); 
+        //printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride); 
       }
     }
   }

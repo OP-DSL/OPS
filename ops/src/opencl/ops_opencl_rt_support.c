@@ -288,8 +288,7 @@ void openclDeviceInit( int argc, char ** argv )
 
 
 
-void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
-{
+void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size ) {
   //printf("Copying data from host to device\n");
   cl_int ret = 0;
   *data_d = (cl_mem) clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
