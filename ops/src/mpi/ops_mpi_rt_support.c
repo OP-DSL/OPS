@@ -355,8 +355,8 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 #ifdef AGGREGATE
       ops_realloc_buffers(&sd->halos[MAX_DEPTH*dim+actual_depth_send],&sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
       ops_pack(dat,i2, ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
-      int send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
-      int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+      int send_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
+      int recv_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
       MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_m[dim],dim,
                    ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_p[dim],dim,
                    sb->comm, &status);
@@ -400,8 +400,8 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 #ifdef AGGREGATE
       ops_realloc_buffers(&sd->halos[MAX_DEPTH*dim+actual_depth_send],&sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
       ops_pack(dat,i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH*dim+actual_depth_send]);
-      send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
-      recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+      send_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
+      recv_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
       MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_p[dim],dim,
                    ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_m[dim],dim,
                    sb->comm, &status);
@@ -506,8 +506,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   }
 
   //Compute size of packed data
-  int send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
-  int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  int send_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
+  int recv_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  
   if (send_recv_offsets[0]+send_size > ops_buffer_send_1_size) {
     if (OPS_diags>4) printf("Realloc ops_buffer_send_1\n");
     ops_buffer_send_1 = (char *)realloc(ops_buffer_send_1,send_recv_offsets[0]+4*send_size);
@@ -560,8 +561,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   }
 
   //Compute size of packed data
-  send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
-  recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  send_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
+  recv_size = 0;//sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  
   if (send_recv_offsets[2]+send_size > ops_buffer_send_2_size) {
     if (OPS_diags>4) printf("Realloc ops_buffer_send_2\n");
     ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2,send_recv_offsets[2]+4*send_size);

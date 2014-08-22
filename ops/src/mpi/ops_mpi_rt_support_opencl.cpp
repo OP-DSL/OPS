@@ -102,7 +102,7 @@ const char unpacker4_kernel_src[] = "__kernel void ops_opencl_unpacker4("
                                   "  }"
                                   "}\n";
 
-
+/*
 static bool isbuilt_packer1_kernel = false;
 static bool isbuilt_packer4_kernel = false;
 static bool isbuilt_unpacker1_kernel = false;
@@ -377,11 +377,30 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, unpacker1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
 }
+*/
+
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+  const char * __restrict src = dat->data+src_offset*dat->elem_size;
+  for (unsigned int i = 0; i < halo->count; i ++) {
+    memcpy(dest, src, halo->blocklength);
+    src += halo->stride;
+    dest += halo->blocklength;
+  }
+}
+
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
+  char * __restrict dest = dat->data+dest_offset*dat->elem_size;
+  for (unsigned int i = 0; i < halo->count; i ++) {
+    memcpy(dest, src, halo->blocklength);
+    src += halo->blocklength;
+    dest += halo->stride;
+  }
+}
 
 void ops_comm_realloc(char **ptr, int size, int prev) {
   if (*ptr == NULL) {
-    *ptr = (char *)malloc(size);
+    *ptr = (char *)xmalloc(size);
   } else {
-    *ptr = (char*)realloc(*ptr, size);
+    *ptr = (char*)xrealloc(*ptr, size);
   }
 }

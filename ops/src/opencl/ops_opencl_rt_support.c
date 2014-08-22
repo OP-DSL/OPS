@@ -52,7 +52,7 @@
 #include <CL/cl_ext.h>
 #endif
 
-//#include <math_constants.h>
+#include <math_constants.h>
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>

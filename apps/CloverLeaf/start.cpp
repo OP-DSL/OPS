@@ -61,11 +61,15 @@ void start()
   build_field();
 
   /**---------------------------Initialize Chunks----------------------------**/
-
+  
   initialise_chunk();
+  
   int status;
   MPI_Barrier(MPI_COMM_WORLD);
   ops_exit();
+  exit(0);
+  
+  
   
   /**---------------------------Generating Chunks----------------------------**/
 
