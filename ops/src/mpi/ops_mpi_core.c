@@ -88,7 +88,7 @@ void ops_timers(double * cpu, double * et)
 
 void ops_printf(const char* format, ...)
 {
-  if(ops_my_rank==MPI_ROOT) {
+  if(ops_my_global_rank==MPI_ROOT) {
     va_list argptr;
     va_start(argptr, format);
     vprintf(format, argptr);
@@ -98,7 +98,7 @@ void ops_printf(const char* format, ...)
 
 void ops_fprintf(FILE *stream, const char *format, ...)
 {
-  if(ops_my_rank==MPI_ROOT) {
+  if(ops_my_global_rank==MPI_ROOT) {
     va_list argptr;
     va_start(argptr, format);
     vfprintf(stream, format, argptr);

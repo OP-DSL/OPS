@@ -108,14 +108,14 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
         int exch_size = sd->halos[MAX_DEPTH*n+d].blocklength * sd->halos[MAX_DEPTH*n+d].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_p[n],0,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_m[n],0,
-                     OPS_CART_COMM, &status);
+                     sb->comm, &status);
         ops_unpack(dat, i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
 #else
         //send in positive direction, receive from negative direction
         //printf("Exchaning 1 From:%d To: %d\n", i3, i1);
         MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],0,
                      &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],0,
-                     OPS_CART_COMM, &status);
+                     sb->comm, &status);
 #endif
         for (int d1 = 0; d1 <= d; d1++)  sd->dirty_dir_send[2*MAX_DEPTH*n + MAX_DEPTH + d1] = 0;
         for (int d1 = 0; d1 <= d; d1++)  sd->dirty_dir_recv[2*MAX_DEPTH*n + d1] = 0;
@@ -125,14 +125,14 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
         exch_size = sd->halos[MAX_DEPTH*n+d].blocklength * sd->halos[MAX_DEPTH*n+d].count;
         MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_m[n],1,
                      ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_p[n],1,
-                     OPS_CART_COMM, &status);
+                     sb->comm, &status);
         ops_unpack(dat, i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+d]);
 #else
         //send in negative direction, receive from positive direction
         //printf("Exchaning 2 From:%d To: %d\n", i2, i4);
         MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_m[n],1,
                      &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+d],sb->id_p[n],1,
-                     OPS_CART_COMM, &status);
+                     sb->comm, &status);
 #endif
         for (int d1 = 0; d1 <= d; d1++)  sd->dirty_dir_send[2*MAX_DEPTH*n + d1] = 0;
         for (int d1 = 0; d1 <= d; d1++)  sd->dirty_dir_recv[2*MAX_DEPTH*n + MAX_DEPTH + d1] = 0;
@@ -176,10 +176,10 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       if (OPS_diags>5) { //Consistency checking
         int they_send;
         MPI_Sendrecv(&actual_depth,1,MPI_INT,sb->id_p[n],666,
-          &they_send,1,MPI_INT,sb->id_m[n],666,OPS_CART_COMM, &status);
+          &they_send,1,MPI_INT,sb->id_m[n],666,sb->comm, &status);
         if (sb->id_m[n]>=0 && actual_depth != they_send) {
           printf("Left recv mismatch\n");
-          MPI_Abort(OPS_CART_COMM,-1);
+          MPI_Abort(sb->comm,-1);
         }
       }
 
@@ -189,7 +189,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       int exch_size = sd->halos[MAX_DEPTH*n+actual_depth].blocklength * sd->halos[MAX_DEPTH*n+actual_depth].count;
       MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_p[n],sb->ndim+n,
                    ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_m[n],sb->ndim+n,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
       ops_unpack(dat,i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
 #else
       //send in positive direction, receive from negative direction
@@ -197,7 +197,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       if(actual_depth > 0)
       MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],sb->ndim+n,
                    &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],sb->ndim+n,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
 #endif
       for (int d = 0; d <= actual_depth; d++) sd->dirty_dir_send[2*MAX_DEPTH*n + MAX_DEPTH + d] = 0;
       for (int d = 0; d <= actual_depth; d++) sd->dirty_dir_recv[2*MAX_DEPTH*n + d] = 0;
@@ -213,10 +213,10 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       if (OPS_diags>5) { //Consistency checking
         int they_send;
         MPI_Sendrecv(&actual_depth,1,MPI_INT,sb->id_m[n],665,
-          &they_send,1,MPI_INT,sb->id_p[n],665,OPS_CART_COMM, &status);
+          &they_send,1,MPI_INT,sb->id_p[n],665,sb->comm, &status);
         if (sb->id_p[n]>=0 && actual_depth != they_send) {
           printf("Right recv mismatch\n");
-          MPI_Abort(OPS_CART_COMM,-1);
+          MPI_Abort(sb->comm,-1);
         }
       }
 
@@ -226,7 +226,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       exch_size = sd->halos[MAX_DEPTH*n+actual_depth].blocklength * sd->halos[MAX_DEPTH*n+actual_depth].count;
       MPI_Sendrecv(ops_buffer_send_1,exch_size,MPI_BYTE,sb->id_m[n],n,
                    ops_buffer_recv_1,exch_size,MPI_BYTE,sb->id_p[n],n,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
       ops_unpack(dat,i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*n+actual_depth]);
 #else
       //send in negative direction, receive from positive direction
@@ -234,7 +234,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
       if(actual_depth > 0)
       MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_m[n],n,
                    &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*n+actual_depth],sb->id_p[n],n,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
 #endif
       for (int d = 0; d <= actual_depth; d++) sd->dirty_dir_send[2*MAX_DEPTH*n + d] = 0;
       for (int d = 0; d <= actual_depth; d++) sd->dirty_dir_recv[2*MAX_DEPTH*n + MAX_DEPTH + d] = 0;
@@ -337,10 +337,10 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
     if (OPS_diags>5) { //Consistency checking
       int they_send;
       MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_m[dim],665,
-        &they_send,1,MPI_INT,sb->id_p[dim],665,OPS_CART_COMM, &status);
+        &they_send,1,MPI_INT,sb->id_p[dim],665,sb->comm, &status);
       if (sb->id_p[dim]>=0 && actual_depth_recv != they_send) {
         printf("\nRight recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
-        MPI_Abort(OPS_CART_COMM,-1);
+        MPI_Abort(sb->comm,-1);
       }
     }
 
@@ -351,13 +351,13 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
       MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_m[dim],dim,
                    ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_p[dim],dim,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
       ops_unpack(dat,i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
 #else
     //negative direction exchange
     MPI_Sendrecv(&dat->data[i2*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_send],sb->id_m[dim],dim,
                  &dat->data[i4*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_recv],sb->id_p[dim],dim,
-                 OPS_CART_COMM, &status);
+                 sb->comm, &status);
 #endif
 
     //clear dirtybits
@@ -383,10 +383,10 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
     if (OPS_diags>5) { //Consistency checking
       int they_send;
       MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_p[dim],666,
-        &they_send,1,MPI_INT,sb->id_m[dim],666,OPS_CART_COMM, &status);
+        &they_send,1,MPI_INT,sb->id_m[dim],666,sb->comm, &status);
       if (sb->id_m[dim]>=0 && actual_depth_recv != they_send) {
         printf("\nLeft recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
-        MPI_Abort(OPS_CART_COMM,-1);
+        MPI_Abort(sb->comm,-1);
       }
     }
 #ifdef AGGREGATE
@@ -396,13 +396,13 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
       MPI_Sendrecv(ops_buffer_send_1,send_size,MPI_BYTE,sb->id_p[dim],dim,
                    ops_buffer_recv_1,recv_size,MPI_BYTE,sb->id_m[dim],dim,
-                   OPS_CART_COMM, &status);
+                   sb->comm, &status);
       ops_unpack(dat,i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
 #else
     //positive direction exchange
     MPI_Sendrecv(&dat->data[i3*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_send],sb->id_p[dim],ndim+dim,
                  &dat->data[i1*size],1,sd->mpidat[MAX_DEPTH*dim+actual_depth_recv],sb->id_m[dim],ndim+dim,
-                 OPS_CART_COMM, &status);
+                 sb->comm, &status);
 #endif
     //clear dirtybits
     for (int d = 0; d <= actual_depth_send; d++) sd->dirty_dir_send[2*MAX_DEPTH*dim + MAX_DEPTH + d] = 0;
@@ -487,10 +487,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_m[dim],665,
-      &they_send,1,MPI_INT,sb->id_p[dim],665,OPS_CART_COMM, &status);
+      &they_send,1,MPI_INT,sb->id_p[dim],665,sb->comm, &status);
     if (sb->id_p[dim]>=0 && actual_depth_recv != they_send) {
       printf("Right recv mismatch\n");
-      MPI_Abort(OPS_CART_COMM,-1);
+      MPI_Abort(sb->comm,-1);
     }
   }
 
@@ -541,10 +541,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_p[dim],666,
-      &they_send,1,MPI_INT,sb->id_m[dim],666,OPS_CART_COMM, &status);
+      &they_send,1,MPI_INT,sb->id_m[dim],666,sb->comm, &status);
     if (sb->id_m[dim]>=0 && actual_depth_recv != they_send) {
       printf("Left recv mismatch\n");
-      MPI_Abort(OPS_CART_COMM,-1);
+      MPI_Abort(sb->comm,-1);
     }
   }
 
@@ -659,6 +659,8 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
 //  double c1,c2,t1,t2;
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
+  MPI_Comm comm = MPI_COMM_NULL;
+
   for (int dim = 0; dim < OPS_MAX_DIM; dim++){
 //    ops_timers_core(&c1,&t1);
     int id_m=-1,id_p=-1;
@@ -669,6 +671,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if( dat_ndim <= dim || dat->size[dim] <= 1 ) continue;
+      comm = OPS_sub_block_list[dat->block->index]->comm;
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
           other_dims = other_dims && (dat->size[d2]==1 || intersection( range[2*d2]-MAX_DEPTH,
@@ -694,13 +697,13 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
 
     MPI_Request request[4];
     MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:MPI_PROC_NULL,dim,
-      OPS_CART_COMM, &request[0]);
+      comm, &request[0]);
     MPI_Isend(ops_buffer_send_2,send_recv_offsets[2],MPI_BYTE,send_recv_offsets[2]>0?id_p:MPI_PROC_NULL,OPS_MAX_DIM+dim,
-      OPS_CART_COMM, &request[1]);
+      comm, &request[1]);
     MPI_Irecv(ops_buffer_recv_1,send_recv_offsets[1],MPI_BYTE,send_recv_offsets[1]>0?id_p:MPI_PROC_NULL,dim,
-      OPS_CART_COMM, &request[2]);
+      comm, &request[2]);
     MPI_Irecv(ops_buffer_recv_2,send_recv_offsets[3],MPI_BYTE,send_recv_offsets[3]>0?id_m:MPI_PROC_NULL,OPS_MAX_DIM+dim,
-      OPS_CART_COMM, &request[3]);
+      comm, &request[3]);
 
     MPI_Status status[4];
     MPI_Waitall(2,&request[2],&status[2]);
@@ -733,17 +736,17 @@ void ops_mpi_reduce_double(ops_arg* arg, double* data)
 {
   (void)data;
   //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    double result[arg->dim*ops_comm_size];
+    double result[arg->dim*ops_comm_global_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_CART_COMM);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MAX, OPS_CART_COMM);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MAX, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_CART_COMM);
+      MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_MIN, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_CART_COMM);
-      for (int i = 1; i < ops_comm_size; i++) {
+      MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result, arg->dim, MPI_DOUBLE, OPS_MPI_GLOBAL);
+      for (int i = 1; i < ops_comm_global_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0.0)
             result[j] = result[i*arg->dim+j];
@@ -761,17 +764,17 @@ void ops_mpi_reduce_float(ops_arg* arg, float* data)
   (void)data;
 
   //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    float result[arg->dim*ops_comm_size];
+    float result[arg->dim*ops_comm_global_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM, OPS_CART_COMM);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MAX, OPS_CART_COMM);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MAX, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MIN, OPS_CART_COMM);
+      MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_MIN, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result, arg->dim, MPI_FLOAT, OPS_CART_COMM);
-      for (int i = 1; i < ops_comm_size; i++) {
+      MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result, arg->dim, MPI_FLOAT, OPS_MPI_GLOBAL);
+      for (int i = 1; i < ops_comm_global_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0.0f)
             result[j] = result[i*arg->dim+j];
@@ -788,17 +791,17 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
   (void)data;
 
   //if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-    int result[arg->dim*ops_comm_size];
+    int result[arg->dim*ops_comm_global_size];
 
     if(arg->acc == OPS_INC)//global reduction
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM, OPS_CART_COMM);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MAX)//global maximum
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MAX, OPS_CART_COMM);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MAX, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_MIN)//global minimum
-      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MIN, OPS_CART_COMM);
+      MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_MIN, OPS_MPI_GLOBAL);
     else if(arg->acc == OPS_WRITE) {//any
-      MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result, arg->dim, MPI_INT, OPS_CART_COMM);
-      for (int i = 1; i < ops_comm_size; i++) {
+      MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result, arg->dim, MPI_INT, OPS_MPI_GLOBAL);
+      for (int i = 1; i < ops_comm_global_size; i++) {
         for (int j = 0; j < arg->dim; j++) {
           if (result[i*arg->dim+j] != 0)
             result[j] = result[i*arg->dim+j];

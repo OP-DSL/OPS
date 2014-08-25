@@ -47,9 +47,9 @@ ops_init ( int argc, char ** argv, int diags )
     MPI_Init(&argc, &argv);
   }
 
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
-  MPI_Comm_rank(OPS_MPI_WORLD, &ops_my_rank);
-  MPI_Comm_size(OPS_MPI_WORLD, &ops_comm_size);
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
+  MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
   ops_init_core ( argc, argv, diags );
 }
