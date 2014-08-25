@@ -233,6 +233,15 @@ void build_field()
   S2D_00_M10_STRID2D_X = ops_decl_strided_stencil( 2, 2, s2D_00_M10, stride2D_x, "s2D_00_M10_stride2D_x");
   S2D_00_0M1_STRID2D_Y = ops_decl_strided_stencil( 2, 2, s2D_00_0M1, stride2D_y, "s2D_00_0M1_stride2D_y");
 
+  red_local_dt = ops_decl_reduction_handle(sizeof(double), "double", "local_dt");
+  red_xl_pos = ops_decl_reduction_handle(sizeof(double), "double", "xl_pos");
+  red_yl_pos = ops_decl_reduction_handle(sizeof(double), "double", "yl_pos");
+  red_vol = ops_decl_reduction_handle(sizeof(double), "double", "vol");
+  red_mass = ops_decl_reduction_handle(sizeof(double), "double", "mass");
+  red_ie = ops_decl_reduction_handle(sizeof(double), "double", "ie");
+  red_ke = ops_decl_reduction_handle(sizeof(double), "double", "ke");
+  red_press = ops_decl_reduction_handle(sizeof(double), "double", "press");
+  red_output = ops_decl_reduction_handle(12*sizeof(double), "double", "output");
 
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");

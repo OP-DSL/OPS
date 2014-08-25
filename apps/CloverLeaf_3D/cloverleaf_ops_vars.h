@@ -138,3 +138,16 @@
   ops_stencil S3D_000_P100_M100_M200_STRID3D_X;
   ops_stencil S3D_000_0P10_0M10_0M20_STRID3D_Y;
   ops_stencil S3D_000_00P1_00M1_00M2_STRID3D_Z;
+  
+  ops_reduction red_local_dt;
+  ops_reduction red_xl_pos;
+  ops_reduction red_yl_pos;
+  ops_reduction red_zl_pos;
+  ops_reduction red_vol;
+  ops_reduction red_mass;
+  ops_reduction red_ie;
+  ops_reduction red_ke;
+  ops_reduction red_press;
+  ops_reduction red_dt;
+  ops_reduction red_output;
+

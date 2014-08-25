@@ -305,6 +305,17 @@ void build_field()
   S3D_000_0P10_0M10_0M20_STRID3D_Y = ops_decl_strided_stencil( 3, 4, s3D_000_0P10_0P20_0M10, stride3D_y, "0,0,0:1,0,0:0,-1,0:0,-2,0");
   S3D_000_00P1_00M1_00M2_STRID3D_Z = ops_decl_strided_stencil( 3, 4, s3D_000_00P1_00P2_00M1, stride3D_z, "0,0,0:1,0,0:0,0,-1:0,0,-2");
 
+  red_local_dt = ops_decl_reduction_handle(sizeof(double), "double", "local_dt");
+  red_xl_pos = ops_decl_reduction_handle(sizeof(double), "double", "xl_pos");
+  red_yl_pos = ops_decl_reduction_handle(sizeof(double), "double", "yl_pos");
+  red_zl_pos = ops_decl_reduction_handle(sizeof(double), "double", "zl_pos");
+  red_vol = ops_decl_reduction_handle(sizeof(double), "double", "vol");
+  red_mass = ops_decl_reduction_handle(sizeof(double), "double", "mass");
+  red_ie = ops_decl_reduction_handle(sizeof(double), "double", "ie");
+  red_ke = ops_decl_reduction_handle(sizeof(double), "double", "ke");
+  red_press = ops_decl_reduction_handle(sizeof(double), "double", "press");
+  red_output = ops_decl_reduction_handle(28*sizeof(double), "double", "output");
+
   ops_partition("3D_BLOCK_DECOMPOSE");
   //print ops blocks and dats details
   ops_diagnostic_output();

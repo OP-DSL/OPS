@@ -159,6 +159,7 @@ int main(int argc, char **argv)
   ops_decl_const("g_circ",1,"int",&g_circ);
   ops_decl_const("g_point",1,"int",&g_point);
   ops_decl_const("g_rect",1,"int",&g_rect);
+  ops_decl_const("dt", 1, "double", &dt );
 
   start();
   /***************************************************************************
@@ -172,10 +173,6 @@ int main(int argc, char **argv)
     step = step + 1;
 
     timestep();
-
-    //declare a global constant for dt ... as this chages for each iteration
-    //this should probably be a gbl OPS_READ for any kernel that uses dt
-    ops_decl_const("dt", 1, "double", &dt );
 
     PdV(TRUE);
 

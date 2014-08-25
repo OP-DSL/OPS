@@ -38,6 +38,8 @@
 #include <sys/time.h>
 #include "ops_lib_core.h"
 #include <sys/time.h>
+#include <float.h>
+#include <limits.h>
 
 int OPS_diags = 0;
 
@@ -395,6 +397,38 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
   return stencil;
 }
 
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+  ops_arg arg;
+  arg.argtype = OPS_ARG_GBL;
+  arg.dat = NULL;
+  arg.data_d = NULL;
+  arg.stencil = NULL;
+  arg.dim = dim;
+  arg.data = handle->data;
+  arg.acc = acc;
+  if (handle->initialized == 0) {
+    handle->initialized = 1;
+    handle->acc = acc;
+    if (acc == OPS_INC) memset(handle->data, 0, handle->size);
+    if (strcmp(type,"double")==0) { //TODO: handle other types
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = DBL_MAX; 
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = -1.0*DBL_MAX; 
+    }
+    else if (strcmp(type,"float")==0) {
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = FLT_MAX; 
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1.0f*FLT_MAX; 
+    }
+    else if (strcmp(type,"int")==0) {
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = INT_MAX; 
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1*INT_MAX; 
+    }
+  } else if (handle->acc != acc) {
+    printf("ops_reduction handle %s was aleady used with a different access type\n",handle->name);
+    exit(-1);
+  }
+  return arg;
+}
+
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
   if ( OPS_halo_index == OPS_halo_max ) {
     OPS_halo_max += 10;
@@ -468,6 +502,16 @@ ops_arg ops_arg_idx () {
   arg.data = NULL;
   arg.acc = 0;
   return arg;
+}
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
+  red->initialized = 0;
+  red->size = size;
+  red->data = (char *)malloc(size*sizeof(char));
+  red->name = copy_str(name);
+  red->type = copy_str(type);
+  return red;
 }
 
 void ops_diagnostic_output ( )
