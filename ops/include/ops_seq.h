@@ -257,8 +257,11 @@ void ops_par_loop(void (*kernel)(T0*),
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -380,8 +383,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -512,8 +518,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -653,8 +662,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -807,8 +819,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -971,8 +986,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -1144,8 +1162,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -1326,8 +1347,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -1521,8 +1545,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -1726,8 +1753,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -1940,8 +1970,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -2163,8 +2196,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -2399,8 +2435,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -2645,8 +2684,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -2900,8 +2942,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -3164,8 +3209,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -3441,8 +3489,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;
@@ -3728,8 +3779,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) start[n] = 0;
     else start[n] = range[2*n] - start[n];
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) end[n] = range[2*n+1] - sb->decomp_disp[n];
     else end[n] = sb->decomp_size[n];
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
   int ndim = block->dims;

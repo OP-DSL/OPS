@@ -58,8 +58,8 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,2);
 
-  int logical_size_x = 50;
-  int logical_size_y = 50;
+  int logical_size_x = 20;
+  int logical_size_y = 20;
   int ngrid_x = 2;
   int ngrid_y = 1;
   int n_iter = 1000;
