@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   ops_reduction red_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
 
   //declare datasets
-  int d_p[2] = {-1,-1}; //max halo depths for the dat in the possitive direction
+  int d_p[2] = {1,1}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-1,-1}; //max halo depths for the dat in the negative direction
   int base[2] = {0,0};
   int uniform_size[2] = {(logical_size_x-1)/ngrid_x+1,(logical_size_y-1)/ngrid_y+1};

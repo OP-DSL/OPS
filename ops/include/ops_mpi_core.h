@@ -108,9 +108,15 @@ typedef struct {
   // the displacement from the start of the block in each dimension
   int decomp_disp[OPS_MAX_DIM];
 
+  // intra-block halo
+  int d_im[OPS_MAX_DIM];
+  int d_ip[OPS_MAX_DIM];
+
   // global information
   int gbl_size[OPS_MAX_DIM];
   int gbl_base[OPS_MAX_DIM];
+  int gbl_d_m[OPS_MAX_DIM];
+  int gbl_d_p[OPS_MAX_DIM];
 
   //flag to indicate MPI halo exchange is needed
   int         dirtybit;

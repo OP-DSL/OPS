@@ -63,7 +63,7 @@ void build_field()
   //
   //declare data on blocks
   //
-  int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
+  int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells+5, y_cells+5}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
@@ -103,32 +103,32 @@ void build_field()
   yarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yarea");
 
   int size2[2] = {x_cells+5,1};
-  d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
+  d_m[0]=-2;d_m[1]=0;d_p[0]=2;d_p[1]=0;
   cellx    = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp, "double", "cellx");
   celldx   = ops_decl_dat(clover_grid, 1, size2, base, d_m, d_p, temp, "double", "celldx");
 
   int size3[2] = {1,y_cells+5};
-  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=2;
   celly    = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celly");
   celldy   = ops_decl_dat(clover_grid, 1, size3, base, d_m, d_p, temp, "double", "celldy");
 
   int size4[2] = {x_cells+6,1};
-  d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
+  d_m[0]=-2;d_m[1]=0;d_p[0]=2;d_p[1]=0;
   vertexx  = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "vertexx");
   vertexdx = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp, "double", "vertexdx");
 
   int size5[2] = {1,y_cells+6};
-  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=2;
   vertexy  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexy");
   vertexdy = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp, "double", "vertexdy");
 
   //contains x indicies from 0 to xmax+3 -- needed for initialization
 
   int* temp2 = NULL;
-  d_m[0]=-2;d_m[1]=0;d_p[0]=-2;d_p[1]=0;
+  d_m[0]=-2;d_m[1]=0;d_p[0]=2;d_p[1]=0;
   xx  = ops_decl_dat(clover_grid, 1, size4, base, d_m, d_p, temp2, "int", "xx");
 
-  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=-2;
+  d_m[0]=0;d_m[1]=-2;d_p[0]=0;d_p[1]=2;
   yy  = ops_decl_dat(clover_grid, 1, size5, base, d_m, d_p, temp2, "int", "yy");
 
   //

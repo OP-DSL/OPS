@@ -93,7 +93,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
     for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets)); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
       for (int d = 0; d < block->dims; d++)
-        max_sizes[d] = MAX(item->dat->size[d]+item->dat->base[d]+item->dat->d_m[d]+item->dat->d_p[d],max_sizes[d]);
+        max_sizes[d] = MAX(item->dat->size[d]+item->dat->base[d]+item->dat->d_m[d]-item->dat->d_p[d],max_sizes[d]);
     }
 
     for (int j = 0; j < OPS_MAX_DIM; j++) {
@@ -137,7 +137,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps, 
 /** ---- determine subgrid dimensions and displacements ---- **/
 
   for(int n=0; n<ndim; n++) {
-    sb->decomp_disp[n] = proc_disps[n];//(sb->coords[n] * g_sizes[n])/pdims[n];
+    sb->decomp_disp[n] = proc_disps[n];  //(sb->coords[n] * g_sizes[n])/pdims[n];
     sb->decomp_size[n] = proc_sizes[n];  //((sb->coords[n]+1)*g_sizes[n])/pdims[n] - sb->decomp_disp[n];
   }
   for (int n=ndim; n<OPS_MAX_DIM; n++) {
@@ -187,6 +187,8 @@ void ops_decomp_dats(sub_block *sb) {
     for (int d = 0; d < block->dims; d++) {
       sd->gbl_base[d] = dat->base[d];
       sd->gbl_size[d] = dat->size[d];
+      sd->gbl_d_m[d]  = dat->d_m[d];
+      sd->gbl_d_p[d]  = dat->d_p[d];
 
       //special treatment if it's an edge dataset in this direction
       if (dat->e_dat && (dat->size[d] == 1)) {
@@ -197,14 +199,30 @@ void ops_decomp_dats(sub_block *sb) {
         continue;
       }
 
-      int zerobase_gbl_size = dat->size[d] + dat->d_m[d] + dat->d_p[d] + dat->base[d];
+      int zerobase_gbl_size = dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
       sd->decomp_disp[d] = sb->decomp_disp[d];
       sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
       if(sb->id_m[d] != MPI_PROC_NULL) {
-        //if not negative end, then base should be 0
+        //if not negative end, then there is no block-level left padding, but intra-block halo padding
         dat->base[d] = 0;
+        sd->d_im[d] = dat->d_m[d]; //TODO: compute this properly, or lazy or something
+        dat->d_m[d] = 0;
+      } else {
+        sd->decomp_disp[d] += (dat->base[d] + dat->d_m[d]); //move left end to negative for base and left block halo
+        sd->decomp_size[d] -= (dat->base[d] + dat->d_m[d]); //extend size
+        sd->d_im[d] = 0; //no intra-block halo
       }
-      dat->size[d] = sd->decomp_size[d] - dat->base[d] - dat->d_m[d] - dat->d_p[d]; //TODO: block halo doubles as intra-block halo
+
+      if (sb->id_p[d] != MPI_PROC_NULL) {
+        //if not positive end
+        sd->d_ip[d] = dat->d_p[d]; //TODO: compute this properly, or lazy or something
+        dat->d_p[d] = 0;
+      } else {
+        sd->decomp_size[d] += dat->d_p[d]; //if last in this dimension, extend with left block halo size
+        sd->d_ip[d] = 0; //no intra-block halo
+      }
+
+      dat->size[d] = sd->decomp_size[d] - dat->base[d] - dat->d_m[d] - sd->d_im[d] + dat->d_p[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
     }
 
@@ -271,7 +289,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
       int relative_base[OPS_MAX_DIM]; //of my part of the halo into the full halo
       //first, compute the intersection and location of the halo within my owned part of the dataset
       for (int d = 0; d < sb_from->ndim; d++) {
-        int intersection_local = intersection(sd_from->decomp_disp[d] + sd_from->dat->base[d], //check block halo??
+        int intersection_local = intersection(sd_from->decomp_disp[d],
                                               sd_from->decomp_disp[d] + sd_from->decomp_size[d],
                                               halo->from_base[d],
                                               halo->from_base[d]+halo->iter_size[abs(halo->from_dir[d])-1]);
@@ -279,8 +297,8 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
         while (d2 != abs(halo->from_dir[d])-1) d2++;
         intersection_range[d2] = intersection_local;
         //where my part of the halo begins in the full halo, with the coordinate ordering of iter_range
-        relative_base[d2] = (sd_from->decomp_disp[d] + sd_from->dat->base[d] - halo->from_base[d]) > 0 ?
-                            (sd_from->decomp_disp[d] + sd_from->dat->base[d] - halo->from_base[d]) : 0;
+        relative_base[d2] = (sd_from->decomp_disp[d] - halo->from_base[d]) > 0 ?
+                            (sd_from->decomp_disp[d] - halo->from_base[d]) : 0;
         all_dims = all_dims && (intersection_local>0);
       }
       //it there is an actual intersection, discover all target partitions that connect to my bit of the halo
@@ -301,12 +319,12 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
           for (int d = 0; d < sb_to->ndim; ++d) {
             int proc_disp = proc_disps[j*OPS_MAX_DIM+d];
             int proc_size = proc_sizes[j*OPS_MAX_DIM+d];
-            int left_pad  = (proc_disp==0 ? (sd_to->gbl_base[d] + sd_to->dat->d_m[d]) : 0);
+            int left_pad  = (proc_disp==0 ? (sd_to->gbl_base[d] + sd_to->gbl_d_m[d]) : 0);
             //determine if target partition is at the end in the current dimension
             int is_last = 1;
             for (int k = proc_offsets[halo->to->block->index];
                      k < proc_offsets[halo->to->block->index+1]; ++k) is_last = is_last && (proc_disps[k]<=proc_disps[j]);
-            int right_pad = is_last ? (-sd_to->dat->d_p[d]) : 0;
+            int right_pad = is_last ? sd_to->gbl_d_p[d] : 0;
 
             int intersection_local = intersection(proc_disp + left_pad,
                                               proc_disp + proc_size + right_pad,
@@ -328,7 +346,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
             for (int d = 0; d < sb_from->ndim; d++) {
               OPS_mpi_halo_list[i].local_iter_size[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
               OPS_mpi_halo_list[i].local_from_base[OPS_MAX_DIM*entry + d] =
-                 ((halo->from_base[d] - sd_from->decomp_disp[d]) >= sd_from->dat->base[d] ?
+                 ((halo->from_base[d] - sd_from->decomp_disp[d]) > 0 ?
                   (halo->from_base[d] - sd_from->decomp_disp[d]) : 0) + from_relative_base[abs(halo->from_dir[d])-1];
               OPS_mpi_halo_list[i].local_to_base[OPS_MAX_DIM*entry + d] = to_base[d]; //This isn't really relevant, but good for debug (if both blocks on same proc)
             }
@@ -356,19 +374,16 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
       int relative_base[OPS_MAX_DIM]; //of my part of the halo into the full halo
       //first, compute the intersection and location of the halo within my owned part of the dataset
       for (int d = 0; d < sb_from->ndim; d++) {
-        int left_pad  = sd_to->dat->base[d] + (sd_to->decomp_disp[d]==0 ? sd_to->dat->d_m[d] : 0);
-        //if I am at the end in the current dimension
-        int right_pad = (sb_to->id_p[d] == MPI_PROC_NULL) ? (-sd_to->dat->d_p[d]) : 0;
-        int intersection_local = intersection(sd_to->decomp_disp[d] + left_pad,
-                                              sd_to->decomp_disp[d] + sd_to->decomp_size[d] + right_pad,
+        int intersection_local = intersection(sd_to->decomp_disp[d],
+                                              sd_to->decomp_disp[d] + sd_to->decomp_size[d],
                                               halo->to_base[d],
                                               halo->to_base[d]+halo->iter_size[abs(halo->to_dir[d])-1]);
         int d2 = 0;
         while (d2 != abs(halo->to_dir[d])-1) d2++;
         intersection_range[d2] = intersection_local;
         //where my part of the halo begins in the full halo, with the coordinate ordering of iter_range
-        relative_base[d2] = (sd_to->decomp_disp[d] + left_pad - halo->to_base[d]) > 0 ?
-                            (sd_to->decomp_disp[d] + left_pad - halo->to_base[d]) : 0;
+        relative_base[d2] = (sd_to->decomp_disp[d] - halo->to_base[d]) > 0 ?
+                            (sd_to->decomp_disp[d] - halo->to_base[d]) : 0;
         all_dims = all_dims && (intersection_local>0);
       }
       //it there is an actual intersection, discover all target partitions that connect to my bit of the halo
@@ -392,9 +407,13 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
           for (int d = 0; d < sb_from->ndim; ++d) {
             int proc_disp = proc_disps[j*OPS_MAX_DIM+d];
             int proc_size = proc_sizes[j*OPS_MAX_DIM+d];
-            int left_pad  = (proc_disp==0 ? sd_to->gbl_base[d] : 0);
-            int intersection_local = intersection(proc_disp + left_pad, //check block halo??
-                                              proc_disp + proc_size,
+            int left_pad  = (proc_disp==0 ? sd_to->gbl_base[d]+sd_to->gbl_d_m[d] : 0);
+            int is_last = 1;
+            for (int k = proc_offsets[halo->from->block->index];
+                     k < proc_offsets[halo->from->block->index+1]; ++k) is_last = is_last && (proc_disps[k]<=proc_disps[j]);
+            int right_pad = is_last ? sd_from->gbl_d_p[d] : 0;
+            int intersection_local = intersection(proc_disp + left_pad,
+                                              proc_disp + proc_size + right_pad,
                                               halo->from_base[d] + relative_base[abs(halo->from_dir[d])-1],
                                               halo->from_base[d] + relative_base[abs(halo->from_dir[d])-1]+intersection_range[abs(halo->from_dir[d])-1]);
             int d2 = 0;
@@ -411,10 +430,9 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
             int entry = OPS_mpi_halo_list[i].nproc_from + OPS_mpi_halo_list[i].nproc_to;
             OPS_mpi_halo_list[i].proclist[entry] = processes[j];
             for (int d = 0; d < sb_to->ndim; d++) {
-              int left_pad  = sd_to->dat->base[d] + (sd_to->decomp_disp[d]==0 ? sd_to->dat->d_m[d] : 0);
               OPS_mpi_halo_list[i].local_iter_size[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
               OPS_mpi_halo_list[i].local_to_base[OPS_MAX_DIM*entry + d] =
-                 ((halo->to_base[d] - sd_to->decomp_disp[d]) >= left_pad ?
+                 ((halo->to_base[d] - sd_to->decomp_disp[d]) > 0 ?
                   (halo->to_base[d] - sd_to->decomp_disp[d]) : 0) + to_relative_base[abs(halo->to_dir[d])-1];
               OPS_mpi_halo_list[i].local_from_base[OPS_MAX_DIM*entry + d] = from_base[d]; //This isn't really relevant, but good for debug (if both blocks on same proc)
             }

@@ -91,8 +91,11 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
 
 
     int i1,i2,i3,i4; //indicies for halo and boundary of the dat
-    int* d_m = dat->d_m;
-    int* d_p = dat->d_p;
+    int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      d_m[d] = dat->d_m[d]+sd->d_im[d];
+      d_p[d] = dat->d_p[d]+sd->d_ip[d];
+    }
     int* prod = sd->prod;
     MPI_Status status;
 
@@ -101,8 +104,8 @@ void ops_exchange_halo(ops_arg* arg, int d/*depth*/)
 
         i1 = (-d_m[n] - d) * prod[n-1];
         i2 = (-d_m[n]    ) * prod[n-1];
-        i3 = (prod[n]/prod[n-1] - (-d_p[n]) - d) * prod[n-1];
-        i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
+        i3 = (prod[n]/prod[n-1] - (d_p[n]) - d) * prod[n-1];
+        i4 = (prod[n]/prod[n-1] - (d_p[n])    ) * prod[n-1];
 #ifdef AGGREGATE
         ops_realloc_buffers(&sd->halos[MAX_DEPTH*n+d],&sd->halos[MAX_DEPTH*n+d]);
         ops_pack(dat, i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH*n+d]);
@@ -156,8 +159,11 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
 
   int i1,i2,i3,i4; //indicies for halo and boundary of the dat
-  int* d_m = dat->d_m;
-  int* d_p = dat->d_p;
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d]+sd->d_im[d];
+    d_p[d] = dat->d_p[d]+sd->d_ip[d];
+  }
   int* prod = sd->prod;
   MPI_Status status;
 
@@ -171,7 +177,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         if(sd->dirty_dir_send[2*MAX_DEPTH*n + MAX_DEPTH + d] == 1 || sd->dirty_dir_recv[2*MAX_DEPTH*n + d] == 1) actual_depth = d;
 
       i1 = (-d_m[n] - actual_depth) * prod[n-1];
-      i3 = (prod[n]/prod[n-1] - (-d_p[n]) - actual_depth) * prod[n-1];
+      i3 = (prod[n]/prod[n-1] - (d_p[n]) - actual_depth) * prod[n-1];
       //printf("Exchange %s, dim %d min depth %d req %d\n",dat->name, n, actual_depth, d_min);
 
       if (OPS_diags>5) { //Consistency checking
@@ -208,7 +214,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         if(sd->dirty_dir_send[2*MAX_DEPTH*n + d] == 1 || sd->dirty_dir_recv[2*MAX_DEPTH*n + MAX_DEPTH + d] == 1) actual_depth = d;
 
       i2 = (-d_m[n]    ) * prod[n-1];
-      i4 = (prod[n]/prod[n-1] - (-d_p[n])    ) * prod[n-1];
+      i4 = (prod[n]/prod[n-1] - (d_p[n])    ) * prod[n-1];
       //printf("Exchange %s, dim %d max depth %d req %d\n",dat->name, n, actual_depth, d_pos[n]);
 
       if (OPS_diags>5) { //Consistency checking
@@ -255,9 +261,7 @@ int contains(int point, int* range) {
 
 void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range) {
   ops_dat dat = arg->dat;
-//????
-//TODO: diagonal dependency????
-//????
+
   if(!arg->opt) return;
 
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
@@ -269,8 +273,11 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 
   int range_intersect[OPS_MAX_DIM] = {0};
 
-  int* d_m = dat->d_m;
-  int* d_p = dat->d_p;
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d]+sd->d_im[d];
+    d_p[d] = dat->d_p[d]+sd->d_ip[d];
+  }
   int* prod = sd->prod;
   MPI_Status status;
   int ndim = sb->ndim;
@@ -333,7 +340,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 
     //set up initial pointers
     int i2 = (-d_m[dim]    ) * prod[dim-1];
-    int i4 = (prod[dim]/prod[dim-1] - (-d_p[dim])    ) * prod[dim-1];
+    int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
 
     if (OPS_diags>5) { //Consistency checking
       int they_send;
@@ -379,7 +386,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
 
     //set up initial pointers
     int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
-    int i3 = (prod[dim]/prod[dim-1] - (-d_p[dim]) - actual_depth_send) * prod[dim-1];
+    int i3 = (prod[dim]/prod[dim-1] - (d_p[dim]) - actual_depth_send) * prod[dim-1];
 
     if (OPS_diags>5) { //Consistency checking
       int they_send;
@@ -421,8 +428,11 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
 
   int range_intersect[OPS_MAX_DIM] = {0};
 
-  int* d_m = dat->d_m;
-  int* d_p = dat->d_p;
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d]+sd->d_im[d];
+    d_p[d] = dat->d_p[d]+sd->d_ip[d];
+  }
   int* prod = sd->prod;
   int ndim = sb->ndim;
 
@@ -482,7 +492,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
 
   //set up initial pointers
   int i2 = (-d_m[dim]    ) * prod[dim-1];
-  //int i4 = (prod[dim]/prod[dim-1] - (-d_p[dim])    ) * prod[dim-1];
+  //int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
 
   if (OPS_diags>5) { //Consistency checking
     int they_send;
@@ -536,7 +546,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
 
   //set up initial pointers
   //int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
-  int i3 = (prod[dim]/prod[dim-1] - (-d_p[dim]) - actual_depth_send) * prod[dim-1];
+  int i3 = (prod[dim]/prod[dim-1] - (d_p[dim]) - actual_depth_send) * prod[dim-1];
 
   if (OPS_diags>5) { //Consistency checking
     int they_send;
@@ -586,8 +596,11 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 
   int range_intersect[OPS_MAX_DIM] = {0};
 
-  int* d_m = dat->d_m;
-  int* d_p = dat->d_p;
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d]+sd->d_im[d];
+    d_p[d] = dat->d_p[d]+sd->d_ip[d];
+  }
   int* prod = sd->prod;
   int ndim = sb->ndim;
 
@@ -628,7 +641,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   for (int d = 0; d <= right_recv_depth; d++)
     if(sd->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d] == 1) actual_depth_recv = d;
   //set up initial pointers
-  int i4 = (prod[dim]/prod[dim-1] - (-d_p[dim])    ) * prod[dim-1];
+  int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
   //Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
   //Unpack data
@@ -904,6 +917,7 @@ void ops_halo_transfer(ops_halo_group group) {
   //Loop over all the halos we own in the group
   for (int h = 0; h < mpi_group->nhalos; h++) {
     ops_mpi_halo *halo = mpi_group->mpi_halos[h];
+    sub_dat *sd = OPS_sub_dat_list[halo->halo->from->index];
 
     //Loop over all the send fragments and pack into buffer
     for (int f = 0; f < halo->nproc_from; f++) {
@@ -913,11 +927,11 @@ void ops_halo_transfer(ops_halo_group group) {
       int fragment_size = halo->halo->from->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->from_dir[i] > 0) {
-          ranges[2*i] = halo->local_from_base[i] - halo->halo->from->d_m[i] - halo->halo->from->base[i];
+          ranges[2*i] = halo->local_from_base[i] - sd->d_im[i]; //Need to account for intra-block halo padding
           ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
           step[i] = 1;
         } else {
-          ranges[2*i+1] = halo->local_from_base[i] - 1  - halo->halo->from->d_m[i] - halo->halo->from->base[i];
+          ranges[2*i+1] = halo->local_from_base[i] - 1  - sd->d_im[i];
           ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
           step[i] = -1;
         }
@@ -957,6 +971,7 @@ void ops_halo_transfer(ops_halo_group group) {
   //Loop over all the halos we own in the group
   for (int h = 0; h < mpi_group->nhalos; h++) {
     ops_mpi_halo *halo = mpi_group->mpi_halos[h];
+    sub_dat *sd = OPS_sub_dat_list[halo->halo->to->index];
 
     //Loop over all the recv fragments and pack into buffer
     for (int f = halo->nproc_from; f < halo->nproc_from+halo->nproc_to; f++) {
@@ -966,11 +981,11 @@ void ops_halo_transfer(ops_halo_group group) {
       int fragment_size = halo->halo->to->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->to_dir[i] > 0) {
-          ranges[2*i] = halo->local_to_base[i] - halo->halo->to->d_m[i] - halo->halo->to->base[i];
+          ranges[2*i] = halo->local_to_base[i] - sd->d_im[i];
           ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
           step[i] = 1;
         } else {
-          ranges[2*i+1] = halo->local_to_base[i] - 1  - halo->halo->to->d_m[i] - halo->halo->to->base[i];
+          ranges[2*i+1] = halo->local_to_base[i] - 1  - sd->d_im[i];
           ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
           step[i] = -1;
         }

@@ -261,7 +261,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   for(int n=0;n<block->dims;n++){
     if(dataset_size[n] != 1) {
       //compute total size - which includes the block halo
-      dat->size[n] = dataset_size[n] - d_m[n] - d_p[n];
+      dat->size[n] = dataset_size[n] - d_m[n] + d_p[n];
     }
     else {
       dat->size[n] = 1;
