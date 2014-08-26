@@ -34,7 +34,7 @@
 
 /** @brief core header file for the ops MPI backend
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Headder file for OPS MPI backend
+  * @details Header file for OPS MPI backend
   */
 
 #include <mpi.h>
@@ -130,7 +130,7 @@ typedef struct {
   int *proclist;
   int *local_from_base;
   int *local_to_base;
-  int *local_iter_range;
+  int *local_iter_size;
   int index;
 } ops_mpi_halo;
 
@@ -139,6 +139,14 @@ typedef struct {
   int nhalos;
   ops_mpi_halo **mpi_halos;
   int index;
+  int num_neighbors_send;
+  int num_neighbors_recv;
+  int *neighbors_send;
+  int *neighbors_recv;
+  int *send_sizes;
+  int *recv_sizes;
+  MPI_Request *requests;
+  MPI_Status *statuses;
 } ops_mpi_halo_group;
 
 //

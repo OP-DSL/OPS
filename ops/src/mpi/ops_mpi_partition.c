@@ -49,7 +49,7 @@ extern int ops_buffer_send_1_size;
 extern int ops_buffer_recv_1_size;
 extern int ops_buffer_send_2_size;
 extern int ops_buffer_recv_2_size;
-
+extern int *mpi_neigh_size;
 
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
@@ -247,7 +247,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
       OPS_mpi_halo_list[i].proclist = NULL;
       OPS_mpi_halo_list[i].local_from_base = NULL;
       OPS_mpi_halo_list[i].local_to_base = NULL;
-      OPS_mpi_halo_list[i].local_iter_range = NULL;
+      OPS_mpi_halo_list[i].local_iter_size = NULL;
       continue;
     }
     sub_block *sb_from = OPS_sub_block_list[halo->from->block->index];
@@ -260,7 +260,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
     OPS_mpi_halo_list[i].proclist = NULL;
     OPS_mpi_halo_list[i].local_from_base = NULL;
     OPS_mpi_halo_list[i].local_to_base = NULL;
-    OPS_mpi_halo_list[i].local_iter_range = NULL;
+    OPS_mpi_halo_list[i].local_iter_size = NULL;
 
     //Map out all halo regions where the current process has the "from" part
     if (sb_from->owned) {
@@ -286,9 +286,10 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
         //There is going to be at least one destination, at most the number of processes that hold parts of the destination dataset
         int max_dest = proc_offsets[halo->to->block->index+1] - proc_offsets[halo->to->block->index];
         OPS_mpi_halo_list[i].proclist = (int *)malloc(max_dest*sizeof(int));
-        OPS_mpi_halo_list[i].local_from_base = (int *)malloc(OPS_MAX_DIM*max_dest*sizeof(int));
-        OPS_mpi_halo_list[i].local_to_base = (int *)malloc(OPS_MAX_DIM*max_dest*sizeof(int));
-        OPS_mpi_halo_list[i].local_iter_range = (int *)malloc(OPS_MAX_DIM*max_dest*sizeof(int));
+        OPS_mpi_halo_list[i].local_from_base = (int *)calloc(OPS_MAX_DIM*max_dest,sizeof(int));
+        OPS_mpi_halo_list[i].local_to_base = (int *)calloc(OPS_MAX_DIM*max_dest,sizeof(int));
+        OPS_mpi_halo_list[i].local_iter_size = (int *)malloc(OPS_MAX_DIM*max_dest*sizeof(int));
+        for (int k = 0; k < OPS_MAX_DIM*max_dest; k++) OPS_mpi_halo_list[i].local_iter_size[k] = 1;
 
         //find intersecting destination partitions
         for (int j = proc_offsets[halo->to->block->index];
@@ -316,7 +317,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
             int entry = OPS_mpi_halo_list[i].nproc_from;
             OPS_mpi_halo_list[i].proclist[entry] = processes[j];
             for (int d = 0; d < sb_from->ndim; d++) {
-              OPS_mpi_halo_list[i].local_iter_range[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
+              OPS_mpi_halo_list[i].local_iter_size[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
               OPS_mpi_halo_list[i].local_from_base[OPS_MAX_DIM*entry + d] =
                  ((halo->from_base[d] - sd_from->decomp_disp[d]) > sd_from->dat->base[d] ?
                   (halo->from_base[d] - sd_from->decomp_disp[d]) > sd_from->dat->base[d] : 0) + from_relative_base[abs(halo->from_dir[d])-1];
@@ -327,6 +328,17 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
         }
       }
     }
+  }
+  for (int i = 0; i < OPS_halo_index; i++) {
+    ops_halo halo = OPS_halo_list[i];
+    if (!OPS_sub_block_list[halo->from->block->index]->owned &&
+        !OPS_sub_block_list[halo->to  ->block->index]->owned) {
+      continue;
+    }
+    sub_block *sb_from = OPS_sub_block_list[halo->from->block->index];
+    sub_dat   *sd_from = OPS_sub_dat_list[halo->from->index];
+    sub_block *sb_to   = OPS_sub_block_list[halo->to->block->index];
+    sub_dat   *sd_to   = OPS_sub_dat_list[halo->to->index];
 
     //Map out all halo regions where the current process has the "to" part
     if (sb_to->owned) {
@@ -356,8 +368,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
         int existing = OPS_mpi_halo_list[i].nproc_from;
         OPS_mpi_halo_list[i].proclist = (int *)realloc(OPS_mpi_halo_list[i].proclist, (max_src+existing)*sizeof(int));
         OPS_mpi_halo_list[i].local_from_base = (int *)realloc(OPS_mpi_halo_list[i].local_from_base, OPS_MAX_DIM*(max_src+existing)*sizeof(int));
+        for (int k = OPS_MAX_DIM*existing; k < OPS_MAX_DIM*(max_src+existing); k ++) OPS_mpi_halo_list[i].local_from_base[k] = 0;
         OPS_mpi_halo_list[i].local_to_base = (int *)realloc(OPS_mpi_halo_list[i].local_to_base, OPS_MAX_DIM*(max_src+existing)*sizeof(int));
-        OPS_mpi_halo_list[i].local_iter_range = (int *)realloc(OPS_mpi_halo_list[i].local_iter_range, OPS_MAX_DIM*(max_src+existing)*sizeof(int));
+        for (int k = OPS_MAX_DIM*existing; k < OPS_MAX_DIM*(max_src+existing); k ++) OPS_mpi_halo_list[i].local_to_base[k] = 0;
+        OPS_mpi_halo_list[i].local_iter_size = (int *)realloc(OPS_mpi_halo_list[i].local_iter_size, OPS_MAX_DIM*(max_src+existing)*sizeof(int));
+        for (int k = OPS_MAX_DIM*existing; k < OPS_MAX_DIM*(max_src+existing); k ++) OPS_mpi_halo_list[i].local_iter_size[k] = 1;
 
         //find intersecting destination partitions
         for (int j = proc_offsets[halo->from->block->index];
@@ -383,7 +398,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
             int entry = OPS_mpi_halo_list[i].nproc_from + OPS_mpi_halo_list[i].nproc_to;
             OPS_mpi_halo_list[i].proclist[entry] = processes[j];
             for (int d = 0; d < sb_to->ndim; d++) {
-              OPS_mpi_halo_list[i].local_iter_range[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
+              OPS_mpi_halo_list[i].local_iter_size[OPS_MAX_DIM*entry + d] = owned_range_for_proc[d];
               OPS_mpi_halo_list[i].local_to_base[OPS_MAX_DIM*entry + d] =
                  ((halo->to_base[d] - sd_to->decomp_disp[d]) > sd_to->dat->base[d] ?
                   (halo->to_base[d] - sd_to->decomp_disp[d]) > sd_to->dat->base[d] : 0) + to_relative_base[abs(halo->to_dir[d])-1];
@@ -395,24 +410,90 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
       }
     }
   }
+
+  int *neighbor_array_send = (int *)malloc(ops_comm_global_size*sizeof(int)); //Arrays for mapping out neighbors
+  int *neighbor_array_recv = (int *)malloc(ops_comm_global_size*sizeof(int));
+  int max_neigh = 0; //maximum number of MPI neighbors in any given group
+
+  //Create halo groups with only the relevant entries
   for (int i = 0; i < OPS_halo_group_index; i++) {
     ops_halo_group group = OPS_halo_group_list[i];
+    ops_mpi_halo_group *mpi_group = &OPS_mpi_halo_group_list[i];
+    //First, see how many halos we have in this group that we own part of
     int owned = 0;
     for (int j = 0; j < group->nhalos; j++) {
       if (OPS_mpi_halo_list[group->halos[j]->index].nproc_from > 0 || OPS_mpi_halo_list[group->halos[j]->index].nproc_to > 0) owned++;
     }
-    OPS_mpi_halo_group_list[i].group = group;
-    OPS_mpi_halo_group_list[i].nhalos = owned;
-    OPS_mpi_halo_group_list[i].index = i;
-    OPS_mpi_halo_group_list[i].mpi_halos = (ops_mpi_halo **)malloc(owned*sizeof(ops_mpi_halo*));
+    mpi_group->group = group;
+    mpi_group->nhalos = owned;
+    mpi_group->index = i;
+    mpi_group->mpi_halos = (ops_mpi_halo **)malloc(owned*sizeof(ops_mpi_halo*));
+    //Add all halos we own a part of to the list
     owned = 0;
     for (int j = 0; j < group->nhalos; j++) {
       if (OPS_mpi_halo_list[group->halos[j]->index].nproc_from > 0 || OPS_mpi_halo_list[group->halos[j]->index].nproc_to > 0) {
-        OPS_mpi_halo_group_list[i].mpi_halos[owned++] = &OPS_mpi_halo_list[group->halos[j]->index];
+        mpi_group->mpi_halos[owned++] = &OPS_mpi_halo_list[group->halos[j]->index];
       }
     }
     //TODO: create stored list by destination/source partition for aggregation
+    for (int j = 0; j < ops_comm_global_size; ++j) {neighbor_array_send[j] = 0;neighbor_array_recv[j] = 0;}
+    //See how many neighbors we have and how much data we are going to send or receive each
+    for (int j = 0; j < mpi_group->nhalos; j++) {
+      for (int k = 0; k < mpi_group->mpi_halos[j]->nproc_from; k++) {
+        int halo_size = mpi_group->mpi_halos[j]->halo->from->elem_size;
+        for (int d = 0; d < OPS_MAX_DIM; d++)
+          halo_size *= mpi_group->mpi_halos[j]->local_iter_size[k*OPS_MAX_DIM+d];
+        neighbor_array_send[mpi_group->mpi_halos[j]->proclist[k]] += halo_size;
+      }
+      for (int k = mpi_group->mpi_halos[j]->nproc_from;
+               k < mpi_group->mpi_halos[j]->nproc_from + mpi_group->mpi_halos[j]->nproc_to; k++) {
+        int halo_size = mpi_group->mpi_halos[j]->halo->to->elem_size;
+        for (int d = 0; d < OPS_MAX_DIM; d++)
+          halo_size *= mpi_group->mpi_halos[j]->local_iter_size[k*OPS_MAX_DIM+d];
+        neighbor_array_recv[mpi_group->mpi_halos[j]->proclist[k]] += halo_size;
+      }
+
+    }
+    //Save this information
+    mpi_group->num_neighbors_send = 0;
+    mpi_group->num_neighbors_recv = 0;
+    for (int j = 0; j < ops_comm_global_size; ++j) {
+      mpi_group->num_neighbors_send += neighbor_array_send[j]>0 ? 1 : 0;
+      mpi_group->num_neighbors_send += neighbor_array_recv[j]>0 ? 1 : 0;
+    }
+    max_neigh = MAX(max_neigh, mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv);
+
+    mpi_group->neighbors_send = (int *)malloc(mpi_group->num_neighbors_send * sizeof(int));
+    mpi_group->neighbors_recv = (int *)malloc(mpi_group->num_neighbors_recv * sizeof(int));
+    mpi_group->send_sizes =     (int *)malloc(mpi_group->num_neighbors_send * sizeof(int));
+    mpi_group->recv_sizes =     (int *)malloc(mpi_group->num_neighbors_recv * sizeof(int));
+    mpi_group->requests = (MPI_Request*)malloc((mpi_group->num_neighbors_send+mpi_group->num_neighbors_recv)*sizeof(MPI_Request));
+    mpi_group->statuses = (MPI_Status*)malloc((mpi_group->num_neighbors_send+mpi_group->num_neighbors_recv)*sizeof(MPI_Status));
+
+    int total_size = 0;
+    int k = 0;
+    for (int j = 0; j < ops_comm_global_size; ++j) {
+      if (neighbor_array_send[j]>0) {
+        mpi_group->neighbors_send[k] = j;
+        mpi_group->send_sizes[k] = neighbor_array_send[j];
+        total_size += mpi_group->send_sizes[k];
+        k++;
+      }
+    }
+    if (ops_buffer_send_1_size < total_size) ops_comm_realloc(&ops_buffer_send_1,total_size*sizeof(char),ops_buffer_send_1_size);
+
+    k = 0; total_size = 0;
+    for (int j = 0; j < ops_comm_global_size; ++j) {
+      if (neighbor_array_recv[j]>0) {
+        mpi_group->neighbors_recv[k] = j;
+        mpi_group->recv_sizes[k] = neighbor_array_recv[j];
+        total_size += mpi_group->recv_sizes[k];
+        k++;
+      }
+    }
+    if (ops_buffer_recv_1_size < total_size) ops_comm_realloc(&ops_buffer_recv_1,total_size*sizeof(char),ops_buffer_recv_1_size);
   }
+  mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
 }
 
 void ops_partition(char* routine)
@@ -456,10 +537,6 @@ void ops_partition(char* routine)
   }
   ops_printf("Finished block decomposition\n");
 
-  OPS_mpi_halo_list = (ops_mpi_halo *)malloc(OPS_halo_index * sizeof(ops_mpi_halo));
-  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)malloc(OPS_halo_group_index * sizeof(ops_mpi_halo_group));
-  ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes, proc_dimsplit);
-
   //allocate send/recv buffer (double, 8 args, maximum depth)
   ops_buffer_size = 8*8*MAX_DEPTH*pow(2*MAX_DEPTH+max_block_dim,max_block_dims-1);
   ops_comm_realloc(&ops_buffer_send_1,ops_buffer_size*sizeof(char),0);
@@ -470,6 +547,10 @@ void ops_partition(char* routine)
   ops_buffer_recv_1_size = ops_buffer_size;
   ops_buffer_send_2_size = ops_buffer_size;
   ops_buffer_recv_2_size = ops_buffer_size;
+
+  OPS_mpi_halo_list = (ops_mpi_halo *)malloc(OPS_halo_index * sizeof(ops_mpi_halo));
+  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)malloc(OPS_halo_group_index * sizeof(ops_mpi_halo_group));
+  ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes, proc_dimsplit);
 
   free(processes);
   free(proc_offsets);
@@ -509,13 +590,17 @@ void ops_mpi_exit()
       free(OPS_mpi_halo_list[i].proclist);
       free(OPS_mpi_halo_list[i].local_from_base);
       free(OPS_mpi_halo_list[i].local_to_base);
-      free(OPS_mpi_halo_list[i].local_iter_range);
+      free(OPS_mpi_halo_list[i].local_iter_size);
     }
   }
   free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
       free(OPS_mpi_halo_group_list[i].mpi_halos);
+      free(OPS_mpi_halo_group_list[i].neighbors_send);
+      free(OPS_mpi_halo_group_list[i].neighbors_recv);
+      free(OPS_mpi_halo_group_list[i].send_sizes);
+      free(OPS_mpi_halo_group_list[i].recv_sizes);
     }
   }
   free(OPS_mpi_halo_group_list);

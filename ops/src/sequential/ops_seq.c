@@ -127,11 +127,11 @@ void ops_halo_transfer(ops_halo_group group) {
     int buf_strides[OPS_MAX_DIM];
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->from_dir[i] > 0) {
-        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i];
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i] - halo->from->base[i];
         ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i];
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i] - halo->from->base[i];
         ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = -1;
       }
@@ -150,11 +150,11 @@ void ops_halo_transfer(ops_halo_group group) {
     //copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->to_dir[i] > 0) {
-        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i];
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i] - halo->to->base[i];
         ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i];
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i] - halo->to->base[i];
         ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = -1;
       }

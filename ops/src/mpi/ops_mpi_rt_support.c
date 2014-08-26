@@ -55,6 +55,7 @@ int ops_buffer_send_1_size=0;
 int ops_buffer_recv_1_size=0;
 int ops_buffer_send_2_size=0;
 int ops_buffer_recv_2_size=0;
+int *mpi_neigh_size=NULL;
 
 extern double ops_gather_time;
 extern double ops_scatter_time;
@@ -892,4 +893,104 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
       }
     }
   }
+}
+
+void ops_halo_transfer(ops_halo_group group) {
+  ops_mpi_halo_group *mpi_group = &OPS_mpi_halo_group_list[group->index];
+  //Reset offset counters
+  mpi_neigh_size[0] = 0;
+  for (int i = 1; i < mpi_group->num_neighbors_send; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->send_sizes[i-1];
+
+  //Loop over all the halos we own in the group
+  for (int h = 0; h < mpi_group->nhalos; h++) {
+    ops_mpi_halo *halo = mpi_group->mpi_halos[h];
+
+    //Loop over all the send fragments and pack into buffer
+    for (int f = 0; f < halo->nproc_from; f++) {
+      int ranges[OPS_MAX_DIM*2];
+      int step[OPS_MAX_DIM];
+      int buf_strides[OPS_MAX_DIM];
+      int fragment_size = halo->halo->from->elem_size;
+      for (int i = 0; i < OPS_MAX_DIM; i++) {
+        if (halo->halo->from_dir[i] > 0) {
+          ranges[2*i] = halo->local_from_base[i] - halo->halo->from->d_m[i] - halo->halo->from->base[i];
+          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
+          step[i] = 1;
+        } else {
+          ranges[2*i+1] = halo->local_from_base[i] - 1  - halo->halo->from->d_m[i] - halo->halo->from->base[i];
+          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
+          step[i] = -1;
+        }
+        buf_strides[i] = 1;
+        for (int j = 0; j != abs(halo->halo->from_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[j];
+        fragment_size *= halo->local_iter_size[i];
+      }
+      int process = halo->proclist[f];
+      int proc_grp_idx = 0;
+      while (process != mpi_group->neighbors_send[proc_grp_idx]) proc_grp_idx++;
+      ops_halo_copy_tobuf(ops_buffer_send_1, mpi_neigh_size[proc_grp_idx],
+                   halo->halo->from,
+                   ranges[0], ranges[1],
+                   ranges[2], ranges[3],
+                   ranges[4], ranges[5],
+                   step[0], step[1], step[2],
+                   buf_strides[0], buf_strides[1], buf_strides[2]);
+      mpi_neigh_size[proc_grp_idx] += fragment_size;
+    }
+  }
+
+
+  mpi_neigh_size[0] = 0;
+  for (int i = 1; i < mpi_group->num_neighbors_send; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->send_sizes[i-1];
+  for (int i = 1; i < mpi_group->num_neighbors_send; i++)
+    MPI_Isend(&ops_buffer_send_1[mpi_neigh_size[i]], mpi_group->send_sizes[i],
+              MPI_BYTE,mpi_group->neighbors_send[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[i]);
+
+  mpi_neigh_size[0] = 0;
+  for (int i = 1; i < mpi_group->num_neighbors_recv; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->recv_sizes[i-1];
+  for (int i = 1; i < mpi_group->num_neighbors_recv; i++)
+    MPI_Irecv(&ops_buffer_recv_1[mpi_neigh_size[i]], mpi_group->recv_sizes[i],
+              MPI_BYTE,mpi_group->neighbors_recv[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[mpi_group->num_neighbors_send+i]);
+
+  MPI_Waitall(mpi_group->num_neighbors_recv,&mpi_group->requests[mpi_group->num_neighbors_send],&mpi_group->statuses[mpi_group->num_neighbors_send]);
+
+  //Loop over all the halos we own in the group
+  for (int h = 0; h < mpi_group->nhalos; h++) {
+    ops_mpi_halo *halo = mpi_group->mpi_halos[h];
+
+    //Loop over all the recv fragments and pack into buffer
+    for (int f = halo->nproc_from; f < halo->nproc_from+halo->nproc_to; f++) {
+      int ranges[OPS_MAX_DIM*2];
+      int step[OPS_MAX_DIM];
+      int buf_strides[OPS_MAX_DIM];
+      int fragment_size = halo->halo->to->elem_size;
+      for (int i = 0; i < OPS_MAX_DIM; i++) {
+        if (halo->halo->to_dir[i] > 0) {
+          ranges[2*i] = halo->local_to_base[i] - halo->halo->to->d_m[i] - halo->halo->to->base[i];
+          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
+          step[i] = 1;
+        } else {
+          ranges[2*i+1] = halo->local_to_base[i] - 1  - halo->halo->to->d_m[i] - halo->halo->to->base[i];
+          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
+          step[i] = -1;
+        }
+        buf_strides[i] = 1;
+        for (int j = 0; j != abs(halo->halo->to_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[j];
+        fragment_size *= halo->local_iter_size[i];
+      }
+      int process = halo->proclist[f];
+      int proc_grp_idx = 0;
+      while (process != mpi_group->neighbors_recv[proc_grp_idx]) proc_grp_idx++;
+      ops_halo_copy_frombuf(halo->halo->to,
+                   ops_buffer_recv_1, mpi_neigh_size[proc_grp_idx],
+                   ranges[0], ranges[1],
+                   ranges[2], ranges[3],
+                   ranges[4], ranges[5],
+                   step[0], step[1], step[2],
+                   buf_strides[0], buf_strides[1], buf_strides[2]);
+      mpi_neigh_size[proc_grp_idx] += fragment_size;
+    }
+  }
+  MPI_Waitall(mpi_group->num_neighbors_send,&mpi_group->requests[0],&mpi_group->statuses[0]);
+  //TODO: host/device dirtybits???
 }

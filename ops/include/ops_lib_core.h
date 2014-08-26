@@ -386,6 +386,16 @@ void ops_compute_moment(double t, double *first, double *second);
 
 void ops_dump3(ops_dat dat, const char *name);
 
+void ops_halo_copy_frombuf(ops_dat dest,
+                        char * src, int src_offset,
+                        int rx_s, int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z);
+void ops_halo_copy_tobuf(char * dest, int dest_offset, ops_dat src,
+                        int rx_s, int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z);
+
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute();
