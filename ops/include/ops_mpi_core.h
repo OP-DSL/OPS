@@ -125,8 +125,8 @@ typedef sub_dat * sub_dat_list;
 
 typedef struct {
   ops_halo halo;
-  int nproc_from;
-  int nproc_to;
+  int nproc_from; //number of processes I have to send to (from part of halo)
+  int nproc_to; //number of processes I have to receive from (to part of halo)
   int *proclist;
   int *local_from_base;
   int *local_to_base;

@@ -455,13 +455,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_INC>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_INC>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MIN>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_MIN>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction<OPS_MAX>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_MAX>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
 
 
     code('')

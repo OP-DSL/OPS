@@ -250,6 +250,7 @@ void ops_par_loop(void (*kernel)(T0*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -372,6 +373,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -503,6 +505,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -643,6 +646,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -796,6 +800,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -959,6 +964,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -1131,6 +1137,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -1312,6 +1319,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -1506,6 +1514,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -1710,6 +1719,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -1923,6 +1933,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -2145,6 +2156,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -2380,6 +2392,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -2625,6 +2638,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -2879,6 +2893,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -3142,6 +3157,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -3418,6 +3434,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {
@@ -3704,6 +3721,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   //compute locally allocated range for the sub-block 
   int ndim = sb->ndim;
   for (int n=0; n<ndim; n++) {

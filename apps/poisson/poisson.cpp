@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   int logical_size_x = 50;
   int logical_size_y = 50;
   int ngrid_x = 2;
-  int ngrid_y = 2;
+  int ngrid_y = 1;
   int n_iter = 1000;
   dx = 0.01;
   dy = 0.01;
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   int s2D_00_P10_M10_0P1_0M1[]         = {0,0, 1,0, -1,0, 0,1, 0,-1};
   ops_stencil S2D_00_P10_M10_0P1_0M1 = ops_decl_stencil( 2, 5, s2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1");
 
-  ops_reduction_handle red_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
+  ops_reduction red_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
 
   //declare datasets
   int d_p[2] = {-1,-1}; //max halo depths for the dat in the possitive direction

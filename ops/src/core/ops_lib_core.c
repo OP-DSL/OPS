@@ -58,10 +58,10 @@ int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
 * Lists of blocks and dats declared in an OPS programs
 */
 
-ops_block_descriptor * OPS_block_list;
-ops_halo * OPS_halo_list;
-ops_halo_group * OPS_halo_group_list;
-ops_stencil * OPS_stencil_list;
+ops_block_descriptor * OPS_block_list = NULL;
+ops_halo * OPS_halo_list = NULL;
+ops_halo_group * OPS_halo_group_list = NULL;
+ops_stencil * OPS_stencil_list = NULL;
 Double_linked_list OPS_dat_list; //Head of the double linked list
 
 int OPS_block_size_x = 32;
@@ -411,22 +411,41 @@ ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_ac
     handle->acc = acc;
     if (acc == OPS_INC) memset(handle->data, 0, handle->size);
     if (strcmp(type,"double")==0) { //TODO: handle other types
-      if (acc == OPS_MIN) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = DBL_MAX; 
-      if (acc == OPS_MAX) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = -1.0*DBL_MAX; 
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = DBL_MAX;
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = -1.0*DBL_MAX;
     }
     else if (strcmp(type,"float")==0) {
-      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = FLT_MAX; 
-      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1.0f*FLT_MAX; 
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = FLT_MAX;
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1.0f*FLT_MAX;
     }
     else if (strcmp(type,"int")==0) {
-      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = INT_MAX; 
-      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1*INT_MAX; 
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = INT_MAX;
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1*INT_MAX;
     }
   } else if (handle->acc != acc) {
     printf("ops_reduction handle %s was aleady used with a different access type\n",handle->name);
     exit(-1);
   }
   return arg;
+}
+
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
+  if ( OPS_halo_group_index == OPS_halo_group_max ) {
+    OPS_halo_group_max += 10;
+    OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
+
+    if ( OPS_halo_group_list == NULL ) {
+      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  grp->nhalos = nhalos;
+  grp->halos = halos; //TODO: make a copy?
+  grp->index = OPS_halo_group_index;
+  OPS_halo_group_list[OPS_halo_group_index++] = grp;
+
+  return grp;
 }
 
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
@@ -441,7 +460,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
   }
 
   ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
-  halo->index = OPS_halo_index++;
+  halo->index = OPS_halo_index;
   halo->from = from;
   halo->to = to;
   for (int i = 0; i < from->block->dims; i++) {

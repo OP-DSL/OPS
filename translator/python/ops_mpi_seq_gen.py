@@ -261,6 +261,7 @@ for nargs in range (1,maxargs+1):
 
     f.write('  #ifdef OPS_MPI\n')
     f.write('  sub_block_list sb = OPS_sub_block_list[block->index];\n')
+    f.write('  if (!sb->owned) return;\n')
     f.write('  //compute locally allocated range for the sub-block \n' +
             '  int ndim = sb->ndim;\n' )
     f.write('  for (int n=0; n<ndim; n++) {\n')

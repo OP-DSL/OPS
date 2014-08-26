@@ -694,7 +694,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     }
 //    ops_timers_core(&c2,&t2);
 //    ops_gather_time += t2-t1;
-    if (other_dims==0) continue;
+    if (other_dims==0 || comm == MPI_COMM_NULL) continue;
 
     MPI_Request request[4];
     MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:MPI_PROC_NULL,dim,
@@ -942,13 +942,13 @@ void ops_halo_transfer(ops_halo_group group) {
 
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->send_sizes[i-1];
-  for (int i = 1; i < mpi_group->num_neighbors_send; i++)
+  for (int i = 0; i < mpi_group->num_neighbors_send; i++)
     MPI_Isend(&ops_buffer_send_1[mpi_neigh_size[i]], mpi_group->send_sizes[i],
               MPI_BYTE,mpi_group->neighbors_send[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[i]);
 
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_recv; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->recv_sizes[i-1];
-  for (int i = 1; i < mpi_group->num_neighbors_recv; i++)
+  for (int i = 0; i < mpi_group->num_neighbors_recv; i++)
     MPI_Irecv(&ops_buffer_recv_1[mpi_neigh_size[i]], mpi_group->recv_sizes[i],
               MPI_BYTE,mpi_group->neighbors_recv[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[mpi_group->num_neighbors_send+i]);
 

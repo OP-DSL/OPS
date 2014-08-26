@@ -98,6 +98,10 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   return dat;
 }
 
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+}
+
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
   ops_print_dat_to_txtfile_core(dat, file_name);

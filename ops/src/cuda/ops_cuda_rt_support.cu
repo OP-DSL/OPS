@@ -106,7 +106,7 @@ __global__ void copy_kernel_frombuf(char * dest, char * src,
 }
 
 
-void ops_cuda_halo_copy_tobuf(char * dest, int dest_offset,
+void ops_halo_copy_tobuf(char * dest, int dest_offset,
                         ops_dat src,
                         int rx_s, int rx_e,
                         int ry_s, int ry_e,
@@ -147,7 +147,7 @@ void ops_cuda_halo_copy_tobuf(char * dest, int dest_offset,
 }
 
 
-void ops_cuda_halo_copy_frombuf(ops_dat dest,
+void ops_halo_copy_frombuf(ops_dat dest,
                         char * src, int src_offset,
                         int rx_s, int rx_e,
                         int ry_s, int ry_e,
