@@ -226,7 +226,7 @@ void ops_decomp_dats(sub_block *sb) {
       prod[d] = prod[d-1]*dat->size[d];
     }
 
-    if (!sb->owned) continue;
+    if (!sb->owned) {sd->mpidat = NULL; continue;}
 
     //Allocate datasets
     //TODO: read HDF5, what if it was already allocated - re-distribute
@@ -602,14 +602,16 @@ void ops_mpi_exit()
   int i;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     i = (item->dat)->index;
-    free(&OPS_sub_dat_list[i]->prod[-1]);
-    free(OPS_sub_dat_list[i]->halos);
-    for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
-      for(int d = 0; d<MAX_DEPTH; d++) {
-        MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
+    if (OPS_sub_dat_list[i]->mpidat != NULL) {
+      free(OPS_sub_dat_list[i]->halos);
+      for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+        for(int d = 0; d<MAX_DEPTH; d++) {
+          MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
+        }
       }
+      free(OPS_sub_dat_list[i]->mpidat);
     }
-    free(OPS_sub_dat_list[i]->mpidat);
+    free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
     free(OPS_sub_dat_list[i]);

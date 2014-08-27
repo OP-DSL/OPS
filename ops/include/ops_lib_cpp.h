@@ -93,6 +93,7 @@ void ops_reduction_result(ops_reduction handle, T *ptr) {
     exit ( 1 );
   }
   ops_execute();
+  ops_execute_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
 }

@@ -152,3 +152,20 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 {
   return ops_arg_gbl_core( data, dim, size, acc );
 }
+
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+  int was_initialized = handle->initialized;
+  ops_arg temp = ops_arg_reduce_core(handle, dim, type, acc);
+  if (!was_initialized) {
+    for (int i = 1; i < OPS_block_index; i++) {
+      memcpy(handle->data + i*handle->size, handle->data, handle->size);
+    }
+  }
+  return temp;
+}
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
+  red->data = (char *)realloc(red->data, red->size*OPS_block_index*sizeof(char));
+  return red;
+}

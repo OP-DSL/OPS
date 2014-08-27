@@ -298,9 +298,15 @@ void ops_par_loop(void (*kernel)(T0*),
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -354,8 +360,6 @@ void ops_par_loop(void (*kernel)(T0*),
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -431,9 +435,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -493,9 +503,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -573,9 +580,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -641,10 +654,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -724,9 +733,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -798,11 +813,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -888,9 +898,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -969,12 +985,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -1062,9 +1072,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -1149,13 +1165,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
@@ -1245,9 +1254,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -1339,14 +1354,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -1437,9 +1444,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -1537,15 +1550,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -1642,9 +1646,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -1749,16 +1759,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -1857,9 +1857,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -1970,17 +1976,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -2081,9 +2076,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -2200,18 +2201,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -2314,9 +2303,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -2439,19 +2434,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -2560,9 +2542,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -2692,20 +2680,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -2816,9 +2790,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -2954,21 +2934,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -3081,9 +3046,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -3225,22 +3196,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -3355,9 +3310,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -3505,23 +3466,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -3642,9 +3586,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -3799,24 +3749,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     }
   }
 
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
-  if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
-
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);
   if (args[1].argtype == OPS_ARG_DAT && args[1].acc != OPS_READ) ops_dump3(args[1].dat,name);
@@ -3939,9 +3871,15 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
         args[i].dat->size, args[i].stencil->stride, args[i].dat->base,
         d_m);
     }
-    else if (args[i].argtype == OPS_ARG_GBL)
-      p_a[i] = (char *)args[i].data;
-    else if (args[i].argtype == OPS_ARG_IDX) {
+    else if (args[i].argtype == OPS_ARG_GBL) {
+      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;
+      else
+  #ifdef OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;
+  #else //OPS_MPI
+        p_a[i] = ((ops_reduction)args[i].data)->data;
+  #endif //OPS_MPI
+    } else if (args[i].argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
@@ -4101,25 +4039,6 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
       }
     }
   }
-
-  if (args[0].argtype == OPS_ARG_GBL && args[0].acc != OPS_READ)  ops_mpi_reduce(&arg0,(T0 *)p_a[0]);
-  if (args[1].argtype == OPS_ARG_GBL && args[1].acc != OPS_READ)  ops_mpi_reduce(&arg1,(T1 *)p_a[1]);
-  if (args[2].argtype == OPS_ARG_GBL && args[2].acc != OPS_READ)  ops_mpi_reduce(&arg2,(T2 *)p_a[2]);
-  if (args[3].argtype == OPS_ARG_GBL && args[3].acc != OPS_READ)  ops_mpi_reduce(&arg3,(T3 *)p_a[3]);
-  if (args[4].argtype == OPS_ARG_GBL && args[4].acc != OPS_READ)  ops_mpi_reduce(&arg4,(T4 *)p_a[4]);
-  if (args[5].argtype == OPS_ARG_GBL && args[5].acc != OPS_READ)  ops_mpi_reduce(&arg5,(T5 *)p_a[5]);
-  if (args[6].argtype == OPS_ARG_GBL && args[6].acc != OPS_READ)  ops_mpi_reduce(&arg6,(T6 *)p_a[6]);
-  if (args[7].argtype == OPS_ARG_GBL && args[7].acc != OPS_READ)  ops_mpi_reduce(&arg7,(T7 *)p_a[7]);
-  if (args[8].argtype == OPS_ARG_GBL && args[8].acc != OPS_READ)  ops_mpi_reduce(&arg8,(T8 *)p_a[8]);
-  if (args[9].argtype == OPS_ARG_GBL && args[9].acc != OPS_READ)  ops_mpi_reduce(&arg9,(T9 *)p_a[9]);
-  if (args[10].argtype == OPS_ARG_GBL && args[10].acc != OPS_READ)  ops_mpi_reduce(&arg10,(T10 *)p_a[10]);
-  if (args[11].argtype == OPS_ARG_GBL && args[11].acc != OPS_READ)  ops_mpi_reduce(&arg11,(T11 *)p_a[11]);
-  if (args[12].argtype == OPS_ARG_GBL && args[12].acc != OPS_READ)  ops_mpi_reduce(&arg12,(T12 *)p_a[12]);
-  if (args[13].argtype == OPS_ARG_GBL && args[13].acc != OPS_READ)  ops_mpi_reduce(&arg13,(T13 *)p_a[13]);
-  if (args[14].argtype == OPS_ARG_GBL && args[14].acc != OPS_READ)  ops_mpi_reduce(&arg14,(T14 *)p_a[14]);
-  if (args[15].argtype == OPS_ARG_GBL && args[15].acc != OPS_READ)  ops_mpi_reduce(&arg15,(T15 *)p_a[15]);
-  if (args[16].argtype == OPS_ARG_GBL && args[16].acc != OPS_READ)  ops_mpi_reduce(&arg16,(T16 *)p_a[16]);
-  if (args[17].argtype == OPS_ARG_GBL && args[17].acc != OPS_READ)  ops_mpi_reduce(&arg17,(T17 *)p_a[17]);
 
   #ifdef OPS_DEBUG_DUMP
   if (args[0].argtype == OPS_ARG_DAT && args[0].acc != OPS_READ) ops_dump3(args[0].dat,name);

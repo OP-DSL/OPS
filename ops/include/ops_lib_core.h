@@ -308,8 +308,11 @@ ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_ac
 ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
 ops_arg ops_arg_idx( );
 ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc);
+ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, ops_access acc);
 
 ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name);
+ops_reduction ops_decl_reduction_handle_core(int size, const char *type, const char *name);
+void ops_execute_reduction(ops_reduction handle);
 
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 void ops_decl_const_char( int, char const *, int, char *, char const* );

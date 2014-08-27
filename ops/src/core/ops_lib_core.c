@@ -397,14 +397,14 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
   return stencil;
 }
 
-ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, ops_access acc) {
   ops_arg arg;
   arg.argtype = OPS_ARG_GBL;
   arg.dat = NULL;
   arg.data_d = NULL;
   arg.stencil = NULL;
   arg.dim = dim;
-  arg.data = handle->data;
+  arg.data = (char*)handle;
   arg.acc = acc;
   if (handle->initialized == 0) {
     handle->initialized = 1;
@@ -523,7 +523,7 @@ ops_arg ops_arg_idx () {
   return arg;
 }
 
-ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+ops_reduction ops_decl_reduction_handle_core(int size, const char *type, const char *name) {
   ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;

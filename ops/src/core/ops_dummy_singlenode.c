@@ -50,6 +50,18 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
   }
 }
 
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+  return ops_arg_reduce_core(handle, dim, type, acc);
+}
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  return ops_decl_reduction_handle_core(size, type, name);
+}
+
+void ops_execute_reduction(ops_reduction handle) {
+  (void)handle;
+}
+
 int ops_is_root()
 {
   return 1;

@@ -313,9 +313,15 @@ for nargs in range (1,maxargs+1):
     f.write('        args[i].dat->size, args[i].stencil->stride, args[i].dat->base,\n')
     f.write('        d_m);\n')
     f.write('    }\n')
-    f.write('    else if (args[i].argtype == OPS_ARG_GBL)\n')
-    f.write('      p_a[i] = (char *)args[i].data;\n')
-    f.write('    else if (args[i].argtype == OPS_ARG_IDX) {\n')
+    f.write('    else if (args[i].argtype == OPS_ARG_GBL) {\n')
+    f.write('      if (args[i].acc == OPS_READ) p_a[i] = args[i].data;\n')
+    f.write('      else\n')
+    f.write('  #ifdef OPS_MPI\n')
+    f.write('        p_a[i] = ((ops_reduction)args[i].data)->data + ((ops_reduction)args[i].data)->size * block->index;\n')
+    f.write('  #else //OPS_MPI\n')
+    f.write('        p_a[i] = ((ops_reduction)args[i].data)->data;\n')
+    f.write('  #endif //OPS_MPI\n')
+    f.write('    } else if (args[i].argtype == OPS_ARG_IDX) {\n')
     f.write('  #ifdef OPS_MPI\n')
     f.write('      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];\n')
     f.write('  #else //OPS_MPI\n')
@@ -410,10 +416,10 @@ for nargs in range (1,maxargs+1):
     f.write('    }\n')
     f.write('  }\n\n')
 
-    for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_GBL && args['+str(n)+'].acc != OPS_READ)')
-      f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
-    f.write('\n')
+#    for n in range (0, nargs):
+#      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_GBL && args['+str(n)+'].acc != OPS_READ)')
+#      f.write('  ops_mpi_reduce(&arg'+str(n)+',(T'+str(n)+' *)p_a['+str(n)+']);\n')
+#    f.write('\n')
 
     f.write('  #ifdef OPS_DEBUG_DUMP\n')
     for n in range (0, nargs):

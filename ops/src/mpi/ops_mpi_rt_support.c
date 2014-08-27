@@ -826,6 +826,66 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
   //}
 }
 
+void ops_execute_reduction(ops_reduction handle) {
+  char local[handle->size];
+  memcpy(local, handle->data, handle->size);
+  if (strcmp(handle->type,"int")==0) {
+    for (int i = 1; i < OPS_block_index; i++) {
+      if (!OPS_sub_block_list[i]->owned) continue;
+      if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(int); d++)
+        ((int*)local)[d] = MAX(((int*)local)[d], ((int*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_MIN) for (int d = 0; d < handle->size/sizeof(int); d++)
+        ((int*)local)[d] = MIN(((int*)local)[d], ((int*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_INC) for (int d = 0; d < handle->size/sizeof(int); d++)
+        ((int*)local)[d] += ((int*)(handle->data+i*handle->size))[d];
+      if (handle->acc == OPS_WRITE) for (int d = 0; d < handle->size/sizeof(int); d++)
+        ((int*)local)[d] = ((int*)(handle->data+i*handle->size))[d]!=0 ? ((int*)(handle->data+i*handle->size))[d] : ((int*)local)[d];
+    }
+    ops_arg arg;
+    arg.data = local;
+    arg.acc = handle->acc;
+    arg.dim = handle->size/sizeof(int);
+    ops_mpi_reduce_int(&arg, (int*)local);
+  }
+  if (strcmp(handle->type,"float")==0) {
+    for (int i = 1; i < OPS_block_index; i++) {
+      if (!OPS_sub_block_list[i]->owned) continue;
+      if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(float); d++)
+        ((float*)local)[d] = MAX(((float*)local)[d], ((float*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_MIN) for (int d = 0; d < handle->size/sizeof(float); d++)
+        ((float*)local)[d] = MIN(((float*)local)[d], ((float*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_INC) for (int d = 0; d < handle->size/sizeof(float); d++)
+        ((float*)local)[d] += ((float*)(handle->data+i*handle->size))[d];
+      if (handle->acc == OPS_WRITE) for (int d = 0; d < handle->size/sizeof(float); d++)
+        ((float*)local)[d] = ((float*)(handle->data+i*handle->size))[d]!=0.0f ? ((float*)(handle->data+i*handle->size))[d] : ((float*)local)[d];
+    }
+    ops_arg arg;
+    arg.data = local;
+    arg.acc = handle->acc;
+    arg.dim = handle->size/sizeof(float);
+    ops_mpi_reduce_float(&arg, (float*)local);
+  }
+  if (strcmp(handle->type,"double")==0) {
+    for (int i = 1; i < OPS_block_index; i++) {
+      if (!OPS_sub_block_list[i]->owned) continue;
+      if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(double); d++)
+        ((double*)local)[d] = MAX(((double*)local)[d], ((double*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_MIN) for (int d = 0; d < handle->size/sizeof(double); d++)
+        ((double*)local)[d] = MIN(((double*)local)[d], ((double*)(handle->data+i*handle->size))[d]);
+      if (handle->acc == OPS_INC) for (int d = 0; d < handle->size/sizeof(double); d++)
+        ((double*)local)[d] += ((double*)(handle->data+i*handle->size))[d];
+      if (handle->acc == OPS_WRITE) for (int d = 0; d < handle->size/sizeof(double); d++)
+        ((double*)local)[d] = ((double*)(handle->data+i*handle->size))[d]!=0.0 ? ((double*)(handle->data+i*handle->size))[d] : ((double*)local)[d];
+    }
+    ops_arg arg;
+    arg.data = local;
+    arg.acc = handle->acc;
+    arg.dim = handle->size/sizeof(double);
+    ops_mpi_reduce_double(&arg, (double*)local);
+  }
+  memcpy(handle->data, local, handle->size);
+}
+
 void ops_set_halo_dirtybit(ops_arg *arg)
 {
   if(arg->opt == 0) return;
