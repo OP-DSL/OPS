@@ -927,17 +927,17 @@ void ops_halo_transfer(ops_halo_group group) {
       int fragment_size = halo->halo->from->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->from_dir[i] > 0) {
-          ranges[2*i] = halo->local_from_base[i] - sd->d_im[i]; //Need to account for intra-block halo padding
-          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
+          ranges[2*i] = halo->local_from_base[f*OPS_MAX_DIM+i] - sd->d_im[i]; //Need to account for intra-block halo padding
+          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[f*OPS_MAX_DIM+abs(halo->halo->from_dir[i])-1];
           step[i] = 1;
         } else {
-          ranges[2*i+1] = halo->local_from_base[i] - 1  - sd->d_im[i];
-          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->from_dir[i])-1];
+          ranges[2*i+1] = halo->local_from_base[f*OPS_MAX_DIM+i] - 1  - sd->d_im[i];
+          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[f*OPS_MAX_DIM+abs(halo->halo->from_dir[i])-1];
           step[i] = -1;
         }
         buf_strides[i] = 1;
-        for (int j = 0; j != abs(halo->halo->from_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[j];
-        fragment_size *= halo->local_iter_size[i];
+        for (int j = 0; j != abs(halo->halo->from_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[f*OPS_MAX_DIM+j];
+        fragment_size *= halo->local_iter_size[f*OPS_MAX_DIM+i];
       }
       int process = halo->proclist[f];
       int proc_grp_idx = 0;
@@ -981,17 +981,17 @@ void ops_halo_transfer(ops_halo_group group) {
       int fragment_size = halo->halo->to->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->to_dir[i] > 0) {
-          ranges[2*i] = halo->local_to_base[i] - sd->d_im[i];
-          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
+          ranges[2*i] = halo->local_to_base[f*OPS_MAX_DIM+i] - sd->d_im[i];
+          ranges[2*i+1] = ranges[2*i] + halo->local_iter_size[f*OPS_MAX_DIM+abs(halo->halo->to_dir[i])-1];
           step[i] = 1;
         } else {
-          ranges[2*i+1] = halo->local_to_base[i] - 1  - sd->d_im[i];
-          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[abs(halo->halo->to_dir[i])-1];
+          ranges[2*i+1] = halo->local_to_base[f*OPS_MAX_DIM+i] - 1  - sd->d_im[i];
+          ranges[2*i] = ranges[2*i+1] + halo->local_iter_size[f*OPS_MAX_DIM+abs(halo->halo->to_dir[i])-1];
           step[i] = -1;
         }
         buf_strides[i] = 1;
-        for (int j = 0; j != abs(halo->halo->to_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[j];
-        fragment_size *= halo->local_iter_size[i];
+        for (int j = 0; j != abs(halo->halo->to_dir[i])-1; j++) buf_strides[i] *= halo->local_iter_size[f*OPS_MAX_DIM+j];
+        fragment_size *= halo->local_iter_size[f*OPS_MAX_DIM+i];
       }
       int process = halo->proclist[f];
       int proc_grp_idx = 0;

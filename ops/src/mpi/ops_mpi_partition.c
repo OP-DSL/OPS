@@ -222,7 +222,7 @@ void ops_decomp_dats(sub_block *sb) {
         sd->d_ip[d] = 0; //no intra-block halo
       }
 
-      dat->size[d] = sd->decomp_size[d] - dat->base[d] - dat->d_m[d] - sd->d_im[d] + dat->d_p[d] + sd->d_ip[d];
+      dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
     }
 

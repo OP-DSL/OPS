@@ -289,9 +289,9 @@ void ops_par_loop(void (*kernel)(T0*),
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -422,9 +422,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -564,9 +564,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -715,9 +715,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -879,9 +879,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -1053,9 +1053,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -1236,9 +1236,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -1428,9 +1428,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -1633,9 +1633,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -1848,9 +1848,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -2072,9 +2072,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -2305,9 +2305,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -2551,9 +2551,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -2807,9 +2807,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -3072,9 +3072,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -3346,9 +3346,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -3633,9 +3633,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
@@ -3930,9 +3930,9 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
     if (args[i].argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
-  #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d] + OPS_sub_dat_list[args[i].dat->index]->d_im[d];
+  #else //OPS_MPI
+      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];
   #endif //OPS_MPI
       p_a[i] = (char *)args[i].data //base of 2D array
       + address(ndim, args[i].dat->elem_size, &start[0], 
