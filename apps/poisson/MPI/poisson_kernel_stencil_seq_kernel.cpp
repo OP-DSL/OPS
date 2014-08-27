@@ -19,6 +19,7 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -27,12 +28,15 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -142,10 +146,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     OPS_kernels[2].time += t2-t1;
     ops_set_dirtybit_host(args, 3);
     ops_set_halo_dirtybit3(&args[2],range);
-
-    #ifdef OPS_DEBUG
-    ops_dump3(arg2.dat,"poisson_kernel_stencil");
-    #endif
 
     //Update kernel record
     OPS_kernels[2].count++;

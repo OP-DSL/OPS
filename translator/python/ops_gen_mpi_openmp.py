@@ -331,6 +331,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('if (!sb->owned) return;')
     FOR('n','0',str(NDIM))
     code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
@@ -339,12 +340,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ELSE()
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
+    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
     IF('end[n] >= range[2*n+1]')
     code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
     code('end[n] = sb->decomp_size[n];')
     ENDIF()
+    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
+    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
@@ -381,7 +385,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     if reduction == True:
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          #code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          if (accs[n] == OPS_READ):
+            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          else:
+            code('#ifdef OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code('#else //OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code('#endif //OPS_MPI')
 
     code('')
     code('#ifdef _OPENMP')
@@ -509,7 +521,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start0,')
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        if accs[n] == OPS_READ:
+          code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        else:
+          code('p_a['+str(n)+'] = (char *)arg'+str(n)+'h;')
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
 
@@ -665,9 +680,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       ENDFOR()
 
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
+    # for n in range (0, nargs):
+    #   if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+    #     #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
@@ -677,12 +692,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
 
-    code('')
-    code('#ifdef OPS_DEBUG')
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
-        code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
-    code('#endif')
+    # code('')
+    # code('#ifdef OPS_DEBUG')
+    # for n in range (0,nargs):
+    #   if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
+    #     code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
+    # code('#endif')
     code('')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')

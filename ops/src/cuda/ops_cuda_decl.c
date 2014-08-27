@@ -185,7 +185,7 @@ void ops_partition(char* routine)
 
 
 void ops_halo_transfer(ops_halo_group group) {
-  printf("In CUDA block halo transfer\n");
+  //printf("In CUDA block halo transfer\n");
 
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];

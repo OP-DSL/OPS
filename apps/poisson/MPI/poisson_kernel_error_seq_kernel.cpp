@@ -19,6 +19,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -27,12 +28,15 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -80,7 +84,11 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
     (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - args[1].dat->d_m[1]);
   p_a[1] = (char *)args[1].data + base1;
 
-  p_a[2] = (char *)args[2].data;
+  #ifdef OPS_MPI
+  p_a[2] = ((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index;
+  #else //OPS_MPI
+  p_a[2] = ((ops_reduction)args[2].data)->data;
+  #endif //OPS_MPI
 
 
 
@@ -124,13 +132,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
     }
     ops_timers_core(&c2,&t2);
     OPS_kernels[4].time += t2-t1;
-    ops_mpi_reduce(&arg2,(double *)p_a[2]);
-    ops_timers_core(&c1,&t1);
-    OPS_kernels[4].mpi_time += t1-t2;
     ops_set_dirtybit_host(args, 3);
-
-    #ifdef OPS_DEBUG
-    #endif
 
     //Update kernel record
     OPS_kernels[4].count++;

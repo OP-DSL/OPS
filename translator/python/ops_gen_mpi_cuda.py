@@ -509,6 +509,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('if (!sb->owned) return;')
     FOR('n','0',str(NDIM))
     code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
@@ -517,12 +518,15 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     ELSE()
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
+    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
     IF('end[n] >= range[2*n+1]')
     code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
     code('end[n] = sb->decomp_size[n];')
     ENDIF()
+    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
+    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
@@ -577,7 +581,15 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
-          code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          if (accs[n] == OPS_READ):
+            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          else:
+            code('#ifdef OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code('#else //OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code('#endif //OPS_MPI')
+
     code('')
 
     #set up CUDA grid and thread blocks
@@ -785,12 +797,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
 
-    if reduction == 1 :
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-          code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
-      code('ops_timers_core(&c1,&t1);')
-      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    # if reduction == 1 :
+    #   for n in range (0, nargs):
+    #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+    #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
+    #   code('ops_timers_core(&c1,&t1);')
+    #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
     for n in range (0, nargs):

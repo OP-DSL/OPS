@@ -34,6 +34,7 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -42,12 +43,15 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -159,10 +163,6 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   ops_set_dirtybit_host(args, 2);
 
   ops_set_halo_dirtybit3(&args[1],range);
-
-  #ifdef OPS_DEBUG
-  ops_dump3(arg1.dat,"poisson_kernel_update");
-  #endif
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
