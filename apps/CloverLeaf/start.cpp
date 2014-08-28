@@ -63,13 +63,7 @@ void start()
   /**---------------------------Initialize Chunks----------------------------**/
   
   initialise_chunk();
-  
-  //int status;
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //ops_exit();
-  //exit(0);
-  
-  
+ 
   
   /**---------------------------Generating Chunks----------------------------**/
 
@@ -78,11 +72,13 @@ void start()
   ops_fprintf(g_out,"\n");
 
   generate();
+  field_summary();
+  exit(0);
   
   //MPI_Abort(MPI_COMM_WORLD,status);
   //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");
   //ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-
+  printf("going over\n");
   advect_x = TRUE;
 
   /**------------------------------ideal_gas---------------------------------**/

@@ -206,7 +206,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  
+
 //user kernel files
 #include "revert_kernel_opencl_kernel.cpp"
 #include "reset_field_kernel1_opencl_kernel.cpp"

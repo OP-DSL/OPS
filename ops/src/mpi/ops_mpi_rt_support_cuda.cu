@@ -46,7 +46,7 @@ extern "C" {
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
-__global__ void ops_cuda_packer_4(const int * __restrict src, int *__restrict dest, int count, int len, int stride){
+__global__ void ops_cuda_packer_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
   int idx = blockIdx.x*blockDim.x+threadIdx.x;
   int block = idx/len;
   if (idx < count*len) {
@@ -54,7 +54,15 @@ __global__ void ops_cuda_packer_4(const int * __restrict src, int *__restrict de
   }
 }
 
-__global__ void ops_cuda_packer_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
+__global__ void ops_cuda_unpacker_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
+  int idx = blockIdx.x*blockDim.x+threadIdx.x;
+  int block = idx/len;
+  if (idx < count*len) {
+    dest[stride*block + idx%len] = src[idx];
+  }
+}
+
+__global__ void ops_cuda_packer_4(const int * __restrict src, int *__restrict dest, int count, int len, int stride){
   int idx = blockIdx.x*blockDim.x+threadIdx.x;
   int block = idx/len;
   if (idx < count*len) {
@@ -70,13 +78,7 @@ __global__ void ops_cuda_unpacker_4(const int * __restrict src, int *__restrict 
   }
 }
 
-__global__ void ops_cuda_unpacker_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
-  int idx = blockIdx.x*blockDim.x+threadIdx.x;
-  int block = idx/len;
-  if (idx < count*len) {
-    dest[stride*block + idx%len] = src[idx];
-  }
-}
+
 
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
