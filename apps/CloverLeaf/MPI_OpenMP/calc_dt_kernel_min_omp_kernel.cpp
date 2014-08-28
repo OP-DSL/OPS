@@ -21,7 +21,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(72,"calc_dt_kernel_min");
+  ops_timing_realloc(28,"calc_dt_kernel_min");
   ops_timers_core(&c1,&t1);
 
 
@@ -36,6 +36,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -44,12 +45,15 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -70,7 +74,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   int off0_1 = offs[0][1];
   int dat0 = args[0].dat->elem_size;
 
-  double*arg1h = (double *)arg1.data;
+  #ifdef OPS_MPI
+  double *arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
+  #endif //OPS_MPI
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -94,7 +102,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[72].mpi_time += t2-t1;
+  OPS_kernels[28].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -111,14 +119,20 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     int start1 = start_i;
 
     //set up initial pointers 
+    int d_m[OPS_MAX_DIM];
+    #ifdef OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
+    #else //OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
+    #endif //OPS_MPI
     int base0 = dat0 * 1 * 
-    (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - args[0].dat->d_m[0]);
+    (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
     base0 = base0+ dat0 *
       args[0].dat->size[0] *
-      (start1 * args[0].stencil->stride[1] - args[0].dat->base[1] - args[0].dat->d_m[1]);
+      (start1 * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
     p_a[0] = (char *)args[0].data + base0;
 
-    p_a[1] = (char *)args[1].data;
+    p_a[1] = (char *)arg1h;
 
 
     for ( int n_y=start_i; n_y<finish_i; n_y++ ){
@@ -148,7 +162,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[72].time += t1-t2;
+  OPS_kernels[28].time += t1-t2;
 
 
   // combine reduction data
@@ -157,16 +171,12 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
       arg1h[d] = MIN(arg1h[d], arg_gbl1[64*thr+d]);
     }
   }
-  ops_mpi_reduce(&arg1,(double *)arg1h);
   ops_set_dirtybit_host(args, 2);
 
 
-  #ifdef OPS_DEBUG
-  #endif
-
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[72].count++;
-  OPS_kernels[72].mpi_time += t2-t1;
-  OPS_kernels[72].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[28].count++;
+  OPS_kernels[28].mpi_time += t2-t1;
+  OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
 }

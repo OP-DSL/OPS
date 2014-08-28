@@ -56,6 +56,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
   int end[3];
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<3; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -64,12 +65,15 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<3; n++ ){
@@ -89,10 +93,10 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(117,"update_halo_kernel5_plus_4_left");
+  ops_timing_realloc(133,"update_halo_kernel5_plus_4_left");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[117].count == 0) {
+  if (OPS_kernels[133].count == 0) {
     cudaMemcpyToSymbol( xdim0_update_halo_kernel5_plus_4_left, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_update_halo_kernel5_plus_4_left, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_update_halo_kernel5_plus_4_left, &xdim1, sizeof(int) );
@@ -123,26 +127,37 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
   char *p_a[3];
 
   //set up initial pointers
+  int d_m[OPS_MAX_DIM];
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
+  #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - args[0].dat->d_m[0]);
+  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - args[0].dat->d_m[1]);
+    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
-    (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - args[0].dat->d_m[2]);
+    (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
+  #endif //OPS_MPI
   int base1 = dat1 * 1 * 
-  (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - args[1].dat->d_m[0]);
+  (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - args[1].dat->d_m[1]);
+    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
-    (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - args[1].dat->d_m[2]);
+    (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
 
@@ -150,7 +165,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[117].mpi_time += t1-t2;
+  OPS_kernels[133].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -161,15 +176,13 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[117].time += t2-t1;
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[117].mpi_time += t1-t2;
+  OPS_kernels[133].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[117].count++;
-  OPS_kernels[117].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[117].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[133].count++;
+  OPS_kernels[133].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[133].transfer += ops_compute_transfer(dim, range, &arg1);
 }

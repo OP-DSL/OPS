@@ -30,4 +30,5 @@ poisson_cuda
 poisson_openmp
 poisson_opencl
 poisson_openacc
+*.optrpt
 

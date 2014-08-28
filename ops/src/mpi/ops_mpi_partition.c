@@ -210,6 +210,14 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps, 
       sb->decomp_disp[n] = 0;
       sb->decomp_size[n] = 1;
     }
+  } else {
+    for(int n=0; n<OPS_MAX_DIM; n++) {
+      sb->decomp_disp[n] = 0;
+      sb->decomp_size[n] = 0;
+      sb->id_m[n] = MPI_PROC_NULL;
+      sb->id_p[n] = MPI_PROC_NULL;
+      sb->coords[n] = -1;
+    }
   }
 
 /** ---- Store subgrid decomposition geometries ---- **/

@@ -115,6 +115,7 @@ int main(int argc, char **argv)
   ops_decl_const2( "g_sphe",1, "int",&g_sphe);
   ops_decl_const2( "g_point",1, "int",&g_point);
   ops_decl_const2( "g_cube",1, "int",&g_cube);
+  ops_decl_const2( "dt",1, "double",&dt);
 
   start();
 
@@ -126,9 +127,6 @@ int main(int argc, char **argv)
     step = step + 1;
 
     timestep();
-
-
-      ops_decl_const2( "dt",1, "double",&dt);
 
     PdV(TRUE);
 

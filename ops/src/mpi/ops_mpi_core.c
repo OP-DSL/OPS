@@ -107,8 +107,8 @@ void ops_fprintf(FILE *stream, const char *format, ...)
 }
 
 void ops_compute_moment(double t, double *first, double *second) {
-  double times[2];
-  double times_reduced[2];
+  double times[2] = {0.0};
+  double times_reduced[2] = {0.0};
   int comm_size;
   times[0] = t;
   times[1] = t*t;

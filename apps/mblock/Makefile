@@ -172,7 +172,7 @@ mblock_seq: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)
 mblock_cuda: Makefile ./CUDA/mblock_kernels_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda -o mblock_cuda
 
-mblock_mpi_cuda: Makefile ./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp smblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+mblock_mpi_cuda: Makefile ./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o mblock_mpi_cuda
 
 ./CUDA/mblock_kernels_cu.o: ./CUDA/mblock_kernels.cu Makefile

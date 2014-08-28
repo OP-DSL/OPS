@@ -785,8 +785,8 @@ void ops_timing_output()
       sprintf(buf,"%s",OPS_kernels[k].name);
       for (int i = strlen(OPS_kernels[k].name); i < maxlen+2; i++) strcat(buf," ");
 
-      double moments_mpi_time[2];
-      double moments_time[2];
+      double moments_mpi_time[2] = {0.0};
+      double moments_time[2] = {0.0};
       ops_compute_moment(OPS_kernels[k].time, &moments_time[0], &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0], &moments_mpi_time[1]);
 
