@@ -172,7 +172,7 @@ poisson_seq: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/l
 poisson_cuda: Makefile ./CUDA/poisson_kernels_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) poisson_ops.cpp ./CUDA/poisson_kernels_cu.o -lcudart -lops_cuda -o poisson_cuda
 
-poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp spoisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) poisson_ops.cpp ./CUDA/poisson_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o poisson_mpi_cuda
 
 ./CUDA/poisson_kernels_cu.o: ./CUDA/poisson_kernels.cu Makefile
