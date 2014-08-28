@@ -970,6 +970,8 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range)
 
 void ops_halo_transfer(ops_halo_group group) {
   ops_mpi_halo_group *mpi_group = &OPS_mpi_halo_group_list[group->index];
+  if (mpi_group->nhalos == 0) return;
+
   //Reset offset counters
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->send_sizes[i-1];
@@ -1018,13 +1020,13 @@ void ops_halo_transfer(ops_halo_group group) {
   for (int i = 1; i < mpi_group->num_neighbors_send; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->send_sizes[i-1];
   for (int i = 0; i < mpi_group->num_neighbors_send; i++)
     MPI_Isend(&ops_buffer_send_1[mpi_neigh_size[i]], mpi_group->send_sizes[i],
-              MPI_BYTE,mpi_group->neighbors_send[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[i]);
+              MPI_BYTE,mpi_group->neighbors_send[i],100+mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[i]);
 
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_recv; i++) mpi_neigh_size[i] = mpi_neigh_size[i-1] + mpi_group->recv_sizes[i-1];
   for (int i = 0; i < mpi_group->num_neighbors_recv; i++)
     MPI_Irecv(&ops_buffer_recv_1[mpi_neigh_size[i]], mpi_group->recv_sizes[i],
-              MPI_BYTE,mpi_group->neighbors_recv[i],mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[mpi_group->num_neighbors_send+i]);
+              MPI_BYTE,mpi_group->neighbors_recv[i],100+mpi_group->index,OPS_MPI_GLOBAL, &mpi_group->requests[mpi_group->num_neighbors_send+i]);
 
   MPI_Waitall(mpi_group->num_neighbors_recv,&mpi_group->requests[mpi_group->num_neighbors_send],&mpi_group->statuses[mpi_group->num_neighbors_send]);
 

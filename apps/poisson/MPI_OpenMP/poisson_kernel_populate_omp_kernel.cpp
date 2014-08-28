@@ -134,31 +134,47 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     arg_idx[1] = start1;
     #endif //OPS_MPI
     //set up initial pointers 
+    int d_m[OPS_MAX_DIM];
     p_a[0] = (char *)args[0].data;
 
     p_a[1] = (char *)args[1].data;
 
     p_a[2] = (char *)arg_idx;
 
+    #ifdef OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
+    #else //OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
+    #endif //OPS_MPI
     int base3 = dat3 * 1 * 
-    (start0 * args[3].stencil->stride[0] - args[3].dat->base[0] - args[3].dat->d_m[0]);
+    (start0 * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
     base3 = base3+ dat3 *
       args[3].dat->size[0] *
-      (start1 * args[3].stencil->stride[1] - args[3].dat->base[1] - args[3].dat->d_m[1]);
+      (start1 * args[3].stencil->stride[1] - args[3].dat->base[1] - d_m[1]);
     p_a[3] = (char *)args[3].data + base3;
 
+    #ifdef OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
+    #else //OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
+    #endif //OPS_MPI
     int base4 = dat4 * 1 * 
-    (start0 * args[4].stencil->stride[0] - args[4].dat->base[0] - args[4].dat->d_m[0]);
+    (start0 * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
     base4 = base4+ dat4 *
       args[4].dat->size[0] *
-      (start1 * args[4].stencil->stride[1] - args[4].dat->base[1] - args[4].dat->d_m[1]);
+      (start1 * args[4].stencil->stride[1] - args[4].dat->base[1] - d_m[1]);
     p_a[4] = (char *)args[4].data + base4;
 
+    #ifdef OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
+    #else //OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
+    #endif //OPS_MPI
     int base5 = dat5 * 1 * 
-    (start0 * args[5].stencil->stride[0] - args[5].dat->base[0] - args[5].dat->d_m[0]);
+    (start0 * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
     base5 = base5+ dat5 *
       args[5].dat->size[0] *
-      (start1 * args[5].stencil->stride[1] - args[5].dat->base[1] - args[5].dat->d_m[1]);
+      (start1 * args[5].stencil->stride[1] - args[5].dat->base[1] - d_m[1]);
     p_a[5] = (char *)args[5].data + base5;
 
 

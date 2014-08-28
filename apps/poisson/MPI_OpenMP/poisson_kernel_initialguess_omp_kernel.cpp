@@ -104,11 +104,17 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
     int start1 = start_i;
 
     //set up initial pointers 
+    int d_m[OPS_MAX_DIM];
+    #ifdef OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
+    #else //OPS_MPI
+    for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
+    #endif //OPS_MPI
     int base0 = dat0 * 1 * 
-    (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - args[0].dat->d_m[0]);
+    (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
     base0 = base0+ dat0 *
       args[0].dat->size[0] *
-      (start1 * args[0].stencil->stride[1] - args[0].dat->base[1] - args[0].dat->d_m[1]);
+      (start1 * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
     p_a[0] = (char *)args[0].data + base0;
 
 

@@ -307,6 +307,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     comm('set up initial pointers and exchange halos if necessary')
+    code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
@@ -322,14 +323,19 @@ def ops_gen_mpi(master, date, consts, kernels):
         #ENDFOR()
         #ENDFOR()
 
+        code('#ifdef OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
+        code('#else //OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
+        code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
+        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
+          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
@@ -422,7 +428,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
     #code('for(;n_x<(end[0]-start[0]);n_x++) {')
-    depth = depth+2
+    #depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
