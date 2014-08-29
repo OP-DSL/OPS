@@ -13,7 +13,11 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   ops_arg args[1] = { arg0};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(1,"poisson_kernel_initialguess");
+  OPS_kernels[1].count++;
+
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
 
@@ -55,7 +59,6 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(1,"poisson_kernel_initialguess");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -118,6 +121,5 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[1].count++;
   OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
 }

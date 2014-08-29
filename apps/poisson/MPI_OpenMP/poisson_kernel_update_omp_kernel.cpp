@@ -19,13 +19,16 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(3,"poisson_kernel_update");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[2][2];
   ops_arg args[2] = { arg0, arg1};
 
+
+
+  ops_timing_realloc(3,"poisson_kernel_update");
+  OPS_kernels[3].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -177,7 +180,6 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[3].count++;
   OPS_kernels[3].mpi_time += t2-t1;
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);

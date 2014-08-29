@@ -13,7 +13,11 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(4,"poisson_kernel_error");
+  OPS_kernels[4].count++;
+
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
 
@@ -59,7 +63,6 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(4,"poisson_kernel_error");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -146,7 +149,6 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   ops_set_dirtybit_host(args, 3);
 
   //Update kernel record
-  OPS_kernels[4].count++;
   OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
 }

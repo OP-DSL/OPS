@@ -727,7 +727,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
-
+    code('')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('OPS_kernels['+str(nk)+'].count++;')
+    code('')
     comm('compute locally allocated range for the sub-block')
 
     code('int start['+str(NDIM)+'];')
@@ -807,7 +810,6 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c2,&t2);')
     code('')
 
@@ -1041,7 +1043,6 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].count++;')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

@@ -25,13 +25,16 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(0,"poisson_kernel_populate");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[6][2];
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
+
+
+  ops_timing_realloc(0,"poisson_kernel_populate");
+  OPS_kernels[0].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -231,7 +234,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].count++;
   OPS_kernels[0].mpi_time += t2-t1;
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
