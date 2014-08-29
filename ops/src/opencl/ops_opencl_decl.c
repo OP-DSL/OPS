@@ -165,28 +165,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
-void ops_printf(const char* format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vprintf(format, argptr);
-  va_end(argptr);
-}
-
-void ops_fprintf(FILE *stream, const char *format, ...)
-{
-  va_list argptr;
-  va_start(argptr, format);
-  vfprintf(stream, format, argptr);
-  va_end(argptr);
-}
-
 void ops_partition(char* routine)
 {
   (void)routine;
-}
-
-void ops_compute_moment(double t, double *first, double *second) {
-  *first = t;
-  *second = t*t;
 }

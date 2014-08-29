@@ -825,8 +825,18 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     #setup reduction variables
     code('')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl':
-          code(''+(str(typs[n]).replace('"','')).strip()+' *arg'+str(n)+'h = ('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data;')
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+          if (accs[n] == OPS_READ):
+            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          else:
+            code('#ifdef OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code('#else //OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code('#endif //OPS_MPI')
+
+    code('')
+
 
     GBL_READ = False
     GBL_READ_MDIM = False
@@ -966,7 +976,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
     code('')
 
-    #set up argements in order to do the kernel call
+    #set up arguments in order to do the kernel call
     nkernel_args = 0
     for n in range (0, nargs):
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')

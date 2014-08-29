@@ -38,6 +38,10 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block Block, int
 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
+
+  ops_timing_realloc(9,"advec_cell_kernel3_xdir");
+  OPS_kernels[9].count++;
+
   //compute localy allocated range for the sub-block
   int start[2];
   int end[2];
@@ -75,7 +79,6 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block Block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(9,"advec_cell_kernel3_xdir");
   ops_timers_core(&c2,&t2);
 
   if (OPS_kernels[9].count == 0) {
@@ -262,7 +265,6 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block Block, int
   ops_set_halo_dirtybit3(&args[7],range);
 
   //Update kernel record
-  OPS_kernels[9].count++;
   OPS_kernels[9].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[9].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[9].transfer += ops_compute_transfer(dim, range, &arg2);

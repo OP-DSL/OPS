@@ -56,13 +56,16 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(4,"PdV_kernel_predict");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[12][2];
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
+
+
+  ops_timing_realloc(4,"PdV_kernel_predict");
+  OPS_kernels[4].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -452,7 +455,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[4].count++;
   OPS_kernels[4].mpi_time += t2-t1;
   OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);

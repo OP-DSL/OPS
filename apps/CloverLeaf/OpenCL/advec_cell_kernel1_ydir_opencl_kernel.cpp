@@ -102,6 +102,10 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int
  ops_arg arg4) {
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
+
+  ops_timing_realloc(11,"advec_cell_kernel1_ydir");
+  OPS_kernels[11].count++;
+
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
@@ -153,12 +157,12 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(11,"advec_cell_kernel1_ydir");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
+
 
 
 
@@ -251,7 +255,6 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[11].count++;
   OPS_kernels[11].time += t2-t1;
   OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg1);

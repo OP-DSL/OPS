@@ -34,13 +34,16 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(30,"calc_dt_kernel_print");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[7][2];
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
 
+
+
+  ops_timing_realloc(30,"calc_dt_kernel_print");
+  OPS_kernels[30].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -306,7 +309,6 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[30].count++;
   OPS_kernels[30].mpi_time += t2-t1;
   OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg1);

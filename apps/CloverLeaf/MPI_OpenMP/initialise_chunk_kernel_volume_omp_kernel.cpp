@@ -29,13 +29,16 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(41,"initialise_chunk_kernel_volume");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[5][2];
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
+
+
+  ops_timing_realloc(41,"initialise_chunk_kernel_volume");
+  OPS_kernels[41].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -260,7 +263,6 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[41].count++;
   OPS_kernels[41].mpi_time += t2-t1;
   OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);

@@ -57,13 +57,16 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(5,"PdV_kernel_nopredict");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[14][2];
   ops_arg args[14] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13};
 
+
+
+  ops_timing_realloc(5,"PdV_kernel_nopredict");
+  OPS_kernels[5].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -499,7 +502,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[5].count++;
   OPS_kernels[5].mpi_time += t2-t1;
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);
