@@ -15,7 +15,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(31,"field_summary_kernel");
+  OPS_kernels[31].count++;
+
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
 
@@ -77,7 +81,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(31,"field_summary_kernel");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -272,7 +275,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_set_dirtybit_host(args, 11);
 
   //Update kernel record
-  OPS_kernels[31].count++;
   OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);

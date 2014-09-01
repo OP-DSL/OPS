@@ -33,13 +33,16 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(14,"advec_cell_kernel4_ydir");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[11][2];
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
+
+
+  ops_timing_realloc(14,"advec_cell_kernel4_ydir");
+  OPS_kernels[14].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -407,7 +410,6 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[14].count++;
   OPS_kernels[14].mpi_time += t2-t1;
   OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg1);

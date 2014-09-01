@@ -25,6 +25,10 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  ops_timing_realloc(28,"calc_dt_kernel_min");
+  OPS_kernels[28].count++;
+
   //compute localy allocated range for the sub-block
   int start[2];
   int end[2];
@@ -62,7 +66,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(28,"calc_dt_kernel_min");
   ops_timers_core(&c2,&t2);
 
   if (OPS_kernels[28].count == 0) {
@@ -122,6 +125,5 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
   #endif
 
   //Update kernel record
-  OPS_kernels[28].count++;
   OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
 }

@@ -174,7 +174,8 @@ int main(int argc, char **argv)
   ops_halo_transfer(halos2);
   ops_halo_transfer(halos3);
   ops_halo_transfer(halos4);
-
+  ops_print_dat_to_txtfile(data0, "data0.txt");
+  ops_print_dat_to_txtfile(data1, "data1.txt");
 
   ops_timers_core(&ct1, &et1);
   ops_timing_output();

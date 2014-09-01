@@ -98,6 +98,10 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(29,"calc_dt_kernel_get");
+  OPS_kernels[29].count++;
+
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
@@ -143,7 +147,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(29,"calc_dt_kernel_get");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -151,8 +154,17 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
 
 
-  double *arg2h = (double *)arg2.data;
-  double *arg3h = (double *)arg3.data;
+  #ifdef OPS_MPI
+  double *arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg2h = (double *)(((ops_reduction)args[2].data)->data);
+  #endif //OPS_MPI
+  #ifdef OPS_MPI
+  double *arg3h = (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg3h = (double *)(((ops_reduction)args[3].data)->data);
+  #endif //OPS_MPI
+
   int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
@@ -251,7 +263,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[29].count++;
   OPS_kernels[29].time += t2-t1;
   OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg1);

@@ -248,6 +248,9 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
                                   src->size[0], src->size[1], src->size[2],
                                   buf_strides_x, buf_strides_y, buf_strides_z,
                                   src->elem_size);
+
+  if (!OPS_gpu_direct)
+    cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size*sizeof(char), cudaMemcpyDeviceToHost));
 }
 
 

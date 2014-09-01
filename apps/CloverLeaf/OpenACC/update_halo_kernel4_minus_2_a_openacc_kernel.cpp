@@ -27,6 +27,10 @@ void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Bloc
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(76,"update_halo_kernel4_minus_2_a");
+  OPS_kernels[76].count++;
+
   //compute localy allocated range for the sub-block
   int start[2];
   int end[2];
@@ -64,7 +68,6 @@ void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Bloc
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(76,"update_halo_kernel4_minus_2_a");
   ops_timers_core(&c2,&t2);
 
   if (OPS_kernels[76].count == 0) {
@@ -155,7 +158,6 @@ void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Bloc
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[76].count++;
   OPS_kernels[76].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[76].transfer += ops_compute_transfer(dim, range, &arg1);
 }

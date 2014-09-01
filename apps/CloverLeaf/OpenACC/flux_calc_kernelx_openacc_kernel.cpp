@@ -30,6 +30,10 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block Block, int dim, 
 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(32,"flux_calc_kernelx");
+  OPS_kernels[32].count++;
+
   //compute localy allocated range for the sub-block
   int start[2];
   int end[2];
@@ -67,7 +71,6 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block Block, int dim, 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(32,"flux_calc_kernelx");
   ops_timers_core(&c2,&t2);
 
   if (OPS_kernels[32].count == 0) {
@@ -177,7 +180,6 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block Block, int dim, 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[32].count++;
   OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg2);

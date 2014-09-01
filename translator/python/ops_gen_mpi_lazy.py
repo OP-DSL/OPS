@@ -226,7 +226,10 @@ def ops_gen_mpi(master, date, consts, kernels):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
-
+    code('')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('OPS_kernels['+str(nk)+'].count++;')
+    code('')
     comm('compute localy allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
@@ -291,7 +294,6 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('Timing')
     code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c2,&t2);')
     code('')
 
@@ -512,7 +514,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#endif')
     code('')
     comm('Update kernel record')
-    code('OPS_kernels['+str(nk)+'].count++;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')

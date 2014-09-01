@@ -30,6 +30,10 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(3,"ideal_gas_kernel");
+  OPS_kernels[3].count++;
+
   //compute localy allocated range for the sub-block
   int start[2];
   int end[2];
@@ -67,7 +71,6 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(3,"ideal_gas_kernel");
   ops_timers_core(&c2,&t2);
 
   if (OPS_kernels[3].count == 0) {
@@ -178,7 +181,6 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   ops_set_halo_dirtybit3(&args[3],range);
 
   //Update kernel record
-  OPS_kernels[3].count++;
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg2);
