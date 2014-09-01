@@ -57,10 +57,10 @@ const char packer1_kernel_src[] = "__kernel void ops_opencl_packer1("
                                   "const int src_offset,"
                                   "const int elem_size"
                                   ") {"
-                                  //"  printf(\"executing packer1_kernel_src\\n\");"
                                   "  int idx = get_global_id(0);"
                                   "  int block = idx/blk_len;"
                                   "  if (idx < count*blk_len) {"
+                                  //"  printf(\"executing packer1_kernel_src %d %d %d %d %d, %d\\n\", idx, count, blk_len, stride, src_offset, elem_size);"
                                   "    dest[idx] = src[src_offset*elem_size + stride*block + idx%blk_len];"
                                   "  }"
                                   "}\n";
@@ -118,7 +118,7 @@ static bool isbuilt_packer4_kernel = false;
 static bool isbuilt_unpacker1_kernel = false;
 static bool isbuilt_unpacker4_kernel = false;
 
-void ops_pack2(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
 
   cl_int ret = 0;
   if(!isbuilt_packer1_kernel){
@@ -161,7 +161,7 @@ void ops_pack2(ops_dat dat, const int src_offset, char *__restrict dest, const o
     clSafeCall( ret );
     free(source_str[0]);
     isbuilt_packer1_kernel = true;
-    //printf("in packer1 build\n");
+    printf("in packer1 build\n");
   }
 
   /*if(!isbuilt_packer4_kernel){
@@ -240,15 +240,15 @@ void ops_pack2(ops_dat dat, const int src_offset, char *__restrict dest, const o
 
     //ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
     //clSafeCall( clSetKernelArg(*packer1_kernel, 0, sizeof(cl_mem), (void*) src ));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 0, sizeof(cl_mem), (void*) &dat->data_d ));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 1, sizeof(cl_mem), (void*) &device_buf ));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 2, sizeof(cl_int), (void*) &halo->count ));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 0, sizeof(cl_mem), (void*) &dat->data_d ));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 1, sizeof(cl_mem), (void*) &device_buf ));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 2, sizeof(cl_int), (void*) &halo->count ));
     int blk_length = halo->blocklength;
     int stride = halo->stride;
-    clSafeCall( clSetKernelArg(*packer1_kernel, 3, sizeof(cl_int), (void*) &blk_length ));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 4, sizeof(cl_int), (void*) &stride));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 5, sizeof(cl_int), (void*) &src_offset));
-    clSafeCall( clSetKernelArg(*packer1_kernel, 6, sizeof(cl_int), (void*) &dat->elem_size ));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 3, sizeof(cl_int), (void*) &blk_length ));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 4, sizeof(cl_int), (void*) &stride));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 5, sizeof(cl_int), (void*) &src_offset));
+    clSafeCall( clSetKernelArg(packer1_kernel[0], 6, sizeof(cl_int), (void*) &dat->elem_size ));
     clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, *packer1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   //}
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
@@ -257,7 +257,7 @@ void ops_pack2(ops_dat dat, const int src_offset, char *__restrict dest, const o
 
 }
 
-void ops_unpack2(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
+void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
 
   cl_int ret = 0;
   if(!isbuilt_unpacker1_kernel){
@@ -395,7 +395,7 @@ void ops_unpack2(ops_dat dat, const int dest_offset, const char *__restrict src,
 }
 
 
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+void ops_pack3(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   const char * __restrict src = dat->data+src_offset*dat->elem_size;
 
   if(dat->dirty_hd == 2){

@@ -41,11 +41,11 @@
 #include "../MPI/advec_mom_kernel2_y_seq_kernel.cpp"
 */
 //#include "../MPI/calc_dt_kernel_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
 
-//#include "../MPI/field_summary_kernel_seq_kernel.cpp"
+#include "../MPI/field_summary_kernel_seq_kernel.cpp"
 //#include "../MPI/flux_calc_kernelx_seq_kernel.cpp"
 //#include "../MPI/flux_calc_kernely_seq_kernel.cpp"
 //#include "../MPI/viscosity_kernel_seq_kernel.cpp"
@@ -59,7 +59,7 @@
 #include "../MPI/initialise_chunk_kernel_volume_seq_kernel.cpp"
 #include "../MPI/generate_chunk_kernel_seq_kernel.cpp"
 
-/*#include "../MPI/update_halo_kernel1_b2_seq_kernel.cpp"
+#include "../MPI/update_halo_kernel1_b2_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_b1_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_t2_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_t1_seq_kernel.cpp"
@@ -98,4 +98,4 @@
 #include "../MPI/update_halo_kernel4_plus_4_a_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel4_plus_2_a_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel4_plus_4_b_seq_kernel.cpp"
-#include "../MPI/update_halo_kernel4_plus_2_b_seq_kernel.cpp"*/
+#include "../MPI/update_halo_kernel4_plus_2_b_seq_kernel.cpp"
