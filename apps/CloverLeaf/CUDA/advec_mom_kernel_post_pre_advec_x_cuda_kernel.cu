@@ -120,7 +120,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[20].count == 0) {
+  if (OPS_kernels[20].count == 1) {
     cudaMemcpyToSymbol( xdim0_advec_mom_kernel_post_pre_advec_x, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_advec_mom_kernel_post_pre_advec_x, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_advec_mom_kernel_post_pre_advec_x, &xdim2, sizeof(int) );

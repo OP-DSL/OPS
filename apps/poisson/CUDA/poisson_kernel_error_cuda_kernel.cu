@@ -95,7 +95,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[4].count == 0) {
+  if (OPS_kernels[4].count == 1) {
     cudaMemcpyToSymbol( xdim0_poisson_kernel_error, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_poisson_kernel_error, &xdim1, sizeof(int) );
   }

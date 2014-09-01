@@ -569,7 +569,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_timers_core(&c2,&t2);')
     code('')
 
-    IF('OPS_kernels['+str(nk)+'].count == 0')
+    IF('OPS_kernels['+str(nk)+'].count == 1')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')

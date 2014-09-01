@@ -105,7 +105,7 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[0].count == 0) {
+  if (OPS_kernels[0].count == 1) {
     cudaMemcpyToSymbol( xdim0_revert_kernel, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_revert_kernel, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_revert_kernel, &xdim2, sizeof(int) );

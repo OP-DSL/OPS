@@ -77,7 +77,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block Block, 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[36].count == 0) {
+  if (OPS_kernels[36].count == 1) {
     xdim0_initialise_chunk_kernel_yy = args[0].dat->size[0]*args[0].dat->dim;
   }
 

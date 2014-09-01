@@ -87,7 +87,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[27].count == 0) {
+  if (OPS_kernels[27].count == 1) {
     xdim0_calc_dt_kernel = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_calc_dt_kernel = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_calc_dt_kernel = args[2].dat->size[0]*args[2].dat->dim;

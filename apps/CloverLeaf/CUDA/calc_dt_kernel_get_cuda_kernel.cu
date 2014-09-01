@@ -101,7 +101,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[29].count == 0) {
+  if (OPS_kernels[29].count == 1) {
     cudaMemcpyToSymbol( xdim0_calc_dt_kernel_get, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_calc_dt_kernel_get, &xdim1, sizeof(int) );
   }

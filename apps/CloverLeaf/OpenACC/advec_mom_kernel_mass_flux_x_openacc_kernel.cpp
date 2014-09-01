@@ -69,7 +69,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block Block
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[19].count == 0) {
+  if (OPS_kernels[19].count == 1) {
     xdim0_advec_mom_kernel_mass_flux_x = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_advec_mom_kernel_mass_flux_x = args[1].dat->size[0]*args[1].dat->dim;
   }

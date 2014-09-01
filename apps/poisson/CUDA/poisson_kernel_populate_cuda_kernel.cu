@@ -117,7 +117,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[0].count == 0) {
+  if (OPS_kernels[0].count == 1) {
     cudaMemcpyToSymbol( xdim3_poisson_kernel_populate, &xdim3, sizeof(int) );
     cudaMemcpyToSymbol( xdim4_poisson_kernel_populate, &xdim4, sizeof(int) );
     cudaMemcpyToSymbol( xdim5_poisson_kernel_populate, &xdim5, sizeof(int) );

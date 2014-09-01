@@ -68,7 +68,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[28].count == 0) {
+  if (OPS_kernels[28].count == 1) {
     xdim0_calc_dt_kernel_min = args[0].dat->size[0]*args[0].dat->dim;
   }
 

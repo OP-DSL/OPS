@@ -80,7 +80,7 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block Block, int 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[45].count == 0) {
+  if (OPS_kernels[45].count == 1) {
     xdim0_update_halo_kernel1_t2 = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_update_halo_kernel1_t2 = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_update_halo_kernel1_t2 = args[2].dat->size[0]*args[2].dat->dim;

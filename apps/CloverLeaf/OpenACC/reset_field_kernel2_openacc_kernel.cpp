@@ -73,7 +73,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[2].count == 0) {
+  if (OPS_kernels[2].count == 1) {
     xdim0_reset_field_kernel2 = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_reset_field_kernel2 = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_reset_field_kernel2 = args[2].dat->size[0]*args[2].dat->dim;
