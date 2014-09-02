@@ -157,6 +157,7 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *
 }
 
 
+/*
 void openclDeviceInit( int argc, char ** argv )
 {
   (void)argc;
@@ -236,6 +237,37 @@ void openclDeviceInit( int argc, char ** argv )
   // Number of constants in constant array
   OPS_opencl_core.n_constants = 0;
 }
+*/
+
+/**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
+void openclDeviceInit( int argc, char ** argv )
+{
+  (void)argc;
+  (void)argv;
+
+  //&OPS_opencl_core.device_id == cl_device_id *device,
+  //OPS_opencl_core.context == cl_context *context,
+  //OPS_opencl_core.command_queue == cl_command_queue *queue,
+  //char **dev_name == ?
+
+  //num_plats = OPS_opencl_core.n_platforms
+  //num_devs = OPS_opencl_core.n_devices
+  //cl_platform_id  *platforms == OPS_opencl_core.platform_id[1]
+  //cl_device_id    *devices == OPS_opencl_core.devices[1]
+
+  OPS_opencl_core.n_platforms = 0;
+  OPS_opencl_core.n_devices   = 0;
+  OPS_opencl_core.platform_id = NULL;
+  OPS_opencl_core.devices     = NULL;
+  cl_int          ret         = 0;
+
+  //get number of platforms on current system (cast is intentional)
+  clSafeCall(clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms));
+
+}
+
+
+
 
 void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
 {

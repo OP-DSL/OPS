@@ -195,6 +195,7 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *name, ops_block Block
 
 
   ops_H_D_exchanges_device(args, 3);
+  ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[82].mpi_time += t1-t2;
@@ -215,6 +216,8 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *name, ops_block Block
   }
 
   ops_set_dirtybit_device(args, 3);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

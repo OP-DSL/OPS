@@ -315,6 +315,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
 
 
   ops_H_D_exchanges_device(args, 11);
+  ops_halo_exchanges(args,11,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[31].mpi_time += t1-t2;

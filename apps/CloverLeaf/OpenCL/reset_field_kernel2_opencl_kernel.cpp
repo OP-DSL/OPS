@@ -212,6 +212,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
 
 
   ops_H_D_exchanges_device(args, 4);
+  ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[2].mpi_time += t1-t2;
@@ -235,6 +236,8 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   }
 
   ops_set_dirtybit_device(args, 4);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

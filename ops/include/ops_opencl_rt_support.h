@@ -50,7 +50,7 @@
 typedef struct{
   cl_platform_id *platform_id;
   cl_device_id device_id;
-  cl_device_id *subdev_id;
+  cl_device_id *devices;
   cl_uint n_devices;
   cl_uint n_platforms;
   cl_command_queue command_queue;

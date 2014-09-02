@@ -227,6 +227,7 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block Block, int
 
 
   ops_H_D_exchanges_device(args, 5);
+  ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[7].mpi_time += t1-t2;
@@ -252,6 +253,8 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block Block, int
   }
 
   ops_set_dirtybit_device(args, 5);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

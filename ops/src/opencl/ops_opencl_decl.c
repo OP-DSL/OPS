@@ -45,6 +45,10 @@
 #include <ops_lib_cpp.h>
 #include <ops_opencl_rt_support.h>
 
+char *ops_halo_buffer = NULL;
+char *ops_halo_buffer_d = NULL;
+int ops_halo_buffer_size = 0;
+
 extern ops_opencl_core OPS_opencl_core;
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file

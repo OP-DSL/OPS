@@ -137,6 +137,7 @@ mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 opencl: mklib core $(SRC)/opencl/ops_opencl_decl.c $(OBJ)/ops_lib_core.o
 	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
         -c $(SRC)/opencl/ops_opencl_decl.c -o $(OBJ)/ops_opencl_decl.o
+	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
         -c $(SRC)/opencl/ops_opencl_rt_support.c -o $(OBJ)/ops_opencl_rt_support.o
 	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o

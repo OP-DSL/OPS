@@ -255,6 +255,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
 
   ops_H_D_exchanges_device(args, 7);
+  ops_halo_exchanges(args,7,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[34].mpi_time += t1-t2;
@@ -284,6 +285,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   }
 
   ops_set_dirtybit_device(args, 7);
+  ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

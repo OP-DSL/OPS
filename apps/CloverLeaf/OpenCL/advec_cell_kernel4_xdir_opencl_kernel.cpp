@@ -312,6 +312,7 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block Block, int
 
 
   ops_H_D_exchanges_device(args, 11);
+  ops_halo_exchanges(args,11,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[10].mpi_time += t1-t2;
@@ -349,6 +350,12 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block Block, int
   }
 
   ops_set_dirtybit_device(args, 11);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
+  ops_set_halo_dirtybit3(&args[6],range);
+  ops_set_halo_dirtybit3(&args[7],range);
+  ops_set_halo_dirtybit3(&args[8],range);
+  ops_set_halo_dirtybit3(&args[9],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
