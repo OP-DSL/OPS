@@ -547,11 +547,11 @@ def ops_gen_mpi(master, date, consts, kernels):
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
-  code('#ifdef OPS_MPI')
+  #code('#ifdef OPS_MPI')
   code('#include "ops_lib_mpi.h"')
+  #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
-  code('#endif')
   code('')
 
   comm(' global constants')

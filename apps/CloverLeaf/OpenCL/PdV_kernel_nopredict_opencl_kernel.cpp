@@ -185,10 +185,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-<<<<<<< HEAD
-=======
-  ops_timing_realloc(5,"PdV_kernel_nopredict");
->>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -409,10 +405,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-=======
-  OPS_kernels[5].count++;
->>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[5].time += t2-t1;
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);

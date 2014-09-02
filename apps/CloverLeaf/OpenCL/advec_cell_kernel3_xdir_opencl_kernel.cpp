@@ -166,10 +166,6 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-<<<<<<< HEAD
-=======
-  ops_timing_realloc(9,"advec_cell_kernel3_xdir");
->>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -313,10 +309,6 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-=======
-  OPS_kernels[9].count++;
->>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[9].time += t2-t1;
   OPS_kernels[9].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[9].transfer += ops_compute_transfer(dim, range, &arg1);

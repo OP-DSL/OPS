@@ -308,8 +308,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#endif')
     code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
     code('')
-
-    code('#include "user_types.h"')
+    if os.path.exists('./user_types.h'):
+      code('#include "user_types.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
     comm('')
@@ -591,7 +591,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
           arg_values = arg_values + ', ydim'+str(n)
-      if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
+      else:
+        continue
+      if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
         arg_values = arg_values + ','
       else:
@@ -799,7 +801,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         arg_text = arg_text +'xdim'+str(n)
         if NDIM==3:
           arg_text = arg_text +', ydim'+str(n)
-      if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
+      else:
+        continue
+      if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
       else:
         arg_text = arg_text + ''
@@ -875,7 +879,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
+        if accs[n] == OPS_READ:# and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
         else:
           #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
@@ -908,7 +912,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
           code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
           code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
@@ -1088,10 +1092,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
-  code('#include "user_types.h"')
-  code('#ifdef OPS_MPI')
-  code('#include "ops_mpi_core.h"')
-  code('#endif')
+  if os.path.exists('./user_types.h'):
+    code('#include "user_types.h"')
+  code('#include "ops_lib_mpi.h"')
+  #code('#ifdef OPS_MPI')
+  #code('#include "ops_mpi_core.h"')
+  #code('#endif')
 
   comm('global constants')
   for nc in range (0,len(consts)):

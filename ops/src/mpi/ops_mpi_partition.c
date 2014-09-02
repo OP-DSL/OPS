@@ -259,6 +259,8 @@ void ops_decomp_dats(sub_block *sb) {
         prod[d] = prod[d-1];
         sd->decomp_disp[d] = 0;
         sd->decomp_size[d] = 1;
+	sd->d_im[d] = 0; //no intra-block halo
+	sd->d_ip[d] = 0;
         continue;
       }
 

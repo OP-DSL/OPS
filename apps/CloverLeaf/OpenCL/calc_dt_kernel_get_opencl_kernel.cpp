@@ -147,7 +147,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(29,"calc_dt_kernel_get");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -261,13 +260,10 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   }
   arg3.data = (char *)arg3h;
 
-  ops_mpi_reduce(&arg2,(double *)arg2.data);
-  ops_mpi_reduce(&arg3,(double *)arg3.data);
   ops_set_dirtybit_device(args, 4);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[29].count++;
   OPS_kernels[29].time += t2-t1;
   OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg1);

@@ -147,10 +147,6 @@ void ops_par_loop_update_halo_kernel3_minus_4_b(char const *name, ops_block bloc
 
   //Timing
   double t1,t2,c1,c2;
-<<<<<<< HEAD
-=======
-  ops_timing_realloc(73,"update_halo_kernel3_minus_4_b");
->>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -225,10 +221,6 @@ void ops_par_loop_update_halo_kernel3_minus_4_b(char const *name, ops_block bloc
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-=======
-  OPS_kernels[73].count++;
->>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[73].time += t2-t1;
   OPS_kernels[73].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[73].transfer += ops_compute_transfer(dim, range, &arg1);

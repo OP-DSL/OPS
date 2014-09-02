@@ -157,10 +157,6 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Timing
   double t1,t2,c1,c2;
-<<<<<<< HEAD
-=======
-  ops_timing_realloc(24,"advec_mom_kernel_post_pre_advec_y");
->>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -262,10 +258,6 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-=======
-  OPS_kernels[24].count++;
->>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[24].time += t2-t1;
   OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg1);

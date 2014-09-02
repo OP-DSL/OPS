@@ -118,7 +118,7 @@ static bool isbuilt_packer4_kernel = false;
 static bool isbuilt_unpacker1_kernel = false;
 static bool isbuilt_unpacker4_kernel = false;
 
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+void ops_pack2(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
 
   cl_int ret = 0;
   if(!isbuilt_packer1_kernel){
@@ -395,7 +395,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
 }
 
 
-void ops_pack3(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
   const char * __restrict src = dat->data+src_offset*dat->elem_size;
 
   if(dat->dirty_hd == 2){
@@ -433,4 +433,25 @@ void ops_comm_realloc(char **ptr, int size, int prev) {
   } else {
     *ptr = (char*)xrealloc(*ptr, size);
   }
+}
+
+
+
+void ops_halo_copy_tobuf(char * dest, int dest_offset,
+                        ops_dat src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z) {
+}
+
+
+void ops_halo_copy_frombuf(ops_dat dest,
+                        char * src, int src_offset,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z) {
 }

@@ -34,7 +34,7 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
 else
-  CCFLAGS 	:= -O3 -vec-report -xAVX
+  CCFLAGS 	:= -O3 -xAVX #vec-report -xAVX
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
@@ -149,7 +149,7 @@ mpi_opencl: mklib opencl $(OBJ)/ops_opencl_rt_support.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
 	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_opencl.cpp -o $(OBJ)/ops_mpi_rt_support_opencl.o -I$(MPI_INSTALL_PATH)/include
-	ar -r $(LIB)/libops_mpi_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_opencl.o $(OBJ)/ops_mpi_rt_support.o \
+	ar -r $(LIB)/libops_mpi_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o $(OBJ)/ops_mpi_decl_opencl.o $(OBJ)/ops_mpi_rt_support.o \
         $(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_opencl.o $(OBJ)/ops_mpi_partition.o $(OBJ)/ops_opencl_rt_support.o
 
 

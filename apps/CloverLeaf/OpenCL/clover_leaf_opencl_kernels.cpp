@@ -7,9 +7,7 @@
 #include "ops_lib_cpp.h"
 #include "ops_opencl_rt_support.h"
 #include "user_types.h"
-#ifdef OPS_MPI
-#include "ops_mpi_core.h"
-#endif
+#include "ops_lib_mpi.h"
 //global constants
 extern double g_small;
 extern double g_big;
@@ -209,9 +207,8 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-
+  
 //user kernel files
-
 #include "revert_kernel_opencl_kernel.cpp"
 #include "reset_field_kernel1_opencl_kernel.cpp"
 #include "reset_field_kernel2_opencl_kernel.cpp"
@@ -239,18 +236,15 @@ void buildOpenCLKernels() {
 #include "advec_mom_kernel_post_pre_advec_y_opencl_kernel.cpp"
 #include "advec_mom_kernel1_y_nonvector_opencl_kernel.cpp"
 #include "advec_mom_kernel2_y_opencl_kernel.cpp"
-
 #include "calc_dt_kernel_opencl_kernel.cpp"
-//#include "calc_dt_kernel_min_opencl_kernel.cpp"
-//#include "calc_dt_kernel_get_opencl_kernel.cpp"
-//#include "calc_dt_kernel_print_opencl_kernel.cpp"
-//#include "field_summary_kernel_opencl_kernel.cpp"
-
+#include "calc_dt_kernel_min_opencl_kernel.cpp"
+#include "calc_dt_kernel_get_opencl_kernel.cpp"
+#include "calc_dt_kernel_print_opencl_kernel.cpp"
+#include "field_summary_kernel_opencl_kernel.cpp"
 #include "flux_calc_kernelx_opencl_kernel.cpp"
 #include "flux_calc_kernely_opencl_kernel.cpp"
 #include "viscosity_kernel_opencl_kernel.cpp"
-
-/*#include "update_halo_kernel1_b2_opencl_kernel.cpp"
+#include "update_halo_kernel1_b2_opencl_kernel.cpp"
 #include "update_halo_kernel1_b1_opencl_kernel.cpp"
 #include "update_halo_kernel1_t2_opencl_kernel.cpp"
 #include "update_halo_kernel1_t1_opencl_kernel.cpp"
@@ -289,5 +283,4 @@ void buildOpenCLKernels() {
 #include "update_halo_kernel4_plus_4_a_opencl_kernel.cpp"
 #include "update_halo_kernel4_plus_2_a_opencl_kernel.cpp"
 #include "update_halo_kernel4_plus_4_b_opencl_kernel.cpp"
-#include "update_halo_kernel4_plus_2_b_opencl_kernel.cpp"*/
-
+#include "update_halo_kernel4_plus_2_b_opencl_kernel.cpp"

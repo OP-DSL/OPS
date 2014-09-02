@@ -147,10 +147,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
   //Timing
   double t1,t2,c1,c2;
-<<<<<<< HEAD
-=======
-  ops_timing_realloc(23,"advec_mom_kernel_mass_flux_y");
->>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -212,10 +208,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-=======
-  OPS_kernels[23].count++;
->>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[23].time += t2-t1;
   OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg1);

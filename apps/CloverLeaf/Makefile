@@ -355,7 +355,7 @@ cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp star
                 advec_mom_ops.cpp ./OpenCL/cloverleaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o cloverleaf_opencl
 
 ./OpenCL/cloverleaf_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
-		$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+		$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/cloverleaf_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
 cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \

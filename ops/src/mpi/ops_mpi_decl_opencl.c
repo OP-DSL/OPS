@@ -34,7 +34,7 @@
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi+cuda backend
   */
-  
+
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
@@ -51,7 +51,7 @@ extern char *ops_buffer_recv_2;
 void ops_init_opencl ( int argc, char ** argv, int diags )
 {
   ops_init_core ( argc, argv, diags );
-  
+
   if ((OPS_block_size_x*OPS_block_size_y) > 1024) {
     printf ( " OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
     exit ( -1 );
@@ -72,14 +72,14 @@ void
 ops_init ( int argc, char ** argv, int diags )
 {
   int flag = 0;
-  MPI_Initialized(&flag);                                    
+  MPI_Initialized(&flag);
   if(!flag) {
     MPI_Init(&argc, &argv);
   }
 
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_WORLD);
-  MPI_Comm_rank(OPS_MPI_WORLD, &ops_my_rank);
-  MPI_Comm_size(OPS_MPI_WORLD, &ops_comm_size);
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
+  MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
   ops_init_opencl ( argc, argv, diags );
 }
@@ -92,7 +92,7 @@ void ops_exit()
   free(ops_buffer_recv_1);
   free(ops_buffer_send_2);
   free(ops_buffer_recv_2);
-  
+
   int flag = 0;
   MPI_Finalized(&flag);
   if(!flag) MPI_Finalize();
@@ -131,6 +131,10 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   OPS_sub_dat_list[dat->index] = sd;
 
   return dat;
+}
+
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
 }
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
