@@ -103,6 +103,8 @@ void mvConstArraysToDevice( int consts_bytes );
 void mvReductArraysToDevice( int reduct_bytes );
 void mvReductArraysToHost( int reduct_bytes );
 void ops_opencl_exit( );
+void ops_upload_dat(ops_dat dat);
+void ops_download_dat(ops_dat dat);
 
 #ifdef __cplusplus
 }
