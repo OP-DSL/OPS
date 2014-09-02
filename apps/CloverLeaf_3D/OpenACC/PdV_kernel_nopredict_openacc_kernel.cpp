@@ -73,6 +73,10 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
 
   ops_arg args[17] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
 
+
+  ops_timing_realloc(5,"PdV_kernel_nopredict");
+  OPS_kernels[5].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -111,10 +115,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(5,"PdV_kernel_nopredict");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[5].count == 0) {
+  if (OPS_kernels[5].count == 1) {
     xdim0_PdV_kernel_nopredict = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_PdV_kernel_nopredict = args[0].dat->size[1];
     xdim1_PdV_kernel_nopredict = args[1].dat->size[0]*args[1].dat->dim;
@@ -555,7 +558,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
   ops_set_halo_dirtybit3(&args[13],range);
 
   //Update kernel record
-  OPS_kernels[5].count++;
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg2);

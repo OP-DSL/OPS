@@ -51,6 +51,10 @@ void ops_par_loop_update_halo_kernel5_plus_4_b(char const *name, ops_block block
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(131,"update_halo_kernel5_plus_4_b");
+  OPS_kernels[131].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -93,10 +97,9 @@ void ops_par_loop_update_halo_kernel5_plus_4_b(char const *name, ops_block block
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(131,"update_halo_kernel5_plus_4_b");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[131].count == 0) {
+  if (OPS_kernels[131].count == 1) {
     cudaMemcpyToSymbol( xdim0_update_halo_kernel5_plus_4_b, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_update_halo_kernel5_plus_4_b, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_update_halo_kernel5_plus_4_b, &xdim1, sizeof(int) );
@@ -182,7 +185,6 @@ void ops_par_loop_update_halo_kernel5_plus_4_b(char const *name, ops_block block
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[131].count++;
   OPS_kernels[131].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[131].transfer += ops_compute_transfer(dim, range, &arg1);
 }

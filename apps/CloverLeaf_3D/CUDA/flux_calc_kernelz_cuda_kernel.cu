@@ -65,6 +65,10 @@ void ops_par_loop_flux_calc_kernelz(char const *name, ops_block block, int dim, 
 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(44,"flux_calc_kernelz");
+  OPS_kernels[44].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -111,10 +115,9 @@ void ops_par_loop_flux_calc_kernelz(char const *name, ops_block block, int dim, 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(44,"flux_calc_kernelz");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[44].count == 0) {
+  if (OPS_kernels[44].count == 1) {
     cudaMemcpyToSymbol( xdim0_flux_calc_kernelz, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_flux_calc_kernelz, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_flux_calc_kernelz, &xdim1, sizeof(int) );
@@ -226,7 +229,6 @@ void ops_par_loop_flux_calc_kernelz(char const *name, ops_block block, int dim, 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[44].count++;
   OPS_kernels[44].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[44].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[44].transfer += ops_compute_transfer(dim, range, &arg2);

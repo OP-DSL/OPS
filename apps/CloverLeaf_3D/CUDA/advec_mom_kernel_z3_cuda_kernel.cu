@@ -66,6 +66,10 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(24,"advec_mom_kernel_z3");
+  OPS_kernels[24].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -112,10 +116,9 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(24,"advec_mom_kernel_z3");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[24].count == 0) {
+  if (OPS_kernels[24].count == 1) {
     cudaMemcpyToSymbol( xdim0_advec_mom_kernel_z3, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_advec_mom_kernel_z3, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_advec_mom_kernel_z3, &xdim1, sizeof(int) );
@@ -228,7 +231,6 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[24].count++;
   OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg2);

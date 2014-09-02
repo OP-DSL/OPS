@@ -14,7 +14,11 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(59,"update_halo_kernel1_t2");
+  OPS_kernels[59].count++;
+
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
 
@@ -94,7 +98,6 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(59,"update_halo_kernel1_t2");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -336,7 +339,6 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[59].count++;
   OPS_kernels[59].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[59].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[59].transfer += ops_compute_transfer(dim, range, &arg2);

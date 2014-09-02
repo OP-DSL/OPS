@@ -223,15 +223,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
   #endif
 
   double *p_a6 = arg6h;
-
   double *p_a7 = arg7h;
-
   double *p_a8 = arg8h;
-
   double *p_a9 = arg9h;
-
   double *p_a10 = arg10h;
-
 
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 11);

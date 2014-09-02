@@ -198,7 +198,6 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
 
   double *p_a6 = arg6h;
 
-
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 7);
   #else

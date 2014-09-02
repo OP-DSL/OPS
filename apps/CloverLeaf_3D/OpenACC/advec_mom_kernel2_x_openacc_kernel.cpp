@@ -34,6 +34,10 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block Block, int dim
 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
+
+  ops_timing_realloc(28,"advec_mom_kernel2_x");
+  OPS_kernels[28].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -72,10 +76,9 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block Block, int dim
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(28,"advec_mom_kernel2_x");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[28].count == 0) {
+  if (OPS_kernels[28].count == 1) {
     xdim0_advec_mom_kernel2_x = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_advec_mom_kernel2_x = args[0].dat->size[1];
     xdim1_advec_mom_kernel2_x = args[1].dat->size[0]*args[1].dat->dim;
@@ -202,7 +205,6 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[28].count++;
   OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg2);

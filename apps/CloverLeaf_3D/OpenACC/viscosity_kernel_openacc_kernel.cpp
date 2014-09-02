@@ -58,6 +58,10 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
+
+  ops_timing_realloc(45,"viscosity_kernel");
+  OPS_kernels[45].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -96,10 +100,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(45,"viscosity_kernel");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[45].count == 0) {
+  if (OPS_kernels[45].count == 1) {
     xdim0_viscosity_kernel = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_viscosity_kernel = args[0].dat->size[1];
     xdim1_viscosity_kernel = args[1].dat->size[0]*args[1].dat->dim;
@@ -418,7 +421,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[45].count++;
   OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg2);

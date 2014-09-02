@@ -21,13 +21,16 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_top(char const *name, ops_blo
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(83,"update_halo_kernel2_yvel_minus_4_top");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[3][3];
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+
+  ops_timing_realloc(83,"update_halo_kernel2_yvel_minus_4_top");
+  OPS_kernels[83].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -204,7 +207,6 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_top(char const *name, ops_blo
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[83].count++;
   OPS_kernels[83].mpi_time += t2-t1;
   OPS_kernels[83].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[83].transfer += ops_compute_transfer(dim, range, &arg1);

@@ -52,6 +52,10 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(104,"update_halo_kernel2_zvel_minus_2_front");
+  OPS_kernels[104].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -94,10 +98,9 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(104,"update_halo_kernel2_zvel_minus_2_front");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[104].count == 0) {
+  if (OPS_kernels[104].count == 1) {
     cudaMemcpyToSymbol( xdim0_update_halo_kernel2_zvel_minus_2_front, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_update_halo_kernel2_zvel_minus_2_front, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_update_halo_kernel2_zvel_minus_2_front, &xdim1, sizeof(int) );
@@ -183,7 +186,6 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[104].count++;
   OPS_kernels[104].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[104].transfer += ops_compute_transfer(dim, range, &arg1);
 }

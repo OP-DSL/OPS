@@ -28,6 +28,10 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block Block
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  ops_timing_realloc(25,"advec_mom_kernel_mass_flux_x");
+  OPS_kernels[25].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -66,10 +70,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block Block
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(25,"advec_mom_kernel_mass_flux_x");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[25].count == 0) {
+  if (OPS_kernels[25].count == 1) {
     xdim0_advec_mom_kernel_mass_flux_x = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_advec_mom_kernel_mass_flux_x = args[0].dat->size[1];
     xdim1_advec_mom_kernel_mass_flux_x = args[1].dat->size[0]*args[1].dat->dim;
@@ -148,7 +151,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block Block
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[25].count++;
   OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg1);
 }

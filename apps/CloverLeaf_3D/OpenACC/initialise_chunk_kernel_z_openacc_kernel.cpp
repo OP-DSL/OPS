@@ -31,6 +31,10 @@ void ops_par_loop_initialise_chunk_kernel_z(char const *name, ops_block Block, i
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(51,"initialise_chunk_kernel_z");
+  OPS_kernels[51].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -69,10 +73,9 @@ void ops_par_loop_initialise_chunk_kernel_z(char const *name, ops_block Block, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(51,"initialise_chunk_kernel_z");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[51].count == 0) {
+  if (OPS_kernels[51].count == 1) {
     xdim0_initialise_chunk_kernel_z = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_initialise_chunk_kernel_z = args[0].dat->size[1];
     xdim1_initialise_chunk_kernel_z = args[1].dat->size[0]*args[1].dat->dim;
@@ -176,7 +179,6 @@ void ops_par_loop_initialise_chunk_kernel_z(char const *name, ops_block Block, i
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[51].count++;
   OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg2);

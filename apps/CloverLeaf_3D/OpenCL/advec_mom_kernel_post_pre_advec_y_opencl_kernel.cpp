@@ -102,6 +102,10 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
  ops_arg arg4) {
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
+
+  ops_timing_realloc(30,"advec_mom_kernel_post_pre_advec_y");
+  OPS_kernels[30].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -159,12 +163,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(30,"advec_mom_kernel_post_pre_advec_y");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
+
 
 
 
@@ -268,7 +272,6 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[30].count++;
   OPS_kernels[30].time += t2-t1;
   OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg1);

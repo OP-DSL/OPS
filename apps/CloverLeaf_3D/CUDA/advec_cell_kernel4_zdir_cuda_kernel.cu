@@ -119,6 +119,10 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
 
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
+
+  ops_timing_realloc(18,"advec_cell_kernel4_zdir");
+  OPS_kernels[18].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -179,10 +183,9 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(18,"advec_cell_kernel4_zdir");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[18].count == 0) {
+  if (OPS_kernels[18].count == 1) {
     cudaMemcpyToSymbol( xdim0_advec_cell_kernel4_zdir, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_advec_cell_kernel4_zdir, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_advec_cell_kernel4_zdir, &xdim1, sizeof(int) );
@@ -436,7 +439,6 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
   ops_set_halo_dirtybit3(&args[9],range);
 
   //Update kernel record
-  OPS_kernels[18].count++;
   OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg2);

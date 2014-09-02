@@ -102,7 +102,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   int *p_a0 = (int *)((char *)args[0].data + base0);
   #endif
 
-  int *p_a1 = arg1h;
+  int *p_a1 = NULL;
 
 
   #ifdef OPS_GPU

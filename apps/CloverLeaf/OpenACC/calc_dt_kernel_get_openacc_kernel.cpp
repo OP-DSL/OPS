@@ -125,9 +125,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   #endif
 
   double *p_a2 = arg2h;
-
   double *p_a3 = arg3h;
-
 
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 4);

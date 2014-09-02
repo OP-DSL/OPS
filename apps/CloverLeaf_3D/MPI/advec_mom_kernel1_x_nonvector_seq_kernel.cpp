@@ -14,7 +14,11 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(27,"advec_mom_kernel1_x_nonvector");
+  OPS_kernels[27].count++;
+
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
 
@@ -82,7 +86,6 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(27,"advec_mom_kernel1_x_nonvector");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -261,7 +264,6 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[27].count++;
   OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[27].transfer += ops_compute_transfer(dim, range, &arg2);

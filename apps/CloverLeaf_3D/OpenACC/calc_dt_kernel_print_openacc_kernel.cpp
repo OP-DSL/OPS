@@ -42,6 +42,10 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
+
+  ops_timing_realloc(40,"calc_dt_kernel_print");
+  OPS_kernels[40].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -80,10 +84,9 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(40,"calc_dt_kernel_print");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[40].count == 0) {
+  if (OPS_kernels[40].count == 1) {
     xdim0_calc_dt_kernel_print = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_calc_dt_kernel_print = args[0].dat->size[1];
     xdim1_calc_dt_kernel_print = args[1].dat->size[0]*args[1].dat->dim;
@@ -258,7 +261,6 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
 
   double *p_a7 = arg7h;
 
-
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 8);
   #else
@@ -289,7 +291,6 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
   #endif
 
   //Update kernel record
-  OPS_kernels[40].count++;
   OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg2);

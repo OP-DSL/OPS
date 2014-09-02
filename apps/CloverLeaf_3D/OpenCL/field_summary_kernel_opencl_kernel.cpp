@@ -105,6 +105,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
  ops_arg arg9, ops_arg arg10, ops_arg arg11) {
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
+
+  ops_timing_realloc(41,"field_summary_kernel");
+  OPS_kernels[41].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -168,7 +172,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(41,"field_summary_kernel");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -176,11 +179,32 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
 
 
-  double *arg7h = (double *)arg7.data;
-  double *arg8h = (double *)arg8.data;
-  double *arg9h = (double *)arg9.data;
-  double *arg10h = (double *)arg10.data;
-  double *arg11h = (double *)arg11.data;
+  #ifdef OPS_MPI
+  double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
+  #endif //OPS_MPI
+  #ifdef OPS_MPI
+  double *arg8h = (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg8h = (double *)(((ops_reduction)args[8].data)->data);
+  #endif //OPS_MPI
+  #ifdef OPS_MPI
+  double *arg9h = (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg9h = (double *)(((ops_reduction)args[9].data)->data);
+  #endif //OPS_MPI
+  #ifdef OPS_MPI
+  double *arg10h = (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg10h = (double *)(((ops_reduction)args[10].data)->data);
+  #endif //OPS_MPI
+  #ifdef OPS_MPI
+  double *arg11h = (double *)(((ops_reduction)args[11].data)->data + ((ops_reduction)args[11].data)->size * block->index);
+  #else //OPS_MPI
+  double *arg11h = (double *)(((ops_reduction)args[11].data)->data);
+  #endif //OPS_MPI
+
   int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;
   int maxblocks = nblocks;
   int reduct_bytes = 0;
@@ -413,7 +437,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[41].count++;
   OPS_kernels[41].time += t2-t1;
   OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);

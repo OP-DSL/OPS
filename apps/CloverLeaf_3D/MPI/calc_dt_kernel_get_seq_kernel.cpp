@@ -14,7 +14,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(39,"calc_dt_kernel_get");
+  OPS_kernels[39].count++;
+
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
 
@@ -70,7 +74,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(39,"calc_dt_kernel_get");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -216,7 +219,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_set_dirtybit_host(args, 6);
 
   //Update kernel record
-  OPS_kernels[39].count++;
   OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);

@@ -61,6 +61,10 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(52,"initialise_chunk_kernel_cellx");
+  OPS_kernels[52].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -105,10 +109,9 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(52,"initialise_chunk_kernel_cellx");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[52].count == 0) {
+  if (OPS_kernels[52].count == 1) {
     cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_cellx, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_initialise_chunk_kernel_cellx, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_initialise_chunk_kernel_cellx, &xdim1, sizeof(int) );
@@ -202,7 +205,6 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[52].count++;
   OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg1);
   OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg2);

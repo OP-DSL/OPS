@@ -27,6 +27,10 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block Block, 
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  ops_timing_realloc(48,"initialise_chunk_kernel_zz");
+  OPS_kernels[48].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -75,10 +79,9 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block Block, 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(48,"initialise_chunk_kernel_zz");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[48].count == 0) {
+  if (OPS_kernels[48].count == 1) {
     xdim0_initialise_chunk_kernel_zz = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_initialise_chunk_kernel_zz = args[0].dat->size[1];
   }
@@ -108,7 +111,7 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block Block, 
   int *p_a0 = (int *)((char *)args[0].data + base0);
   #endif
 
-  int *p_a1 = arg1h;
+  int *p_a1 = NULL;
 
 
   #ifdef OPS_GPU
@@ -137,6 +140,5 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block Block, 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[48].count++;
   OPS_kernels[48].transfer += ops_compute_transfer(dim, range, &arg0);
 }

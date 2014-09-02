@@ -29,6 +29,10 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name, ops_blo
 
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(81,"update_halo_kernel2_yvel_minus_4_bot");
+  OPS_kernels[81].count++;
+
   //compute localy allocated range for the sub-block
   int start[3];
   int end[3];
@@ -67,10 +71,9 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name, ops_blo
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(81,"update_halo_kernel2_yvel_minus_4_bot");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[81].count == 0) {
+  if (OPS_kernels[81].count == 1) {
     xdim0_update_halo_kernel2_yvel_minus_4_bot = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_update_halo_kernel2_yvel_minus_4_bot = args[0].dat->size[1];
     xdim1_update_halo_kernel2_yvel_minus_4_bot = args[1].dat->size[0]*args[1].dat->dim;
@@ -140,7 +143,6 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name, ops_blo
   int *p_a2 = arg2h;
   #endif
 
-
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 3);
   #else
@@ -168,7 +170,6 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name, ops_blo
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[81].count++;
   OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg1);
 }

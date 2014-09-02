@@ -32,13 +32,16 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(49,"initialise_chunk_kernel_x");
   ops_timers_core(&c1,&t1);
 
 
   int  offs[3][3];
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+
+  ops_timing_realloc(49,"initialise_chunk_kernel_x");
+  OPS_kernels[49].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -245,7 +248,6 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[49].count++;
   OPS_kernels[49].mpi_time += t2-t1;
   OPS_kernels[49].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[49].transfer += ops_compute_transfer(dim, range, &arg1);

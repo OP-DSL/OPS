@@ -130,7 +130,6 @@ void ops_par_loop_update_halo_kernel4_plus_4_a(char const *name, ops_block Block
   int *p_a2 = arg2h;
   #endif
 
-
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 3);
   #else

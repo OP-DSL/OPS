@@ -100,7 +100,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
 
   double *p_a1 = arg1h;
 
-
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 2);
   #else

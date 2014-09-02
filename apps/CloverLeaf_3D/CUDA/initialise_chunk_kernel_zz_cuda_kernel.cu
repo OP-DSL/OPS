@@ -48,6 +48,10 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  ops_timing_realloc(48,"initialise_chunk_kernel_zz");
+  OPS_kernels[48].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -98,10 +102,9 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(48,"initialise_chunk_kernel_zz");
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[48].count == 0) {
+  if (OPS_kernels[48].count == 1) {
     cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_zz, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_initialise_chunk_kernel_zz, &ydim0, sizeof(int) );
   }
@@ -155,6 +158,5 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[48].count++;
   OPS_kernels[48].transfer += ops_compute_transfer(dim, range, &arg0);
 }

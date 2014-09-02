@@ -98,6 +98,10 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(70,"update_halo_kernel2_xvel_plus_2_bot");
+  OPS_kernels[70].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
@@ -146,7 +150,6 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(70,"update_halo_kernel2_xvel_plus_2_bot");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -155,6 +158,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
 
 
   int *arg2h = (int *)arg2.data;
+
   int consts_bytes = 0;
 
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
@@ -222,7 +226,6 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[70].count++;
   OPS_kernels[70].time += t2-t1;
   OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg1);
