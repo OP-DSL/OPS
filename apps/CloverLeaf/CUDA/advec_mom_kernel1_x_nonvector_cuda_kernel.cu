@@ -153,7 +153,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[21].count == 0) {
+  if (OPS_kernels[21].count == 1) {
     cudaMemcpyToSymbol( xdim0_advec_mom_kernel1_x_nonvector, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_advec_mom_kernel1_x_nonvector, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_advec_mom_kernel1_x_nonvector, &xdim2, sizeof(int) );

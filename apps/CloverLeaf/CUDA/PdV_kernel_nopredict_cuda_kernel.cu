@@ -201,7 +201,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[5].count == 0) {
+  if (OPS_kernels[5].count == 1) {
     cudaMemcpyToSymbol( xdim0_PdV_kernel_nopredict, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_PdV_kernel_nopredict, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_PdV_kernel_nopredict, &xdim2, sizeof(int) );

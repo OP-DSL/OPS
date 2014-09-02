@@ -91,7 +91,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[28].count == 0) {
+  if (OPS_kernels[28].count == 1) {
     cudaMemcpyToSymbol( xdim0_calc_dt_kernel_min, &xdim0, sizeof(int) );
   }
 

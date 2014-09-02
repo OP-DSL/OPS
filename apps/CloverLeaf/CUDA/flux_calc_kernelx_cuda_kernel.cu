@@ -106,7 +106,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[32].count == 0) {
+  if (OPS_kernels[32].count == 1) {
     cudaMemcpyToSymbol( xdim0_flux_calc_kernelx, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_flux_calc_kernelx, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_flux_calc_kernelx, &xdim2, sizeof(int) );

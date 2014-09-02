@@ -90,7 +90,7 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[3].count == 0) {
+  if (OPS_kernels[3].count == 1) {
     cudaMemcpyToSymbol( xdim0_poisson_kernel_update, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_poisson_kernel_update, &xdim1, sizeof(int) );
   }

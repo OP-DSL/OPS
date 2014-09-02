@@ -199,7 +199,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[42].count == 0) {
+  if (OPS_kernels[42].count == 1) {
     cudaMemcpyToSymbol( xdim0_generate_chunk_kernel, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_generate_chunk_kernel, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_generate_chunk_kernel, &xdim2, sizeof(int) );

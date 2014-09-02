@@ -82,7 +82,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[31].count == 0) {
+  if (OPS_kernels[31].count == 1) {
     xdim0_field_summary_kernel = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_field_summary_kernel = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_field_summary_kernel = args[2].dat->size[0]*args[2].dat->dim;

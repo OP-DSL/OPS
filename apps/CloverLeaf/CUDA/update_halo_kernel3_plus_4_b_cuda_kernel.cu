@@ -92,7 +92,7 @@ void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block block
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[69].count == 0) {
+  if (OPS_kernels[69].count == 1) {
     cudaMemcpyToSymbol( xdim0_update_halo_kernel3_plus_4_b, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_update_halo_kernel3_plus_4_b, &xdim1, sizeof(int) );
   }

@@ -563,7 +563,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('ops_timers_core(&c2,&t2);')
     code('')
 
-    IF('OPS_kernels['+str(nk)+'].count == 0')
+    IF('OPS_kernels['+str(nk)+'].count == 1')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')

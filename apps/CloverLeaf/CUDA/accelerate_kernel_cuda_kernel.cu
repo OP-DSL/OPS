@@ -185,7 +185,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[6].count == 0) {
+  if (OPS_kernels[6].count == 1) {
     cudaMemcpyToSymbol( xdim0_accelerate_kernel, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_accelerate_kernel, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_accelerate_kernel, &xdim2, sizeof(int) );
