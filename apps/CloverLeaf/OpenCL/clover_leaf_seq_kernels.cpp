@@ -4,7 +4,9 @@
 
 //header
 #include "ops_lib_cpp.h"
+#ifdef OPS_MPI
 #include "ops_lib_mpi.h"
+#endif
 
 //user kernel files
 //#include "revert_kernel_seq_kernel.cpp"

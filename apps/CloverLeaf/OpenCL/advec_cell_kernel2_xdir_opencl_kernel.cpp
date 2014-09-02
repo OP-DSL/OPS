@@ -96,7 +96,7 @@ void buildOpenCLKernels_advec_cell_kernel2_xdir(int xdim0,
 
 
 // host stub function
-void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
@@ -153,6 +153,10 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block Block, int
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(8,"advec_cell_kernel2_xdir");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -241,6 +245,10 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block Block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[8].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[8].time += t2-t1;
   OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg1);

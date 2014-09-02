@@ -103,7 +103,7 @@ void buildOpenCLKernels_accelerate_kernel(int xdim0,
 
 
 // host stub function
-void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10) {
@@ -176,6 +176,10 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, 
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(6,"accelerate_kernel");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -357,6 +361,10 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[6].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[6].time += t2-t1;
   OPS_kernels[6].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[6].transfer += ops_compute_transfer(dim, range, &arg1);

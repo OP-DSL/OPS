@@ -73,7 +73,7 @@ void start()
 
   generate();
   field_summary();
-  exit(0);
+//  exit(0);
   
   //MPI_Abort(MPI_COMM_WORLD,status);
   //ops_print_dat_to_txtfile_core(cellx, "cloverdats.dat");

@@ -99,7 +99,7 @@ void buildOpenCLKernels_viscosity_kernel(int xdim0,
 
 
 // host stub function
-void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
@@ -163,6 +163,10 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(34,"viscosity_kernel");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -289,6 +293,10 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[34].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[34].time += t2-t1;
   OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg1);

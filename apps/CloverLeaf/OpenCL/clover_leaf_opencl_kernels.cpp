@@ -7,6 +7,9 @@
 #include "ops_lib_cpp.h"
 #include "ops_opencl_rt_support.h"
 #include "user_types.h"
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
 //global constants
 extern double g_small;
 extern double g_big;
@@ -206,7 +209,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-
+  
 //user kernel files
 #include "revert_kernel_opencl_kernel.cpp"
 #include "reset_field_kernel1_opencl_kernel.cpp"

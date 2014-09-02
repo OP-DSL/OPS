@@ -85,7 +85,7 @@ void buildOpenCLKernels_initialise_chunk_kernel_cellx(int xdim0,
 
 
 // host stub function
-void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   ops_arg args[3] = { arg0, arg1, arg2};
 

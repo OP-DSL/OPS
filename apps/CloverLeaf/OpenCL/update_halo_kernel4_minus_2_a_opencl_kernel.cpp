@@ -94,7 +94,7 @@ void buildOpenCLKernels_update_halo_kernel4_minus_2_a(int xdim0,
 
 
 // host stub function
-void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   ops_arg args[3] = { arg0, arg1, arg2};
 
@@ -147,6 +147,10 @@ void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Bloc
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(76,"update_halo_kernel4_minus_2_a");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -221,6 +225,10 @@ void ops_par_loop_update_halo_kernel4_minus_2_a(char const *name, ops_block Bloc
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[76].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[76].time += t2-t1;
   OPS_kernels[76].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[76].transfer += ops_compute_transfer(dim, range, &arg1);

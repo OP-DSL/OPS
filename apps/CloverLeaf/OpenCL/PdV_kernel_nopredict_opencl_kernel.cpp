@@ -106,7 +106,7 @@ void buildOpenCLKernels_PdV_kernel_nopredict(int xdim0,
 
 
 // host stub function
-void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10, ops_arg arg11, ops_arg arg12, ops_arg arg13) {
@@ -185,6 +185,10 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(5,"PdV_kernel_nopredict");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -405,6 +409,10 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[5].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[5].time += t2-t1;
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);

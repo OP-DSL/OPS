@@ -375,7 +375,7 @@ cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o clover_leaf_ops.
                 advec_mom_ops.cpp ./OpenCL/cloverleaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl -o cloverleaf_mpi_opencl
 
 ./OpenCL/cloverleaf_mpi_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
-	      	$(CPP) -g -O0 $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+	      	$(MPICPP) -g -O0 $(MPIFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. -DOPS_MPI \
                 -c -o ./OpenCL/cloverleaf_mpi_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
 

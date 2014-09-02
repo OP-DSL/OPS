@@ -96,7 +96,7 @@ void buildOpenCLKernels_ideal_gas_kernel(int xdim0,
 
 
 // host stub function
-void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
@@ -153,6 +153,10 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
+<<<<<<< HEAD
+=======
+  ops_timing_realloc(3,"ideal_gas_kernel");
+>>>>>>> d25c33b... MPI+OpenCL compilation
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -234,13 +238,17 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
-  
+
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[2],range);
   ops_set_halo_dirtybit3(&args[3],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
+=======
+  OPS_kernels[3].count++;
+>>>>>>> d25c33b... MPI+OpenCL compilation
   OPS_kernels[3].time += t2-t1;
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
   OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);

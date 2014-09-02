@@ -703,7 +703,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -1089,6 +1089,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
   code('#include "user_types.h"')
+  code('#ifdef OPS_MPI')
+  code('#include "ops_mpi_core.h"')
+  code('#endif')
 
   comm('global constants')
   for nc in range (0,len(consts)):
