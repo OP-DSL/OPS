@@ -67,13 +67,18 @@ void field_summary()
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
       ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
       ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-      ops_arg_gbl(&vol, 1, "double", OPS_INC),
-      ops_arg_gbl(&mass, 1, "double", OPS_INC),
-      ops_arg_gbl(&ie, 1, "double", OPS_INC),
-      ops_arg_gbl(&ke, 1, "double", OPS_INC),
-      ops_arg_gbl(&press, 1, "double", OPS_INC));
+      ops_arg_reduce(red_vol, 1, "double", OPS_INC),
+      ops_arg_reduce(red_mass, 1, "double", OPS_INC),
+      ops_arg_reduce(red_ie, 1, "double", OPS_INC),
+      ops_arg_reduce(red_ke, 1, "double", OPS_INC),
+      ops_arg_reduce(red_press, 1, "double", OPS_INC));
 
   //printf("mass = %lf\n",mass);
+  ops_reduction_result(red_vol,&vol);
+  ops_reduction_result(red_mass,&mass);
+  ops_reduction_result(red_ie,&ie);
+  ops_reduction_result(red_ke,&ke);
+  ops_reduction_result(red_press,&press);
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out,"\n Time %lf\n",clover_time);

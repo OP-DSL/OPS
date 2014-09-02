@@ -39,7 +39,6 @@ void calc_dt(double* local_dt, char* local_control,
   int small;
   double jk_control = 1.1;
 
-  *local_dt = g_big;
   small = 0;
 
   int dtl_control;
@@ -69,7 +68,7 @@ void calc_dt(double* local_dt, char* local_control,
 
   ops_par_loop(calc_dt_kernel_min, "calc_dt_kernel_min", clover_grid, 2, rangexy_inner,
     ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
-    ops_arg_gbl(local_dt, 1, "double", OPS_MIN));
+    ops_arg_reduce(red_local_dt, 1, "double", OPS_MIN));
 
   //printf("*local_dt = %lf\n",*local_dt);
 
@@ -86,14 +85,18 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_getpointx[] = {*jldt-1+2,*jldt+2,y_min-2,y_max+2}; // get point value //note +2 added due to boundary
   int rangexy_getpointy[] = {x_min-2,x_max+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
-  if(*local_dt < dtmin) small = 1;
-
   ops_par_loop(calc_dt_kernel_get, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpoint,
     ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
-    ops_arg_gbl(xl_pos, 1, "double", OPS_INC),
-    ops_arg_gbl(yl_pos, 1, "double", OPS_INC));
+    ops_arg_reduce(red_xl_pos, 1, "double", OPS_INC),
+    ops_arg_reduce(red_yl_pos, 1, "double", OPS_INC));
 
+  ops_reduction_result(red_local_dt, local_dt);
+  ops_reduction_result(red_xl_pos, xl_pos);
+  ops_reduction_result(red_yl_pos, yl_pos);
+  *local_dt = MIN(*local_dt, g_big);
+
+  if(*local_dt < dtmin) small = 1;
 
   if(small != 0) {
     ops_printf("Timestep information:\n");
@@ -109,8 +112,9 @@ void calc_dt(double* local_dt, char* local_control,
       ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
       ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
       ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
-      ops_arg_gbl(output, 12, "double", OPS_INC));
+      ops_arg_reduce(red_output, 12, "double", OPS_INC));
 
+    ops_reduction_result(red_output, output);
     ops_printf("Cell velocities:\n");
     ops_printf("%E, %E \n",output[0],output[1]); //xvel0(jldt  ,kldt  ),yvel0(jldt  ,kldt  )
     ops_printf("%E, %E \n",output[2],output[3]); //xvel0(jldt+1,kldt  ),yvel0(jldt+1,kldt  )

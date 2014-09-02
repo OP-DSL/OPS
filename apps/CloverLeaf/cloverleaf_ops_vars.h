@@ -103,3 +103,15 @@
 
   ops_stencil S2D_00_P10_P20_M10;
   ops_stencil S2D_00_0P1_0P2_0M1;
+
+  ops_reduction red_local_dt;
+  ops_reduction red_xl_pos;
+  ops_reduction red_yl_pos;
+  ops_reduction red_vol;
+  ops_reduction red_mass;
+  ops_reduction red_ie;
+  ops_reduction red_ke;
+  ops_reduction red_press;
+  ops_reduction red_dt;
+  ops_reduction red_output;
+

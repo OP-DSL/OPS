@@ -180,13 +180,13 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 
 void ops_partition(char* routine)
 {
-  
+
 }
 
 
 void ops_halo_transfer(ops_halo_group group) {
-  printf("In CUDA block halo transfer\n"); 
-  
+  //printf("In CUDA block halo transfer\n");
+
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
     int size = halo->from->elem_size * halo->iter_size[0];
@@ -204,53 +204,51 @@ void ops_halo_transfer(ops_halo_group group) {
     int buf_strides[OPS_MAX_DIM];
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->from_dir[i] > 0) {
-        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i];
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i] - halo->from->base[i];
         ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i];
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i] - halo->from->base[i];
         ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
         step[i] = -1;
       }
       buf_strides[i] = 1;
       for (int j = 0; j != abs(halo->from_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
     }
-    
+
     /*for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
       for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
           ops_cuda_halo_copy(ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
-                 halo->from->data_d + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);        
+                 halo->from->data_d + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
         }
       }
     }*/
 
-    ops_cuda_halo_copy_tobuf(ops_halo_buffer_d, halo->from->data_d, 
+    ops_halo_copy_tobuf(ops_halo_buffer_d, 0, halo->from,
                        ranges[0], ranges[1],
                        ranges[2], ranges[3],
                        ranges[4], ranges[5],
                        step[0], step[1], step[2],
-                       halo->from->size[0],halo->from->size[1],halo->from->size[2],
-                       buf_strides[0], buf_strides[1], buf_strides[2],
-                       halo->from->elem_size);
-    
+                       buf_strides[0], buf_strides[1], buf_strides[2]);
+
     cutilSafeCall ( cudaDeviceSynchronize ( ) );
-    
+
     //copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->to_dir[i] > 0) {
-        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i];
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i] - halo->to->base[i];
         ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = 1;
       } else {
-        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i];
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i] - halo->to->base[i];
         ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
         step[i] = -1;
       }
       buf_strides[i] = 1;
       for (int j = 0; j != abs(halo->to_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
     }
-    
+
     /*for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
       for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
@@ -259,17 +257,15 @@ void ops_halo_transfer(ops_halo_group group) {
         }
       }
     }*/
-    
-    ops_cuda_halo_copy_frombuf(halo->to->data_d, ops_halo_buffer_d, 
+
+    ops_halo_copy_frombuf(halo->to, ops_halo_buffer_d, 0,
                    ranges[0], ranges[1],
                    ranges[2], ranges[3],
                    ranges[4], ranges[5],
                    step[0], step[1], step[2],
-                   halo->to->size[0],halo->to->size[1],halo->to->size[2],
-                   buf_strides[0], buf_strides[1], buf_strides[2],
-                   halo->to->elem_size);
-        
+                   buf_strides[0], buf_strides[1], buf_strides[2]);
+
     cutilSafeCall ( cudaDeviceSynchronize ( ) );
     halo->to->dirty_hd = 2;
-  }  
+  }
 }

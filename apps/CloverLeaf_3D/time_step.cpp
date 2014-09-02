@@ -48,7 +48,6 @@ void timestep()
   char dt_control[8];
   char dtl_control[8];
 
-  dt = g_big;
   int small = 0;
 
   x_pos  = 0.0;
@@ -118,9 +117,9 @@ void timestep()
   //dtl_control = (char *)xmalloc(8*sizeof(char ));
   calc_dt(&dtlp, dtl_control, &xl_pos, &yl_pos, &jldt, &kldt, &zl_pos, &lldt);
 
-
-  if (dtlp <= dt) {
-      dt = dtlp;
+  double dt_temp = g_big;
+  if (dtlp <= dt_temp) {
+      dt_temp = dtlp;
       //memcpy(dt_control, dtl_control, sizeof(char)*8);
       x_pos = xl_pos;
       y_pos = yl_pos;
@@ -128,8 +127,9 @@ void timestep()
       kdt = kldt;
   }
 
-  dt = MIN(MIN(dt, (dtold * dtrise)), dtmax);
-  //CALL clover_min(dt)
+  dt_temp = MIN(MIN(dt_temp, (dtold * dtrise)), dtmax);
+  ops_update_const("dt", 1, "double", &dt_temp);
+  dt = dt_temp;
 
   if(dt < dtmin) small=1;
   ops_printf(

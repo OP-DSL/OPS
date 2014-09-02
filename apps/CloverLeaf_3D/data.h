@@ -193,4 +193,15 @@ extern ops_stencil S3D_000_P100_M100_M200_STRID3D_X;
 extern ops_stencil S3D_000_0P10_0M10_0M20_STRID3D_Y;
 extern ops_stencil S3D_000_00P1_00M1_00M2_STRID3D_Z;
 
+extern ops_reduction red_local_dt;
+extern ops_reduction red_xl_pos;
+extern ops_reduction red_yl_pos;
+extern ops_reduction red_zl_pos;
+extern ops_reduction red_vol;
+extern ops_reduction red_mass;
+extern ops_reduction red_ie;
+extern ops_reduction red_ke;
+extern ops_reduction red_press;
+extern ops_reduction red_output;
+
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/

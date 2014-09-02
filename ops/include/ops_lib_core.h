@@ -188,6 +188,16 @@ typedef struct
   int         opt;     /*falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional*/
 } ops_arg;
 
+typedef struct {
+  char       *data;        /* The data */
+  int         size;        /* size of data in bytes */
+  int         initialized; /* flag indicating whether data has been initialized*/
+  ops_access  acc;         /* Type of reduction it was used for last time */
+  const char *type;        /* Type */
+  const char *name;        /* Name */
+} ops_reduction_core;
+typedef ops_reduction_core * ops_reduction;
+
 typedef struct
 {
   char       *name;     /* name of kernel function */
@@ -223,6 +233,18 @@ typedef struct
 } ops_halo_group_core;
 
 typedef ops_halo_group_core * ops_halo_group;
+
+
+typedef struct ops_kernel_descriptor
+{
+//  char        *name;     /* name of kernel */
+  ops_arg     *args;     /* list of arguments to pass in */
+  int         nargs;     /* number of arguments */
+  int           dim;     /* number of dimensions */
+  int      range[2*OPS_MAX_DIM];     /* execution range */
+  ops_block   block;     /* block to execute on */
+  void (*function)(struct ops_kernel_descriptor *desc); /* Function pointer to a wrapper to be called */
+} ops_kernel_descriptor;
 
 /*
 * min / max definitions
@@ -285,6 +307,12 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* bas
 ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
 ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
 ops_arg ops_arg_idx( );
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc);
+ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, ops_access acc);
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name);
+ops_reduction ops_decl_reduction_handle_core(int size, const char *type, const char *name);
+void ops_execute_reduction(ops_reduction handle);
 
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 void ops_decl_const_char( int, char const *, int, char *, char const* );
@@ -360,6 +388,20 @@ void ops_mpi_reduce_int(ops_arg *args, int* data);
 void ops_compute_moment(double t, double *first, double *second);
 
 void ops_dump3(ops_dat dat, const char *name);
+
+void ops_halo_copy_frombuf(ops_dat dest,
+                        char * src, int src_offset,
+                        int rx_s, int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z);
+void ops_halo_copy_tobuf(char * dest, int dest_offset, ops_dat src,
+                        int rx_s, int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z);
+
+/* lazy execution */
+void ops_enqueue_kernel(ops_kernel_descriptor *desc);
+void ops_execute();
 
 #ifdef __cplusplus
 }

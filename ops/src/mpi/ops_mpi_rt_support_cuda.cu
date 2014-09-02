@@ -153,6 +153,159 @@ void ops_comm_realloc(char **ptr, int size, int prev) {
  cutilSafeCall(cudaDeviceSynchronize());
 }
 
+__global__ void copy_kernel_tobuf(char * dest, char * src,
+                 int rx_s, int rx_e,
+                 int ry_s, int ry_e,
+                 int rz_s, int rz_e,
+                 int x_step, int y_step, int z_step,
+                 int size_x,int size_y,int size_z,
+                 int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                 int elem_size){
+
+  int idx_z = rz_s + z_step*(blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step*(blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step*(blockDim.x * blockIdx.x + threadIdx.x);
+
+  if ((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&
+      (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&
+      (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {
+
+      src += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;
+      dest  += ((idx_z-rz_s)*z_step*buf_strides_z+ (idx_y-ry_s)*y_step*buf_strides_y + (idx_x-rx_s)*x_step*buf_strides_x)*elem_size;
+      memcpy(dest,src,elem_size);
+  }
+}
+
+__global__ void copy_kernel_frombuf(char * dest, char * src,
+                 int rx_s, int rx_e,
+                 int ry_s, int ry_e,
+                 int rz_s, int rz_e,
+                 int x_step, int y_step, int z_step,
+                 int size_x,int size_y,int size_z,
+                 int buf_strides_x, int buf_strides_y, int buf_strides_z,
+                 int elem_size){
+
+  int idx_z = rz_s + z_step*(blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step*(blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step*(blockDim.x * blockIdx.x + threadIdx.x);
+
+  if ((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&
+      (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&
+      (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {
+
+      dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;
+      src  += ((idx_z-rz_s)*z_step*buf_strides_z+ (idx_y-ry_s)*y_step*buf_strides_y + (idx_x-rx_s)*x_step*buf_strides_x)*elem_size;
+      memcpy(dest,src,elem_size);
+  }
+}
+
+
+void ops_halo_copy_tobuf(char * dest, int dest_offset,
+                        ops_dat src,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z) {
+
+  dest += dest_offset;
+  int thr_x = abs(rx_s-rx_e);
+  int blk_x = 1;
+  if (abs(rx_s-rx_e)>8) {
+    blk_x = (thr_x-1)/8+1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s-ry_e);
+  int blk_y = 1;
+  if (abs(ry_s-ry_e)>8) {
+    blk_y = (thr_y-1)/8+1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s-rz_e);
+  int blk_z = 1;
+  if (abs(rz_s-rz_e)>8) {
+    blk_z = (thr_z-1)/8+1;
+    thr_z = 8;
+  }
+
+  int size = abs(src->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
+  char *gpu_ptr;
+  if (OPS_gpu_direct) gpu_ptr = dest;
+  else {
+    if (halo_buffer_size < size) {
+      if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
+      cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,size*sizeof(char)));
+      halo_buffer_size = size;
+    }
+    gpu_ptr = halo_buffer_d;
+  }
+
+  dim3 grid(blk_x,blk_y,blk_z);
+  dim3 tblock(thr_x,thr_y,thr_z);
+  copy_kernel_tobuf<<<grid, tblock>>>(gpu_ptr, src->data_d,
+                                  rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
+                                  x_step, y_step, z_step,
+                                  src->size[0], src->size[1], src->size[2],
+                                  buf_strides_x, buf_strides_y, buf_strides_z,
+                                  src->elem_size);
+
+  if (!OPS_gpu_direct)
+    cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size*sizeof(char), cudaMemcpyDeviceToHost));
+}
+
+
+void ops_halo_copy_frombuf(ops_dat dest,
+                        char * src, int src_offset,
+                        int rx_s, int rx_e,
+                        int ry_s, int ry_e,
+                        int rz_s, int rz_e,
+                        int x_step, int y_step, int z_step,
+                        int buf_strides_x, int buf_strides_y, int buf_strides_z) {
+
+  src += src_offset;
+  int thr_x = abs(rx_s-rx_e);
+  int blk_x = 1;
+  if (abs(rx_s-rx_e)>8) {
+    blk_x = (thr_x-1)/8+1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s-ry_e);
+  int blk_y = 1;
+  if (abs(ry_s-ry_e)>8) {
+    blk_y = (thr_y-1)/8+1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s-rz_e);
+  int blk_z = 1;
+  if (abs(rz_s-rz_e)>8) {
+    blk_z = (thr_z-1)/8+1;
+    thr_z = 8;
+  }
+
+  int size = abs(dest->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
+  char *gpu_ptr;
+  if (OPS_gpu_direct) gpu_ptr = src;
+  else {
+    if (halo_buffer_size < size) {
+      if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
+      cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,size*sizeof(char)));
+      halo_buffer_size = size;
+    }
+    gpu_ptr = halo_buffer_d;
+    cutilSafeCall(cudaMemcpy(halo_buffer_d, src, size*sizeof(char), cudaMemcpyHostToDevice));
+  }
+
+  dim3 grid(blk_x,blk_y,blk_z);
+  dim3 tblock(thr_x,thr_y,thr_z);
+  copy_kernel_frombuf<<<grid, tblock>>>(dest->data_d, gpu_ptr,
+                                  rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
+                                  x_step, y_step, z_step,
+                                  dest->size[0], dest->size[1], dest->size[2],
+                                  buf_strides_x, buf_strides_y, buf_strides_z,
+                                  dest->elem_size);
+  dest->dirty_hd = 2;
+}
+
 #ifdef __cplusplus
 }
 #endif

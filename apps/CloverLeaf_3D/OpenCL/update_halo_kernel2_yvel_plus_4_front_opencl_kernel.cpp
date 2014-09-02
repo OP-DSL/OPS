@@ -84,7 +84,7 @@ void buildOpenCLKernels_update_halo_kernel2_yvel_plus_4_front(int xdim0, int ydi
       printf("compiling update_halo_kernel2_yvel_plus_4_front -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[75] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel2_yvel_plus_4_front", &ret);
+    OPS_opencl_core.kernel[91] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel2_yvel_plus_4_front", &ret);
     clSafeCall( ret );
 
     isbuilt_update_halo_kernel2_yvel_plus_4_front = true;
@@ -98,11 +98,16 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   ops_arg args[3] = { arg0, arg1, arg2};
 
+
+  ops_timing_realloc(91,"update_halo_kernel2_yvel_plus_4_front");
+  OPS_kernels[91].count++;
+
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<3; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -111,12 +116,15 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<3; n++ ){
@@ -142,7 +150,6 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(75,"update_halo_kernel2_yvel_plus_4_front");
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
@@ -151,6 +158,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
 
 
   int *arg2h = (int *)arg2.data;
+
   int consts_bytes = 0;
 
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
@@ -167,38 +175,49 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
   int dat1 = args[1].dat->elem_size;
 
   //set up initial pointers
+  int d_m[OPS_MAX_DIM];
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
+  #endif //OPS_MPI
   int base0 = 1 * 
-  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - args[0].dat->d_m[0]);
+  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0 + args[0].dat->size[0] *
-  (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - args[0].dat->d_m[1]);
+  (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   base0 = base0 + args[0].dat->size[0] *  args[0].dat->size[1] *
-  (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - args[0].dat->d_m[2]);
+  (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
 
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
+  #endif //OPS_MPI
   int base1 = 1 * 
-  (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - args[1].dat->d_m[0]);
+  (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   base1 = base1 + args[1].dat->size[0] *
-  (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - args[1].dat->d_m[1]);
+  (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
   base1 = base1 + args[1].dat->size[0] *  args[1].dat->size[1] *
-  (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - args[1].dat->d_m[2]);
+  (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
 
 
   ops_H_D_exchanges_device(args, 3);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[75].mpi_time += t1-t2;
+  OPS_kernels[91].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 3, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 4, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 5, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 6, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[75], 7, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 3, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 4, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 5, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 6, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[91], 7, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[75], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[91], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
@@ -207,8 +226,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_front(char const *name, ops_bl
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[75].count++;
-  OPS_kernels[75].time += t2-t1;
-  OPS_kernels[75].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[75].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[91].time += t2-t1;
+  OPS_kernels[91].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[91].transfer += ops_compute_transfer(dim, range, &arg1);
 }

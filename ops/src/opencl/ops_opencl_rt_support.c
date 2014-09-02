@@ -296,19 +296,6 @@ void ops_H_D_exchanges_device(ops_arg *args, int nargs)
     }
 }
 
-void ops_set_dirtybit_host(ops_arg *args, int nargs)
-{
-  //printf("in ops_set_dirtybit\n");
-  for (int n=0; n<nargs; n++) {
-    if((args[n].argtype == OPS_ARG_DAT) &&
-       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
-      //printf("setting dirty bit on host\n");
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-}
-
-
 void ops_set_dirtybit_device(ops_arg *args, int nargs)
 {
   for (int n=0; n<nargs; n++) {
@@ -427,45 +414,3 @@ void ops_opencl_exit ( )
   clSafeCall( clReleaseContext(OPS_opencl_core.context) );
   free(OPS_opencl_core.platform_id);
 }
-
-int ops_is_root()
-{
-  return 1;
-}
-
-void ops_set_halo_dirtybit(ops_arg *arg)
-{
-  (void)arg;
-}
-
-void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {}
-
-void ops_exchange_halo(ops_arg* arg, int d)
-{
-  (void)arg;
-}
-
-void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/) {}
-void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range) {}
-void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {}
-
-
-void ops_mpi_reduce_float(ops_arg* args, float* data)
-{
-  (void)args;
-  (void)data;
-}
-
-void ops_mpi_reduce_double(ops_arg* args, double* data)
-{
-  (void)args;
-  (void)data;
-}
-
-void ops_mpi_reduce_int(ops_arg* args, int* data)
-{
-  (void)args;
-  (void)data;
-}
-
-

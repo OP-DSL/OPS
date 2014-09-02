@@ -230,14 +230,18 @@ def ops_gen_mpi(master, date, consts, kernels):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
-
-    comm('compute localy allocated range for the sub-block')
+    code('')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('OPS_kernels['+str(nk)+'].count++;')
+    code('')
+    comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
     code('')
 
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('if (!sb->owned) return;')
     FOR('n','0',str(NDIM))
     code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
@@ -246,12 +250,15 @@ def ops_gen_mpi(master, date, consts, kernels):
     ELSE()
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
+    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
     IF('end[n] >= range[2*n+1]')
     code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
     code('end[n] = sb->decomp_size[n];')
     ENDIF()
+    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
+    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
@@ -291,7 +298,6 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('Timing')
     code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c2,&t2);')
     code('')
 
@@ -303,6 +309,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     comm('set up initial pointers and exchange halos if necessary')
+    code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
 
@@ -318,14 +325,19 @@ def ops_gen_mpi(master, date, consts, kernels):
         #ENDFOR()
         #ENDFOR()
 
+        code('#ifdef OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
+        code('#else //OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
+        code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
+        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
+          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
@@ -335,7 +347,14 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        if accs[n] == OPS_READ:
+          code('p_a['+str(n)+'] = args['+str(n)+'].data;')
+        else:
+          code('#ifdef OPS_MPI')
+          code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index;')
+          code('#else //OPS_MPI')
+          code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data;')
+          code('#endif //OPS_MPI')
         code('')
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
@@ -411,7 +430,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
     #code('for(;n_x<(end[0]-start[0]);n_x++) {')
-    depth = depth+2
+    #depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
@@ -478,14 +497,13 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
 
-    if reduction == 1 :
+    # if reduction == 1 :
+    #   for n in range (0, nargs):
+    #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+    #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
 
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-          code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
-
-      code('ops_timers_core(&c1,&t1);')
-      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    #   code('ops_timers_core(&c1,&t1);')
+    #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
@@ -493,15 +511,14 @@ def ops_gen_mpi(master, date, consts, kernels):
         #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
-    code('')
-    code('#ifdef OPS_DEBUG')
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
-        code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
-    code('#endif')
+    # code('')
+    # code('#ifdef OPS_DEBUG')
+    # for n in range (0,nargs):
+    #   if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
+    #     code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
+    # code('#endif')
     code('')
     comm('Update kernel record')
-    code('OPS_kernels['+str(nk)+'].count++;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')

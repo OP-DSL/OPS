@@ -303,7 +303,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('ops_timers_core(&c1,&t1);')
     code('')
     code('');
@@ -322,7 +321,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         text = text +'\n                    '
     code(text);
 
-
+    code('')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    code('OPS_kernels['+str(nk)+'].count++;')
+    code('')
     comm('compute locally allocated range for the sub-block')
     code('')
     code('int start['+str(NDIM)+'];')
@@ -331,6 +333,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('if (!sb->owned) return;')
     FOR('n','0',str(NDIM))
     code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
     IF('start[n] >= range[2*n]')
@@ -339,12 +342,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ELSE()
     code('start[n] = range[2*n] - start[n];')
     ENDIF()
+    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
     IF('end[n] >= range[2*n+1]')
     code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
     ENDIF()
     ELSE()
     code('end[n] = sb->decomp_size[n];')
     ENDIF()
+    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
+    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
@@ -381,7 +387,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     if reduction == True:
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          #code(typs[n]+'*arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          if (accs[n] == OPS_READ):
+            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+          else:
+            code('#ifdef OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code('#else //OPS_MPI')
+            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code('#endif //OPS_MPI')
 
     code('')
     code('#ifdef _OPENMP')
@@ -492,16 +506,22 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code('#endif //OPS_MPI')
 
     comm('set up initial pointers ')
+    code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        code('#ifdef OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
+        code('#else //OPS_MPI')
+        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
+        code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
+        code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
+          code('  (start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
@@ -509,7 +529,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start0,')
         #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        if accs[n] == OPS_READ:
+          code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data;')
+        else:
+          code('p_a['+str(n)+'] = (char *)arg'+str(n)+'h;')
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
 
@@ -665,9 +688,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       ENDFOR()
 
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
+    # for n in range (0, nargs):
+    #   if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+    #     #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)arg'+str(n)+'h);')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
@@ -677,16 +700,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
 
-    code('')
-    code('#ifdef OPS_DEBUG')
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
-        code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
-    code('#endif')
+    # code('')
+    # code('#ifdef OPS_DEBUG')
+    # for n in range (0,nargs):
+    #   if arg_typ[n] == 'ops_arg_dat' and accs[n] <> OPS_READ:
+    #     code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
+    # code('#endif')
     code('')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].count++;')
     code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

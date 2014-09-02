@@ -14,12 +14,17 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(0,"poisson_kernel_populate");
+  OPS_kernels[0].count++;
+
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -28,12 +33,15 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     else {
       start[n] = range[2*n] - start[n];
     }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
       end[n] = range[2*n+1] - sb->decomp_disp[n];
     }
     else {
       end[n] = sb->decomp_size[n];
     }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -68,7 +76,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(0,"poisson_kernel_populate");
   ops_timers_core(&c2,&t2);
 
   int off3_0 = offs[3][0];
@@ -82,34 +89,50 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   int dat5 = args[5].dat->elem_size;
 
   //set up initial pointers and exchange halos if necessary
-  p_a[0] = (char *)args[0].data;
+  int d_m[OPS_MAX_DIM];
+  p_a[0] = args[0].data;
 
 
-  p_a[1] = (char *)args[1].data;
+  p_a[1] = args[1].data;
 
 
   p_a[2] = (char *)arg_idx;
 
 
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
+  #endif //OPS_MPI
   int base3 = dat3 * 1 * 
-    (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - args[3].dat->d_m[0]);
+    (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
   base3 = base3+ dat3 *
     args[3].dat->size[0] *
-    (start[1] * args[3].stencil->stride[1] - args[3].dat->base[1] - args[3].dat->d_m[1]);
+    (start[1] * args[3].stencil->stride[1] - args[3].dat->base[1] - d_m[1]);
   p_a[3] = (char *)args[3].data + base3;
 
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
+  #endif //OPS_MPI
   int base4 = dat4 * 1 * 
-    (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - args[4].dat->d_m[0]);
+    (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
-    (start[1] * args[4].stencil->stride[1] - args[4].dat->base[1] - args[4].dat->d_m[1]);
+    (start[1] * args[4].stencil->stride[1] - args[4].dat->base[1] - d_m[1]);
   p_a[4] = (char *)args[4].data + base4;
 
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
+  #endif //OPS_MPI
   int base5 = dat5 * 1 * 
-    (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - args[5].dat->d_m[0]);
+    (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
   base5 = base5+ dat5 *
     args[5].dat->size[0] *
-    (start[1] * args[5].stencil->stride[1] - args[5].dat->base[1] - args[5].dat->d_m[1]);
+    (start[1] * args[5].stencil->stride[1] - args[5].dat->base[1] - d_m[1]);
   p_a[5] = (char *)args[5].data + base5;
 
 
@@ -142,45 +165,38 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     }
 
     for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
-        //call kernel function, passing in pointers to data - remainder
-        poisson_kernel_populate(  (int *)p_a[0], (int *)p_a[1], (int *)p_a[2],
+      //call kernel function, passing in pointers to data - remainder
+      poisson_kernel_populate(  (int *)p_a[0], (int *)p_a[1], (int *)p_a[2],
            (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
 
 
-        //shift pointers to data x direction
-        p_a[3]= p_a[3] + (dat3 * off3_0);
-        p_a[4]= p_a[4] + (dat4 * off4_0);
-        p_a[5]= p_a[5] + (dat5 * off5_0);
-        arg_idx[0]++;
-      }
-
-      //shift pointers to data y direction
-      p_a[3]= p_a[3] + (dat3 * off3_1);
-      p_a[4]= p_a[4] + (dat4 * off4_1);
-      p_a[5]= p_a[5] + (dat5 * off5_1);
-      #ifdef OPS_MPI
-      arg_idx[0] = sb->decomp_disp[0]+start[0];
-      #else //OPS_MPI
-      arg_idx[0] = start[0];
-      #endif //OPS_MPI
-      arg_idx[1]++;
+      //shift pointers to data x direction
+      p_a[3]= p_a[3] + (dat3 * off3_0);
+      p_a[4]= p_a[4] + (dat4 * off4_0);
+      p_a[5]= p_a[5] + (dat5 * off5_0);
+      arg_idx[0]++;
     }
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[0].time += t2-t1;
-    ops_set_dirtybit_host(args, 6);
-    ops_set_halo_dirtybit3(&args[3],range);
-    ops_set_halo_dirtybit3(&args[4],range);
-    ops_set_halo_dirtybit3(&args[5],range);
 
-    #ifdef OPS_DEBUG
-    ops_dump3(arg3.dat,"poisson_kernel_populate");
-    ops_dump3(arg4.dat,"poisson_kernel_populate");
-    ops_dump3(arg5.dat,"poisson_kernel_populate");
-    #endif
-
-    //Update kernel record
-    OPS_kernels[0].count++;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
+    //shift pointers to data y direction
+    p_a[3]= p_a[3] + (dat3 * off3_1);
+    p_a[4]= p_a[4] + (dat4 * off4_1);
+    p_a[5]= p_a[5] + (dat5 * off5_1);
+    #ifdef OPS_MPI
+    arg_idx[0] = sb->decomp_disp[0]+start[0];
+    #else //OPS_MPI
+    arg_idx[0] = start[0];
+    #endif //OPS_MPI
+    arg_idx[1]++;
   }
+  ops_timers_core(&c2,&t2);
+  OPS_kernels[0].time += t2-t1;
+  ops_set_dirtybit_host(args, 6);
+  ops_set_halo_dirtybit3(&args[3],range);
+  ops_set_halo_dirtybit3(&args[4],range);
+  ops_set_halo_dirtybit3(&args[5],range);
+
+  //Update kernel record
+  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
+}

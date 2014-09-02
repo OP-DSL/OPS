@@ -88,7 +88,7 @@ void ops_timers(double * cpu, double * et)
 
 void ops_printf(const char* format, ...)
 {
-  if(ops_my_rank==MPI_ROOT) {
+  if(ops_my_global_rank==MPI_ROOT) {
     va_list argptr;
     va_start(argptr, format);
     vprintf(format, argptr);
@@ -98,7 +98,7 @@ void ops_printf(const char* format, ...)
 
 void ops_fprintf(FILE *stream, const char *format, ...)
 {
-  if(ops_my_rank==MPI_ROOT) {
+  if(ops_my_global_rank==MPI_ROOT) {
     va_list argptr;
     va_start(argptr, format);
     vfprintf(stream, format, argptr);
@@ -107,8 +107,8 @@ void ops_fprintf(FILE *stream, const char *format, ...)
 }
 
 void ops_compute_moment(double t, double *first, double *second) {
-  double times[2];
-  double times_reduced[2];
+  double times[2] = {0.0};
+  double times_reduced[2] = {0.0};
   int comm_size;
   times[0] = t;
   times[1] = t*t;
@@ -151,4 +151,21 @@ ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, op
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 {
   return ops_arg_gbl_core( data, dim, size, acc );
+}
+
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+  int was_initialized = handle->initialized;
+  ops_arg temp = ops_arg_reduce_core(handle, dim, type, acc);
+  if (!was_initialized) {
+    for (int i = 1; i < OPS_block_index; i++) {
+      memcpy(handle->data + i*handle->size, handle->data, handle->size);
+    }
+  }
+  return temp;
+}
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
+  red->data = (char *)realloc(red->data, red->size*OPS_block_index*sizeof(char));
+  return red;
 }

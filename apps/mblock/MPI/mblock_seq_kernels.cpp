@@ -5,5 +5,6 @@
 #include "ops_lib_cpp.h"
 #include "ops_lib_mpi.h"
 
+// global constants
 //user kernel files
 #include "mblock_populate_kernel_seq_kernel.cpp"

@@ -50,23 +50,16 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
   }
 }
 
-ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
-  if ( OPS_halo_group_index == OPS_halo_group_max ) {
-    OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc) {
+  return ops_arg_reduce_core(handle, dim, type, acc);
+}
 
-    if ( OPS_halo_group_list == NULL ) {
-      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
-      exit ( -1 );
-    }
-  }
-  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
-  grp->nhalos = nhalos;
-  grp->halos = halos; //TODO: make a copy?
-  grp->index = OPS_halo_group_index++;
-  OPS_halo_group_list[OPS_halo_group_index++] = grp;
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  return ops_decl_reduction_handle_core(size, type, name);
+}
 
-  return grp;
+void ops_execute_reduction(ops_reduction handle) {
+  (void)handle;
 }
 
 int ops_is_root()

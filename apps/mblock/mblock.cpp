@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   //declare datasets
-  int d_p[2] = {-2,-2}; //max halo depths for the dat in the possitive direction
+  int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
   int size[2] = {20, 20}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
@@ -174,7 +174,8 @@ int main(int argc, char **argv)
   ops_halo_transfer(halos2);
   ops_halo_transfer(halos3);
   ops_halo_transfer(halos4);
-
+  ops_print_dat_to_txtfile(data0, "data0.txt");
+  ops_print_dat_to_txtfile(data1, "data1.txt");
 
   ops_timers_core(&ct1, &et1);
   ops_timing_output();

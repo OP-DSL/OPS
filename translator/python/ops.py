@@ -241,31 +241,40 @@ def ops_par_loop_parse(text):
       search2 = "ops_arg_dat"
       search3 = "ops_arg_gbl"
       search4 = "ops_arg_idx"
+      search5 = "ops_arg_reduce"
       j = arg_string.find(search2)
       k = arg_string.find(search3)
       l = arg_string.find(search4)
+      m = arg_string.find(search5)
 
-      while j > -1 or k > -1 or l > -1:
-        if j>=0 and (j < k or k<=-1) and (j < l or l <=-1):
+      while j > -1 or k > -1 or l > -1 or m>-1:
+        if j>=0 and (j < k or k<=-1) and (j < l or l <=-1) and (j < m or m <=-1):
             temp_dat = get_arg_dat(arg_string, j)
             # append this struct to a temporary list/array
             temp_args.append(temp_dat)
             num_args = num_args + 1
             j = arg_string.find(search2, j + 12)
 
-        elif k>=0 and (k < j or j<=-1) and (k < l or l <=-1):
+        elif k>=0 and (k < j or j<=-1) and (k < l or l <=-1) and (k < m or m <=-1):
             temp_gbl = get_arg_gbl(arg_string, k)
             # append this struct to a temporary list/array
             temp_args.append(temp_gbl)
             num_args = num_args + 1
             k = arg_string.find(search3, k + 12)
 
-        elif l>=0 and (l < j or j<=-1) and (l < k or k <=-1):
+        elif l>=0 and (l < j or j<=-1) and (l < k or k <=-1) and (l < m or m <=-1):
             temp_idx = get_arg_idx(arg_string, l)
             # append this struct to a temporary list/array
             temp_args.append(temp_idx)
             num_args = num_args + 1
             l = arg_string.find(search4, l + 12)
+
+        elif m>=0 and (m < j or j<=-1) and (m < l or l <=-1) and (m < k or k <=-1):
+            temp_gbl = get_arg_gbl(arg_string, m)
+            # append this struct to a temporary list/array
+            temp_args.append(temp_gbl)
+            num_args = num_args + 1
+            m = arg_string.find(search5, m + 15)
 
       temp = {'loc': i,
             'name1': arg_string.split(',')[0].strip(),
@@ -625,9 +634,14 @@ def main():
                       ', ' + elem['opt'] +'),\n' + indent
                   #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
               elif elem['type'] == 'ops_arg_gbl':
+                if elem['acc'] == 'OPS_READ':
                   line = line + elem['type'] + '(' + elem['data'] + \
                       ', ' + elem['dim'] + ', "' +  elem['typ'] + \
                       '", ' +  elem['acc'] + '),\n' + indent
+                else:
+                  line = line + 'ops_arg_reduce(' + elem['data'] + \
+                        ', ' + elem['dim'] + ', "' +  elem['typ'] + \
+                        '", ' +  elem['acc'] + '),\n' + indent
               elif elem['type'] == 'ops_arg_idx':
                   line = line + elem['type'] + '(),\n' + indent
 

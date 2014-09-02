@@ -161,4 +161,14 @@ extern ops_stencil S2D_00_0P1_0M1_STRID2D_Y;
 extern ops_stencil S2D_00_P10_P20_M10;
 extern ops_stencil S2D_00_0P1_0P2_0M1;
 
+extern ops_reduction red_local_dt;
+extern ops_reduction red_xl_pos;
+extern ops_reduction red_yl_pos;
+extern ops_reduction red_vol;
+extern ops_reduction red_mass;
+extern ops_reduction red_ie;
+extern ops_reduction red_ke;
+extern ops_reduction red_press;
+extern ops_reduction red_output;
+
 #endif /* #ifndef __CLOVER_LEAF_DATA_H*/

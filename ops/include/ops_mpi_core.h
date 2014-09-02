@@ -34,7 +34,7 @@
 
 /** @brief core header file for the ops MPI backend
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Headder file for OPS MPI backend
+  * @details Header file for OPS MPI backend
   */
 
 #include <mpi.h>
@@ -50,8 +50,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
 
 //
 //Struct for holding the decomposition details of a block on an MPI process
@@ -70,6 +68,12 @@ typedef struct {
   // finest level decomposed details
   int decomp_disp[OPS_MAX_DIM];
   int decomp_size[OPS_MAX_DIM];
+  // Cartesian communicator for intra-block
+  MPI_Comm comm;
+  MPI_Comm comm1;
+  // Group communicator for intra-block
+  MPI_Group grp;
+  int owned;
 } sub_block;
 
 typedef sub_block * sub_block_list;
@@ -104,9 +108,15 @@ typedef struct {
   // the displacement from the start of the block in each dimension
   int decomp_disp[OPS_MAX_DIM];
 
+  // intra-block halo
+  int d_im[OPS_MAX_DIM];
+  int d_ip[OPS_MAX_DIM];
+
   // global information
   int gbl_size[OPS_MAX_DIM];
   int gbl_base[OPS_MAX_DIM];
+  int gbl_d_m[OPS_MAX_DIM];
+  int gbl_d_p[OPS_MAX_DIM];
 
   //flag to indicate MPI halo exchange is needed
   int         dirtybit;
@@ -119,20 +129,47 @@ typedef struct {
 
 typedef sub_dat * sub_dat_list;
 
+typedef struct {
+  ops_halo halo;
+  int nproc_from; //number of processes I have to send to (from part of halo)
+  int nproc_to; //number of processes I have to receive from (to part of halo)
+  int *proclist;
+  int *local_from_base;
+  int *local_to_base;
+  int *local_iter_size;
+  int index;
+} ops_mpi_halo;
+
+typedef struct {
+  ops_halo_group group;
+  int nhalos;
+  ops_mpi_halo **mpi_halos;
+  int index;
+  int num_neighbors_send;
+  int num_neighbors_recv;
+  int *neighbors_send;
+  int *neighbors_recv;
+  int *send_sizes;
+  int *recv_sizes;
+  MPI_Request *requests;
+  MPI_Status *statuses;
+} ops_mpi_halo_group;
+
 //
 //MPI Communicator for halo creation and exchange
 //
 
-extern MPI_Comm OPS_MPI_WORLD;
-extern MPI_Comm OPS_CART_COMM;
-extern int ops_comm_size;
-extern int ops_my_rank;
+extern MPI_Comm OPS_MPI_GLOBAL;
+extern int ops_comm_global_size;
+extern int ops_my_global_rank;
 
 //
 // list holding sub-block and sub-dat geometries
 //
 extern sub_block_list *OPS_sub_block_list;
 extern sub_dat_list *OPS_sub_dat_list;
+extern ops_mpi_halo *OPS_mpi_halo_list;
+extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
 
 void ops_mpi_exit();
 
