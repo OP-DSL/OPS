@@ -45,7 +45,7 @@
 
 
 //user function
-void calc_dt_kernel_get(const __global double* restrict  cellx, const __global double* restrict  celly,  double* restrict  xl_pos,
+void calc_dt_kernel_get(const __global double* restrict  cellx, const __global double* restrict  celly,  double* restrict  xl_pos, 
  double* restrict  yl_pos)
 
   {

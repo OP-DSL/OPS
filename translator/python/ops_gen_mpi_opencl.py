@@ -389,6 +389,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
             sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+          else:
+            sig2 = sig2 + sig.split(',')[n].strip()+', '
       elif arg_typ[n] == 'ops_arg_idx':
         sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
       else:
@@ -1001,7 +1003,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         nkernel_args = nkernel_args+1
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
-          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) &arg'+str(n)+'.data ));')
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) arg'+str(n)+'.data ));')
           nkernel_args = nkernel_args+1
         else:
           code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
