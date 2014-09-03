@@ -94,7 +94,7 @@ void buildOpenCLKernels_update_halo_kernel3_plus_4_b(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   ops_arg args[3] = { arg0, arg1, arg2};
 
@@ -202,6 +202,7 @@ void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block Block
 
 
   ops_H_D_exchanges_device(args, 3);
+  ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[107].mpi_time += t1-t2;
@@ -223,6 +224,8 @@ void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block Block
   }
 
   ops_set_dirtybit_device(args, 3);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

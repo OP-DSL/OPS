@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel3_minus_2_b(__global double * restrict vol_flux_x, __global double * restrict mass_flux_x, const __global int* restrict  fields)
+inline void update_halo_kernel3_minus_2_b(__global double * restrict vol_flux_x, __global double * restrict mass_flux_x)
 
   {
   if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0,0)]  = -(vol_flux_x[OPS_ACC0(-2,0,0)]);

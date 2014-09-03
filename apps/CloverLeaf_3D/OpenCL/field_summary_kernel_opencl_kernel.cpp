@@ -99,7 +99,7 @@ void buildOpenCLKernels_field_summary_kernel(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10, ops_arg arg11) {
@@ -351,6 +351,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block Block, int di
 
 
   ops_H_D_exchanges_device(args, 12);
+  ops_halo_exchanges(args,12,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[41].mpi_time += t1-t2;

@@ -93,7 +93,7 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0, int ydim0) {
 
 
 // host stub function
-void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
   ops_arg args[2] = { arg0, arg1};
 
@@ -195,6 +195,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block Block, int dim,
 
 
   ops_H_D_exchanges_device(args, 2);
+  ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[38].mpi_time += t1-t2;

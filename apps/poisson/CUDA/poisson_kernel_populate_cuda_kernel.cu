@@ -16,6 +16,7 @@ void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx,
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
   u[OPS_ACC3(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
+  printf(" idx[0] = %d , idx[1] = %d, u = %g\n",idx[0],idx[1],u[OPS_ACC3(0,0)]);
   f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
   ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
 
@@ -143,7 +144,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = dat3 * 1 * 
+  int base3 = dat3 * 1 *
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
   base3 = base3+ dat3 *
     args[3].dat->size[0] *
@@ -155,7 +156,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
   #endif //OPS_MPI
-  int base4 = dat4 * 1 * 
+  int base4 = dat4 * 1 *
   (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
@@ -167,7 +168,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
   #endif //OPS_MPI
-  int base5 = dat5 * 1 * 
+  int base5 = dat5 * 1 *
   (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
   base5 = base5+ dat5 *
     args[5].dat->size[0] *

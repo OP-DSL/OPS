@@ -97,7 +97,7 @@ void buildOpenCLKernels_advec_cell_kernel1_ydir(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4) {
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
@@ -243,6 +243,7 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int
 
 
   ops_H_D_exchanges_device(args, 5);
+  ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[11].mpi_time += t1-t2;
@@ -269,6 +270,8 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block Block, int
   }
 
   ops_set_dirtybit_device(args, 5);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

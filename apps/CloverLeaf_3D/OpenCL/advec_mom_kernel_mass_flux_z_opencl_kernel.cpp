@@ -94,7 +94,7 @@ void buildOpenCLKernels_advec_mom_kernel_mass_flux_z(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
   ops_arg args[2] = { arg0, arg1};
 
@@ -191,6 +191,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block Block
 
 
   ops_H_D_exchanges_device(args, 2);
+  ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[33].mpi_time += t1-t2;
@@ -211,6 +212,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block Block
   }
 
   ops_set_dirtybit_device(args, 2);
+  ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

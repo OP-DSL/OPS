@@ -8,6 +8,7 @@
 #include "ops_lib_cpp.h"
 #include "ops_opencl_rt_support.h"
 #include "user_types.h"
+#include "ops_lib_mpi.h"
 //global constants
 extern double g_small;
 extern double g_big;

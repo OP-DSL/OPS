@@ -106,7 +106,7 @@ void buildOpenCLKernels_calc_dt_kernel(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10, ops_arg arg11, ops_arg arg12, ops_arg arg13) {
@@ -397,6 +397,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
 
 
   ops_H_D_exchanges_device(args, 14);
+  ops_halo_exchanges(args,14,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[37].mpi_time += t1-t2;
@@ -447,6 +448,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   }
 
   ops_set_dirtybit_device(args, 14);
+  ops_set_halo_dirtybit3(&args[10],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

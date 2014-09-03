@@ -109,7 +109,7 @@ void buildOpenCLKernels_PdV_kernel_nopredict(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10, ops_arg arg11, ops_arg arg12, ops_arg arg13,
@@ -449,6 +449,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
 
 
   ops_H_D_exchanges_device(args, 17);
+  ops_halo_exchanges(args,17,range);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[5].mpi_time += t1-t2;
@@ -500,6 +501,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
   }
 
   ops_set_dirtybit_device(args, 17);
+  ops_set_halo_dirtybit3(&args[6],range);
+  ops_set_halo_dirtybit3(&args[10],range);
+  ops_set_halo_dirtybit3(&args[13],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);

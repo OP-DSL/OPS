@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel4_plus_4_front(__global double * restrict vol_flux_y, __global double * restrict mass_flux_y, const __global int* restrict  fields)
+inline void update_halo_kernel4_plus_4_front(__global double * restrict vol_flux_y, __global double * restrict mass_flux_y)
 
   {
   if(fields[FIELD_VOL_FLUX_Y] == 1)  vol_flux_y[OPS_ACC0(0,0,0)]  = vol_flux_y[OPS_ACC0(0,0,-4)];

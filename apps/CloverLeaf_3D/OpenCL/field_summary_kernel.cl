@@ -52,7 +52,7 @@
 //user function
 void field_summary_kernel( const __global double * restrict volume, const __global double * restrict density0, const __global double * restrict energy0, 
 const __global double * restrict pressure, const __global double * restrict xvel0, const __global double * restrict yvel0, const __global double * restrict zvel0, 
- double * restrict vol, double * restrict mass, double * restrict ie, double * restrict ke,
+ double * restrict vol,  double * restrict mass,  double * restrict ie,  double * restrict ke, 
  double * restrict press)
 
   {
