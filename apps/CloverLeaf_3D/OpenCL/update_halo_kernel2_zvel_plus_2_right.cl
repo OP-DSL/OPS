@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel2_zvel_plus_2_right(__global double * restrict zvel0, __global double * restrict zvel1)
+inline void update_halo_kernel2_zvel_plus_2_right(__global double * restrict zvel0, __global double * restrict zvel1, const __global int* restrict  fields)
 
  
 {

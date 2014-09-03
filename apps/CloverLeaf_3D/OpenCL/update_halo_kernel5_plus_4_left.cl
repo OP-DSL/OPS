@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel5_plus_4_left(__global double * restrict vol_flux_z, __global double * restrict mass_flux_z)
+inline void update_halo_kernel5_plus_4_left(__global double * restrict vol_flux_z, __global double * restrict mass_flux_z, const __global int* restrict  fields)
 
   {
   if(fields[FIELD_VOL_FLUX_Z] == 1) vol_flux_z[OPS_ACC0(0,0,0)] = (vol_flux_z[OPS_ACC0(4,0,0)]);

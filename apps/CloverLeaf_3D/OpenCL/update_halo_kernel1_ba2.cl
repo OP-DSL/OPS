@@ -51,7 +51,8 @@
 
 //user function
 inline void update_halo_kernel1_ba2(__global double * restrict density0, __global double * restrict density1, __global double * restrict energy0, 
-__global double * restrict energy1, __global double * restrict pressure, __global double * restrict viscosity, __global double * restrict soundspeed)
+__global double * restrict energy1, __global double * restrict pressure, __global double * restrict viscosity, __global double * restrict soundspeed, 
+const __global int* restrict  fields)
 
   {
   if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0,0)] = density0[OPS_ACC0(0,0,3)];

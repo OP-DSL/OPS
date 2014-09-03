@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel2_xvel_minus_2_left(__global double * restrict xvel0, __global double * restrict xvel1)
+inline void update_halo_kernel2_xvel_minus_2_left(__global double * restrict xvel0, __global double * restrict xvel1, const __global int* restrict  fields)
 
  
 {

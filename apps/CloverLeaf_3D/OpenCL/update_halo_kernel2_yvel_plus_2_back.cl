@@ -45,7 +45,7 @@
 
 
 //user function
-inline void update_halo_kernel2_yvel_plus_2_back(__global double * restrict yvel0, __global double * restrict yvel1)
+inline void update_halo_kernel2_yvel_plus_2_back(__global double * restrict yvel0, __global double * restrict yvel1, const __global int* restrict  fields)
 
  
 {
