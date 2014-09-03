@@ -173,3 +173,8 @@ void ops_partition(char* routine)
 {
   (void)routine;
 }
+
+void ops_halo_transfer(ops_halo_group group)
+{
+
+}

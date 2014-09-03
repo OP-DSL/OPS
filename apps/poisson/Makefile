@@ -207,7 +207,7 @@ poisson_opencl: ./OpenCL/poisson_opencl_kernels.o poisson_ops.cpp poisson_kernel
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) poisson_ops.cpp ./OpenCL/poisson_opencl_kernels.o  -lops_opencl -o poisson_opencl
 
 ./OpenCL/poisson_opencl_kernels.o: ./OpenCL/poisson_opencl_kernels.cpp Makefile
-	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+	$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/poisson_opencl_kernels.o ./OpenCL/poisson_opencl_kernels.cpp
 
 poisson_mpi_opencl: ./OpenCL/poisson_mpi_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a

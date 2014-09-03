@@ -141,7 +141,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
       clSafeCall(ret);
       return;
     }
-    char buildOpts[] = "-g ";
+    char buildOpts[] = " ";
     ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
     if(ret != CL_SUCCESS) {
       char* build_log;
@@ -180,7 +180,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
       clSafeCall(ret);
       return;
     }
-    char buildOpts[] = "-g ";
+    char buildOpts[] = " ";
     ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
     if(ret != CL_SUCCESS) {
       char* build_log;
@@ -280,7 +280,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
       clSafeCall(ret);
       return;
     }
-    char buildOpts[] = "-g ";
+    char buildOpts[] = " ";
     ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
     if(ret != CL_SUCCESS) {
       char* build_log;
@@ -318,7 +318,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
       clSafeCall(ret);
       return;
     }
-     char buildOpts[] = "-g ";
+     char buildOpts[] = " ";
     ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
     if(ret != CL_SUCCESS) {
       char* build_log;
