@@ -163,7 +163,7 @@ int main(int argc, char **argv)
                    ops_arg_dat(ref[i+ngrid_x*j], S2D_00, "double", OPS_WRITE));
     }
   }
-
+  ops_print_dat_to_txtfile(u[0],"data00.dat");
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
@@ -203,6 +203,8 @@ int main(int argc, char **argv)
                    ops_arg_reduce(red_err, 1, "double", OPS_INC));
     }
   }
+
+  ops_print_dat_to_txtfile(u[0],"data0.dat");
 
   ops_reduction_result(red_err,&err);
   ops_printf("Total error: %g\n",err);

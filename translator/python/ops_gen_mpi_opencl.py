@@ -383,8 +383,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     # detect global variables and remove __global from the function signature for these
     sig2 = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] != OPS_READ:
+          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+        else:
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+      elif arg_typ[n] == 'ops_arg_idx':
+        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
       else:
         sig2 = sig2 + sig.split(',')[n].strip()+', '
       if n%4 == 2:
@@ -444,7 +450,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            code('const '+(str(typs[n]).replace('"','')).strip()+' arg'+str(n)+',')
+          else:
+            code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
         else:
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
           code('__local '+(str(typs[n]).replace('"','')).strip()+'* scratch'+str(n)+',')
@@ -525,7 +534,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
           ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
-        text = text +'arg'+str(n)
+        if dims[n].isdigit() and int(dims[n]) == 1:
+          text = text +'&arg'+str(n)
+        else:
+          text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
       elif arg_typ[n] == 'ops_arg_idx':
@@ -873,20 +885,20 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('int reduct_bytes = 0;')
       code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('int consts_bytes = 0;')
       code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:# and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-        else:
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        elif accs[n] <> OPS_READ:
           #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('reallocConstArrays(consts_bytes);')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('reallocReductArrays(reduct_bytes);')
@@ -918,7 +930,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-          code('mvConstArraysToDevice(consts_bytes);')
+    if GBL_READ == True and GBL_READ_MDIM == True:
+      code('mvConstArraysToDevice(consts_bytes);')
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToDevice(reduct_bytes);')
@@ -983,9 +996,19 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     #set up arguments in order to do the kernel call
     nkernel_args = 0
     for n in range (0, nargs):
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
-      nkernel_args = nkernel_args+1
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+      if arg_typ[n] == 'ops_arg_dat':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        nkernel_args = nkernel_args+1
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        if dims[n].isdigit() and int(dims[n]) == 1:
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) &arg'+str(n)+'.data ));')
+          nkernel_args = nkernel_args+1
+        else:
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+          nkernel_args = nkernel_args+1
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
         nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
