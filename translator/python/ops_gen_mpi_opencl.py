@@ -605,8 +605,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
           arg_values = arg_values + ', ydim'+str(n)
-      else:
-        continue
+      #else:
+      #  continue
       if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
         arg_values = arg_values + ','
@@ -815,8 +815,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         arg_text = arg_text +'xdim'+str(n)
         if NDIM==3:
           arg_text = arg_text +', ydim'+str(n)
-      else:
-        continue
+      #else:
+      #  continue
       if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
       else:
