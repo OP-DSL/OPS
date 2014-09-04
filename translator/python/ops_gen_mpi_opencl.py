@@ -605,8 +605,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           arg_text = arg_text +', int ydim'+str(n)
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
           arg_values = arg_values + ', ydim'+str(n)
-      else:
-        continue
+      #else:
+      #  continue
       if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
         arg_values = arg_values + ','
@@ -815,8 +815,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         arg_text = arg_text +'xdim'+str(n)
         if NDIM==3:
           arg_text = arg_text +', ydim'+str(n)
-      else:
-        continue
+      #else:
+      #  continue
       if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
         arg_text = arg_text + ',\n'+depth*' '
       else:
@@ -836,7 +836,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
     code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
     code('')
 

@@ -118,6 +118,7 @@ void ops_par_loop_update_halo_kernel5_plus_2_left(char const *name, ops_block bl
 
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[118].mpi_time += t1-t2;

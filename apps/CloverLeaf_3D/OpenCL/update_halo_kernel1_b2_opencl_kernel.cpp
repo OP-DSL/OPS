@@ -289,6 +289,7 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
 
   ops_H_D_exchanges_device(args, 8);
   ops_halo_exchanges(args,8,range);
+  ops_H_D_exchanges_device(args, 8);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[41].mpi_time += t1-t2;

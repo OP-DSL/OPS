@@ -295,6 +295,7 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block block, int
 
   ops_H_D_exchanges_device(args, 8);
   ops_halo_exchanges(args,8,range);
+  ops_H_D_exchanges_device(args, 8);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[31].mpi_time += t1-t2;

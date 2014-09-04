@@ -115,6 +115,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[21].mpi_time += t1-t2;

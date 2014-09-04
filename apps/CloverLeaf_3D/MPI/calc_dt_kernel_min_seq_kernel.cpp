@@ -96,6 +96,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[127].mpi_time += t1-t2;

@@ -167,6 +167,7 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
 
   ops_H_D_exchanges_host(args, 4);
   ops_halo_exchanges(args,4,range);
+  ops_H_D_exchanges_host(args, 4);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[3].mpi_time += t1-t2;

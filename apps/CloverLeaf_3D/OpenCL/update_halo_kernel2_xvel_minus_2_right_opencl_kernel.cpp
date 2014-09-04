@@ -203,6 +203,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_right(char const *name, ops_b
 
   ops_H_D_exchanges_device(args, 3);
   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_device(args, 3);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[60].mpi_time += t1-t2;

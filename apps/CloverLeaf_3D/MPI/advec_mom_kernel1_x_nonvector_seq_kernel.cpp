@@ -194,6 +194,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
 
   ops_H_D_exchanges_host(args, 5);
   ops_halo_exchanges(args,5,range);
+  ops_H_D_exchanges_host(args, 5);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[19].mpi_time += t1-t2;

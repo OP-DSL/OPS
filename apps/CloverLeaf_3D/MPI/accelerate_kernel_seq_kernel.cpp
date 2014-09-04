@@ -430,6 +430,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
 
   ops_H_D_exchanges_host(args, 14);
   ops_halo_exchanges(args,14,range);
+  ops_H_D_exchanges_host(args, 14);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[1].mpi_time += t1-t2;
