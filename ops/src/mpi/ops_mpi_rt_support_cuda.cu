@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-void ops_download_dat(ops_dat dat);
-
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
@@ -269,8 +267,6 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
 
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size*sizeof(char), cudaMemcpyDeviceToHost));
-
-  ops_download_dat(src);
 }
 
 
@@ -324,7 +320,6 @@ void ops_halo_copy_frombuf(ops_dat dest,
                                   buf_strides_x, buf_strides_y, buf_strides_z,
                                   dest->elem_size);
   dest->dirty_hd = 2;
-  ops_download_dat(dest);
 }
 
 #ifdef __cplusplus
