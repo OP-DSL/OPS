@@ -6,8 +6,11 @@
 #define OPS_GPU
 
 extern int xdim3_poisson_kernel_populate;
+int xdim3_poisson_kernel_populate_h;
 extern int xdim4_poisson_kernel_populate;
+int xdim4_poisson_kernel_populate_h;
 extern int xdim5_poisson_kernel_populate;
+int xdim5_poisson_kernel_populate_h;
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,10 +86,13 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block Block, int
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[0].count == 1) {
+  if (xdim3 != xdim3_poisson_kernel_populate_h || xdim4 != xdim4_poisson_kernel_populate_h || xdim5 != xdim5_poisson_kernel_populate_h) {
     xdim3_poisson_kernel_populate = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3_poisson_kernel_populate_h = xdim3;
     xdim4_poisson_kernel_populate = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4_poisson_kernel_populate_h = xdim4;
     xdim5_poisson_kernel_populate = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5_poisson_kernel_populate_h = xdim5;
   }
 
   int dat3 = args[3].dat->elem_size;

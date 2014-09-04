@@ -6,9 +6,13 @@
 #define OPS_GPU
 
 extern int xdim0_reset_field_kernel2;
+int xdim0_reset_field_kernel2_h = -1;
 extern int xdim1_reset_field_kernel2;
+int xdim1_reset_field_kernel2_h = -1;
 extern int xdim2_reset_field_kernel2;
+int xdim2_reset_field_kernel2_h = -1;
 extern int xdim3_reset_field_kernel2;
+int xdim3_reset_field_kernel2_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +35,8 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(4,"reset_field_kernel2");
-  OPS_kernels[4].count++;
+  ops_timing_realloc(2,"reset_field_kernel2");
+  OPS_kernels[2].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -68,16 +72,24 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[4].count == 1) {
-    xdim0_reset_field_kernel2 = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_reset_field_kernel2 = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_reset_field_kernel2 = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_reset_field_kernel2 = args[3].dat->size[0]*args[3].dat->dim;
+  if (xdim0 != xdim0_reset_field_kernel2_h || xdim1 != xdim1_reset_field_kernel2_h || xdim2 != xdim2_reset_field_kernel2_h || xdim3 != xdim3_reset_field_kernel2_h) {
+    xdim0_reset_field_kernel2 = xdim0;
+    xdim0_reset_field_kernel2_h = xdim0;
+    xdim1_reset_field_kernel2 = xdim1;
+    xdim1_reset_field_kernel2_h = xdim1;
+    xdim2_reset_field_kernel2 = xdim2;
+    xdim2_reset_field_kernel2_h = xdim2;
+    xdim3_reset_field_kernel2 = xdim3;
+    xdim3_reset_field_kernel2_h = xdim3;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -161,7 +173,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[4].mpi_time += t1-t2;
+  OPS_kernels[2].mpi_time += t1-t2;
 
   reset_field_kernel2_c_wrapper(
     p_a0,
@@ -171,7 +183,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[4].time += t2-t1;
+  OPS_kernels[2].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -181,8 +193,8 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg3);
 }

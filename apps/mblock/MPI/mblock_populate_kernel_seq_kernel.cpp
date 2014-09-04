@@ -13,7 +13,11 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   ops_arg args[2] = { arg0, arg1};
 
 
-  //compute localy allocated range for the sub-block
+
+  ops_timing_realloc(0,"mblock_populate_kernel");
+  OPS_kernels[0].count++;
+
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
 
@@ -63,7 +67,6 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timing_realloc(0,"mblock_populate_kernel");
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
@@ -136,6 +139,5 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[0].count++;
   OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
 }

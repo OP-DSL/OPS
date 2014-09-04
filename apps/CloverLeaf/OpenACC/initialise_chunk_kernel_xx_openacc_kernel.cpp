@@ -6,6 +6,7 @@
 #define OPS_GPU
 
 extern int xdim0_initialise_chunk_kernel_xx;
+int xdim0_initialise_chunk_kernel_xx_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,8 +28,8 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(75,"initialise_chunk_kernel_xx");
-  OPS_kernels[75].count++;
+  ops_timing_realloc(35,"initialise_chunk_kernel_xx");
+  OPS_kernels[35].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -72,13 +73,15 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   arg_idx[1] = start[1];
   #endif //OPS_MPI
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[75].count == 1) {
-    xdim0_initialise_chunk_kernel_xx = args[0].dat->size[0]*args[0].dat->dim;
+  if (xdim0 != xdim0_initialise_chunk_kernel_xx_h) {
+    xdim0_initialise_chunk_kernel_xx = xdim0;
+    xdim0_initialise_chunk_kernel_xx_h = xdim0;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -113,7 +116,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[75].mpi_time += t1-t2;
+  OPS_kernels[35].mpi_time += t1-t2;
 
   initialise_chunk_kernel_xx_c_wrapper(
     p_a0,
@@ -122,7 +125,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[75].time += t2-t1;
+  OPS_kernels[35].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
   #else
@@ -131,5 +134,5 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[75].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg0);
 }

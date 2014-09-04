@@ -4,13 +4,21 @@
 #include "./OpenACC/clover_leaf_common.h"
 
 extern int xdim0_generate_chunk_kernel;
+int xdim0_generate_chunk_kernel_h = -1;
 extern int xdim1_generate_chunk_kernel;
+int xdim1_generate_chunk_kernel_h = -1;
 extern int xdim2_generate_chunk_kernel;
+int xdim2_generate_chunk_kernel_h = -1;
 extern int xdim3_generate_chunk_kernel;
+int xdim3_generate_chunk_kernel_h = -1;
 extern int xdim4_generate_chunk_kernel;
+int xdim4_generate_chunk_kernel_h = -1;
 extern int xdim5_generate_chunk_kernel;
+int xdim5_generate_chunk_kernel_h = -1;
 extern int xdim6_generate_chunk_kernel;
+int xdim6_generate_chunk_kernel_h = -1;
 extern int xdim7_generate_chunk_kernel;
+int xdim7_generate_chunk_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,8 +45,8 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block Block, int d
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(82,"generate_chunk_kernel");
-  OPS_kernels[82].count++;
+  ops_timing_realloc(42,"generate_chunk_kernel");
+  OPS_kernels[42].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -74,20 +82,36 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block Block, int d
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[82].count == 1) {
-    xdim0_generate_chunk_kernel = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_generate_chunk_kernel = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_generate_chunk_kernel = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_generate_chunk_kernel = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_generate_chunk_kernel = args[4].dat->size[0]*args[4].dat->dim;
-    xdim5_generate_chunk_kernel = args[5].dat->size[0]*args[5].dat->dim;
-    xdim6_generate_chunk_kernel = args[6].dat->size[0]*args[6].dat->dim;
-    xdim7_generate_chunk_kernel = args[7].dat->size[0]*args[7].dat->dim;
+  if (xdim0 != xdim0_generate_chunk_kernel_h || xdim1 != xdim1_generate_chunk_kernel_h || xdim2 != xdim2_generate_chunk_kernel_h || xdim3 != xdim3_generate_chunk_kernel_h || xdim4 != xdim4_generate_chunk_kernel_h || xdim5 != xdim5_generate_chunk_kernel_h || xdim6 != xdim6_generate_chunk_kernel_h || xdim7 != xdim7_generate_chunk_kernel_h) {
+    xdim0_generate_chunk_kernel = xdim0;
+    xdim0_generate_chunk_kernel_h = xdim0;
+    xdim1_generate_chunk_kernel = xdim1;
+    xdim1_generate_chunk_kernel_h = xdim1;
+    xdim2_generate_chunk_kernel = xdim2;
+    xdim2_generate_chunk_kernel_h = xdim2;
+    xdim3_generate_chunk_kernel = xdim3;
+    xdim3_generate_chunk_kernel_h = xdim3;
+    xdim4_generate_chunk_kernel = xdim4;
+    xdim4_generate_chunk_kernel_h = xdim4;
+    xdim5_generate_chunk_kernel = xdim5;
+    xdim5_generate_chunk_kernel_h = xdim5;
+    xdim6_generate_chunk_kernel = xdim6;
+    xdim6_generate_chunk_kernel_h = xdim6;
+    xdim7_generate_chunk_kernel = xdim7;
+    xdim7_generate_chunk_kernel_h = xdim7;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -239,7 +263,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block Block, int d
   ops_halo_exchanges(args,8,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[82].mpi_time += t1-t2;
+  OPS_kernels[42].mpi_time += t1-t2;
 
   generate_chunk_kernel_c_wrapper(
     p_a0,
@@ -253,7 +277,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block Block, int d
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[82].time += t2-t1;
+  OPS_kernels[42].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 8);
   #else
@@ -265,12 +289,12 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block Block, int d
   ops_set_halo_dirtybit3(&args[5],range);
 
   //Update kernel record
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg7);
 }

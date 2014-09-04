@@ -452,8 +452,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('extern int xdim'+str(n)+'_'+name+';')
+        code('int xdim'+str(n)+'_'+name+'_h;')
         if NDIM==3:
           code('extern int ydim'+str(n)+'_'+name+';')
+          code('int ydim'+str(n)+'_'+name+'_h;')
     code('')
 
     code('#ifdef __cplusplus')
@@ -571,13 +573,22 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('double t1,t2,c1,c2;')
     code('ops_timers_core(&c2,&t2);')
     code('')
+    condition = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
+        if NDIM==3:
+          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+    condition = condition[:-4]
+    IF(condition)
 
-    IF('OPS_kernels['+str(nk)+'].count == 1')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
         if NDIM==3:
           code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
+          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
     ENDIF()
     code('')
 

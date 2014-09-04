@@ -6,10 +6,15 @@
 #define OPS_GPU
 
 extern int xdim0_advec_mom_kernel1_x_nonvector;
+int xdim0_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim1_advec_mom_kernel1_x_nonvector;
+int xdim1_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim2_advec_mom_kernel1_x_nonvector;
+int xdim2_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim3_advec_mom_kernel1_x_nonvector;
+int xdim3_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim4_advec_mom_kernel1_x_nonvector;
+int xdim4_advec_mom_kernel1_x_nonvector_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,8 +38,8 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
-  ops_timing_realloc(16,"advec_mom_kernel1_x_nonvector");
-  OPS_kernels[16].count++;
+  ops_timing_realloc(21,"advec_mom_kernel1_x_nonvector");
+  OPS_kernels[21].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -70,17 +75,27 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[16].count == 1) {
-    xdim0_advec_mom_kernel1_x_nonvector = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_advec_mom_kernel1_x_nonvector = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_advec_mom_kernel1_x_nonvector = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_advec_mom_kernel1_x_nonvector = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_advec_mom_kernel1_x_nonvector = args[4].dat->size[0]*args[4].dat->dim;
+  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h || xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h || xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h || xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h || xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h) {
+    xdim0_advec_mom_kernel1_x_nonvector = xdim0;
+    xdim0_advec_mom_kernel1_x_nonvector_h = xdim0;
+    xdim1_advec_mom_kernel1_x_nonvector = xdim1;
+    xdim1_advec_mom_kernel1_x_nonvector_h = xdim1;
+    xdim2_advec_mom_kernel1_x_nonvector = xdim2;
+    xdim2_advec_mom_kernel1_x_nonvector_h = xdim2;
+    xdim3_advec_mom_kernel1_x_nonvector = xdim3;
+    xdim3_advec_mom_kernel1_x_nonvector_h = xdim3;
+    xdim4_advec_mom_kernel1_x_nonvector = xdim4;
+    xdim4_advec_mom_kernel1_x_nonvector_h = xdim4;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -181,7 +196,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[16].mpi_time += t1-t2;
+  OPS_kernels[21].mpi_time += t1-t2;
 
   advec_mom_kernel1_x_nonvector_c_wrapper(
     p_a0,
@@ -192,7 +207,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[16].time += t2-t1;
+  OPS_kernels[21].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 5);
   #else
@@ -201,9 +216,9 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg4);
 }

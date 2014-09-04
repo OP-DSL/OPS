@@ -6,8 +6,11 @@
 #define OPS_GPU
 
 extern int xdim0_poisson_kernel_stencil;
+int xdim0_poisson_kernel_stencil_h;
 extern int xdim1_poisson_kernel_stencil;
+int xdim1_poisson_kernel_stencil_h;
 extern int xdim2_poisson_kernel_stencil;
+int xdim2_poisson_kernel_stencil_h;
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,10 +74,13 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block Block, int 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[2].count == 1) {
+  if (xdim0 != xdim0_poisson_kernel_stencil_h || xdim1 != xdim1_poisson_kernel_stencil_h || xdim2 != xdim2_poisson_kernel_stencil_h) {
     xdim0_poisson_kernel_stencil = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0_poisson_kernel_stencil_h = xdim0;
     xdim1_poisson_kernel_stencil = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1_poisson_kernel_stencil_h = xdim1;
     xdim2_poisson_kernel_stencil = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2_poisson_kernel_stencil_h = xdim2;
   }
 
   int dat0 = args[0].dat->elem_size;

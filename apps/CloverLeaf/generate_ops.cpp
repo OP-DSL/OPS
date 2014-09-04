@@ -35,8 +35,6 @@ void ops_par_loop_generate_chunk_kernel(char const *, ops_block, int , int*,
 void generate()
 {
 
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;

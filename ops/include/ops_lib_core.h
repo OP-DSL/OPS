@@ -48,6 +48,7 @@
 #include <sys/queue.h> //contains double linked list implementation
 #include <stdbool.h>
 
+#include "ops_macros.h"
 #include "ops_util.h"
 
 

@@ -6,17 +6,29 @@
 #define OPS_GPU
 
 extern int xdim0_PdV_kernel_predict;
+int xdim0_PdV_kernel_predict_h = -1;
 extern int xdim1_PdV_kernel_predict;
+int xdim1_PdV_kernel_predict_h = -1;
 extern int xdim2_PdV_kernel_predict;
+int xdim2_PdV_kernel_predict_h = -1;
 extern int xdim3_PdV_kernel_predict;
+int xdim3_PdV_kernel_predict_h = -1;
 extern int xdim4_PdV_kernel_predict;
+int xdim4_PdV_kernel_predict_h = -1;
 extern int xdim5_PdV_kernel_predict;
+int xdim5_PdV_kernel_predict_h = -1;
 extern int xdim6_PdV_kernel_predict;
+int xdim6_PdV_kernel_predict_h = -1;
 extern int xdim7_PdV_kernel_predict;
+int xdim7_PdV_kernel_predict_h = -1;
 extern int xdim8_PdV_kernel_predict;
+int xdim8_PdV_kernel_predict_h = -1;
 extern int xdim9_PdV_kernel_predict;
+int xdim9_PdV_kernel_predict_h = -1;
 extern int xdim10_PdV_kernel_predict;
+int xdim10_PdV_kernel_predict_h = -1;
 extern int xdim11_PdV_kernel_predict;
+int xdim11_PdV_kernel_predict_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,8 +59,8 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
 
-  ops_timing_realloc(5,"PdV_kernel_predict");
-  OPS_kernels[5].count++;
+  ops_timing_realloc(4,"PdV_kernel_predict");
+  OPS_kernels[4].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -84,24 +96,48 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[5].count == 1) {
-    xdim0_PdV_kernel_predict = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_PdV_kernel_predict = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_PdV_kernel_predict = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_PdV_kernel_predict = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_PdV_kernel_predict = args[4].dat->size[0]*args[4].dat->dim;
-    xdim5_PdV_kernel_predict = args[5].dat->size[0]*args[5].dat->dim;
-    xdim6_PdV_kernel_predict = args[6].dat->size[0]*args[6].dat->dim;
-    xdim7_PdV_kernel_predict = args[7].dat->size[0]*args[7].dat->dim;
-    xdim8_PdV_kernel_predict = args[8].dat->size[0]*args[8].dat->dim;
-    xdim9_PdV_kernel_predict = args[9].dat->size[0]*args[9].dat->dim;
-    xdim10_PdV_kernel_predict = args[10].dat->size[0]*args[10].dat->dim;
-    xdim11_PdV_kernel_predict = args[11].dat->size[0]*args[11].dat->dim;
+  if (xdim0 != xdim0_PdV_kernel_predict_h || xdim1 != xdim1_PdV_kernel_predict_h || xdim2 != xdim2_PdV_kernel_predict_h || xdim3 != xdim3_PdV_kernel_predict_h || xdim4 != xdim4_PdV_kernel_predict_h || xdim5 != xdim5_PdV_kernel_predict_h || xdim6 != xdim6_PdV_kernel_predict_h || xdim7 != xdim7_PdV_kernel_predict_h || xdim8 != xdim8_PdV_kernel_predict_h || xdim9 != xdim9_PdV_kernel_predict_h || xdim10 != xdim10_PdV_kernel_predict_h || xdim11 != xdim11_PdV_kernel_predict_h) {
+    xdim0_PdV_kernel_predict = xdim0;
+    xdim0_PdV_kernel_predict_h = xdim0;
+    xdim1_PdV_kernel_predict = xdim1;
+    xdim1_PdV_kernel_predict_h = xdim1;
+    xdim2_PdV_kernel_predict = xdim2;
+    xdim2_PdV_kernel_predict_h = xdim2;
+    xdim3_PdV_kernel_predict = xdim3;
+    xdim3_PdV_kernel_predict_h = xdim3;
+    xdim4_PdV_kernel_predict = xdim4;
+    xdim4_PdV_kernel_predict_h = xdim4;
+    xdim5_PdV_kernel_predict = xdim5;
+    xdim5_PdV_kernel_predict_h = xdim5;
+    xdim6_PdV_kernel_predict = xdim6;
+    xdim6_PdV_kernel_predict_h = xdim6;
+    xdim7_PdV_kernel_predict = xdim7;
+    xdim7_PdV_kernel_predict_h = xdim7;
+    xdim8_PdV_kernel_predict = xdim8;
+    xdim8_PdV_kernel_predict_h = xdim8;
+    xdim9_PdV_kernel_predict = xdim9;
+    xdim9_PdV_kernel_predict_h = xdim9;
+    xdim10_PdV_kernel_predict = xdim10;
+    xdim10_PdV_kernel_predict_h = xdim10;
+    xdim11_PdV_kernel_predict = xdim11;
+    xdim11_PdV_kernel_predict_h = xdim11;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -321,7 +357,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_halo_exchanges(args,12,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[5].mpi_time += t1-t2;
+  OPS_kernels[4].mpi_time += t1-t2;
 
   PdV_kernel_predict_c_wrapper(
     p_a0,
@@ -339,7 +375,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[5].time += t2-t1;
+  OPS_kernels[4].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 12);
   #else
@@ -350,16 +386,16 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_set_halo_dirtybit3(&args[11],range);
 
   //Update kernel record
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg10);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg11);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg11);
 }
