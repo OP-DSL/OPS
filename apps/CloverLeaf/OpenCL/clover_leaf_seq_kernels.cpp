@@ -9,7 +9,8 @@
 //#endif
 
 //user kernel files
-/*#include "../MPI/revert_kernel_seq_kernel.cpp"
+/*
+#include "../MPI/revert_kernel_seq_kernel.cpp"
 #include "../MPI/reset_field_kernel1_seq_kernel.cpp"
 #include "../MPI/reset_field_kernel2_seq_kernel.cpp"
 #include "../MPI/ideal_gas_kernel_seq_kernel.cpp"
@@ -39,17 +40,16 @@
 #include "../MPI/advec_mom_kernel_post_pre_advec_y_seq_kernel.cpp"
 #include "../MPI/advec_mom_kernel1_y_nonvector_seq_kernel.cpp"
 #include "../MPI/advec_mom_kernel2_y_seq_kernel.cpp"
+
+#include "../MPI/calc_dt_kernel_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
+#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
+#include "../MPI/field_summary_kernel_seq_kernel.cpp"
+#include "../MPI/flux_calc_kernelx_seq_kernel.cpp"
+#include "../MPI/flux_calc_kernely_seq_kernel.cpp"
+#include "../MPI/viscosity_kernel_seq_kernel.cpp"
 */
-//#include "../MPI/calc_dt_kernel_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
-//#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
-
-//#include "../MPI/field_summary_kernel_seq_kernel.cpp"
-//#include "../MPI/flux_calc_kernelx_seq_kernel.cpp"
-//#include "../MPI/flux_calc_kernely_seq_kernel.cpp"
-//#include "../MPI/viscosity_kernel_seq_kernel.cpp"
-
 
 #include "../MPI/initialise_chunk_kernel_xx_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_yy_seq_kernel.cpp"

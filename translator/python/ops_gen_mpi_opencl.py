@@ -970,6 +970,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')

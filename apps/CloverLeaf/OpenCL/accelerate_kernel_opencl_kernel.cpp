@@ -313,6 +313,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
 
   ops_H_D_exchanges_device(args, 11);
   ops_halo_exchanges(args,11,range);
+  ops_H_D_exchanges_device(args, 11);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[1].mpi_time += t1-t2;

@@ -197,6 +197,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
   ops_H_D_exchanges_host(args, 7);
   ops_halo_exchanges(args,7,range);
+  ops_H_D_exchanges_host(args, 7);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[0].mpi_time += t1-t2;

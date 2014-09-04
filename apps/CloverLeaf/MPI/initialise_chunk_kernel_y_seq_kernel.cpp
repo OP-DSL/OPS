@@ -120,6 +120,7 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
 
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[78].mpi_time += t1-t2;

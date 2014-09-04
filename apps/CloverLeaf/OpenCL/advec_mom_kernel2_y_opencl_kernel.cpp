@@ -213,6 +213,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
 
   ops_H_D_exchanges_device(args, 4);
   ops_halo_exchanges(args,4,range);
+  ops_H_D_exchanges_device(args, 4);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[21].mpi_time += t1-t2;

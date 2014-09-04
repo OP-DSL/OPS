@@ -82,7 +82,13 @@ __global__ void ops_cuda_unpacker_4(const int * __restrict src, int *__restrict 
 
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
-  const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
+  
+	if(dat->dirty_hd == 1){
+    ops_upload_dat(dat);
+    dat->dirty_hd = 0;
+  }
+  
+	const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
   if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
@@ -108,6 +114,11 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
+  
+	if(dat->dirty_hd == 1){
+    ops_upload_dat(dat);
+    dat->dirty_hd = 0;
+  }
   char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
   if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
     if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
@@ -130,6 +141,9 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
     ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
   }
+  
+  dat->dirty_hd = 2;
+  
  //cutilSafeCall(cudaDeviceSynchronize());
 }
 

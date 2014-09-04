@@ -159,6 +159,7 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
 
   ops_H_D_exchanges_host(args, 5);
   ops_halo_exchanges(args,5,range);
+  ops_H_D_exchanges_host(args, 5);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[26].mpi_time += t1-t2;

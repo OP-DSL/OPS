@@ -120,6 +120,11 @@ static bool isbuilt_unpacker4_kernel = false;
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
 
+	if(dat->dirty_hd == 1){
+    ops_upload_dat(dat);
+    dat->dirty_hd = 0;
+  }
+  
   cl_int ret = 0;
   if(!isbuilt_packer1_kernel){
 
@@ -259,6 +264,11 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
 
+	if(dat->dirty_hd == 1){
+    ops_upload_dat(dat);
+    dat->dirty_hd = 0;
+  }
+  
   cl_int ret = 0;
   if(!isbuilt_unpacker1_kernel){
 
@@ -392,6 +402,9 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
     clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, *unpacker1_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   //}
+  
+  dat->dirty_hd = 2;
+  //ops_download_dat(dat);
 }
 
 
@@ -422,7 +435,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
     src += halo->blocklength;
     dest += halo->stride;
   }
-  ops_upload_dat(dat);
+  //ops_upload_dat(dat);
   dat->dirty_hd = 1;
   //printf("copy done 2\n");
 }
