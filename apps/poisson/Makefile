@@ -56,16 +56,16 @@ endif
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CPP     = pgCC
+  CPP     = pgcxx
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS   = -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS   = -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS   = -O3 -Kieee -Minline -Minform=severe -Minfo=all
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp
-  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC   = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CPPFLAGS)
 else

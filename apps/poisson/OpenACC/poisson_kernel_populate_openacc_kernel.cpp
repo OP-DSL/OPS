@@ -13,8 +13,8 @@ extern int xdim5_poisson_kernel_populate;
 extern "C" {
 #endif
 void poisson_kernel_populate_c_wrapper(
-  int *p_a0,
-  int *p_a1,
+  int p_a0,
+  int p_a1,
   int *p_a2,
   double *p_a3,
   double *p_a4,

@@ -39,8 +39,6 @@
 void advec_mom(int which_vel, int sweep_number, int dir)
 {
   //initialize sizes using global values
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;

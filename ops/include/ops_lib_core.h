@@ -101,8 +101,9 @@ extern "C" {
 /*
 * essential typedefs
 */
-
+#ifndef __PGI
 typedef unsigned int uint;
+#endif
 typedef long long ll;
 typedef unsigned long long ull;
 

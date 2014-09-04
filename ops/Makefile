@@ -59,9 +59,9 @@ ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc -c99
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CCFLAGS 	:= -O3 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  CXX 		:= pgCC
+  CXX 		:= pgc++
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -c99
   MPIFLAGS 	:= $(CXXFLAGS)
 else

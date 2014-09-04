@@ -315,7 +315,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('void '+name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code(typs[n]+' *p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code(typs[n]+' p_a'+str(n)+',')
+      else:
+        code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
       if NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
@@ -393,7 +396,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          text = text +' p_a'+str(n)+''
+          if dims[n].isdigit() and int(dims[n])==1:
+            text = text +' &p_a'+str(n)+''
+          else:
+            text = text +' p_a'+str(n)+''
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
             text = text +' &p_a'+str(n)+'_l'
@@ -456,7 +462,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('void '+name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code(typs[n]+' *p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code(typs[n]+' p_a'+str(n)+',')
+      else:
+        code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
       if NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
@@ -692,7 +701,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code(name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code('p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code('*p_a'+str(n)+',')
+      else:
+        code('p_a'+str(n)+',')
     if arg_idx:
       if NDIM==2:
         code('arg_idx[0], arg_idx[1],')

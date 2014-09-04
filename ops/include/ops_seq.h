@@ -4080,3 +4080,4 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[17].argtype == OPS_ARG_DAT && args[17].acc != OPS_READ)  ops_set_halo_dirtybit3(&args[17],range);
   ops_set_dirtybit_host(args, 18);
 }
+
