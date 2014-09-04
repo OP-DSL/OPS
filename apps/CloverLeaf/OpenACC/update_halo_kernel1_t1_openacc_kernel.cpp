@@ -38,8 +38,8 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block Block, int 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(46,"update_halo_kernel1_t1");
-  OPS_kernels[46].count++;
+  ops_timing_realloc(33,"update_halo_kernel1_t1");
+  OPS_kernels[33].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -80,7 +80,7 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block Block, int 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[46].count == 1) {
+  if (OPS_kernels[33].count == 1) {
     xdim0_update_halo_kernel1_t1 = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_update_halo_kernel1_t1 = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_update_halo_kernel1_t1 = args[2].dat->size[0]*args[2].dat->dim;
@@ -238,7 +238,7 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block Block, int 
   ops_halo_exchanges(args,8,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[46].mpi_time += t1-t2;
+  OPS_kernels[33].mpi_time += t1-t2;
 
   update_halo_kernel1_t1_c_wrapper(
     p_a0,
@@ -252,7 +252,7 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block Block, int 
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[46].time += t2-t1;
+  OPS_kernels[33].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 8);
   #else
@@ -267,11 +267,11 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block Block, int 
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg6);
 }

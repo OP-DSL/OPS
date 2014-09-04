@@ -29,8 +29,8 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(39,"initialise_chunk_kernel_cellx");
-  OPS_kernels[39].count++;
+  ops_timing_realloc(79,"initialise_chunk_kernel_cellx");
+  OPS_kernels[79].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -71,7 +71,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[39].count == 1) {
+  if (OPS_kernels[79].count == 1) {
     xdim0_initialise_chunk_kernel_cellx = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_initialise_chunk_kernel_cellx = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_initialise_chunk_kernel_cellx = args[2].dat->size[0]*args[2].dat->dim;
@@ -141,7 +141,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[39].mpi_time += t1-t2;
+  OPS_kernels[79].mpi_time += t1-t2;
 
   initialise_chunk_kernel_cellx_c_wrapper(
     p_a0,
@@ -150,7 +150,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[39].time += t2-t1;
+  OPS_kernels[79].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -160,7 +160,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg2);
 }

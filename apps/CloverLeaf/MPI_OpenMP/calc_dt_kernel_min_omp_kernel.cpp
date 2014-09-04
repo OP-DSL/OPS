@@ -29,8 +29,8 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
 
-  ops_timing_realloc(28,"calc_dt_kernel_min");
-  OPS_kernels[28].count++;
+  ops_timing_realloc(72,"calc_dt_kernel_min");
+  OPS_kernels[72].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -105,7 +105,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[28].mpi_time += t2-t1;
+  OPS_kernels[72].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -165,7 +165,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[28].time += t1-t2;
+  OPS_kernels[72].time += t1-t2;
 
 
   // combine reduction data
@@ -179,6 +179,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[28].mpi_time += t2-t1;
-  OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[72].mpi_time += t2-t1;
+  OPS_kernels[72].transfer += ops_compute_transfer(dim, range, &arg0);
 }

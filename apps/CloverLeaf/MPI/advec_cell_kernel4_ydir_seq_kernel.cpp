@@ -16,8 +16,8 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
 
 
 
-  ops_timing_realloc(14,"advec_cell_kernel4_ydir");
-  OPS_kernels[14].count++;
+  ops_timing_realloc(29,"advec_cell_kernel4_ydir");
+  OPS_kernels[29].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -276,7 +276,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   ops_halo_exchanges(args,11,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[14].mpi_time += t1-t2;
+  OPS_kernels[29].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
   xdim1 = args[1].dat->size[0]*args[1].dat->dim;
@@ -352,7 +352,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
     p_a[10]= p_a[10] + (dat10 * off10_1);
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[14].time += t2-t1;
+  OPS_kernels[29].time += t2-t1;
   ops_set_dirtybit_host(args, 11);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
@@ -362,15 +362,15 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   ops_set_halo_dirtybit3(&args[9],range);
 
   //Update kernel record
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg10);
 }
