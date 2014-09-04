@@ -15,8 +15,8 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
 
 
 
-  ops_timing_realloc(21,"advec_mom_kernel_x2");
-  OPS_kernels[21].count++;
+  ops_timing_realloc(13,"advec_mom_kernel_x2");
+  OPS_kernels[13].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -196,7 +196,7 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[21].mpi_time += t1-t2;
+  OPS_kernels[13].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
   ydim0 = args[0].dat->size[1];
@@ -259,15 +259,15 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
     p_a[4]= p_a[4] + (dat4 * off4_2);
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[21].time += t2-t1;
+  OPS_kernels[13].time += t2-t1;
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg4);
 }

@@ -84,7 +84,7 @@ void buildOpenCLKernels_advec_mom_kernel_mass_flux_z(int xdim0, int ydim0,
       printf("compiling advec_mom_kernel_mass_flux_z -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[33] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_mass_flux_z", &ret);
+    OPS_opencl_core.kernel[25] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_mass_flux_z", &ret);
     clSafeCall( ret );
 
     isbuilt_advec_mom_kernel_mass_flux_z = true;
@@ -99,8 +99,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
-  OPS_kernels[33].count++;
+  ops_timing_realloc(25,"advec_mom_kernel_mass_flux_z");
+  OPS_kernels[25].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -153,7 +153,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};
+  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
 
 
@@ -194,19 +194,19 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[33].mpi_time += t1-t2;
+  OPS_kernels[25].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 2, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 3, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 4, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 5, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 6, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 2, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 3, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 4, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 5, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[25], 6, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[33], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[25], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
@@ -216,7 +216,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[33].time += t2-t1;
-  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[25].time += t2-t1;
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg1);
 }

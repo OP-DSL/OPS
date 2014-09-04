@@ -49,8 +49,8 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(47,"initialise_chunk_kernel_yy");
-  OPS_kernels[47].count++;
+  ops_timing_realloc(131,"initialise_chunk_kernel_yy");
+  OPS_kernels[131].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -104,7 +104,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[47].count == 1) {
+  if (OPS_kernels[131].count == 1) {
     cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_yy, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_initialise_chunk_kernel_yy, &ydim0, sizeof(int) );
   }
@@ -143,7 +143,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[47].mpi_time += t1-t2;
+  OPS_kernels[131].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -153,10 +153,10 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[47].time += t2-t1;
+  OPS_kernels[131].time += t2-t1;
   ops_set_dirtybit_device(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[131].transfer += ops_compute_transfer(dim, range, &arg0);
 }

@@ -33,8 +33,8 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
 
 
-  ops_timing_realloc(52,"initialise_chunk_kernel_cellx");
-  OPS_kernels[52].count++;
+  ops_timing_realloc(136,"initialise_chunk_kernel_cellx");
+  OPS_kernels[136].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -124,7 +124,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[52].mpi_time += t2-t1;
+  OPS_kernels[136].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -232,7 +232,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[52].time += t1-t2;
+  OPS_kernels[136].time += t1-t2;
 
   ops_set_dirtybit_host(args, 3);
 
@@ -241,8 +241,8 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[52].mpi_time += t2-t1;
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[136].mpi_time += t2-t1;
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg2);
 }

@@ -52,8 +52,8 @@ void ops_par_loop_update_halo_kernel5_minus_2_back(char const *name, ops_block b
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(138,"update_halo_kernel5_minus_2_back");
-  OPS_kernels[138].count++;
+  ops_timing_realloc(122,"update_halo_kernel5_minus_2_back");
+  OPS_kernels[122].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -99,7 +99,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_back(char const *name, ops_block b
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[138].count == 1) {
+  if (OPS_kernels[122].count == 1) {
     cudaMemcpyToSymbol( xdim0_update_halo_kernel5_minus_2_back, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_update_halo_kernel5_minus_2_back, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_update_halo_kernel5_minus_2_back, &xdim1, sizeof(int) );
@@ -168,7 +168,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_back(char const *name, ops_block b
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[138].mpi_time += t1-t2;
+  OPS_kernels[122].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -179,12 +179,12 @@ void ops_par_loop_update_halo_kernel5_minus_2_back(char const *name, ops_block b
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[138].time += t2-t1;
+  OPS_kernels[122].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[138].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[138].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[122].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[122].transfer += ops_compute_transfer(dim, range, &arg1);
 }

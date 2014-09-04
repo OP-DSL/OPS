@@ -28,8 +28,8 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
 
 
 
-  ops_timing_realloc(108,"update_halo_kernel3_plus_2_b");
-  OPS_kernels[108].count++;
+  ops_timing_realloc(92,"update_halo_kernel3_plus_2_b");
+  OPS_kernels[92].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -107,7 +107,7 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[108].mpi_time += t2-t1;
+  OPS_kernels[92].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -197,7 +197,7 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[108].time += t1-t2;
+  OPS_kernels[92].time += t1-t2;
 
   ops_set_dirtybit_host(args, 3);
 
@@ -206,7 +206,7 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[108].mpi_time += t2-t1;
-  OPS_kernels[108].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[108].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[92].mpi_time += t2-t1;
+  OPS_kernels[92].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[92].transfer += ops_compute_transfer(dim, range, &arg1);
 }

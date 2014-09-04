@@ -9,7 +9,8 @@
 #include "user_types.h"
 
 //user kernel files
-/*#include "../MPI/viscosity_kernel_seq_kernel.cpp"
+/*
+#include "../MPI/viscosity_kernel_seq_kernel.cpp"
 #include "../MPI/accelerate_kernel_seq_kernel.cpp"
 #include "../MPI/revert_kernel_seq_kernel.cpp"
 #include "../MPI/reset_field_kernel1_seq_kernel.cpp"
@@ -50,7 +51,6 @@
 #include "../MPI/advec_cell_kernel2_zdir_seq_kernel.cpp"
 #include "../MPI/advec_cell_kernel3_zdir_seq_kernel.cpp"
 #include "../MPI/advec_cell_kernel4_zdir_seq_kernel.cpp"
-
 #include "../MPI/update_halo_kernel1_b2_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_b1_seq_kernel.cpp"
 #include "../MPI/update_halo_kernel1_t2_seq_kernel.cpp"
@@ -140,8 +140,8 @@
 #include "../MPI/calc_dt_kernel_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_min_seq_kernel.cpp"
 #include "../MPI/calc_dt_kernel_get_seq_kernel.cpp"
-#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"
-*/
+#include "../MPI/calc_dt_kernel_print_seq_kernel.cpp"*/
+
 #include "../MPI/initialise_chunk_kernel_xx_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_yy_seq_kernel.cpp"
 #include "../MPI/initialise_chunk_kernel_zz_seq_kernel.cpp"
