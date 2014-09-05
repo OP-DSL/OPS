@@ -59,7 +59,7 @@ ifeq ($(OPS_COMPILER),pgi)
   CPP 		= pgCC
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS 	= -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS 	= -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
@@ -294,14 +294,14 @@ openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | t
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
 ./OpenACC/clover_leaf_kernels.o: ./OpenACC/clover_leaf_kernels.cpp ./OpenACC/clover_leaf_common.h Makefile
-				$(MPICPP) -acc -ta=tesla:cc35,llvm -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:llvm $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
  			       -I. OpenACC/clover_leaf_kernels.cpp -c -o OpenACC/clover_leaf_kernels.o
 
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c ./OpenACC/clover_leaf_common.h Makefile
 				@echo "Compiling kernel" $*
-				$(MPICC) -acc -ta=tesla:cc35,llvm -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:llvm $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 			        -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
-				$(MPICPP) -acc -ta=tesla:cc35,llvm -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:llvm $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 				-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
 cloverleaf_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
@@ -313,7 +313,7 @@ cloverleaf_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_fiel
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	        $(MPICPP) -acc -ta=tesla:cc35,llvm $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
 		clover_leaf_ops.cpp start.cpp build_field.cpp \
                 read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \

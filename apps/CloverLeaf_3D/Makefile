@@ -58,7 +58,7 @@ ifeq ($(OPS_COMPILER),pgi)
   CPP 		= pgCC
 	CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS 	= -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS 	= -O2 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
@@ -280,14 +280,14 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 
 
 ./OpenACC/clover_leaf_kernels.o: ./OpenACC/clover_leaf_kernels.cpp ./OpenACC/clover_leaf_common.h Makefile
-				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35  $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/clover_leaf_kernels.cpp -c -o OpenACC/clover_leaf_kernels.o
 
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c ./OpenACC/clover_leaf_common.h Makefile
 				@echo "Compiling kernel" $*
 				$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
-				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35  $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 				-I. OpenACC/$*.cpp OpenACC/$*_c.o -c -o OpenACC/$*.o
 
 cloverleaf_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \

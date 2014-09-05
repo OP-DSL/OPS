@@ -254,8 +254,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
     if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
-      code('#define OPS_GPU')
-      code('')
+      if not (NDIM==3 and 'field_summary' in name):
+        code('#define OPS_GPU')
+        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
@@ -447,15 +448,16 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
     if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
-      code('#define OPS_GPU')
-      code('')
+      if not (NDIM==3 and 'field_summary' in name):
+        code('#define OPS_GPU')
+        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('extern int xdim'+str(n)+'_'+name+';')
-        code('int xdim'+str(n)+'_'+name+'_h;')
+        code('int xdim'+str(n)+'_'+name+'_h = -1;')
         if NDIM==3:
           code('extern int ydim'+str(n)+'_'+name+';')
-          code('int ydim'+str(n)+'_'+name+'_h;')
+          code('int ydim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
     code('#ifdef __cplusplus')
@@ -566,7 +568,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('#endif //OPS_MPI')
     code('')
 
-
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     #timing structs
     code('')
     comm('Timing')
@@ -584,10 +590,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
         code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
         if NDIM==3:
-          code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
+          code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
           code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
     ENDIF()
     code('')
@@ -784,6 +790,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
   file_text =''
   comm('header')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#ifdef __cplusplus')
   code('#include "ops_lib_cpp.h"')
   code('#endif')

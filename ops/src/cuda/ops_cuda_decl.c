@@ -114,9 +114,9 @@ void ops_init ( int argc, char ** argv, int diags )
 //
 
 #ifndef SET_CUDA_CACHE_CONFIG
-  cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferL1 ) );
-#else
   cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferShared ) );
+#else
+  cutilSafeCall ( cudaDeviceSetCacheConfig ( cudaFuncCachePreferL1 ) );
 #endif
 
   printf ( "\n 16/48 L1/shared \n" );

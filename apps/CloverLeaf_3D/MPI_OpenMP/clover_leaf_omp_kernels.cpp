@@ -4,7 +4,9 @@
 //header
 #define OPS_3D
 #include "ops_lib_cpp.h"
-#include "ops_lib_mpi.h"
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
 #include "user_types.h"
 
 //set max number of OMP threads for reductions

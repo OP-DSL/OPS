@@ -825,7 +825,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')

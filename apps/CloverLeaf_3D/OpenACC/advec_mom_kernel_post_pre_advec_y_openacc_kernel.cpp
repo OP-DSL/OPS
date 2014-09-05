@@ -6,15 +6,25 @@
 #define OPS_GPU
 
 extern int xdim0_advec_mom_kernel_post_pre_advec_y;
+int xdim0_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int ydim0_advec_mom_kernel_post_pre_advec_y;
+int ydim0_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int xdim1_advec_mom_kernel_post_pre_advec_y;
+int xdim1_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int ydim1_advec_mom_kernel_post_pre_advec_y;
+int ydim1_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int xdim2_advec_mom_kernel_post_pre_advec_y;
+int xdim2_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int ydim2_advec_mom_kernel_post_pre_advec_y;
+int ydim2_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int xdim3_advec_mom_kernel_post_pre_advec_y;
+int xdim3_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int ydim3_advec_mom_kernel_post_pre_advec_y;
+int ydim3_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int xdim4_advec_mom_kernel_post_pre_advec_y;
+int xdim4_advec_mom_kernel_post_pre_advec_y_h = -1;
 extern int ydim4_advec_mom_kernel_post_pre_advec_y;
+int ydim4_advec_mom_kernel_post_pre_advec_y_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,8 +48,8 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
-  ops_timing_realloc(22,"advec_mom_kernel_post_pre_advec_y");
-  OPS_kernels[22].count++;
+  ops_timing_realloc(30,"advec_mom_kernel_post_pre_advec_y");
+  OPS_kernels[30].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -76,22 +86,42 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  ydim4 = args[4].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[22].count == 1) {
-    xdim0_advec_mom_kernel_post_pre_advec_y = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_advec_mom_kernel_post_pre_advec_y = args[0].dat->size[1];
-    xdim1_advec_mom_kernel_post_pre_advec_y = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_advec_mom_kernel_post_pre_advec_y = args[1].dat->size[1];
-    xdim2_advec_mom_kernel_post_pre_advec_y = args[2].dat->size[0]*args[2].dat->dim;
-    ydim2_advec_mom_kernel_post_pre_advec_y = args[2].dat->size[1];
-    xdim3_advec_mom_kernel_post_pre_advec_y = args[3].dat->size[0]*args[3].dat->dim;
-    ydim3_advec_mom_kernel_post_pre_advec_y = args[3].dat->size[1];
-    xdim4_advec_mom_kernel_post_pre_advec_y = args[4].dat->size[0]*args[4].dat->dim;
-    ydim4_advec_mom_kernel_post_pre_advec_y = args[4].dat->size[1];
+  if (xdim0 != xdim0_advec_mom_kernel_post_pre_advec_y_h || ydim0 != ydim0_advec_mom_kernel_post_pre_advec_y_h || xdim1 != xdim1_advec_mom_kernel_post_pre_advec_y_h || ydim1 != ydim1_advec_mom_kernel_post_pre_advec_y_h || xdim2 != xdim2_advec_mom_kernel_post_pre_advec_y_h || ydim2 != ydim2_advec_mom_kernel_post_pre_advec_y_h || xdim3 != xdim3_advec_mom_kernel_post_pre_advec_y_h || ydim3 != ydim3_advec_mom_kernel_post_pre_advec_y_h || xdim4 != xdim4_advec_mom_kernel_post_pre_advec_y_h || ydim4 != ydim4_advec_mom_kernel_post_pre_advec_y_h) {
+    xdim0_advec_mom_kernel_post_pre_advec_y = xdim0;
+    xdim0_advec_mom_kernel_post_pre_advec_y_h = xdim0;
+    ydim0_advec_mom_kernel_post_pre_advec_y = ydim0;
+    ydim0_advec_mom_kernel_post_pre_advec_y_h = ydim0;
+    xdim1_advec_mom_kernel_post_pre_advec_y = xdim1;
+    xdim1_advec_mom_kernel_post_pre_advec_y_h = xdim1;
+    ydim1_advec_mom_kernel_post_pre_advec_y = ydim1;
+    ydim1_advec_mom_kernel_post_pre_advec_y_h = ydim1;
+    xdim2_advec_mom_kernel_post_pre_advec_y = xdim2;
+    xdim2_advec_mom_kernel_post_pre_advec_y_h = xdim2;
+    ydim2_advec_mom_kernel_post_pre_advec_y = ydim2;
+    ydim2_advec_mom_kernel_post_pre_advec_y_h = ydim2;
+    xdim3_advec_mom_kernel_post_pre_advec_y = xdim3;
+    xdim3_advec_mom_kernel_post_pre_advec_y_h = xdim3;
+    ydim3_advec_mom_kernel_post_pre_advec_y = ydim3;
+    ydim3_advec_mom_kernel_post_pre_advec_y_h = ydim3;
+    xdim4_advec_mom_kernel_post_pre_advec_y = xdim4;
+    xdim4_advec_mom_kernel_post_pre_advec_y_h = xdim4;
+    ydim4_advec_mom_kernel_post_pre_advec_y = ydim4;
+    ydim4_advec_mom_kernel_post_pre_advec_y_h = ydim4;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -212,7 +242,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[22].mpi_time += t1-t2;
+  OPS_kernels[30].mpi_time += t1-t2;
 
   advec_mom_kernel_post_pre_advec_y_c_wrapper(
     p_a0,
@@ -223,7 +253,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[22].time += t2-t1;
+  OPS_kernels[30].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 5);
   #else
@@ -233,9 +263,9 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   ops_set_halo_dirtybit3(&args[3],range);
 
   //Update kernel record
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg4);
 }
