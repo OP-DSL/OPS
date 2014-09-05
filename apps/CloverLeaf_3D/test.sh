@@ -7,15 +7,15 @@ cd -
 make
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
-#KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running MPI+OpenMP'
-#export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./cloverleaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./cloverleaf_mpi_openmp > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running MPI'
-#$MPI_INSTALL_PATH/bin/mpirun -np 22 ./cloverleaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 22 ./cloverleaf_mpi > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running CUDA'
@@ -77,7 +77,6 @@ cd -
 make cloverleaf_openacc
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#tail -n 1 perf_out
 grep "Total Wall time" clover.out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
