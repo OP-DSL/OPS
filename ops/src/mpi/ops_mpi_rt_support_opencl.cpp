@@ -40,7 +40,9 @@
 
 
 int halo_buffer_size = 0;
+int halo_buffer_size2 = 0;
 cl_mem halo_buffer_d = NULL;
+cl_mem halo_buffer_d2 = NULL;
 extern ops_opencl_core OPS_opencl_core;
 
 
@@ -488,11 +490,14 @@ const char copy_tobuf_kernel_src[] = "__kernel void ops_opencl_copy_tobuf("
                  "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
                  "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
                  "    (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-
+                 //"    printf(\"executing copy_tobuf %d %d %d\\n\", *src, *dest, elem_size);"
                  "    src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;"
                  "    dest  += ((idx_z-rz_s)*z_step*buf_strides_z+ (idx_y-ry_s)*y_step*buf_strides_y + (idx_x-rx_s)*x_step*buf_strides_x)*elem_size;"
                  //"    for(int i=0;i<elem_size;i++) "
                  //"    dest[0] = src[0];"
+                 "    printf(\"executing copy_tobuf %d %d\\n\", src[0], elem_size);"
+                 //"    printf(\"executing copy_tobuf %d %d\\n\", dest[0], elem_size);"
+
                  "  }"
                  "}\n";
 
@@ -591,14 +596,15 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
   }
 
   int size = abs(src->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
-  cl_mem gpu_ptr;
-  if (halo_buffer_size < size) {
-    if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
-    halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
+  printf("size = %d\n",size);
+
+  if (halo_buffer_size2 < size) {
+    if (halo_buffer_d2!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d2));
+    halo_buffer_d2 = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size*4, NULL, &ret);
     clSafeCall( ret );
-    halo_buffer_size = size;
+    halo_buffer_size2 = size;
   }
-  gpu_ptr = halo_buffer_d;
+  cl_mem gpu_ptr = halo_buffer_d2;
 
   size_t globalWorkSize[3] = {blk_x*thr_x, blk_y*thr_y, blk_z*thr_z};
   size_t localWorkSize[3] =  {thr_x, thr_y, thr_z};
@@ -624,8 +630,8 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
   clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, *copy_tobuf_kernel, 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
 
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-  //cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size*sizeof(char), cudaMemcpyDeviceToHost));
-  clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) halo_buffer_d, CL_TRUE, 0, size*sizeof(char), dest, 0, NULL, NULL) );
+  //cutilSafeCall(cudaMemcpy(dest, halo_buffer_d2, size*sizeof(char), cudaMemcpyDeviceToHost));
+  clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, (cl_mem) halo_buffer_d2, CL_TRUE, 0, size*sizeof(char), dest, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
 }
@@ -702,19 +708,19 @@ void ops_halo_copy_frombuf(ops_dat dest,
 
   int size = abs(dest->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
   cl_mem gpu_ptr;
-    if (halo_buffer_size < size) {
-    if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
-    halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
+    if (halo_buffer_size2 < size) {
+    if (halo_buffer_d2!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d2));
+    halo_buffer_d2 = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
     clSafeCall( ret );
-    halo_buffer_size = size;
+    halo_buffer_size2 = size;
   }
-  gpu_ptr = halo_buffer_d;
+  gpu_ptr = halo_buffer_d2;
 
   size_t globalWorkSize[3] = {blk_x*thr_x, blk_y*thr_y, blk_z*thr_z};
   size_t localWorkSize[3] =  {thr_x, thr_y, thr_z};
 
-  //cutilSafeCall(cudaMemcpy(halo_buffer_d, src, size*sizeof(char), cudaMemcpyHostToDevice));
-  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) halo_buffer_d, CL_TRUE, 0, size*sizeof(char), src, 0, NULL, NULL) );
+  //cutilSafeCall(cudaMemcpy(halo_buffer_d2, src, size*sizeof(char), cudaMemcpyHostToDevice));
+  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) halo_buffer_d2, CL_TRUE, 0, size*sizeof(char), src, 0, NULL, NULL) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 
   clSafeCall( clSetKernelArg(copy_frombuf_kernel[0], 0, sizeof(cl_mem), (void*) &dest->data_d ));
