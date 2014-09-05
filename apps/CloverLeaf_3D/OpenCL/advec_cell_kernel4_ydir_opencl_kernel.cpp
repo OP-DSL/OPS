@@ -11,17 +11,7 @@
 
 static bool isbuilt_advec_cell_kernel4_ydir = false;
 
-void buildOpenCLKernels_advec_cell_kernel4_ydir(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6,
- int xdim7, int ydim7,
- int xdim8, int ydim8,
- int xdim9, int ydim9,
- int xdim10, int ydim10) {
+void buildOpenCLKernels_advec_cell_kernel4_ydir(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8, int xdim9, int ydim9, int xdim10, int ydim10) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_advec_cell_kernel4_ydir) {
@@ -68,9 +58,9 @@ void buildOpenCLKernels_advec_cell_kernel4_ydir(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_cell_kernel4_ydir=%d -Dydim0_advec_cell_kernel4_ydir=%d -Dxdim1_advec_cell_kernel4_ydir=%d -Dydim1_advec_cell_kernel4_ydir=%d -Dxdim2_advec_cell_kernel4_ydir=%d -Dydim2_advec_cell_kernel4_ydir=%d -Dxdim3_advec_cell_kernel4_ydir=%d -Dydim3_advec_cell_kernel4_ydir=%d -Dxdim4_advec_cell_kernel4_ydir=%d -Dydim4_advec_cell_kernel4_ydir=%d -Dxdim5_advec_cell_kernel4_ydir=%d -Dydim5_advec_cell_kernel4_ydir=%d -Dxdim6_advec_cell_kernel4_ydir=%d -Dydim6_advec_cell_kernel4_ydir=%d -Dxdim7_advec_cell_kernel4_ydir=%d -Dydim7_advec_cell_kernel4_ydir=%d -Dxdim8_advec_cell_kernel4_ydir=%d -Dydim8_advec_cell_kernel4_ydir=%d -Dxdim9_advec_cell_kernel4_ydir=%d -Dydim9_advec_cell_kernel4_ydir=%d -Dxdim10_advec_cell_kernel4_ydir=%d -Dydim10_advec_cell_kernel4_ydir=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_cell_kernel4_ydir=%d  -Dydim0_advec_cell_kernel4_ydir=%d  -Dxdim1_advec_cell_kernel4_ydir=%d  -Dydim1_advec_cell_kernel4_ydir=%d  -Dxdim2_advec_cell_kernel4_ydir=%d  -Dydim2_advec_cell_kernel4_ydir=%d  -Dxdim3_advec_cell_kernel4_ydir=%d  -Dydim3_advec_cell_kernel4_ydir=%d  -Dxdim4_advec_cell_kernel4_ydir=%d  -Dydim4_advec_cell_kernel4_ydir=%d  -Dxdim5_advec_cell_kernel4_ydir=%d  -Dydim5_advec_cell_kernel4_ydir=%d  -Dxdim6_advec_cell_kernel4_ydir=%d  -Dydim6_advec_cell_kernel4_ydir=%d  -Dxdim7_advec_cell_kernel4_ydir=%d  -Dydim7_advec_cell_kernel4_ydir=%d  -Dxdim8_advec_cell_kernel4_ydir=%d  -Dydim8_advec_cell_kernel4_ydir=%d  -Dxdim9_advec_cell_kernel4_ydir=%d  -Dydim9_advec_cell_kernel4_ydir=%d  -Dxdim10_advec_cell_kernel4_ydir=%d  -Dydim10_advec_cell_kernel4_ydir=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_cell_kernel4_ydir=%d -Dydim0_advec_cell_kernel4_ydir=%d -Dxdim1_advec_cell_kernel4_ydir=%d -Dydim1_advec_cell_kernel4_ydir=%d -Dxdim2_advec_cell_kernel4_ydir=%d -Dydim2_advec_cell_kernel4_ydir=%d -Dxdim3_advec_cell_kernel4_ydir=%d -Dydim3_advec_cell_kernel4_ydir=%d -Dxdim4_advec_cell_kernel4_ydir=%d -Dydim4_advec_cell_kernel4_ydir=%d -Dxdim5_advec_cell_kernel4_ydir=%d -Dydim5_advec_cell_kernel4_ydir=%d -Dxdim6_advec_cell_kernel4_ydir=%d -Dydim6_advec_cell_kernel4_ydir=%d -Dxdim7_advec_cell_kernel4_ydir=%d -Dydim7_advec_cell_kernel4_ydir=%d -Dxdim8_advec_cell_kernel4_ydir=%d -Dydim8_advec_cell_kernel4_ydir=%d -Dxdim9_advec_cell_kernel4_ydir=%d -Dydim9_advec_cell_kernel4_ydir=%d -Dxdim10_advec_cell_kernel4_ydir=%d -Dydim10_advec_cell_kernel4_ydir=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_cell_kernel4_ydir=%d  -Dydim0_advec_cell_kernel4_ydir=%d  -Dxdim1_advec_cell_kernel4_ydir=%d  -Dydim1_advec_cell_kernel4_ydir=%d  -Dxdim2_advec_cell_kernel4_ydir=%d  -Dydim2_advec_cell_kernel4_ydir=%d  -Dxdim3_advec_cell_kernel4_ydir=%d  -Dydim3_advec_cell_kernel4_ydir=%d  -Dxdim4_advec_cell_kernel4_ydir=%d  -Dydim4_advec_cell_kernel4_ydir=%d  -Dxdim5_advec_cell_kernel4_ydir=%d  -Dydim5_advec_cell_kernel4_ydir=%d  -Dxdim6_advec_cell_kernel4_ydir=%d  -Dydim6_advec_cell_kernel4_ydir=%d  -Dxdim7_advec_cell_kernel4_ydir=%d  -Dydim7_advec_cell_kernel4_ydir=%d  -Dxdim8_advec_cell_kernel4_ydir=%d  -Dydim8_advec_cell_kernel4_ydir=%d  -Dxdim9_advec_cell_kernel4_ydir=%d  -Dydim9_advec_cell_kernel4_ydir=%d  -Dxdim10_advec_cell_kernel4_ydir=%d  -Dydim10_advec_cell_kernel4_ydir=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -174,17 +164,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   //build opencl kernel if not already built
 
   buildOpenCLKernels_advec_cell_kernel4_ydir(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6,
-  xdim7, ydim7,
-  xdim8, ydim8,
-  xdim9, ydim9,
-  xdim10, ydim10);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10);
 
   //Timing
   double t1,t2,c1,c2;

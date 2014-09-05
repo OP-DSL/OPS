@@ -11,8 +11,7 @@
 
 static bool isbuilt_poisson_kernel_update = false;
 
-void buildOpenCLKernels_poisson_kernel_update(int xdim0,
- int xdim1) {
+void buildOpenCLKernels_poisson_kernel_update(int xdim0, int xdim1) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_poisson_kernel_update) {
@@ -59,9 +58,9 @@ void buildOpenCLKernels_poisson_kernel_update(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_update=%d -Dxdim1_poisson_kernel_update=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_update=%d  -Dxdim1_poisson_kernel_update=%d ", pPath, 32,xdim0,xdim1);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_update=%d -Dxdim1_poisson_kernel_update=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_update=%d  -Dxdim1_poisson_kernel_update=%d ", pPath, 32,xdim0,xdim1);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -142,8 +141,7 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   //build opencl kernel if not already built
 
   buildOpenCLKernels_poisson_kernel_update(
-  xdim0,
-  xdim1);
+  xdim0,xdim1);
 
   //Timing
   double t1,t2,c1,c2;
@@ -185,6 +183,7 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_device(args, 2);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[3].mpi_time += t1-t2;

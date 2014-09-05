@@ -11,8 +11,7 @@
 
 static bool isbuilt_update_halo_kernel2_yvel_minus_2_b = false;
 
-void buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_b(int xdim0,
- int xdim1) {
+void buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_b(int xdim0, int xdim1) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_update_halo_kernel2_yvel_minus_2_b) {
@@ -59,9 +58,9 @@ void buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_b(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_minus_2_b=%d -Dxdim1_update_halo_kernel2_yvel_minus_2_b=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_minus_2_b=%d  -Dxdim1_update_halo_kernel2_yvel_minus_2_b=%d ", pPath, 32,xdim0,xdim1);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_minus_2_b=%d -Dxdim1_update_halo_kernel2_yvel_minus_2_b=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_minus_2_b=%d  -Dxdim1_update_halo_kernel2_yvel_minus_2_b=%d ", pPath, 32,xdim0,xdim1);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -142,8 +141,7 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_b(char const *name, ops_block
   //build opencl kernel if not already built
 
   buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_b(
-  xdim0,
-  xdim1);
+  xdim0,xdim1);
 
   //Timing
   double t1,t2,c1,c2;

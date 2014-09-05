@@ -11,11 +11,7 @@
 
 static bool isbuilt_advec_mom_kernel_post_pre_advec_z = false;
 
-void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_z(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4) {
+void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_z(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_advec_mom_kernel_post_pre_advec_z) {
@@ -62,9 +58,9 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_z(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_z=%d -Dydim0_advec_mom_kernel_post_pre_advec_z=%d -Dxdim1_advec_mom_kernel_post_pre_advec_z=%d -Dydim1_advec_mom_kernel_post_pre_advec_z=%d -Dxdim2_advec_mom_kernel_post_pre_advec_z=%d -Dydim2_advec_mom_kernel_post_pre_advec_z=%d -Dxdim3_advec_mom_kernel_post_pre_advec_z=%d -Dydim3_advec_mom_kernel_post_pre_advec_z=%d -Dxdim4_advec_mom_kernel_post_pre_advec_z=%d -Dydim4_advec_mom_kernel_post_pre_advec_z=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  -Dydim0_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  -Dydim1_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  -Dydim2_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  -Dydim3_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  -Dydim4_advec_mom_kernel_post_pre_advec_z=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_z=%d -Dydim0_advec_mom_kernel_post_pre_advec_z=%d -Dxdim1_advec_mom_kernel_post_pre_advec_z=%d -Dydim1_advec_mom_kernel_post_pre_advec_z=%d -Dxdim2_advec_mom_kernel_post_pre_advec_z=%d -Dydim2_advec_mom_kernel_post_pre_advec_z=%d -Dxdim3_advec_mom_kernel_post_pre_advec_z=%d -Dydim3_advec_mom_kernel_post_pre_advec_z=%d -Dxdim4_advec_mom_kernel_post_pre_advec_z=%d -Dydim4_advec_mom_kernel_post_pre_advec_z=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  -Dydim0_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  -Dydim1_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  -Dydim2_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  -Dydim3_advec_mom_kernel_post_pre_advec_z=%d  -Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  -Dydim4_advec_mom_kernel_post_pre_advec_z=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -155,11 +151,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(char const *name, ops_block 
   //build opencl kernel if not already built
 
   buildOpenCLKernels_advec_mom_kernel_post_pre_advec_z(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
 
   //Timing
   double t1,t2,c1,c2;

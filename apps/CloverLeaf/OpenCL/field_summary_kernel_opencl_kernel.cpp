@@ -11,12 +11,7 @@
 
 static bool isbuilt_field_summary_kernel = false;
 
-void buildOpenCLKernels_field_summary_kernel(int xdim0,
- int xdim1,
- int xdim2,
- int xdim3,
- int xdim4,
- int xdim5) {
+void buildOpenCLKernels_field_summary_kernel(int xdim0, int xdim1, int xdim2, int xdim3, int xdim4, int xdim5) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_field_summary_kernel) {
@@ -63,9 +58,9 @@ void buildOpenCLKernels_field_summary_kernel(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d -Dxdim1_field_summary_kernel=%d -Dxdim2_field_summary_kernel=%d -Dxdim3_field_summary_kernel=%d -Dxdim4_field_summary_kernel=%d -Dxdim5_field_summary_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d  -Dxdim1_field_summary_kernel=%d  -Dxdim2_field_summary_kernel=%d  -Dxdim3_field_summary_kernel=%d  -Dxdim4_field_summary_kernel=%d  -Dxdim5_field_summary_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d -Dxdim1_field_summary_kernel=%d -Dxdim2_field_summary_kernel=%d -Dxdim3_field_summary_kernel=%d -Dxdim4_field_summary_kernel=%d -Dxdim5_field_summary_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d  -Dxdim1_field_summary_kernel=%d  -Dxdim2_field_summary_kernel=%d  -Dxdim3_field_summary_kernel=%d  -Dxdim4_field_summary_kernel=%d  -Dxdim5_field_summary_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -152,12 +147,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   //build opencl kernel if not already built
 
   buildOpenCLKernels_field_summary_kernel(
-  xdim0,
-  xdim1,
-  xdim2,
-  xdim3,
-  xdim4,
-  xdim5);
+  xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
 
   //Timing
   double t1,t2,c1,c2;

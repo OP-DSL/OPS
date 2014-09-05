@@ -91,6 +91,8 @@ void mvConstArraysToDevice( int consts_bytes );
 void mvReductArraysToDevice( int reduct_bytes );
 void mvReductArraysToHost( int reduct_bytes );
 void ops_cuda_exit( );
+void ops_upload_dat(ops_dat dat);
+void ops_download_dat(ops_dat dat);
 
 void ops_halo_copy_dh(const char * src, char * dest, int size);
 void ops_halo_copy_hd(const char * src, char * dest, int size);

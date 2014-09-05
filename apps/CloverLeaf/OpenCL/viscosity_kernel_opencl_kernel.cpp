@@ -11,13 +11,7 @@
 
 static bool isbuilt_viscosity_kernel = false;
 
-void buildOpenCLKernels_viscosity_kernel(int xdim0,
- int xdim1,
- int xdim2,
- int xdim3,
- int xdim4,
- int xdim5,
- int xdim6) {
+void buildOpenCLKernels_viscosity_kernel(int xdim0, int xdim1, int xdim2, int xdim3, int xdim4, int xdim5, int xdim6) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_viscosity_kernel) {
@@ -64,9 +58,9 @@ void buildOpenCLKernels_viscosity_kernel(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d -Dxdim1_viscosity_kernel=%d -Dxdim2_viscosity_kernel=%d -Dxdim3_viscosity_kernel=%d -Dxdim4_viscosity_kernel=%d -Dxdim5_viscosity_kernel=%d -Dxdim6_viscosity_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d  -Dxdim1_viscosity_kernel=%d  -Dxdim2_viscosity_kernel=%d  -Dxdim3_viscosity_kernel=%d  -Dxdim4_viscosity_kernel=%d  -Dxdim5_viscosity_kernel=%d  -Dxdim6_viscosity_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d -Dxdim1_viscosity_kernel=%d -Dxdim2_viscosity_kernel=%d -Dxdim3_viscosity_kernel=%d -Dxdim4_viscosity_kernel=%d -Dxdim5_viscosity_kernel=%d -Dxdim6_viscosity_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d  -Dxdim1_viscosity_kernel=%d  -Dxdim2_viscosity_kernel=%d  -Dxdim3_viscosity_kernel=%d  -Dxdim4_viscosity_kernel=%d  -Dxdim5_viscosity_kernel=%d  -Dxdim6_viscosity_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -153,13 +147,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   //build opencl kernel if not already built
 
   buildOpenCLKernels_viscosity_kernel(
-  xdim0,
-  xdim1,
-  xdim2,
-  xdim3,
-  xdim4,
-  xdim5,
-  xdim6);
+  xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
 
   //Timing
   double t1,t2,c1,c2;

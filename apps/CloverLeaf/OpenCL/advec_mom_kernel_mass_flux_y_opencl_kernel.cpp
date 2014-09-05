@@ -11,8 +11,7 @@
 
 static bool isbuilt_advec_mom_kernel_mass_flux_y = false;
 
-void buildOpenCLKernels_advec_mom_kernel_mass_flux_y(int xdim0,
- int xdim1) {
+void buildOpenCLKernels_advec_mom_kernel_mass_flux_y(int xdim0, int xdim1) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_advec_mom_kernel_mass_flux_y) {
@@ -59,9 +58,9 @@ void buildOpenCLKernels_advec_mom_kernel_mass_flux_y(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_mass_flux_y=%d -Dxdim1_advec_mom_kernel_mass_flux_y=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_mass_flux_y=%d  -Dxdim1_advec_mom_kernel_mass_flux_y=%d ", pPath, 32,xdim0,xdim1);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_mass_flux_y=%d -Dxdim1_advec_mom_kernel_mass_flux_y=%d", pPath, 32,xdim0,xdim1);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_mass_flux_y=%d  -Dxdim1_advec_mom_kernel_mass_flux_y=%d ", pPath, 32,xdim0,xdim1);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -142,8 +141,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   //build opencl kernel if not already built
 
   buildOpenCLKernels_advec_mom_kernel_mass_flux_y(
-  xdim0,
-  xdim1);
+  xdim0,xdim1);
 
   //Timing
   double t1,t2,c1,c2;

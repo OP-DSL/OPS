@@ -11,13 +11,7 @@
 
 static bool isbuilt_update_halo_kernel1_ba2 = false;
 
-void buildOpenCLKernels_update_halo_kernel1_ba2(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6) {
+void buildOpenCLKernels_update_halo_kernel1_ba2(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_update_halo_kernel1_ba2) {
@@ -64,9 +58,9 @@ void buildOpenCLKernels_update_halo_kernel1_ba2(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_ba2=%d -Dydim0_update_halo_kernel1_ba2=%d -Dxdim1_update_halo_kernel1_ba2=%d -Dydim1_update_halo_kernel1_ba2=%d -Dxdim2_update_halo_kernel1_ba2=%d -Dydim2_update_halo_kernel1_ba2=%d -Dxdim3_update_halo_kernel1_ba2=%d -Dydim3_update_halo_kernel1_ba2=%d -Dxdim4_update_halo_kernel1_ba2=%d -Dydim4_update_halo_kernel1_ba2=%d -Dxdim5_update_halo_kernel1_ba2=%d -Dydim5_update_halo_kernel1_ba2=%d -Dxdim6_update_halo_kernel1_ba2=%d -Dydim6_update_halo_kernel1_ba2=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_ba2=%d  -Dydim0_update_halo_kernel1_ba2=%d  -Dxdim1_update_halo_kernel1_ba2=%d  -Dydim1_update_halo_kernel1_ba2=%d  -Dxdim2_update_halo_kernel1_ba2=%d  -Dydim2_update_halo_kernel1_ba2=%d  -Dxdim3_update_halo_kernel1_ba2=%d  -Dydim3_update_halo_kernel1_ba2=%d  -Dxdim4_update_halo_kernel1_ba2=%d  -Dydim4_update_halo_kernel1_ba2=%d  -Dxdim5_update_halo_kernel1_ba2=%d  -Dydim5_update_halo_kernel1_ba2=%d  -Dxdim6_update_halo_kernel1_ba2=%d  -Dydim6_update_halo_kernel1_ba2=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_ba2=%d -Dydim0_update_halo_kernel1_ba2=%d -Dxdim1_update_halo_kernel1_ba2=%d -Dydim1_update_halo_kernel1_ba2=%d -Dxdim2_update_halo_kernel1_ba2=%d -Dydim2_update_halo_kernel1_ba2=%d -Dxdim3_update_halo_kernel1_ba2=%d -Dydim3_update_halo_kernel1_ba2=%d -Dxdim4_update_halo_kernel1_ba2=%d -Dydim4_update_halo_kernel1_ba2=%d -Dxdim5_update_halo_kernel1_ba2=%d -Dydim5_update_halo_kernel1_ba2=%d -Dxdim6_update_halo_kernel1_ba2=%d -Dydim6_update_halo_kernel1_ba2=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_ba2=%d  -Dydim0_update_halo_kernel1_ba2=%d  -Dxdim1_update_halo_kernel1_ba2=%d  -Dydim1_update_halo_kernel1_ba2=%d  -Dxdim2_update_halo_kernel1_ba2=%d  -Dydim2_update_halo_kernel1_ba2=%d  -Dxdim3_update_halo_kernel1_ba2=%d  -Dydim3_update_halo_kernel1_ba2=%d  -Dxdim4_update_halo_kernel1_ba2=%d  -Dydim4_update_halo_kernel1_ba2=%d  -Dxdim5_update_halo_kernel1_ba2=%d  -Dydim5_update_halo_kernel1_ba2=%d  -Dxdim6_update_halo_kernel1_ba2=%d  -Dydim6_update_halo_kernel1_ba2=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -161,13 +155,7 @@ void ops_par_loop_update_halo_kernel1_ba2(char const *name, ops_block block, int
   //build opencl kernel if not already built
 
   buildOpenCLKernels_update_halo_kernel1_ba2(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
 
   //Timing
   double t1,t2,c1,c2;

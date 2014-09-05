@@ -11,17 +11,7 @@
 
 static bool isbuilt_accelerate_kernel = false;
 
-void buildOpenCLKernels_accelerate_kernel(int xdim0,
- int xdim1,
- int xdim2,
- int xdim3,
- int xdim4,
- int xdim5,
- int xdim6,
- int xdim7,
- int xdim8,
- int xdim9,
- int xdim10) {
+void buildOpenCLKernels_accelerate_kernel(int xdim0, int xdim1, int xdim2, int xdim3, int xdim4, int xdim5, int xdim6, int xdim7, int xdim8, int xdim9, int xdim10) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_accelerate_kernel) {
@@ -68,9 +58,9 @@ void buildOpenCLKernels_accelerate_kernel(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_accelerate_kernel=%d -Dxdim1_accelerate_kernel=%d -Dxdim2_accelerate_kernel=%d -Dxdim3_accelerate_kernel=%d -Dxdim4_accelerate_kernel=%d -Dxdim5_accelerate_kernel=%d -Dxdim6_accelerate_kernel=%d -Dxdim7_accelerate_kernel=%d -Dxdim8_accelerate_kernel=%d -Dxdim9_accelerate_kernel=%d -Dxdim10_accelerate_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_accelerate_kernel=%d  -Dxdim1_accelerate_kernel=%d  -Dxdim2_accelerate_kernel=%d  -Dxdim3_accelerate_kernel=%d  -Dxdim4_accelerate_kernel=%d  -Dxdim5_accelerate_kernel=%d  -Dxdim6_accelerate_kernel=%d  -Dxdim7_accelerate_kernel=%d  -Dxdim8_accelerate_kernel=%d  -Dxdim9_accelerate_kernel=%d  -Dxdim10_accelerate_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_accelerate_kernel=%d -Dxdim1_accelerate_kernel=%d -Dxdim2_accelerate_kernel=%d -Dxdim3_accelerate_kernel=%d -Dxdim4_accelerate_kernel=%d -Dxdim5_accelerate_kernel=%d -Dxdim6_accelerate_kernel=%d -Dxdim7_accelerate_kernel=%d -Dxdim8_accelerate_kernel=%d -Dxdim9_accelerate_kernel=%d -Dxdim10_accelerate_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_accelerate_kernel=%d  -Dxdim1_accelerate_kernel=%d  -Dxdim2_accelerate_kernel=%d  -Dxdim3_accelerate_kernel=%d  -Dxdim4_accelerate_kernel=%d  -Dxdim5_accelerate_kernel=%d  -Dxdim6_accelerate_kernel=%d  -Dxdim7_accelerate_kernel=%d  -Dxdim8_accelerate_kernel=%d  -Dxdim9_accelerate_kernel=%d  -Dxdim10_accelerate_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -162,17 +152,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   //build opencl kernel if not already built
 
   buildOpenCLKernels_accelerate_kernel(
-  xdim0,
-  xdim1,
-  xdim2,
-  xdim3,
-  xdim4,
-  xdim5,
-  xdim6,
-  xdim7,
-  xdim8,
-  xdim9,
-  xdim10);
+  xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
 
   //Timing
   double t1,t2,c1,c2;

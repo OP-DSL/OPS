@@ -11,10 +11,7 @@
 
 static bool isbuilt_ideal_gas_kernel = false;
 
-void buildOpenCLKernels_ideal_gas_kernel(int xdim0,
- int xdim1,
- int xdim2,
- int xdim3) {
+void buildOpenCLKernels_ideal_gas_kernel(int xdim0, int xdim1, int xdim2, int xdim3) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_ideal_gas_kernel) {
@@ -61,9 +58,9 @@ void buildOpenCLKernels_ideal_gas_kernel(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_ideal_gas_kernel=%d -Dxdim1_ideal_gas_kernel=%d -Dxdim2_ideal_gas_kernel=%d -Dxdim3_ideal_gas_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_ideal_gas_kernel=%d  -Dxdim1_ideal_gas_kernel=%d  -Dxdim2_ideal_gas_kernel=%d  -Dxdim3_ideal_gas_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_ideal_gas_kernel=%d -Dxdim1_ideal_gas_kernel=%d -Dxdim2_ideal_gas_kernel=%d -Dxdim3_ideal_gas_kernel=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_ideal_gas_kernel=%d  -Dxdim1_ideal_gas_kernel=%d  -Dxdim2_ideal_gas_kernel=%d  -Dxdim3_ideal_gas_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -146,10 +143,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
   //build opencl kernel if not already built
 
   buildOpenCLKernels_ideal_gas_kernel(
-  xdim0,
-  xdim1,
-  xdim2,
-  xdim3);
+  xdim0,xdim1,xdim2,xdim3);
 
   //Timing
   double t1,t2,c1,c2;

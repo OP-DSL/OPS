@@ -11,18 +11,7 @@
 
 static bool isbuilt_viscosity_kernel = false;
 
-void buildOpenCLKernels_viscosity_kernel(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6,
- int xdim7, int ydim7,
- int xdim8, int ydim8,
- int xdim9, int ydim9,
- int xdim10, int ydim10,
- int xdim11, int ydim11) {
+void buildOpenCLKernels_viscosity_kernel(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8, int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_viscosity_kernel) {
@@ -69,9 +58,9 @@ void buildOpenCLKernels_viscosity_kernel(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d -Dydim0_viscosity_kernel=%d -Dxdim1_viscosity_kernel=%d -Dydim1_viscosity_kernel=%d -Dxdim2_viscosity_kernel=%d -Dydim2_viscosity_kernel=%d -Dxdim3_viscosity_kernel=%d -Dydim3_viscosity_kernel=%d -Dxdim4_viscosity_kernel=%d -Dydim4_viscosity_kernel=%d -Dxdim5_viscosity_kernel=%d -Dydim5_viscosity_kernel=%d -Dxdim6_viscosity_kernel=%d -Dydim6_viscosity_kernel=%d -Dxdim7_viscosity_kernel=%d -Dydim7_viscosity_kernel=%d -Dxdim8_viscosity_kernel=%d -Dydim8_viscosity_kernel=%d -Dxdim9_viscosity_kernel=%d -Dydim9_viscosity_kernel=%d -Dxdim10_viscosity_kernel=%d -Dydim10_viscosity_kernel=%d -Dxdim11_viscosity_kernel=%d -Dydim11_viscosity_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10,xdim11, ydim11);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d  -Dydim0_viscosity_kernel=%d  -Dxdim1_viscosity_kernel=%d  -Dydim1_viscosity_kernel=%d  -Dxdim2_viscosity_kernel=%d  -Dydim2_viscosity_kernel=%d  -Dxdim3_viscosity_kernel=%d  -Dydim3_viscosity_kernel=%d  -Dxdim4_viscosity_kernel=%d  -Dydim4_viscosity_kernel=%d  -Dxdim5_viscosity_kernel=%d  -Dydim5_viscosity_kernel=%d  -Dxdim6_viscosity_kernel=%d  -Dydim6_viscosity_kernel=%d  -Dxdim7_viscosity_kernel=%d  -Dydim7_viscosity_kernel=%d  -Dxdim8_viscosity_kernel=%d  -Dydim8_viscosity_kernel=%d  -Dxdim9_viscosity_kernel=%d  -Dydim9_viscosity_kernel=%d  -Dxdim10_viscosity_kernel=%d  -Dydim10_viscosity_kernel=%d  -Dxdim11_viscosity_kernel=%d  -Dydim11_viscosity_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d -Dydim0_viscosity_kernel=%d -Dxdim1_viscosity_kernel=%d -Dydim1_viscosity_kernel=%d -Dxdim2_viscosity_kernel=%d -Dydim2_viscosity_kernel=%d -Dxdim3_viscosity_kernel=%d -Dydim3_viscosity_kernel=%d -Dxdim4_viscosity_kernel=%d -Dydim4_viscosity_kernel=%d -Dxdim5_viscosity_kernel=%d -Dydim5_viscosity_kernel=%d -Dxdim6_viscosity_kernel=%d -Dydim6_viscosity_kernel=%d -Dxdim7_viscosity_kernel=%d -Dydim7_viscosity_kernel=%d -Dxdim8_viscosity_kernel=%d -Dydim8_viscosity_kernel=%d -Dxdim9_viscosity_kernel=%d -Dydim9_viscosity_kernel=%d -Dxdim10_viscosity_kernel=%d -Dydim10_viscosity_kernel=%d -Dxdim11_viscosity_kernel=%d -Dydim11_viscosity_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10,xdim11, ydim11);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_viscosity_kernel=%d  -Dydim0_viscosity_kernel=%d  -Dxdim1_viscosity_kernel=%d  -Dydim1_viscosity_kernel=%d  -Dxdim2_viscosity_kernel=%d  -Dydim2_viscosity_kernel=%d  -Dxdim3_viscosity_kernel=%d  -Dydim3_viscosity_kernel=%d  -Dxdim4_viscosity_kernel=%d  -Dydim4_viscosity_kernel=%d  -Dxdim5_viscosity_kernel=%d  -Dydim5_viscosity_kernel=%d  -Dxdim6_viscosity_kernel=%d  -Dydim6_viscosity_kernel=%d  -Dxdim7_viscosity_kernel=%d  -Dydim7_viscosity_kernel=%d  -Dxdim8_viscosity_kernel=%d  -Dydim8_viscosity_kernel=%d  -Dxdim9_viscosity_kernel=%d  -Dydim9_viscosity_kernel=%d  -Dxdim10_viscosity_kernel=%d  -Dydim10_viscosity_kernel=%d  -Dxdim11_viscosity_kernel=%d  -Dydim11_viscosity_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -177,18 +166,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   //build opencl kernel if not already built
 
   buildOpenCLKernels_viscosity_kernel(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6,
-  xdim7, ydim7,
-  xdim8, ydim8,
-  xdim9, ydim9,
-  xdim10, ydim10,
-  xdim11, ydim11);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11);
 
   //Timing
   double t1,t2,c1,c2;

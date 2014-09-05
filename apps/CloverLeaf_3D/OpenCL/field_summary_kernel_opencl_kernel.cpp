@@ -11,13 +11,7 @@
 
 static bool isbuilt_field_summary_kernel = false;
 
-void buildOpenCLKernels_field_summary_kernel(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6) {
+void buildOpenCLKernels_field_summary_kernel(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_field_summary_kernel) {
@@ -64,9 +58,9 @@ void buildOpenCLKernels_field_summary_kernel(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d -Dydim0_field_summary_kernel=%d -Dxdim1_field_summary_kernel=%d -Dydim1_field_summary_kernel=%d -Dxdim2_field_summary_kernel=%d -Dydim2_field_summary_kernel=%d -Dxdim3_field_summary_kernel=%d -Dydim3_field_summary_kernel=%d -Dxdim4_field_summary_kernel=%d -Dydim4_field_summary_kernel=%d -Dxdim5_field_summary_kernel=%d -Dydim5_field_summary_kernel=%d -Dxdim6_field_summary_kernel=%d -Dydim6_field_summary_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d  -Dydim0_field_summary_kernel=%d  -Dxdim1_field_summary_kernel=%d  -Dydim1_field_summary_kernel=%d  -Dxdim2_field_summary_kernel=%d  -Dydim2_field_summary_kernel=%d  -Dxdim3_field_summary_kernel=%d  -Dydim3_field_summary_kernel=%d  -Dxdim4_field_summary_kernel=%d  -Dydim4_field_summary_kernel=%d  -Dxdim5_field_summary_kernel=%d  -Dydim5_field_summary_kernel=%d  -Dxdim6_field_summary_kernel=%d  -Dydim6_field_summary_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d -Dydim0_field_summary_kernel=%d -Dxdim1_field_summary_kernel=%d -Dydim1_field_summary_kernel=%d -Dxdim2_field_summary_kernel=%d -Dydim2_field_summary_kernel=%d -Dxdim3_field_summary_kernel=%d -Dydim3_field_summary_kernel=%d -Dxdim4_field_summary_kernel=%d -Dydim4_field_summary_kernel=%d -Dxdim5_field_summary_kernel=%d -Dydim5_field_summary_kernel=%d -Dxdim6_field_summary_kernel=%d -Dydim6_field_summary_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_field_summary_kernel=%d  -Dydim0_field_summary_kernel=%d  -Dxdim1_field_summary_kernel=%d  -Dydim1_field_summary_kernel=%d  -Dxdim2_field_summary_kernel=%d  -Dydim2_field_summary_kernel=%d  -Dxdim3_field_summary_kernel=%d  -Dydim3_field_summary_kernel=%d  -Dxdim4_field_summary_kernel=%d  -Dydim4_field_summary_kernel=%d  -Dxdim5_field_summary_kernel=%d  -Dydim5_field_summary_kernel=%d  -Dxdim6_field_summary_kernel=%d  -Dydim6_field_summary_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -162,13 +156,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   //build opencl kernel if not already built
 
   buildOpenCLKernels_field_summary_kernel(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
 
   //Timing
   double t1,t2,c1,c2;

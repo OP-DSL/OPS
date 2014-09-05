@@ -11,13 +11,7 @@
 
 static bool isbuilt_calc_dt_kernel_print = false;
 
-void buildOpenCLKernels_calc_dt_kernel_print(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6) {
+void buildOpenCLKernels_calc_dt_kernel_print(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_calc_dt_kernel_print) {
@@ -64,9 +58,9 @@ void buildOpenCLKernels_calc_dt_kernel_print(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_print=%d -Dydim0_calc_dt_kernel_print=%d -Dxdim1_calc_dt_kernel_print=%d -Dydim1_calc_dt_kernel_print=%d -Dxdim2_calc_dt_kernel_print=%d -Dydim2_calc_dt_kernel_print=%d -Dxdim3_calc_dt_kernel_print=%d -Dydim3_calc_dt_kernel_print=%d -Dxdim4_calc_dt_kernel_print=%d -Dydim4_calc_dt_kernel_print=%d -Dxdim5_calc_dt_kernel_print=%d -Dydim5_calc_dt_kernel_print=%d -Dxdim6_calc_dt_kernel_print=%d -Dydim6_calc_dt_kernel_print=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_print=%d  -Dydim0_calc_dt_kernel_print=%d  -Dxdim1_calc_dt_kernel_print=%d  -Dydim1_calc_dt_kernel_print=%d  -Dxdim2_calc_dt_kernel_print=%d  -Dydim2_calc_dt_kernel_print=%d  -Dxdim3_calc_dt_kernel_print=%d  -Dydim3_calc_dt_kernel_print=%d  -Dxdim4_calc_dt_kernel_print=%d  -Dydim4_calc_dt_kernel_print=%d  -Dxdim5_calc_dt_kernel_print=%d  -Dydim5_calc_dt_kernel_print=%d  -Dxdim6_calc_dt_kernel_print=%d  -Dydim6_calc_dt_kernel_print=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_print=%d -Dydim0_calc_dt_kernel_print=%d -Dxdim1_calc_dt_kernel_print=%d -Dydim1_calc_dt_kernel_print=%d -Dxdim2_calc_dt_kernel_print=%d -Dydim2_calc_dt_kernel_print=%d -Dxdim3_calc_dt_kernel_print=%d -Dydim3_calc_dt_kernel_print=%d -Dxdim4_calc_dt_kernel_print=%d -Dydim4_calc_dt_kernel_print=%d -Dxdim5_calc_dt_kernel_print=%d -Dydim5_calc_dt_kernel_print=%d -Dxdim6_calc_dt_kernel_print=%d -Dydim6_calc_dt_kernel_print=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_print=%d  -Dydim0_calc_dt_kernel_print=%d  -Dxdim1_calc_dt_kernel_print=%d  -Dydim1_calc_dt_kernel_print=%d  -Dxdim2_calc_dt_kernel_print=%d  -Dydim2_calc_dt_kernel_print=%d  -Dxdim3_calc_dt_kernel_print=%d  -Dydim3_calc_dt_kernel_print=%d  -Dxdim4_calc_dt_kernel_print=%d  -Dydim4_calc_dt_kernel_print=%d  -Dxdim5_calc_dt_kernel_print=%d  -Dydim5_calc_dt_kernel_print=%d  -Dxdim6_calc_dt_kernel_print=%d  -Dydim6_calc_dt_kernel_print=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -161,13 +155,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   //build opencl kernel if not already built
 
   buildOpenCLKernels_calc_dt_kernel_print(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6);
 
   //Timing
   double t1,t2,c1,c2;

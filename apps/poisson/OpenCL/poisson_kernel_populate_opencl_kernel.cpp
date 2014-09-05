@@ -11,9 +11,7 @@
 
 static bool isbuilt_poisson_kernel_populate = false;
 
-void buildOpenCLKernels_poisson_kernel_populate(int xdim3,
- int xdim4,
- int xdim5) {
+void buildOpenCLKernels_poisson_kernel_populate(int xdim3, int xdim4, int xdim5) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_poisson_kernel_populate) {
@@ -60,9 +58,9 @@ void buildOpenCLKernels_poisson_kernel_populate(int xdim3,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim3_poisson_kernel_populate=%d -Dxdim4_poisson_kernel_populate=%d -Dxdim5_poisson_kernel_populate=%d", pPath, 32,xdim3,xdim4,xdim5);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim3_poisson_kernel_populate=%d  -Dxdim4_poisson_kernel_populate=%d  -Dxdim5_poisson_kernel_populate=%d ", pPath, 32,xdim3,xdim4,xdim5);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim3_poisson_kernel_populate=%d -Dxdim4_poisson_kernel_populate=%d -Dxdim5_poisson_kernel_populate=%d", pPath, 32,xdim3,xdim4,xdim5);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim3_poisson_kernel_populate=%d  -Dxdim4_poisson_kernel_populate=%d  -Dxdim5_poisson_kernel_populate=%d ", pPath, 32,xdim3,xdim4,xdim5);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -153,9 +151,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   //build opencl kernel if not already built
 
   buildOpenCLKernels_poisson_kernel_populate(
-  xdim3,
-  xdim4,
-  xdim5);
+  xdim3,xdim4,xdim5);
 
   //Timing
   double t1,t2,c1,c2;
@@ -208,6 +204,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
   ops_H_D_exchanges_device(args, 6);
   ops_halo_exchanges(args,6,range);
+  ops_H_D_exchanges_device(args, 6);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[0].mpi_time += t1-t2;

@@ -598,22 +598,34 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     arg_values = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        arg_text = arg_text +'int xdim'+str(n)
-        compile_line = compile_line + ' -Dxdim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-        arg_values = arg_values + 'xdim'+str(n)
+        arg_text = arg_text +'int_xdim'+str(n)+' '
+        compile_line = compile_line + ' -Dxdim'+str(n)+'_'+kernel_name_list[nk]+'=%d'+' '
+        arg_values = arg_values + 'xdim'+str(n)+' '
         if NDIM==3:
-          arg_text = arg_text +', int ydim'+str(n)
-          compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-          arg_values = arg_values + ', ydim'+str(n)
+          arg_text = arg_text +'int_ydim'+str(n)+' ' 
+          compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'+' ' 
+          arg_values = arg_values + 'ydim'+str(n)+' '
+    
+    ' '.join(arg_values.split())
+    arg_values = arg_values.replace(' ',',')
+    arg_values = arg_values[:-1]
+    
+    ' '.join(arg_text.split())
+    arg_text = arg_text.replace(' ',', ')
+    arg_text = arg_text[:-2]
+    arg_text = arg_text.replace('_',' ')
+    
       #else:
       #  continue
-      if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
-        arg_text = arg_text + ',\n'+depth*' '
-        arg_values = arg_values + ','
-      else:
-        arg_text = arg_text + ''
-        arg_values = arg_values + ''
+      #if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
+      #  arg_text = arg_text + ',\n'+depth*' '
+      #  arg_values = arg_values + ','
+      #else:
+      #  arg_text = arg_text + ''
+      #  arg_values = arg_values + ''
 
+		
+    
     compile_line = compile_line + '"'
 
 
@@ -812,15 +824,14 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     arg_text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        arg_text = arg_text +'xdim'+str(n)
+        arg_text = arg_text +'xdim'+str(n)+' '
         if NDIM==3:
-          arg_text = arg_text +', ydim'+str(n)
-      #else:
-      #  continue
-      if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
-        arg_text = arg_text + ',\n'+depth*' '
-      else:
-        arg_text = arg_text + ''
+          arg_text = arg_text +'ydim'+str(n)+' '
+      
+    ' '.join(arg_text.split())
+    arg_text = arg_text.replace(' ',',')
+    arg_text = arg_text[:-1]
+      
 
     code(arg_text+');')
 

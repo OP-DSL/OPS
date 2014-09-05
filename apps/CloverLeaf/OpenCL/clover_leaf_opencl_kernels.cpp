@@ -209,7 +209,6 @@ void buildOpenCLKernels() {
 }
   
 //user kernel files
-
 #include "viscosity_kernel_opencl_kernel.cpp"
 #include "accelerate_kernel_opencl_kernel.cpp"
 #include "revert_kernel_opencl_kernel.cpp"

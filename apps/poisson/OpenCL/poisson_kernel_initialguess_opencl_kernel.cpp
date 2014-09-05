@@ -58,9 +58,9 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_initialguess=%d", pPath, 32,xdim0);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_initialguess=%d ", pPath, 32,xdim0);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_initialguess=%d", pPath, 32,xdim0);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_initialguess=%d ", pPath, 32,xdim0);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -171,6 +171,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
   ops_H_D_exchanges_device(args, 1);
   ops_halo_exchanges(args,1,range);
+  ops_H_D_exchanges_device(args, 1);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[1].mpi_time += t1-t2;

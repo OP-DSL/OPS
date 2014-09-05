@@ -11,20 +11,7 @@
 
 static bool isbuilt_calc_dt_kernel = false;
 
-void buildOpenCLKernels_calc_dt_kernel(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4,
- int xdim5, int ydim5,
- int xdim6, int ydim6,
- int xdim7, int ydim7,
- int xdim8, int ydim8,
- int xdim9, int ydim9,
- int xdim10, int ydim10,
- int xdim11, int ydim11,
- int xdim12, int ydim12,
- int xdim13, int ydim13) {
+void buildOpenCLKernels_calc_dt_kernel(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8, int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11, int xdim12, int ydim12, int xdim13, int ydim13) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_calc_dt_kernel) {
@@ -71,9 +58,9 @@ void buildOpenCLKernels_calc_dt_kernel(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d -Dydim0_calc_dt_kernel=%d -Dxdim1_calc_dt_kernel=%d -Dydim1_calc_dt_kernel=%d -Dxdim2_calc_dt_kernel=%d -Dydim2_calc_dt_kernel=%d -Dxdim3_calc_dt_kernel=%d -Dydim3_calc_dt_kernel=%d -Dxdim4_calc_dt_kernel=%d -Dydim4_calc_dt_kernel=%d -Dxdim5_calc_dt_kernel=%d -Dydim5_calc_dt_kernel=%d -Dxdim6_calc_dt_kernel=%d -Dydim6_calc_dt_kernel=%d -Dxdim7_calc_dt_kernel=%d -Dydim7_calc_dt_kernel=%d -Dxdim8_calc_dt_kernel=%d -Dydim8_calc_dt_kernel=%d -Dxdim9_calc_dt_kernel=%d -Dydim9_calc_dt_kernel=%d -Dxdim10_calc_dt_kernel=%d -Dydim10_calc_dt_kernel=%d -Dxdim11_calc_dt_kernel=%d -Dydim11_calc_dt_kernel=%d -Dxdim12_calc_dt_kernel=%d -Dydim12_calc_dt_kernel=%d -Dxdim13_calc_dt_kernel=%d -Dydim13_calc_dt_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10,xdim11, ydim11,xdim12, ydim12,xdim13, ydim13);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  -Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  -Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  -Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  -Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  -Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  -Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  -Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  -Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  -Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  -Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  -Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  -Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  -Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d -Dydim0_calc_dt_kernel=%d -Dxdim1_calc_dt_kernel=%d -Dydim1_calc_dt_kernel=%d -Dxdim2_calc_dt_kernel=%d -Dydim2_calc_dt_kernel=%d -Dxdim3_calc_dt_kernel=%d -Dydim3_calc_dt_kernel=%d -Dxdim4_calc_dt_kernel=%d -Dydim4_calc_dt_kernel=%d -Dxdim5_calc_dt_kernel=%d -Dydim5_calc_dt_kernel=%d -Dxdim6_calc_dt_kernel=%d -Dydim6_calc_dt_kernel=%d -Dxdim7_calc_dt_kernel=%d -Dydim7_calc_dt_kernel=%d -Dxdim8_calc_dt_kernel=%d -Dydim8_calc_dt_kernel=%d -Dxdim9_calc_dt_kernel=%d -Dydim9_calc_dt_kernel=%d -Dxdim10_calc_dt_kernel=%d -Dydim10_calc_dt_kernel=%d -Dxdim11_calc_dt_kernel=%d -Dydim11_calc_dt_kernel=%d -Dxdim12_calc_dt_kernel=%d -Dydim12_calc_dt_kernel=%d -Dxdim13_calc_dt_kernel=%d -Dydim13_calc_dt_kernel=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4,xdim5, ydim5,xdim6, ydim6,xdim7, ydim7,xdim8, ydim8,xdim9, ydim9,xdim10, ydim10,xdim11, ydim11,xdim12, ydim12,xdim13, ydim13);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  -Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  -Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  -Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  -Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  -Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  -Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  -Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  -Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  -Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  -Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  -Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  -Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  -Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -183,20 +170,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   //build opencl kernel if not already built
 
   buildOpenCLKernels_calc_dt_kernel(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4,
-  xdim5, ydim5,
-  xdim6, ydim6,
-  xdim7, ydim7,
-  xdim8, ydim8,
-  xdim9, ydim9,
-  xdim10, ydim10,
-  xdim11, ydim11,
-  xdim12, ydim12,
-  xdim13, ydim13);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
 
   //Timing
   double t1,t2,c1,c2;
