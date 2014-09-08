@@ -30,9 +30,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi declaration
+/** @brief ops mpi+cuda declaration
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the OPS API calls for the mpi backend
+  * @details Implements the OPS API calls for the mpi+cuda backend
   */
 
 #include <mpi.h>

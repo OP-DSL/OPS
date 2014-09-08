@@ -16,8 +16,8 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
 
 
-  ops_timing_realloc(41,"field_summary_kernel");
-  OPS_kernels[41].count++;
+  ops_timing_realloc(125,"field_summary_kernel");
+  OPS_kernels[125].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -282,9 +282,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   ops_H_D_exchanges_host(args, 12);
   ops_halo_exchanges(args,12,range);
+  ops_H_D_exchanges_host(args, 12);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[41].mpi_time += t1-t2;
+  OPS_kernels[125].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
   ydim0 = args[0].dat->size[1];
@@ -362,15 +363,15 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     p_a[6]= p_a[6] + (dat6 * off6_2);
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[41].time += t2-t1;
+  OPS_kernels[125].time += t2-t1;
   ops_set_dirtybit_host(args, 12);
 
   //Update kernel record
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg6);
 }

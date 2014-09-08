@@ -368,6 +368,7 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
@@ -547,7 +548,9 @@ def ops_gen_mpi(master, date, consts, kernels):
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
+  #code('#ifdef OPS_MPI')
   code('#include "ops_lib_mpi.h"')
+  #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')

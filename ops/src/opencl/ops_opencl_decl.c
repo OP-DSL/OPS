@@ -45,6 +45,10 @@
 #include <ops_lib_cpp.h>
 #include <ops_opencl_rt_support.h>
 
+char *ops_halo_buffer = NULL;
+cl_mem ops_halo_buffer_d = NULL;
+int ops_halo_buffer_size = 0;
+
 extern ops_opencl_core OPS_opencl_core;
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
@@ -168,4 +172,95 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 void ops_partition(char* routine)
 {
   (void)routine;
+}
+
+void ops_halo_transfer(ops_halo_group group)
+{
+  //printf("In OpenCL block halo transfer\n");
+  cl_int ret = 0;
+  
+  for (int h = 0; h < group->nhalos; h++) {
+    ops_halo halo = group->halos[h];
+    int size = halo->from->elem_size * halo->iter_size[0];
+    for (int i = 1; i < halo->from->block->dims; i++) size *= halo->iter_size[i];
+    if (size > ops_halo_buffer_size) {
+      if (ops_halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(ops_halo_buffer_d));
+      ops_halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
+      clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+      clSafeCall( ret );
+      ops_halo_buffer_size = size;
+    }
+
+    //copy to linear buffer from source
+    int ranges[OPS_MAX_DIM*2];
+    int step[OPS_MAX_DIM];
+    int buf_strides[OPS_MAX_DIM];
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->from_dir[i] > 0) {
+        ranges[2*i] = halo->from_base[i] - halo->from->d_m[i] - halo->from->base[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->from_base[i] - 1  - halo->from->d_m[i] - halo->from->base[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->from_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->from_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+
+    /*for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          ops_cuda_halo_copy(ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
+                 halo->from->data_d + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
+        }
+      }
+    }*/
+
+    ops_halo_copy_tobuf((char *)ops_halo_buffer_d, 0, halo->from,
+                       ranges[0], ranges[1],
+                       ranges[2], ranges[3],
+                       ranges[4], ranges[5],
+                       step[0], step[1], step[2],
+                       buf_strides[0], buf_strides[1], buf_strides[2]);
+    
+    //cutilSafeCall ( cudaDeviceSynchronize ( ) );
+    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+
+    //copy from linear buffer to target
+    for (int i = 0; i < OPS_MAX_DIM; i++) {
+      if (halo->to_dir[i] > 0) {
+        ranges[2*i] = halo->to_base[i] - halo->to->d_m[i] - halo->to->base[i];
+        ranges[2*i+1] = ranges[2*i] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = 1;
+      } else {
+        ranges[2*i+1] = halo->to_base[i] - 1 - halo->to->d_m[i] - halo->to->base[i];
+        ranges[2*i] = ranges[2*i+1] + halo->iter_size[abs(halo->to_dir[i])-1];
+        step[i] = -1;
+      }
+      buf_strides[i] = 1;
+      for (int j = 0; j != abs(halo->to_dir[i])-1; j++) buf_strides[i] *= halo->iter_size[j];
+    }
+
+    /*for (int k = ranges[4]; (step[2]==1 ? k < ranges[5] : k > ranges[5]); k += step[2]) {
+      for (int j = ranges[2]; (step[1]==1 ? j < ranges[3] : j > ranges[3]); j += step[1]) {
+        for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i += step[0]) {
+          ops_cuda_halo_copy(halo->to->data_d + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
+               ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
+        }
+      }
+    }*/
+
+    ops_halo_copy_frombuf(halo->to, (char *)ops_halo_buffer_d, 0,
+                   ranges[0], ranges[1],
+                   ranges[2], ranges[3],
+                   ranges[4], ranges[5],
+                   step[0], step[1], step[2],
+                   buf_strides[0], buf_strides[1], buf_strides[2]);
+
+    //cutilSafeCall ( cudaDeviceSynchronize ( ) );
+    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+    halo->to->dirty_hd = 2;
+  }
 }

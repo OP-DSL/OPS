@@ -60,8 +60,8 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(8,"advec_cell_kernel2_xdir");
-  OPS_kernels[8].count++;
+  ops_timing_realloc(23,"advec_cell_kernel2_xdir");
+  OPS_kernels[23].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -106,7 +106,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[8].count == 1) {
+  if (OPS_kernels[23].count == 1) {
     cudaMemcpyToSymbol( xdim0_advec_cell_kernel2_xdir, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_advec_cell_kernel2_xdir, &xdim1, sizeof(int) );
     cudaMemcpyToSymbol( xdim2_advec_cell_kernel2_xdir, &xdim2, sizeof(int) );
@@ -182,7 +182,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[8].mpi_time += t1-t2;
+  OPS_kernels[23].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -193,14 +193,14 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[8].time += t2-t1;
+  OPS_kernels[23].time += t2-t1;
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg3);
 }

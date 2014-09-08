@@ -75,8 +75,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  ops_timing_realloc(39,"calc_dt_kernel_get");
-  OPS_kernels[39].count++;
+  ops_timing_realloc(128,"calc_dt_kernel_get");
+  OPS_kernels[128].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -124,7 +124,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[39].count == 1) {
+  if (OPS_kernels[128].count == 1) {
     cudaMemcpyToSymbol( xdim0_calc_dt_kernel_get, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_calc_dt_kernel_get, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_calc_dt_kernel_get, &xdim1, sizeof(int) );
@@ -249,7 +249,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,6,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[39].mpi_time += t1-t2;
+  OPS_kernels[128].mpi_time += t1-t2;
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -291,11 +291,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[39].time += t2-t1;
+  OPS_kernels[128].time += t2-t1;
   ops_set_dirtybit_device(args, 6);
 
   //Update kernel record
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg4);
 }

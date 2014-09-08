@@ -11,11 +11,7 @@
 
 static bool isbuilt_advec_mom_kernel_post_pre_advec_x = false;
 
-void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0,
- int xdim1, int ydim1,
- int xdim2, int ydim2,
- int xdim3, int ydim3,
- int xdim4, int ydim4) {
+void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_advec_mom_kernel_post_pre_advec_x) {
@@ -62,9 +58,9 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_x=%d -Dydim0_advec_mom_kernel_post_pre_advec_x=%d -Dxdim1_advec_mom_kernel_post_pre_advec_x=%d -Dydim1_advec_mom_kernel_post_pre_advec_x=%d -Dxdim2_advec_mom_kernel_post_pre_advec_x=%d -Dydim2_advec_mom_kernel_post_pre_advec_x=%d -Dxdim3_advec_mom_kernel_post_pre_advec_x=%d -Dydim3_advec_mom_kernel_post_pre_advec_x=%d -Dxdim4_advec_mom_kernel_post_pre_advec_x=%d -Dydim4_advec_mom_kernel_post_pre_advec_x=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_x=%d  -Dydim0_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim1_advec_mom_kernel_post_pre_advec_x=%d  -Dydim1_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim2_advec_mom_kernel_post_pre_advec_x=%d  -Dydim2_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim3_advec_mom_kernel_post_pre_advec_x=%d  -Dydim3_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim4_advec_mom_kernel_post_pre_advec_x=%d  -Dydim4_advec_mom_kernel_post_pre_advec_x=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_x=%d -Dydim0_advec_mom_kernel_post_pre_advec_x=%d -Dxdim1_advec_mom_kernel_post_pre_advec_x=%d -Dydim1_advec_mom_kernel_post_pre_advec_x=%d -Dxdim2_advec_mom_kernel_post_pre_advec_x=%d -Dydim2_advec_mom_kernel_post_pre_advec_x=%d -Dxdim3_advec_mom_kernel_post_pre_advec_x=%d -Dydim3_advec_mom_kernel_post_pre_advec_x=%d -Dxdim4_advec_mom_kernel_post_pre_advec_x=%d -Dydim4_advec_mom_kernel_post_pre_advec_x=%d", pPath, 32,xdim0, ydim0,xdim1, ydim1,xdim2, ydim2,xdim3, ydim3,xdim4, ydim4);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel_post_pre_advec_x=%d  -Dydim0_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim1_advec_mom_kernel_post_pre_advec_x=%d  -Dydim1_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim2_advec_mom_kernel_post_pre_advec_x=%d  -Dydim2_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim3_advec_mom_kernel_post_pre_advec_x=%d  -Dydim3_advec_mom_kernel_post_pre_advec_x=%d  -Dxdim4_advec_mom_kernel_post_pre_advec_x=%d  -Dydim4_advec_mom_kernel_post_pre_advec_x=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -87,7 +83,7 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0,
       printf("compiling advec_mom_kernel_post_pre_advec_x -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[26] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_post_pre_advec_x", &ret);
+    OPS_opencl_core.kernel[18] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_post_pre_advec_x", &ret);
     clSafeCall( ret );
 
     isbuilt_advec_mom_kernel_post_pre_advec_x = true;
@@ -97,14 +93,14 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0,
 
 
 // host stub function
-void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4) {
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
-  ops_timing_realloc(26,"advec_mom_kernel_post_pre_advec_x");
-  OPS_kernels[26].count++;
+  ops_timing_realloc(18,"advec_mom_kernel_post_pre_advec_x");
+  OPS_kernels[18].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -155,18 +151,14 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   //build opencl kernel if not already built
 
   buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(
-  xdim0, ydim0,
-  xdim1, ydim1,
-  xdim2, ydim2,
-  xdim3, ydim3,
-  xdim4, ydim4);
+  xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4);
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};
+  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
 
 
@@ -243,39 +235,43 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
 
   ops_H_D_exchanges_device(args, 5);
+  ops_halo_exchanges(args,5,range);
+  ops_H_D_exchanges_device(args, 5);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[26].mpi_time += t1-t2;
+  OPS_kernels[18].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 5, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 6, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 7, sizeof(cl_int), (void*) &base2 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 8, sizeof(cl_int), (void*) &base3 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 9, sizeof(cl_int), (void*) &base4 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 10, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 11, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[26], 12, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 5, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 6, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 7, sizeof(cl_int), (void*) &base2 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 8, sizeof(cl_int), (void*) &base3 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 9, sizeof(cl_int), (void*) &base4 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 10, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 11, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[18], 12, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[26], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[18], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
   ops_set_dirtybit_device(args, 5);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[3],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[26].time += t2-t1;
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[18].time += t2-t1;
+  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg4);
 }

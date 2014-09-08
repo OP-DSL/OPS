@@ -87,7 +87,7 @@ void buildOpenCLKernels_initialise_chunk_kernel_volume(int xdim0,
 
 
 // host stub function
-void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4) {
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};

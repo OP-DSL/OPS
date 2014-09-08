@@ -31,8 +31,8 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block Block, int dim
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(26,"advec_mom_kernel2_y");
-  OPS_kernels[26].count++;
+  ops_timing_realloc(21,"advec_mom_kernel2_y");
+  OPS_kernels[21].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -73,7 +73,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block Block, int dim
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[26].count == 1) {
+  if (OPS_kernels[21].count == 1) {
     xdim0_advec_mom_kernel2_y = args[0].dat->size[0]*args[0].dat->dim;
     xdim1_advec_mom_kernel2_y = args[1].dat->size[0]*args[1].dat->dim;
     xdim2_advec_mom_kernel2_y = args[2].dat->size[0]*args[2].dat->dim;
@@ -161,7 +161,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block Block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[26].mpi_time += t1-t2;
+  OPS_kernels[21].mpi_time += t1-t2;
 
   advec_mom_kernel2_y_c_wrapper(
     p_a0,
@@ -171,7 +171,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block Block, int dim
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[26].time += t2-t1;
+  OPS_kernels[21].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -180,8 +180,8 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[26].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg3);
 }

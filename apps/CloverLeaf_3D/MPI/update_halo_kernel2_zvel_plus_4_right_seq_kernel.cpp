@@ -14,8 +14,8 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_bl
 
 
 
-  ops_timing_realloc(99,"update_halo_kernel2_zvel_plus_4_right");
-  OPS_kernels[99].count++;
+  ops_timing_realloc(83,"update_halo_kernel2_zvel_plus_4_right");
+  OPS_kernels[83].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -118,9 +118,10 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_bl
 
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[99].mpi_time += t1-t2;
+  OPS_kernels[83].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
   ydim0 = args[0].dat->size[1];
@@ -163,12 +164,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_bl
     p_a[1]= p_a[1] + (dat1 * off1_2);
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[99].time += t2-t1;
+  OPS_kernels[83].time += t2-t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[99].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[99].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[83].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[83].transfer += ops_compute_transfer(dim, range, &arg1);
 }

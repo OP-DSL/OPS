@@ -66,8 +66,8 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(42,"flux_calc_kernelx");
-  OPS_kernels[42].count++;
+  ops_timing_realloc(8,"flux_calc_kernelx");
+  OPS_kernels[8].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -117,7 +117,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[42].count == 1) {
+  if (OPS_kernels[8].count == 1) {
     cudaMemcpyToSymbol( xdim0_flux_calc_kernelx, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_flux_calc_kernelx, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_flux_calc_kernelx, &xdim1, sizeof(int) );
@@ -213,7 +213,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[42].mpi_time += t1-t2;
+  OPS_kernels[8].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -224,13 +224,13 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[42].time += t2-t1;
+  OPS_kernels[8].time += t2-t1;
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg3);
 }

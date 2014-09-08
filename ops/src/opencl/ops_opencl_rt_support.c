@@ -52,7 +52,7 @@
 #include <CL/cl_ext.h>
 #endif
 
-//#include <math_constants.h>
+#include <math_constants.h>
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
@@ -157,94 +157,143 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *
 }
 
 
+/**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
 void openclDeviceInit( int argc, char ** argv )
 {
   (void)argc;
   (void)argv;
 
-  cl_int ret;
-  char buffer[10240];
-  cl_bool available = false;
-  float *test_h1 = (float*) malloc(sizeof(float));
-  float *test_h2 = (float*) malloc(sizeof(float));
-  cl_mem test_d = NULL;
-
-  // Get platform and device information
+  char *dev_name;
+  OPS_opencl_core.n_constants = 0;
+  OPS_opencl_core.n_platforms = 0;
+  OPS_opencl_core.n_devices   = 0;
   OPS_opencl_core.platform_id = NULL;
-  OPS_opencl_core.device_id = NULL;
-  OPS_opencl_core.constant = NULL;
+  OPS_opencl_core.devices     = NULL;
+  cl_int          ret         = 0;
+  cl_uint  dev_type_flag      = CL_DEVICE_TYPE_CPU;
 
-  clSafeCall( clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms) );
-
-  if(OPS_diags >0)
-    ops_printf("num_platforms = %i \n",(int) OPS_opencl_core.n_platforms);
-
-  OPS_opencl_core.platform_id = (cl_platform_id*) malloc( OPS_opencl_core.n_platforms*sizeof(cl_uint) );
-  clSafeCall( clGetPlatformIDs( OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL) );
-
+  //determin the user requested device type
   int device_type = OPS_cl_device;
   switch(device_type) {
     case 0://CPU:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[0], CL_DEVICE_TYPE_CPU, 1,
-        &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
+      dev_type_flag      = CL_DEVICE_TYPE_CPU;
       break;
-    case 1://GPU or PHI:
-      ret = clGetDeviceIDs(OPS_opencl_core.platform_id[1], CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR, 1,
-        &OPS_opencl_core.device_id, &OPS_opencl_core.n_devices);
+    case 1://GPU:
+      dev_type_flag      = CL_DEVICE_TYPE_GPU;
+      break;
+    case 2://Phi:
+      dev_type_flag      = CL_DEVICE_TYPE_ACCELERATOR;
       break;
   }
 
-  if(OPS_diags >5)
-    ops_printf("ret clGetDeviceIDs(.,%d,...) = %d\n", device_type,ret);
+  //get number of platforms on current system (cast is intentional)
+  clSafeCall(clGetPlatformIDs(0, NULL, &OPS_opencl_core.n_platforms));
+  printf("Number of OpenCL platforms = %i \n",(int) OPS_opencl_core.n_platforms);
 
-  if(OPS_opencl_core.n_platforms == 0 && OPS_opencl_core.n_devices == 0) {
-    ops_printf("No OpenCL platform or device is available! Exiting.\n");
-    exit(-1);
+  //alloc space for platform ids
+  OPS_opencl_core.platform_id   = (cl_platform_id *)calloc(OPS_opencl_core.n_platforms, sizeof(cl_platform_id));
+
+  //read in platform ids from runtime
+  clSafeCall(clGetPlatformIDs(OPS_opencl_core.n_platforms, OPS_opencl_core.platform_id, NULL));
+
+  for (int p=0; p<OPS_opencl_core.n_platforms; p++) {
+    //search for requested device : CPU, GPUs and ACCELERATORS (i.e Xeon Phi)
+    //get number of devices on this platform
+    ret = clGetDeviceIDs(OPS_opencl_core.platform_id[p], dev_type_flag, 0, NULL, &OPS_opencl_core.n_devices);
+
+    //this platform may not have the requested type of devices
+    if (CL_DEVICE_NOT_FOUND == ret || 0 == OPS_opencl_core.n_devices)
+      continue;
+    else
+      printf("Number of devices on platform %d = %d\n", p, OPS_opencl_core.n_devices);
+
+    //alloc space for device ids
+    OPS_opencl_core.devices = (cl_device_id *)calloc(OPS_opencl_core.n_devices, sizeof(cl_device_id));
+
+    //get device IDs for this platform
+    clSafeCall(clGetDeviceIDs(OPS_opencl_core.platform_id[p], dev_type_flag, OPS_opencl_core.n_devices, OPS_opencl_core.devices, NULL));
+
+    for (int d=0; d<OPS_opencl_core.n_devices; d++) {
+      //attempt to create context from device id
+      OPS_opencl_core.context = clCreateContext(NULL, 1, &OPS_opencl_core.devices[d], NULL, NULL, &ret);
+
+      //check other devices if it failed
+      if (CL_SUCCESS != ret)
+        continue;
+
+      //attempt to create a command queue
+      OPS_opencl_core.command_queue = clCreateCommandQueue(OPS_opencl_core.context, OPS_opencl_core.devices[d], 0, &ret);
+      if (CL_SUCCESS != ret) {
+        //if we've failed, release the context we just accquired
+        clReleaseContext(OPS_opencl_core.context);
+        OPS_opencl_core.context= NULL;
+        continue;
+      }
+
+      //this is definitely the device id we'll be using
+      OPS_opencl_core.device_id = OPS_opencl_core.devices[d];
+
+      //free the rest of them.
+      free(OPS_opencl_core.devices);
+
+      size_t dev_name_len = 0;
+      ret = clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_NAME, 0, NULL, &dev_name_len);
+
+      //it's unlikely this will happen
+      if (ret != CL_SUCCESS)
+      {
+        //cleanup after ourselves
+        clReleaseCommandQueue(OPS_opencl_core.command_queue);
+        clReleaseContext(OPS_opencl_core.context);
+
+        OPS_opencl_core.context = NULL;
+        OPS_opencl_core.command_queue = NULL;
+
+        fprintf(stderr, "Error: Unable to get device name length.\n");
+        clSafeCall(ret);
+        return;
+      }
+
+      //alloc space for device name and '\0'
+      dev_name = (char *)calloc(dev_name_len+1, sizeof(char));
+      //attempt to get device name
+      ret = clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_NAME, dev_name_len, dev_name, NULL);
+      if (CL_SUCCESS != ret)
+      {
+        //cleanup after ourselves
+        clReleaseCommandQueue(OPS_opencl_core.command_queue);
+        clReleaseContext(OPS_opencl_core.context);
+
+        OPS_opencl_core.context = NULL;
+        OPS_opencl_core.command_queue = NULL;
+
+        fprintf(stderr, "Error: Unable to get device name.\n");
+        clSafeCall(ret);
+        return;
+      }
+
+      //at this point, we've got a device, it's name, a context and a queue
+      printf("OpenCL Running on platform %d device %d : %s\n", p, d, dev_name);
+      return;
+    }
+
+    OPS_opencl_core.devices = NULL;
+    printf("\n");
   }
-  ops_printf("\nNo. of devices on platform = %d\n", OPS_opencl_core.n_devices);
 
-  ops_printf("\nChosen device: \n");
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL) );
-  ops_printf("\nCL_DEVICE_VENDOR = %s \n", buffer);
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_NAME, sizeof(buffer), buffer, NULL) );
-  ops_printf("\nCL_DEVICE_NAME = %s \n", buffer);
-  clSafeCall( clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL) );
-  ops_printf("\nCL_DEVICE_AVAILABLE = %s \n", available ? "true" : "false");
-
-  // Create an OpenCL context
-  OPS_opencl_core.context = clCreateContext( NULL, 1, &OPS_opencl_core.device_id, &pfn_notify, NULL, &ret);
-  clSafeCall( ret );
-
-  // Create a command queue
-  OPS_opencl_core.command_queue = clCreateCommandQueue(OPS_opencl_core.context, OPS_opencl_core.device_id, CL_QUEUE_PROFILING_ENABLE, &ret);
-  clSafeCall( ret );
-
-  // Make a read/write test
-  test_h1[0] = 1986;
-  test_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, sizeof(float), NULL, &ret);
-  clSafeCall( ret );
-  clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, test_d, CL_TRUE, 0, sizeof(float), (void*)test_h1, 0, NULL, NULL) );
-  clSafeCall( clEnqueueReadBuffer(OPS_opencl_core.command_queue, test_d, CL_TRUE, 0, sizeof(float), (void*)test_h2, 0, NULL, NULL) );
-  if(test_h1[0] != test_h2[0]) {
-    printf("Error during buffer read/write test! Exiting \n");
-    exit(-1);
-  }
-  clSafeCall( clReleaseMemObject(test_d) );
-  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
-  clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-
-  // Number of constants in constant array
-  OPS_opencl_core.n_constants = 0;
+  fprintf(stderr, "Error: No available devices found.\n");
+  return;
 }
 
-void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
-{
+
+
+
+void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size ) {
   //printf("Copying data from host to device\n");
   cl_int ret = 0;
   *data_d = (cl_mem) clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, size, NULL, &ret);
   clSafeCall( ret );
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) *data_d, CL_TRUE, 0, size, *data_h, 0, NULL, NULL) );
-  //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
 
@@ -272,8 +321,6 @@ void ops_upload_dat(ops_dat dat) {
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   clSafeCall( clFinish(OPS_opencl_core.command_queue) );
-
-
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs)
@@ -316,7 +363,6 @@ void ops_opencl_get_data( ops_dat dat )
   if (dat->dirty_hd == 2) dat->dirty_hd = 0;
   else return;
   ops_download_dat(dat);
-
 }
 
 
@@ -398,7 +444,6 @@ void mvReductArraysToHost ( int reduct_bytes )
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );
   //clSafeCall( clFinish(OPS_opencl_core.command_queue) );
 }
-
 
 void ops_opencl_exit ( )
 {

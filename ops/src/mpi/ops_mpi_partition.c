@@ -259,6 +259,8 @@ void ops_decomp_dats(sub_block *sb) {
         prod[d] = prod[d-1];
         sd->decomp_disp[d] = 0;
         sd->decomp_size[d] = 1;
+	sd->d_im[d] = 0; //no intra-block halo
+	sd->d_ip[d] = 0;
         continue;
       }
 
@@ -294,7 +296,7 @@ void ops_decomp_dats(sub_block *sb) {
     //Allocate datasets
     //TODO: read HDF5, what if it was already allocated - re-distribute
     dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
-    ops_cpHostToDevice ( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
+    ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
 
     //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block
     sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
@@ -302,7 +304,7 @@ void ops_decomp_dats(sub_block *sb) {
     MPI_Datatype new_type_p; //create generic type for MPI comms
     MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
     MPI_Type_commit(&new_type_p);
-    sd->halos=(ops_int_halo *)malloc(MAX_DEPTH*sb->ndim*sizeof(ops_int_halo));
+    sd->halos=(ops_int_halo *)xmalloc(MAX_DEPTH*sb->ndim*sizeof(ops_int_halo));
 
     for(int n = 0; n<sb->ndim; n++) {
       for(int d = 0; d<MAX_DEPTH; d++) {
@@ -313,6 +315,7 @@ void ops_decomp_dats(sub_block *sb) {
         sd->halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * dat->elem_size;
         sd->halos[MAX_DEPTH*n+d].stride = prod[n] * dat->elem_size;
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
+        //printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride); 
       }
     }
   }

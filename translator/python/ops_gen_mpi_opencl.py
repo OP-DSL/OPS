@@ -308,8 +308,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#endif')
     code('#pragma OPENCL EXTENSION cl_khr_fp64:enable')
     code('')
-
-    code('#include "user_types.h"')
+    if os.path.exists('./user_types.h'):
+      code('#include "user_types.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
     comm('')
@@ -383,8 +383,16 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     # detect global variables and remove __global from the function signature for these
     sig2 = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] != OPS_READ:
+          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+        else:
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+          else:
+            sig2 = sig2 + sig.split(',')[n].strip()+', '
+      elif arg_typ[n] == 'ops_arg_idx':
+        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
       else:
         sig2 = sig2 + sig.split(',')[n].strip()+', '
       if n%4 == 2:
@@ -444,7 +452,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            code('const '+(str(typs[n]).replace('"','')).strip()+' arg'+str(n)+',')
+          else:
+            code('__global const '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
         else:
           code('__global '+(str(typs[n]).replace('"','')).strip()+'* restrict arg'+str(n)+',')
           code('__local '+(str(typs[n]).replace('"','')).strip()+'* scratch'+str(n)+',')
@@ -525,7 +536,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
           ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
-        text = text +'arg'+str(n)
+        if dims[n].isdigit() and int(dims[n]) == 1:
+          text = text +'&arg'+str(n)
+        else:
+          text = text +'arg'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
       elif arg_typ[n] == 'ops_arg_idx':
@@ -584,19 +598,34 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     arg_values = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        arg_text = arg_text +'int xdim'+str(n)
-        compile_line = compile_line + ' -Dxdim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-        arg_values = arg_values + 'xdim'+str(n)
+        arg_text = arg_text +'int_xdim'+str(n)+' '
+        compile_line = compile_line + ' -Dxdim'+str(n)+'_'+kernel_name_list[nk]+'=%d'+' '
+        arg_values = arg_values + 'xdim'+str(n)+' '
         if NDIM==3:
-          arg_text = arg_text +', int ydim'+str(n)
-          compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'
-          arg_values = arg_values + ', ydim'+str(n)
-      if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
-        arg_text = arg_text + ',\n'+depth*' '
-        arg_values = arg_values + ','
-      else:
-        arg_text = arg_text + ''
-        arg_values = arg_values + ''
+          arg_text = arg_text +'int_ydim'+str(n)+' '
+          compile_line = compile_line + ' -Dydim'+str(n)+'_'+kernel_name_list[nk]+'=%d'+' '
+          arg_values = arg_values + 'ydim'+str(n)+' '
+
+    ' '.join(arg_values.split())
+    arg_values = arg_values.replace(' ',',')
+    arg_values = arg_values[:-1]
+
+    ' '.join(arg_text.split())
+    arg_text = arg_text.replace(' ',', ')
+    arg_text = arg_text[:-2]
+    arg_text = arg_text.replace('_',' ')
+
+      #else:
+      #  continue
+      #if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
+      #  arg_text = arg_text + ',\n'+depth*' '
+      #  arg_values = arg_values + ','
+      #else:
+      #  arg_text = arg_text + ''
+      #  arg_values = arg_values + ''
+
+
+
 
     compile_line = compile_line + '"'
 
@@ -703,7 +732,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -796,13 +825,14 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     arg_text = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        arg_text = arg_text +'xdim'+str(n)
+        arg_text = arg_text +'xdim'+str(n)+' '
         if NDIM==3:
-          arg_text = arg_text +', ydim'+str(n)
-      if n != nargs-1 and arg_typ[n+1] != 'ops_arg_gbl':
-        arg_text = arg_text + ',\n'+depth*' '
-      else:
-        arg_text = arg_text + ''
+          arg_text = arg_text +'ydim'+str(n)+' '
+
+    ' '.join(arg_text.split())
+    arg_text = arg_text.replace(' ',',')
+    arg_text = arg_text[:-1]
+
 
     code(arg_text+');')
 
@@ -818,7 +848,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, z_size};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
     code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
     code('')
 
@@ -869,20 +899,20 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('int reduct_bytes = 0;')
       code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('int consts_bytes = 0;')
       code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-        else:
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
+        elif accs[n] <> OPS_READ:
           #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')
 
-    if GBL_READ == True:
+    if GBL_READ == True and GBL_READ_MDIM == True:
       code('reallocConstArrays(consts_bytes);')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('reallocReductArrays(reduct_bytes);')
@@ -908,13 +938,14 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
           code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
           code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-          code('mvConstArraysToDevice(consts_bytes);')
+    if GBL_READ == True and GBL_READ_MDIM == True:
+      code('mvConstArraysToDevice(consts_bytes);')
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToDevice(reduct_bytes);')
@@ -950,7 +981,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     code('')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
-    #code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
@@ -979,9 +1011,19 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     #set up arguments in order to do the kernel call
     nkernel_args = 0
     for n in range (0, nargs):
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
-      nkernel_args = nkernel_args+1
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+      if arg_typ[n] == 'ops_arg_dat':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        nkernel_args = nkernel_args+1
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        if dims[n].isdigit() and int(dims[n]) == 1:
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) arg'+str(n)+'.data ));')
+          nkernel_args = nkernel_args+1
+        else:
+          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+          nkernel_args = nkernel_args+1
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
         nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
@@ -1049,6 +1091,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('')
 
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
     comm('Update kernel record')
@@ -1085,7 +1130,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')
   code('#include "ops_opencl_rt_support.h"')
-  code('#include "user_types.h"')
+  if os.path.exists('./user_types.h'):
+    code('#include "user_types.h"')
+  code('#include "ops_lib_mpi.h"')
+  #code('#ifdef OPS_MPI')
+  #code('#include "ops_mpi_core.h"')
+  #code('#endif')
 
   comm('global constants')
   for nc in range (0,len(consts)):
@@ -1189,3 +1239,4 @@ void buildOpenCLKernels() {
   fid.write('//\n// auto-generated by ops.py//\n\n')
   fid.write(file_text)
   fid.close()
+

@@ -82,6 +82,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
   ops_H_D_exchanges_host(args, 1);
   ops_halo_exchanges(args,1,range);
+  ops_H_D_exchanges_host(args, 1);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[1].mpi_time += t1-t2;

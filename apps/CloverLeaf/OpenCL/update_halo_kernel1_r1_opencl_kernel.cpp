@@ -11,13 +11,7 @@
 
 static bool isbuilt_update_halo_kernel1_r1 = false;
 
-void buildOpenCLKernels_update_halo_kernel1_r1(int xdim0,
- int xdim1,
- int xdim2,
- int xdim3,
- int xdim4,
- int xdim5,
- int xdim6) {
+void buildOpenCLKernels_update_halo_kernel1_r1(int xdim0, int xdim1, int xdim2, int xdim3, int xdim4, int xdim5, int xdim6) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_update_halo_kernel1_r1) {
@@ -64,9 +58,9 @@ void buildOpenCLKernels_update_halo_kernel1_r1(int xdim0,
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_r1=%d -Dxdim1_update_halo_kernel1_r1=%d -Dxdim2_update_halo_kernel1_r1=%d -Dxdim3_update_halo_kernel1_r1=%d -Dxdim4_update_halo_kernel1_r1=%d -Dxdim5_update_halo_kernel1_r1=%d -Dxdim6_update_halo_kernel1_r1=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_r1=%d  -Dxdim1_update_halo_kernel1_r1=%d  -Dxdim2_update_halo_kernel1_r1=%d  -Dxdim3_update_halo_kernel1_r1=%d  -Dxdim4_update_halo_kernel1_r1=%d  -Dxdim5_update_halo_kernel1_r1=%d  -Dxdim6_update_halo_kernel1_r1=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_r1=%d -Dxdim1_update_halo_kernel1_r1=%d -Dxdim2_update_halo_kernel1_r1=%d -Dxdim3_update_halo_kernel1_r1=%d -Dxdim4_update_halo_kernel1_r1=%d -Dxdim5_update_halo_kernel1_r1=%d -Dxdim6_update_halo_kernel1_r1=%d", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_r1=%d  -Dxdim1_update_halo_kernel1_r1=%d  -Dxdim2_update_halo_kernel1_r1=%d  -Dxdim3_update_halo_kernel1_r1=%d  -Dxdim4_update_halo_kernel1_r1=%d  -Dxdim5_update_halo_kernel1_r1=%d  -Dxdim6_update_halo_kernel1_r1=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
@@ -89,7 +83,7 @@ void buildOpenCLKernels_update_halo_kernel1_r1(int xdim0,
       printf("compiling update_halo_kernel1_r1 -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[50] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel1_r1", &ret);
+    OPS_opencl_core.kernel[37] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel1_r1", &ret);
     clSafeCall( ret );
 
     isbuilt_update_halo_kernel1_r1 = true;
@@ -99,14 +93,14 @@ void buildOpenCLKernels_update_halo_kernel1_r1(int xdim0,
 
 
 // host stub function
-void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(50,"update_halo_kernel1_r1");
-  OPS_kernels[50].count++;
+  ops_timing_realloc(37,"update_halo_kernel1_r1");
+  OPS_kernels[37].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -153,13 +147,7 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block Block, int 
   //build opencl kernel if not already built
 
   buildOpenCLKernels_update_halo_kernel1_r1(
-  xdim0,
-  xdim1,
-  xdim2,
-  xdim3,
-  xdim4,
-  xdim5,
-  xdim6);
+  xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
 
   //Timing
   double t1,t2,c1,c2;
@@ -266,45 +254,54 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block Block, int 
 
 
   ops_H_D_exchanges_device(args, 8);
+  ops_halo_exchanges(args,8,range);
+  ops_H_D_exchanges_device(args, 8);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[50].mpi_time += t1-t2;
+  OPS_kernels[37].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 5, sizeof(cl_mem), (void*) &arg5.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 6, sizeof(cl_mem), (void*) &arg6.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 7, sizeof(cl_mem), (void*) &arg7.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 8, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 9, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 10, sizeof(cl_int), (void*) &base2 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 11, sizeof(cl_int), (void*) &base3 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 12, sizeof(cl_int), (void*) &base4 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 13, sizeof(cl_int), (void*) &base5 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 14, sizeof(cl_int), (void*) &base6 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 15, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[50], 16, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 5, sizeof(cl_mem), (void*) &arg5.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 6, sizeof(cl_mem), (void*) &arg6.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 7, sizeof(cl_mem), (void*) &arg7.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 8, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 9, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 10, sizeof(cl_int), (void*) &base2 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 11, sizeof(cl_int), (void*) &base3 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 12, sizeof(cl_int), (void*) &base4 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 13, sizeof(cl_int), (void*) &base5 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 14, sizeof(cl_int), (void*) &base6 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 15, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[37], 16, sizeof(cl_int), (void*) &y_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[50], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[37], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
   ops_set_dirtybit_device(args, 8);
+  ops_set_halo_dirtybit3(&args[0],range);
+  ops_set_halo_dirtybit3(&args[1],range);
+  ops_set_halo_dirtybit3(&args[2],range);
+  ops_set_halo_dirtybit3(&args[3],range);
+  ops_set_halo_dirtybit3(&args[4],range);
+  ops_set_halo_dirtybit3(&args[5],range);
+  ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[50].time += t2-t1;
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[37].time += t2-t1;
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg6);
 }

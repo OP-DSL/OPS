@@ -81,8 +81,8 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  ops_timing_realloc(2,"reset_field_kernel2");
-  OPS_kernels[2].count++;
+  ops_timing_realloc(4,"reset_field_kernel2");
+  OPS_kernels[4].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -136,7 +136,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[2].count == 1) {
+  if (OPS_kernels[4].count == 1) {
     cudaMemcpyToSymbol( xdim0_reset_field_kernel2, &xdim0, sizeof(int) );
     cudaMemcpyToSymbol( ydim0_reset_field_kernel2, &ydim0, sizeof(int) );
     cudaMemcpyToSymbol( xdim1_reset_field_kernel2, &xdim1, sizeof(int) );
@@ -270,7 +270,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,6,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[2].mpi_time += t1-t2;
+  OPS_kernels[4].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -282,17 +282,17 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[2].time += t2-t1;
+  OPS_kernels[4].time += t2-t1;
   ops_set_dirtybit_device(args, 6);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[2],range);
   ops_set_halo_dirtybit3(&args[4],range);
 
   //Update kernel record
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg5);
 }

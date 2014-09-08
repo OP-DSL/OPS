@@ -118,8 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = poisson_dev_seq
-# poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_cuda poisson_mpi_cuda poisson_opencl #poisson_openacc poisson_mpi_openacc
+TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += poisson_openacc poisson_mpi_openacc
@@ -205,12 +204,18 @@ poisson_mpi_openacc: $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefi
     poisson_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o poisson_mpi_openacc
 
 poisson_opencl: ./OpenCL/poisson_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) poisson_ops.cpp ./OpenCL/poisson_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o poisson_opencl
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) poisson_ops.cpp ./OpenCL/poisson_opencl_kernels.o  -lops_opencl -o poisson_opencl
 
 ./OpenCL/poisson_opencl_kernels.o: ./OpenCL/poisson_opencl_kernels.cpp Makefile
-	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+	$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/poisson_opencl_kernels.o ./OpenCL/poisson_opencl_kernels.cpp
 
+poisson_mpi_opencl: ./OpenCL/poisson_mpi_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) -DOPS_MPI poisson_ops.cpp ./OpenCL/poisson_mpi_opencl_kernels.o -lops_mpi_opencl -o poisson_mpi_opencl
+
+./OpenCL/poisson_mpi_opencl_kernels.o: ./OpenCL/poisson_opencl_kernels.cpp Makefile
+	$(MPICPP) $(MPIFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. -DOPS_MPI\
+                -c -o ./OpenCL/poisson_mpi_opencl_kernels.o ./OpenCL/poisson_opencl_kernels.cpp
 #
 #error
 #
@@ -223,4 +228,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl ./OpenCL/*.o *.o
+	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o

@@ -46,8 +46,8 @@
 
 
 //user function
-void calc_dt_kernel_get(const __global double* restrict  cellx, const __global double* restrict  celly,  double* restrict  xl_pos,
- double* restrict  yl_pos,const __global double * restrict cellz,  double * restrict zl_pos)
+void calc_dt_kernel_get(const __global double* restrict  cellx, const __global double* restrict  celly,  double* restrict  xl_pos, 
+ double* restrict  yl_pos, const __global double * restrict cellz,  double * restrict zl_pos)
 
   {
   *xl_pos = cellx[OPS_ACC0(0,0,0)];

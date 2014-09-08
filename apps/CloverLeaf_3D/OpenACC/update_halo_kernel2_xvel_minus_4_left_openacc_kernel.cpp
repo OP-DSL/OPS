@@ -30,8 +30,8 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(char const *name, ops_bl
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(73,"update_halo_kernel2_xvel_minus_4_left");
-  OPS_kernels[73].count++;
+  ops_timing_realloc(57,"update_halo_kernel2_xvel_minus_4_left");
+  OPS_kernels[57].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -73,7 +73,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(char const *name, ops_bl
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[73].count == 1) {
+  if (OPS_kernels[57].count == 1) {
     xdim0_update_halo_kernel2_xvel_minus_4_left = args[0].dat->size[0]*args[0].dat->dim;
     ydim0_update_halo_kernel2_xvel_minus_4_left = args[0].dat->size[1];
     xdim1_update_halo_kernel2_xvel_minus_4_left = args[1].dat->size[0]*args[1].dat->dim;
@@ -151,7 +151,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(char const *name, ops_bl
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[73].mpi_time += t1-t2;
+  OPS_kernels[57].mpi_time += t1-t2;
 
   update_halo_kernel2_xvel_minus_4_left_c_wrapper(
     p_a0,
@@ -160,7 +160,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(char const *name, ops_bl
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[73].time += t2-t1;
+  OPS_kernels[57].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -170,6 +170,6 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(char const *name, ops_bl
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[73].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[73].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[57].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[57].transfer += ops_compute_transfer(dim, range, &arg1);
 }

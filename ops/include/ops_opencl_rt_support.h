@@ -50,7 +50,7 @@
 typedef struct{
   cl_platform_id *platform_id;
   cl_device_id device_id;
-  cl_device_id *subdev_id;
+  cl_device_id *devices;
   cl_uint n_devices;
   cl_uint n_platforms;
   cl_command_queue command_queue;
@@ -66,7 +66,7 @@ typedef struct{
 extern int OPS_cl_device;
 
 
-#include <ops_lib_cpp.h>
+//#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
 
 
@@ -103,6 +103,8 @@ void mvConstArraysToDevice( int consts_bytes );
 void mvReductArraysToDevice( int reduct_bytes );
 void mvReductArraysToHost( int reduct_bytes );
 void ops_opencl_exit( );
+void ops_upload_dat(ops_dat dat);
+void ops_download_dat(ops_dat dat);
 
 #ifdef __cplusplus
 }

@@ -120,8 +120,9 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   p_a[4] = (char *)args[4].data + base4;
 
 
-  ops_halo_exchanges(args,5,range);
   ops_H_D_exchanges(args, 5);
+  ops_halo_exchanges(args,5,range);
+  
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[78].mpi_time += t1-t2;

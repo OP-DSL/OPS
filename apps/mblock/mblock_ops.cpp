@@ -44,8 +44,6 @@ int main(int argc, char **argv)
   ops_dat data0 = ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "data0");
   ops_dat data1 = ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, "double", "data1");
 
-
-
   ops_halo_group halos0;
   {
     int halo_iter[] = {2,20};
@@ -132,6 +130,7 @@ int main(int argc, char **argv)
                ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
+<<<<<<< HEAD
   ops_halo_transfer(halos0);
   ops_halo_transfer(halos1);
   ops_halo_transfer(halos2);
@@ -139,11 +138,22 @@ int main(int argc, char **argv)
   ops_halo_transfer(halos4);
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
-
+=======
+  ops_print_dat_to_txtfile(data0,"mblock.dat");
+  ops_print_dat_to_txtfile(data1,"mblock.dat");
+  
+  ops_halo_transfer(halos0);
+  ops_halo_transfer(halos1);
+  ops_halo_transfer(halos2); 
+  ops_halo_transfer(halos3);
+  ops_halo_transfer(halos4);
+  
+  ops_print_dat_to_txtfile(data0,"mblock.dat");
+  ops_print_dat_to_txtfile(data1,"mblock.dat");
+  
   ops_timers_core(&ct1, &et1);
   ops_timing_output();
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-
   ops_exit();
 }
