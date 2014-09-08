@@ -127,6 +127,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =( int *)xmalloc(sizeof(int)*2*block->dims*MAX_DEPTH);
   for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_recv[i] = 1;
+  for(int i = 0; i<OPS_MAX_DIM; i++) {sd->d_ip[i] = 0; sd->d_im[i] = 0;}
 
   OPS_sub_dat_list[dat->index] = sd;
 

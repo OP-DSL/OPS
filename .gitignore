@@ -12,6 +12,7 @@ cloverleaf_mpi_openmp
 cloverleaf_mpi_cuda
 cloverleaf_mpi_openacc
 cloverleaf_opencl
+cloverleaf_mpi_opencl
 cloverleaf_dev_seq
 cloverleaf_dev_mpi
 *.n001.*
