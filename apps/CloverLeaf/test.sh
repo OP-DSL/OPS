@@ -72,3 +72,4 @@ grep "Total Wall time" clover.out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
 grep "step:   2955" clover.out
+rm perf_out

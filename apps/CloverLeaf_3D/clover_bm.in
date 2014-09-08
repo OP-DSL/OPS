@@ -16,7 +16,7 @@
 
  initial_timestep=0.1
  max_timestep=0.1
- end_step=83
+ end_step=2955
  end_time=1000.1
 
 *endclover
