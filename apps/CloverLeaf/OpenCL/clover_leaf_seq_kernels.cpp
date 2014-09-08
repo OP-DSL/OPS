@@ -4,9 +4,9 @@
 
 //header
 #include "ops_lib_cpp.h"
-//#ifdef OPS_MPI
-#include "ops_lib_mpi.h"
-//#endif
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
 
 //user kernel files
 /*

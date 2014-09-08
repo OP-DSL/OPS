@@ -35,8 +35,8 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block Block, int dim
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(18,"advec_mom_kernel_y2");
-  OPS_kernels[18].count++;
+  ops_timing_realloc(13,"advec_mom_kernel_y2");
+  OPS_kernels[13].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -173,7 +173,7 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block Block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[18].mpi_time += t1-t2;
+  OPS_kernels[13].mpi_time += t1-t2;
 
   advec_mom_kernel_y2_c_wrapper(
     p_a0,
@@ -183,7 +183,7 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block Block, int dim
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[18].time += t2-t1;
+  OPS_kernels[13].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -193,8 +193,8 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg3);
 }

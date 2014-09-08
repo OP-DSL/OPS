@@ -78,8 +78,8 @@ void ops_par_loop_advec_mom_kernel_y1(char const *name, ops_block block, int dim
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
 
-  ops_timing_realloc(16,"advec_mom_kernel_y1");
-  OPS_kernels[16].count++;
+  ops_timing_realloc(11,"advec_mom_kernel_y1");
+  OPS_kernels[11].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -220,7 +220,7 @@ void ops_par_loop_advec_mom_kernel_y1(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[16].mpi_time += t1-t2;
+  OPS_kernels[11].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -232,15 +232,15 @@ void ops_par_loop_advec_mom_kernel_y1(char const *name, ops_block block, int dim
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[16].time += t2-t1;
+  OPS_kernels[11].time += t2-t1;
   ops_set_dirtybit_device(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[11].transfer += ops_compute_transfer(dim, range, &arg4);
 }
