@@ -63,7 +63,8 @@ rm perf_out
 
 cd -
 source ./source_pgi
-make cuda
+make clean
+make 
 cd -
 make cloverleaf_openacc
 echo '============> Running OpenACC'

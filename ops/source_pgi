@@ -7,3 +7,7 @@ export MPI_INSTALL_PATH=/opt/mvapich2/2.0-pgi147/
 export OPS_COMPILER=pgi
 export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS_rebase/OPS/ops
 export CUDA_INSTALL_PATH=/usr/local/cuda-6.0
+export MPICH_CXX=/opt/pgi/linux86-64/14.7/bin/pgc++
+export MPICH_CC=/opt/pgi/linux86-64/14.7/bin/pgcc
+export MPICH_F90=/opt/pgi/linux86-64/14.7/bin/pgf90
+
