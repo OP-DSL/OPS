@@ -43,7 +43,7 @@ ifeq ($(OPS_COMPILER),mic)
   CPP           = icpc
 ifdef DEBUG
   CCFLAGS       = -O0 -g -mmic -DMPICH_IGNORE_CXX_SEEK#-vec-report
-else
+else1
   #CCFLAGS      = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
   #CCFLAGS      = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -finline -inline-forceinline -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK#-vec-report
   CCFLAGS       = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
@@ -64,7 +64,7 @@ else
 endif
   CPPFLAGS 	= $(CCFLAGS)
   OMPFLAGS 	= -mp
-  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS)
 else
