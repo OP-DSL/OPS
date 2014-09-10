@@ -6,9 +6,13 @@
 #define OPS_GPU
 
 extern int xdim0_advec_mom_kernel_y2;
+int xdim0_advec_mom_kernel_y2_h = -1;
 extern int xdim1_advec_mom_kernel_y2;
+int xdim1_advec_mom_kernel_y2_h = -1;
 extern int xdim2_advec_mom_kernel_y2;
+int xdim2_advec_mom_kernel_y2_h = -1;
 extern int xdim3_advec_mom_kernel_y2;
+int xdim3_advec_mom_kernel_y2_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,16 +72,24 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block Block, int dim
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[13].count == 1) {
-    xdim0_advec_mom_kernel_y2 = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_advec_mom_kernel_y2 = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_advec_mom_kernel_y2 = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_advec_mom_kernel_y2 = args[3].dat->size[0]*args[3].dat->dim;
+  if (xdim0 != xdim0_advec_mom_kernel_y2_h || xdim1 != xdim1_advec_mom_kernel_y2_h || xdim2 != xdim2_advec_mom_kernel_y2_h || xdim3 != xdim3_advec_mom_kernel_y2_h) {
+    xdim0_advec_mom_kernel_y2 = xdim0;
+    xdim0_advec_mom_kernel_y2_h = xdim0;
+    xdim1_advec_mom_kernel_y2 = xdim1;
+    xdim1_advec_mom_kernel_y2_h = xdim1;
+    xdim2_advec_mom_kernel_y2 = xdim2;
+    xdim2_advec_mom_kernel_y2_h = xdim2;
+    xdim3_advec_mom_kernel_y2 = xdim3;
+    xdim3_advec_mom_kernel_y2_h = xdim3;
   }
 
   int dat0 = args[0].dat->elem_size;

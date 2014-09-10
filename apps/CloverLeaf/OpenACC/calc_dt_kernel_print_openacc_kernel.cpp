@@ -4,11 +4,17 @@
 #include "./OpenACC/clover_leaf_common.h"
 
 extern int xdim0_calc_dt_kernel_print;
+int xdim0_calc_dt_kernel_print_h = -1;
 extern int xdim1_calc_dt_kernel_print;
+int xdim1_calc_dt_kernel_print_h = -1;
 extern int xdim2_calc_dt_kernel_print;
+int xdim2_calc_dt_kernel_print_h = -1;
 extern int xdim3_calc_dt_kernel_print;
+int xdim3_calc_dt_kernel_print_h = -1;
 extern int xdim4_calc_dt_kernel_print;
+int xdim4_calc_dt_kernel_print_h = -1;
 extern int xdim5_calc_dt_kernel_print;
+int xdim5_calc_dt_kernel_print_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,18 +77,30 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block Block, int di
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[74].count == 1) {
-    xdim0_calc_dt_kernel_print = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_calc_dt_kernel_print = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_calc_dt_kernel_print = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_calc_dt_kernel_print = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_calc_dt_kernel_print = args[4].dat->size[0]*args[4].dat->dim;
-    xdim5_calc_dt_kernel_print = args[5].dat->size[0]*args[5].dat->dim;
+  if (xdim0 != xdim0_calc_dt_kernel_print_h || xdim1 != xdim1_calc_dt_kernel_print_h || xdim2 != xdim2_calc_dt_kernel_print_h || xdim3 != xdim3_calc_dt_kernel_print_h || xdim4 != xdim4_calc_dt_kernel_print_h || xdim5 != xdim5_calc_dt_kernel_print_h) {
+    xdim0_calc_dt_kernel_print = xdim0;
+    xdim0_calc_dt_kernel_print_h = xdim0;
+    xdim1_calc_dt_kernel_print = xdim1;
+    xdim1_calc_dt_kernel_print_h = xdim1;
+    xdim2_calc_dt_kernel_print = xdim2;
+    xdim2_calc_dt_kernel_print_h = xdim2;
+    xdim3_calc_dt_kernel_print = xdim3;
+    xdim3_calc_dt_kernel_print_h = xdim3;
+    xdim4_calc_dt_kernel_print = xdim4;
+    xdim4_calc_dt_kernel_print_h = xdim4;
+    xdim5_calc_dt_kernel_print = xdim5;
+    xdim5_calc_dt_kernel_print_h = xdim5;
   }
 
   int dat0 = args[0].dat->elem_size;

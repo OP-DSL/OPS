@@ -57,7 +57,6 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  int dims[2] = {x_cells+5, y_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
   clover_grid = ops_decl_block(2, "clover grid");
 
   //
@@ -171,11 +170,6 @@ void build_field()
 
   int stride2D_x[] = {1,0};
   int stride2D_y[] = {0,1};
-
-  int stride2D_null[] = {0,0};
-
-  int xmax2D[] = {x_max+2,0};
-  int ymax2D[] = {0,y_max+2};
 
   S2D_00         = ops_decl_stencil( 2, 1, s2D_00, "00");
   S2D_00_P10     = ops_decl_stencil( 2, 2, s2D_00_P10, "0,0:1,0");

@@ -6,16 +6,27 @@
 #define OPS_GPU
 
 extern int xdim0_advec_cell_kernel4_ydir;
+int xdim0_advec_cell_kernel4_ydir_h = -1;
 extern int xdim1_advec_cell_kernel4_ydir;
+int xdim1_advec_cell_kernel4_ydir_h = -1;
 extern int xdim2_advec_cell_kernel4_ydir;
+int xdim2_advec_cell_kernel4_ydir_h = -1;
 extern int xdim3_advec_cell_kernel4_ydir;
+int xdim3_advec_cell_kernel4_ydir_h = -1;
 extern int xdim4_advec_cell_kernel4_ydir;
+int xdim4_advec_cell_kernel4_ydir_h = -1;
 extern int xdim5_advec_cell_kernel4_ydir;
+int xdim5_advec_cell_kernel4_ydir_h = -1;
 extern int xdim6_advec_cell_kernel4_ydir;
+int xdim6_advec_cell_kernel4_ydir_h = -1;
 extern int xdim7_advec_cell_kernel4_ydir;
+int xdim7_advec_cell_kernel4_ydir_h = -1;
 extern int xdim8_advec_cell_kernel4_ydir;
+int xdim8_advec_cell_kernel4_ydir_h = -1;
 extern int xdim9_advec_cell_kernel4_ydir;
+int xdim9_advec_cell_kernel4_ydir_h = -1;
 extern int xdim10_advec_cell_kernel4_ydir;
+int xdim10_advec_cell_kernel4_ydir_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,23 +93,45 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block Block, int
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[29].count == 1) {
-    xdim0_advec_cell_kernel4_ydir = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_advec_cell_kernel4_ydir = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_advec_cell_kernel4_ydir = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_advec_cell_kernel4_ydir = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_advec_cell_kernel4_ydir = args[4].dat->size[0]*args[4].dat->dim;
-    xdim5_advec_cell_kernel4_ydir = args[5].dat->size[0]*args[5].dat->dim;
-    xdim6_advec_cell_kernel4_ydir = args[6].dat->size[0]*args[6].dat->dim;
-    xdim7_advec_cell_kernel4_ydir = args[7].dat->size[0]*args[7].dat->dim;
-    xdim8_advec_cell_kernel4_ydir = args[8].dat->size[0]*args[8].dat->dim;
-    xdim9_advec_cell_kernel4_ydir = args[9].dat->size[0]*args[9].dat->dim;
-    xdim10_advec_cell_kernel4_ydir = args[10].dat->size[0]*args[10].dat->dim;
+  if (xdim0 != xdim0_advec_cell_kernel4_ydir_h || xdim1 != xdim1_advec_cell_kernel4_ydir_h || xdim2 != xdim2_advec_cell_kernel4_ydir_h || xdim3 != xdim3_advec_cell_kernel4_ydir_h || xdim4 != xdim4_advec_cell_kernel4_ydir_h || xdim5 != xdim5_advec_cell_kernel4_ydir_h || xdim6 != xdim6_advec_cell_kernel4_ydir_h || xdim7 != xdim7_advec_cell_kernel4_ydir_h || xdim8 != xdim8_advec_cell_kernel4_ydir_h || xdim9 != xdim9_advec_cell_kernel4_ydir_h || xdim10 != xdim10_advec_cell_kernel4_ydir_h) {
+    xdim0_advec_cell_kernel4_ydir = xdim0;
+    xdim0_advec_cell_kernel4_ydir_h = xdim0;
+    xdim1_advec_cell_kernel4_ydir = xdim1;
+    xdim1_advec_cell_kernel4_ydir_h = xdim1;
+    xdim2_advec_cell_kernel4_ydir = xdim2;
+    xdim2_advec_cell_kernel4_ydir_h = xdim2;
+    xdim3_advec_cell_kernel4_ydir = xdim3;
+    xdim3_advec_cell_kernel4_ydir_h = xdim3;
+    xdim4_advec_cell_kernel4_ydir = xdim4;
+    xdim4_advec_cell_kernel4_ydir_h = xdim4;
+    xdim5_advec_cell_kernel4_ydir = xdim5;
+    xdim5_advec_cell_kernel4_ydir_h = xdim5;
+    xdim6_advec_cell_kernel4_ydir = xdim6;
+    xdim6_advec_cell_kernel4_ydir_h = xdim6;
+    xdim7_advec_cell_kernel4_ydir = xdim7;
+    xdim7_advec_cell_kernel4_ydir_h = xdim7;
+    xdim8_advec_cell_kernel4_ydir = xdim8;
+    xdim8_advec_cell_kernel4_ydir_h = xdim8;
+    xdim9_advec_cell_kernel4_ydir = xdim9;
+    xdim9_advec_cell_kernel4_ydir_h = xdim9;
+    xdim10_advec_cell_kernel4_ydir = xdim10;
+    xdim10_advec_cell_kernel4_ydir_h = xdim10;
   }
 
   int dat0 = args[0].dat->elem_size;

@@ -97,8 +97,6 @@ void ops_par_loop_advec_mom_kernel2_y(char const *, ops_block, int , int*,
 void advec_mom(int which_vel, int sweep_number, int dir)
 {
 
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;

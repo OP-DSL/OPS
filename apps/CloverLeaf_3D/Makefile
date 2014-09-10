@@ -43,7 +43,7 @@ ifeq ($(OPS_COMPILER),mic)
   CPP           = icpc
 ifdef DEBUG
   CCFLAGS       = -O0 -g -mmic -DMPICH_IGNORE_CXX_SEEK#-vec-report
-else
+else1
   #CCFLAGS      = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
   #CCFLAGS      = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -finline -inline-forceinline -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK#-vec-report
   CCFLAGS       = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
@@ -55,16 +55,16 @@ endif
   OPENCL_LIB    = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CPP 		= pgCC
+  CPP 		= pgc++
 	CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS 	= -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS 	= -O2 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
   CPPFLAGS 	= $(CCFLAGS)
   OMPFLAGS 	= -mp
-  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS)
 else
@@ -280,14 +280,14 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 
 
 ./OpenACC/clover_leaf_kernels.o: ./OpenACC/clover_leaf_kernels.cpp ./OpenACC/clover_leaf_common.h Makefile
-				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35  $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/clover_leaf_kernels.cpp -c -o OpenACC/clover_leaf_kernels.o
 
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c ./OpenACC/clover_leaf_common.h Makefile
 				@echo "Compiling kernel" $*
 				$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
-				$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+				$(MPICPP) -acc -ta=tesla:cc35  $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 				-I. OpenACC/$*.cpp OpenACC/$*_c.o -c -o OpenACC/$*.o
 
 cloverleaf_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \

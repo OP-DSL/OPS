@@ -6,9 +6,13 @@
 #define OPS_GPU
 
 extern int xdim0_update_halo_kernel2_xvel_plus_4_back;
+int xdim0_update_halo_kernel2_xvel_plus_4_back_h = -1;
 extern int ydim0_update_halo_kernel2_xvel_plus_4_back;
+int ydim0_update_halo_kernel2_xvel_plus_4_back_h = -1;
 extern int xdim1_update_halo_kernel2_xvel_plus_4_back;
+int xdim1_update_halo_kernel2_xvel_plus_4_back_h = -1;
 extern int ydim1_update_halo_kernel2_xvel_plus_4_back;
+int ydim1_update_halo_kernel2_xvel_plus_4_back_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,8 +34,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(61,"update_halo_kernel2_xvel_plus_4_back");
-  OPS_kernels[61].count++;
+  ops_timing_realloc(77,"update_halo_kernel2_xvel_plus_4_back");
+  OPS_kernels[77].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -68,16 +72,24 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[61].count == 1) {
-    xdim0_update_halo_kernel2_xvel_plus_4_back = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_update_halo_kernel2_xvel_plus_4_back = args[0].dat->size[1];
-    xdim1_update_halo_kernel2_xvel_plus_4_back = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_update_halo_kernel2_xvel_plus_4_back = args[1].dat->size[1];
+  if (xdim0 != xdim0_update_halo_kernel2_xvel_plus_4_back_h || ydim0 != ydim0_update_halo_kernel2_xvel_plus_4_back_h || xdim1 != xdim1_update_halo_kernel2_xvel_plus_4_back_h || ydim1 != ydim1_update_halo_kernel2_xvel_plus_4_back_h) {
+    xdim0_update_halo_kernel2_xvel_plus_4_back = xdim0;
+    xdim0_update_halo_kernel2_xvel_plus_4_back_h = xdim0;
+    ydim0_update_halo_kernel2_xvel_plus_4_back = ydim0;
+    ydim0_update_halo_kernel2_xvel_plus_4_back_h = ydim0;
+    xdim1_update_halo_kernel2_xvel_plus_4_back = xdim1;
+    xdim1_update_halo_kernel2_xvel_plus_4_back_h = xdim1;
+    ydim1_update_halo_kernel2_xvel_plus_4_back = ydim1;
+    ydim1_update_halo_kernel2_xvel_plus_4_back_h = ydim1;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -151,7 +163,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[61].mpi_time += t1-t2;
+  OPS_kernels[77].mpi_time += t1-t2;
 
   update_halo_kernel2_xvel_plus_4_back_c_wrapper(
     p_a0,
@@ -160,7 +172,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[61].time += t2-t1;
+  OPS_kernels[77].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -170,6 +182,6 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[61].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[61].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[77].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[77].transfer += ops_compute_transfer(dim, range, &arg1);
 }

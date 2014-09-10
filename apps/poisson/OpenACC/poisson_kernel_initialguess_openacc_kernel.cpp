@@ -6,6 +6,7 @@
 #define OPS_GPU
 
 extern int xdim0_poisson_kernel_initialguess;
+int xdim0_poisson_kernel_initialguess_h;
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,8 +68,9 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block Block,
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[1].count == 1) {
+  if (xdim0 != xdim0_poisson_kernel_initialguess_h) {
     xdim0_poisson_kernel_initialguess = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0_poisson_kernel_initialguess_h = xdim0;
   }
 
   int dat0 = args[0].dat->elem_size;

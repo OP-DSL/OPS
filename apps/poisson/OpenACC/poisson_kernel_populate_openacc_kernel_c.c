@@ -32,8 +32,8 @@ void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx,
 
 
 void poisson_kernel_populate_c_wrapper(
-  int *p_a0,
-  int *p_a1,
+  int p_a0,
+  int p_a1,
   int *p_a2,
   double *p_a3,
   double *p_a4,
@@ -50,8 +50,8 @@ void poisson_kernel_populate_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      poisson_kernel_populate(  p_a0,
-           p_a1,arg_idx,
+      poisson_kernel_populate(  &p_a0,
+           &p_a1,arg_idx,
            p_a3 + n_x*1 + n_y*xdim3_poisson_kernel_populate*1, p_a4 + n_x*1 + n_y*xdim4_poisson_kernel_populate*1,
            p_a5 + n_x*1 + n_y*xdim5_poisson_kernel_populate*1 );
 

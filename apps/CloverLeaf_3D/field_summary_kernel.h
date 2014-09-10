@@ -15,6 +15,31 @@ void field_summary_kernel( const double *volume, const double *density0,
   double vsqrd, cell_vol, cell_mass;
   
   vsqrd = 0.0;
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,0)] * xvel0[OPS_ACC4(0,0,0)] +
+                 yvel0[OPS_ACC5(0,0,0)] * yvel0[OPS_ACC5(0,0,0)] +
+                 zvel0[OPS_ACC6(0,0,0)] * zvel0[OPS_ACC6(0,0,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,0)] * xvel0[OPS_ACC4(1,0,0)] +
+                 yvel0[OPS_ACC5(1,0,0)] * yvel0[OPS_ACC5(1,0,0)] +
+                 zvel0[OPS_ACC6(1,0,0)] * zvel0[OPS_ACC6(1,0,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,0)] * xvel0[OPS_ACC4(0,1,0)] +
+                 yvel0[OPS_ACC5(0,1,0)] * yvel0[OPS_ACC5(0,1,0)] +
+                 zvel0[OPS_ACC6(0,1,0)] * zvel0[OPS_ACC6(0,1,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,0)] * xvel0[OPS_ACC4(1,1,0)] +
+                 yvel0[OPS_ACC5(1,1,0)] * yvel0[OPS_ACC5(1,1,0)] +
+                 zvel0[OPS_ACC6(1,1,0)] * zvel0[OPS_ACC6(1,1,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,1)] * xvel0[OPS_ACC4(0,0,1)] +
+                 yvel0[OPS_ACC5(0,0,1)] * yvel0[OPS_ACC5(0,0,1)] +
+                 zvel0[OPS_ACC6(0,0,1)] * zvel0[OPS_ACC6(0,0,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,1)] * xvel0[OPS_ACC4(1,0,1)] +
+                 yvel0[OPS_ACC5(1,0,1)] * yvel0[OPS_ACC5(1,0,1)] +
+                 zvel0[OPS_ACC6(1,0,1)] * zvel0[OPS_ACC6(1,0,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,1)] * xvel0[OPS_ACC4(0,1,1)] +
+                 yvel0[OPS_ACC5(0,1,1)] * yvel0[OPS_ACC5(0,1,1)] +
+                 zvel0[OPS_ACC6(0,1,1)] * zvel0[OPS_ACC6(0,1,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,1)] * xvel0[OPS_ACC4(1,1,1)] +
+                 yvel0[OPS_ACC5(1,1,1)] * yvel0[OPS_ACC5(1,1,1)] +
+                 zvel0[OPS_ACC6(1,1,1)] * zvel0[OPS_ACC6(1,1,1)]);
+/* OpenACC doesn't work with nested loops
   for (int iz=0;iz<2;iz++){
     for (int iy=0;iy<2;iy++){
       for (int ix=0;ix<2;ix++){
@@ -24,7 +49,7 @@ void field_summary_kernel( const double *volume, const double *density0,
       }
     }
   }
-
+*/
   cell_vol = volume[OPS_ACC0(0,0,0)];
   cell_mass = cell_vol * density0[OPS_ACC1(0,0,0)];
   *vol = *vol + cell_vol;

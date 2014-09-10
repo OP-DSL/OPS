@@ -6,7 +6,9 @@
 #define OPS_GPU
 
 extern int xdim0_poisson_kernel_update;
+int xdim0_poisson_kernel_update_h;
 extern int xdim1_poisson_kernel_update;
+int xdim1_poisson_kernel_update_h;
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,9 +71,11 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block Block, int d
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[3].count == 1) {
+  if (xdim0 != xdim0_poisson_kernel_update_h || xdim1 != xdim1_poisson_kernel_update_h) {
     xdim0_poisson_kernel_update = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0_poisson_kernel_update_h = xdim0;
     xdim1_poisson_kernel_update = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1_poisson_kernel_update_h = xdim1;
   }
 
   int dat0 = args[0].dat->elem_size;

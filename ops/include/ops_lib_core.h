@@ -48,6 +48,7 @@
 #include <sys/queue.h> //contains double linked list implementation
 #include <stdbool.h>
 
+#include "ops_macros.h"
 #include "ops_util.h"
 
 
@@ -101,8 +102,9 @@ extern "C" {
 /*
 * essential typedefs
 */
-
+#ifndef __PGI
 typedef unsigned int uint;
+#endif
 typedef long long ll;
 typedef unsigned long long ull;
 

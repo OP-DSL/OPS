@@ -6,17 +6,29 @@
 #define OPS_GPU
 
 extern int xdim0_reset_field_kernel2;
+int xdim0_reset_field_kernel2_h = -1;
 extern int ydim0_reset_field_kernel2;
+int ydim0_reset_field_kernel2_h = -1;
 extern int xdim1_reset_field_kernel2;
+int xdim1_reset_field_kernel2_h = -1;
 extern int ydim1_reset_field_kernel2;
+int ydim1_reset_field_kernel2_h = -1;
 extern int xdim2_reset_field_kernel2;
+int xdim2_reset_field_kernel2_h = -1;
 extern int ydim2_reset_field_kernel2;
+int ydim2_reset_field_kernel2_h = -1;
 extern int xdim3_reset_field_kernel2;
+int xdim3_reset_field_kernel2_h = -1;
 extern int ydim3_reset_field_kernel2;
+int ydim3_reset_field_kernel2_h = -1;
 extern int xdim4_reset_field_kernel2;
+int xdim4_reset_field_kernel2_h = -1;
 extern int ydim4_reset_field_kernel2;
+int ydim4_reset_field_kernel2_h = -1;
 extern int xdim5_reset_field_kernel2;
+int xdim5_reset_field_kernel2_h = -1;
 extern int ydim5_reset_field_kernel2;
+int ydim5_reset_field_kernel2_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +53,8 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  ops_timing_realloc(4,"reset_field_kernel2");
-  OPS_kernels[4].count++;
+  ops_timing_realloc(2,"reset_field_kernel2");
+  OPS_kernels[2].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -79,24 +91,48 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  ydim4 = args[4].dat->size[1];
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  ydim5 = args[5].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[4].count == 1) {
-    xdim0_reset_field_kernel2 = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_reset_field_kernel2 = args[0].dat->size[1];
-    xdim1_reset_field_kernel2 = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_reset_field_kernel2 = args[1].dat->size[1];
-    xdim2_reset_field_kernel2 = args[2].dat->size[0]*args[2].dat->dim;
-    ydim2_reset_field_kernel2 = args[2].dat->size[1];
-    xdim3_reset_field_kernel2 = args[3].dat->size[0]*args[3].dat->dim;
-    ydim3_reset_field_kernel2 = args[3].dat->size[1];
-    xdim4_reset_field_kernel2 = args[4].dat->size[0]*args[4].dat->dim;
-    ydim4_reset_field_kernel2 = args[4].dat->size[1];
-    xdim5_reset_field_kernel2 = args[5].dat->size[0]*args[5].dat->dim;
-    ydim5_reset_field_kernel2 = args[5].dat->size[1];
+  if (xdim0 != xdim0_reset_field_kernel2_h || ydim0 != ydim0_reset_field_kernel2_h || xdim1 != xdim1_reset_field_kernel2_h || ydim1 != ydim1_reset_field_kernel2_h || xdim2 != xdim2_reset_field_kernel2_h || ydim2 != ydim2_reset_field_kernel2_h || xdim3 != xdim3_reset_field_kernel2_h || ydim3 != ydim3_reset_field_kernel2_h || xdim4 != xdim4_reset_field_kernel2_h || ydim4 != ydim4_reset_field_kernel2_h || xdim5 != xdim5_reset_field_kernel2_h || ydim5 != ydim5_reset_field_kernel2_h) {
+    xdim0_reset_field_kernel2 = xdim0;
+    xdim0_reset_field_kernel2_h = xdim0;
+    ydim0_reset_field_kernel2 = ydim0;
+    ydim0_reset_field_kernel2_h = ydim0;
+    xdim1_reset_field_kernel2 = xdim1;
+    xdim1_reset_field_kernel2_h = xdim1;
+    ydim1_reset_field_kernel2 = ydim1;
+    ydim1_reset_field_kernel2_h = ydim1;
+    xdim2_reset_field_kernel2 = xdim2;
+    xdim2_reset_field_kernel2_h = xdim2;
+    ydim2_reset_field_kernel2 = ydim2;
+    ydim2_reset_field_kernel2_h = ydim2;
+    xdim3_reset_field_kernel2 = xdim3;
+    xdim3_reset_field_kernel2_h = xdim3;
+    ydim3_reset_field_kernel2 = ydim3;
+    ydim3_reset_field_kernel2_h = ydim3;
+    xdim4_reset_field_kernel2 = xdim4;
+    xdim4_reset_field_kernel2_h = xdim4;
+    ydim4_reset_field_kernel2 = ydim4;
+    ydim4_reset_field_kernel2_h = ydim4;
+    xdim5_reset_field_kernel2 = xdim5;
+    xdim5_reset_field_kernel2_h = xdim5;
+    ydim5_reset_field_kernel2 = ydim5;
+    ydim5_reset_field_kernel2_h = ydim5;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -238,7 +274,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_halo_exchanges(args,6,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[4].mpi_time += t1-t2;
+  OPS_kernels[2].mpi_time += t1-t2;
 
   reset_field_kernel2_c_wrapper(
     p_a0,
@@ -250,7 +286,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[4].time += t2-t1;
+  OPS_kernels[2].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 6);
   #else
@@ -261,10 +297,10 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[4],range);
 
   //Update kernel record
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg5);
 }

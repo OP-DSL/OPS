@@ -6,9 +6,13 @@
 #define OPS_GPU
 
 extern int xdim0_reset_field_kernel1;
+int xdim0_reset_field_kernel1_h = -1;
 extern int xdim1_reset_field_kernel1;
+int xdim1_reset_field_kernel1_h = -1;
 extern int xdim2_reset_field_kernel1;
+int xdim2_reset_field_kernel1_h = -1;
 extern int xdim3_reset_field_kernel1;
+int xdim3_reset_field_kernel1_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,16 +72,24 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block Block, int dim
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[3].count == 1) {
-    xdim0_reset_field_kernel1 = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_reset_field_kernel1 = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_reset_field_kernel1 = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_reset_field_kernel1 = args[3].dat->size[0]*args[3].dat->dim;
+  if (xdim0 != xdim0_reset_field_kernel1_h || xdim1 != xdim1_reset_field_kernel1_h || xdim2 != xdim2_reset_field_kernel1_h || xdim3 != xdim3_reset_field_kernel1_h) {
+    xdim0_reset_field_kernel1 = xdim0;
+    xdim0_reset_field_kernel1_h = xdim0;
+    xdim1_reset_field_kernel1 = xdim1;
+    xdim1_reset_field_kernel1_h = xdim1;
+    xdim2_reset_field_kernel1 = xdim2;
+    xdim2_reset_field_kernel1_h = xdim2;
+    xdim3_reset_field_kernel1 = xdim3;
+    xdim3_reset_field_kernel1_h = xdim3;
   }
 
   int dat0 = args[0].dat->elem_size;

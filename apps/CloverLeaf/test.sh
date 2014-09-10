@@ -63,7 +63,8 @@ rm perf_out
 
 cd -
 source ./source_pgi
-make cuda
+make clean
+make 
 cd -
 make cloverleaf_openacc
 echo '============> Running OpenACC'
@@ -72,3 +73,4 @@ grep "Total Wall time" clover.out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
 grep "step:   2955" clover.out
+rm perf_out

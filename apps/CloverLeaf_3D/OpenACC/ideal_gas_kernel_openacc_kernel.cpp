@@ -6,13 +6,21 @@
 #define OPS_GPU
 
 extern int xdim0_ideal_gas_kernel;
+int xdim0_ideal_gas_kernel_h = -1;
 extern int ydim0_ideal_gas_kernel;
+int ydim0_ideal_gas_kernel_h = -1;
 extern int xdim1_ideal_gas_kernel;
+int xdim1_ideal_gas_kernel_h = -1;
 extern int ydim1_ideal_gas_kernel;
+int ydim1_ideal_gas_kernel_h = -1;
 extern int xdim2_ideal_gas_kernel;
+int xdim2_ideal_gas_kernel_h = -1;
 extern int ydim2_ideal_gas_kernel;
+int ydim2_ideal_gas_kernel_h = -1;
 extern int xdim3_ideal_gas_kernel;
+int xdim3_ideal_gas_kernel_h = -1;
 extern int ydim3_ideal_gas_kernel;
+int ydim3_ideal_gas_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,8 +43,8 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(7,"ideal_gas_kernel");
-  OPS_kernels[7].count++;
+  ops_timing_realloc(3,"ideal_gas_kernel");
+  OPS_kernels[3].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -73,20 +81,36 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  ydim3 = args[3].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[7].count == 1) {
-    xdim0_ideal_gas_kernel = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_ideal_gas_kernel = args[0].dat->size[1];
-    xdim1_ideal_gas_kernel = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_ideal_gas_kernel = args[1].dat->size[1];
-    xdim2_ideal_gas_kernel = args[2].dat->size[0]*args[2].dat->dim;
-    ydim2_ideal_gas_kernel = args[2].dat->size[1];
-    xdim3_ideal_gas_kernel = args[3].dat->size[0]*args[3].dat->dim;
-    ydim3_ideal_gas_kernel = args[3].dat->size[1];
+  if (xdim0 != xdim0_ideal_gas_kernel_h || ydim0 != ydim0_ideal_gas_kernel_h || xdim1 != xdim1_ideal_gas_kernel_h || ydim1 != ydim1_ideal_gas_kernel_h || xdim2 != xdim2_ideal_gas_kernel_h || ydim2 != ydim2_ideal_gas_kernel_h || xdim3 != xdim3_ideal_gas_kernel_h || ydim3 != ydim3_ideal_gas_kernel_h) {
+    xdim0_ideal_gas_kernel = xdim0;
+    xdim0_ideal_gas_kernel_h = xdim0;
+    ydim0_ideal_gas_kernel = ydim0;
+    ydim0_ideal_gas_kernel_h = ydim0;
+    xdim1_ideal_gas_kernel = xdim1;
+    xdim1_ideal_gas_kernel_h = xdim1;
+    ydim1_ideal_gas_kernel = ydim1;
+    ydim1_ideal_gas_kernel_h = ydim1;
+    xdim2_ideal_gas_kernel = xdim2;
+    xdim2_ideal_gas_kernel_h = xdim2;
+    ydim2_ideal_gas_kernel = ydim2;
+    ydim2_ideal_gas_kernel_h = ydim2;
+    xdim3_ideal_gas_kernel = xdim3;
+    xdim3_ideal_gas_kernel_h = xdim3;
+    ydim3_ideal_gas_kernel = ydim3;
+    ydim3_ideal_gas_kernel_h = ydim3;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -186,7 +210,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[7].mpi_time += t1-t2;
+  OPS_kernels[3].mpi_time += t1-t2;
 
   ideal_gas_kernel_c_wrapper(
     p_a0,
@@ -196,7 +220,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[7].time += t2-t1;
+  OPS_kernels[3].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -206,8 +230,8 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   ops_set_halo_dirtybit3(&args[3],range);
 
   //Update kernel record
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg3);
 }

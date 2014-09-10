@@ -6,21 +6,37 @@
 #define OPS_GPU
 
 extern int xdim0_advec_cell_kernel3_ydir;
+int xdim0_advec_cell_kernel3_ydir_h = -1;
 extern int ydim0_advec_cell_kernel3_ydir;
+int ydim0_advec_cell_kernel3_ydir_h = -1;
 extern int xdim1_advec_cell_kernel3_ydir;
+int xdim1_advec_cell_kernel3_ydir_h = -1;
 extern int ydim1_advec_cell_kernel3_ydir;
+int ydim1_advec_cell_kernel3_ydir_h = -1;
 extern int xdim2_advec_cell_kernel3_ydir;
+int xdim2_advec_cell_kernel3_ydir_h = -1;
 extern int ydim2_advec_cell_kernel3_ydir;
+int ydim2_advec_cell_kernel3_ydir_h = -1;
 extern int xdim3_advec_cell_kernel3_ydir;
+int xdim3_advec_cell_kernel3_ydir_h = -1;
 extern int ydim3_advec_cell_kernel3_ydir;
+int ydim3_advec_cell_kernel3_ydir_h = -1;
 extern int xdim4_advec_cell_kernel3_ydir;
+int xdim4_advec_cell_kernel3_ydir_h = -1;
 extern int ydim4_advec_cell_kernel3_ydir;
+int ydim4_advec_cell_kernel3_ydir_h = -1;
 extern int xdim5_advec_cell_kernel3_ydir;
+int xdim5_advec_cell_kernel3_ydir_h = -1;
 extern int ydim5_advec_cell_kernel3_ydir;
+int ydim5_advec_cell_kernel3_ydir_h = -1;
 extern int xdim6_advec_cell_kernel3_ydir;
+int xdim6_advec_cell_kernel3_ydir_h = -1;
 extern int ydim6_advec_cell_kernel3_ydir;
+int ydim6_advec_cell_kernel3_ydir_h = -1;
 extern int xdim7_advec_cell_kernel3_ydir;
+int xdim7_advec_cell_kernel3_ydir_h = -1;
 extern int ydim7_advec_cell_kernel3_ydir;
+int ydim7_advec_cell_kernel3_ydir_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,8 +63,8 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block Block, int
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(35,"advec_cell_kernel3_ydir");
-  OPS_kernels[35].count++;
+  ops_timing_realloc(13,"advec_cell_kernel3_ydir");
+  OPS_kernels[13].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -85,28 +101,60 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block Block, int
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  ydim4 = args[4].dat->size[1];
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  ydim5 = args[5].dat->size[1];
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  ydim6 = args[6].dat->size[1];
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  ydim7 = args[7].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[35].count == 1) {
-    xdim0_advec_cell_kernel3_ydir = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_advec_cell_kernel3_ydir = args[0].dat->size[1];
-    xdim1_advec_cell_kernel3_ydir = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_advec_cell_kernel3_ydir = args[1].dat->size[1];
-    xdim2_advec_cell_kernel3_ydir = args[2].dat->size[0]*args[2].dat->dim;
-    ydim2_advec_cell_kernel3_ydir = args[2].dat->size[1];
-    xdim3_advec_cell_kernel3_ydir = args[3].dat->size[0]*args[3].dat->dim;
-    ydim3_advec_cell_kernel3_ydir = args[3].dat->size[1];
-    xdim4_advec_cell_kernel3_ydir = args[4].dat->size[0]*args[4].dat->dim;
-    ydim4_advec_cell_kernel3_ydir = args[4].dat->size[1];
-    xdim5_advec_cell_kernel3_ydir = args[5].dat->size[0]*args[5].dat->dim;
-    ydim5_advec_cell_kernel3_ydir = args[5].dat->size[1];
-    xdim6_advec_cell_kernel3_ydir = args[6].dat->size[0]*args[6].dat->dim;
-    ydim6_advec_cell_kernel3_ydir = args[6].dat->size[1];
-    xdim7_advec_cell_kernel3_ydir = args[7].dat->size[0]*args[7].dat->dim;
-    ydim7_advec_cell_kernel3_ydir = args[7].dat->size[1];
+  if (xdim0 != xdim0_advec_cell_kernel3_ydir_h || ydim0 != ydim0_advec_cell_kernel3_ydir_h || xdim1 != xdim1_advec_cell_kernel3_ydir_h || ydim1 != ydim1_advec_cell_kernel3_ydir_h || xdim2 != xdim2_advec_cell_kernel3_ydir_h || ydim2 != ydim2_advec_cell_kernel3_ydir_h || xdim3 != xdim3_advec_cell_kernel3_ydir_h || ydim3 != ydim3_advec_cell_kernel3_ydir_h || xdim4 != xdim4_advec_cell_kernel3_ydir_h || ydim4 != ydim4_advec_cell_kernel3_ydir_h || xdim5 != xdim5_advec_cell_kernel3_ydir_h || ydim5 != ydim5_advec_cell_kernel3_ydir_h || xdim6 != xdim6_advec_cell_kernel3_ydir_h || ydim6 != ydim6_advec_cell_kernel3_ydir_h || xdim7 != xdim7_advec_cell_kernel3_ydir_h || ydim7 != ydim7_advec_cell_kernel3_ydir_h) {
+    xdim0_advec_cell_kernel3_ydir = xdim0;
+    xdim0_advec_cell_kernel3_ydir_h = xdim0;
+    ydim0_advec_cell_kernel3_ydir = ydim0;
+    ydim0_advec_cell_kernel3_ydir_h = ydim0;
+    xdim1_advec_cell_kernel3_ydir = xdim1;
+    xdim1_advec_cell_kernel3_ydir_h = xdim1;
+    ydim1_advec_cell_kernel3_ydir = ydim1;
+    ydim1_advec_cell_kernel3_ydir_h = ydim1;
+    xdim2_advec_cell_kernel3_ydir = xdim2;
+    xdim2_advec_cell_kernel3_ydir_h = xdim2;
+    ydim2_advec_cell_kernel3_ydir = ydim2;
+    ydim2_advec_cell_kernel3_ydir_h = ydim2;
+    xdim3_advec_cell_kernel3_ydir = xdim3;
+    xdim3_advec_cell_kernel3_ydir_h = xdim3;
+    ydim3_advec_cell_kernel3_ydir = ydim3;
+    ydim3_advec_cell_kernel3_ydir_h = ydim3;
+    xdim4_advec_cell_kernel3_ydir = xdim4;
+    xdim4_advec_cell_kernel3_ydir_h = xdim4;
+    ydim4_advec_cell_kernel3_ydir = ydim4;
+    ydim4_advec_cell_kernel3_ydir_h = ydim4;
+    xdim5_advec_cell_kernel3_ydir = xdim5;
+    xdim5_advec_cell_kernel3_ydir_h = xdim5;
+    ydim5_advec_cell_kernel3_ydir = ydim5;
+    ydim5_advec_cell_kernel3_ydir_h = ydim5;
+    xdim6_advec_cell_kernel3_ydir = xdim6;
+    xdim6_advec_cell_kernel3_ydir_h = xdim6;
+    ydim6_advec_cell_kernel3_ydir = ydim6;
+    ydim6_advec_cell_kernel3_ydir_h = ydim6;
+    xdim7_advec_cell_kernel3_ydir = xdim7;
+    xdim7_advec_cell_kernel3_ydir_h = xdim7;
+    ydim7_advec_cell_kernel3_ydir = ydim7;
+    ydim7_advec_cell_kernel3_ydir_h = ydim7;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -290,7 +338,7 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block Block, int
   ops_halo_exchanges(args,8,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[35].mpi_time += t1-t2;
+  OPS_kernels[13].mpi_time += t1-t2;
 
   advec_cell_kernel3_ydir_c_wrapper(
     p_a0,
@@ -304,7 +352,7 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block Block, int
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[35].time += t2-t1;
+  OPS_kernels[13].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 8);
   #else
@@ -314,12 +362,12 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block Block, int
   ops_set_halo_dirtybit3(&args[7],range);
 
   //Update kernel record
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg7);
 }

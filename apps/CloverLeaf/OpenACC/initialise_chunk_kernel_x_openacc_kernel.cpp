@@ -6,8 +6,11 @@
 #define OPS_GPU
 
 extern int xdim0_initialise_chunk_kernel_x;
+int xdim0_initialise_chunk_kernel_x_h = -1;
 extern int xdim1_initialise_chunk_kernel_x;
+int xdim1_initialise_chunk_kernel_x_h = -1;
 extern int xdim2_initialise_chunk_kernel_x;
+int xdim2_initialise_chunk_kernel_x_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,15 +69,21 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block Block, i
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[77].count == 1) {
-    xdim0_initialise_chunk_kernel_x = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_initialise_chunk_kernel_x = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_initialise_chunk_kernel_x = args[2].dat->size[0]*args[2].dat->dim;
+  if (xdim0 != xdim0_initialise_chunk_kernel_x_h || xdim1 != xdim1_initialise_chunk_kernel_x_h || xdim2 != xdim2_initialise_chunk_kernel_x_h) {
+    xdim0_initialise_chunk_kernel_x = xdim0;
+    xdim0_initialise_chunk_kernel_x_h = xdim0;
+    xdim1_initialise_chunk_kernel_x = xdim1;
+    xdim1_initialise_chunk_kernel_x_h = xdim1;
+    xdim2_initialise_chunk_kernel_x = xdim2;
+    xdim2_initialise_chunk_kernel_x_h = xdim2;
   }
 
   int dat0 = args[0].dat->elem_size;

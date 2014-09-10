@@ -3,7 +3,9 @@
 
 //header
 #include "ops_lib_cpp.h"
-#include "ops_lib_mpi.h"
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
 
 //set max number of OMP threads for reductions
 #ifndef MAX_REDUCT_THREADS

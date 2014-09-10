@@ -6,10 +6,15 @@
 #define OPS_GPU
 
 extern int xdim0_advec_mom_kernel1_x_nonvector;
+int xdim0_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim1_advec_mom_kernel1_x_nonvector;
+int xdim1_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim2_advec_mom_kernel1_x_nonvector;
+int xdim2_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim3_advec_mom_kernel1_x_nonvector;
+int xdim3_advec_mom_kernel1_x_nonvector_h = -1;
 extern int xdim4_advec_mom_kernel1_x_nonvector;
+int xdim4_advec_mom_kernel1_x_nonvector_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,17 +75,27 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block Bloc
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[16].count == 1) {
-    xdim0_advec_mom_kernel1_x_nonvector = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_advec_mom_kernel1_x_nonvector = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_advec_mom_kernel1_x_nonvector = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_advec_mom_kernel1_x_nonvector = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_advec_mom_kernel1_x_nonvector = args[4].dat->size[0]*args[4].dat->dim;
+  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h || xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h || xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h || xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h || xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h) {
+    xdim0_advec_mom_kernel1_x_nonvector = xdim0;
+    xdim0_advec_mom_kernel1_x_nonvector_h = xdim0;
+    xdim1_advec_mom_kernel1_x_nonvector = xdim1;
+    xdim1_advec_mom_kernel1_x_nonvector_h = xdim1;
+    xdim2_advec_mom_kernel1_x_nonvector = xdim2;
+    xdim2_advec_mom_kernel1_x_nonvector_h = xdim2;
+    xdim3_advec_mom_kernel1_x_nonvector = xdim3;
+    xdim3_advec_mom_kernel1_x_nonvector_h = xdim3;
+    xdim4_advec_mom_kernel1_x_nonvector = xdim4;
+    xdim4_advec_mom_kernel1_x_nonvector_h = xdim4;
   }
 
   int dat0 = args[0].dat->elem_size;

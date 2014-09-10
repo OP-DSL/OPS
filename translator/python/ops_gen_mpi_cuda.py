@@ -293,8 +293,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
+        code('int xdim'+str(n)+'_'+name+'_h = -1;')
         if NDIM==3:
           code('__constant__ int ydim'+str(n)+'_'+name+';')
+        code('int ydim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
     #code('#define OPS_ACC_MACROS')
@@ -568,13 +570,23 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('double t1,t2,c1,c2;')
     code('ops_timers_core(&c2,&t2);')
     code('')
+    
+    condition = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
+        if NDIM==3:
+          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+    condition = condition[:-4]
+    IF(condition)
 
-    IF('OPS_kernels['+str(nk)+'].count == 1')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
+        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
         if NDIM==3:
           code('cudaMemcpyToSymbol( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
+          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
     ENDIF()
 
     code('')
@@ -855,6 +867,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
+  for n in range (0,18):
+   code('#undef OPS_ACC'+str(n))
   code('')
   comm(' global constants')
   for nc in range (0,len(consts)):

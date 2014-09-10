@@ -6,33 +6,61 @@
 #define OPS_GPU
 
 extern int xdim0_calc_dt_kernel;
+int xdim0_calc_dt_kernel_h = -1;
 extern int ydim0_calc_dt_kernel;
+int ydim0_calc_dt_kernel_h = -1;
 extern int xdim1_calc_dt_kernel;
+int xdim1_calc_dt_kernel_h = -1;
 extern int ydim1_calc_dt_kernel;
+int ydim1_calc_dt_kernel_h = -1;
 extern int xdim2_calc_dt_kernel;
+int xdim2_calc_dt_kernel_h = -1;
 extern int ydim2_calc_dt_kernel;
+int ydim2_calc_dt_kernel_h = -1;
 extern int xdim3_calc_dt_kernel;
+int xdim3_calc_dt_kernel_h = -1;
 extern int ydim3_calc_dt_kernel;
+int ydim3_calc_dt_kernel_h = -1;
 extern int xdim4_calc_dt_kernel;
+int xdim4_calc_dt_kernel_h = -1;
 extern int ydim4_calc_dt_kernel;
+int ydim4_calc_dt_kernel_h = -1;
 extern int xdim5_calc_dt_kernel;
+int xdim5_calc_dt_kernel_h = -1;
 extern int ydim5_calc_dt_kernel;
+int ydim5_calc_dt_kernel_h = -1;
 extern int xdim6_calc_dt_kernel;
+int xdim6_calc_dt_kernel_h = -1;
 extern int ydim6_calc_dt_kernel;
+int ydim6_calc_dt_kernel_h = -1;
 extern int xdim7_calc_dt_kernel;
+int xdim7_calc_dt_kernel_h = -1;
 extern int ydim7_calc_dt_kernel;
+int ydim7_calc_dt_kernel_h = -1;
 extern int xdim8_calc_dt_kernel;
+int xdim8_calc_dt_kernel_h = -1;
 extern int ydim8_calc_dt_kernel;
+int ydim8_calc_dt_kernel_h = -1;
 extern int xdim9_calc_dt_kernel;
+int xdim9_calc_dt_kernel_h = -1;
 extern int ydim9_calc_dt_kernel;
+int ydim9_calc_dt_kernel_h = -1;
 extern int xdim10_calc_dt_kernel;
+int xdim10_calc_dt_kernel_h = -1;
 extern int ydim10_calc_dt_kernel;
+int ydim10_calc_dt_kernel_h = -1;
 extern int xdim11_calc_dt_kernel;
+int xdim11_calc_dt_kernel_h = -1;
 extern int ydim11_calc_dt_kernel;
+int ydim11_calc_dt_kernel_h = -1;
 extern int xdim12_calc_dt_kernel;
+int xdim12_calc_dt_kernel_h = -1;
 extern int ydim12_calc_dt_kernel;
+int ydim12_calc_dt_kernel_h = -1;
 extern int xdim13_calc_dt_kernel;
+int xdim13_calc_dt_kernel_h = -1;
 extern int ydim13_calc_dt_kernel;
+int ydim13_calc_dt_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,8 +93,8 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   ops_arg args[14] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13};
 
 
-  ops_timing_realloc(126,"calc_dt_kernel");
-  OPS_kernels[126].count++;
+  ops_timing_realloc(37,"calc_dt_kernel");
+  OPS_kernels[37].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -103,40 +131,96 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   int z_size = MAX(0,end[2]-start[2]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  ydim4 = args[4].dat->size[1];
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  ydim5 = args[5].dat->size[1];
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  ydim6 = args[6].dat->size[1];
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  ydim7 = args[7].dat->size[1];
+  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  ydim8 = args[8].dat->size[1];
+  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  ydim9 = args[9].dat->size[1];
+  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  ydim10 = args[10].dat->size[1];
+  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  ydim11 = args[11].dat->size[1];
+  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  ydim12 = args[12].dat->size[1];
+  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  ydim13 = args[13].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[126].count == 1) {
-    xdim0_calc_dt_kernel = args[0].dat->size[0]*args[0].dat->dim;
-    ydim0_calc_dt_kernel = args[0].dat->size[1];
-    xdim1_calc_dt_kernel = args[1].dat->size[0]*args[1].dat->dim;
-    ydim1_calc_dt_kernel = args[1].dat->size[1];
-    xdim2_calc_dt_kernel = args[2].dat->size[0]*args[2].dat->dim;
-    ydim2_calc_dt_kernel = args[2].dat->size[1];
-    xdim3_calc_dt_kernel = args[3].dat->size[0]*args[3].dat->dim;
-    ydim3_calc_dt_kernel = args[3].dat->size[1];
-    xdim4_calc_dt_kernel = args[4].dat->size[0]*args[4].dat->dim;
-    ydim4_calc_dt_kernel = args[4].dat->size[1];
-    xdim5_calc_dt_kernel = args[5].dat->size[0]*args[5].dat->dim;
-    ydim5_calc_dt_kernel = args[5].dat->size[1];
-    xdim6_calc_dt_kernel = args[6].dat->size[0]*args[6].dat->dim;
-    ydim6_calc_dt_kernel = args[6].dat->size[1];
-    xdim7_calc_dt_kernel = args[7].dat->size[0]*args[7].dat->dim;
-    ydim7_calc_dt_kernel = args[7].dat->size[1];
-    xdim8_calc_dt_kernel = args[8].dat->size[0]*args[8].dat->dim;
-    ydim8_calc_dt_kernel = args[8].dat->size[1];
-    xdim9_calc_dt_kernel = args[9].dat->size[0]*args[9].dat->dim;
-    ydim9_calc_dt_kernel = args[9].dat->size[1];
-    xdim10_calc_dt_kernel = args[10].dat->size[0]*args[10].dat->dim;
-    ydim10_calc_dt_kernel = args[10].dat->size[1];
-    xdim11_calc_dt_kernel = args[11].dat->size[0]*args[11].dat->dim;
-    ydim11_calc_dt_kernel = args[11].dat->size[1];
-    xdim12_calc_dt_kernel = args[12].dat->size[0]*args[12].dat->dim;
-    ydim12_calc_dt_kernel = args[12].dat->size[1];
-    xdim13_calc_dt_kernel = args[13].dat->size[0]*args[13].dat->dim;
-    ydim13_calc_dt_kernel = args[13].dat->size[1];
+  if (xdim0 != xdim0_calc_dt_kernel_h || ydim0 != ydim0_calc_dt_kernel_h || xdim1 != xdim1_calc_dt_kernel_h || ydim1 != ydim1_calc_dt_kernel_h || xdim2 != xdim2_calc_dt_kernel_h || ydim2 != ydim2_calc_dt_kernel_h || xdim3 != xdim3_calc_dt_kernel_h || ydim3 != ydim3_calc_dt_kernel_h || xdim4 != xdim4_calc_dt_kernel_h || ydim4 != ydim4_calc_dt_kernel_h || xdim5 != xdim5_calc_dt_kernel_h || ydim5 != ydim5_calc_dt_kernel_h || xdim6 != xdim6_calc_dt_kernel_h || ydim6 != ydim6_calc_dt_kernel_h || xdim7 != xdim7_calc_dt_kernel_h || ydim7 != ydim7_calc_dt_kernel_h || xdim8 != xdim8_calc_dt_kernel_h || ydim8 != ydim8_calc_dt_kernel_h || xdim9 != xdim9_calc_dt_kernel_h || ydim9 != ydim9_calc_dt_kernel_h || xdim10 != xdim10_calc_dt_kernel_h || ydim10 != ydim10_calc_dt_kernel_h || xdim11 != xdim11_calc_dt_kernel_h || ydim11 != ydim11_calc_dt_kernel_h || xdim12 != xdim12_calc_dt_kernel_h || ydim12 != ydim12_calc_dt_kernel_h || xdim13 != xdim13_calc_dt_kernel_h || ydim13 != ydim13_calc_dt_kernel_h) {
+    xdim0_calc_dt_kernel = xdim0;
+    xdim0_calc_dt_kernel_h = xdim0;
+    ydim0_calc_dt_kernel = ydim0;
+    ydim0_calc_dt_kernel_h = ydim0;
+    xdim1_calc_dt_kernel = xdim1;
+    xdim1_calc_dt_kernel_h = xdim1;
+    ydim1_calc_dt_kernel = ydim1;
+    ydim1_calc_dt_kernel_h = ydim1;
+    xdim2_calc_dt_kernel = xdim2;
+    xdim2_calc_dt_kernel_h = xdim2;
+    ydim2_calc_dt_kernel = ydim2;
+    ydim2_calc_dt_kernel_h = ydim2;
+    xdim3_calc_dt_kernel = xdim3;
+    xdim3_calc_dt_kernel_h = xdim3;
+    ydim3_calc_dt_kernel = ydim3;
+    ydim3_calc_dt_kernel_h = ydim3;
+    xdim4_calc_dt_kernel = xdim4;
+    xdim4_calc_dt_kernel_h = xdim4;
+    ydim4_calc_dt_kernel = ydim4;
+    ydim4_calc_dt_kernel_h = ydim4;
+    xdim5_calc_dt_kernel = xdim5;
+    xdim5_calc_dt_kernel_h = xdim5;
+    ydim5_calc_dt_kernel = ydim5;
+    ydim5_calc_dt_kernel_h = ydim5;
+    xdim6_calc_dt_kernel = xdim6;
+    xdim6_calc_dt_kernel_h = xdim6;
+    ydim6_calc_dt_kernel = ydim6;
+    ydim6_calc_dt_kernel_h = ydim6;
+    xdim7_calc_dt_kernel = xdim7;
+    xdim7_calc_dt_kernel_h = xdim7;
+    ydim7_calc_dt_kernel = ydim7;
+    ydim7_calc_dt_kernel_h = ydim7;
+    xdim8_calc_dt_kernel = xdim8;
+    xdim8_calc_dt_kernel_h = xdim8;
+    ydim8_calc_dt_kernel = ydim8;
+    ydim8_calc_dt_kernel_h = ydim8;
+    xdim9_calc_dt_kernel = xdim9;
+    xdim9_calc_dt_kernel_h = xdim9;
+    ydim9_calc_dt_kernel = ydim9;
+    ydim9_calc_dt_kernel_h = ydim9;
+    xdim10_calc_dt_kernel = xdim10;
+    xdim10_calc_dt_kernel_h = xdim10;
+    ydim10_calc_dt_kernel = ydim10;
+    ydim10_calc_dt_kernel_h = ydim10;
+    xdim11_calc_dt_kernel = xdim11;
+    xdim11_calc_dt_kernel_h = xdim11;
+    ydim11_calc_dt_kernel = ydim11;
+    ydim11_calc_dt_kernel_h = ydim11;
+    xdim12_calc_dt_kernel = xdim12;
+    xdim12_calc_dt_kernel_h = xdim12;
+    ydim12_calc_dt_kernel = ydim12;
+    ydim12_calc_dt_kernel_h = ydim12;
+    xdim13_calc_dt_kernel = xdim13;
+    xdim13_calc_dt_kernel_h = xdim13;
+    ydim13_calc_dt_kernel = ydim13;
+    ydim13_calc_dt_kernel_h = ydim13;
   }
 
   int dat0 = args[0].dat->elem_size;
@@ -446,7 +530,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   ops_halo_exchanges(args,14,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[126].mpi_time += t1-t2;
+  OPS_kernels[37].mpi_time += t1-t2;
 
   calc_dt_kernel_c_wrapper(
     p_a0,
@@ -466,7 +550,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[126].time += t2-t1;
+  OPS_kernels[37].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 14);
   #else
@@ -475,18 +559,18 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block Block, int dim, int
   ops_set_halo_dirtybit3(&args[10],range);
 
   //Update kernel record
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg10);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg11);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg12);
-  OPS_kernels[126].transfer += ops_compute_transfer(dim, range, &arg13);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg11);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg12);
+  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg13);
 }

@@ -6,19 +6,33 @@
 #define OPS_GPU
 
 extern int xdim0_PdV_kernel_nopredict;
+int xdim0_PdV_kernel_nopredict_h = -1;
 extern int xdim1_PdV_kernel_nopredict;
+int xdim1_PdV_kernel_nopredict_h = -1;
 extern int xdim2_PdV_kernel_nopredict;
+int xdim2_PdV_kernel_nopredict_h = -1;
 extern int xdim3_PdV_kernel_nopredict;
+int xdim3_PdV_kernel_nopredict_h = -1;
 extern int xdim4_PdV_kernel_nopredict;
+int xdim4_PdV_kernel_nopredict_h = -1;
 extern int xdim5_PdV_kernel_nopredict;
+int xdim5_PdV_kernel_nopredict_h = -1;
 extern int xdim6_PdV_kernel_nopredict;
+int xdim6_PdV_kernel_nopredict_h = -1;
 extern int xdim7_PdV_kernel_nopredict;
+int xdim7_PdV_kernel_nopredict_h = -1;
 extern int xdim8_PdV_kernel_nopredict;
+int xdim8_PdV_kernel_nopredict_h = -1;
 extern int xdim9_PdV_kernel_nopredict;
+int xdim9_PdV_kernel_nopredict_h = -1;
 extern int xdim10_PdV_kernel_nopredict;
+int xdim10_PdV_kernel_nopredict_h = -1;
 extern int xdim11_PdV_kernel_nopredict;
+int xdim11_PdV_kernel_nopredict_h = -1;
 extern int xdim12_PdV_kernel_nopredict;
+int xdim12_PdV_kernel_nopredict_h = -1;
 extern int xdim13_PdV_kernel_nopredict;
+int xdim13_PdV_kernel_nopredict_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,26 +102,54 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[6].count == 1) {
-    xdim0_PdV_kernel_nopredict = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_PdV_kernel_nopredict = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_PdV_kernel_nopredict = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_PdV_kernel_nopredict = args[3].dat->size[0]*args[3].dat->dim;
-    xdim4_PdV_kernel_nopredict = args[4].dat->size[0]*args[4].dat->dim;
-    xdim5_PdV_kernel_nopredict = args[5].dat->size[0]*args[5].dat->dim;
-    xdim6_PdV_kernel_nopredict = args[6].dat->size[0]*args[6].dat->dim;
-    xdim7_PdV_kernel_nopredict = args[7].dat->size[0]*args[7].dat->dim;
-    xdim8_PdV_kernel_nopredict = args[8].dat->size[0]*args[8].dat->dim;
-    xdim9_PdV_kernel_nopredict = args[9].dat->size[0]*args[9].dat->dim;
-    xdim10_PdV_kernel_nopredict = args[10].dat->size[0]*args[10].dat->dim;
-    xdim11_PdV_kernel_nopredict = args[11].dat->size[0]*args[11].dat->dim;
-    xdim12_PdV_kernel_nopredict = args[12].dat->size[0]*args[12].dat->dim;
-    xdim13_PdV_kernel_nopredict = args[13].dat->size[0]*args[13].dat->dim;
+  if (xdim0 != xdim0_PdV_kernel_nopredict_h || xdim1 != xdim1_PdV_kernel_nopredict_h || xdim2 != xdim2_PdV_kernel_nopredict_h || xdim3 != xdim3_PdV_kernel_nopredict_h || xdim4 != xdim4_PdV_kernel_nopredict_h || xdim5 != xdim5_PdV_kernel_nopredict_h || xdim6 != xdim6_PdV_kernel_nopredict_h || xdim7 != xdim7_PdV_kernel_nopredict_h || xdim8 != xdim8_PdV_kernel_nopredict_h || xdim9 != xdim9_PdV_kernel_nopredict_h || xdim10 != xdim10_PdV_kernel_nopredict_h || xdim11 != xdim11_PdV_kernel_nopredict_h || xdim12 != xdim12_PdV_kernel_nopredict_h || xdim13 != xdim13_PdV_kernel_nopredict_h) {
+    xdim0_PdV_kernel_nopredict = xdim0;
+    xdim0_PdV_kernel_nopredict_h = xdim0;
+    xdim1_PdV_kernel_nopredict = xdim1;
+    xdim1_PdV_kernel_nopredict_h = xdim1;
+    xdim2_PdV_kernel_nopredict = xdim2;
+    xdim2_PdV_kernel_nopredict_h = xdim2;
+    xdim3_PdV_kernel_nopredict = xdim3;
+    xdim3_PdV_kernel_nopredict_h = xdim3;
+    xdim4_PdV_kernel_nopredict = xdim4;
+    xdim4_PdV_kernel_nopredict_h = xdim4;
+    xdim5_PdV_kernel_nopredict = xdim5;
+    xdim5_PdV_kernel_nopredict_h = xdim5;
+    xdim6_PdV_kernel_nopredict = xdim6;
+    xdim6_PdV_kernel_nopredict_h = xdim6;
+    xdim7_PdV_kernel_nopredict = xdim7;
+    xdim7_PdV_kernel_nopredict_h = xdim7;
+    xdim8_PdV_kernel_nopredict = xdim8;
+    xdim8_PdV_kernel_nopredict_h = xdim8;
+    xdim9_PdV_kernel_nopredict = xdim9;
+    xdim9_PdV_kernel_nopredict_h = xdim9;
+    xdim10_PdV_kernel_nopredict = xdim10;
+    xdim10_PdV_kernel_nopredict_h = xdim10;
+    xdim11_PdV_kernel_nopredict = xdim11;
+    xdim11_PdV_kernel_nopredict_h = xdim11;
+    xdim12_PdV_kernel_nopredict = xdim12;
+    xdim12_PdV_kernel_nopredict_h = xdim12;
+    xdim13_PdV_kernel_nopredict = xdim13;
+    xdim13_PdV_kernel_nopredict_h = xdim13;
   }
 
   int dat0 = args[0].dat->elem_size;

@@ -254,8 +254,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
     if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
-      code('#define OPS_GPU')
-      code('')
+      if not (NDIM==3 and 'field_summary' in name):
+        code('#define OPS_GPU')
+        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
@@ -315,7 +316,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('void '+name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code(typs[n]+' *p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code(typs[n]+' p_a'+str(n)+',')
+      else:
+        code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
       if NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
@@ -393,7 +397,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          text = text +' p_a'+str(n)+''
+          if dims[n].isdigit() and int(dims[n])==1:
+            text = text +' &p_a'+str(n)+''
+          else:
+            text = text +' p_a'+str(n)+''
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
             text = text +' &p_a'+str(n)+'_l'
@@ -441,13 +448,16 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
     if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
-      code('#define OPS_GPU')
-      code('')
+      if not (NDIM==3 and 'field_summary' in name):
+        code('#define OPS_GPU')
+        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('extern int xdim'+str(n)+'_'+name+';')
+        code('int xdim'+str(n)+'_'+name+'_h = -1;')
         if NDIM==3:
           code('extern int ydim'+str(n)+'_'+name+';')
+          code('int ydim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
     code('#ifdef __cplusplus')
@@ -456,7 +466,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('void '+name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code(typs[n]+' *p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code(typs[n]+' p_a'+str(n)+',')
+      else:
+        code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
       if NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
@@ -555,20 +568,33 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('#endif //OPS_MPI')
     code('')
 
-
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     #timing structs
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
     code('ops_timers_core(&c2,&t2);')
     code('')
-
-    IF('OPS_kernels['+str(nk)+'].count == 1')
+    condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
         if NDIM==3:
-          code('ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
+          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+    condition = condition[:-4]
+    IF(condition)
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
+        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
+        if NDIM==3:
+          code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
+          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
     ENDIF()
     code('')
 
@@ -692,7 +718,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code(name+'_c_wrapper(')
     depth = depth+2
     for n in range (0, nargs):
-      code('p_a'+str(n)+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
+        code('*p_a'+str(n)+',')
+      else:
+        code('p_a'+str(n)+',')
     if arg_idx:
       if NDIM==2:
         code('arg_idx[0], arg_idx[1],')
@@ -761,6 +790,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
   file_text =''
   comm('header')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#ifdef __cplusplus')
   code('#include "ops_lib_cpp.h"')
   code('#endif')

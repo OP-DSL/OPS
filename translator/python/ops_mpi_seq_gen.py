@@ -432,4 +432,4 @@ for nargs in range (1,maxargs+1):
     f.write('  ops_set_dirtybit_host(args, '+str(nargs)+');\n')
 
 
-    f.write('}')
+    f.write('}\n')

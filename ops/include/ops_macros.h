@@ -1,5 +1,5 @@
-#ifndef LIB_MPI_H
-#define LIB_MPI_H
+#ifndef OPS_MACROS_H
+#define OPS_MACROS_H
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -34,10 +34,8 @@
 
 /** @brief header file declaring the functions for the ops mpi backend
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Declares the OPS API calls for the sequential backend
+  * @details Declares the OPS macros
   */
-
-#include "ops_mpi_core.h"
 
 #ifndef OPS_ACC_MACROS
 #ifdef OPS_3D
@@ -137,142 +135,42 @@
 #endif
 
 extern int xdim0;
-extern int ydim0;
 extern int xdim1;
-extern int ydim1;
 extern int xdim2;
-extern int ydim2;
 extern int xdim3;
-extern int ydim3;
 extern int xdim4;
-extern int ydim4;
 extern int xdim5;
-extern int ydim5;
 extern int xdim6;
-extern int ydim6;
 extern int xdim7;
-extern int ydim7;
 extern int xdim8;
-extern int ydim8;
 extern int xdim9;
-extern int ydim9;
 extern int xdim10;
-extern int ydim10;
 extern int xdim11;
-extern int ydim11;
 extern int xdim12;
-extern int ydim12;
 extern int xdim13;
-extern int ydim13;
 extern int xdim14;
-extern int ydim14;
 extern int xdim15;
-extern int ydim15;
 extern int xdim16;
-extern int ydim16;
 extern int xdim17;
+#ifdef OPS_3D
+extern int ydim0;
+extern int ydim1;
+extern int ydim2;
+extern int ydim3;
+extern int ydim4;
+extern int ydim5;
+extern int ydim6;
+extern int ydim7;
+extern int ydim8;
+extern int ydim9;
+extern int ydim10;
+extern int ydim11;
+extern int ydim12;
+extern int ydim13;
+extern int ydim14;
+extern int ydim15;
+extern int ydim16;
 extern int ydim17;
-
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
-inline int mult2(int* size, int dim)
-{
-  int result = 1;
-  if(dim > 0) {
-    for(int i = 0; i<dim;i++) result *= size[i];
-  }
-  return result;
-}
-
-inline int add2(int* coords, int* size, int dim)
-{
-  int result = coords[0];
-  for(int i = 1; i<=dim;i++) result += coords[i]*mult2(size,i);
-  return result;
-}
-
-
-inline int off2(int ndim, int dim, int* start, int* end, int* size, int* stride)
-{
-  int i = 0;
-  int c1[ndim];
-  int c2[ndim];
-
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
-
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<ndim; i++) c2[i] = start[i];
-
-  for (i = 0; i < ndim; i++) {
-    c1[i] *= stride[i];
-    c2[i] *= stride[i];
-  }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
-
-  return off;
-}
-
-inline int address2(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
-{
-  int base = 0;
-  for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult2(size, i) * (start[i] * stride[i] - off[i]);
-  }
-
-  /* for 2D the code generator hard codes the following */
-  //base = base + dat_size * 1       * (ps[0] * std[0] - off[0]);
-  //base = base + dat_size * size[0] * (ps[1] * std[1] - off[1]);
-
-  return base;
-}
-
-
-inline int off2D(int dim, int* start, int* end, int* size, int* stride)
-{
-  int i = 0;
-  int c1[2];
-  int c2[2];
-
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<2; i++) c1[i] = start[i];
-
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<2; i++) c2[i] = start[i];
-
-  for (i = 0; i < 2; i++) {
-    c1[i] *= stride[i];
-    c2[i] *= stride[i];
-  }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
-  return off;
-}
-
-inline int off3D(int dim, int* start, int* end, int* size, int* stride)
-{
-  int i = 0;
-  int c1[3];
-  int c2[3];
-
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<3; i++) c1[i] = start[i];
-
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<3; i++) c2[i] = start[i];
-
-  for (i = 0; i < 3; i++) {
-    c1[i] *= stride[i];
-    c2[i] *= stride[i];
-  }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
-  return off;
-}
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif //OPS_MACROS_H

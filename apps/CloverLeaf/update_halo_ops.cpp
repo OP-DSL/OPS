@@ -265,8 +265,6 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *, ops_block, int , in
 void update_halo(int* fields, int depth)
 {
 
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;

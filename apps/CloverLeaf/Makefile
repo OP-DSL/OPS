@@ -56,16 +56,16 @@ endif
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CPP 		= pgCC
+  CPP 		= pgc++
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS 	= -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS 	= -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
   CPPFLAGS 	= $(CCFLAGS)
   OMPFLAGS 	= -mp
-  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS)
 else
@@ -141,7 +141,7 @@ cloverleaf_dev_seq: Makefile clover_leaf.cpp start.cpp build_field.cpp read_inpu
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
+		$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk.cpp initialise.cpp generate.cpp \
                 ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
                 viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
@@ -218,7 +218,7 @@ cloverleaf_openmp: Makefile clover_leaf_ops.cpp start.cpp build_field.cpp read_i
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+	        $(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
@@ -237,7 +237,7 @@ cloverleaf_seq: Makefile clover_leaf_ops.cpp start.cpp build_field.cpp read_inpu
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
                 reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+		$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
@@ -257,7 +257,7 @@ cloverleaf_cuda: Makefile ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp sta
 		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
 		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
 		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+		$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
 		initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
@@ -347,7 +347,7 @@ cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp star
 		update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
 		PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
 		reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-		$(MPICPP) $(MPIFLAGS) $(OCL_FLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+		$(CPP) $(MPIFLAGS) $(OCL_FLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
                 initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \

@@ -6,9 +6,13 @@
 #define OPS_GPU
 
 extern int xdim0_ideal_gas_kernel;
+int xdim0_ideal_gas_kernel_h = -1;
 extern int xdim1_ideal_gas_kernel;
+int xdim1_ideal_gas_kernel_h = -1;
 extern int xdim2_ideal_gas_kernel;
+int xdim2_ideal_gas_kernel_h = -1;
 extern int xdim3_ideal_gas_kernel;
+int xdim3_ideal_gas_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,16 +72,24 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block Block, int dim, i
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[7].count == 1) {
-    xdim0_ideal_gas_kernel = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_ideal_gas_kernel = args[1].dat->size[0]*args[1].dat->dim;
-    xdim2_ideal_gas_kernel = args[2].dat->size[0]*args[2].dat->dim;
-    xdim3_ideal_gas_kernel = args[3].dat->size[0]*args[3].dat->dim;
+  if (xdim0 != xdim0_ideal_gas_kernel_h || xdim1 != xdim1_ideal_gas_kernel_h || xdim2 != xdim2_ideal_gas_kernel_h || xdim3 != xdim3_ideal_gas_kernel_h) {
+    xdim0_ideal_gas_kernel = xdim0;
+    xdim0_ideal_gas_kernel_h = xdim0;
+    xdim1_ideal_gas_kernel = xdim1;
+    xdim1_ideal_gas_kernel_h = xdim1;
+    xdim2_ideal_gas_kernel = xdim2;
+    xdim2_ideal_gas_kernel_h = xdim2;
+    xdim3_ideal_gas_kernel = xdim3;
+    xdim3_ideal_gas_kernel_h = xdim3;
   }
 
   int dat0 = args[0].dat->elem_size;

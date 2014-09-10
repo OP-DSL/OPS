@@ -587,7 +587,9 @@ def ops_gen_mpi(master, date, consts, kernels):
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
-  code('#include "ops_lib_mpi.h"')
+  code('#ifdef OPS_MPI')
+  code('#include "ops_mpi_core.h"')
+  code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')

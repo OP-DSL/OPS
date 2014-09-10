@@ -54,14 +54,6 @@ void timestep()
   xl_pos = 0.0;
   yl_pos = 0.0;
 
-  //initialize sizes using global values
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
-  int x_min = field.x_min;
-  int x_max = field.x_max;
-  int y_min = field.y_min;
-  int y_max = field.y_max;
-
   ideal_gas(FALSE);
 
   fields[FIELD_DENSITY0]  = 1;

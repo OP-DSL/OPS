@@ -118,8 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = mblock_dev_seq
-# mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda mblock_opencl #mblock_openacc mblock_mpi_openacc
+TARGETS = mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda #mblock_opencl #mblock_openacc mblock_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += mblock_openacc mblock_mpi_openacc
@@ -132,7 +131,7 @@ endif
 all: clean $(TARGETS)
 
 mblock_dev_seq: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_seq -o mblock_dev_seq
+	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_seq -o mblock_dev_seq
 
 
 mblock_dev_mpi: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
@@ -157,20 +156,20 @@ mblock_mpi_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTAL
 
 
 mblock_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o mblock_openmp
+	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o mblock_openmp
 
 #
 # Sequential version
 #
 mblock_seq: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o mblock_seq
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o mblock_seq
 
 #
 # CUDA version
 #
 
 mblock_cuda: Makefile ./CUDA/mblock_kernels_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda -o mblock_cuda
+	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda -o mblock_cuda
 
 mblock_mpi_cuda: Makefile ./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o mblock_mpi_cuda
@@ -205,7 +204,7 @@ mblock_mpi_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h 
     mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o mblock_mpi_openacc
 
 mblock_opencl: ./OpenCL/mblock_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o mblock_opencl
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o mblock_opencl
 
 ./OpenCL/mblock_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \

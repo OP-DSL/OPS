@@ -6,7 +6,9 @@
 #define OPS_GPU
 
 extern int xdim0_update_halo_kernel3_minus_2_a;
+int xdim0_update_halo_kernel3_minus_2_a_h = -1;
 extern int xdim1_update_halo_kernel3_minus_2_a;
+int xdim1_update_halo_kernel3_minus_2_a_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,14 +67,18 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block Bloc
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[59].count == 1) {
-    xdim0_update_halo_kernel3_minus_2_a = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_update_halo_kernel3_minus_2_a = args[1].dat->size[0]*args[1].dat->dim;
+  if (xdim0 != xdim0_update_halo_kernel3_minus_2_a_h || xdim1 != xdim1_update_halo_kernel3_minus_2_a_h) {
+    xdim0_update_halo_kernel3_minus_2_a = xdim0;
+    xdim0_update_halo_kernel3_minus_2_a_h = xdim0;
+    xdim1_update_halo_kernel3_minus_2_a = xdim1;
+    xdim1_update_halo_kernel3_minus_2_a_h = xdim1;
   }
 
   int dat0 = args[0].dat->elem_size;

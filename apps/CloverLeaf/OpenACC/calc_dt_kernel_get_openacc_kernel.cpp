@@ -6,7 +6,9 @@
 #define OPS_GPU
 
 extern int xdim0_calc_dt_kernel_get;
+int xdim0_calc_dt_kernel_get_h = -1;
 extern int xdim1_calc_dt_kernel_get;
+int xdim1_calc_dt_kernel_get_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,14 +68,18 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block Block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-  if (OPS_kernels[73].count == 1) {
-    xdim0_calc_dt_kernel_get = args[0].dat->size[0]*args[0].dat->dim;
-    xdim1_calc_dt_kernel_get = args[1].dat->size[0]*args[1].dat->dim;
+  if (xdim0 != xdim0_calc_dt_kernel_get_h || xdim1 != xdim1_calc_dt_kernel_get_h) {
+    xdim0_calc_dt_kernel_get = xdim0;
+    xdim0_calc_dt_kernel_get_h = xdim0;
+    xdim1_calc_dt_kernel_get = xdim1;
+    xdim1_calc_dt_kernel_get_h = xdim1;
   }
 
   int dat0 = args[0].dat->elem_size;
