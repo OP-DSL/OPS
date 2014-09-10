@@ -85,3 +85,11 @@ void ops_halo_copy_frombuf(ops_dat dest,
     }
   }
 }
+
+void ops_download_dat(ops_dat dat) {
+  (void)dat;
+}
+
+void ops_upload_dat(ops_dat dat) {
+  (void)dat;
+}

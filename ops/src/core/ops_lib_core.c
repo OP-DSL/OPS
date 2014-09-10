@@ -52,7 +52,9 @@ ops_arg *OPS_curr_args=NULL;
 const char *OPS_curr_name=NULL;
 int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
 int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
-    OPS_halo_index = 0, OPS_halo_max = 0;
+    OPS_halo_index = 0, OPS_halo_max = 0,
+    OPS_reduction_index = 0, OPS_reduction_max = 0;
+ops_reduction * OPS_reduction_list = NULL;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -196,6 +198,8 @@ void ops_exit_core( )
   OPS_block_index = 0;
   OPS_dat_index = 0;
   OPS_block_max = 0;
+
+  ops_checkpointing_exit();
 }
 
 ops_block ops_decl_block(int dims, char *name)
@@ -524,12 +528,24 @@ ops_arg ops_arg_idx () {
 }
 
 ops_reduction ops_decl_reduction_handle_core(int size, const char *type, const char *name) {
+  if ( OPS_reduction_index == OPS_reduction_max ) {
+    OPS_reduction_max += 10;
+    OPS_reduction_list = (ops_reduction *) realloc(OPS_reduction_list,OPS_reduction_max * sizeof(ops_reduction));
+
+    if ( OPS_reduction_list == NULL ) {
+      printf ( " ops_decl_reduction_handle error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
   ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;
   red->data = (char *)malloc(size*sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
+  OPS_reduction_list[OPS_reduction_index] = red;
+  red->index = OPS_reduction_index++;
   return red;
 }
 
