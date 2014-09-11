@@ -179,7 +179,7 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_
     discarded_range[2*d] = 0;
     discarded_range[2*d+1] = 0;
   }
-  sub_block *sb = OPS_sub_block_list[dat->index];
+  sub_block *sb = OPS_sub_block_list[dat->block->index];
   sub_dat *sd = OPS_sub_dat_list[dat->index];
   if (!sb->owned) return;
 

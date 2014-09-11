@@ -35,6 +35,11 @@
   * @details function implementations for checkpointing
   */
 
+#ifdef CHECKPOINTING
+#include <hdf5.h>
+#include <hdf5_hl.h>
+#endif
+
 #include <ops_lib_core.h>
 #include <stdio.h>
 
@@ -43,9 +48,6 @@ char *OPS_dat_ever_written = NULL;
 ops_checkpoint_types *OPS_dat_status = NULL;
 
 #ifdef CHECKPOINTING
-
-#include <hdf5.h>
-#include <hdf5_hl.h>
 
 #ifndef defaultTimeout
 #define defaultTimeout 1.0
@@ -64,6 +66,7 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *saved_rang
 //checkpoint and execution progress information
 int call_counter = 0;
 int backup_point = -1;
+int catch_up_loop = -1;
 double checkpoint_interval = -1;
 double last_checkpoint = -1;
 bool pre_backup = false;
@@ -180,11 +183,13 @@ void save_dat_partial(ops_dat dat, int *range) {
   int offset = 0;
   for (int d = 0; d < dat->block->dims ; d++) {
     int depth_before = saved_range[2*d];
-    ops_pack_chk(dat->data, OPS_partial_buffer+offset, count[d], block_length[d], stride[d]);
+    if (depth_before)
+      ops_pack_chk(dat->data, OPS_partial_buffer+offset, count[d], depth_before*block_length[d], stride[d]);
     offset += depth_before*block_length[d]*count[d];
     int depth_after = dat->size[d]-saved_range[2*d+1];
     int i4 = (prod[d+1]/prod[d] - (depth_after)) * prod[d] * dat->elem_size;
-    ops_pack_chk(dat->data + i4, OPS_partial_buffer+offset, count[d], block_length[d], stride[d]);
+    if (depth_after)
+      ops_pack_chk(dat->data + i4, OPS_partial_buffer+offset, count[d], depth_after*block_length[d], stride[d]);
     offset += depth_after*block_length[d]*count[d];
   }
 
@@ -275,11 +280,13 @@ void ops_restore_dataset(ops_dat dat) {
     int offset = 0;
     for (int d = 0; d < dat->block->dims ; d++) {
       int depth_before = saved_range[2*d];
-      ops_unpack_chk(dat->data, OPS_partial_buffer+offset, count[d], block_length[d], stride[d]);
+      if (depth_before)
+        ops_unpack_chk(dat->data, OPS_partial_buffer+offset, count[d], depth_before*block_length[d], stride[d]);
       offset += depth_before*block_length[d]*count[d];
       int depth_after = dat->size[d]-saved_range[2*d+1];
       int i4 = (prod[d+1]/prod[d] - (depth_after)) * prod[d] * dat->elem_size;
-      ops_unpack_chk(dat->data + i4, OPS_partial_buffer+offset, count[d], block_length[d], stride[d]);
+      if (depth_after)
+        ops_unpack_chk(dat->data + i4, OPS_partial_buffer+offset, count[d], depth_after*block_length[d], stride[d]);
       offset += depth_after*block_length[d]*count[d];
     }
 
@@ -387,6 +394,20 @@ bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range, const c
 
 void gather_statistics(ops_arg *args, int nargs, int loop_id, int *range) {}
 bool should_backup(ops_arg *args, int nargs, int loop_id, int *range, double time_left, double checkpoint_interval) {
+  if (catch_up_loop > call_counter) return false;
+
+  { // Over MPI, we have to play catch-up
+    ops_arg temp;
+    temp.argtype = OPS_ARG_GBL;
+    temp.acc = OPS_MAX;
+    int max_loop_id = call_counter;
+    temp.data = (char*)&max_loop_id;
+    temp.dim = sizeof(int);
+    ops_mpi_reduce_int(&temp, &max_loop_id);
+    catch_up_loop = max_loop_id;
+    if (catch_up_loop != call_counter) return false;
+  }
+
   //Initial strategy: if this range is over a very small part (one fifth) of the dataset, then don't do a checkpoint here
   int i = 0;
   for (; i < nargs; i ++) if (args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0) break;
@@ -422,10 +443,10 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       backup_state = OPS_BACKUP_BEGIN;
       pre_backup = false;
     }
-    if (pre_backup && last_checkpoint+checkpoint_interval+defaultTimeout-now < 0.0) {
-      backup_state = OPS_BACKUP_BEGIN;
-      pre_backup = false;
-    }
+    // if (pre_backup && last_checkpoint+checkpoint_interval+defaultTimeout-now < 0.0) {
+    //   backup_state = OPS_BACKUP_BEGIN;
+    //   pre_backup = false;
+    // }
   } else  if (backup_state == OPS_BACKUP_LEADIN) {
     return false;
   } else if (backup_state == OPS_BACKUP_RESTORE) {
@@ -556,7 +577,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     }
 
     check_hdf5_error(H5Fclose(file));
-    if (OPS_diags>1) printf("Checkpoint created in %s\n", filename);
+    printf("Checkpoint created in %s at loop counter %d\n", filename, backup_point);
     //finished backing up, reset everything, prepare to be backed up at a later point
     backup_state = OPS_BACKUP_GATHER;
     for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
