@@ -169,3 +169,30 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
   red->data = (char *)realloc(red->data, red->size*OPS_block_index*sizeof(char));
   return red;
 }
+
+void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+  sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
+}
+
+void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    discarded_range[2*d] = 0;
+    discarded_range[2*d+1] = 0;
+  }
+  sub_block *sb = OPS_sub_block_list[dat->index];
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  if (!sb->owned) return;
+
+  for (int d = 0; d < dat->block->dims; d++) {
+    if (sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d] != dat->size[d]) printf("Problem 1\n");
+
+    discarded_range[2*d] = MAX(0,range[2*d] - (sd->decomp_disp[d] - sd->d_im[d]));
+    discarded_range[2*d+1] = MAX(0, MIN(dat->size[d], range[2*d+1] - (sd->decomp_disp[d] - sd->d_im[d])));
+    // if (range[2*d+1] >= (sd->decomp_disp[d]+sd->decomp_size[d]))
+    //   discarded_range[2*d+1] = dat->size[d]; //Never save intra-block halo
+    // else if (range[2*d+1] <= sd->decomp_disp[d])
+    //   discarded_range[2*d+1] = 0;
+    // else
+    //   discarded_range[2*d+1] = (range[2*d+1] - (sd->decomp_disp[d] - sd->d_im[d]));
+  }
+}

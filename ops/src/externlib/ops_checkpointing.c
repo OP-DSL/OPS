@@ -55,8 +55,11 @@ ops_checkpoint_types *OPS_dat_status = NULL;
 extern "C" {
 #endif
 
+//Internal function definitions
 void ops_download_dat(ops_dat dat);
 void ops_upload_dat(ops_dat dat);
+void ops_checkpointing_filename(const char *file_name, char *filename_out);
+void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *saved_range);
 
 //checkpoint and execution progress information
 int call_counter = 0;
@@ -74,7 +77,7 @@ int OPS_partial_buffer_size = 0;
 char *OPS_partial_buffer = NULL;
 
 //file managment
-const char* filename = "";
+char filename[100];
 hid_t file;
 herr_t status;
 
@@ -139,9 +142,9 @@ void save_dat_partial(ops_dat dat, int *range) {
   prod[0] = 1;
 
   //Calculate saved range (based on full size and the range where it is modified)
+  ops_checkpointing_calc_range(dat, range, saved_range);
+
   for (int d = 0; d < dat->block->dims; d++) {
-    saved_range[2*d] = range[2*d]-dat->base[d]-dat->d_m[d]; //TODO: MPI halo
-    saved_range[2*d+1] = saved_range[2*d] + range[2*d+1] - range[2*d];
     prod[d+1] = prod[d]*dat->size[d];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {saved_range[2*d] = 0; saved_range[2*d+1] = 1;}
@@ -160,6 +163,12 @@ void save_dat_partial(ops_dat dat, int *range) {
     int depth_before = saved_range[2*d];
     int depth_after = dat->size[d]-saved_range[2*d+1];
     dims[0] += (depth_before+depth_after)*block_length[d]*count[d];
+  }
+
+  //if too much redundancy, just do the usual save
+  if (dims[0] >= prod[dat->block->dims]*dat->elem_size) {
+    save_dat(dat);
+    return;
   }
 
   if (OPS_partial_buffer_size < dims[0]) {
@@ -288,7 +297,7 @@ bool ops_checkpointing_init(const char *file_name, double interval) {
   if (interval < defaultTimeout*2.0) interval = defaultTimeout*2.0; //WHAT SHOULD THIS BE? - the time it takes to back up everything
   double cpu;
   ops_timers_core(&cpu, &last_checkpoint);
-  filename = file_name;
+  ops_checkpointing_filename(file_name, filename);
 
 
   OPS_dat_ever_written = (char*)malloc(OPS_dat_index * sizeof(char));
@@ -576,7 +585,7 @@ void ops_checkpointing_exit() {
     free(OPS_dat_status); OPS_dat_status = NULL;
     OPS_partial_buffer_size = 0;
     free(OPS_partial_buffer); OPS_partial_buffer = NULL;
-    filename =  "";
+    //filename =  "";
   }
 }
 
