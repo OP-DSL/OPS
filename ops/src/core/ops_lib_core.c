@@ -55,6 +55,7 @@ int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
     OPS_halo_index = 0, OPS_halo_max = 0,
     OPS_reduction_index = 0, OPS_reduction_max = 0;
 ops_reduction * OPS_reduction_list = NULL;
+int OPS_enable_checkpointing = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -140,6 +141,11 @@ void ops_init_core( int argc, char ** argv, int diags )
     {
       OPS_diags = atoi ( argv[n] + 10 );
       printf ( "\n OPS_diags = %d \n", OPS_diags );
+    }
+    if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
+    {
+      OPS_enable_checkpointing = 1;
+      printf ( "\n OPS Checkpointing enabled\n");
     }
   }
 

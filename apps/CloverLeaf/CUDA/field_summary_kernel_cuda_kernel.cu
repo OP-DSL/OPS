@@ -133,8 +133,12 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
-  ops_timing_realloc(70,"field_summary_kernel");
-  OPS_kernels[70].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,11,range,31)) return;
+  #endif
+
+  ops_timing_realloc(31,"field_summary_kernel");
+  OPS_kernels[31].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -365,7 +369,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_halo_exchanges(args,11,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[70].mpi_time += t1-t2;
+  OPS_kernels[31].mpi_time += t1-t2;
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -426,14 +430,14 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[70].time += t2-t1;
+  OPS_kernels[31].time += t2-t1;
   ops_set_dirtybit_device(args, 11);
 
   //Update kernel record
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[70].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg5);
 }

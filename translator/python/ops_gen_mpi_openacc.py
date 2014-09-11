@@ -514,6 +514,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         text = text +'\n                    '
     code(text);
     code('')
+    code('#ifdef CHECKPOINTING')
+    code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
+    code('#endif')
+    code('')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
     code('')

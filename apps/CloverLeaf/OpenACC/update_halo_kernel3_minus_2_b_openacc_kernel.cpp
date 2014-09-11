@@ -30,8 +30,12 @@ void ops_par_loop_update_halo_kernel3_minus_2_b(char const *name, ops_block Bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(61,"update_halo_kernel3_minus_2_b");
-  OPS_kernels[61].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,74)) return;
+  #endif
+
+  ops_timing_realloc(74,"update_halo_kernel3_minus_2_b");
+  OPS_kernels[74].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -144,7 +148,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_b(char const *name, ops_block Bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[61].mpi_time += t1-t2;
+  OPS_kernels[74].mpi_time += t1-t2;
 
   update_halo_kernel3_minus_2_b_c_wrapper(
     p_a0,
@@ -153,7 +157,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_b(char const *name, ops_block Bloc
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[61].time += t2-t1;
+  OPS_kernels[74].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -163,6 +167,6 @@ void ops_par_loop_update_halo_kernel3_minus_2_b(char const *name, ops_block Bloc
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[61].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[61].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[74].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[74].transfer += ops_compute_transfer(dim, range, &arg1);
 }
