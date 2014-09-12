@@ -6,9 +6,9 @@
 #define OPS_GPU
 
 extern int xdim0_poisson_kernel_error;
-int xdim0_poisson_kernel_error_h;
+int xdim0_poisson_kernel_error_h = -1;
 extern int xdim1_poisson_kernel_error;
-int xdim1_poisson_kernel_error_h;
+int xdim1_poisson_kernel_error_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,15 +67,17 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block Block, int di
   int y_size = MAX(0,end[1]-start[1]);
 
 
+  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_poisson_kernel_error_h || xdim1 != xdim1_poisson_kernel_error_h) {
-    xdim0_poisson_kernel_error = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0_poisson_kernel_error = xdim0;
     xdim0_poisson_kernel_error_h = xdim0;
-    xdim1_poisson_kernel_error = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1_poisson_kernel_error = xdim1;
     xdim1_poisson_kernel_error_h = xdim1;
   }
 

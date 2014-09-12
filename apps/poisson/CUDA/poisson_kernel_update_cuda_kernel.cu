@@ -156,7 +156,6 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   ops_timers_core(&c2,&t2);
   OPS_kernels[3].time += t2-t1;
   ops_set_dirtybit_device(args, 2);
-  ops_H_D_exchanges_host(args, 2);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record

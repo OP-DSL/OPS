@@ -202,7 +202,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   ops_timers_core(&c2,&t2);
   OPS_kernels[0].time += t2-t1;
   ops_set_dirtybit_device(args, 6);
-  ops_H_D_exchanges_host(args, 6);
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[5],range);

@@ -198,7 +198,6 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   ops_timers_core(&c2,&t2);
   OPS_kernels[4].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
-  ops_H_D_exchanges_host(args, 3);
 
   //Update kernel record
   OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);

@@ -183,7 +183,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   ops_timers_core(&c2,&t2);
   OPS_kernels[2].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
-  ops_H_D_exchanges_host(args, 3);
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record

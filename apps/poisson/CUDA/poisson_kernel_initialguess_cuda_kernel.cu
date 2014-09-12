@@ -133,7 +133,6 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   ops_timers_core(&c2,&t2);
   OPS_kernels[1].time += t2-t1;
   ops_set_dirtybit_device(args, 1);
-  ops_H_D_exchanges_host(args, 1);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
