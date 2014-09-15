@@ -329,6 +329,13 @@ specification.
 \noindent The strided stencil will handle both multigrid (with a stride of 2) and the boundary condition and reduced
 dimension applications (with a stride of 0 for the relevant dimensions).
 
+\subsection{Checkpointing}
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} runtime argument has to be used.
+
+\begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing system, has to be called after {\tt ops\_partition}}
+\item[filename]        name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
+\item[interval]    average time between checkpoints
+\end{routine}
 
 \newpage
 \section{OPS User Kernels}
