@@ -177,9 +177,10 @@ void save_dat_partial(ops_dat dat, int *range) {
     save_dat(dat);
     return;
   }
+  if (dims[0] == 0) return;
 
   if (OPS_partial_buffer_size < dims[0]) {
-    OPS_partial_buffer_size = dims[0];
+    OPS_partial_buffer_size = 2*dims[0];
     OPS_partial_buffer = (char*)realloc(OPS_partial_buffer, OPS_partial_buffer_size*sizeof(char));
   }
 
@@ -262,9 +263,10 @@ void ops_restore_dataset(ops_dat dat) {
       int depth_after = dat->size[d]-saved_range[2*d+1];
       dims[0] += (depth_before+depth_after)*block_length[d]*count[d];
     }
+    if (dims[0] == 0) return;
 
     if (OPS_partial_buffer_size < dims[0]) {
-      OPS_partial_buffer_size = dims[0];
+      OPS_partial_buffer_size = 2*dims[0];
       OPS_partial_buffer = (char*)realloc(OPS_partial_buffer, OPS_partial_buffer_size*sizeof(char));
     }
 
@@ -280,7 +282,7 @@ void ops_restore_dataset(ops_dat dat) {
       exit(-1);
     }
 
-    //Pack
+    //Unpack
     int offset = 0;
     for (int d = 0; d < dat->block->dims ; d++) {
       int depth_before = saved_range[2*d];
@@ -361,6 +363,7 @@ void ops_checkpointing_reduction(ops_reduction red) {
     memcpy(&OPS_chk_red_storage[OPS_chk_red_offset], red->data, red->size);
     OPS_chk_red_offset += red->size;
     ops_reduction_counter++;
+
     if (ops_reduction_counter % ops_sync_frequency == 0) {
       double cpu, now;
       ops_timers_core(&cpu, &now);
@@ -369,7 +372,7 @@ void ops_checkpointing_reduction(ops_reduction red) {
       temp.argtype = OPS_ARG_GBL;
       temp.acc = OPS_MAX;
       temp.data = (char*)timing;
-      temp.dim = 2*sizeof(double);
+      temp.dim = 2;//*sizeof(double);
       ops_mpi_reduce_double(&temp, timing);
       ops_reduction_avg_time += timing[0];
       if (ops_reduction_avg_time/(double)ops_reduction_counter < 0.2 * checkpoint_interval) ops_sync_frequency*=2;
@@ -479,6 +482,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     }
     free(reduction_state);
     check_hdf5_error(H5Fclose(file));
+    ops_printf("Restored, continuing normal execution...\n");
   }
 
   if (backup_state == OPS_BACKUP_BEGIN) {
@@ -579,7 +583,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     }
 
     check_hdf5_error(H5Fclose(file));
-    printf("Checkpoint created in %s at loop counter %d\n", filename, ops_backup_point);
+    ops_printf("Checkpoint created\n");
     //finished backing up, reset everything, prepare to be backed up at a later point
     backup_state = OPS_BACKUP_GATHER;
     for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
