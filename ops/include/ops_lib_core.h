@@ -355,7 +355,7 @@ void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
 
 void ops_diagnostic_output( );
-void ops_timing_output();
+void ops_timing_output( FILE *stream );
 
 void ops_timers( double *cpu, double *et );
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
