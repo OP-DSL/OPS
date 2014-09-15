@@ -85,15 +85,15 @@ int jdt, kdt;
 
 void start();
 
-#include "profile.cpp"
 #include "cloverleaf_ops_vars.h"
+#include "profile.cpp"
 
 
 int main(int argc, char **argv)
 {
 
 
-  ops_init(argc,argv,2);
+  ops_init(argc,argv,1);
   ops_printf(" Clover version %f\n", g_version);
 
 
@@ -170,10 +170,10 @@ int main(int argc, char **argv)
   }
 
   ops_timers_core(&ct1, &et1);
-  
-  if(profiler_on == 1) {  
-    //ops_timing_output(stdout); // print output to STDOUT
-    //ops_timing_output(g_out);  
+
+  if(profiler_on == 1) {
+
+
     process_profile();
   }
 

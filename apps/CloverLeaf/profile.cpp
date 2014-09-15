@@ -37,17 +37,17 @@ char* strip(char *c) {
 void process_profile()
 {
 
-  char out_file[] = "profiler.out";
+  char out_file[] = "prof.out";
   FILE* prof_out;
   char line[100];
 
-  if ((prof_out = fopen(out_file,"w")) == NULL) {
+  if ((OPS_diags > 1) && (prof_out = fopen(out_file,"w")) == NULL) {
     printf("can't open file %s\n",out_file); exit(-1);
   }
   ops_timing_output(prof_out);
-  fclose(prof_out);
+  if (OPS_diags > 1) fclose(prof_out);
 
-  if (ops_is_root()) {
+  if (ops_is_root() && OPS_diags > 1) {
     if ((prof_out = fopen(out_file,"r")) == NULL) {
       printf("can't open file %s\n",out_file); exit(-1);
     }
@@ -92,107 +92,108 @@ void process_profile()
        sscanf(line,"%s %d %lf %s %lf %s %lf\n",name, &count, &time, std1, &mpi, std2, &bw);
        if(strncmp(strip(name),"advec_cell",10)==0) {
          Time_Cell_Advection = Time_Cell_Advection + time;
-         BW_Cell_Advection = BW_Cell_Advection + bw;
+         BW_Cell_Advection = BW_Cell_Advection + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"advec_mom",9)==0) {
          Time_Momentum_Advection = Time_Momentum_Advection + time;
-         BW_Momentum_Advection = BW_Momentum_Advection + bw;
+         BW_Momentum_Advection = BW_Momentum_Advection + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"calc_dt",7)==0) {
          Time_Timestep = Time_Timestep + time;
-         BW_Timestep = BW_Timestep + bw;
+         BW_Timestep = BW_Timestep + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"ideal_gas",9)==0) {
          Time_Ideal_Gas = Time_Ideal_Gas + time;
-         BW_Ideal_Gas = BW_Ideal_Gas + bw;
+         BW_Ideal_Gas = BW_Ideal_Gas + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"viscosity",9)==0) {
          Time_Viscosity = Time_Viscosity + time;
-         BW_Viscosity = BW_Viscosity + bw;
+         BW_Viscosity = BW_Viscosity + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"PdV",3)==0) {
          Time_PdV = Time_PdV + time;
-         BW_PdV = BW_PdV + bw;
+         BW_PdV = BW_PdV + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"revert",6)==0) {
          Time_Revert = Time_Revert + time;
-         BW_Revert = BW_Revert + bw;
+         BW_Revert = BW_Revert + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"accelerate",10)==0) {
          Time_Acceleration = Time_Acceleration + time;
-         BW_Acceleration = BW_Acceleration + bw;
+         BW_Acceleration = BW_Acceleration + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"flux_calc",9)==0) {
          Time_Fluxes = Time_Fluxes + time;
-         BW_Fluxes = BW_Fluxes + bw;
+         BW_Fluxes = BW_Fluxes + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"reset",5)==0) {
          Time_Reset = Time_Reset + time;
-         BW_Reset = BW_Reset + bw;
+         BW_Reset = BW_Reset + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"update_halo",11)==0) {
          Time_Update_Halo = Time_Update_Halo + time;
-         BW_Update_Halo = BW_Update_Halo + bw;
+         BW_Update_Halo = BW_Update_Halo + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"field_summary",13)==0) {
          Time_Field_Summary = Time_Field_Summary + time;
-         BW_Field_Summary = BW_Field_Summary + bw;
+         BW_Field_Summary = BW_Field_Summary + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"initialise",10)==0) {
          Time_Others = Time_Others + time;
-         BW_Others = BW_Others + bw;
+         BW_Others = BW_Others + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
        if(strncmp(strip(name),"generate",8)==0) {
          Time_Others = Time_Others + time;
-         BW_Others = BW_Others + bw;
+         BW_Others = BW_Others + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
 
     }
-    printf("\n\nProfiler Output       :     Time(sec)   Bandwidth(GB/s)\n");
-    printf("Timestep              :     %0.4f    %10.2f\n",Time_Timestep, BW_Timestep);
-    printf("Ideal Gas             :     %0.4f    %10.2f\n",Time_Ideal_Gas, BW_Ideal_Gas);
-    printf("Viscosity             :     %0.4f    %10.2f\n",Time_Viscosity, BW_Viscosity);
-    printf("PdV                   :     %0.4f    %10.2f\n",Time_PdV, BW_PdV);
-    printf("Revert                :     %0.4f    %10.2f\n",Time_Revert, BW_Revert);
-    printf("Acceleration          :     %0.4f    %10.2f\n",Time_Acceleration, BW_Acceleration);
-    printf("Fluxes                :     %0.4f    %10.2f\n",Time_Fluxes, BW_Fluxes);
-    printf("Cell Advection        :     %0.4f    %10.2f\n",Time_Cell_Advection, BW_Cell_Advection);
-    printf("Momentum Advection    :     %0.4f    %10.2f\n",Time_Momentum_Advection, BW_Momentum_Advection);
-    printf("Reset                 :     %0.4f    %10.2f\n",Time_Reset, BW_Reset);
-    printf("Update_Halo           :     %0.4f    %10.2f\n",Time_Update_Halo, BW_Update_Halo);
-    printf("Field_Summary         :     %0.4f    %10.2f\n",Time_Field_Summary, BW_Field_Summary);
-    printf("The Rest              :     %0.4f    %10.2f\n\n",Time_Others, BW_Others);
-    printf("Compute Time          :     %0.4f    \n",Comp_time);
-    printf("Communication Time    :     %0.4f    \n",Comm_time);
-    printf("Total Time            :     %0.4f    \n",Comp_time+Comm_time);
+    double precentage = 100/(Comp_time+Comm_time);
+    printf("\n\nProfiler Output       :     %10s   %10s   %15s\n","Time(sec)","Percentage","Bandwidth(GB/s)");
+    printf("Timestep              :     %10.2f   %10.2f   %15.2f\n",Time_Timestep, Time_Timestep*precentage, BW_Timestep/Time_Timestep);
+    printf("Ideal Gas             :     %10.2f   %10.2f   %15.2f\n",Time_Ideal_Gas, Time_Ideal_Gas*precentage, BW_Ideal_Gas/Time_Ideal_Gas);
+    printf("Viscosity             :     %10.2f   %10.2f   %15.2f\n",Time_Viscosity, Time_Viscosity*precentage, BW_Viscosity/Time_Viscosity);
+    printf("PdV                   :     %10.2f   %10.2f   %15.2f\n",Time_PdV, Time_PdV*precentage, BW_PdV/Time_PdV);
+    printf("Revert                :     %10.2f   %10.2f   %15.2f\n",Time_Revert, Time_Revert*precentage, BW_Revert/Time_Revert);
+    printf("Acceleration          :     %10.2f   %10.2f   %15.2f\n",Time_Acceleration, Time_Acceleration*precentage, BW_Acceleration/Time_Acceleration);
+    printf("Fluxes                :     %10.2f   %10.2f   %15.2f\n",Time_Fluxes, Time_Fluxes*precentage, BW_Fluxes/Time_Fluxes);
+    printf("Cell Advection        :     %10.2f   %10.2f   %15.2f\n",Time_Cell_Advection, Time_Cell_Advection*precentage, BW_Cell_Advection/Time_Cell_Advection);
+    printf("Momentum Advection    :     %10.2f   %10.2f   %15.2f\n",Time_Momentum_Advection, Time_Momentum_Advection*precentage, BW_Momentum_Advection/Time_Momentum_Advection);
+    printf("Reset                 :     %10.2f   %10.2f   %15.2f\n",Time_Reset, Time_Reset*precentage, BW_Reset/Time_Reset);
+    printf("Update_Halo           :     %10.2f   %10.2f   %15.2f\n",Time_Update_Halo, Time_Update_Halo*precentage, BW_Update_Halo/Time_Update_Halo);
+    printf("Field_Summary         :     %10.2f   %10.2f   %15.2f\n",Time_Field_Summary, Time_Field_Summary*precentage, BW_Field_Summary/Time_Field_Summary);
+    printf("The Rest              :     %10.2f   %10.2f   %15.2f\n\n",Time_Others, Time_Others*precentage, BW_Others/Time_Others);
+    printf("Compute Time          :     %10.2f   %10.2f   \n",Comp_time, Comp_time*precentage);
+    printf("Communication Time    :     %10.2f   %10.2f   \n",Comm_time, Comm_time*precentage);
+    printf("Total Time            :     %10.2f   %10.2f   \n",Comp_time+Comm_time, (Comp_time+Comm_time)*precentage);
 
     fclose(prof_out);
   }

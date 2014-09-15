@@ -127,6 +127,7 @@ int jdt, kdt;
 void start();
 
 #include "cloverleaf_ops_vars.h"
+#include "profile.cpp"
 
 
 /******************************************************************************
@@ -137,7 +138,7 @@ int main(int argc, char **argv)
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
   ops_printf(" Clover version %f\n", g_version);
 
 

@@ -15,7 +15,7 @@
  timestep_rise=1.5
  max_timestep=0.04
  end_time=15.5
- end_step=50
+ end_step=2955
  profiler_on=1
 
 *endclover
