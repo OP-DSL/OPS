@@ -64,6 +64,7 @@ int step ;
 int advect_x;
 int error_condition;
 int test_problem;
+int profiler_on;
 int state_max;
 int complete;
 
@@ -170,10 +171,11 @@ int main(int argc, char **argv)
 
   ops_timers_core(&ct1, &et1);
   
-  //if(profiler_on)
-  process_profile();
-  //ops_timing_output(stdout); // print output to STDOUT
-  //ops_timing_output(g_out);
+  if(profiler_on == 1) {  
+    //ops_timing_output(stdout); // print output to STDOUT
+    //ops_timing_output(g_out);  
+    process_profile();
+  }
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);
