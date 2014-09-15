@@ -108,6 +108,7 @@ int step ;
 int advect_x; //logical
 int error_condition;
 int test_problem;
+int profiler_on;
 int state_max;
 int complete; //logical
 
@@ -129,6 +130,7 @@ int jdt, kdt, ldt;
 void start();
 
 #include "cloverleaf_ops_vars.h"
+#include "profile.cpp"
 
 
 /******************************************************************************
@@ -217,7 +219,11 @@ int main(int argc, char **argv)
   }
 
   ops_timers_core(&ct1, &et1);
-  ops_timing_output();
+  if(profiler_on == 1) {  
+    //ops_timing_output(stdout); // print output to STDOUT
+    //ops_timing_output(g_out);  
+    process_profile();
+  }
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);
