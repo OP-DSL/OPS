@@ -375,10 +375,11 @@ void ops_checkpointing_reduction(ops_reduction red) {
       temp.dim = 2;//*sizeof(double);
       ops_mpi_reduce_double(&temp, timing);
       ops_reduction_avg_time = timing[0];
-      if (ops_reduction_avg_time < 0.1 * checkpoint_interval) ops_sync_frequency*=2;
+      if (ops_reduction_avg_time < 0.1 * checkpoint_interval) ops_sync_frequency=ops_reduction_counter;
       //if (ops_reduction_avg_time > 0.3 * checkpoint_interval) ops_sync_frequency/=1.5;
       //ops_printf("ops_sync_frequency %d\n", ops_sync_frequency);
       if (timing[1] == 1.0) {
+        ops_reduction_counter = 0;
         if (OPS_diags>4) ops_printf("It's time to checkpoint...\n");
         last_checkpoint = now;
         if (pre_backup == true) {
