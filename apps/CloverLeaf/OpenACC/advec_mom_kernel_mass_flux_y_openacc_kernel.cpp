@@ -29,8 +29,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block Block
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(18,"advec_mom_kernel_mass_flux_y");
-  OPS_kernels[18].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,23)) return;
+  #endif
+
+  ops_timing_realloc(23,"advec_mom_kernel_mass_flux_y");
+  OPS_kernels[23].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -127,7 +131,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block Block
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[18].mpi_time += t1-t2;
+  OPS_kernels[23].mpi_time += t1-t2;
 
   advec_mom_kernel_mass_flux_y_c_wrapper(
     p_a0,
@@ -135,7 +139,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block Block
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[18].time += t2-t1;
+  OPS_kernels[23].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
   #else
@@ -144,6 +148,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block Block
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[18].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[23].transfer += ops_compute_transfer(dim, range, &arg1);
 }

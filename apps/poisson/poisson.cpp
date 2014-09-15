@@ -58,11 +58,11 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,6);
 
-  int logical_size_x = 20;
-  int logical_size_y = 20;
+  int logical_size_x = 200;
+  int logical_size_y = 200;
   int ngrid_x = 1;
   int ngrid_y = 1;
-  int n_iter = 1000;
+  int n_iter = 10000;
   dx = 0.01;
   dy = 0.01;
   ops_decl_const("dx",1,"double",&dx);
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
   ops_halo_group u_halos = ops_decl_halo_group(off,halos);
 
   ops_partition("");
-
+  ops_checkpointing_init("check.h5", 5.0);
   /**-------------------------- Computations --------------------------**/
 
 

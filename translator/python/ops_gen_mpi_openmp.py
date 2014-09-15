@@ -320,7 +320,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
-
+    code('')
+    code('#ifdef CHECKPOINTING')
+    code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
+    code('#endif')
     code('')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')

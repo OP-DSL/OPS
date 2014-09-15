@@ -504,6 +504,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         text = text +'\n                    '
     code(text);
     code('')
+    code('#ifdef CHECKPOINTING')
+    code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
+    code('#endif')
+    code('')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
     code('')
@@ -570,7 +574,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('double t1,t2,c1,c2;')
     code('ops_timers_core(&c2,&t2);')
     code('')
-    
+
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

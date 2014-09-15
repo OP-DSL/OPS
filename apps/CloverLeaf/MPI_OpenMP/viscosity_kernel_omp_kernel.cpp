@@ -76,8 +76,12 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
 
 
-  ops_timing_realloc(0,"viscosity_kernel");
-  OPS_kernels[0].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,7,range,34)) return;
+  #endif
+
+  ops_timing_realloc(34,"viscosity_kernel");
+  OPS_kernels[34].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -187,7 +191,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].mpi_time += t2-t1;
+  OPS_kernels[34].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -338,7 +342,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].time += t1-t2;
+  OPS_kernels[34].time += t1-t2;
 
   ops_set_dirtybit_host(args, 7);
 
@@ -346,12 +350,12 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].mpi_time += t2-t1;
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[34].mpi_time += t2-t1;
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, range, &arg6);
 }

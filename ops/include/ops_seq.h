@@ -37,9 +37,134 @@
   */
 
 #include "ops_lib_cpp.h"
-#ifdef OPS_MPI
 #include "ops_mpi_core.h"
+
+
+#ifndef OPS_ACC_MACROS
+#ifdef OPS_3D
+#ifndef OPS_DEBUG
+#define OPS_ACC0(x,y,z) (x+xdim0*(y)+xdim0*ydim0*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1*(y)+xdim1*ydim1*(z))
+#define OPS_ACC2(x,y,z) (x+xdim2*(y)+xdim2*ydim2*(z))
+#define OPS_ACC3(x,y,z) (x+xdim3*(y)+xdim3*ydim3*(z))
+#define OPS_ACC4(x,y,z) (x+xdim4*(y)+xdim4*ydim4*(z))
+#define OPS_ACC5(x,y,z) (x+xdim5*(y)+xdim5*ydim5*(z))
+#define OPS_ACC6(x,y,z) (x+xdim6*(y)+xdim6*ydim6*(z))
+#define OPS_ACC7(x,y,z) (x+xdim7*(y)+xdim7*ydim7*(z))
+#define OPS_ACC8(x,y,z) (x+xdim8*(y)+xdim8*ydim8*(z))
+#define OPS_ACC9(x,y,z) (x+xdim9*(y)+xdim9*ydim9*(z))
+#define OPS_ACC10(x,y,z) (x+xdim10*(y)+xdim10*ydim10*(z))
+#define OPS_ACC11(x,y,z) (x+xdim11*(y)+xdim11*ydim11*(z))
+#define OPS_ACC12(x,y,z) (x+xdim12*(y)+xdim12*ydim12*(z))
+#define OPS_ACC13(x,y,z) (x+xdim13*(y)+xdim13*ydim13*(z))
+#define OPS_ACC14(x,y,z) (x+xdim14*(y)+xdim14*ydim14*(z))
+#define OPS_ACC15(x,y,z) (x+xdim15*(y)+xdim15*ydim15*(z))
+#define OPS_ACC16(x,y,z) (x+xdim16*(y)+xdim16*ydim16*(z))
+#define OPS_ACC17(x,y,z) (x+xdim17*(y)+xdim17*ydim17*(z))
+#else
+
+#define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+#define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
+#define OPS_ACC2(x,y,z) (ops_stencil_check_3d(2, x, y, z, xdim2, ydim2))
+#define OPS_ACC3(x,y,z) (ops_stencil_check_3d(3, x, y, z, xdim3, ydim3))
+#define OPS_ACC4(x,y,z) (ops_stencil_check_3d(4, x, y, z, xdim4, ydim4))
+#define OPS_ACC5(x,y,z) (ops_stencil_check_3d(5, x, y, z, xdim5, ydim5))
+#define OPS_ACC6(x,y,z) (ops_stencil_check_3d(6, x, y, z, xdim6, ydim6))
+#define OPS_ACC7(x,y,z) (ops_stencil_check_3d(7, x, y, z, xdim7, ydim7))
+#define OPS_ACC8(x,y,z) (ops_stencil_check_3d(8, x, y, z, xdim8, ydim8))
+#define OPS_ACC9(x,y,z) (ops_stencil_check_3d(9, x, y, z, xdim9, ydim9))
+#define OPS_ACC10(x,y,z) (ops_stencil_check_3d(10, x, y, z, xdim10, ydim10))
+#define OPS_ACC11(x,y,z) (ops_stencil_check_3d(11, x, y, z, xdim11, ydim11))
+#define OPS_ACC12(x,y,z) (ops_stencil_check_3d(12, x, y, z, xdim12, ydim12))
+#define OPS_ACC13(x,y,z) (ops_stencil_check_3d(13, x, y, z, xdim13, ydim13))
+#define OPS_ACC14(x,y,z) (ops_stencil_check_3d(14, x, y, z, xdim14, ydim14))
+#define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
+#define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
+#define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
 #endif
+#else
+#ifndef OPS_DEBUG
+#define OPS_ACC0(x,y) (x+xdim0*(y))
+#define OPS_ACC1(x,y) (x+xdim1*(y))
+#define OPS_ACC2(x,y) (x+xdim2*(y))
+#define OPS_ACC3(x,y) (x+xdim3*(y))
+#define OPS_ACC4(x,y) (x+xdim4*(y))
+#define OPS_ACC5(x,y) (x+xdim5*(y))
+#define OPS_ACC6(x,y) (x+xdim6*(y))
+#define OPS_ACC7(x,y) (x+xdim7*(y))
+#define OPS_ACC8(x,y) (x+xdim8*(y))
+#define OPS_ACC9(x,y) (x+xdim9*(y))
+#define OPS_ACC10(x,y) (x+xdim10*(y))
+#define OPS_ACC11(x,y) (x+xdim11*(y))
+#define OPS_ACC12(x,y) (x+xdim12*(y))
+#define OPS_ACC13(x,y) (x+xdim13*(y))
+#define OPS_ACC14(x,y) (x+xdim14*(y))
+#define OPS_ACC15(x,y) (x+xdim15*(y))
+#define OPS_ACC16(x,y) (x+xdim16*(y))
+#define OPS_ACC17(x,y) (x+xdim17*(y))
+#else
+
+#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
+#define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
+#define OPS_ACC2(x,y) (ops_stencil_check_2d(2, x, y, xdim2, -1))
+#define OPS_ACC3(x,y) (ops_stencil_check_2d(3, x, y, xdim3, -1))
+#define OPS_ACC4(x,y) (ops_stencil_check_2d(4, x, y, xdim4, -1))
+#define OPS_ACC5(x,y) (ops_stencil_check_2d(5, x, y, xdim5, -1))
+#define OPS_ACC6(x,y) (ops_stencil_check_2d(6, x, y, xdim6, -1))
+#define OPS_ACC7(x,y) (ops_stencil_check_2d(7, x, y, xdim7, -1))
+#define OPS_ACC8(x,y) (ops_stencil_check_2d(8, x, y, xdim8, -1))
+#define OPS_ACC9(x,y) (ops_stencil_check_2d(9, x, y, xdim9, -1))
+#define OPS_ACC10(x,y) (ops_stencil_check_2d(10, x, y, xdim10, -1))
+#define OPS_ACC11(x,y) (ops_stencil_check_2d(11, x, y, xdim11, -1))
+#define OPS_ACC12(x,y) (ops_stencil_check_2d(12, x, y, xdim12, -1))
+#define OPS_ACC13(x,y) (ops_stencil_check_2d(13, x, y, xdim13, -1))
+#define OPS_ACC14(x,y) (ops_stencil_check_2d(14, x, y, xdim14, -1))
+#define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
+#define OPS_ACC16(x,y) (ops_stencil_check_2d(16, x, y, xdim16, -1))
+#define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
+#endif
+#endif
+#endif
+
+extern int xdim0;
+extern int xdim1;
+extern int xdim2;
+extern int xdim3;
+extern int xdim4;
+extern int xdim5;
+extern int xdim6;
+extern int xdim7;
+extern int xdim8;
+extern int xdim9;
+extern int xdim10;
+extern int xdim11;
+extern int xdim12;
+extern int xdim13;
+extern int xdim14;
+extern int xdim15;
+extern int xdim16;
+extern int xdim17;
+#ifdef OPS_3D
+extern int ydim0;
+extern int ydim1;
+extern int ydim2;
+extern int ydim3;
+extern int ydim4;
+extern int ydim5;
+extern int ydim6;
+extern int ydim7;
+extern int ydim8;
+extern int ydim9;
+extern int ydim10;
+extern int ydim11;
+extern int ydim12;
+extern int ydim13;
+extern int ydim14;
+extern int ydim15;
+extern int ydim16;
+extern int ydim17;
+#endif
+
 
 static int arg_idx[OPS_MAX_DIM];
 
@@ -119,6 +244,11 @@ void ops_par_loop(void (*kernel)(T0*),
 
   int  count[dim];
   ops_arg args[1] = { arg0};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,1,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -243,6 +373,7 @@ void ops_par_loop(void (*kernel)(T0*),
   ops_set_dirtybit_host(args, 1);
 }
 
+
 //
 //ops_par_loop routine for 2 arguments
 //
@@ -256,6 +387,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   int  count[dim];
   ops_arg args[2] = { arg0, arg1};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,2,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -388,6 +524,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   ops_set_dirtybit_host(args, 2);
 }
 
+
 //
 //ops_par_loop routine for 3 arguments
 //
@@ -401,6 +538,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
 
   int  count[dim];
   ops_arg args[3] = { arg0, arg1, arg2};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,3,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -541,6 +683,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   ops_set_dirtybit_host(args, 3);
 }
 
+
 //
 //ops_par_loop routine for 4 arguments
 //
@@ -554,6 +697,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
 
   int  count[dim];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,4,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -702,6 +850,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   ops_set_dirtybit_host(args, 4);
 }
 
+
 //
 //ops_par_loop routine for 5 arguments
 //
@@ -719,6 +868,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   int  count[dim];
   ops_arg args[5] = { arg0, arg1, arg2, arg3,
                      arg4};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,5,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -876,6 +1030,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 5);
 }
 
+
 //
 //ops_par_loop routine for 6 arguments
 //
@@ -893,6 +1048,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   int  count[dim];
   ops_arg args[6] = { arg0, arg1, arg2, arg3,
                      arg4, arg5};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,6,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -1058,6 +1218,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 6);
 }
 
+
 //
 //ops_par_loop routine for 7 arguments
 //
@@ -1075,6 +1236,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   int  count[dim];
   ops_arg args[7] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,7,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -1248,6 +1414,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 7);
 }
 
+
 //
 //ops_par_loop routine for 8 arguments
 //
@@ -1265,6 +1432,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   int  count[dim];
   ops_arg args[8] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,8,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -1446,6 +1618,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 8);
 }
 
+
 //
 //ops_par_loop routine for 9 arguments
 //
@@ -1467,6 +1640,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_arg args[9] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,9,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -1657,6 +1835,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 9);
 }
 
+
 //
 //ops_par_loop routine for 10 arguments
 //
@@ -1678,6 +1857,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_arg args[10] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,10,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -1876,6 +2060,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 10);
 }
 
+
 //
 //ops_par_loop routine for 11 arguments
 //
@@ -1897,6 +2082,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_arg args[11] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,11,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -2103,6 +2293,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 11);
 }
 
+
 //
 //ops_par_loop routine for 12 arguments
 //
@@ -2124,6 +2315,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_arg args[12] = { arg0, arg1, arg2, arg3,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,12,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -2338,6 +2534,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 12);
 }
 
+
 //
 //ops_par_loop routine for 13 arguments
 //
@@ -2363,6 +2560,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11,
                      arg12};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,13,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -2586,6 +2788,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 13);
 }
 
+
 //
 //ops_par_loop routine for 14 arguments
 //
@@ -2611,6 +2814,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,14,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -2842,6 +3050,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 14);
 }
 
+
 //
 //ops_par_loop routine for 15 arguments
 //
@@ -2867,6 +3076,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,15,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -3106,6 +3320,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 15);
 }
 
+
 //
 //ops_par_loop routine for 16 arguments
 //
@@ -3131,6 +3346,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg4, arg5, arg6, arg7,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14, arg15};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,16,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -3378,6 +3598,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 16);
 }
 
+
 //
 //ops_par_loop routine for 17 arguments
 //
@@ -3407,6 +3628,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14, arg15,
                      arg16};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,17,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -3663,6 +3889,7 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   ops_set_dirtybit_host(args, 17);
 }
 
+
 //
 //ops_par_loop routine for 18 arguments
 //
@@ -3692,6 +3919,11 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
                      arg8, arg9, arg10, arg11,
                      arg12, arg13, arg14, arg15,
                      arg16, arg17};
+
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_name_before(args,18,range,name)) return;
+  #endif
 
   int start[OPS_MAX_DIM];
   int end[OPS_MAX_DIM];
@@ -3955,4 +4187,3 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   if (args[17].argtype == OPS_ARG_DAT && args[17].acc != OPS_READ)  ops_set_halo_dirtybit3(&args[17],range);
   ops_set_dirtybit_host(args, 18);
 }
-

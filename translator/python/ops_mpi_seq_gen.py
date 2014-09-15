@@ -256,6 +256,9 @@ for nargs in range (1,maxargs+1):
         if n%n_per_line == 3 and n <> nargs-1:
           f.write('\n                    ')
 
+    f.write('\n  #ifdef CHECKPOINTING\n')
+    f.write('  if (!ops_checkpointing_name_before(args,'+str(nargs)+',range,name)) return;\n')
+    f.write('  #endif\n\n')
     f.write('  int start[OPS_MAX_DIM];\n');
     f.write('  int end[OPS_MAX_DIM];\n\n')
 

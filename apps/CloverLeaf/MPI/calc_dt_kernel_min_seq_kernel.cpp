@@ -14,8 +14,12 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
 
-  ops_timing_realloc(72,"calc_dt_kernel_min");
-  OPS_kernels[72].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,28)) return;
+  #endif
+
+  ops_timing_realloc(28,"calc_dt_kernel_min");
+  OPS_kernels[28].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -92,7 +96,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[72].mpi_time += t1-t2;
+  OPS_kernels[28].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
 
@@ -123,9 +127,9 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     p_a[0]= p_a[0] + (dat0 * off0_1);
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[72].time += t2-t1;
+  OPS_kernels[28].time += t2-t1;
   ops_set_dirtybit_host(args, 2);
 
   //Update kernel record
-  OPS_kernels[72].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
 }

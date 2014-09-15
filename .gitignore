@@ -32,4 +32,5 @@ poisson_openmp
 poisson_opencl
 poisson_openacc
 *.optrpt
-
+*.h5
+*.h5.*

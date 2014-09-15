@@ -194,6 +194,7 @@ typedef struct {
   char       *data;        /* The data */
   int         size;        /* size of data in bytes */
   int         initialized; /* flag indicating whether data has been initialized*/
+  int         index;       /* unique identifier */
   ops_access  acc;         /* Type of reduction it was used for last time */
   const char *type;        /* Type */
   const char *name;        /* Name */
@@ -286,13 +287,16 @@ extern int OPS_diags;
 extern int OPS_block_index, OPS_block_max,
            OPS_dat_index, OPS_dat_max,
            OPS_halo_group_index, OPS_halo_group_max,
-           OPS_halo_index, OPS_halo_max;
+           OPS_halo_index, OPS_halo_max,
+           OPS_reduction_index, OPS_reduction_max;
+extern ops_reduction * OPS_reduction_list;
 
 extern ops_block_descriptor * OPS_block_list;
 extern ops_halo * OPS_halo_list;
 extern ops_halo_group * OPS_halo_group_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
+extern int OPS_enable_checkpointing;
 
 /*******************************************************************************
 * Core lib function prototypes
@@ -408,5 +412,7 @@ void ops_execute();
 #ifdef __cplusplus
 }
 #endif
+
+#include "ops_checkpointing.h"
 
 #endif /* __OP_LIB_CORE_H */

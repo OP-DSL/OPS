@@ -142,3 +142,14 @@ void ops_fprintf(FILE *stream, const char *format, ...)
   va_end(argptr);
 }
 
+void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+  strcpy(filename_out, file_name);
+}
+
+void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
+  for (int d = 0; d < dat->block->dims; d++) {
+    discarded_range[2*d] = range[2*d]-dat->base[d]-dat->d_m[d];
+    discarded_range[2*d+1] = discarded_range[2*d] + range[2*d+1] - range[2*d];
+  }
+}
+
