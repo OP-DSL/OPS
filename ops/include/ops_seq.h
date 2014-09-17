@@ -37,7 +37,9 @@
   */
 
 #include "ops_lib_cpp.h"
+#ifdef OPS_MPI
 #include "ops_mpi_core.h"
+#endif
 
 
 #ifndef OPS_ACC_MACROS

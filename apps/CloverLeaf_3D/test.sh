@@ -2,9 +2,9 @@
 
 cd ../../ops/
 source ./source_intel
-#make
+make
 cd -
-#make
+make
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out

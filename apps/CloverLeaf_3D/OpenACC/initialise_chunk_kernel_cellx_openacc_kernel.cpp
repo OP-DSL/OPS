@@ -38,8 +38,8 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(52,"initialise_chunk_kernel_cellx");
-  OPS_kernels[52].count++;
+  ops_timing_realloc(136,"initialise_chunk_kernel_cellx");
+  OPS_kernels[136].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -178,7 +178,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[52].mpi_time += t1-t2;
+  OPS_kernels[136].mpi_time += t1-t2;
 
   initialise_chunk_kernel_cellx_c_wrapper(
     p_a0,
@@ -187,7 +187,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[52].time += t2-t1;
+  OPS_kernels[136].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -197,7 +197,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block Bloc
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[52].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[136].transfer += ops_compute_transfer(dim, range, &arg2);
 }

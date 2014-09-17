@@ -55,15 +55,30 @@ void field_summary_kernel( const double *volume, const double *density0,
   double vsqrd, cell_vol, cell_mass;
 
   vsqrd = 0.0;
-  for (int iz=0;iz<2;iz++){
-    for (int iy=0;iy<2;iy++){
-      for (int ix=0;ix<2;ix++){
-        vsqrd+=0.125*( xvel0[OPS_ACC4(ix,iy,iz)] * xvel0[OPS_ACC4(ix,iy,iz)] +
-                       yvel0[OPS_ACC5(ix,iy,iz)] * yvel0[OPS_ACC5(ix,iy,iz)] +
-                       zvel0[OPS_ACC6(ix,iy,iz)] * zvel0[OPS_ACC6(ix,iy,iz)]);
-      }
-    }
-  }
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,0)] * xvel0[OPS_ACC4(0,0,0)] +
+                 yvel0[OPS_ACC5(0,0,0)] * yvel0[OPS_ACC5(0,0,0)] +
+                 zvel0[OPS_ACC6(0,0,0)] * zvel0[OPS_ACC6(0,0,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,0)] * xvel0[OPS_ACC4(1,0,0)] +
+                 yvel0[OPS_ACC5(1,0,0)] * yvel0[OPS_ACC5(1,0,0)] +
+                 zvel0[OPS_ACC6(1,0,0)] * zvel0[OPS_ACC6(1,0,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,0)] * xvel0[OPS_ACC4(0,1,0)] +
+                 yvel0[OPS_ACC5(0,1,0)] * yvel0[OPS_ACC5(0,1,0)] +
+                 zvel0[OPS_ACC6(0,1,0)] * zvel0[OPS_ACC6(0,1,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,0)] * xvel0[OPS_ACC4(1,1,0)] +
+                 yvel0[OPS_ACC5(1,1,0)] * yvel0[OPS_ACC5(1,1,0)] +
+                 zvel0[OPS_ACC6(1,1,0)] * zvel0[OPS_ACC6(1,1,0)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,1)] * xvel0[OPS_ACC4(0,0,1)] +
+                 yvel0[OPS_ACC5(0,0,1)] * yvel0[OPS_ACC5(0,0,1)] +
+                 zvel0[OPS_ACC6(0,0,1)] * zvel0[OPS_ACC6(0,0,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,1)] * xvel0[OPS_ACC4(1,0,1)] +
+                 yvel0[OPS_ACC5(1,0,1)] * yvel0[OPS_ACC5(1,0,1)] +
+                 zvel0[OPS_ACC6(1,0,1)] * zvel0[OPS_ACC6(1,0,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,1)] * xvel0[OPS_ACC4(0,1,1)] +
+                 yvel0[OPS_ACC5(0,1,1)] * yvel0[OPS_ACC5(0,1,1)] +
+                 zvel0[OPS_ACC6(0,1,1)] * zvel0[OPS_ACC6(0,1,1)]);
+  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,1)] * xvel0[OPS_ACC4(1,1,1)] +
+                 yvel0[OPS_ACC5(1,1,1)] * yvel0[OPS_ACC5(1,1,1)] +
+                 zvel0[OPS_ACC6(1,1,1)] * zvel0[OPS_ACC6(1,1,1)]);
 
   cell_vol = volume[OPS_ACC0(0,0,0)];
   cell_mass = cell_vol * density0[OPS_ACC1(0,0,0)];
@@ -153,8 +168,8 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
 
-  ops_timing_realloc(41,"field_summary_kernel");
-  OPS_kernels[41].count++;
+  ops_timing_realloc(125,"field_summary_kernel");
+  OPS_kernels[125].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -451,7 +466,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_halo_exchanges(args,12,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[41].mpi_time += t1-t2;
+  OPS_kernels[125].mpi_time += t1-t2;
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -512,15 +527,15 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[41].time += t2-t1;
+  OPS_kernels[125].time += t2-t1;
   ops_set_dirtybit_device(args, 12);
 
   //Update kernel record
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, range, &arg6);
 }

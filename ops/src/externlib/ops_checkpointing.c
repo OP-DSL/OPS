@@ -637,10 +637,10 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range, const char *s) {
   return true;
 }
-void void ops_checkpointing_exit() {}
+void ops_checkpointing_exit() {}
 
 void ops_checkpointing_reduction(ops_reduction red) {
-  ops_execute_reduction(handle);
+  ops_execute_reduction(red);
 }
 
 #ifdef __cplusplus

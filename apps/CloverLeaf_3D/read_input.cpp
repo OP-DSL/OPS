@@ -172,6 +172,11 @@ void read_input()
                 test_problem = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "test_problem",test_problem);
               }
+              else if(strcmp(token,"profiler_on") == 0) {
+                token = strtok(NULL, " =");
+                profiler_on = atoi(token);
+                ops_fprintf(g_out," %20s: %d\n", "profiler_on",profiler_on);
+              }
               else if(strcmp(token,"state") == 0) {
 
                 ops_fprintf(g_out,"\n");

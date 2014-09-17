@@ -38,6 +38,7 @@ void read_input()
   //some defailt values before read input
 
   test_problem = 0;
+  profiler_on  = 0;
   state_max = 0;
   number_of_states = 0;
 
@@ -152,6 +153,11 @@ void read_input()
                 token = strtok(NULL, " =");
                 test_problem = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "test_problem",test_problem);
+              }
+              else if(strcmp(token,"profiler_on") == 0) {
+                token = strtok(NULL, " =");
+                profiler_on = atoi(token);
+                ops_fprintf(g_out," %20s: %d\n", "profiler_on",profiler_on);
               }
               else if(strcmp(token,"state") == 0) {
 
