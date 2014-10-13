@@ -154,7 +154,6 @@ void process_profile()
        else if(strncmp(strip(name),"update_halo",11)==0) {
          Time_Update_Halo = Time_Update_Halo + time;
          BW_Update_Halo = BW_Update_Halo + bw*time;
-         printf("time = %lf\n",time);
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
