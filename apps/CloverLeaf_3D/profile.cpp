@@ -89,91 +89,94 @@ void process_profile()
     double BW_Others = 0.0;
 
     while (fgets(line, 100, prof_out) != NULL) {
-       sscanf(line,"%s %d %lf %s %lf %s %lf\n",name, &count, &time, std1, &mpi, std2, &bw);
+       count= 0; time = 0; mpi = 0; bw = 0;
+       sscanf(strip(line),"%s %d %lf %s %lf %s %lf\n",name, &count, &time, std1, &mpi, std2, &bw);
        if(strncmp(strip(name),"advec_cell",10)==0) {
          Time_Cell_Advection = Time_Cell_Advection + time;
          BW_Cell_Advection = BW_Cell_Advection + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"advec_mom",9)==0) {
+       else if(strncmp(strip(name),"advec_mom",9)==0) {
          Time_Momentum_Advection = Time_Momentum_Advection + time;
          BW_Momentum_Advection = BW_Momentum_Advection + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"calc_dt",7)==0) {
+       else if(strncmp(strip(name),"calc_dt",7)==0) {
          Time_Timestep = Time_Timestep + time;
          BW_Timestep = BW_Timestep + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"ideal_gas",9)==0) {
+       else if(strncmp(strip(name),"ideal_gas",9)==0) {
          Time_Ideal_Gas = Time_Ideal_Gas + time;
          BW_Ideal_Gas = BW_Ideal_Gas + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"viscosity",9)==0) {
+       else if(strncmp(strip(name),"viscosity",9)==0) {
          Time_Viscosity = Time_Viscosity + time;
          BW_Viscosity = BW_Viscosity + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"PdV",3)==0) {
+       else if(strncmp(strip(name),"PdV",3)==0) {
          Time_PdV = Time_PdV + time;
          BW_PdV = BW_PdV + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"revert",6)==0) {
+       else if(strncmp(strip(name),"revert",6)==0) {
          Time_Revert = Time_Revert + time;
          BW_Revert = BW_Revert + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"accelerate",10)==0) {
+       else if(strncmp(strip(name),"accelerate",10)==0) {
          Time_Acceleration = Time_Acceleration + time;
          BW_Acceleration = BW_Acceleration + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"flux_calc",9)==0) {
+       else if(strncmp(strip(name),"flux_calc",9)==0) {
          Time_Fluxes = Time_Fluxes + time;
          BW_Fluxes = BW_Fluxes + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"reset",5)==0) {
+       else if(strncmp(strip(name),"reset",5)==0) {
          Time_Reset = Time_Reset + time;
          BW_Reset = BW_Reset + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"update_halo",11)==0) {
+       else if(strncmp(strip(name),"update_halo",11)==0) {
          Time_Update_Halo = Time_Update_Halo + time;
          BW_Update_Halo = BW_Update_Halo + bw*time;
+         printf("time = %lf\n",time);
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"field_summary",13)==0) {
+       else if(strncmp(strip(name),"field_summary",13)==0) {
          Time_Field_Summary = Time_Field_Summary + time;
          BW_Field_Summary = BW_Field_Summary + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"initialise",10)==0) {
+       else if(strncmp(strip(name),"initialise",10)==0) {
          Time_Others = Time_Others + time;
          BW_Others = BW_Others + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
-       if(strncmp(strip(name),"generate",8)==0) {
+       else if(strncmp(strip(name),"generate",8)==0) {
          Time_Others = Time_Others + time;
          BW_Others = BW_Others + bw*time;
          Comp_time = Comp_time +  time;
          Comm_time = Comm_time +  mpi;
        }
+       sprintf(name,"reset name");
 
     }
     double precentage = 100/(Comp_time+Comm_time);
