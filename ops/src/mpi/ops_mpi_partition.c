@@ -136,14 +136,17 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
           max_sizes[d] = MAX(item->dat->size[d]+item->dat->base[d]+item->dat->d_m[d]-item->dat->d_p[d],max_sizes[d]);
       }
 
-      //Given the split in different dimensions, equally divide up the block
+      //Given the split in different dimensions, equally divide up the block 
+      // - this is the same computation done by MPI_Cart_create etc, done manually but the computation
+      //is done by every MPI process in the MPI_COMM_WORLD as every one needs this information to be held
+      //at the end what is in coords[ ] should match  sb->coords in ops_decomp()
       for (int j = 0; j < nproc_each_block; j++) {
         int coords[OPS_MAX_DIM];
         int *dimsplit = &((*proc_dimsplit)[i*OPS_MAX_DIM]);
         for(int d=0; d<ndim; d++) {
           int cumdim = 1;
           for (int d2 = d+1; d2 < ndim; d2++) cumdim *= dimsplit[d2];
-          coords[d] = (j/cumdim)%dimsplit[d];
+          coords[d] = (j/cumdim)%dimsplit[d];  
           (*proc_disps)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = (coords[d]*max_sizes[d])/dimsplit[d];
           (*proc_sizes)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = ((coords[d]+1)*max_sizes[d])/dimsplit[d] - (coords[d]*max_sizes[d])/dimsplit[d];
         }
@@ -200,7 +203,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps, 
     for(int n=0; n<ndim; n++)
       MPI_Cart_shift(sb->comm, n, 1, &(sb->id_m[n]), &(sb->id_p[n]));
 
-/** ---- determine subgrid dimensions and displacements ---- **/
+/** ---- store subgrid dimensions and displacements ---- **/
 
     for(int n=0; n<ndim; n++) {
       sb->decomp_disp[n] = proc_disps[my_local_rank*OPS_MAX_DIM + n];  //(sb->coords[n] * g_sizes[n])/pdims[n];
@@ -248,10 +251,11 @@ void ops_decomp_dats(sub_block *sb) {
     sd->prod = prod;
 
     for (int d = 0; d < block->dims; d++) {
-      sd->gbl_base[d] = dat->base[d];
-      sd->gbl_size[d] = dat->size[d];
-      sd->gbl_d_m[d]  = dat->d_m[d];
-      sd->gbl_d_p[d]  = dat->d_p[d];
+      //first store away the details of the dat (i.e global dat details) 
+      sd->gbl_base[d] = dat->base[d]; //global start base
+      sd->gbl_size[d] = dat->size[d]; //global size of data elements in this dat (i.e. pure data)
+      sd->gbl_d_m[d]  = dat->d_m[d]; //global dat halo at the begning (minus size)
+      sd->gbl_d_p[d]  = dat->d_p[d]; //global dat halo at the end (positive size)
 
       //special treatment if it's an edge dataset in this direction
       if (dat->e_dat && (dat->size[d] == 1)) {
@@ -263,8 +267,10 @@ void ops_decomp_dats(sub_block *sb) {
 	      sd->d_ip[d] = 0;
         continue;
       }
-
+      
+      //global size of dat
       int zerobase_gbl_size = dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
+      
       sd->decomp_disp[d] = sb->decomp_disp[d];
       sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
       if(sb->id_m[d] != MPI_PROC_NULL) {
@@ -299,21 +305,27 @@ void ops_decomp_dats(sub_block *sb) {
     ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
 
     //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block
-    sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
-
-    MPI_Datatype new_type_p; //create generic type for MPI comms
-    MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
-    MPI_Type_commit(&new_type_p);
+    
+    ///MPI data types are no longer used as the manual data types were found to be more optimal
+    //sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim * MAX_DEPTH);
+    //MPI_Datatype new_type_p; //create generic type for MPI comms
+    //MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
+    //MPI_Type_commit(&new_type_p);
+    
     sd->halos=(ops_int_halo *)xmalloc(MAX_DEPTH*sb->ndim*sizeof(ops_int_halo));
 
     for(int n = 0; n<sb->ndim; n++) {
       for(int d = 0; d<MAX_DEPTH; d++) {
-        MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
-                        prod[n], new_type_p, &(sd->mpidat[MAX_DEPTH*n+d]));
-        MPI_Type_commit(&(sd->mpidat[MAX_DEPTH*n+d]));
+        ///MPI data types are no longer used as the manual data types were found to be more optimal
+        //MPI_Type_vector(prod[sb->ndim - 1]/prod[n], d*prod[n-1],
+        //                prod[n], new_type_p, &(sd->mpidat[MAX_DEPTH*n+d]));
+        //MPI_Type_commit(&(sd->mpidat[MAX_DEPTH*n+d]));
+        
+        //populate the struct duplicating information in MPI_Datatypes for (strided) halo access
         sd->halos[MAX_DEPTH*n+d].count = prod[sb->ndim - 1]/prod[n];
         sd->halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * dat->elem_size;
         sd->halos[MAX_DEPTH*n+d].stride = prod[n] * dat->elem_size;
+        
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
         //printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride);
       }
@@ -615,6 +627,7 @@ void ops_partition(char* routine)
 
     sub_block *sb = OPS_sub_block_list[block->index];
 
+    //decompose dats defined on this block
     ops_decomp_dats(sb);
     if (sb->owned) {
       printf(" ===========================================================================\n" );
@@ -670,12 +683,13 @@ void ops_mpi_exit()
     i = (item->dat)->index;
     if (OPS_sub_dat_list[i]->mpidat != NULL) {
       free(OPS_sub_dat_list[i]->halos);
-      for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
         for(int d = 0; d<MAX_DEPTH; d++) {
           MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
         }
       }
       free(OPS_sub_dat_list[i]->mpidat);
+      */
     }
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);

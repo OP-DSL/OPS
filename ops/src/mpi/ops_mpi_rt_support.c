@@ -673,12 +673,12 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
-//  double c1,c2,t1,t2;
+  // double c1,c2,t1,t2;
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
   MPI_Comm comm = MPI_COMM_NULL;
 
   for (int dim = 0; dim < OPS_MAX_DIM; dim++){
-//    ops_timers_core(&c1,&t1);
+    // ops_timers_core(&c1,&t1);
     int id_m=-1,id_p=-1;
     int other_dims=1;
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
@@ -697,8 +697,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
                                          OPS_sub_dat_list[dat->index]->decomp_size[d2])); //i.e. the intersection of the dependency range with my full range
       }
       if (other_dims==0) break;
-      id_m = OPS_sub_block_list[dat->block->index]->id_m[dim];
-      id_p = OPS_sub_block_list[dat->block->index]->id_p[dim];
+      id_m = OPS_sub_block_list[dat->block->index]->id_m[dim]; //neighbor in negative direction
+      id_p = OPS_sub_block_list[dat->block->index]->id_p[dim]; //neighbor in possitive direction
       int d_pos=0,d_neg=0;
       for (int p = 0; p < args[i].stencil->points; p++) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
@@ -707,8 +707,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
-//    ops_timers_core(&c2,&t2);
-//    ops_gather_time += t2-t1;
+    //  ops_timers_core(&c2,&t2);
+    //  ops_gather_time += t2-t1;
     if (other_dims==0 || comm == MPI_COMM_NULL) continue;
 
     MPI_Request request[4];
@@ -724,8 +724,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     MPI_Status status[4];
     MPI_Waitall(2,&request[2],&status[2]);
 
-//    ops_timers_core(&c1,&t1);
-//    ops_sendrecv_time += t1-t2;
+    //  ops_timers_core(&c1,&t1);
+    //  ops_sendrecv_time += t1-t2;
 
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
     for (int i = 0; i < nargs; i++) {
@@ -743,8 +743,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     }
 
     MPI_Waitall(2,&request[0],&status[0]);
-//    ops_timers_core(&c2,&t2);
-//    ops_scatter_time += t2-t1;
+    //  ops_timers_core(&c2,&t2);
+    //  ops_scatter_time += t2-t1;
   }
 }
 
