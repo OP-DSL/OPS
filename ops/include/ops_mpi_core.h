@@ -86,8 +86,8 @@ typedef sub_block * sub_block_list;
 typedef struct
 {
   int         count;       /* number of blocks */
-  int         blocklength; /*size of blocks */
-  int         stride;      /*stride between blocks */
+  int         blocklength; /* size of blocks */
+  int         stride;      /* stride between blocks */
 } ops_int_halo;
 
 //

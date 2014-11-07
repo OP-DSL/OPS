@@ -14,8 +14,8 @@ export MPICH_CXX=/opt/intel/composer_xe_2015/bin/icpc
 export MPICH_CC=/opt/intel/composer_xe_2015/bin/icc
 #export MPICH_F90=/opt/intel/composer_xe_2013.1.117/bin/intel64/ifort
 
-#export MPICH_CXX=/opt/intel/bin/icpc
-#export MPICH_CC=/opt/intel/bin/icc
+export MPICH_CXX=/opt/intel/bin/icpc
+export MPICH_CC=/opt/intel/bin/icc
 #export MPICH_F90=/opt/intel/bin/ifort
 #for GPU-direct
 #export PATH=/opt/mvapich2/2.0-intel-gpu/bin:$PATH

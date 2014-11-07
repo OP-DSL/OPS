@@ -4,6 +4,7 @@ cd ../../ops/
 source ./source_intel
 make
 cd -
+make clean
 make
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'

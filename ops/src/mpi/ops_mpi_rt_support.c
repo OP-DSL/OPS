@@ -479,8 +479,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
 
   if (other_dims == 0) return;
 
+  //
   //negative direction
-
+  //
+  
   //decide actual depth based on dirtybits
   int actual_depth_send = 0;
   for (int d = 0; d <= left_send_depth; d++)
@@ -534,8 +536,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //clear dirtybits
   for (int d = 0; d <= actual_depth_send; d++) sd->dirty_dir_send[2*MAX_DEPTH*dim + d] = 0;
 
+  //
   //similarly for positive direction
-
+  //
+  
   //decide actual depth based on dirtybits
   actual_depth_send = 0;
   for (int d = 0; d <= right_send_depth; d++)
@@ -636,16 +640,21 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
     if (d2 != dim) other_dims = other_dims && (range_intersect[d2]>0 || dat->size[d2]==1);
   if (other_dims == 0) return;
 
+  //
   //negative direction
-
+  //
+  
   //decide actual depth based on dirtybits
   int actual_depth_recv = 0;
   for (int d = 0; d <= right_recv_depth; d++)
     if(sd->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d] == 1) actual_depth_recv = d;
+  
   //set up initial pointers
   int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
+  
   //Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  
   //Unpack data
   if (actual_depth_recv>0)
     ops_unpack(dat,i4, ops_buffer_recv_1+send_recv_offsets[1], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
@@ -654,15 +663,21 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   //clear dirtybits
   for (int d = 0; d <= actual_depth_recv; d++) sd->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d] = 0;
 
+  //
   //similarly for positive direction
+  //
+  
   //decide actual depth based on dirtybits
   actual_depth_recv = 0;
   for (int d = 0; d <= left_recv_depth; d++)
     if(sd->dirty_dir_recv[2*MAX_DEPTH*dim + d] == 1) actual_depth_recv = d;
+  
   //set up initial pointers
   int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
+  
   //Compute size of packed data
   recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
+  
   //Unpack data
   if (actual_depth_recv>0)
     ops_unpack(dat,i1, ops_buffer_recv_2+send_recv_offsets[3], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
@@ -673,12 +688,12 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
-//  double c1,c2,t1,t2;
+  // double c1,c2,t1,t2;
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
   MPI_Comm comm = MPI_COMM_NULL;
 
   for (int dim = 0; dim < OPS_MAX_DIM; dim++){
-//    ops_timers_core(&c1,&t1);
+    // ops_timers_core(&c1,&t1);
     int id_m=-1,id_p=-1;
     int other_dims=1;
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
@@ -686,8 +701,11 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if (args[i].argtype != OPS_ARG_DAT || !(args[i].acc==OPS_READ || args[i].acc==OPS_RW) || args[i].opt == 0 ) continue;
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
-      if( dat_ndim <= dim || dat->size[dim] <= 1 ) continue;
-      comm = OPS_sub_block_list[dat->block->index]->comm;
+      if( dat_ndim <= dim || dat->size[dim] <= 1 ) continue;  //dimension of the sub-block is less than current dim OR has a size of 1 (edge dat)
+      comm = OPS_sub_block_list[dat->block->index]->comm; //use communicator for this sub-block
+      
+      //check if there is an intersection of dependency range with my full range 
+      //in *other* dimensions (i.e. any other dimension d2 ,but the current one dim)
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
           other_dims = other_dims && (dat->size[d2]==1 || intersection( range[2*d2]-MAX_DEPTH,
@@ -697,8 +715,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
                                          OPS_sub_dat_list[dat->index]->decomp_size[d2])); //i.e. the intersection of the dependency range with my full range
       }
       if (other_dims==0) break;
-      id_m = OPS_sub_block_list[dat->block->index]->id_m[dim];
-      id_p = OPS_sub_block_list[dat->block->index]->id_p[dim];
+      id_m = OPS_sub_block_list[dat->block->index]->id_m[dim]; //neighbor in negative direction
+      id_p = OPS_sub_block_list[dat->block->index]->id_p[dim]; //neighbor in possitive direction
       int d_pos=0,d_neg=0;
       for (int p = 0; p < args[i].stencil->points; p++) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
@@ -707,9 +725,13 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
-//    ops_timers_core(&c2,&t2);
-//    ops_gather_time += t2-t1;
-    if (other_dims==0 || comm == MPI_COMM_NULL) continue;
+    //  ops_timers_core(&c2,&t2);
+    //  ops_gather_time += t2-t1;
+    
+    // early exit - if one of the args does not have an intersection in other dims
+    // then none of the args will have an intersection - as all dats (except edge dats) 
+    // are defined on the whole domain 
+    if (other_dims==0 || comm == MPI_COMM_NULL) continue;  
 
     MPI_Request request[4];
     MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:MPI_PROC_NULL,dim,
@@ -724,8 +746,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     MPI_Status status[4];
     MPI_Waitall(2,&request[2],&status[2]);
 
-//    ops_timers_core(&c1,&t1);
-//    ops_sendrecv_time += t1-t2;
+    //  ops_timers_core(&c1,&t1);
+    //  ops_sendrecv_time += t1-t2;
 
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
     for (int i = 0; i < nargs; i++) {
@@ -743,8 +765,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     }
 
     MPI_Waitall(2,&request[0],&status[0]);
-//    ops_timers_core(&c2,&t2);
-//    ops_scatter_time += t2-t1;
+    //  ops_timers_core(&c2,&t2);
+    //  ops_scatter_time += t2-t1;
   }
 }
 
