@@ -37,6 +37,8 @@
   * @details Declares the OPS macros
   */
 
+
+/**---------------------------1-D ops_dats macros ---------------------------**/
 #ifndef OPS_ACC_MACROS
 #ifdef OPS_3D
 #ifndef OPS_DEBUG
@@ -123,7 +125,32 @@
 #endif
 #endif
 
+/**--------------------------Multi-D ops_dats macros ------------------------**/
+#ifndef OPS_ACC_MD_MACROS
+#ifdef OPS_MD_3D
+#ifndef OPS_DEBUG
+//#define OPS_ACC_MD0(x,y,z,d) (x+xdim0*(y)+ydim0*xdim0*(z))
 
+
+#else
+
+//#define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+
+#endif
+#else
+#ifndef OPS_DEBUG
+#define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
+//#define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(xdim0*(y))+(d))
+
+#else
+
+//#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
+
+#endif
+#endif
+#endif
+
+/**--------------------------Set SIMD Vector lenght--------------------------**/
 #ifndef SIMD_VEC
 #define SIMD_VEC 4
 #endif
@@ -173,4 +200,5 @@ extern int ydim16;
 extern int ydim17;
 #endif
 
+extern int multi_d0;
 #endif //OPS_MACROS_H
