@@ -108,23 +108,23 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    /***** PROBLEM VECTORISING in MULTI-D****/
-    /*#pragma novector
+    #pragma novector
     for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
       //call kernel function, passing in pointers to data -vectorised
       for ( int i=0; i<SIMD_VEC; i++ ){
-        multidim_kernel(  (double *)p_a[0]+ i*1, (int *)p_a[1] );
+        multidim_kernel(  (double *)p_a[0]+ i*1*2, (int *)p_a[1] );
 
         arg_idx[0]++;
       }
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
-    }*/
+    }
 
-    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
+    for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
       multidim_kernel(  (double *)p_a[0], (int *)p_a[1] );
+
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_0);
