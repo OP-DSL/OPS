@@ -79,10 +79,10 @@ int ops_halo_buffer_size = 0;
   int ydim17;
 #endif /* __XDIMS__ */
 
-#ifndef __MULTIDIMS__
-int multi_d0;
-int multi_d1;
-#endif /*__MULTIDIMS__*/
+//#ifndef __MULTIDIMS__
+//int multi_d0;
+//int multi_d1;
+//#endif /*__MULTIDIMS__*/
 
 void
 ops_init ( int argc, char ** argv, int diags )

@@ -103,7 +103,7 @@ void ops_par_loop_multidim_print_kernel(char const *name, ops_block block, int d
   OPS_kernels[2].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  multi_d0 = args[0].dat->dim;
+  mdim0_multidim_print_kernel = args[0].dat->dim;
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
 
   int n_x;
@@ -113,7 +113,7 @@ void ops_par_loop_multidim_print_kernel(char const *name, ops_block block, int d
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<SIMD_VEC; i++ ){
-        multidim_print_kernel(  (double *)p_a[0]+ i*1*multi_d0 );
+        multidim_print_kernel(  (double *)p_a[0]+ i*1*mdim0_multidim_print_kernel );
 
       }
 

@@ -201,6 +201,6 @@ extern int ydim16;
 extern int ydim17;
 #endif
 
-extern int multi_d0;
-extern int multi_d1;
+//extern int multi_d0;
+//extern int multi_d1;
 #endif //OPS_MACROS_H

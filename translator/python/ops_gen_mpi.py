@@ -514,7 +514,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm("initialize global variable with the dimension of dats")
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('multi_d'+str(n)+' = args['+str(n)+'].dat->dim;')
+        code('mdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->dim;')
         code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
@@ -540,7 +540,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*multi_d'+str(n)
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*mdim'+str(n)+'_'+name
       else:
         text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       if nargs <> 1 and n != nargs-1:

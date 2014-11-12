@@ -126,9 +126,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   OPS_kernels[1].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  multi_d0 = args[0].dat->dim;
+  mdim0_multidim_copy_kernel = args[0].dat->dim;
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  multi_d1 = args[1].dat->dim;
+  mdim1_multidim_copy_kernel = args[1].dat->dim;
   xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   int n_x;
@@ -138,7 +138,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<SIMD_VEC; i++ ){
-        multidim_copy_kernel(  (double *)p_a[0]+ i*1*multi_d0, (double *)p_a[1]+ i*1*multi_d1 );
+        multidim_copy_kernel(  (double *)p_a[0]+ i*1*mdim0_multidim_copy_kernel, (double *)p_a[1]+ i*1*mdim1_multidim_copy_kernel );
 
       }
 
