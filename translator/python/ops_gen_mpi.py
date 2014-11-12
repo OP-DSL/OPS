@@ -196,12 +196,22 @@ def check_accs(name, arg_list, arg_typ, text):
         if pos < 0:
           break
         pos = pos + len(arg_list[n])
-        pos = pos + text[pos:].find('OPS_ACC_MD')
-        pos2 = text[pos+10:].find('(')
-        num = int(text[pos+10:pos+10+pos2])
-        if num <> n:
-          print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
-        pos = pos+10+pos2
+        
+        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+          pos = pos + text[pos:].find('OPS_ACC_MD')
+          pos2 = text[pos+10:].find('(')
+          num = int(text[pos+10:pos+10+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+          pos = pos+10+pos2
+        elif text[pos:].find('OPS_ACC') <> -1:
+          pos = pos + text[pos:].find('OPS_ACC')
+          pos2 = text[pos+7:].find('(')
+          num = int(text[pos+7:pos+7+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+          pos = pos+7+pos2
+          
         
 def ops_gen_mpi(master, date, consts, kernels):
 
