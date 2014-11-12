@@ -140,6 +140,7 @@
 #else
 #ifndef OPS_DEBUG
 #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
+#define OPS_ACC_MD1(d,x,y) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1))
 //#define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(xdim0*(y))+(d))
 
 #else
@@ -201,4 +202,5 @@ extern int ydim17;
 #endif
 
 extern int multi_d0;
+extern int multi_d1;
 #endif //OPS_MACROS_H

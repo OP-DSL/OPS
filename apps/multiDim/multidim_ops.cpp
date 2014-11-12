@@ -19,8 +19,11 @@ void ops_par_loop_multidim_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
-void ops_par_loop_multidim_print_kernel(char const *, ops_block, int , int*,
+void ops_par_loop_multidim_copy_kernel(char const *, ops_block, int , int*,
   ops_arg,
+  ops_arg );
+
+void ops_par_loop_multidim_print_kernel(char const *, ops_block, int , int*,
   ops_arg );
 
 
@@ -55,20 +58,22 @@ int main(int argc, char **argv)
 
 
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
+  ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
-
-  ops_print_dat_to_txtfile_core(dat0, "multidim.dat");
 
   int iter_range[] = {0,4,0,4};
   ops_par_loop_multidim_kernel("multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  printf("\n\n");
-  ops_par_loop_multidim_print_kernel("multidim_print_kernel", grid2D, 2, iter_range,
+  ops_par_loop_multidim_copy_kernel("multidim_copy_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, S2D_00, "double", OPS_READ),
-               ops_arg_idx());
+               ops_arg_dat(dat1, S2D_00, "double", OPS_WRITE));
+
+  ops_printf("\n\n");
+  ops_par_loop_multidim_print_kernel("multidim_print_kernel", grid2D, 2, iter_range,
+               ops_arg_dat(dat1, S2D_00, "double", OPS_READ));
 
   ops_print_dat_to_txtfile_core(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);

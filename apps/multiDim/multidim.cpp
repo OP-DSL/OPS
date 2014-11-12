@@ -48,8 +48,8 @@
 int main(int argc, char **argv)
 {
   //initialize sizes using global values
-  int x_cells = 10;
-  int y_cells = 10;
+  int x_cells = 4;
+  int y_cells = 4;
   
   /**-------------------------- Initialisation --------------------------**/
 
@@ -67,25 +67,32 @@ int main(int argc, char **argv)
   
   
   //declare data on blocks
-  int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
-  int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
+  int d_p[2] = {0,0}; //max halo depths for the dat in the possitive direction
+  int d_m[2] = {0,0}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells, y_cells}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
   double* temp = NULL;
   
   //declare ops_dat with dim = 2
-  ops_dat dat0    = ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, "double", "dat0");
+  ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
+  ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
   
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
   
-  //populate
-  int iter_range[] = {0,10,0,10};
+  int iter_range[] = {0,4,0,4};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
+  ops_par_loop(multidim_copy_kernel,"multidim_copy_kernel", grid2D, 2, iter_range,
+               ops_arg_dat(dat0, S2D_00, "double", OPS_READ),
+               ops_arg_dat(dat1, S2D_00, "double", OPS_WRITE));
+    
+  ops_printf("\n\n");
+  ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range,
+               ops_arg_dat(dat1, S2D_00, "double", OPS_READ));
   
-  
+  ops_print_dat_to_txtfile_core(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   ops_exit();

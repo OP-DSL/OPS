@@ -81,6 +81,7 @@ int ops_halo_buffer_size = 0;
 
 #ifndef __MULTIDIMS__
 int multi_d0;
+int multi_d1;
 #endif /*__MULTIDIMS__*/
 
 void
