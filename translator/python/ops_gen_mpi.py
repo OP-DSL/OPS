@@ -121,6 +121,88 @@ def mult(text, i, n):
 
   return text
 
+def para_parse(text, j, op_b, cl_b):
+    """Parsing code block, i.e. text to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+
+    while 1:
+      if text[loc2] == op_b:
+            depth = depth + 1
+
+      elif text[loc2] == cl_b:
+            depth = depth - 1
+            if depth == 0:
+                return loc2
+      loc2 = loc2 + 1
+      
+def comment_remover(text):
+    """Remove comments from text"""
+
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return ''
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    return re.sub(pattern, replacer, text)
+
+def remove_trailing_w_space(text):
+  line_start = 0
+  line = ""
+  line_end = 0
+  striped_test = ''
+  count = 0
+  while 1:
+    line_end =  text.find("\n",line_start+1)
+    line = text[line_start:line_end]
+    line = line.rstrip()
+    striped_test = striped_test + line +'\n'
+    line_start = line_end + 1
+    line = ""
+    if line_end < 0:
+      return striped_test
+
+def parse_signature(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+
+def check_accs(name, arg_list, arg_typ, text):
+  for n in range(0,len(arg_list)):
+    if arg_typ[n] == 'ops_arg_dat':
+      pos = 0
+      while 1:
+        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        if match == None:
+          break
+        pos = pos + match.start(0)
+        if pos < 0:
+          break
+        pos = pos + len(arg_list[n])
+        pos = pos + text[pos:].find('OPS_ACC_MD')
+        pos2 = text[pos+10:].find('(')
+        num = int(text[pos+10:pos+10+pos2])
+        if num <> n:
+          print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+        pos = pos+10+pos2
+        
 def ops_gen_mpi(master, date, consts, kernels):
 
   global dims, stens
@@ -183,10 +265,6 @@ def ops_gen_mpi(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-##########################################################################
-#  start with seq kernel function
-##########################################################################
-
     g_m = 0;
     file_text = ''
     depth = 0
@@ -196,9 +274,61 @@ def ops_gen_mpi(master, date, consts, kernels):
     name2 = name[0:i-1]
     #print name2
 
+##########################################################################
+#  generate MACROS
+##########################################################################
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('int mdim'+str(n)+'_'+name+';')
+    
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if NDIM==2:
+          code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*mdim'+str(n)+'_'+name+'+(d)+(xdim'+str(n)+'*(y)*mdim'+str(n)+'_'+name+'))')
+        #if NDIM==3:
+        #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+    
+##########################################################################
+#  start with seq kernel function
+##########################################################################
+
+    code('')
     comm('user function')
-    code('#include "'+name2+'_kernel.h"')
-    comm('')
+    #code('#include "'+name2+'_kernel.h"')
+    
+    fid = open(name2+'_kernel.h', 'r')
+    text = fid.read()
+    fid.close()
+    text = comment_remover(text)
+    text = remove_trailing_w_space(text)
+
+    i = text.find(name)
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
+
+    print name
+    i2 = i
+    i = text[0:i].rfind('\n') #reverse find
+    j = text[i:].find('{')
+    k = para_parse(text, i+j, '{', '}')
+    arg_list = parse_signature(text[i2+len(name):i+j])
+    check_accs(name, arg_list, arg_typ, text[i+j:k])
+    code(text[i:k+2])
+    code('')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#undef OPS_ACC_MD'+str(n))
+    code('')
+    code('')
+
+##########################################################################
+#  now host stub
+##########################################################################
+
     comm(' host stub function')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''

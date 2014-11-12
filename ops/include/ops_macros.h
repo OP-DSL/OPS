@@ -126,7 +126,7 @@
 #endif
 
 /**--------------------------Multi-D ops_dats macros ------------------------**/
-#ifndef OPS_ACC_MD_MACROS
+/*#ifndef OPS_ACC_MD_MACROS
 #ifdef OPS_MD_3D
 #ifndef OPS_DEBUG
 //#define OPS_ACC_MD0(x,y,z,d) (x+xdim0*(y)+ydim0*xdim0*(z))
@@ -149,7 +149,7 @@
 
 #endif
 #endif
-#endif
+#endif*/
 
 /**--------------------------Set SIMD Vector lenght--------------------------**/
 #ifndef SIMD_VEC
