@@ -47,17 +47,17 @@ void flux_calc()
   int rangexy_inner_plus1x[] = {x_min,x_max+1,y_min,y_max};
 
   ops_par_loop(flux_calc_kernelx, "flux_calc_kernelx", clover_grid, 2, rangexy_inner_plus1x,
-    ops_arg_dat(vol_flux_x, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(xarea, S2D_00, "double", OPS_READ),
-    ops_arg_dat(xvel0, S2D_00_0P1, "double", OPS_READ),
-    ops_arg_dat(xvel1, S2D_00_0P1, "double", OPS_READ));
+    ops_arg_dat(vol_flux_x, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(xarea, 1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(xvel0, 1, S2D_00_0P1, "double", OPS_READ),
+    ops_arg_dat(xvel1, 1, S2D_00_0P1, "double", OPS_READ));
 
   int rangexy_inner_plus1y[] = {x_min,x_max,y_min,y_max+1};
 
   ops_par_loop(flux_calc_kernely, "flux_calc_kernely", clover_grid, 2, rangexy_inner_plus1y,
-    ops_arg_dat(vol_flux_y, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(yarea, S2D_00, "double", OPS_READ),
-    ops_arg_dat(yvel0, S2D_00_P10, "double", OPS_READ),
-    ops_arg_dat(yvel1, S2D_00_P10, "double", OPS_READ));
+    ops_arg_dat(vol_flux_y, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(yarea, 1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(yvel0, 1, S2D_00_P10, "double", OPS_READ),
+    ops_arg_dat(yvel1, 1, S2D_00_P10, "double", OPS_READ));
 
 }

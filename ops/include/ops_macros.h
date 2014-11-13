@@ -137,6 +137,22 @@
 #ifndef OPS_DEBUG
 #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
 #define OPS_ACC_MD1(d,x,y) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1))
+#define OPS_ACC_MD2(d,x,y) ((x)*multi_d2+(d)+(xdim2*(y)*multi_d2))
+#define OPS_ACC_MD3(d,x,y) ((x)*multi_d3+(d)+(xdim3*(y)*multi_d3))
+#define OPS_ACC_MD4(d,x,y) ((x)*multi_d4+(d)+(xdim4*(y)*multi_d4))
+#define OPS_ACC_MD5(d,x,y) ((x)*multi_d5+(d)+(xdim5*(y)*multi_d5))
+#define OPS_ACC_MD6(d,x,y) ((x)*multi_d6+(d)+(xdim6*(y)*multi_d6))
+#define OPS_ACC_MD7(d,x,y) ((x)*multi_d7+(d)+(xdim7*(y)*multi_d7))
+#define OPS_ACC_MD8(d,x,y) ((x)*multi_d8+(d)+(xdim8*(y)*multi_d8))
+#define OPS_ACC_MD9(d,x,y) ((x)*multi_d9+(d)+(xdim9*(y)*multi_d9))
+#define OPS_ACC_MD10(d,x,y) ((x)*multi_d10+(d)+(xdim10*(y)*multi_d10))
+#define OPS_ACC_MD11(d,x,y) ((x)*multi_d11+(d)+(xdim11*(y)*multi_d11))
+#define OPS_ACC_MD12(d,x,y) ((x)*multi_d12+(d)+(xdim12*(y)*multi_d12))
+#define OPS_ACC_MD13(d,x,y) ((x)*multi_d13+(d)+(xdim13*(y)*multi_d13))
+#define OPS_ACC_MD14(d,x,y) ((x)*multi_d14+(d)+(xdim14*(y)*multi_d14))
+#define OPS_ACC_MD15(d,x,y) ((x)*multi_d15+(d)+(xdim15*(y)*multi_d15))
+#define OPS_ACC_MD16(d,x,y) ((x)*multi_d16+(d)+(xdim16*(y)*multi_d16))
+#define OPS_ACC_MD17(d,x,y) ((x)*multi_d17+(d)+(xdim17*(y)*multi_d17))
 #else
 
 //#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
@@ -197,5 +213,21 @@ extern int ydim17;
 
 extern int multi_d0;
 extern int multi_d1;
+extern int multi_d2;
+extern int multi_d3;
+extern int multi_d4;
+extern int multi_d5;
+extern int multi_d6;
+extern int multi_d7;
+extern int multi_d8;
+extern int multi_d9;
+extern int multi_d10;
+extern int multi_d11;
+extern int multi_d12;
+extern int multi_d13;
+extern int multi_d14;
+extern int multi_d15;
+extern int multi_d16;
+extern int multi_d17;
 
 #endif //OPS_MACROS_H

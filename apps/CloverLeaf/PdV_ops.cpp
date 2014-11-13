@@ -69,35 +69,35 @@ void PdV(int predict)
 
   if(predict == TRUE) {
   ops_par_loop_PdV_kernel_predict("PdV_kernel_predict", clover_grid, 2, rangexy_inner,
-               ops_arg_dat(xarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-               ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-               ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(density1, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
-               ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(energy1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(xarea, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yarea, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(volume, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(pressure, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(density1, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(viscosity, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(energy0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(energy1, 1, S2D_00, "double", OPS_WRITE));
   }
   else {
   ops_par_loop_PdV_kernel_nopredict("PdV_kernel_nopredict", clover_grid, 2, rangexy_inner,
-               ops_arg_dat(xarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(xvel1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yarea, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yvel1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-               ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-               ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(density1, S2D_00, "double", OPS_WRITE),
-               ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
-               ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(energy1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(xarea, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(xvel1, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yarea, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yvel1, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(volume, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(pressure, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(density1, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(viscosity, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(energy0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(energy1, 1, S2D_00, "double", OPS_WRITE));
   }
 
   if(error_condition == 1) {

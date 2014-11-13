@@ -59,12 +59,12 @@ void field_summary()
   double vol= 0.0 , mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 
   ops_par_loop(field_summary_kernel, "field_summary_kernel", clover_grid, 2, rangexy_inner,
-      ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-      ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-      ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-      ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-      ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-      ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+      ops_arg_dat(volume, 1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(energy0, 1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(pressure, 1, S2D_00, "double", OPS_READ),
+      ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+      ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
       ops_arg_reduce(red_vol, 1, "double", OPS_INC),
       ops_arg_reduce(red_mass, 1, "double", OPS_INC),
       ops_arg_reduce(red_ie, 1, "double", OPS_INC),

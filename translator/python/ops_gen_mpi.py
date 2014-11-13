@@ -288,10 +288,11 @@ def ops_gen_mpi(master, date, consts, kernels):
 ##########################################################################
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
-        #if NDIM==3:
-        #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) > 1:
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+          #if NDIM==3:
+          #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     
 ##########################################################################
 #  start with seq kernel function

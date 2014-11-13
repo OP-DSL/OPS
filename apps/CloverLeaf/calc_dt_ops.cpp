@@ -71,20 +71,20 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_inner[] = {x_min,x_max,y_min,y_max};
 
   ops_par_loop_calc_dt_kernel("calc_dt_kernel", clover_grid, 2, rangexy_inner,
-               ops_arg_dat(celldx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
-               ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
-               ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
-               ops_arg_dat(viscosity, S2D_00, "double", OPS_READ),
-               ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(xarea, S2D_00_P10, "double", OPS_READ),
-               ops_arg_dat(volume, S2D_00, "double", OPS_READ),
-               ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yarea, S2D_00_0P1, "double", OPS_READ),
-               ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(celldx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(celldy, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+               ops_arg_dat(soundspeed, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(viscosity, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(xarea, 1, S2D_00_P10, "double", OPS_READ),
+               ops_arg_dat(volume, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yarea, 1, S2D_00_0P1, "double", OPS_READ),
+               ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE));
 
   ops_par_loop_calc_dt_kernel_min("calc_dt_kernel_min", clover_grid, 2, rangexy_inner,
-               ops_arg_dat(work_array1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_READ),
                ops_arg_reduce(red_local_dt, 1, "double", OPS_MIN));
 
 
@@ -101,8 +101,8 @@ void calc_dt(double* local_dt, char* local_control,
   int rangexy_getpointy[] = {x_min-2,x_max+2,*kldt-1+2,*kldt+2};
 
   ops_par_loop_calc_dt_kernel_get("calc_dt_kernel_getx", clover_grid, 2, rangexy_getpoint,
-               ops_arg_dat(cellx, S2D_00_STRID2D_X, "double", OPS_READ),
-               ops_arg_dat(celly, S2D_00_STRID2D_Y, "double", OPS_READ),
+               ops_arg_dat(cellx, 1, S2D_00_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(celly, 1, S2D_00_STRID2D_Y, "double", OPS_READ),
                ops_arg_reduce(red_xl_pos, 1, "double", OPS_INC),
                ops_arg_reduce(red_yl_pos, 1, "double", OPS_INC));
 
@@ -121,12 +121,12 @@ void calc_dt(double* local_dt, char* local_control,
 
     double output[12] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     ops_par_loop_calc_dt_kernel_print("calc_dt_kernel_print", clover_grid, 2, rangexy_getpoint,
-                 ops_arg_dat(xvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
-                 ops_arg_dat(yvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
-                 ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(pressure, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(xvel0, 1, S2D_10_M10_01_0M1, "double", OPS_READ),
+                 ops_arg_dat(yvel0, 1, S2D_10_M10_01_0M1, "double", OPS_READ),
+                 ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(energy0, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(pressure, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(soundspeed, 1, S2D_00, "double", OPS_READ),
                  ops_arg_reduce(red_output, 12, "double", OPS_INC));
 
     ops_reduction_result(red_output, output);
