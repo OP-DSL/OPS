@@ -50,8 +50,8 @@
 int main(int argc, char **argv)
 {
   //initialize sizes using global values
-  int x_cells = 4;
-  int y_cells = 4;
+  int x_cells = 10;
+  int y_cells = 10;
   
   /**-------------------------- Initialisation --------------------------**/
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
   
-  int iter_range[] = {0,4,0,4};
+  int iter_range[] = {0,10,0,10};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());

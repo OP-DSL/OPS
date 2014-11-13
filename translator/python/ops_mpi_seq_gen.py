@@ -87,8 +87,9 @@ top =  """
   */
 
 #include "ops_lib_cpp.h"
+#ifdef OPS_MPI
 #include "ops_mpi_core.h"
-
+#endif
 
 """
 
@@ -347,6 +348,7 @@ for nargs in range (1,maxargs+1):
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
       f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;\n')
+      f.write('    multi_d'+str(n)+' = args['+str(n)+'].dat->dim;\n')
       f.write('    #ifdef OPS_3D\n')
       f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
       f.write('    #endif\n')

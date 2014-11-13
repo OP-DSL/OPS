@@ -628,11 +628,11 @@ def main():
               elem = loop_args[curr_loop]['args'][arguments]
               if elem['type'] == 'ops_arg_dat':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + '),\n' + indent
               if elem['type'] == 'ops_arg_dat_opt':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + \
                       ', ' + elem['opt'] +'),\n' + indent
                   #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
