@@ -5,7 +5,7 @@
 
 //user function
 
-void multidim_print_kernel(double *val) {
+void multidim_print_kernel(const double *val) {
   printf("(%lf %lf) \n",val[OPS_ACC_MD0(0,0,0)],val[OPS_ACC_MD0(1,0,0)]);
 }
 
@@ -102,7 +102,7 @@ void ops_par_loop_multidim_print_kernel(char const *name, ops_block block, int d
   OPS_kernels[2].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){

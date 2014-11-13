@@ -114,7 +114,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   OPS_kernels[0].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){

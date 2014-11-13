@@ -307,11 +307,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+      if int(dims[n]) == 1:
+        if arg_typ[n] == 'ops_arg_dat':
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
 
     for n in range (0, nargs):
@@ -355,11 +356,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC_MD'+str(n))
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
 
 

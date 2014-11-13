@@ -6,7 +6,7 @@
 
 //user function
 
-void multidim_copy_kernel(double *src, double *dest) {
+void multidim_copy_kernel(const double *src, double *dest) {
   dest[OPS_ACC_MD1(0,0,0)] = src[OPS_ACC_MD0(0,0,0)];
   dest[OPS_ACC_MD1(1,0,0)] = src[OPS_ACC_MD0(1,0,0)];
 }
@@ -124,8 +124,8 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   OPS_kernels[1].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
