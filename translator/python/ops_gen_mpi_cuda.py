@@ -307,8 +307,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
-      if int(dims[n]) == 1:
-        if arg_typ[n] == 'ops_arg_dat':
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
           if NDIM==2:
             code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
           if NDIM==3:

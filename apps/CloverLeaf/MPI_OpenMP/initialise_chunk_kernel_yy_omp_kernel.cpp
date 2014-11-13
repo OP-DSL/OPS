@@ -85,7 +85,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   ops_H_D_exchanges_host(args, 2);
 

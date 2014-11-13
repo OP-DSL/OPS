@@ -187,11 +187,11 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   OPS_kernels[11].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){

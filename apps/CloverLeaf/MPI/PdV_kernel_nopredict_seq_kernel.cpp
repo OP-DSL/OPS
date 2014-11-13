@@ -399,20 +399,20 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   OPS_kernels[5].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
-  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
-  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
-  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  xdim6 = args[6].dat->size[0];
+  xdim7 = args[7].dat->size[0];
+  xdim8 = args[8].dat->size[0];
+  xdim9 = args[9].dat->size[0];
+  xdim10 = args[10].dat->size[0];
+  xdim11 = args[11].dat->size[0];
+  xdim12 = args[12].dat->size[0];
+  xdim13 = args[13].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){

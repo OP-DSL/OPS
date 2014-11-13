@@ -32,7 +32,7 @@ int size1 ){
   int arg_idx[2];
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
-  arg0 += idx_x * 0 + idx_y * 1 * xdim0_initialise_chunk_kernel_yy;
+  arg0 += idx_x * 0*1 + idx_y * 1*1 * xdim0_initialise_chunk_kernel_yy;
 
   if (idx_x < size0 && idx_y < size1) {
     initialise_chunk_kernel_yy(arg0, arg_idx);
@@ -95,7 +95,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
 
 
   //Timing

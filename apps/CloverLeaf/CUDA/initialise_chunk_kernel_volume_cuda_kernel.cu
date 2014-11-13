@@ -61,11 +61,11 @@ int size1 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_initialise_chunk_kernel_volume;
-  arg1 += idx_x * 0 + idx_y * 1 * xdim1_initialise_chunk_kernel_volume;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_initialise_chunk_kernel_volume;
-  arg3 += idx_x * 1 + idx_y * 0 * xdim3_initialise_chunk_kernel_volume;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_initialise_chunk_kernel_volume;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_initialise_chunk_kernel_volume;
+  arg1 += idx_x * 0*1 + idx_y * 1*1 * xdim1_initialise_chunk_kernel_volume;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_initialise_chunk_kernel_volume;
+  arg3 += idx_x * 1*1 + idx_y * 0*1 * xdim3_initialise_chunk_kernel_volume;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_initialise_chunk_kernel_volume;
 
   if (idx_x < size0 && idx_y < size1) {
     initialise_chunk_kernel_volume(arg0, arg1, arg2, arg3,
@@ -122,11 +122,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
 
 
   //Timing

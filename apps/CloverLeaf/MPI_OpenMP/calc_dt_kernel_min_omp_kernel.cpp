@@ -100,7 +100,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
       arg_gbl1[d+64*thr] = INFINITY_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   ops_H_D_exchanges_host(args, 2);
 

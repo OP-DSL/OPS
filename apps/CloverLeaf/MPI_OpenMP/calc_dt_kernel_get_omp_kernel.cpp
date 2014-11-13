@@ -115,8 +115,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
       arg_gbl3[d+64*thr] = ZERO_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
 
   ops_H_D_exchanges_host(args, 4);
 

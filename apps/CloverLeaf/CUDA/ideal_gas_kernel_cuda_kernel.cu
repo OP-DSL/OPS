@@ -55,10 +55,10 @@ int size1 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_ideal_gas_kernel;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_ideal_gas_kernel;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_ideal_gas_kernel;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_ideal_gas_kernel;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_ideal_gas_kernel;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_ideal_gas_kernel;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_ideal_gas_kernel;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_ideal_gas_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
     ideal_gas_kernel(arg0, arg1, arg2, arg3);
@@ -113,10 +113,10 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
 
 
   //Timing

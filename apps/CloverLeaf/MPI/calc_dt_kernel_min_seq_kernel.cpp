@@ -110,7 +110,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   OPS_kernels[28].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){

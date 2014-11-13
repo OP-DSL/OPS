@@ -169,17 +169,17 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block block, int
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  xdim6 = args[6].dat->size[0];
+  xdim7 = args[7].dat->size[0];
+  xdim8 = args[8].dat->size[0];
+  xdim9 = args[9].dat->size[0];
+  xdim10 = args[10].dat->size[0];
 
   ops_H_D_exchanges_host(args, 11);
 
