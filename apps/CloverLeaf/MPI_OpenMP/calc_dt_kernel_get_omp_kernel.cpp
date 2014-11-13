@@ -176,7 +176,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
       for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
-          calc_dt_kernel_get(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, &arg_gbl2[64*thr],
+          calc_dt_kernel_get(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, &arg_gbl2[64*thr],
            &arg_gbl3[64*thr] );
 
         }

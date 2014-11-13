@@ -153,7 +153,7 @@ void ops_par_loop_update_halo_kernel3_plus_4_b(char const *name, ops_block block
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          update_halo_kernel3_plus_4_b(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (int * )p_a[2] );
+          update_halo_kernel3_plus_4_b(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (int * )p_a[2] );
 
         }
 

@@ -235,10 +235,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-##########################################################################
-#  start with omp kernel function
-##########################################################################
-
     g_m = 0;
     file_text = ''
     depth = 0
@@ -249,6 +245,23 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     reduction = False
     ng_args = 0
+
+
+##########################################################################
+#  generate MACROS
+##########################################################################
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+          #if NDIM==3:
+          #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+          
+          
+##########################################################################
+#  start with omp kernel function
+##########################################################################
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
@@ -558,9 +571,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if accs[n] <> OPS_READ:
-          text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
         else:
-          text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           text = text +' &arg_gbl'+str(n)+'[64*thr]'

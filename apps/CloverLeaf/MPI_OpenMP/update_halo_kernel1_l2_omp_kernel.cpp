@@ -263,8 +263,8 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block, int 
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          update_halo_kernel1_l2(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (double * )p_a[2]+ i*1,
-           (double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (double * )p_a[5]+ i*1, (double * )p_a[6]+ i*1,
+          update_halo_kernel1_l2(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (double * )p_a[2]+ i*1*1,
+           (double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (double * )p_a[5]+ i*1*1, (double * )p_a[6]+ i*1*1,
            (int * )p_a[7] );
 
         }

@@ -387,10 +387,10 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          PdV_kernel_predict(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (const double * )p_a[5]+ i*1, (const double * )p_a[6]+ i*1,
-           (const double * )p_a[7]+ i*1, (double * )p_a[8]+ i*1, (const double * )p_a[9]+ i*1, (const double * )p_a[10]+ i*1,
-           (double * )p_a[11]+ i*1 );
+          PdV_kernel_predict(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (const double * )p_a[5]+ i*1*1, (const double * )p_a[6]+ i*1*1,
+           (const double * )p_a[7]+ i*1*1, (double * )p_a[8]+ i*1*1, (const double * )p_a[9]+ i*1*1, (const double * )p_a[10]+ i*1*1,
+           (double * )p_a[11]+ i*1*1 );
 
         }
 

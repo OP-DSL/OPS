@@ -342,9 +342,9 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          generate_chunk_kernel(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, (double * )p_a[2]+ i*1,
-           (double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (double * )p_a[5]+ i*1, (const double * )p_a[6]+ i*1,
-           (const double * )p_a[7]+ i*0 );
+          generate_chunk_kernel(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, (double * )p_a[2]+ i*1*1,
+           (double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (double * )p_a[5]+ i*1*1, (const double * )p_a[6]+ i*1*1,
+           (const double * )p_a[7]+ i*0*1 );
 
         }
 

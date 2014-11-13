@@ -187,7 +187,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          initialise_chunk_kernel_celly(  (const double * )p_a[0]+ i*0, (double * )p_a[1]+ i*0, (double * )p_a[2]+ i*0 );
+          initialise_chunk_kernel_celly(  (const double * )p_a[0]+ i*0*1, (double * )p_a[1]+ i*0*1, (double * )p_a[2]+ i*0*1 );
 
         }
 

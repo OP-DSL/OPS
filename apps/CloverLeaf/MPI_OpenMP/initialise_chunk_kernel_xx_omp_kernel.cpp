@@ -139,7 +139,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
       for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
-          initialise_chunk_kernel_xx(  (int * )p_a[0]+ i*1, arg_idx );
+          initialise_chunk_kernel_xx(  (int * )p_a[0]+ i*1*1, arg_idx );
 
           arg_idx[0]++;
         }

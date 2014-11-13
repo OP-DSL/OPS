@@ -195,8 +195,8 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          advec_mom_kernel_y2(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1 );
+          advec_mom_kernel_y2(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1 );
 
         }
 

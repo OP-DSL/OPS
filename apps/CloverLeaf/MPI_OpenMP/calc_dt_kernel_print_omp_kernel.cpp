@@ -259,8 +259,8 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
       for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
-          calc_dt_kernel_print(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (const double * )p_a[4]+ i*1, (const double * )p_a[5]+ i*1, &arg_gbl6[64*thr] );
+          calc_dt_kernel_print(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (const double * )p_a[4]+ i*1*1, (const double * )p_a[5]+ i*1*1, &arg_gbl6[64*thr] );
 
         }
 
