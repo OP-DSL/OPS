@@ -753,6 +753,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   comm('header')
   if NDIM==3:
     code('#define OPS_3D')
+  code('#define OPS_ACC_MD_MACROS')
   code('#include "ops_lib_cpp.h"')
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')

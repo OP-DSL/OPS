@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = multidim_dev_seq multidim_seq 
+TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp 
 
 ifeq ($(OPS_COMPILER),pgi)
 #TARGETS += multidim_openacc multidim_mpi_openacc
@@ -134,7 +134,7 @@ multidim_dev_seq: Makefile multidim.cpp multidim_kernel.h multidim_print_kernel.
 	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) multidim.cpp -lops_seq -o multidim_dev_seq
 
 
-multidim_dev_mpi: Makefile multidim.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+multidim_dev_mpi: Makefile multidim.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) multidim.cpp -lops_mpi -o multidim_dev_mpi
 
 #
@@ -143,7 +143,7 @@ multidim_dev_mpi: Makefile multidim.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/li
 
 SEQ_KERNELS = multidim_seq_kernels.cpp
 
-multidim_mpi: Makefile multidim_ops.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+multidim_mpi: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o multidim_mpi
 
 #
@@ -151,11 +151,11 @@ multidim_mpi: Makefile multidim_ops.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/li
 #
 OMP_KERNELS = multidim_omp_kernels.cpp
 
-multidim_mpi_openmp: Makefile multidim_ops.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+multidim_mpi_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -o multidim_mpi_openmp
 
 
-multidim_openmp: Makefile multidim_ops.cpp multidim_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+multidim_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o multidim_openmp
 
 #
