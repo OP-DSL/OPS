@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp 
+TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda 
 
 ifeq ($(OPS_COMPILER),pgi)
 #TARGETS += multidim_openacc multidim_mpi_openacc
@@ -161,17 +161,17 @@ multidim_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kern
 #
 # Sequential version
 #
-multidim_seq: Makefile multidim_ops.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+multidim_seq: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o multidim_seq
 
 #
 # CUDA version
 #
 
-multidim_cuda: Makefile ./CUDA/multidim_kernels_cu.o multidim_ops.cpp multidim_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+multidim_cuda: Makefile ./CUDA/multidim_kernels_cu.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) multidim_ops.cpp ./CUDA/multidim_kernels_cu.o -lcudart -lops_cuda -o multidim_cuda
 
-multidim_mpi_cuda: Makefile ./CUDA/multidim_kernels_mpi_cu.o multidim_ops.cpp multidim_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+multidim_mpi_cuda: Makefile ./CUDA/multidim_kernels_mpi_cu.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) multidim_ops.cpp ./CUDA/multidim_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o multidim_mpi_cuda
 
 ./CUDA/multidim_kernels_cu.o: ./CUDA/multidim_kernels.cu Makefile
@@ -222,4 +222,4 @@ openacc_error:
 #
 
 clean:
-	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o
+	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o

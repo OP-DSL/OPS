@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   ops_par_loop_multidim_print_kernel("multidim_print_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat1, 2, S2D_00, "double", OPS_READ));
 
-  ops_print_dat_to_txtfile_core(dat0, "multidim.dat");
+  ops_print_dat_to_txtfile(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   ops_exit();

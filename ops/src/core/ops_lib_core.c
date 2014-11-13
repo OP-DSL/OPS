@@ -265,7 +265,8 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
-  dat->elem_size = type_size*dim;
+  dat->elem_size = type_size*dim;  //note here that the element size is taken to
+                                   //be the type_size in bytes multiplied by the dimension of an element
   dat->e_dat = 0; //default to non-edge dat
 
   for(int n=0;n<block->dims;n++){

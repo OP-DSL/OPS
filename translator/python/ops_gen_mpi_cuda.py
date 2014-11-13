@@ -184,24 +184,28 @@ def check_accs(name, arg_list, arg_typ, text):
     if arg_typ[n] == 'ops_arg_dat':
       pos = 0
       while 1:
-        #pos = pos + text[pos:].find(arg_list[n])
         match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
         if match == None:
           break
         pos = pos + match.start(0)
-        #print text[pos:pos+len(arg_list[n])+10]
         if pos < 0:
           break
         pos = pos + len(arg_list[n])
-        #print text[pos:pos+len(arg_list[n])+10]
-        pos = pos + text[pos:].find('OPS_ACC')
-        #print text[pos:pos+len(arg_list[n])+10]
-        pos2 = text[pos+7:].find('(')
-        #print text[pos+7:pos+7+pos2]
-        num = int(text[pos+7:pos+7+pos2])
-        if num <> n:
-          print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
-        pos = pos+7+pos2
+        
+        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+          pos = pos + text[pos:].find('OPS_ACC_MD')
+          pos2 = text[pos+10:].find('(')
+          num = int(text[pos+10:pos+10+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+          pos = pos+10+pos2
+        elif text[pos:].find('OPS_ACC') <> -1:
+          pos = pos + text[pos:].find('OPS_ACC')
+          pos2 = text[pos+7:].find('(')
+          num = int(text[pos+7:pos+7+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+          pos = pos+7+pos2
 
 def ops_gen_mpi_cuda(master, date, consts, kernels):
 
@@ -290,6 +294,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 #  generate constants and MACROS
 ##########################################################################
 
+  
+    
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
@@ -308,6 +314,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
 
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          #if NDIM==3:
+          #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+  
 
 ##########################################################################
 #  generate headder
@@ -343,6 +357,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('#undef OPS_ACC'+str(n))
     code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#undef OPS_ACC_MD'+str(n))
     code('')
 
 
@@ -412,9 +429,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==2:
-          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+';')
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+';')
         elif NDIM==3:
-          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
 
     code('')
     n_per_line = 5
@@ -563,7 +580,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -861,6 +878,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
   file_text =''
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
