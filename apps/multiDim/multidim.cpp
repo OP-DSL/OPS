@@ -79,6 +79,9 @@ int main(int argc, char **argv)
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
   
+  //decompose the block
+  ops_partition("2D_BLOCK_DECOMPSE");
+  
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
   
