@@ -130,7 +130,7 @@ endif
 
 all: clean $(TARGETS)
 
-multidim_dev_seq: Makefile multidim.cpp multidim_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+multidim_dev_seq: Makefile multidim.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) multidim.cpp -lops_seq -o multidim_dev_seq
 
 

@@ -60,7 +60,7 @@
 #define OPS_ACC15(x,y,z) (x+xdim15*(y)+ydim15*xdim15*(z))
 #define OPS_ACC16(x,y,z) (x+xdim16*(y)+ydim16*xdim16*(z))
 #define OPS_ACC17(x,y,z) (x+xdim17*(y)+ydim17*xdim17*(z))
-#else
+#else //#else of ifndef OPS_DEBUG
 
 #define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
 #define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
@@ -80,8 +80,8 @@
 #define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
 #define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
 #define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
-#endif
-#else
+#endif //#ifndef OPS_DEBUG
+#else //else of #ifdef OPS_3D 
 #ifndef OPS_DEBUG
 #define OPS_ACC0(x,y) (x+xdim0*(y))
 #define OPS_ACC1(x,y) (x+xdim1*(y))
@@ -101,7 +101,7 @@
 #define OPS_ACC15(x,y) (x+xdim15*(y))
 #define OPS_ACC16(x,y) (x+xdim16*(y))
 #define OPS_ACC17(x,y) (x+xdim17*(y))
-#else
+#else //#else of ifndef OPS_DEBUG
 
 #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
 #define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
@@ -121,35 +121,29 @@
 #define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
 #define OPS_ACC16(x,y) (ops_stencil_check_2d(16, x, y, xdim16, -1))
 #define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
-#endif
-#endif
-#endif
+#endif //#ifndef OPS_DEBUG
+#endif //#ifdef OPS_3D 
+#endif //#ifndef OPS_ACC_MACROS
 
 /**--------------------------Multi-D ops_dats macros ------------------------**/
-/*#ifndef OPS_ACC_MD_MACROS
-#ifdef OPS_MD_3D
+#ifndef OPS_ACC_MD_MACROS
+#ifdef OPS_3D
 #ifndef OPS_DEBUG
 //#define OPS_ACC_MD0(x,y,z,d) (x+xdim0*(y)+ydim0*xdim0*(z))
-
-
 #else
-
 //#define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
-
 #endif
 #else
 #ifndef OPS_DEBUG
 #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
 #define OPS_ACC_MD1(d,x,y) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1))
-//#define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(xdim0*(y))+(d))
-
 #else
 
 //#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
 
 #endif
 #endif
-#endif*/
+#endif
 
 /**--------------------------Set SIMD Vector lenght--------------------------**/
 #ifndef SIMD_VEC
@@ -201,6 +195,7 @@ extern int ydim16;
 extern int ydim17;
 #endif
 
-//extern int multi_d0;
-//extern int multi_d1;
+extern int multi_d0;
+extern int multi_d1;
+
 #endif //OPS_MACROS_H

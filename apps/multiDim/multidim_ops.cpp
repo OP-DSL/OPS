@@ -29,6 +29,8 @@ void ops_par_loop_multidim_print_kernel(char const *, ops_block, int , int*,
 
 
 //#include "multidim_kernel.h"
+//#include "multidim_print_kernel.h"
+//#include "multidim_copy_kernel.h"
 
 int main(int argc, char **argv)
 {

@@ -288,13 +288,8 @@ def ops_gen_mpi(master, date, consts, kernels):
 ##########################################################################
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int mdim'+str(n)+'_'+name+';')
-    
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
         if NDIM==2:
-          code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*mdim'+str(n)+'_'+name+'+(d)+(xdim'+str(n)+'*(y)*mdim'+str(n)+'_'+name+'))')
+          code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
         #if NDIM==3:
         #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     
@@ -497,7 +492,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm("initialize global variable with the dimension of dats")
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('mdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->dim;')
         code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
@@ -522,7 +516,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*mdim'+str(n)+'_'+name
+        text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
       else:
         text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       if nargs <> 1 and n != nargs-1:
@@ -645,6 +639,7 @@ def ops_gen_mpi(master, date, consts, kernels):
   comm('header')
   if NDIM==3:
     code('#define OPS_3D')
+  code('#define OPS_ACC_MD_MACROS')
   code('#include "ops_lib_cpp.h"')
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')

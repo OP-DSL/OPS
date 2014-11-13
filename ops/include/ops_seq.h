@@ -206,6 +206,7 @@ void ops_par_loop(void (*kernel)(T0*),
 
   if (args[0].argtype == OPS_ARG_DAT) {
     xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
@@ -349,19 +350,23 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
 
   if (args[0].argtype == OPS_ARG_DAT) {
     xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
     xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
 
   ops_H_D_exchanges_host(args, 2);
-  ops_halo_exchanges(args,2,range);
+  ops_halo_exchanges(args,2,range);  
+  
+  
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 

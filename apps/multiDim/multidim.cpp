@@ -44,6 +44,8 @@
 #include "ops_seq.h"
 
 #include "multidim_kernel.h"
+#include "multidim_print_kernel.h"
+#include "multidim_copy_kernel.h"
 
 int main(int argc, char **argv)
 {
@@ -82,15 +84,15 @@ int main(int argc, char **argv)
   
   int iter_range[] = {0,4,0,4};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
-               ops_arg_dat(dat0, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop(multidim_copy_kernel,"multidim_copy_kernel", grid2D, 2, iter_range,
-               ops_arg_dat(dat0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(dat1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ),
+               ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
     
   ops_printf("\n\n");
   ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range,
-               ops_arg_dat(dat1, S2D_00, "double", OPS_READ));
+               ops_arg_dat(dat1, 2, S2D_00, "double", OPS_READ));
   
   ops_print_dat_to_txtfile_core(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
