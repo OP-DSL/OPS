@@ -8,6 +8,10 @@
 #include "ops_mpi_core.h"
 #endif
 
+//this is a custom include -- not produced by the code generator
+#include "data.h"
+#include "definitions.h"
+
 //user kernel files
 /*
 #include "../MPI/revert_kernel_seq_kernel.cpp"

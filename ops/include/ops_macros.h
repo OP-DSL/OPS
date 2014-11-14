@@ -129,7 +129,9 @@
 #ifndef OPS_ACC_MD_MACROS
 #ifdef OPS_3D
 #ifndef OPS_DEBUG
-//#define OPS_ACC_MD0(x,y,z,d) (x+xdim0*(y)+ydim0*xdim0*(z))
+#define OPS_ACC_MD0(d,x,y,z) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0)+(xdim0*ydim0*(z)*multi_d0))
+
+
 #else
 //#define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
 #endif
