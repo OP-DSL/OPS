@@ -347,12 +347,22 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) == 1:
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
-
+    
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          #if NDIM==3:
+          #  code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+  
+  
     code('')
     comm('user function')
     fid = open(name2+'_kernel.h', 'r')
@@ -361,6 +371,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     text = comment_remover(text)
 
     text = remove_triling_w_space(text)
+
+
 
     i = text.find(name)
     if(i < 0):
@@ -404,7 +416,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     k2 = para_parse(text, loc+j2, '{', '}')
 
     body = text[loc+1:k2+2] # body of function
-
+    
     found_consts = find_consts(body,consts)
     #print found_consts
 
@@ -429,13 +441,19 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code(text)
 
 
-    depth =depth-1
+    depth =depth-2
     code(body)
     code('')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
 
@@ -529,12 +547,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==2:
-          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
+          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
         elif NDIM==3:
           text = text + '&arg'+str(n)+'[base'+str(n)+\
-          ' + idx_x * '+str(stride[NDIM*n])+\
-          ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
-          ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
+          ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
+          ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
           text = text +'&arg'+str(n)
@@ -818,7 +837,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -971,12 +990,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = 1 * ')
+        code('int base'+str(n)+' = 1 *'+str(dims[n])+'* ')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
           for d2 in range (0,d):
-            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] * '
+            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
           code(line[:-1])
           code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
@@ -1128,6 +1147,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   depth = 0
   file_text =''
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "stdlib.h"')

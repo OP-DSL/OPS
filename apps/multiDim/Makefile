@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda 
+TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_opencl multidim_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 #TARGETS += multidim_openacc multidim_mpi_openacc
@@ -203,11 +203,19 @@ multidim_mpi_openacc: $(openacc_obj_list) multidim_ops.cpp multidim_populate_ker
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
     multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o multidim_mpi_openacc
 
-multidim_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o multidim_opencl
+multidim_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o  -lops_opencl -o multidim_opencl
+
+
+multidim_mpi_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o -lops_mpi_opencl -o multidim_mpi_opencl
 
 ./OpenCL/multidim_opencl_kernels.o: ./OpenCL/multidim_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+                -c -o ./OpenCL/multidim_opencl_kernels.o ./OpenCL/multidim_opencl_kernels.cpp
+
+./OpenCL/multidim_mpi_opencl_kernels.o: ./OpenCL/multidim_opencl_kernels.cpp Makefile
+	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/multidim_opencl_kernels.o ./OpenCL/multidim_opencl_kernels.cpp
 
 #
@@ -222,4 +230,4 @@ openacc_error:
 #
 
 clean:
-	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o
+	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_opencl multidim_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o

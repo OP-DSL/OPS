@@ -342,7 +342,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
 
-    print name
+    
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
