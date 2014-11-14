@@ -73,7 +73,7 @@ int main(int argc, char **argv)
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ),
                ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
 
-  ops_printf("\n\n");
+
 
 
 

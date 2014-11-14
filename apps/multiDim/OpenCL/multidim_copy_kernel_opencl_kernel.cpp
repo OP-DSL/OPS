@@ -98,9 +98,6 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   ops_arg args[2] = { arg0, arg1};
 
 
-  #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,1)) return;
-  #endif
 
   ops_timing_realloc(1,"multidim_copy_kernel");
   OPS_kernels[1].count++;
