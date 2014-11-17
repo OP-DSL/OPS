@@ -1,11 +1,12 @@
-A hydrodynamics mini-app to solve the compressible Euler equations in 2D,
-using an explicit, second-order method. See http://uk-mac.github.io/CloverLeaf/
+A hydrodynamics mini-app to solve the compressible Euler equations in 3D,
+using an explicit, second-order method. See http://uk-mac.github.io/CloverLeaf3D/
 for the original version and more details.
 
 This version utilizes the OPS library and preprocessor. With OPS a single
 application code is transformed to enable it to be run with a number of
-parallelisations: OpenMP, CUDA, OpenCL, OpenACC and MPI and their
+parallelisations: OpenMP, CUDA, OpenCL, OpenACC and MPI and their 
 combinations with MPI.
+
 
 ####Directory Structure
 
@@ -56,7 +57,7 @@ include platform specific optimisations such as verctorization
 
 3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP, CUDA, MPI+CUDA, OpenCL, OpenCL+MPI, OpenACC and OpenACC+MPI (if your compiler supports OpenACC)
 
-   cd ~/OPS/apps/Cloverleaf/
+   cd ~/OPS/apps/Cloverleaf_3D/
 
    make
 
