@@ -268,12 +268,22 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) == 1:
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
-
+    
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+  
+  
 
 ##########################################################################
 #  generate headder
@@ -303,10 +313,17 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     else:
       code(text[i:k+2])
     code('')
+    
+    
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
 
@@ -392,7 +409,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+        text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         if NDIM == 3:
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -574,7 +591,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     #timing structs
@@ -794,6 +811,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
   file_text =''
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
   if NDIM==3:
     code('#define OPS_3D')
   code('#ifdef __cplusplus')

@@ -195,11 +195,11 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-multidim_openacc: $(openacc_obj_list) multidim_ops.cpp multidim_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+multidim_openacc: $(openacc_obj_list) multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
     multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o multidim_openacc
 
-multidim_mpi_openacc: $(openacc_obj_list) multidim_ops.cpp multidim_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+multidim_mpi_openacc: $(openacc_obj_list) multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
     multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o multidim_mpi_openacc
 
@@ -230,4 +230,4 @@ openacc_error:
 #
 
 clean:
-	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_opencl multidim_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o
+	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_openacc multidim_mpi_openacc multidim_opencl multidim_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o
