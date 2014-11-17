@@ -5,7 +5,7 @@
 \usepackage{listings}
 \usepackage{verbments}
 
-\date{Jan 2014}
+\date{Nov 2014}
 
  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
  \oddsidemargin 0.1in
@@ -105,27 +105,99 @@ face of another block.  This is awkward and hard to handle simply.
                     diagnostics and reporting to be performed
 \end{routine}
 
-
-\begin{routine} {void ops\_exit()}
-{This routine must be called last to cleanly terminate the OPS computation.}
-\item \vspace{-0.3in}
-\end{routine}
-
-\begin{routine} {ops\_block ops\_decl\_block(int dims, int *size, char *name)}
+\begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
 {This routine defines a structured grid block.}
 
 \item[dims]          dimension of the set
-\item[size]          size of the set in each dimension
 \item[name]          a name used for output diagnostics
 \end{routine}
 
-\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, T *data, char *name)}
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
+*data, char
+*type, char *name)}
 {This routine defines a dataset.}
 
 \item[block]         structured block
-\item[dim]           dimension of dataset (number of items per block element)
+\item[dim]           dimension of dataset (number of items per grid element)
+\item[size]      size in each dimension of the block
+\item[base]      base indices in each dimension of the block
+\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
+\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
 \item[data]          input data of type {\tt T}
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
 \item[name]          a name used for output diagnostics
+\end{routine}
+
+\noindent The \texttt{size} allows to declare different sized data arrays on a given \texttt{block}. \texttt{d\_m} and 
+\texttt{d\_p} are depth of the ``block halos'' that are used to indicate the offset from the edge of a block (in both 
+the negative and positive directions of each dimension). \\\\
+
+
+\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *size, int *base, int *d\_m, int *d\_p, 
+char *file, char *type, char *name)}
+{This routine defines a dataset to be read in from a named hdf5 file}
+
+\item[block]         structured block
+\item[dim]           dimension of dataset (number of items per grid element)
+\item[size]      size in each dimension of the block
+\item[base]      base indices in each dimension of the block
+\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
+\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
+\item[file]      hdf5 file to read and obtain the data from
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          name of the dat used for output diagnostics
+\end{routine}
+
+
+
+\begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
+int *from\_dir, int *to\_dir)}
+{This routine defines a halo relationship between two datasets defined on two different blocks.}
+
+\item[from]         origin dataset
+\item[to]           destination dataset
+\item[iter\_size]          defines an iteration size (number of indices to iterate over in each direction)
+\item[from\_base]      indices of starting point in "from" dataset
+\item[to\_base]          indices of starting point in "to" dataset
+\item[from\_dir]          direction of incrementing for "from" for each dimension of {\tt iter\_size}
+\item[to\_dir]           direction of incrementing for "to" for each dimension of {\tt iter\_size}
+\end{routine}
+
+(Simple example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = 
+[1,0,0], to\_base = [-1,0,0], from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers 
+between blocks with different orientations.)\\\\\\
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
+{This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
+there is no order defined in which they are carried out.}
+
+\item[nhalos]         number of halos in {\tt halos}
+\item[halos]           array of halos
+\end{routine}
+
+\begin{routine} {ops\_reduction ops\_decl\_reduction\_handle(int size, char *type, char *name)}
+{This routine defines a reduction handle to be used in a parallel loop}
+
+\item[size]      size of data in bytes
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          name of the dat used for output diagnostics
+\end{routine}
+
+\begin{routine} {void ops\_reduction\_result(ops\_reduction handle, T *result)}
+{This routine returns the reduced value held by a reduction handle}
+
+\item[handle]        the {\tt ops\_reduction} handle
+\item[result]          a pointer to write the results to, memory size has to match the declared
+\end{routine}
+
+
+\begin{routine} {ops\_partition(char *method)}
+{Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
+function for single node parallelisations). This routine should only be called after all the ops\_halo ops\_decl\_block 
+and ops\_halo ops\_decl\_dat statements have been declared}
+
+\item[method]        string describing the partitioning method. Currently this string is not used internally, but 
+is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
 \begin{routine} {void ops\_diagnostic\_output()}
@@ -133,6 +205,39 @@ face of another block.  This is awkward and hard to handle simply.
 \item \vspace{-0.3in}
 \end{routine}
 
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsubsection{Convenience functions}
+
+%Since in many cases blocks and their datasets are perfectly aligned, it is convenient to define the relationship between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
+%
+%\begin{routine} {ops\_halo\_group ops\_decl\_halos(ops\_block from, ops\_block to, int *from\_face, int depth)}
+%{This routine defines a connection between two blocks that are oriented the same way and share a face, and all their datasets have the same dimensions on that face. It will return an {\tt ops\_halo\_group} with {\tt ops\_halo}s defined between matching datasets. \textbf{Should this be symmetric?}}
+%
+%\item[from]         origin block
+%\item[to]           target block
+%\item[from\_face]           an array specifying the invariant dimension and a side - it may contain a single non-zero value, either -1 or +1 (beginning and end of iteration range)
+%\item[depth]         number of halo layers
+%\end{routine}
+%
+%(For example in 2D if (0,0) is the bottom left corner of blocks, then {\tt from\_face}=[1,0] would define a connection between the right face of the origin block and the left face of the destination block.)
+
+\begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
+{Adds an {ops\_halo} to a halo group}
+
+\item[group]         the halo group to add to
+\item[halo]           the halo to add
+\end{routine}
+
+\subsection{Halo exchange}
+\begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
+{This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on the exchanged data.}
+
+\item[group]         the halo group
+\end{routine}
 
 
 \newpage
@@ -141,16 +246,19 @@ face of another block.  This is awkward and hard to handle simply.
 
 A parallel loop with N arguments has the following syntax:
 
-\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), char *name,
-                 int dims, int *range,\\
-\hspace*{1.4in} ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
+\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), \\
+                 \hspace*{1.4in} char *name, ops\_blck block, int dims, int *range,\\
+\hspace*{1.4in}  ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
 
 \item[kernel]     user's kernel function with N arguments
 \item[name]       name of kernel function, used for output diagnostics
+\item[block]      the ops\_block over which this loop executes
 \item[dims]       dimension of loop iteration
 \item[range]      iteration range array
 \item[args]       arguments
 \end{routine}
+
+
 
 
 \vspace{0.2in}
@@ -165,18 +273,25 @@ for OPS datasets.
 \begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
 \item[data]       data array
 \item[dim]        array dimension
-\item[type]    	  string representing the type of data held in data
+\item[type]       string representing the type of data held in data
 \item[acc]        access type
 \end{routine}
 
-
+\begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{}
+\item[handle]       an {\tt ops\_reduction} handle
+\item[dim]        array dimension (according to {\tt type})
+\item[type]       string representing the type of data held in data
+\item[acc]        access type
+\end{routine}
+\newpage
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
                  ops\_access acc)}{}
 \item[dat]        dataset
 \item[stencil]    stencil for accessing data
-\item[type]    	  string representing the type of data held in dataset
+\item[type]       string representing the type of data held in dataset
 \item[acc]        access type
 \end{routine}
+
 
 
 \newpage
@@ -188,7 +303,7 @@ for OPS datasets.
 \item[dims]     dimension of loop iteration
 \item[points]   number of points in the stencil
 \item[stencil]  stencil for accessing data
-\item[name]	string representing the name of the stencil
+\item[name] string representing the name of the stencil
 \end{routine}
 
 
@@ -198,7 +313,7 @@ for OPS datasets.
 \item[points]     number of points in the stencil
 \item[stencil]    stencil for accessing data
 \item[stride]     stride for accessing data
-\item[name]	string representing the name of the stencil
+\item[name] string representing the name of the stencil
 \end{routine}
 
 \vspace{0.2in}
@@ -224,12 +339,19 @@ specification.
 \noindent The strided stencil will handle both multigrid (with a stride of 2) and the boundary condition and reduced
 dimension applications (with a stride of 0 for the relevant dimensions).
 
+\subsection{Checkpointing}
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} runtime argument has to be used.
+
+\begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing system, has to be called after {\tt ops\_partition}}
+\item[filename]        name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
+\item[interval]    average time between checkpoints
+\end{routine}
 
 \newpage
 \section{OPS User Kernels}
 
 \noindent In OPS, the elemental operation carried out per mesh/grid point is specified as an outlined function called
-a \textit{user kernel}. An example is given in \figurename{ \ref{fig:example}}.
+a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.
 \begin{figure}[h]\small
 \vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
 \begin{pyglist}[language=c]
@@ -256,7 +378,7 @@ void accelerate_kernel_stepbymass( double *density0, double *volume,
 int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; //x-y range
 
 ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
-             2, rangexy_inner_plus1,
+             clover_grid, 2, rangexy_inner_plus1,
              ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(volume,   S2D_00_M10_0M1_M1M1, "double", OPS_READ),
              ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
@@ -277,6 +399,7 @@ related to the stencil specified) to access the relevant element.
 \end{thebibliography}
 
 \end{document}
+
 
 
 
