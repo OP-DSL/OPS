@@ -5,7 +5,7 @@
 \usepackage{listings}
 \usepackage{verbments}
 
-\date{Jan 2014}
+\date{Nov 2014}
 
  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
  \oddsidemargin 0.1in
@@ -105,32 +105,20 @@ face of another block.  This is awkward and hard to handle simply.
                     diagnostics and reporting to be performed
 \end{routine}
 
-
-\begin{routine} {void ops\_exit()}
-{This routine must be called last to cleanly terminate the OPS computation.}
-\item \vspace{-0.3in}
-\end{routine}
-
-
-\begin{routine} {void ops\_diagnostic\_output()}
-{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
-\item \vspace{-0.3in}
-\end{routine}
-
 \begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
 {This routine defines a structured grid block.}
 
 \item[dims]          dimension of the set
-% \item[size]          size of the set in each dimension
 \item[name]          a name used for output diagnostics
 \end{routine}
 
-\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, int *d\_m, int *d\_p, \\T *data, char
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
+*data, char
 *type, char *name)}
 {This routine defines a dataset.}
 
 \item[block]         structured block
-\item[dim]           dimension of dataset (number of items per block element)
+\item[dim]           dimension of dataset (number of items per grid element)
 \item[size]      size in each dimension of the block
 \item[base]      base indices in each dimension of the block
 \item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
@@ -140,20 +128,17 @@ face of another block.  This is awkward and hard to handle simply.
 \item[name]          a name used for output diagnostics
 \end{routine}
 
-\noindent The depths \texttt{d\_m} and \texttt{d\_p} are a current workaround that is used to indicate the offset from
-the edge (in both the negative and positive directions of each dimension). In the current API, it is important that the
-application developer indicate to OPS, the maximum stencil depth a given \texttt{ops\_dat} is accessed within any of the
-subsequent loops over a block. This is to account for stencils accessing beyond the defined regions of the
-\texttt{ops\_dat} during an execution, particularly for distributed memory halo allocation within OPS. In the future OPS
-will be able to dynamically allocate the maximum necessary depths based on the stencils declared to be used on a given
-\texttt{ops\_dat}, eliminating the need to declare \texttt{d\_m} and \texttt{d\_p}.
+\noindent The \texttt{size} allows to declare different sized data arrays on a given \texttt{block}. \texttt{d\_m} and 
+\texttt{d\_p} are depth of the ``block halos'' that are used to indicate the offset from the edge of a block (in both 
+the negative and positive directions of each dimension). \\\\
 
 
-\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *size, int *base, int *d\_m, int *d\_p, char *file, char *type, char *name)}
+\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *size, int *base, int *d\_m, int *d\_p, 
+char *file, char *type, char *name)}
 {This routine defines a dataset to be read in from a named hdf5 file}
 
 \item[block]         structured block
-\item[dim]           dimension of dataset (number of items per block element)
+\item[dim]           dimension of dataset (number of items per grid element)
 \item[size]      size in each dimension of the block
 \item[base]      base indices in each dimension of the block
 \item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
@@ -161,6 +146,33 @@ will be able to dynamically allocate the maximum necessary depths based on the s
 \item[file]      hdf5 file to read and obtain the data from
 \item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
 \item[name]          name of the dat used for output diagnostics
+\end{routine}
+
+
+
+\begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
+int *from\_dir, int *to\_dir)}
+{This routine defines a halo relationship between two datasets defined on two different blocks.}
+
+\item[from]         origin dataset
+\item[to]           destination dataset
+\item[iter\_size]          defines an iteration size (number of indices to iterate over in each direction)
+\item[from\_base]      indices of starting point in "from" dataset
+\item[to\_base]          indices of starting point in "to" dataset
+\item[from\_dir]          direction of incrementing for "from" for each dimension of {\tt iter\_size}
+\item[to\_dir]           direction of incrementing for "to" for each dimension of {\tt iter\_size}
+\end{routine}
+
+(Simple example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = 
+[1,0,0], to\_base = [-1,0,0], from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers 
+between blocks with different orientations.)\\\\\\
+
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
+{This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
+there is no order defined in which they are carried out.}
+
+\item[nhalos]         number of halos in {\tt halos}
+\item[halos]           array of halos
 \end{routine}
 
 \begin{routine} {ops\_reduction ops\_decl\_reduction\_handle(int size, char *type, char *name)}
@@ -179,25 +191,23 @@ will be able to dynamically allocate the maximum necessary depths based on the s
 \end{routine}
 
 
-\begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, int *from\_dir, int *to\_dir)}
-{This routine defines a halo relationship between two datasets defined on two different blocks.}
+\begin{routine} {ops\_partition(char *method)}
+{Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
+function for single node parallelisations). This routine should only be called after all the ops\_halo ops\_decl\_block 
+and ops\_halo ops\_decl\_dat statements have been declared}
 
-\item[from]         origin dataset
-\item[to]           destination dataset
-\item[iter\_size]          defines an iteration size (number of indices to iterate over in each direction)
-\item[from\_base]      indices of starting point in "from" dataset
-\item[to\_base]          indices of starting point in "to" dataset
-\item[from\_dir]          direction of incrementing for "from" for each dimension of {\tt iter\_size}
-\item[to\_dir]           direction of incrementing for "to" for each dimension of {\tt iter\_size}
+\item[method]        string describing the partitioning method. Currently this string is not used internally, but 
+is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
-(Simple example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = [1,0,0], to\_base = [-1,0,0], from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers between blocks with different orientations.)
+\begin{routine} {void ops\_diagnostic\_output()}
+{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
+\item \vspace{-0.3in}
+\end{routine}
 
-\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
-{This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, there is no order defined in which they are carried out.}
-
-\item[nhalos]         number of halos in {\tt halos}
-\item[halos]           array of halos
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
 \end{routine}
 
 \subsubsection{Convenience functions}
@@ -273,7 +283,7 @@ for OPS datasets.
 \item[type]       string representing the type of data held in data
 \item[acc]        access type
 \end{routine}
-
+\newpage
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
                  ops\_access acc)}{}
 \item[dat]        dataset
