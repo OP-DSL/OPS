@@ -29,10 +29,10 @@ void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double 
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
+
 
 
 void initialise_chunk_kernel_cellx_c_wrapper(
@@ -53,9 +53,9 @@ void initialise_chunk_kernel_cellx_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        initialise_chunk_kernel_cellx(  p_a0 + n_x*1 + n_y*xdim0_initialise_chunk_kernel_cellx*0 + n_z*xdim0_initialise_chunk_kernel_cellx*ydim0_initialise_chunk_kernel_cellx*0,
-           p_a1 + n_x*1 + n_y*xdim1_initialise_chunk_kernel_cellx*0 + n_z*xdim1_initialise_chunk_kernel_cellx*ydim1_initialise_chunk_kernel_cellx*0,
-           p_a2 + n_x*1 + n_y*xdim2_initialise_chunk_kernel_cellx*0 + n_z*xdim2_initialise_chunk_kernel_cellx*ydim2_initialise_chunk_kernel_cellx*0 );
+        initialise_chunk_kernel_cellx(  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_cellx*0*1 + n_z*xdim0_initialise_chunk_kernel_cellx*ydim0_initialise_chunk_kernel_cellx*0,
+           p_a1 + n_x*1*1 + n_y*xdim1_initialise_chunk_kernel_cellx*0*1 + n_z*xdim1_initialise_chunk_kernel_cellx*ydim1_initialise_chunk_kernel_cellx*0,
+           p_a2 + n_x*1*1 + n_y*xdim2_initialise_chunk_kernel_cellx*0*1 + n_z*xdim2_initialise_chunk_kernel_cellx*ydim2_initialise_chunk_kernel_cellx*0 );
 
       }
     }

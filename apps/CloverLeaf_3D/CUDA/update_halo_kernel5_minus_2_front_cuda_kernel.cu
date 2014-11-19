@@ -40,8 +40,8 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel5_minus_2_front + idx_z * 1 * xdim0_update_halo_kernel5_minus_2_front * ydim0_update_halo_kernel5_minus_2_front;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel5_minus_2_front + idx_z * 1 * xdim1_update_halo_kernel5_minus_2_front * ydim1_update_halo_kernel5_minus_2_front;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel5_minus_2_front + idx_z * 1*1 * xdim0_update_halo_kernel5_minus_2_front * ydim0_update_halo_kernel5_minus_2_front;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel5_minus_2_front + idx_z * 1*1 * xdim1_update_halo_kernel5_minus_2_front * ydim1_update_halo_kernel5_minus_2_front;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     update_halo_kernel5_minus_2_front(arg0, arg1, arg2);
@@ -97,9 +97,9 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
 
 

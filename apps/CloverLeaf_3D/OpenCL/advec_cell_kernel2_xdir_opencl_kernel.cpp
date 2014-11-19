@@ -140,13 +140,13 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
 
   //build opencl kernel if not already built
@@ -178,11 +178,11 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 * 
+  int base0 = 1 *1* 
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0 + args[0].dat->size[0] *
+  base0 = base0 + args[0].dat->size[0] *1*
   (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  base0 = base0 + args[0].dat->size[0] *  args[0].dat->size[1] *
+  base0 = base0 + args[0].dat->size[0] *1*  args[0].dat->size[1] *1*
   (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -190,11 +190,11 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 * 
+  int base1 = 1 *1* 
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1 + args[1].dat->size[0] *
+  base1 = base1 + args[1].dat->size[0] *1*
   (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  base1 = base1 + args[1].dat->size[0] *  args[1].dat->size[1] *
+  base1 = base1 + args[1].dat->size[0] *1*  args[1].dat->size[1] *1*
   (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -202,11 +202,11 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = 1 * 
+  int base2 = 1 *1* 
   (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
-  base2 = base2 + args[2].dat->size[0] *
+  base2 = base2 + args[2].dat->size[0] *1*
   (start[1] * args[2].stencil->stride[1] - args[2].dat->base[1] - d_m[1]);
-  base2 = base2 + args[2].dat->size[0] *  args[2].dat->size[1] *
+  base2 = base2 + args[2].dat->size[0] *1*  args[2].dat->size[1] *1*
   (start[2] * args[2].stencil->stride[2] - args[2].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -214,11 +214,11 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = 1 * 
+  int base3 = 1 *1* 
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
-  base3 = base3 + args[3].dat->size[0] *
+  base3 = base3 + args[3].dat->size[0] *1*
   (start[1] * args[3].stencil->stride[1] - args[3].dat->base[1] - d_m[1]);
-  base3 = base3 + args[3].dat->size[0] *  args[3].dat->size[1] *
+  base3 = base3 + args[3].dat->size[0] *1*  args[3].dat->size[1] *1*
   (start[2] * args[3].stencil->stride[2] - args[3].dat->base[2] - d_m[2]);
 
 

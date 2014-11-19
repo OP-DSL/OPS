@@ -47,7 +47,7 @@
 //user function
 inline void advec_mom_kernel_mass_flux_y( __global double * restrict node_flux, const __global double * restrict mass_flux_y)
 
-  {
+ {
 
 
   node_flux[OPS_ACC0(0,0,0)] = 0.125 * ( mass_flux_y[OPS_ACC1(-1,0,0)] + mass_flux_y[OPS_ACC1(0,0,0)] +
@@ -58,27 +58,28 @@ inline void advec_mom_kernel_mass_flux_y( __global double * restrict node_flux, 
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
+#undef OPS_ACC0
+#undef OPS_ACC1
 
 
- __kernel void ops_advec_mom_kernel_mass_flux_y(
- __global double* restrict arg0,
- __global const double* restrict arg1,
- const int base0,
- const int base1,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_advec_mom_kernel_mass_flux_y(
+__global double* restrict arg0,
+__global const double* restrict arg1,
+const int base0,
+const int base1,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_z = get_global_id(2);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     advec_mom_kernel_mass_flux_y(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel_mass_flux_y + idx_z * 1 * xdim0_advec_mom_kernel_mass_flux_y * ydim0_advec_mom_kernel_mass_flux_y],
-                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel_mass_flux_y + idx_z * 1 * xdim1_advec_mom_kernel_mass_flux_y * ydim1_advec_mom_kernel_mass_flux_y]);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    advec_mom_kernel_mass_flux_y(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim0_advec_mom_kernel_mass_flux_y * ydim0_advec_mom_kernel_mass_flux_y],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim1_advec_mom_kernel_mass_flux_y * ydim1_advec_mom_kernel_mass_flux_y]);
+  }
 
- }
+}

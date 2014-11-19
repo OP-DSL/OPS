@@ -103,7 +103,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
       arg_gbl1[d+64*thr] = INFINITY_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
 
   ops_H_D_exchanges_host(args, 2);
@@ -156,7 +156,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
         for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
           //call kernel function, passing in pointers to data -vectorised
           for ( int i=0; i<SIMD_VEC; i++ ){
-            calc_dt_kernel_min(  (const double * )p_a[0]+ i*1, &arg_gbl1[64*thr] );
+            calc_dt_kernel_min(  (const double * )p_a[0]+ i*1*1, &arg_gbl1[64*thr] );
 
           }
 

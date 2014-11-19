@@ -202,27 +202,27 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block block, int
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim7 = args[7].dat->size[0];
   ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim8 = args[8].dat->size[0];
   ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim9 = args[9].dat->size[0];
   ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim10 = args[10].dat->size[0];
   ydim10 = args[10].dat->size[1];
 
   ops_H_D_exchanges_host(args, 11);
@@ -434,9 +434,9 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block block, int
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            advec_cell_kernel4_xdir(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (const double * )p_a[4]+ i*1, (const double * )p_a[5]+ i*1, (double * )p_a[6]+ i*1,
-           (double * )p_a[7]+ i*1, (double * )p_a[8]+ i*1, (double * )p_a[9]+ i*1, (const double * )p_a[10]+ i*1 );
+            advec_cell_kernel4_xdir(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (const double * )p_a[4]+ i*1*1, (const double * )p_a[5]+ i*1*1, (double * )p_a[6]+ i*1*1,
+           (double * )p_a[7]+ i*1*1, (double * )p_a[8]+ i*1*1, (double * )p_a[9]+ i*1*1, (const double * )p_a[10]+ i*1*1 );
 
           }
 

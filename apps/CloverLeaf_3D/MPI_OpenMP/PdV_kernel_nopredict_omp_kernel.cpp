@@ -305,39 +305,39 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim7 = args[7].dat->size[0];
   ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim8 = args[8].dat->size[0];
   ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim9 = args[9].dat->size[0];
   ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim10 = args[10].dat->size[0];
   ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  xdim11 = args[11].dat->size[0];
   ydim11 = args[11].dat->size[1];
-  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  xdim12 = args[12].dat->size[0];
   ydim12 = args[12].dat->size[1];
-  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  xdim13 = args[13].dat->size[0];
   ydim13 = args[13].dat->size[1];
-  xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+  xdim14 = args[14].dat->size[0];
   ydim14 = args[14].dat->size[1];
-  xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+  xdim15 = args[15].dat->size[0];
   ydim15 = args[15].dat->size[1];
-  xdim16 = args[16].dat->size[0]*args[16].dat->dim;
+  xdim16 = args[16].dat->size[0];
   ydim16 = args[16].dat->size[1];
 
   ops_H_D_exchanges_host(args, 17);
@@ -645,11 +645,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            PdV_kernel_nopredict(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (const double * )p_a[4]+ i*1, (const double * )p_a[5]+ i*1, (double * )p_a[6]+ i*1,
-           (const double * )p_a[7]+ i*1, (const double * )p_a[8]+ i*1, (const double * )p_a[9]+ i*1, (double * )p_a[10]+ i*1,
-           (const double * )p_a[11]+ i*1, (const double * )p_a[12]+ i*1, (double * )p_a[13]+ i*1, (const double * )p_a[14]+ i*1,
-           (const double * )p_a[15]+ i*1, (const double * )p_a[16]+ i*1 );
+            PdV_kernel_nopredict(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (const double * )p_a[4]+ i*1*1, (const double * )p_a[5]+ i*1*1, (double * )p_a[6]+ i*1*1,
+           (const double * )p_a[7]+ i*1*1, (const double * )p_a[8]+ i*1*1, (const double * )p_a[9]+ i*1*1, (double * )p_a[10]+ i*1*1,
+           (const double * )p_a[11]+ i*1*1, (const double * )p_a[12]+ i*1*1, (double * )p_a[13]+ i*1*1, (const double * )p_a[14]+ i*1*1,
+           (const double * )p_a[15]+ i*1*1, (const double * )p_a[16]+ i*1*1 );
 
           }
 

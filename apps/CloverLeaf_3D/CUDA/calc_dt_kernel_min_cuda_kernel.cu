@@ -36,7 +36,7 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min + idx_z * 1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     calc_dt_kernel_min(arg0, arg1_l);
@@ -94,7 +94,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
 

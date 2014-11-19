@@ -114,11 +114,11 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
 
   ops_H_D_exchanges_host(args, 3);
@@ -202,7 +202,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            initialise_chunk_kernel_celly(  (const double * )p_a[0]+ i*0, (double * )p_a[1]+ i*0, (double * )p_a[2]+ i*0 );
+            initialise_chunk_kernel_celly(  (const double * )p_a[0]+ i*0*1, (double * )p_a[1]+ i*0*1, (double * )p_a[2]+ i*0*1 );
 
           }
 

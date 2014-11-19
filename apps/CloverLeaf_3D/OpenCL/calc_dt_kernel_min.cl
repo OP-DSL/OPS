@@ -46,38 +46,39 @@
 //user function
 void calc_dt_kernel_min(const __global double* restrict  dt_min,  double* restrict  dt_min_val)
 
-  {
+ {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0,0)]);
 
 }
 
 
 
- #undef OPS_ACC0
+#undef OPS_ACC0
 
 
- __kernel void ops_calc_dt_kernel_min(
- __global const double* restrict arg0,
- __global double* restrict arg1,
- __local double* scratch1,
- int r_bytes1,
- const int base0,
- const int size0,
- const int size1,
- const int size2 ){
 
-   arg1 += r_bytes1;
-   double arg1_l[1];
-   for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
+__kernel void ops_calc_dt_kernel_min(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+__local double* scratch1,
+int r_bytes1,
+const int base0,
+const int size0,
+const int size1,
+const int size2 ){
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  arg1 += r_bytes1;
+  double arg1_l[1];
+  for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     calc_dt_kernel_min(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_min + idx_z * 1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min],
-                    arg1_l);
-   }
-   reduce_double(arg1_l[0], scratch1, arg1, OPS_MIN);
+  int idx_z = get_global_id(2);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
- }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    calc_dt_kernel_min(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min],
+                   arg1_l);
+  }
+  reduce_double(arg1_l[0], scratch1, arg1, OPS_MIN);
+
+}

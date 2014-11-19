@@ -38,13 +38,13 @@ inline void advec_mom_kernel_x1( double *pre_vol, double *post_vol,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
+
 
 
 void advec_mom_kernel_x1_c_wrapper(
@@ -68,12 +68,12 @@ void advec_mom_kernel_x1_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel_x1(  p_a0 + n_x*1 + n_y*xdim0_advec_mom_kernel_x1*1 + n_z*xdim0_advec_mom_kernel_x1*ydim0_advec_mom_kernel_x1*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_mom_kernel_x1*1 + n_z*xdim1_advec_mom_kernel_x1*ydim1_advec_mom_kernel_x1*1,
-           p_a2 + n_x*1 + n_y*xdim2_advec_mom_kernel_x1*1 + n_z*xdim2_advec_mom_kernel_x1*ydim2_advec_mom_kernel_x1*1,
-           p_a3 + n_x*1 + n_y*xdim3_advec_mom_kernel_x1*1 + n_z*xdim3_advec_mom_kernel_x1*ydim3_advec_mom_kernel_x1*1,
-           p_a4 + n_x*1 + n_y*xdim4_advec_mom_kernel_x1*1 + n_z*xdim4_advec_mom_kernel_x1*ydim4_advec_mom_kernel_x1*1,
-           p_a5 + n_x*1 + n_y*xdim5_advec_mom_kernel_x1*1 + n_z*xdim5_advec_mom_kernel_x1*ydim5_advec_mom_kernel_x1*1 );
+        advec_mom_kernel_x1(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel_x1*1*1 + n_z*xdim0_advec_mom_kernel_x1*ydim0_advec_mom_kernel_x1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel_x1*1*1 + n_z*xdim1_advec_mom_kernel_x1*ydim1_advec_mom_kernel_x1*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel_x1*1*1 + n_z*xdim2_advec_mom_kernel_x1*ydim2_advec_mom_kernel_x1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel_x1*1*1 + n_z*xdim3_advec_mom_kernel_x1*ydim3_advec_mom_kernel_x1*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_advec_mom_kernel_x1*1*1 + n_z*xdim4_advec_mom_kernel_x1*ydim4_advec_mom_kernel_x1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_advec_mom_kernel_x1*1*1 + n_z*xdim5_advec_mom_kernel_x1*ydim5_advec_mom_kernel_x1*1 );
 
       }
     }

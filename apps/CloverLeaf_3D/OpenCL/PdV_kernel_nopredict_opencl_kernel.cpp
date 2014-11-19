@@ -143,39 +143,39 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  int xdim5 = args[5].dat->size[0];
   int ydim5 = args[5].dat->size[1];
-  int xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
-  int xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  int xdim7 = args[7].dat->size[0];
   int ydim7 = args[7].dat->size[1];
-  int xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  int xdim8 = args[8].dat->size[0];
   int ydim8 = args[8].dat->size[1];
-  int xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  int xdim9 = args[9].dat->size[0];
   int ydim9 = args[9].dat->size[1];
-  int xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  int xdim10 = args[10].dat->size[0];
   int ydim10 = args[10].dat->size[1];
-  int xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  int xdim11 = args[11].dat->size[0];
   int ydim11 = args[11].dat->size[1];
-  int xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  int xdim12 = args[12].dat->size[0];
   int ydim12 = args[12].dat->size[1];
-  int xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  int xdim13 = args[13].dat->size[0];
   int ydim13 = args[13].dat->size[1];
-  int xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+  int xdim14 = args[14].dat->size[0];
   int ydim14 = args[14].dat->size[1];
-  int xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+  int xdim15 = args[15].dat->size[0];
   int ydim15 = args[15].dat->size[1];
-  int xdim16 = args[16].dat->size[0]*args[16].dat->dim;
+  int xdim16 = args[16].dat->size[0];
   int ydim16 = args[16].dat->size[1];
 
   //build opencl kernel if not already built
@@ -220,11 +220,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 * 
+  int base0 = 1 *1* 
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0 + args[0].dat->size[0] *
+  base0 = base0 + args[0].dat->size[0] *1*
   (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  base0 = base0 + args[0].dat->size[0] *  args[0].dat->size[1] *
+  base0 = base0 + args[0].dat->size[0] *1*  args[0].dat->size[1] *1*
   (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -232,11 +232,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 * 
+  int base1 = 1 *1* 
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1 + args[1].dat->size[0] *
+  base1 = base1 + args[1].dat->size[0] *1*
   (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  base1 = base1 + args[1].dat->size[0] *  args[1].dat->size[1] *
+  base1 = base1 + args[1].dat->size[0] *1*  args[1].dat->size[1] *1*
   (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -244,11 +244,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = 1 * 
+  int base2 = 1 *1* 
   (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
-  base2 = base2 + args[2].dat->size[0] *
+  base2 = base2 + args[2].dat->size[0] *1*
   (start[1] * args[2].stencil->stride[1] - args[2].dat->base[1] - d_m[1]);
-  base2 = base2 + args[2].dat->size[0] *  args[2].dat->size[1] *
+  base2 = base2 + args[2].dat->size[0] *1*  args[2].dat->size[1] *1*
   (start[2] * args[2].stencil->stride[2] - args[2].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -256,11 +256,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = 1 * 
+  int base3 = 1 *1* 
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
-  base3 = base3 + args[3].dat->size[0] *
+  base3 = base3 + args[3].dat->size[0] *1*
   (start[1] * args[3].stencil->stride[1] - args[3].dat->base[1] - d_m[1]);
-  base3 = base3 + args[3].dat->size[0] *  args[3].dat->size[1] *
+  base3 = base3 + args[3].dat->size[0] *1*  args[3].dat->size[1] *1*
   (start[2] * args[3].stencil->stride[2] - args[3].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -268,11 +268,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
   #endif //OPS_MPI
-  int base4 = 1 * 
+  int base4 = 1 *1* 
   (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
-  base4 = base4 + args[4].dat->size[0] *
+  base4 = base4 + args[4].dat->size[0] *1*
   (start[1] * args[4].stencil->stride[1] - args[4].dat->base[1] - d_m[1]);
-  base4 = base4 + args[4].dat->size[0] *  args[4].dat->size[1] *
+  base4 = base4 + args[4].dat->size[0] *1*  args[4].dat->size[1] *1*
   (start[2] * args[4].stencil->stride[2] - args[4].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -280,11 +280,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
   #endif //OPS_MPI
-  int base5 = 1 * 
+  int base5 = 1 *1* 
   (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
-  base5 = base5 + args[5].dat->size[0] *
+  base5 = base5 + args[5].dat->size[0] *1*
   (start[1] * args[5].stencil->stride[1] - args[5].dat->base[1] - d_m[1]);
-  base5 = base5 + args[5].dat->size[0] *  args[5].dat->size[1] *
+  base5 = base5 + args[5].dat->size[0] *1*  args[5].dat->size[1] *1*
   (start[2] * args[5].stencil->stride[2] - args[5].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -292,11 +292,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[6].dat->d_m[d];
   #endif //OPS_MPI
-  int base6 = 1 * 
+  int base6 = 1 *1* 
   (start[0] * args[6].stencil->stride[0] - args[6].dat->base[0] - d_m[0]);
-  base6 = base6 + args[6].dat->size[0] *
+  base6 = base6 + args[6].dat->size[0] *1*
   (start[1] * args[6].stencil->stride[1] - args[6].dat->base[1] - d_m[1]);
-  base6 = base6 + args[6].dat->size[0] *  args[6].dat->size[1] *
+  base6 = base6 + args[6].dat->size[0] *1*  args[6].dat->size[1] *1*
   (start[2] * args[6].stencil->stride[2] - args[6].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -304,11 +304,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[7].dat->d_m[d];
   #endif //OPS_MPI
-  int base7 = 1 * 
+  int base7 = 1 *1* 
   (start[0] * args[7].stencil->stride[0] - args[7].dat->base[0] - d_m[0]);
-  base7 = base7 + args[7].dat->size[0] *
+  base7 = base7 + args[7].dat->size[0] *1*
   (start[1] * args[7].stencil->stride[1] - args[7].dat->base[1] - d_m[1]);
-  base7 = base7 + args[7].dat->size[0] *  args[7].dat->size[1] *
+  base7 = base7 + args[7].dat->size[0] *1*  args[7].dat->size[1] *1*
   (start[2] * args[7].stencil->stride[2] - args[7].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -316,11 +316,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[8].dat->d_m[d];
   #endif //OPS_MPI
-  int base8 = 1 * 
+  int base8 = 1 *1* 
   (start[0] * args[8].stencil->stride[0] - args[8].dat->base[0] - d_m[0]);
-  base8 = base8 + args[8].dat->size[0] *
+  base8 = base8 + args[8].dat->size[0] *1*
   (start[1] * args[8].stencil->stride[1] - args[8].dat->base[1] - d_m[1]);
-  base8 = base8 + args[8].dat->size[0] *  args[8].dat->size[1] *
+  base8 = base8 + args[8].dat->size[0] *1*  args[8].dat->size[1] *1*
   (start[2] * args[8].stencil->stride[2] - args[8].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -328,11 +328,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[9].dat->d_m[d];
   #endif //OPS_MPI
-  int base9 = 1 * 
+  int base9 = 1 *1* 
   (start[0] * args[9].stencil->stride[0] - args[9].dat->base[0] - d_m[0]);
-  base9 = base9 + args[9].dat->size[0] *
+  base9 = base9 + args[9].dat->size[0] *1*
   (start[1] * args[9].stencil->stride[1] - args[9].dat->base[1] - d_m[1]);
-  base9 = base9 + args[9].dat->size[0] *  args[9].dat->size[1] *
+  base9 = base9 + args[9].dat->size[0] *1*  args[9].dat->size[1] *1*
   (start[2] * args[9].stencil->stride[2] - args[9].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -340,11 +340,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[10].dat->d_m[d];
   #endif //OPS_MPI
-  int base10 = 1 * 
+  int base10 = 1 *1* 
   (start[0] * args[10].stencil->stride[0] - args[10].dat->base[0] - d_m[0]);
-  base10 = base10 + args[10].dat->size[0] *
+  base10 = base10 + args[10].dat->size[0] *1*
   (start[1] * args[10].stencil->stride[1] - args[10].dat->base[1] - d_m[1]);
-  base10 = base10 + args[10].dat->size[0] *  args[10].dat->size[1] *
+  base10 = base10 + args[10].dat->size[0] *1*  args[10].dat->size[1] *1*
   (start[2] * args[10].stencil->stride[2] - args[10].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -352,11 +352,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[11].dat->d_m[d];
   #endif //OPS_MPI
-  int base11 = 1 * 
+  int base11 = 1 *1* 
   (start[0] * args[11].stencil->stride[0] - args[11].dat->base[0] - d_m[0]);
-  base11 = base11 + args[11].dat->size[0] *
+  base11 = base11 + args[11].dat->size[0] *1*
   (start[1] * args[11].stencil->stride[1] - args[11].dat->base[1] - d_m[1]);
-  base11 = base11 + args[11].dat->size[0] *  args[11].dat->size[1] *
+  base11 = base11 + args[11].dat->size[0] *1*  args[11].dat->size[1] *1*
   (start[2] * args[11].stencil->stride[2] - args[11].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -364,11 +364,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[12].dat->d_m[d];
   #endif //OPS_MPI
-  int base12 = 1 * 
+  int base12 = 1 *1* 
   (start[0] * args[12].stencil->stride[0] - args[12].dat->base[0] - d_m[0]);
-  base12 = base12 + args[12].dat->size[0] *
+  base12 = base12 + args[12].dat->size[0] *1*
   (start[1] * args[12].stencil->stride[1] - args[12].dat->base[1] - d_m[1]);
-  base12 = base12 + args[12].dat->size[0] *  args[12].dat->size[1] *
+  base12 = base12 + args[12].dat->size[0] *1*  args[12].dat->size[1] *1*
   (start[2] * args[12].stencil->stride[2] - args[12].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -376,11 +376,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[13].dat->d_m[d];
   #endif //OPS_MPI
-  int base13 = 1 * 
+  int base13 = 1 *1* 
   (start[0] * args[13].stencil->stride[0] - args[13].dat->base[0] - d_m[0]);
-  base13 = base13 + args[13].dat->size[0] *
+  base13 = base13 + args[13].dat->size[0] *1*
   (start[1] * args[13].stencil->stride[1] - args[13].dat->base[1] - d_m[1]);
-  base13 = base13 + args[13].dat->size[0] *  args[13].dat->size[1] *
+  base13 = base13 + args[13].dat->size[0] *1*  args[13].dat->size[1] *1*
   (start[2] * args[13].stencil->stride[2] - args[13].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -388,11 +388,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[14].dat->d_m[d];
   #endif //OPS_MPI
-  int base14 = 1 * 
+  int base14 = 1 *1* 
   (start[0] * args[14].stencil->stride[0] - args[14].dat->base[0] - d_m[0]);
-  base14 = base14 + args[14].dat->size[0] *
+  base14 = base14 + args[14].dat->size[0] *1*
   (start[1] * args[14].stencil->stride[1] - args[14].dat->base[1] - d_m[1]);
-  base14 = base14 + args[14].dat->size[0] *  args[14].dat->size[1] *
+  base14 = base14 + args[14].dat->size[0] *1*  args[14].dat->size[1] *1*
   (start[2] * args[14].stencil->stride[2] - args[14].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -400,11 +400,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[15].dat->d_m[d];
   #endif //OPS_MPI
-  int base15 = 1 * 
+  int base15 = 1 *1* 
   (start[0] * args[15].stencil->stride[0] - args[15].dat->base[0] - d_m[0]);
-  base15 = base15 + args[15].dat->size[0] *
+  base15 = base15 + args[15].dat->size[0] *1*
   (start[1] * args[15].stencil->stride[1] - args[15].dat->base[1] - d_m[1]);
-  base15 = base15 + args[15].dat->size[0] *  args[15].dat->size[1] *
+  base15 = base15 + args[15].dat->size[0] *1*  args[15].dat->size[1] *1*
   (start[2] * args[15].stencil->stride[2] - args[15].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -412,11 +412,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[16].dat->d_m[d];
   #endif //OPS_MPI
-  int base16 = 1 * 
+  int base16 = 1 *1* 
   (start[0] * args[16].stencil->stride[0] - args[16].dat->base[0] - d_m[0]);
-  base16 = base16 + args[16].dat->size[0] *
+  base16 = base16 + args[16].dat->size[0] *1*
   (start[1] * args[16].stencil->stride[1] - args[16].dat->base[1] - d_m[1]);
-  base16 = base16 + args[16].dat->size[0] *  args[16].dat->size[1] *
+  base16 = base16 + args[16].dat->size[0] *1*  args[16].dat->size[1] *1*
   (start[2] * args[16].stencil->stride[2] - args[16].dat->base[2] - d_m[2]);
 
 

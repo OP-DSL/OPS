@@ -36,7 +36,7 @@ int size2 ){
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
   arg_idx[2] = arg_idx2+idx_z;
-  arg0 += idx_x * 0 + idx_y * 0 * xdim0_initialise_chunk_kernel_zz + idx_z * 1 * xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz;
+  arg0 += idx_x * 0*1 + idx_y * 0*1 * xdim0_initialise_chunk_kernel_zz + idx_z * 1*1 * xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     initialise_chunk_kernel_zz(arg0, arg_idx);
@@ -102,7 +102,7 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
   arg_idx[1] = start[1];
   arg_idx[2] = start[2];
   #endif //OPS_MPI
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
 

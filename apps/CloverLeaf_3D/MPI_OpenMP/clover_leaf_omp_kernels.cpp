@@ -3,6 +3,7 @@
 
 //header
 #define OPS_3D
+#define OPS_ACC_MD_MACROS
 #include "ops_lib_cpp.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"

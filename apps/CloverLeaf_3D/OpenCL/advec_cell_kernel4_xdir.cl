@@ -58,7 +58,7 @@ inline void advec_cell_kernel4_xdir( __global double * restrict density1, __glob
 const __global double * restrict vol_flux_x, const __global double * restrict pre_vol, const __global double * restrict post_vol, __global double * restrict pre_mass, 
 __global double * restrict post_mass, __global double * restrict advec_vol, __global double * restrict post_ener, const __global double * restrict ener_flux)
 
-  {
+ {
 
   pre_mass[OPS_ACC6(0,0,0)] = density1[OPS_ACC0(0,0,0)] * pre_vol[OPS_ACC4(0,0,0)];
   post_mass[OPS_ACC7(0,0,0)] = pre_mass[OPS_ACC6(0,0,0)] + mass_flux_x[OPS_ACC2(0,0,0)] - mass_flux_x[OPS_ACC2(1,0,0)];
@@ -71,63 +71,64 @@ __global double * restrict post_mass, __global double * restrict advec_vol, __gl
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
- #undef OPS_ACC7
- #undef OPS_ACC8
- #undef OPS_ACC9
- #undef OPS_ACC10
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
 
 
- __kernel void ops_advec_cell_kernel4_xdir(
- __global double* restrict arg0,
- __global double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- __global const double* restrict arg5,
- __global double* restrict arg6,
- __global double* restrict arg7,
- __global double* restrict arg8,
- __global double* restrict arg9,
- __global const double* restrict arg10,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int base7,
- const int base8,
- const int base9,
- const int base10,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_advec_cell_kernel4_xdir(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global double* restrict arg6,
+__global double* restrict arg7,
+__global double* restrict arg8,
+__global double* restrict arg9,
+__global const double* restrict arg10,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_z = get_global_id(2);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     advec_cell_kernel4_xdir(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_advec_cell_kernel4_xdir + idx_z * 1 * xdim0_advec_cell_kernel4_xdir * ydim0_advec_cell_kernel4_xdir],
-                       &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_advec_cell_kernel4_xdir + idx_z * 1 * xdim1_advec_cell_kernel4_xdir * ydim1_advec_cell_kernel4_xdir],
-                       &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_advec_cell_kernel4_xdir + idx_z * 1 * xdim2_advec_cell_kernel4_xdir * ydim2_advec_cell_kernel4_xdir],
-                       &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_advec_cell_kernel4_xdir + idx_z * 1 * xdim3_advec_cell_kernel4_xdir * ydim3_advec_cell_kernel4_xdir],
-                       &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_advec_cell_kernel4_xdir + idx_z * 1 * xdim4_advec_cell_kernel4_xdir * ydim4_advec_cell_kernel4_xdir],
-                       &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_advec_cell_kernel4_xdir + idx_z * 1 * xdim5_advec_cell_kernel4_xdir * ydim5_advec_cell_kernel4_xdir],
-                       &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_advec_cell_kernel4_xdir + idx_z * 1 * xdim6_advec_cell_kernel4_xdir * ydim6_advec_cell_kernel4_xdir],
-                       &arg7[base7 + idx_x * 1 + idx_y * 1 * xdim7_advec_cell_kernel4_xdir + idx_z * 1 * xdim7_advec_cell_kernel4_xdir * ydim7_advec_cell_kernel4_xdir],
-                       &arg8[base8 + idx_x * 1 + idx_y * 1 * xdim8_advec_cell_kernel4_xdir + idx_z * 1 * xdim8_advec_cell_kernel4_xdir * ydim8_advec_cell_kernel4_xdir],
-                       &arg9[base9 + idx_x * 1 + idx_y * 1 * xdim9_advec_cell_kernel4_xdir + idx_z * 1 * xdim9_advec_cell_kernel4_xdir * ydim9_advec_cell_kernel4_xdir],
-                       &arg10[base10 + idx_x * 1 + idx_y * 1 * xdim10_advec_cell_kernel4_xdir + idx_z * 1 * xdim10_advec_cell_kernel4_xdir * ydim10_advec_cell_kernel4_xdir]);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    advec_cell_kernel4_xdir(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim0_advec_cell_kernel4_xdir * ydim0_advec_cell_kernel4_xdir],
+                      &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim1_advec_cell_kernel4_xdir * ydim1_advec_cell_kernel4_xdir],
+                      &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim2_advec_cell_kernel4_xdir * ydim2_advec_cell_kernel4_xdir],
+                      &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim3_advec_cell_kernel4_xdir * ydim3_advec_cell_kernel4_xdir],
+                      &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim4_advec_cell_kernel4_xdir * ydim4_advec_cell_kernel4_xdir],
+                      &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim5_advec_cell_kernel4_xdir * ydim5_advec_cell_kernel4_xdir],
+                      &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim6_advec_cell_kernel4_xdir * ydim6_advec_cell_kernel4_xdir],
+                      &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim7_advec_cell_kernel4_xdir * ydim7_advec_cell_kernel4_xdir],
+                      &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim8_advec_cell_kernel4_xdir * ydim8_advec_cell_kernel4_xdir],
+                      &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim9_advec_cell_kernel4_xdir * ydim9_advec_cell_kernel4_xdir],
+                      &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_advec_cell_kernel4_xdir + idx_z * 1*1 * xdim10_advec_cell_kernel4_xdir * ydim10_advec_cell_kernel4_xdir]);
+  }
 
- }
+}
