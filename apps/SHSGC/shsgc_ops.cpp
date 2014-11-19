@@ -79,14 +79,13 @@ int main(int argc, char **argv)
 
   int d_p[1] = {2};
   int d_m[1] = {-2};
-  int size[1] = {204};
+  int size[1] = {nxp};
   int base[1] = {0};
   double* temp = NULL;
 
   x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "x");
 
-  
-  
+
   rho_old = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rho_old");
   rho_new = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rho_new");
   rho_res = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rho_res");
@@ -102,21 +101,24 @@ int main(int argc, char **argv)
   rhoE_new = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_new");
   rhoE_res = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_res");
 
+
+
+
+
   int s1D_0[]   = {0};
   S1D_0         = ops_decl_stencil( 1, 1, s1D_0, "0");
 
   ops_partition("1D_BLOCK_DECOMPOSE");
-  
+  printf("here\n");
 
 
-  
+
 
   int nxp_range[] = {0,nxp};
   ops_par_loop_initialize_kernel("initialize_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(x, 1, S1D_0, "double", OPS_WRITE),
                ops_arg_idx());
+
   ops_print_dat_to_txtfile(x, "shsgc.dat");
-  
-  //ops_exit();
 
 }

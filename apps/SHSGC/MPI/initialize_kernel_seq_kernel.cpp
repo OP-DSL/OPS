@@ -72,7 +72,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
-  int dat0 = 8;//args[0].dat->elem_size;
+  int dat0 = args[0].dat->elem_size;
 
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
@@ -103,7 +103,6 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   
   int n_x;
   #pragma novector
-  printf("here\n");
   printf("start[0] = %d, end[0] = %d\n",start[0],end[0]);
   for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
@@ -111,7 +110,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
 
 
     //shift pointers to data x direction
-    p_a[0]= p_a[0] + (dat0 * 1);
+    p_a[0]= p_a[0] + (dat0 * off0_0);
     arg_idx[0]++;
   }
  

@@ -93,8 +93,8 @@ int main(int argc, char **argv)
   
   int d_p[1] = {2}; //max block halo depths for the dat in the possitive direction
   int d_m[1] = {-2}; //max block halo depths for the dat in the negative direction
-  int size[1] = {0}; //size of 1D dat
-  int base[1] = {nxp};
+  int size[1] = {nxp}; //size of 1D dat
+  int base[1] = {0};
   double* temp = NULL;
   
   x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "x");
