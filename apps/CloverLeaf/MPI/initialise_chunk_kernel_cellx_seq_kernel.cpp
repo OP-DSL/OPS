@@ -26,9 +26,6 @@ void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double 
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
 
 
 // host stub function

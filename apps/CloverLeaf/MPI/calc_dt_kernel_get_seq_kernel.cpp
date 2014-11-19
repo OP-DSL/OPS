@@ -11,8 +11,6 @@ void calc_dt_kernel_get(const double* cellx, const double* celly, double* xl_pos
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 // host stub function

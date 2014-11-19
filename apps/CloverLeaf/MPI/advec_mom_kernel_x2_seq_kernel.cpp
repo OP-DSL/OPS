@@ -15,10 +15,6 @@ inline void advec_mom_kernel_x2( double *pre_vol, double *post_vol,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

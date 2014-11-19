@@ -14,10 +14,6 @@ void flux_calc_kernelx( double *vol_flux_x, const double *xarea,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

@@ -14,10 +14,6 @@ void reset_field_kernel2( double *xvel0, const double *xvel1,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

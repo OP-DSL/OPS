@@ -25,9 +25,6 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
 
 
 // host stub function

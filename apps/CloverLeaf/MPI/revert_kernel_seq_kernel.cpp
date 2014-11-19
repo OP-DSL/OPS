@@ -13,10 +13,6 @@ void revert_kernel( const double *density0, double *density1,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

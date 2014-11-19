@@ -25,9 +25,6 @@ void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx)
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
 
 
 // host stub function

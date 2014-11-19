@@ -13,10 +13,6 @@ inline void advec_mom_kernel2_y( double *vel1, const double *node_mass_post,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

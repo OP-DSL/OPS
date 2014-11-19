@@ -53,11 +53,6 @@ inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
 
 
 // host stub function

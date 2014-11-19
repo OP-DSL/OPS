@@ -327,7 +327,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC_MD'+str(n))
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
 

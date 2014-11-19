@@ -20,13 +20,6 @@ inline void update_halo_kernel1_t1(double *density0, double *density1,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
-#undef OPS_ACC_MD6
 
 
 // host stub function

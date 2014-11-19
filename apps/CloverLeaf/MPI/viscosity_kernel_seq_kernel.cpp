@@ -58,13 +58,6 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
-#undef OPS_ACC_MD6
 
 
 // host stub function

@@ -14,10 +14,6 @@ void reset_field_kernel1( double *density0, const double *density1,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

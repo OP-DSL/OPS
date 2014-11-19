@@ -14,10 +14,6 @@ inline void advec_cell_kernel2_ydir( double *pre_vol, double *post_vol, const do
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

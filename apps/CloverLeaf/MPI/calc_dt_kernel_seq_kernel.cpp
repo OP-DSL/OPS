@@ -51,17 +51,6 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
-#undef OPS_ACC_MD6
-#undef OPS_ACC_MD7
-#undef OPS_ACC_MD8
-#undef OPS_ACC_MD9
-#undef OPS_ACC_MD10
 
 
 // host stub function

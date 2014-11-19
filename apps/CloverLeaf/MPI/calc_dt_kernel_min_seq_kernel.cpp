@@ -12,7 +12,6 @@ void calc_dt_kernel_min(const double* dt_min ,
 
 
 
-#undef OPS_ACC_MD0
 
 
 // host stub function

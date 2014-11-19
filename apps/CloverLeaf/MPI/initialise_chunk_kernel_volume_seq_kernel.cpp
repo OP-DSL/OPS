@@ -19,11 +19,6 @@ void initialise_chunk_kernel_volume(double *volume, const double *celldy, double
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
 
 
 // host stub function

@@ -11,8 +11,6 @@ inline void update_halo_kernel3_minus_4_a(double *vol_flux_x, double *mass_flux_
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 // host stub function

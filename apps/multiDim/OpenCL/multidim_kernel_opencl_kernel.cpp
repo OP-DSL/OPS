@@ -98,6 +98,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   ops_arg args[2] = { arg0, arg1};
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,0)) return;
+  #endif
 
   ops_timing_realloc(0,"multidim_kernel");
   OPS_kernels[0].count++;

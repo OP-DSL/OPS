@@ -19,10 +19,6 @@ void ideal_gas_kernel( const double *density, const double *energy,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
 
 
 // host stub function

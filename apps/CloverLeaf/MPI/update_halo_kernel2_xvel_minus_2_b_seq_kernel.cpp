@@ -12,8 +12,6 @@ inline void update_halo_kernel2_xvel_minus_2_b(double *xvel0, double *xvel1, con
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 // host stub function

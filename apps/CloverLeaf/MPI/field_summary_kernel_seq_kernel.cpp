@@ -36,12 +36,6 @@ void field_summary_kernel( const double *volume, const double *density0,
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
 
 
 // host stub function

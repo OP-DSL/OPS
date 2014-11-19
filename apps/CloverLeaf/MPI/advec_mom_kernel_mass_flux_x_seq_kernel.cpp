@@ -13,8 +13,6 @@ inline void advec_mom_kernel_mass_flux_x( double *node_flux, const double *mass_
 
 
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 // host stub function

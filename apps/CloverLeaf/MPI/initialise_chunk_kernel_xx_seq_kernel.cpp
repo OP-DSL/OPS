@@ -10,7 +10,6 @@ void initialise_chunk_kernel_xx(int *xx, int *idx) {
 
 
 
-#undef OPS_ACC_MD0
 
 
 // host stub function
