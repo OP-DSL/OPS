@@ -4,22 +4,11 @@
 
 //user function
 
-void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE_new,
-                       double* rhoin, int *idx) {
-  x[0] = xmin + (idx[0]-2) * dx;
-  if (x[0] >= -4.0){
-		rho_new[0] = 1.0 + eps * sin(lambda *x[0]);
-		rhou_new[0] = ur * rho_new[0];
-		rhoE_new[0] = (pr / gam1) + 0.5 * pow(rhou_new[0],2)/rho_new[0];
-	}
-	else {
-		rho_new[0] = rhol;
-		rhou_new[0] = ul * rho_new[0];
-		rhoE_new[0] = (pl / gam1) + 0.5 * pow(rhou_new[0],2)/rho_new[0];
-	}
-
-	rhoin[0] = gam1 * (rhoE_new[0] - 0.5 * rhou_new[0] * rhou_new[0] / rho_new[0] );
-
+void save_kernel(double *rho_old, double *rhou_old, double *rhoE_old,
+                       double *rho_new, double *rhou_new, double *rhoE_new) {
+      rho_old[0]=rho_new[0];
+      rhou_old[0]=rhou_new[0];
+      rhoE_old[0]=rhoE_new[0];
 }
 
 
@@ -27,7 +16,7 @@ void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE
 
 
 // host stub function
-void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_save_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
 
@@ -38,11 +27,11 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,6,range,0)) return;
+  if (!ops_checkpointing_before(args,6,range,1)) return;
   #endif
 
-  ops_timing_realloc(0,"initialize_kernel");
-  OPS_kernels[0].count++;
+  ops_timing_realloc(1,"save_kernel");
+  OPS_kernels[1].count++;
 
   //compute locally allocated range for the sub-block
   int start[1];
@@ -75,7 +64,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialize_kernel");
+  ops_register_args(args, "save_kernel");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -88,13 +77,9 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
 
   offs[4][0] = args[4].stencil->stride[0]*1;  //unit step in x dimension
 
+  offs[5][0] = args[5].stencil->stride[0]*1;  //unit step in x dimension
 
-  int arg_idx[1];
-  #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  #endif //OPS_MPI
+
 
   //Timing
   double t1,t2,c1,c2;
@@ -110,6 +95,8 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   int dat3 = args[3].dat->elem_size;
   int off4_0 = offs[4][0];
   int dat4 = args[4].dat->elem_size;
+  int off5_0 = offs[5][0];
+  int dat5 = args[5].dat->elem_size;
 
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
@@ -158,8 +145,14 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   p_a[4] = (char *)args[4].data + base4;
 
-  p_a[5] = (char *)arg_idx;
-
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
+  #else //OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
+  #endif //OPS_MPI
+  int base5 = dat5 * 1 * 
+    (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
+  p_a[5] = (char *)args[5].data + base5;
 
 
   ops_H_D_exchanges_host(args, 6);
@@ -167,7 +160,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   ops_H_D_exchanges_host(args, 6);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  OPS_kernels[1].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
 
@@ -175,11 +168,11 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   #pragma novector
   for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
     //call kernel function, passing in pointers to data -vectorised
+    #pragma simd
     for ( int i=0; i<SIMD_VEC; i++ ){
-      initialize_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3]+ i*1*1, (double *)p_a[4]+ i*1*1, (int *)p_a[5] );
+      save_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
+           (double *)p_a[3]+ i*1*1, (double *)p_a[4]+ i*1*1, (double *)p_a[5]+ i*1*1 );
 
-      arg_idx[0]++;
     }
 
     //shift pointers to data x direction
@@ -188,12 +181,13 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     p_a[2]= p_a[2] + (dat2 * off2_0)*SIMD_VEC;
     p_a[3]= p_a[3] + (dat3 * off3_0)*SIMD_VEC;
     p_a[4]= p_a[4] + (dat4 * off4_0)*SIMD_VEC;
+    p_a[5]= p_a[5] + (dat5 * off5_0)*SIMD_VEC;
   }
 
   for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
-    initialize_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
+    save_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
+           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
 
 
     //shift pointers to data x direction
@@ -202,22 +196,21 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     p_a[2]= p_a[2] + (dat2 * off2_0);
     p_a[3]= p_a[3] + (dat3 * off3_0);
     p_a[4]= p_a[4] + (dat4 * off4_0);
-    arg_idx[0]++;
+    p_a[5]= p_a[5] + (dat5 * off5_0);
   }
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  OPS_kernels[1].time += t2-t1;
   ops_set_dirtybit_host(args, 6);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
-  ops_set_halo_dirtybit3(&args[3],range);
-  ops_set_halo_dirtybit3(&args[4],range);
 
   //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg5);
 }

@@ -495,7 +495,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm("initialize global variable with the dimension of dats")
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        if NDIM > 1:
+          code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -504,7 +505,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     if NDIM==3:
       FOR('n_z','start[2]','end[2]')
 
-    FOR('n_y','start[1]','end[1]')
+    if NDIM>1:
+      FOR('n_y','start[1]','end[1]')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #code('for( n_x=0; n_x<ROUND_DOWN((end[0]-start[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
@@ -571,21 +573,21 @@ def ops_gen_mpi(master, date, consts, kernels):
     ENDFOR()
     code('')
 
-
-    comm('shift pointers to data y direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
-    if arg_idx:
-      code('#ifdef OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-      code('#else //OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
-      code('arg_idx[1]++;')
-    ENDFOR()
+    if NDIM > 1:
+      comm('shift pointers to data y direction')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+      if arg_idx:
+        code('#ifdef OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('#else //OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+        code('#endif //OPS_MPI')
+        code('arg_idx[1]++;')
+      ENDFOR()
 
     if NDIM==3:
       comm('shift pointers to data z direction')

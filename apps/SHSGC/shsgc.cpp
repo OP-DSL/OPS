@@ -29,6 +29,8 @@ ops_dat rho_old, rho_new, rho_res;
 ops_dat rhou_old, rhou_new, rhou_res;
 ops_dat rhov_old, rhov_new; 
 ops_dat rhoE_old, rhoE_new, rhoE_res;
+ops_dat rhoin;
+ops_dat r;
 
 //
 //Declare commonly used stencils
@@ -63,6 +65,7 @@ double gam1=gam - 1.0;
 double eps = 0.2;
 double lambda = 5.0;
 
+FILE *fp;
 
 //#define OPS_ACC0_1D(x) (x)
 
@@ -70,11 +73,13 @@ double lambda = 5.0;
 //kernles
 //
 #include "initialize_kernel.h"
+#include "save_kernel.h"
 
 
 /******************************************************************************
 * Main program
 /******************************************************************************/
+
 int main(int argc, char **argv)
 {  
   /**-------------------------- OPS Initialisation --------------------------**/
@@ -115,6 +120,11 @@ int main(int argc, char **argv)
   rhoE_new = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_new");
   rhoE_res = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_res");
   
+  //extra dat for rhoin 
+  rhoin = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoin");
+  
+  // TVD scheme variables
+  r = ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
   
   //
   //Declare commonly used stencils
@@ -124,15 +134,43 @@ int main(int argc, char **argv)
   
   ops_partition("1D_BLOCK_DECOMPOSE");
   printf("here\n");
+  
   //
   // Initialize with the test case
   //
   
+  fp = fopen("rhoin.txt", "w");
+  
   int nxp_range[] = {0,nxp};
   ops_par_loop(initialize_kernel, "initialize_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(x, 1, S1D_0, "double", OPS_WRITE),
+               ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_WRITE),
+               ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_WRITE),
+               ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_WRITE),
+               ops_arg_dat(rhoin, 1, S1D_0, "double", OPS_WRITE),
                ops_arg_idx());
+
+  ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
   
-  ops_print_dat_to_txtfile(x, "shsgc.dat");
+  
+  //
+  //main iterative loop
+  //
+  
+  int niter = 9005;
+  
+  for (int iter = 0; iter <niter;  iter++){
+    
+    // Save previous data arguments
+    ops_par_loop(save_kernel, "save_kernel", shsgc_grid, 1, nxp_range,
+             ops_arg_dat(rho_old, 1, S1D_0, "double", OPS_WRITE),
+             ops_arg_dat(rhou_old, 1, S1D_0, "double", OPS_WRITE),
+             ops_arg_dat(rhoE_old, 1, S1D_0, "double", OPS_WRITE),
+             ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_READ),
+             ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_READ),
+             ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_READ));
+
+    
+  }
   
 }
