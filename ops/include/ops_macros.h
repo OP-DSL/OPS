@@ -182,6 +182,23 @@
   #else //macros for 1D application
     #ifndef OPS_DEBUG //no debug checks
       #define OPS_ACC_MD0(d,x) ((x)*multi_d0+d)
+      #define OPS_ACC_MD1(d,x) ((x)*multi_d1+d)
+      #define OPS_ACC_MD2(d,x) ((x)*multi_d2+d)
+      #define OPS_ACC_MD3(d,x) ((x)*multi_d3+d)
+      #define OPS_ACC_MD4(d,x) ((x)*multi_d4+d)
+      #define OPS_ACC_MD5(d,x) ((x)*multi_d5+d)
+      #define OPS_ACC_MD6(d,x) ((x)*multi_d6+d)
+      #define OPS_ACC_MD7(d,x) ((x)*multi_d7+d)
+      #define OPS_ACC_MD8(d,x) ((x)*multi_d8+d)
+      #define OPS_ACC_MD9(d,x) ((x)*multi_d9+d)
+      #define OPS_ACC_MD10(d,x) ((x)*multi_d10+d)
+      #define OPS_ACC_MD11(d,x) ((x)*multi_d11+d)
+      #define OPS_ACC_MD12(d,x) ((x)*multi_d12+d)
+      #define OPS_ACC_MD13(d,x) ((x)*multi_d13+d)
+      #define OPS_ACC_MD14(d,x) ((x)*multi_d14+d)
+      #define OPS_ACC_MD15(d,x) ((x)*multi_d15+d)
+      #define OPS_ACC_MD16(d,x) ((x)*multi_d16+d)
+      #define OPS_ACC_MD17(d,x) ((x)*multi_d17+d)
     #else
       ///TODO #define OPS_ACC_MD0(x,d) (ops_stencil_check_1d(0, x))
     #endif

@@ -30,12 +30,11 @@ ops_dat rhou_old, rhou_new, rhou_res;
 ops_dat rhov_old, rhov_new;
 ops_dat rhoE_old, rhoE_new, rhoE_res;
 ops_dat rhoin;
-ops_dat r;
-
+ops_dat r, al, alam;
 //
 //Declare commonly used stencils
 //
-ops_stencil S1D_0;
+ops_stencil S1D_0, S1D_01;
 ops_stencil S1D_0M1M2P1P2;
 
 /******************************************************************************
@@ -81,7 +80,7 @@ FILE *fp;
 #include "drhouupdx_kernel.h"
 #include "drhoEpudx_kernel.h"
 #include "updateRK3_kernel.h"
-
+#include "Riemann_kernel.h"
 
 
 /******************************************************************************
@@ -141,6 +140,8 @@ int main(int argc, char **argv) {
 
   // TVD scheme variables
   r = ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
+  al = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "al");
+  alam = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "alam");
 
   //
   //Declare commonly used stencils
@@ -150,8 +151,11 @@ int main(int argc, char **argv) {
   int s1D_0M1M2P1P2[] = {0,-1,-2,1,2};
   S1D_0M1M2P1P2 = ops_decl_stencil( 5, 1, s1D_0M1M2P1P2, "0,-1,-2,1,2");
 
+  int s1D_01[]   = {0,1};
+  S1D_01         = ops_decl_stencil( 2, 1, s1D_01, "0,1");
+  
   ops_partition("1D_BLOCK_DECOMPOSE");
-  printf("here\n");
+  
 
   //
   // Initialize with the test case
@@ -234,10 +238,6 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),              
                    ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
                    ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
-      
-      ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
-      exit(0);
-
     }
     
     //
@@ -245,9 +245,22 @@ int main(int argc, char **argv) {
     //
     
     // Riemann invariants
-    //int nxp_range_3[] = {0,nxp-1};
-    //ops_par_loop(Riemann_kernel, "Riemann_kernel", shsgc_grid, 1, nxp_range_3,
+    int nxp_range_3[] = {0,nxp-1};
+    ops_par_loop(Riemann_kernel, "Riemann_kernel", shsgc_grid, 1, nxp_range_3,
+                 ops_arg_dat(rho_new,  1, S1D_01, "double",OPS_READ),
+                 ops_arg_dat(rhou_new,  1, S1D_01, "double",OPS_READ),
+                 ops_arg_dat(rhoE_new,  1, S1D_01, "double",OPS_READ),
+                 ops_arg_dat(alam,  3, S1D_01, "double",OPS_WRITE),
+                 ops_arg_dat(r,  9, S1D_01, "double",OPS_WRITE),
+                 ops_arg_dat(al, 3, S1D_01, "double",OPS_WRITE));
                  
+    //ops_print_dat_to_txtfile(alam, "shsgc.dat");
+    ops_print_dat_to_txtfile(r, "shsgc.dat");
+    //ops_print_dat_to_txtfile(al, "shsgc.dat");
+    exit(0);
+    
+    
+    
     // limiter function
     //int nxp_range_4[] = {1,nxp};
     //ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,

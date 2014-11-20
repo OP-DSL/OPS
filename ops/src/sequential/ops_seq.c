@@ -121,7 +121,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
-
+    
   //Allocate memory immediately
   int bytes = size*type_size;
   for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];

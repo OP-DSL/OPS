@@ -201,6 +201,7 @@ def check_accs(name, arg_list, arg_typ, text):
           pos = pos + text[pos:].find('OPS_ACC_MD')
           pos2 = text[pos+10:].find('(')
           num = int(text[pos+10:pos+10+pos2])
+          #print num, str(n);
           if num <> n:
             print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
           pos = pos+10+pos2
@@ -289,6 +290,8 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
