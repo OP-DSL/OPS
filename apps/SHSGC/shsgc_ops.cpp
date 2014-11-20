@@ -30,6 +30,15 @@ void ops_par_loop_save_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_zerores_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
+void ops_par_loop_drhoudx_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg );
+
 
 
 
@@ -42,9 +51,11 @@ ops_dat rhou_old, rhou_new, rhou_res;
 ops_dat rhov_old, rhov_new;
 ops_dat rhoE_old, rhoE_new, rhoE_res;
 ops_dat rhoin;
+ops_dat r;
 
 
 ops_stencil S1D_0;
+ops_stencil S1D_0M1M2P1P2;
 
 
 
@@ -72,17 +83,16 @@ double lambda = 5.0;
 FILE *fp;
 
 
-
 //#include "initialize_kernel.h"
 //#include "save_kernel.h"
+//#include "zerores_kernel.h"
+//#include "drhoudx_kernel.h"
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
 
   ops_init(argc,argv,1);
-
 
 
 
@@ -91,15 +101,13 @@ int main(int argc, char **argv)
 
 
 
-
-  int d_p[1] = {2};
-  int d_m[1] = {-2};
+  int d_p[1] = {0};
+  int d_m[1] = {0};
   int size[1] = {nxp};
   int base[1] = {0};
   double* temp = NULL;
 
   x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "x");
-
 
   rho_old = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rho_old");
   rho_new = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rho_new");
@@ -116,18 +124,19 @@ int main(int argc, char **argv)
   rhoE_new = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_new");
   rhoE_res = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoE_res");
 
-
   rhoin = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoin");
 
+  r = ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
 
 
 
   int s1D_0[]   = {0};
   S1D_0         = ops_decl_stencil( 1, 1, s1D_0, "0");
+  int s1D_0M1M2P1P2[] = {0,-1,-2,1,2};
+  S1D_0M1M2P1P2 = ops_decl_stencil( 5, 1, s1D_0M1M2P1P2, "0,-1,-2,1,2");
 
   ops_partition("1D_BLOCK_DECOMPOSE");
   printf("here\n");
-
 
 
 
@@ -143,8 +152,6 @@ int main(int argc, char **argv)
                ops_arg_dat(rhoin, 1, S1D_0, "double", OPS_WRITE),
                ops_arg_idx());
 
-  ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
-
 
 
 
@@ -154,7 +161,6 @@ int main(int argc, char **argv)
 
   for (int iter = 0; iter <niter;  iter++){
 
-
     ops_par_loop_save_kernel("save_kernel", shsgc_grid, 1, nxp_range,
                  ops_arg_dat(rho_old, 1, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(rhou_old, 1, S1D_0, "double", OPS_WRITE),
@@ -163,6 +169,23 @@ int main(int argc, char **argv)
                  ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_READ),
                  ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_READ));
 
-  }
+    for (int nrk=0; nrk <3; nrk++){
 
+      ops_par_loop_zerores_kernel("zerores_kernel", shsgc_grid, 1, nxp_range,
+                   ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(rhou_res, 1, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(rhoE_res, 1, S1D_0, "double", OPS_WRITE));
+
+
+
+      int nxp_range_1[] = {2,nxp-2};
+      ops_par_loop_drhoudx_kernel("drhoudx_kernel", shsgc_grid, 1, nxp_range_1,
+                   ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE));
+
+      ops_print_dat_to_txtfile(rho_res, "shsgc.dat");
+      exit(0);
+
+    }
+  }
 }

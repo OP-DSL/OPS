@@ -40,9 +40,9 @@
 
 /**--------------1-D ops_dats macros (one element per grid point)------------**/
 #ifndef OPS_ACC_MACROS
-  #define OPS_ACC_MACROS
-  #ifdef OPS_3D
-    #ifndef OPS_DEBUG
+  #define OPS_ACC_MACROS 
+  #ifdef OPS_3D //macros for 3D application
+    #ifndef OPS_DEBUG //no debug checks
       #define OPS_ACC0(x,y,z) (x+xdim0*(y)+ydim0*xdim0*(z))
       #define OPS_ACC1(x,y,z) (x+xdim1*(y)+ydim1*xdim1*(z))
       #define OPS_ACC2(x,y,z) (x+xdim2*(y)+ydim2*xdim2*(z))
@@ -61,7 +61,7 @@
       #define OPS_ACC15(x,y,z) (x+xdim15*(y)+ydim15*xdim15*(z))
       #define OPS_ACC16(x,y,z) (x+xdim16*(y)+ydim16*xdim16*(z))
       #define OPS_ACC17(x,y,z) (x+xdim17*(y)+ydim17*xdim17*(z))
-    #else //#else of ifndef OPS_DEBUG
+    #else //do debug checks
       #define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
       #define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
       #define OPS_ACC2(x,y,z) (ops_stencil_check_3d(2, x, y, z, xdim2, ydim2))
@@ -80,9 +80,9 @@
       #define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
       #define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
       #define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
-    #endif //#ifndef OPS_DEBUG
-  #else //else of #ifdef OPS_3D 
-    #ifndef OPS_DEBUG
+    #endif //end debug checks
+  #elif OPS_2D//macros for 2D application
+    #ifndef OPS_DEBUG //no debug checks
       #define OPS_ACC0(x,y) (x+xdim0*(y))
       #define OPS_ACC1(x,y) (x+xdim1*(y))
       #define OPS_ACC2(x,y) (x+xdim2*(y))
@@ -101,7 +101,7 @@
       #define OPS_ACC15(x,y) (x+xdim15*(y))
       #define OPS_ACC16(x,y) (x+xdim16*(y))
       #define OPS_ACC17(x,y) (x+xdim17*(y))
-    #else //#else of ifndef OPS_DEBUG
+    #else //do debug checks
       #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
       #define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
       #define OPS_ACC2(x,y) (ops_stencil_check_2d(2, x, y, xdim2, -1))
@@ -120,20 +120,43 @@
       #define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
       #define OPS_ACC16(x,y) (ops_stencil_check_2d(16, x, y, xdim16, -1))
       #define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
-    #endif //#ifndef OPS_DEBUG
-  #endif //#ifdef OPS_3D 
-#endif //#ifndef OPS_ACC_MACROS
+    #endif //end debug checks
+  #else //macros for 1D application
+    #ifndef OPS_DEBUG //no debug checks
+      #define OPS_ACC0(x) (x)
+      #define OPS_ACC1(x) (x)
+      #define OPS_ACC2(x) (x)
+      #define OPS_ACC3(x) (x)
+      #define OPS_ACC4(x) (x)
+      #define OPS_ACC5(x) (x)
+      #define OPS_ACC6(x) (x)
+      #define OPS_ACC7(x) (x)
+      #define OPS_ACC8(x) (x)
+      #define OPS_ACC9(x) (x)
+      #define OPS_ACC10(x) (x)
+      #define OPS_ACC11(x) (x)
+      #define OPS_ACC12(x) (x)
+      #define OPS_ACC13(x) (x)
+      #define OPS_ACC14(x) (x)
+      #define OPS_ACC15(x) (x)
+      #define OPS_ACC16(x) (x)
+      #define OPS_ACC17(x) (x)
+    #else//do debug checks
+      ///TODO ops_stencil_check_1d
+    #endif//end debug checks   
+  #endif // end macros for 1D application
+#endif //end OPS_ACC_MACROS
 
 /**---------Multi-D ops_dats macros (multiple elements per grid point)-------**/
 #ifndef OPS_ACC_MD_MACROS
   #define OPS_ACC_MACROS
-  #ifdef OPS_3D
-    #ifndef OPS_DEBUG
+  #ifdef OPS_3D //macros for 3D application
+    #ifndef OPS_DEBUG //no debug checks
       #define OPS_ACC_MD0(d,x,y,z) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0)+(xdim0*ydim0*(z)*multi_d0))
     #else
-      //#define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+      ///TODO #define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
     #endif
-  #else 
+  #elif OPS_2D //macros for 2D application
     #ifndef OPS_DEBUG
       #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
       #define OPS_ACC_MD1(d,x,y) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1))
@@ -154,7 +177,13 @@
       #define OPS_ACC_MD16(d,x,y) ((x)*multi_d16+(d)+(xdim16*(y)*multi_d16))
       #define OPS_ACC_MD17(d,x,y) ((x)*multi_d17+(d)+(xdim17*(y)*multi_d17))
     #else
-      //#define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
+      ///TODO #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, -1, -1))
+    #endif
+  #else //macros for 1D application
+    #ifndef OPS_DEBUG //no debug checks
+      #define OPS_ACC_MD0(d,x) ((x)*multi_d0+d)
+    #else
+      ///TODO #define OPS_ACC_MD0(x,d) (ops_stencil_check_1d(0, x))
     #endif
   #endif
 #endif

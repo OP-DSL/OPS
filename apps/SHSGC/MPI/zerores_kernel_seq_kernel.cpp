@@ -4,22 +4,10 @@
 
 //user function
 
-void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE_new,
-                       double* rhoin, int *idx) {
-  x[OPS_ACC0(0)] = xmin + (idx[0]-2) * dx;
-  if (x[OPS_ACC0(0)] >= -4.0){
-		rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
-		rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pr / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
-	else {
-		rho_new[OPS_ACC1(0)] = rhol;
-		rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
-
-	rhoin[OPS_ACC4(0)] = gam1 * (rhoE_new[OPS_ACC3(0)] - 0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] / rho_new[OPS_ACC1(0)]);
-
+void zerores_kernel(double *rho_res, double *rhou_res, double *rhoE_res) {
+      rho_res[OPS_ACC0(0)] = 0.0;
+      rhou_res[OPS_ACC1(0)] = 0.0;
+      rhoE_res[OPS_ACC2(0)] = 0.0;
 }
 
 
@@ -27,22 +15,21 @@ void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE
 
 
 // host stub function
-void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5) {
+void ops_par_loop_zerores_kernel(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
-  char *p_a[6];
-  int  offs[6][1];
-  ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
+  char *p_a[3];
+  int  offs[3][1];
+  ops_arg args[3] = { arg0, arg1, arg2};
 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,6,range,0)) return;
+  if (!ops_checkpointing_before(args,3,range,2)) return;
   #endif
 
-  ops_timing_realloc(0,"initialize_kernel");
-  OPS_kernels[0].count++;
+  ops_timing_realloc(2,"zerores_kernel");
+  OPS_kernels[2].count++;
 
   //compute locally allocated range for the sub-block
   int start[1];
@@ -75,7 +62,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialize_kernel");
+  ops_register_args(args, "zerores_kernel");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -84,17 +71,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
 
   offs[2][0] = args[2].stencil->stride[0]*1;  //unit step in x dimension
 
-  offs[3][0] = args[3].stencil->stride[0]*1;  //unit step in x dimension
 
-  offs[4][0] = args[4].stencil->stride[0]*1;  //unit step in x dimension
-
-
-  int arg_idx[1];
-  #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  #endif //OPS_MPI
 
   //Timing
   double t1,t2,c1,c2;
@@ -106,10 +83,6 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   int dat1 = args[1].dat->elem_size;
   int off2_0 = offs[2][0];
   int dat2 = args[2].dat->elem_size;
-  int off3_0 = offs[3][0];
-  int dat3 = args[3].dat->elem_size;
-  int off4_0 = offs[4][0];
-  int dat4 = args[4].dat->elem_size;
 
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
@@ -140,34 +113,13 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
   p_a[2] = (char *)args[2].data + base2;
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
-  #endif //OPS_MPI
-  int base3 = dat3 * 1 * 
-    (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
-  p_a[3] = (char *)args[3].data + base3;
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
-  #endif //OPS_MPI
-  int base4 = dat4 * 1 * 
-    (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
-  p_a[4] = (char *)args[4].data + base4;
-
-  p_a[5] = (char *)arg_idx;
-
-
-
-  ops_H_D_exchanges_host(args, 6);
-  ops_halo_exchanges(args,6,range);
-  ops_H_D_exchanges_host(args, 6);
+  ops_H_D_exchanges_host(args, 3);
+  ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  OPS_kernels[2].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
 
@@ -175,49 +127,38 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   #pragma novector
   for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
     //call kernel function, passing in pointers to data -vectorised
+    #pragma simd
     for ( int i=0; i<SIMD_VEC; i++ ){
-      initialize_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3]+ i*1*1, (double *)p_a[4]+ i*1*1, (int *)p_a[5] );
+      zerores_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1 );
 
-      arg_idx[0]++;
     }
 
     //shift pointers to data x direction
     p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
     p_a[1]= p_a[1] + (dat1 * off1_0)*SIMD_VEC;
     p_a[2]= p_a[2] + (dat2 * off2_0)*SIMD_VEC;
-    p_a[3]= p_a[3] + (dat3 * off3_0)*SIMD_VEC;
-    p_a[4]= p_a[4] + (dat4 * off4_0)*SIMD_VEC;
   }
 
   for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
-    initialize_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
+    zerores_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2] );
 
 
     //shift pointers to data x direction
     p_a[0]= p_a[0] + (dat0 * off0_0);
     p_a[1]= p_a[1] + (dat1 * off1_0);
     p_a[2]= p_a[2] + (dat2 * off2_0);
-    p_a[3]= p_a[3] + (dat3 * off3_0);
-    p_a[4]= p_a[4] + (dat4 * off4_0);
-    arg_idx[0]++;
   }
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
-  ops_set_dirtybit_host(args, 6);
+  OPS_kernels[2].time += t2-t1;
+  ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
-  ops_set_halo_dirtybit3(&args[3],range);
-  ops_set_halo_dirtybit3(&args[4],range);
 
   //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
 }

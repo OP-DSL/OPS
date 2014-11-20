@@ -14,3 +14,5 @@
 //user kernel files
 #include "initialize_kernel_seq_kernel.cpp"
 #include "save_kernel_seq_kernel.cpp"
+#include "zerores_kernel_seq_kernel.cpp"
+#include "drhoudx_kernel_seq_kernel.cpp"
