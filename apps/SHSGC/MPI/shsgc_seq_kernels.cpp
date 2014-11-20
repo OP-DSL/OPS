@@ -16,3 +16,4 @@
 #include "save_kernel_seq_kernel.cpp"
 #include "zerores_kernel_seq_kernel.cpp"
 #include "drhoudx_kernel_seq_kernel.cpp"
+#include "drhouupdx_kernel_seq_kernel.cpp"

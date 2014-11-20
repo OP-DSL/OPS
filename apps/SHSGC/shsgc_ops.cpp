@@ -39,6 +39,12 @@ void ops_par_loop_drhoudx_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_drhouupdx_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 
@@ -87,6 +93,7 @@ FILE *fp;
 //#include "save_kernel.h"
 //#include "zerores_kernel.h"
 //#include "drhoudx_kernel.h"
+//#include "drhouupdx_kernel.h"
 
 
 int main(int argc, char **argv) {
@@ -183,7 +190,13 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE));
 
-      ops_print_dat_to_txtfile(rho_res, "shsgc.dat");
+      ops_par_loop_drhouupdx_kernel("drhouupdx_kernel", shsgc_grid, 1, nxp_range_1,
+                   ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rhou_res, 1, S1D_0, "double", OPS_WRITE));
+
+      ops_print_dat_to_txtfile(rhou_res, "shsgc.dat");
       exit(0);
 
     }
