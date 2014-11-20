@@ -65,6 +65,9 @@ double gam = 1.4;
 double gam1=gam - 1.0;
 double eps = 0.2;
 double lambda = 5.0;
+double a1[3];
+double a2[3];
+double dt=0.0002;
 
 FILE *fp;
 
@@ -76,6 +79,9 @@ FILE *fp;
 #include "zerores_kernel.h"
 #include "drhoudx_kernel.h"
 #include "drhouupdx_kernel.h"
+#include "drhoEpudx_kernel.h"
+#include "updateRK3_kernel.h"
+
 
 
 /******************************************************************************
@@ -83,6 +89,15 @@ FILE *fp;
 /******************************************************************************/
 
 int main(int argc, char **argv) {
+  
+  // Initialize rk3 co-efficient's
+  a1[0] = 2.0/3.0;
+  a1[1] = 5.0/12.0;
+  a1[2] = 3.0/5.0;
+  a2[0] = 1.0/4.0;
+  a2[1] = 3.0/20.0;
+  a2[2] = 3.0/5.0;
+  
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
@@ -198,9 +213,59 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rhou_res,  1, S1D_0, "double",OPS_WRITE));
 
-      ops_print_dat_to_txtfile(rhou_res, "shsgc.dat");
+      // Energy equation derivative d(rhoE+p)u/dx
+      ops_par_loop(drhoEpudx_kernel, "drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1,
+              ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
+              ops_arg_dat(rho_new,  1, S1D_0M1M2P1P2, "double",OPS_READ),
+              ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
+              ops_arg_dat(rhoE_res,  1, S1D_0, "double",OPS_WRITE));
+
+      //update use rk3 co-efficient's
+      int nxp_range_2[] = {3,nxp-2};      
+      ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
+                   ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_WRITE),
+                   ops_arg_dat(rhou_new, 1, S1D_0, "double",OPS_WRITE),
+                   ops_arg_dat(rhoE_new, 1, S1D_0, "double",OPS_WRITE),
+                   ops_arg_dat(rho_old,  1, S1D_0, "double",OPS_RW),
+                   ops_arg_dat(rhou_old, 1, S1D_0, "double",OPS_RW),
+                   ops_arg_dat(rhoE_old, 1, S1D_0, "double",OPS_RW),                   
+                   ops_arg_dat(rho_res,  1, S1D_0, "double",OPS_READ),
+                   ops_arg_dat(rhou_res, 1, S1D_0, "double",OPS_READ),
+                   ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),              
+                   ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
+                   ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
+      
+      ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
       exit(0);
 
     }
+    
+    //
+    // TVD scheme
+    //
+    
+    // Riemann invariants
+    //int nxp_range_3[] = {0,nxp-1};
+    //ops_par_loop(Riemann_kernel, "Riemann_kernel", shsgc_grid, 1, nxp_range_3,
+                 
+    // limiter function
+    //int nxp_range_4[] = {1,nxp};
+    //ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,
+    
+    // Second order tvd dissipation
+    //ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
+    
+    // vars
+    //ops_par_loop(vars_kernel, "vars_kernel", shsgc_grid, 1, nxp_range_3,
+    
+    // cal upwind eff
+    //ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
+    
+    //fact
+    //ops_par_loop(fact_kernel, "fact_kernel", shsgc_grid, 1, nxp_range_4,
+    
+    // update loop
+    //int nxp_range_5[] = {3,nxp-3};
+    //ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5,
   }
 }

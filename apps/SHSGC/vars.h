@@ -20,5 +20,5 @@ extern double gam;
 extern double gam1;
 extern double eps;
 extern double lambda;
-
+extern double dt;
 extern FILE *fp;

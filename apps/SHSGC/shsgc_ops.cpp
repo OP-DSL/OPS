@@ -45,6 +45,25 @@ void ops_par_loop_drhouupdx_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_drhoEpudx_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
+void ops_par_loop_updateRK3_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 
@@ -85,6 +104,9 @@ double gam = 1.4;
 double gam1=gam - 1.0;
 double eps = 0.2;
 double lambda = 5.0;
+double a1[3];
+double a2[3];
+double dt=0.0002;
 
 FILE *fp;
 
@@ -94,9 +116,21 @@ FILE *fp;
 //#include "zerores_kernel.h"
 //#include "drhoudx_kernel.h"
 //#include "drhouupdx_kernel.h"
+//#include "drhoEpudx_kernel.h"
+//#include "updateRK3_kernel.h"
+
 
 
 int main(int argc, char **argv) {
+
+
+  a1[0] = 2.0/3.0;
+  a1[1] = 5.0/12.0;
+  a1[2] = 3.0/5.0;
+  a2[0] = 1.0/4.0;
+  a2[1] = 3.0/20.0;
+  a2[2] = 3.0/5.0;
+
 
 
   ops_init(argc,argv,1);
@@ -196,9 +230,32 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rhou_res, 1, S1D_0, "double", OPS_WRITE));
 
-      ops_print_dat_to_txtfile(rhou_res, "shsgc.dat");
+      ops_par_loop_drhoEpudx_kernel("drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1,
+                   ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
+                   ops_arg_dat(rhoE_res, 1, S1D_0, "double", OPS_WRITE));
+
+      int nxp_range_2[] = {3,nxp-2};
+      ops_par_loop_updateRK3_kernel("updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
+                   ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(rho_old, 1, S1D_0, "double", OPS_RW),
+                   ops_arg_dat(rhou_old, 1, S1D_0, "double", OPS_RW),
+                   ops_arg_dat(rhoE_old, 1, S1D_0, "double", OPS_RW),
+                   ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_READ),
+                   ops_arg_dat(rhou_res, 1, S1D_0, "double", OPS_READ),
+                   ops_arg_dat(rhoE_res, 1, S1D_0, "double", OPS_READ),
+                   ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
+                   ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
+
+      ops_print_dat_to_txtfile(rhoE_old, "shsgc.dat");
       exit(0);
 
     }
+    
+    // TVD scheme
+    
   }
 }

@@ -7,9 +7,7 @@
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
-
 #include "vars.h"
-
 // global constants
 //user kernel files
 #include "initialize_kernel_seq_kernel.cpp"
@@ -17,3 +15,5 @@
 #include "zerores_kernel_seq_kernel.cpp"
 #include "drhoudx_kernel_seq_kernel.cpp"
 #include "drhouupdx_kernel_seq_kernel.cpp"
+#include "drhoEpudx_kernel_seq_kernel.cpp"
+#include "updateRK3_kernel_seq_kernel.cpp"
