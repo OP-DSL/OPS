@@ -201,7 +201,7 @@ def check_accs(name, arg_list, arg_typ, text):
           pos = pos + text[pos:].find('OPS_ACC_MD')
           pos2 = text[pos+10:].find('(')
           num = int(text[pos+10:pos+10+pos2])
-          #print num, str(n);
+          print num, str(n);
           if num <> n:
             print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
           pos = pos+10+pos2

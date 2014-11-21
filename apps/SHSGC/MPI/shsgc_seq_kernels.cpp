@@ -8,7 +8,7 @@
 #include "ops_mpi_core.h"
 #endif
 
-#include "vars.h"
+#include "vars.h" 
 
 // global constants
 //user kernel files
@@ -20,3 +20,9 @@
 #include "drhoEpudx_kernel_seq_kernel.cpp"
 #include "updateRK3_kernel_seq_kernel.cpp"
 #include "Riemann_kernel_seq_kernel.cpp"
+#include "limiter_kernel_seq_kernel.cpp"
+#include "tvd_kernel_seq_kernel.cpp"
+#include "vars_kernel_seq_kernel.cpp"
+#include "calupwindeff_kernel_seq_kernel.cpp"
+#include "fact_kernel_seq_kernel.cpp"
+#include "update_kernel_seq_kernel.cpp"

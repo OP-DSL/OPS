@@ -30,11 +30,11 @@ ops_dat rhou_old, rhou_new, rhou_res;
 ops_dat rhov_old, rhov_new;
 ops_dat rhoE_old, rhoE_new, rhoE_res;
 ops_dat rhoin;
-ops_dat r, al, alam;
+ops_dat r, al, alam, gt, tht, ep2, cmp, cf, eff, s;
 //
 //Declare commonly used stencils
 //
-ops_stencil S1D_0, S1D_01;
+ops_stencil S1D_0, S1D_01, S1D_0M1;
 ops_stencil S1D_0M1M2P1P2;
 
 /******************************************************************************
@@ -67,6 +67,10 @@ double lambda = 5.0;
 double a1[3];
 double a2[3];
 double dt=0.0002;
+double del2 = 1e-8;
+double akap2 = 0.40;
+double tvdsmu = 0.25f;
+double con = pow (tvdsmu,2.f);
 
 FILE *fp;
 
@@ -81,6 +85,12 @@ FILE *fp;
 #include "drhoEpudx_kernel.h"
 #include "updateRK3_kernel.h"
 #include "Riemann_kernel.h"
+#include "limiter_kernel.h"
+#include "tvd_kernel.h"
+#include "vars_kernel.h"
+#include "calupwindeff_kernel.h"
+#include "fact_kernel.h"
+#include "update_kernel.h"
 
 
 /******************************************************************************
@@ -139,9 +149,16 @@ int main(int argc, char **argv) {
   rhoin = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoin");
 
   // TVD scheme variables
-  r = ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
-  al = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "al");
-  alam = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "alam");
+  r     =  ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
+  al    = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "al");
+  alam  = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "alam");
+  gt    = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "gt");
+  tht   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "tht");
+  ep2   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "ep2");
+  cmp   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "cmp");
+  cf    = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "cf");
+  eff   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "eff");
+  s     = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "s");
 
   //
   //Declare commonly used stencils
@@ -153,6 +170,9 @@ int main(int argc, char **argv) {
 
   int s1D_01[]   = {0,1};
   S1D_01         = ops_decl_stencil( 2, 1, s1D_01, "0,1");
+  
+  int s1D_0M1[]   = {0,-1};
+  S1D_0M1         = ops_decl_stencil( 2, 1, s1D_01, "0,-1");
   
   ops_partition("1D_BLOCK_DECOMPOSE");
   
@@ -253,32 +273,56 @@ int main(int argc, char **argv) {
                  ops_arg_dat(alam,  3, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(r,  9, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(al, 3, S1D_01, "double",OPS_WRITE));
-                 
+    
+    // limiter function
+    int nxp_range_4[] = {1,nxp};
+    ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,
+                 ops_arg_dat(al, 3, S1D_0M1, "double",OPS_READ),
+                 ops_arg_dat(tht,3, S1D_0, "double",OPS_WRITE),
+                 ops_arg_dat(gt, 3, S1D_0, "double",OPS_WRITE));
+   
+    // Second order tvd dissipation
+    ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
+                 ops_arg_dat(tht, 3, S1D_0M1, "double",OPS_READ),
+                 ops_arg_dat(ep2, 3, S1D_0, "double",OPS_WRITE));
+
+    // vars
+    ops_par_loop(vars_kernel, "vars_kernel", shsgc_grid, 1, nxp_range_3,
+                 ops_arg_dat(alam,3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(al,  3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(gt,  3, S1D_01, "double",OPS_READ),
+                 ops_arg_dat(cmp, 3, S1D_0, "double",OPS_WRITE),
+                 ops_arg_dat(cf,  3, S1D_0, "double",OPS_WRITE));
+   
+    
+    // cal upwind eff
+    ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
+                 ops_arg_dat(cmp,3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(gt, 3, S1D_01, "double",OPS_READ),
+                 ops_arg_dat(cf, 3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(al, 3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(ep2,3, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(r,  9, S1D_0, "double",OPS_READ),
+                 ops_arg_dat(eff,3, S1D_0, "double",OPS_WRITE));
+   
+    //fact
+    ops_par_loop(fact_kernel, "fact_kernel", shsgc_grid, 1, nxp_range_4,
+                 ops_arg_dat(eff,  3, S1D_0M1, "double",OPS_READ),
+                 ops_arg_dat(s,    3, S1D_0,   "double",OPS_WRITE));
+
+   
+    // update loop
+    int nxp_range_5[] = {3,nxp-3};
+    ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5,
+                 ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_RW),
+                 ops_arg_dat(rhou_new, 1, S1D_0, "double",OPS_RW),
+                 ops_arg_dat(rhoE_new, 1, S1D_0, "double",OPS_RW),
+                 ops_arg_dat(s,        3, S1D_0, "double",OPS_READ));
+    
     //ops_print_dat_to_txtfile(alam, "shsgc.dat");
-    ops_print_dat_to_txtfile(r, "shsgc.dat");
+    ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
     //ops_print_dat_to_txtfile(al, "shsgc.dat");
     exit(0);
     
-    
-    
-    // limiter function
-    //int nxp_range_4[] = {1,nxp};
-    //ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,
-    
-    // Second order tvd dissipation
-    //ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
-    
-    // vars
-    //ops_par_loop(vars_kernel, "vars_kernel", shsgc_grid, 1, nxp_range_3,
-    
-    // cal upwind eff
-    //ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
-    
-    //fact
-    //ops_par_loop(fact_kernel, "fact_kernel", shsgc_grid, 1, nxp_range_4,
-    
-    // update loop
-    //int nxp_range_5[] = {3,nxp-3};
-    //ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5,
   }
 }

@@ -58,7 +58,7 @@ void Riemann_kernel(double* rho_new, double *rhou_new,  double* rhoE_new,
   al[OPS_ACC_MD5(2,0)] = 0.5 * ( delpc2 + rdeluc );
   
   for (int m=0; m<3; m++) 
-    al[OPS_ACC_MD5(m,0)] = al[OPS_ACC_MD5(m,0)] * csq;		
+    al[OPS_ACC_MD5(m,0)] = al[OPS_ACC_MD5(m,0)] * csq;	
 }
 
 #endif

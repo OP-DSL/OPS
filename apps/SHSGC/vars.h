@@ -21,4 +21,8 @@ extern double gam1;
 extern double eps;
 extern double lambda;
 extern double dt;
+extern double del2;
+extern double akap2;
+extern double tvdsmu;
+extern double con;
 extern FILE *fp;

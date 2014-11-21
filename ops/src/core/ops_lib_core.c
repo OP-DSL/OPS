@@ -763,10 +763,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     if( strcmp(dat->type,"double") == 0 ) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
-          if (fprintf(fp, "%3.10lf ", ((double *)dat->data)[j*dat->dim+d])<0) {
+          if (fprintf(fp, "%3.10lf", ((double *)dat->data)[j*dat->dim+d])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
           }
+          if(d<dat->dim-1)fprintf(fp," ");
         }
         fprintf(fp,"\n");
       }
