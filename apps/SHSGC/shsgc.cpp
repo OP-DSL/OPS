@@ -31,6 +31,10 @@ ops_dat rhov_old, rhov_new;
 ops_dat rhoE_old, rhoE_new, rhoE_res;
 ops_dat rhoin;
 ops_dat r, al, alam, gt, tht, ep2, cmp, cf, eff, s;
+ops_dat readvar;
+
+ops_reduction rms;
+
 //
 //Declare commonly used stencils
 //
@@ -91,6 +95,7 @@ FILE *fp;
 #include "calupwindeff_kernel.h"
 #include "fact_kernel.h"
 #include "update_kernel.h"
+#include "test_kernel.h"
 
 
 /******************************************************************************
@@ -162,6 +167,25 @@ int main(int argc, char **argv) {
   eff   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "eff");
   s     = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "s");
 
+  //read in referance solution
+  if ((fp = fopen("Rho", "r")) == NULL) {
+    printf("can't open file %s\n","Rho");
+    exit(2);
+  }
+  
+  readvar     = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "readvar");
+  temp = (double *)malloc(sizeof(double)*nxp);
+  for (int i=0; i<nxp; i++){
+	  fscanf(fp,"%lf",&temp[i]);
+  }
+  //manual copy of read values -- ****** need to be removed later ******
+  memcpy(readvar->data, temp, sizeof(double)*nxp);
+  free(temp);
+  
+  
+  //reduction handle for rms variable
+  rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
+  
   //
   //Declare commonly used stencils
   //
@@ -182,8 +206,6 @@ int main(int argc, char **argv) {
   //
   // Initialize with the test case
   //
-
-  //fp = fopen("rhoin.txt", "w");
 
   int nxp_range[] = {0,nxp};
   ops_par_loop(initialize_kernel, "initialize_kernel", shsgc_grid, 1, nxp_range,
@@ -331,8 +353,18 @@ int main(int argc, char **argv) {
   ops_timers_core(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   
+  //compare solution to referance solution
+  double local_rms = 0.0;
+  ops_par_loop(test_kernel, "test_kernel", shsgc_grid, 1, nxp_range,
+               ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_READ),
+               ops_arg_dat(readvar,  1, S1D_0, "double",OPS_READ),
+               ops_arg_reduce(rms, 1, "double", OPS_INC));
+               
+  ops_reduction_result(rms, &local_rms);
+  printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
+   
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
-  ops_print_dat_to_txtfile(rhou_new, "shsgc.dat");
+  ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
   //ops_print_dat_to_txtfile(al, "shsgc.dat");
   ops_exit();
     

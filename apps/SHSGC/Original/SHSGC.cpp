@@ -448,7 +448,7 @@ int main(int argc, char **argv)
   //for (int i=0; i<nxp; i++) 
   //  fprintf(test_fp, "%3.10lf\n",x[i]);
   for (int i=0; i<nxp; i++) 
-    fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
+    fprintf(test_fp, "%3.10lf\n",rho_new[i]);
   //for (int i=0; i<nxp; i++) 
   //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
   /*for (int i=0; i<nxp; i++) {

@@ -107,6 +107,11 @@ void ops_par_loop_update_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_test_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 
@@ -120,6 +125,9 @@ ops_dat rhov_old, rhov_new;
 ops_dat rhoE_old, rhoE_new, rhoE_res;
 ops_dat rhoin;
 ops_dat r, al, alam, gt, tht, ep2, cmp, cf, eff, s;
+ops_dat readvar;
+
+ops_reduction rms;
 
 
 ops_stencil S1D_0, S1D_01, S1D_0M1;
@@ -172,6 +180,7 @@ FILE *fp;
 //#include "calupwindeff_kernel.h"
 //#include "fact_kernel.h"
 //#include "update_kernel.h"
+//#include "test_kernel.h"
 
 
 int main(int argc, char **argv) {
@@ -233,6 +242,24 @@ int main(int argc, char **argv) {
   eff   = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "eff");
   s     = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "s");
 
+  if ((fp = fopen("Rho", "r")) == NULL) {
+    printf("can't open file %s\n","Rho");
+    exit(2);
+  }
+
+  readvar     = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "readvar");
+  temp = (double *)malloc(sizeof(double)*nxp);
+  for (int i=0; i<nxp; i++){
+	  fscanf(fp,"%lf",&temp[i]);
+  }
+
+  memcpy(readvar->data, temp, sizeof(double)*nxp);
+  free(temp);
+
+
+  rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
+
+
 
 
   int s1D_0[]   = {0};
@@ -247,7 +274,6 @@ int main(int argc, char **argv) {
   S1D_0M1         = ops_decl_stencil( 2, 1, s1D_01, "0,-1");
 
   ops_partition("1D_BLOCK_DECOMPOSE");
-
 
 
 
@@ -388,7 +414,17 @@ int main(int argc, char **argv) {
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
 
-  ops_print_dat_to_txtfile(rhou_new, "shsgc.dat");
+  double local_rms = 0.0;
+  ops_par_loop_test_kernel("test_kernel", shsgc_grid, 1, nxp_range,
+               ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_READ),
+               ops_arg_dat(readvar, 1, S1D_0, "double", OPS_READ),
+               ops_arg_reduce(rms, 1, "double", OPS_INC));
+
+  ops_reduction_result(rms, &local_rms);
+  printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
+
+
+  ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
 
   ops_exit();
 
