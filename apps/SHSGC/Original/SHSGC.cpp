@@ -4,11 +4,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <sys/time.h>
 #ifndef MAX
 	#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
 #endif
 double dx,dy,gam, gam1 ;
 
+
+void ops_timers_core( double * cpu, double * et )
+{
+  (void)cpu;
+  struct timeval t;
+
+  gettimeofday ( &t, ( struct timezone * ) 0 );
+  *et = t.tv_sec + t.tv_usec * 1.0e-6;
+}
 
 
 /******************************************************************************
@@ -137,6 +147,9 @@ int main(int argc, char **argv)
 // 	  }
 //   }
 
+  double ct0, ct1, et0, et1;
+  ops_timers_core(&ct0, &et0);
+  
    
   //main iterative loop
   for (int iter = 0; iter <niter;  iter++){
@@ -422,12 +435,20 @@ int main(int argc, char **argv)
 		rhoE_new[i] = rhoE_new[i] + s[i][2];
 	}
 	
-	FILE *test_fp;
+	
+	totaltime = totaltime + dt;
+	printf("%d \t %f\n", iter, totaltime);
+  }
+  
+  ops_timers_core(&ct1, &et1);
+  printf("\nOriginal Application Total Wall time %lf\n",et1-et0);
+  
+  FILE *test_fp;
   test_fp = fopen("shsgc.txt", "w");
   //for (int i=0; i<nxp; i++) 
   //  fprintf(test_fp, "%3.10lf\n",x[i]);
   for (int i=0; i<nxp; i++) 
-    fprintf(test_fp, "%3.10lf\n",rho_new[i]);
+    fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
   //for (int i=0; i<nxp; i++) 
   //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
   /*for (int i=0; i<nxp; i++) {
@@ -449,11 +470,7 @@ int main(int argc, char **argv)
   }*/
   fclose(test_fp);
   exit(0);
-	
-	
-	totaltime = totaltime + dt;
-	printf("%d \t %f\n", iter, totaltime);
-  }
+  
   
   FILE *fp;
   fp = fopen("rho.txt", "w");

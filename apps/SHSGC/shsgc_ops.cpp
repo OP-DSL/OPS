@@ -176,6 +176,8 @@ FILE *fp;
 
 int main(int argc, char **argv) {
 
+  double totaltime =0.0f;
+
 
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
@@ -250,7 +252,6 @@ int main(int argc, char **argv) {
 
 
 
-  fp = fopen("rhoin.txt", "w");
 
   int nxp_range[] = {0,nxp};
   ops_par_loop_initialize_kernel("initialize_kernel", shsgc_grid, 1, nxp_range,
@@ -266,8 +267,10 @@ int main(int argc, char **argv) {
 
 
 
-  int niter = 9005;
+  double ct0, ct1, et0, et1;
+  ops_timers_core(&ct0, &et0);
 
+  int niter = 9005;
   for (int iter = 0; iter <niter;  iter++){
 
     ops_par_loop_save_kernel("save_kernel", shsgc_grid, 1, nxp_range,
@@ -376,10 +379,17 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_RW),
                  ops_arg_dat(s, 3, S1D_0, "double", OPS_READ));
 
-
-    ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
-
-    exit(0);
+    totaltime = totaltime + dt;
+    printf("%d \t %f\n", iter, totaltime);
 
   }
+
+  ops_timers_core(&ct1, &et1);
+  ops_printf("\nTotal Wall time %lf\n",et1-et0);
+
+
+  ops_print_dat_to_txtfile(rhou_new, "shsgc.dat");
+
+  ops_exit();
+
 }
