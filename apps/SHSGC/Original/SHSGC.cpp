@@ -401,8 +401,8 @@ int main(int argc, char **argv)
 	}
 
 		//if (nrk == 1) {
-		  FILE *test_fp;
-		  test_fp = fopen("shsgc.txt", "w");
+		  //FILE *test_fp;
+		  //test_fp = fopen("shsgc.txt", "w");
 		  //for (int i=0; i<nxp; i++)
 		  //  fprintf(test_fp, "%3.10lf\n",x[i]);
 		  //for (int i=0; i<nxp; i++)
@@ -420,14 +420,14 @@ int main(int argc, char **argv)
 		        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
 		    fprintf(test_fp, "\n");
 		  }*/
-		  for (int i=0; i<nxp; i++) {
+		  /*for (int i=0; i<nxp; i++) {
 		    for (int j = 0; j<3;j++)
 		      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
 		      fprintf(test_fp, "%3.10lf ",cf[i][j]);
 		    fprintf(test_fp, "\n");
-		  }
+		  }*/
 		  //fclose(test_fp);
-		  exit(0);
+		  //exit(0);
 		//}
 
 

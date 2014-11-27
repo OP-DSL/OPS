@@ -186,14 +186,12 @@ int main(int argc, char **argv) {
 
   double totaltime =0.0f;
 
-
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
   a1[2] = 3.0/5.0;
   a2[0] = 1.0/4.0;
   a2[1] = 3.0/20.0;
   a2[2] = 3.0/5.0;
-
 
 
   ops_init(argc,argv,1);
@@ -244,9 +242,7 @@ int main(int argc, char **argv) {
 
 
 
-
   rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
-
 
 
 
@@ -321,6 +317,10 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rhoE_res, 1, S1D_0, "double", OPS_WRITE));
 
+
+
+
+
       int nxp_range_2[] = {3,nxp-2};
       ops_par_loop_updateRK3_kernel("updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
                    ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_WRITE),
@@ -339,8 +339,6 @@ int main(int argc, char **argv) {
 
 
 
-
-
     int nxp_range_3[] = {0,nxp-1};
     ops_par_loop_Riemann_kernel("Riemann_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(rho_new, 1, S1D_01, "double", OPS_READ),
@@ -350,16 +348,11 @@ int main(int argc, char **argv) {
                  ops_arg_dat(r, 9, S1D_01, "double", OPS_WRITE),
                  ops_arg_dat(al, 3, S1D_01, "double", OPS_WRITE));
 
-
-
-
     int nxp_range_4[] = {1,nxp};
     ops_par_loop_limiter_kernel("limiter_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(al, 3, S1D_0M1, "double", OPS_READ),
                  ops_arg_dat(tht, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double", OPS_WRITE));
-
-
 
     ops_par_loop_tvd_kernel("tvd_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(tht, 3, S1D_0M1, "double", OPS_READ),
@@ -372,10 +365,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(cf, 3, S1D_0, "double", OPS_WRITE));
 
-      //if (nrk == 1) {
-        ops_print_dat_to_txtfile(cf, "shsgc.dat");
-        exit(0);
-      //}
 
     ops_par_loop_calupwindeff_kernel("calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_READ),
@@ -385,7 +374,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(ep2, 3, S1D_0, "double", OPS_READ),
                  ops_arg_dat(r, 9, S1D_0, "double", OPS_READ),
                  ops_arg_dat(eff, 3, S1D_0, "double", OPS_WRITE));
-
 
     ops_par_loop_fact_kernel("fact_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(eff, 3, S1D_0M1, "double", OPS_READ),
@@ -407,7 +395,6 @@ int main(int argc, char **argv) {
   ops_timers_core(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
-
   double local_rms = 0.0;
   ops_par_loop_test_kernel("test_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_READ),
@@ -418,7 +405,6 @@ int main(int argc, char **argv) {
 
 
   ops_printf("\nRMS %lf\n" , sqrt(local_rms)/nxp);
-
 
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
 

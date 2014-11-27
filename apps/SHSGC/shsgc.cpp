@@ -103,9 +103,9 @@ FILE *fp;
 /******************************************************************************/
 
 int main(int argc, char **argv) {
-  
+
   double totaltime =0.0f;
-  
+
   // Initialize rk3 co-efficient's
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   a2[0] = 1.0/4.0;
   a2[1] = 3.0/20.0;
   a2[2] = 3.0/5.0;
-  
+
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
     printf("can't open file %s\n","Rho");
     exit(2);
   }
-  
+
   readvar     = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "readvar");
   temp = (double *)malloc(sizeof(double)*nxp);
   for (int i=0; i<nxp; i++){
@@ -181,11 +181,11 @@ int main(int argc, char **argv) {
   //manual copy of read values -- ****** need to be removed later ******
   memcpy(readvar->data, temp, sizeof(double)*nxp);
   free(temp);*/
-  
-  
+
+
   //reduction handle for rms variable
   rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
-  
+
   //
   //Declare commonly used stencils
   //
@@ -196,12 +196,12 @@ int main(int argc, char **argv) {
 
   int s1D_01[]   = {0,1};
   S1D_01         = ops_decl_stencil( 1, 2, s1D_01, "0,1");
-  
+
   int s1D_0M1[]   = {0,-1};
   S1D_0M1         = ops_decl_stencil( 1, 2, s1D_01, "0,-1");
-  
+
   ops_partition("1D_BLOCK_DECOMPOSE");
-  
+
 
   //
   // Initialize with the test case
@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
-  
-  int niter = 9005; 
+
+  int niter = 9005;
   for (int iter = 0; iter <niter;  iter++){
 
     // Save previous data arguments
@@ -270,31 +270,31 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rhoE_res,  1, S1D_0, "double",OPS_WRITE));
 
-      if (nrk == 1) {
-        ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
-        exit(0);
-      }
-      
+      //if (nrk == 1) {
+      //  ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
+      //  exit(0);
+      //}
+
       //update use rk3 co-efficient's
-      int nxp_range_2[] = {3,nxp-2};      
+      int nxp_range_2[] = {3,nxp-2};
       ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
                    ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_WRITE),
                    ops_arg_dat(rhou_new, 1, S1D_0, "double",OPS_WRITE),
                    ops_arg_dat(rhoE_new, 1, S1D_0, "double",OPS_WRITE),
                    ops_arg_dat(rho_old,  1, S1D_0, "double",OPS_RW),
                    ops_arg_dat(rhou_old, 1, S1D_0, "double",OPS_RW),
-                   ops_arg_dat(rhoE_old, 1, S1D_0, "double",OPS_RW),                   
+                   ops_arg_dat(rhoE_old, 1, S1D_0, "double",OPS_RW),
                    ops_arg_dat(rho_res,  1, S1D_0, "double",OPS_READ),
                    ops_arg_dat(rhou_res, 1, S1D_0, "double",OPS_READ),
-                   ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),              
+                   ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),
                    ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
                    ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
     }
-    
+
     //
     // TVD scheme
     //
-    
+
     // Riemann invariants
     int nxp_range_3[] = {0,nxp-1};
     ops_par_loop(Riemann_kernel, "Riemann_kernel", shsgc_grid, 1, nxp_range_3,
@@ -304,14 +304,14 @@ int main(int argc, char **argv) {
                  ops_arg_dat(alam,  3, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(r,  9, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(al, 3, S1D_01, "double",OPS_WRITE));
-    
+
     // limiter function
     int nxp_range_4[] = {1,nxp};
     ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(al, 3, S1D_0M1, "double",OPS_READ),
                  ops_arg_dat(tht,3, S1D_0, "double",OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double",OPS_WRITE));
-   
+
     // Second order tvd dissipation
     ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(tht, 3, S1D_0M1, "double",OPS_READ),
@@ -324,8 +324,8 @@ int main(int argc, char **argv) {
                  ops_arg_dat(gt,  3, S1D_01, "double",OPS_READ),
                  ops_arg_dat(cmp, 3, S1D_0, "double",OPS_WRITE),
                  ops_arg_dat(cf,  3, S1D_0, "double",OPS_WRITE));
-   
-    
+
+
     // cal upwind eff
     ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(cmp,3, S1D_0, "double",OPS_READ),
@@ -335,13 +335,13 @@ int main(int argc, char **argv) {
                  ops_arg_dat(ep2,3, S1D_0, "double",OPS_READ),
                  ops_arg_dat(r,  9, S1D_0, "double",OPS_READ),
                  ops_arg_dat(eff,3, S1D_0, "double",OPS_WRITE));
-   
+
     //fact
     ops_par_loop(fact_kernel, "fact_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(eff,  3, S1D_0M1, "double",OPS_READ),
                  ops_arg_dat(s,    3, S1D_0,   "double",OPS_WRITE));
 
-   
+
     // update loop
     int nxp_range_5[] = {3,nxp-3};
     ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5,
@@ -349,30 +349,30 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhou_new, 1, S1D_0, "double",OPS_RW),
                  ops_arg_dat(rhoE_new, 1, S1D_0, "double",OPS_RW),
                  ops_arg_dat(s,        3, S1D_0, "double",OPS_READ));
-    
+
     totaltime = totaltime + dt;
     ops_printf("%d \t %f\n", iter, totaltime);
-   
+
   }
-  
+
   ops_timers_core(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  
+
   //compare solution to referance solution
   double local_rms = 0.0;
   ops_par_loop(test_kernel, "test_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_READ),
                ops_arg_reduce(rms, 1, "double", OPS_INC));
   //ops_arg_dat(readvar,  1, S1D_0, "double",OPS_READ),
-               
+
   ops_reduction_result(rms, &local_rms);
   //printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
-   
+
   ops_printf("\nRMS %lf\n" , sqrt(local_rms)/nxp); //Correct RMS = 0.233689
- 
+
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
   //ops_print_dat_to_txtfile(al, "shsgc.dat");
   ops_exit();
-    
+
 }
