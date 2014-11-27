@@ -61,7 +61,6 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  int dims[3] = {x_cells+5, y_cells+5, z_cells+5};  //cloverleaf 2D block dimensions: +5 because we allocate the largest ops_dat's size
   clover_grid = ops_decl_block(3, "clover grid");
 
   //
@@ -69,7 +68,7 @@ void build_field()
   //
   int d_p[3] = {2,2,2}; //max halo depths for the dat in the possitive direction
   int d_m[3] = {-2,-2,-2}; //max halo depths for the dat in the negative direction
-  int size[3] = {x_cells+5, y_cells+5, z_cells+5}; //size of the dat -- should be identical to the block on which its define on
+  int size[3] = {x_cells+5, y_cells+5, z_cells+5}; //size of the dat
   int base[3] = {0,0,0};
   double* temp = NULL;
 

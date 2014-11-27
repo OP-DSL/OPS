@@ -1,5 +1,5 @@
-#ifndef VARS_KERNEL_H
-#define VARS_KERNEL_H
+#ifndef TEST_KERNEL_H
+#define TEST_KERNEL_H
 
 #include "vars.h"
 

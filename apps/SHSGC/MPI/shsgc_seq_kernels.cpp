@@ -11,6 +11,7 @@
 #include "vars.h"
 
 // global constants
+
 //user kernel files
 #include "initialize_kernel_seq_kernel.cpp"
 #include "save_kernel_seq_kernel.cpp"
@@ -26,4 +27,3 @@
 #include "calupwindeff_kernel_seq_kernel.cpp"
 #include "fact_kernel_seq_kernel.cpp"
 #include "update_kernel_seq_kernel.cpp"
-#include "test_kernel_seq_kernel.cpp"

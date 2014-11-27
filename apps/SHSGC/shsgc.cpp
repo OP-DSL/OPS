@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
   //declare data on block
   //
 
-  int d_p[1] = {0}; //max block halo depths for the dat in the possitive direction
-  int d_m[1] = {0}; //max block halo depths for the dat in the negative direction
+  int d_p[1] = {2}; //max block halo depths for the dat in the possitive direction
+  int d_m[1] = {-2}; //max block halo depths for the dat in the negative direction
   int size[1] = {nxp}; //size of 1D dat
   int base[1] = {0};
   double* temp = NULL;
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
   s     = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "s");
 
   //read in referance solution
-  if ((fp = fopen("Rho", "r")) == NULL) {
+  /*if ((fp = fopen("Rho", "r")) == NULL) {
     printf("can't open file %s\n","Rho");
     exit(2);
   }
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
   }
   //manual copy of read values -- ****** need to be removed later ******
   memcpy(readvar->data, temp, sizeof(double)*nxp);
-  free(temp);
+  free(temp);*/
   
   
   //reduction handle for rms variable
@@ -192,13 +192,13 @@ int main(int argc, char **argv) {
   int s1D_0[]   = {0};
   S1D_0         = ops_decl_stencil( 1, 1, s1D_0, "0");
   int s1D_0M1M2P1P2[] = {0,-1,-2,1,2};
-  S1D_0M1M2P1P2 = ops_decl_stencil( 5, 1, s1D_0M1M2P1P2, "0,-1,-2,1,2");
+  S1D_0M1M2P1P2 = ops_decl_stencil( 1, 5, s1D_0M1M2P1P2, "0,-1,-2,1,2");
 
   int s1D_01[]   = {0,1};
-  S1D_01         = ops_decl_stencil( 2, 1, s1D_01, "0,1");
+  S1D_01         = ops_decl_stencil( 1, 2, s1D_01, "0,1");
   
   int s1D_0M1[]   = {0,-1};
-  S1D_0M1         = ops_decl_stencil( 2, 1, s1D_01, "0,-1");
+  S1D_0M1         = ops_decl_stencil( 1, 2, s1D_01, "0,-1");
   
   ops_partition("1D_BLOCK_DECOMPOSE");
   
@@ -270,6 +270,11 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rhoE_res,  1, S1D_0, "double",OPS_WRITE));
 
+      //if (nrk == 0) {
+      //  ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
+      //  exit(0);
+      // }
+      
       //update use rk3 co-efficient's
       int nxp_range_2[] = {3,nxp-2};      
       ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
@@ -346,7 +351,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(s,        3, S1D_0, "double",OPS_READ));
     
     totaltime = totaltime + dt;
-    printf("%d \t %f\n", iter, totaltime);
+    ops_printf("%d \t %f\n", iter, totaltime);
    
   }
   
@@ -354,14 +359,14 @@ int main(int argc, char **argv) {
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   
   //compare solution to referance solution
-  double local_rms = 0.0;
+  /*double local_rms = 0.0;
   ops_par_loop(test_kernel, "test_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_READ),
                ops_arg_dat(readvar,  1, S1D_0, "double",OPS_READ),
                ops_arg_reduce(rms, 1, "double", OPS_INC));
                
   ops_reduction_result(rms, &local_rms);
-  printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
+  printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);*/
    
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");

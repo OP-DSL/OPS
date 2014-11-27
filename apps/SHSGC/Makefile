@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = shsgc_dev_seq shsgc_seq
+TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_mpi
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += #multidim_openacc multidim_mpi_openacc
@@ -137,14 +137,30 @@ all: clean $(TARGETS)
 shsgc_dev_seq: Makefile shsgc.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) shsgc.cpp -lops_seq -o shsgc_dev_seq
 
+#
+## MPI developer version
+#
+
+shsgc_dev_mpi: Makefile shsgc.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc.cpp -lops_mpi -o shsgc_dev_mpi
+
 
 SEQ_KERNELS = shsgc_seq_kernels.cpp
 
 #
 ## Sequential vectorised version
 #
-shsgc_seq: Makefile shsgc_ops.cpp initialize_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+shsgc_seq: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o shsgc_seq
+
+
+#
+## mpi version
+#
+#
+
+shsgc_mpi: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o shsgc_mpi
 
 
 #
@@ -152,4 +168,4 @@ shsgc_seq: Makefile shsgc_ops.cpp initialize_kernel.h $(OPS_INSTALL_PATH)/lib/li
 #
 
 clean:
-	rm -f shsgc_dev_seq shsgc_seq ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o
+	rm -f shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_mpi ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o

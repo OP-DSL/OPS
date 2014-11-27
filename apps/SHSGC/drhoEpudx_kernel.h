@@ -4,7 +4,7 @@
 #include "vars.h"
 
 
-void drhoEpudx_kernel(double *rhou_new, double* rho_new, double* rhoE_new, double *rhoE_res) {
+void drhoEpudx_kernel(const double *rhou_new, const double* rho_new, const double* rhoE_new, double *rhoE_res) {
   			
 			double fni = rhou_new[OPS_ACC0(0)] * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)] ;
 			double p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * fni);
