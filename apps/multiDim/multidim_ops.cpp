@@ -49,8 +49,8 @@ int main(int argc, char **argv)
 
 
 
-  int d_p[2] = {0,0};
-  int d_m[2] = {0,0};
+  int d_p[2] = {2,2};
+  int d_m[2] = {-2,-2};
   int size[2] = {x_cells, y_cells};
   int base[2] = {0,0};
   double* temp = NULL;

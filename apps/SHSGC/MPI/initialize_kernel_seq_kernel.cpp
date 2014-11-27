@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE_new,
                        double* rhoin, int *idx) {
   x[OPS_ACC0(0)] = xmin + (idx[0]-2) * dx;

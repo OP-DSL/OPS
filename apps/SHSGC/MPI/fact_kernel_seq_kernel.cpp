@@ -5,7 +5,7 @@
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void fact_kernel(const double* eff, double *s) {
   double fact;
   for (int m=0; m < 3 ;m++) {

@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void save_kernel(double *rho_old, double *rhou_old, double *rhoE_old,
                        double *rho_new, double *rhou_new, double *rhoE_new) {
       rho_old[0]=rho_new[0];

@@ -6,7 +6,7 @@
 #define OPS_ACC_MD2(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void limiter_kernel(const double* al, double *tht, double* gt) {
 
   double aalm, aal, all, ar, gtt;

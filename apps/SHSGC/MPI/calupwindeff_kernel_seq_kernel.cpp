@@ -10,7 +10,7 @@
 #define OPS_ACC_MD6(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void calupwindeff_kernel(const double* cmp, const double *gt, double* cf,
                          const double* al, const double* ep2, const double* r, double* eff) {
 

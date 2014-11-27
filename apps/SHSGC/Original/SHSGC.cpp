@@ -468,8 +468,8 @@ int main(int argc, char **argv)
       fprintf(test_fp, "%3.10lf ",s[i][j]);
     fprintf(test_fp, "\n");
   }*/
-  fclose(test_fp);
-  exit(0);
+  //fclose(test_fp);
+  //exit(0);
   
   
   FILE *fp;
@@ -490,5 +490,13 @@ int main(int argc, char **argv)
 	  rms = rms + pow ((rho_new[i] - readvar), 2);
   }
   printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(rms)/nxp);
+
+  fclose(fp);
+
+  for (int i=0; i<nxp; i++){
+	  rms = rms + pow ((rho_new[i]), 2);
+  }
+  printf("\nthe RMS %lf\n" , sqrt(rms)/nxp);
+
   // end time loop
 }

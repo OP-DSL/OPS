@@ -4,7 +4,7 @@
 #include "vars.h"
 
 
-void calupwindeff_kernel(const double* cmp, const double *gt, double* cf, 
+void calupwindeff_kernel(const double* cmp, const double *gt, const double* cf, 
                          const double* al, const double* ep2, const double* r, double* eff) {
   
 		double e1 = (cmp[OPS_ACC_MD0(0,0)] * (gt[OPS_ACC_MD1(0,0)] + gt[OPS_ACC_MD1(0,1)]) - cf[OPS_ACC_MD2(0,0)] * al[OPS_ACC_MD3(0,0)]) * ep2[OPS_ACC_MD4(0,0)];

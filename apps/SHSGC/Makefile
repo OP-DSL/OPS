@@ -118,10 +118,10 @@ endif
 # master to make all versions
 #
 
-TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_mpi
+TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_mpi
 
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += #multidim_openacc multidim_mpi_openacc
+TARGETS += #shsgc_openacc shsgc_mpi_openacc
 else
 TARGETS += #openacc_error
 endif
@@ -164,8 +164,20 @@ shsgc_mpi: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 
 
 #
+# OpenMP version
+#
+OMP_KERNELS = shsgc_omp_kernels.cpp
+
+shsgc_mpi_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	    $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -o shsgc_mpi_openmp
+
+
+shsgc_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
+	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o shsgc_openmp
+
+#
 # cleanup
 #
 
 clean:
-	rm -f shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_mpi ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o
+	rm -f shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_mpi ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o

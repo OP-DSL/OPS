@@ -107,6 +107,10 @@ void ops_par_loop_update_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_test_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg );
+
 
 
 
@@ -403,7 +407,16 @@ int main(int argc, char **argv) {
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
 
+  double local_rms = 0.0;
+  ops_par_loop_test_kernel("test_kernel", shsgc_grid, 1, nxp_range,
+               ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_READ),
+               ops_arg_reduce(rms, 1, "double", OPS_INC));
 
+
+  ops_reduction_result(rms, &local_rms);
+
+
+  ops_printf("\nRMS %lf\n" , sqrt(local_rms)/nxp);
 
 
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");

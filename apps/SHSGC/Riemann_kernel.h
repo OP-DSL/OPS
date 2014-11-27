@@ -4,7 +4,7 @@
 #include "vars.h"
 
 
-void Riemann_kernel(double* rho_new, double *rhou_new,  double* rhoE_new, 
+void Riemann_kernel(const double* rho_new, const double *rhou_new, const double* rhoE_new, 
                     double* alam, double* r, double* al) {
   
   double rl, rr, rho, leftu, rightu, u, hl, hr, h, Vsq, csq, c, g;

@@ -169,6 +169,51 @@ def comment_remover(text):
     )
     return re.sub(pattern, replacer, text)
 
+def parse_signature(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+
+def check_accs(name, arg_list, arg_typ, text):
+  for n in range(0,len(arg_list)):
+    if arg_typ[n] == 'ops_arg_dat':
+      pos = 0
+      while 1:
+        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        if match == None:
+          break
+        pos = pos + match.start(0)
+        if pos < 0:
+          break
+        pos = pos + len(arg_list[n])
+        
+        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+          pos = pos + text[pos:].find('OPS_ACC_MD')
+          pos2 = text[pos+10:].find('(')
+          num = int(text[pos+10:pos+10+pos2])
+          print num, str(n);
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+          pos = pos+10+pos2
+        elif text[pos:].find('OPS_ACC') <> -1:
+          pos = pos + text[pos:].find('OPS_ACC')
+          pos2 = text[pos+7:].find('(')
+          num = int(text[pos+7:pos+7+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+          pos = pos+7+pos2
+
 def ops_gen_mpi_openmp(master, date, consts, kernels):
 
   global dims, stens
@@ -253,6 +298,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
@@ -286,11 +333,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-
+    i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
+    arg_list = parse_signature(text[i2+len(name):i+j])
+    check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
       code('inline '+text[i:k+2])
@@ -298,6 +347,16 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code(text[i:k+2])
     code('')
     comm('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
+    code('')
+
+##########################################################################
+#  now host stub
+##########################################################################
     comm(' host stub function')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
@@ -494,6 +553,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     FOR('thr','0','nthreads')
 
     code('')
+    if NDIM==1:
+      outer = 'x'
     if NDIM==2:
       outer = 'y'
     if NDIM==3:
@@ -560,7 +621,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       FOR('n_y','start[1]','end[1]')
     if NDIM==2:
       FOR('n_y','start_i','finish_i')
-    FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
+    if NDIM==1:
+      FOR('n_x','start_i','start_i+(finish_i-start_i)/SIMD_VEC')
+    
+    if NDIM > 1: 
+      FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #depth = depth+2
 
     comm('call kernel function, passing in pointers to data -vectorised')
@@ -603,7 +668,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ENDFOR()
     code('')
 
-    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
+    if NDIM==1:
+      FOR('n_x','start_i+((finish_i-start_i)/SIMD_VEC)*SIMD_VEC','finish_i')
+    if NDIM > 1:
+      FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
     #depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
@@ -643,21 +711,22 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
 
-    comm('shift pointers to data y direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+    if NDIM > 1:
+      comm('shift pointers to data y direction')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
 
-    if arg_idx:
-      code('#ifdef OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
-      code('#else //OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = start'+str(n)+';')
-      code('#endif //OPS_MPI')
-      code('arg_idx[1]++;')
-    ENDFOR()
+      if arg_idx:
+        code('#ifdef OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
+        code('#else //OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = start'+str(n)+';')
+        code('#endif //OPS_MPI')
+        code('arg_idx[1]++;')
+      ENDFOR()
 
     if NDIM==3:
       comm('shift pointers to data z direction')

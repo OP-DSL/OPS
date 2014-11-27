@@ -8,7 +8,7 @@
 #define OPS_ACC_MD4(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void vars_kernel(const double* alam, const double* al, const double *gt, double* cmp,  double* cf) {
 
   double  anu, aaa, ga, qf, ww;

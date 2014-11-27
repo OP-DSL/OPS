@@ -359,15 +359,17 @@ int main(int argc, char **argv) {
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   
   //compare solution to referance solution
-  /*double local_rms = 0.0;
+  double local_rms = 0.0;
   ops_par_loop(test_kernel, "test_kernel", shsgc_grid, 1, nxp_range,
                ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_READ),
-               ops_arg_dat(readvar,  1, S1D_0, "double",OPS_READ),
                ops_arg_reduce(rms, 1, "double", OPS_INC));
+  //ops_arg_dat(readvar,  1, S1D_0, "double",OPS_READ),
                
   ops_reduction_result(rms, &local_rms);
-  printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);*/
+  //printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
    
+  ops_printf("\nRMS %lf\n" , sqrt(local_rms)/nxp); //Correct RMS = 0.233689
+ 
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
   //ops_print_dat_to_txtfile(al, "shsgc.dat");

@@ -5,7 +5,7 @@
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void tvd_kernel(const double *tht, double* ep2) {
     double maxim;
 		for (int m=0; m < 3 ;m++) {

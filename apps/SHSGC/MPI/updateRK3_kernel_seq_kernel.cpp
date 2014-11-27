@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void updateRK3_kernel(double *rho_new, double* rhou_new, double* rhoE_new,
                       double *rho_old, double* rhou_old, double* rhoE_old,
                       double *rho_res, double *rhou_res, double *rhoE_res,

@@ -4,7 +4,7 @@
 #define OPS_ACC_MD3(d,x) ((x)*3+(d))
 
 //user function
-
+inline 
 void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new, const double *s) {
 		rho_new[OPS_ACC0(0)]  = rho_new[OPS_ACC0(0)]  + s[OPS_ACC_MD3(0,0)];
 		rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1,0)];

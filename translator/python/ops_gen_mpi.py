@@ -323,9 +323,14 @@ def ops_gen_mpi(master, date, consts, kernels):
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
+    m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
     check_accs(name, arg_list, arg_typ, text[i+j:k])
-    code(text[i:k+2])
+    l = text[i:m].find('inline')
+    if(l<0):
+      code('inline '+text[i:k+2])
+    else:
+      code(text[i:k+2])
     code('')
     code('')
     for n in range (0, nargs):
