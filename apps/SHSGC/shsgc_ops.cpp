@@ -321,11 +321,6 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rhoE_res, 1, S1D_0, "double", OPS_WRITE));
 
-
-
-
-
-
       int nxp_range_2[] = {3,nxp-2};
       ops_par_loop_updateRK3_kernel("updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
                    ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_WRITE),
@@ -356,11 +351,14 @@ int main(int argc, char **argv) {
                  ops_arg_dat(al, 3, S1D_01, "double", OPS_WRITE));
 
 
+
+
     int nxp_range_4[] = {1,nxp};
     ops_par_loop_limiter_kernel("limiter_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(al, 3, S1D_0M1, "double", OPS_READ),
                  ops_arg_dat(tht, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double", OPS_WRITE));
+
 
 
     ops_par_loop_tvd_kernel("tvd_kernel", shsgc_grid, 1, nxp_range_3,
@@ -374,7 +372,10 @@ int main(int argc, char **argv) {
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(cf, 3, S1D_0, "double", OPS_WRITE));
 
-
+      //if (nrk == 1) {
+        ops_print_dat_to_txtfile(cf, "shsgc.dat");
+        exit(0);
+      //}
 
     ops_par_loop_calupwindeff_kernel("calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_READ),

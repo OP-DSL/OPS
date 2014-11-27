@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   xmax = 5.0;
   ymax = 0.5;
   dx = (xmax-xmin)/(nxp-(1 + 2*xhalo));
-  dy = (ymax-ymin)/(nyp-1); 
+  dy = (ymax-ymin)/(nyp-1);
   pl = 10.333f;
   pr = 1.0f;
   rhol = 3.857143;
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   // rk3 co-efficient's
   double *a1 = (double *)malloc(3*sizeof(double*));
   double *a2 = (double *)malloc(3*sizeof(double*));
-  
+
 
   // TVD scheme variables
   double r[nxp][3][3], al[nxp][3], alam[nxp][3], gt[nxp][3], eff[nxp][3], s[nxp][3], tht[nxp][3];
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   double akap2 = 0.40;
   double tvdsmu = 0.25f;
   printf("%lf\t %lf",akap2, tvdsmu);
-  
+
   // Initialize rk3 co-efficient's
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 	  x[i] = xmin + (i-2) * dx;
 
   }
-  
+
   for (int i = 0; i < nxp; i++) {
 	if (x[i] >= -4.0){
 		rho_new[i] = 1.0 + eps * sin(lambda *x[i] );
@@ -119,18 +119,18 @@ int main(int argc, char **argv)
 		rhou_new[i] = ul * rho_new[i];
 		rhoE_new[i] = (pl / gam1) + 0.5 * pow(rhou_new[i],2)/rho_new[i];
 	}
-	
 
-  
-  
+
+
+
 	FILE *fp;
   fp = fopen("rhoin.txt", "w");
-  for (int i=0; i<nxp; i++) 
+  for (int i=0; i<nxp; i++)
 	  fprintf(fp, "%3.10lf\n", gam1 * (rhoE_new[i] - 0.5 * rhou_new[i] * rhou_new[i] / rho_new[i] ));
   fclose(fp);
   }
-  
- 
+
+
    // boundary conditions as of no it is just an idea to implement however for the test case the grid points  nx+4 are given as input
 //   for (int i = 0; i < 2*xhalo; i++) {
 // 	  if(i < xhalo){
@@ -149,18 +149,18 @@ int main(int argc, char **argv)
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
-  
-   
+
+
   //main iterative loop
   for (int iter = 0; iter <niter;  iter++){
-	
+
     // Save previous data arguments
     for (int i = 0; i < nxp; i++) {
       rho_old[i]=rho_new[i];
       rhou_old[i]=rhou_new[i];
       rhoE_old[i]=rhoE_new[i];
     }
-    
+
 	// rk3 loop
 	for (int nrk=0; nrk <3; nrk++){
 		// make residue equal to zero
@@ -185,14 +185,14 @@ int main(int argc, char **argv)
 			deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
 			rho_res[i] = deriv;
 		}
-		
 
-   
-   
-  
+
+
+
+
 		// calculate d(rhouu + p)/dx
 		for (int i=2; i < nxp-2; i++) {
-			// cal pressure 
+			// cal pressure
 			fni = rhou_new[i] * rhou_new[i] / rho_new[i] ;
 			p = gam1 * (rhoE_new[i] - 0.5 * fni);
 			fni = fni + p;
@@ -214,30 +214,30 @@ int main(int argc, char **argv)
 		}
 
 
-		
+
 		// Energy equation derivative d(rhoE+p)u/dx
 		for (int i=2; i < nxp-2; i++) {
-			
+
 			fni = rhou_new[i] * rhou_new[i] / rho_new[i] ;
 			p = gam1 * (rhoE_new[i] - 0.5 * fni);
 			fni = (rhoE_new[i] + p) * rhou_new[i] / rho_new[i] ;
-			
+
 			fnim1 = rhou_new[i-1] * rhou_new[i-1] / rho_new[i-1];
 			p = gam1 * (rhoE_new[i-1] - 0.5 * fnim1);
 			fnim1 = (rhoE_new[i-1] + p) * rhou_new[i-1] / rho_new[i-1];
-			
+
 			fnim2 = rhou_new[i-2] * rhou_new[i-2] / rho_new[i-2];
 			p = gam1 * (rhoE_new[i-2] - 0.5 * fnim2);
 			fnim2 = (rhoE_new[i-2] + p ) * rhou_new[i-2] / rho_new[i-2];
-			
+
 			fnip1 = rhou_new[i+1] * rhou_new[i+1] / rho_new[i+1];
 			p = gam1 * (rhoE_new[i+1] - 0.5 * fnip1);
 			fnip1 = (rhoE_new[i+1] + p) * rhou_new[i+1] / rho_new[i+1];
-			
+
 			fnip2 = rhou_new[i+2] * rhou_new[i+2] / rho_new[i+2];
 			p = gam1 * (rhoE_new[i+2] - 0.5 * fnip2);
 			fnip2 = (rhoE_new[i+2] + p) * rhou_new[i+2] / rho_new[i+2];
-			
+
 // 			fni = rhoE_new[i] * gam - 0.5 * gam1 * (rhou_new[i] * rhou_new[i] / rho_new[i]) ; // not reqd for first der
 // 			fnim1 = rhoE_new[i-1] * gam - 0.5 * gam1 * (rhou_new[i-1] * rhou_new[i-1] / rho_new[i-1]);
 // 			fnim1 = fnim1 * rhou_new[i-1] / rho_new[i-1];
@@ -251,8 +251,6 @@ int main(int argc, char **argv)
 			deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
 			rhoE_res[i] = deriv;
 		}
-		
-
 
 		// boundary derivatives
 
@@ -267,7 +265,7 @@ int main(int argc, char **argv)
 			rhou_old[i] = rhou_old[i] + dt * a2[nrk] * (-rhou_res[i]);
 			rhoE_old[i] = rhoE_old[i] + dt * a2[nrk] * (-rhoE_res[i]);
 		}
-    
+
 	}
 
 	// TVD scheme
@@ -312,51 +310,52 @@ int main(int argc, char **argv)
 		r[i][2][2] = h + u * c;
 
 		for (int m=0; m<3; m++)
-			for (int n=0; n<3; n++) 
+			for (int n=0; n<3; n++)
 				r[i][m][n] = r[i][m][n] / csq;
-		dw1 = rho_new[i+1] - rho_new[i]; 
-		dw2 = rhou_new[i+1] - rhou_new[i]; 
-		dw3 = rhoE_new[i+1] - rhoE_new[i]; 
-		
-		
+		dw1 = rho_new[i+1] - rho_new[i];
+		dw2 = rhou_new[i+1] - rhou_new[i];
+		dw3 = rhoE_new[i+1] - rhoE_new[i];
+
+
 		delpc2 = gam1 * ( dw3 + 0.50 * Vsq * dw1  - u * dw2) / csq;
 		rdeluc = ( dw2 - u * dw1) / c ;
 		al[i][0] = 0.5 * (delpc2 - rdeluc);
 		al[i][1] = dw1 - delpc2 ;
 		al[i][2] = 0.5 * ( delpc2 + rdeluc );
-// 		
+//
 // 		ri[0][0] = 0.5 * (0.50 *g * Vsq + u /c);
 // 		ri[0][1] = -0.5 * (g * u + 1.0/c);
 // 		ri[0][2] = 0.50 * g;
-// 
+//
 // 		ri[1][0] = 1.00 - 0.5 * g * Vsq;
 // 		ri[1][1] = g * u;
 // 		ri[1][2] = -g;
-// 
+//
 // 		ri[2][0] = 0.50 * (0.50 * g * Vsq - u /c);
 // 		ri[2][1] = -0.50 * (g * u - 1.00 / c);
 // 		ri[2][2] = 0.50 * g;
-// // 		
+// //
 // 		al[i][0] = 0.00;
 //         al[i][0] = al[i][0] + ri[0][0] * dw1 + ri[0][1] * dw2 + ri[0][2] * dw3 ;
-// 		
+//
 // 		al[i][1] = 0.00;
 //         al[i][1] = al[i][1] + ri[1][0] * dw1 + ri[1][1] * dw2 + ri[1][2] * dw3;
-// 		
+//
 // 		al[i][2] = 0.00;
 //         al[i][2] = al[i][2] + ri[2][0] * dw1 + ri[2][1] * dw2 + ri[2][2] * dw3;
-      
-		
- 		for (int m=0; m<3; m++) 
+
+
+ 		for (int m=0; m<3; m++)
 			al[i][m] = al[i][m] * csq;
 	}
-	
-	
 
-	
-	
+
+
+
+
+
 	double del2 = 1e-8;
-	
+
 	// limiter function
 	double aalm, aal, all, ar, gtt;
 	for (int i=1; i < nxp; i++) {
@@ -370,21 +369,21 @@ int main(int argc, char **argv)
 			gt[i][m]= gtt / (ar * ar + all * all + 2.00 * del2);
 		}
 	}
-   
-  
+
+
 	double maxim;
 	// Second order tvd dissipation
 	for (int i=0; i < nxp-1; i++) {
 		for (int m=0; m < 3 ;m++) {
-			if (tht[i][m] > tht[i+1][m]) 
+			if (tht[i][m] > tht[i+1][m])
 				maxim = tht[i][m];
 			else
 				maxim = tht[i+1][m];
 			ep2[i][m] = akap2 * maxim;
 		}
 	}
-	 
-  
+
+
 	// vars
 	double  anu, aaa, ga, qf, con, ww;
 	con = pow (tvdsmu,2.f);
@@ -395,28 +394,57 @@ int main(int argc, char **argv)
 			ga = aaa * ( gt[i+1][m] - gt[i][m]) / (pow(aaa,2.f) + del2);
 			qf = sqrt ( con + pow(anu,2.f));
 			cmp[i][m] = 0.50 * qf;
-			ww = anu + cmp[i][m] * ga; 
+			ww = anu + cmp[i][m] * ga;
 			qf = sqrt(con + pow(ww,2.f));
 			cf[i][m] = qf;
 		}
 	}
-	
-	
-  
-  
+
+		//if (nrk == 1) {
+		  FILE *test_fp;
+		  test_fp = fopen("shsgc.txt", "w");
+		  //for (int i=0; i<nxp; i++)
+		  //  fprintf(test_fp, "%3.10lf\n",x[i]);
+		  //for (int i=0; i<nxp; i++)
+		  //  fprintf(test_fp, "%3.10lf\n",rho_new[i]);
+		  //for (int i=0; i<nxp; i++)
+		  //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
+		  /*for (int i=0; i<nxp; i++) {
+		    for (int j = 0; j<3;j++)
+		      fprintf(test_fp, "%3.10lf ",al[i][j]);
+		    fprintf(test_fp, "\n");
+		  }*/
+		  /*for (int i=0; i<nxp; i++) {
+		    for (int j = 0; j<3;j++)
+		      for (int k = 0; k<3;k++)
+		        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
+		    fprintf(test_fp, "\n");
+		  }*/
+		  for (int i=0; i<nxp; i++) {
+		    for (int j = 0; j<3;j++)
+		      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
+		      fprintf(test_fp, "%3.10lf ",cf[i][j]);
+		    fprintf(test_fp, "\n");
+		  }
+		  //fclose(test_fp);
+		  exit(0);
+		//}
+
+
+
 	// cal upwind eff
 	double e1, e2, e3;
 	for (int i=0; i < nxp-1; i++) {
 		e1 = (cmp[i][0] * (gt[i][0] + gt[i+1][0]) - cf[i][0] * al[i][0]) * ep2[i][0];
 		e2 = (cmp[i][1] * (gt[i][1] + gt[i+1][1]) - cf[i][1] * al[i][1]) * ep2[i][1];
 		e3 = (cmp[i][2] * (gt[i][2] + gt[i+1][2]) - cf[i][2] * al[i][2]) * ep2[i][2];
-		
+
 		eff[i][0]=e1 * r[i][0][0] + e2 * r[i][0][1] + e3 * r[i][0][2];
 		eff[i][1]=e1 * r[i][1][0] + e2 * r[i][1][1] + e3 * r[i][1][2];
 		eff[i][2]=e1 * r[i][2][0] + e2 * r[i][2][1] + e3 * r[i][2][2];
 	}
- 
-	
+
+
 	//fact
 	double fact;
 	for (int i=1; i < nxp; i++) {
@@ -425,61 +453,33 @@ int main(int argc, char **argv)
 			s[i][m] = -fact * (eff[i][m] - eff[i-1][m]);
 		}
 	}
-  
-  
-  
+
+
+
 	// update loop
 	for (int i=3; i < nxp-3; i++) {
 		rho_new[i] = rho_new[i] + s[i][0];
 		rhou_new[i] = rhou_new[i] + s[i][1];
 		rhoE_new[i] = rhoE_new[i] + s[i][2];
 	}
-	
-	
+
+
 	totaltime = totaltime + dt;
 	printf("%d \t %f\n", iter, totaltime);
   }
-  
+
   ops_timers_core(&ct1, &et1);
   printf("\nOriginal Application Total Wall time %lf\n",et1-et0);
-  
-  FILE *test_fp;
-  test_fp = fopen("shsgc.txt", "w");
-  //for (int i=0; i<nxp; i++) 
-  //  fprintf(test_fp, "%3.10lf\n",x[i]);
-  for (int i=0; i<nxp; i++) 
-    fprintf(test_fp, "%3.10lf\n",rho_new[i]);
-  //for (int i=0; i<nxp; i++) 
-  //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
-  /*for (int i=0; i<nxp; i++) {
-    for (int j = 0; j<3;j++)
-      fprintf(test_fp, "%3.10lf ",alam[i][j]);
-    fprintf(test_fp, "\n");
-  }*/
-  /*or (int i=0; i<nxp; i++) {
-    for (int j = 0; j<3;j++)
-      for (int k = 0; k<3;k++)
-        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
-    fprintf(test_fp, "\n");
-  }*/
-  /*for (int i=0; i<nxp; i++) {
-    for (int j = 0; j<3;j++)
-      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
-      fprintf(test_fp, "%3.10lf ",s[i][j]);
-    fprintf(test_fp, "\n");
-  }*/
-  //fclose(test_fp);
-  //exit(0);
-  
-  
+
+
   FILE *fp;
   fp = fopen("rho.txt", "w");
-  for (int i=0; i<nxp; i++) 
+  for (int i=0; i<nxp; i++)
 	  fprintf(fp, "%lf\n",rho_new[i]);
   fclose(fp);
-  
+
   fp = fopen("U.txt", "w");
-  for (int i=0; i<nxp; i++) 
+  for (int i=0; i<nxp; i++)
 	  fprintf(fp, "%lf\n",rhou_new[i]/rho_new[i]);
   fclose(fp);
   double readvar = 0.0;

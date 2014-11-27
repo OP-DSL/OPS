@@ -270,10 +270,10 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rhoE_res,  1, S1D_0, "double",OPS_WRITE));
 
-      //if (nrk == 0) {
-      //  ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
-      //  exit(0);
-      // }
+      if (nrk == 1) {
+        ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
+        exit(0);
+      }
       
       //update use rk3 co-efficient's
       int nxp_range_2[] = {3,nxp-2};      
