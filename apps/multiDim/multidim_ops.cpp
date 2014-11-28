@@ -46,8 +46,8 @@ int main(int argc, char **argv)
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
 
-  int d_p[2] = {2,2};
-  int d_m[2] = {-2,-2};
+  int d_p[2] = {1,1};
+  int d_m[2] = {-1,-1};
   int size[2] = {x_cells, y_cells};
   int base[2] = {0,0};
   double* temp = NULL;
@@ -55,12 +55,18 @@ int main(int argc, char **argv)
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
 
+
   ops_partition("2D_BLOCK_DECOMPSE");
+
+
+
+
+
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {0,10,0,10};
+  int iter_range[] = {0,4,0,4};
   ops_par_loop_multidim_kernel("multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());

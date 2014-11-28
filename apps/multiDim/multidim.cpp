@@ -70,8 +70,8 @@ int main(int argc, char **argv)
 
 
   //declare data on blocks
-  int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
-  int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
+  int d_p[2] = {1,1}; //max halo depths for the dat in the possitive direction
+  int d_m[2] = {-1,-1}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells, y_cells}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
   double* temp = NULL;
@@ -80,13 +80,29 @@ int main(int argc, char **argv)
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
 
+
+
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
+
+  //temp = (double*)malloc(sizeof(double)*2*dat0->size[1]*dat0->size[0]);
+  /*int count=0;
+  for(int j = 0; j<dat0->size[1]; j++)
+    for(int i = 0; i<dat0->size[0]; i++)
+    {
+        ((double *)(dat0->data))[2*count] = 1.44;
+        ((double *)(dat0->data))[2*count+1] = 6.99;
+        count++;
+    }*/
+
+  //ops_upload_dat(dat0);
+  //ops_print_dat_to_txtfile(dat0, "multidim.dat");
+  //exit(0);
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {0,10,0,10};
+  int iter_range[] = {0,4,0,4};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());

@@ -3,6 +3,7 @@
 
 //header
 #define OPS_ACC_MD_MACROS
+#define OPS_2D
 #include "stdlib.h"
 #include "stdio.h"
 #include "ops_lib_cpp.h"

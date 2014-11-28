@@ -15,6 +15,9 @@ void multidim_kernel(double *val, int *idx){
 
 
 
+#undef OPS_ACC_MD0
+
+
 // host stub function
 void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {

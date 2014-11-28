@@ -16,6 +16,10 @@ void multidim_copy_kernel(const double *src, double *dest){
 
 
 
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+
+
 // host stub function
 void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {

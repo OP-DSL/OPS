@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_mpi
+TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shscg_cuda hsgc_mpi
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += #shsgc_openacc shsgc_mpi_openacc
@@ -174,6 +174,25 @@ shsgc_mpi_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 
 shsgc_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o shsgc_openmp
+
+#
+## CUDA version
+#
+#
+shsgc_cuda: Makefile ./CUDA/shsgc_kernels_cu.o shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) shsgc_ops.cpp ./CUDA/shsgc_kernels_cu.o -lcudart -lops_cuda -o shsgc_cuda
+
+shsgc_mpi_cuda: Makefile ./CUDA/shsgc_kernels_mpi_cu.o shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) shsgc_ops.cpp ./CUDA/shsgc_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o shsgc_mpi_cuda
+
+./CUDA/shsgc_kernels_cu.o: ./CUDA/shsgc_kernels.cu Makefile
+	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/shsgc_kernels_cu.o ./CUDA/shsgc_kernels.cu
+
+./CUDA/shsgc_kernels_mpi_cu.o: ./CUDA/shsgc_kernels.cu Makefile
+	nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) -I. -I$(MPI_INSTALL_PATH)/include \
+        -DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/shsgc_kernels_mpi_cu.o ./CUDA/shsgc_kernels.cu
+
+
 
 #
 # cleanup
