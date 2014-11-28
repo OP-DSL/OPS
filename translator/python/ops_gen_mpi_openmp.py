@@ -197,8 +197,8 @@ def check_accs(name, arg_list, arg_typ, text):
         if pos < 0:
           break
         pos = pos + len(arg_list[n])
-        
-        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+
+        if text[pos:].find('OPS_ACC_MD') <> -1 :
           pos = pos + text[pos:].find('OPS_ACC_MD')
           pos2 = text[pos+10:].find('(')
           num = int(text[pos+10:pos+10+pos2])
@@ -304,8 +304,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
-          
-          
+
+
 ##########################################################################
 #  start with omp kernel function
 ##########################################################################
@@ -623,8 +623,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       FOR('n_y','start_i','finish_i')
     if NDIM==1:
       FOR('n_x','start_i','start_i+(finish_i-start_i)/SIMD_VEC')
-    
-    if NDIM > 1: 
+
+    if NDIM > 1:
       FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #depth = depth+2
 
@@ -820,6 +820,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   depth = 0
   file_text =''
   comm('header')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#define OPS_ACC_MD_MACROS')

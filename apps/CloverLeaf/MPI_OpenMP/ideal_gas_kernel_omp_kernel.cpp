@@ -22,6 +22,8 @@ void ideal_gas_kernel( const double *density, const double *energy,
 
 
 
+
+
 // host stub function
 void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {

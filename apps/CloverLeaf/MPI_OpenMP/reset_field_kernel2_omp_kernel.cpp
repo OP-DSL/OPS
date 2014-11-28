@@ -17,6 +17,8 @@ void reset_field_kernel2( double *xvel0, const double *xvel1,
 
 
 
+
+
 // host stub function
 void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {

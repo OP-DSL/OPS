@@ -47,34 +47,35 @@
 //user function
 inline void update_halo_kernel3_minus_2_b(__global double * restrict vol_flux_x, __global double * restrict mass_flux_x, const __global int* restrict  fields)
 
-  {
+ {
   if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(-2,0)]);
   if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(-2,0)]);
 }
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
+#undef OPS_ACC0
+#undef OPS_ACC1
 
 
- __kernel void ops_update_halo_kernel3_minus_2_b(
- __global double* restrict arg0,
- __global double* restrict arg1,
- __global const int* restrict arg2,
- const int base0,
- const int base1,
- const int size0,
- const int size1 ){
+
+__kernel void ops_update_halo_kernel3_minus_2_b(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global const int* restrict arg2,
+const int base0,
+const int base1,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     update_halo_kernel3_minus_2_b(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel3_minus_2_b],
-                        &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel3_minus_2_b],
-                        arg2);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    update_halo_kernel3_minus_2_b(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel3_minus_2_b],
+                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel3_minus_2_b],
+                       arg2);
+  }
 
- }
+}

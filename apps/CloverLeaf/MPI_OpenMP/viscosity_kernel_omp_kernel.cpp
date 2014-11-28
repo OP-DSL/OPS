@@ -61,6 +61,8 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
 
 
 
+
+
 // host stub function
 void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,

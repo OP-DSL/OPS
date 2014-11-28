@@ -50,7 +50,7 @@
 void revert_kernel( const __global double * restrict density0, __global double * restrict density1, const __global double * restrict energy0, 
 __global double * restrict energy1)
 
-  {
+ {
 
   density1[OPS_ACC1(0,0)] = density0[OPS_ACC0(0,0)];
   energy1[OPS_ACC3(0,0)] = energy0[OPS_ACC2(0,0)];
@@ -58,33 +58,34 @@ __global double * restrict energy1)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
 
- __kernel void ops_revert_kernel(
- __global const double* restrict arg0,
- __global double* restrict arg1,
- __global const double* restrict arg2,
- __global double* restrict arg3,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int size0,
- const int size1 ){
+
+__kernel void ops_revert_kernel(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+__global const double* restrict arg2,
+__global double* restrict arg3,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     revert_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_revert_kernel],
-                   &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_revert_kernel],
-                   &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_revert_kernel],
-                   &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_revert_kernel]);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    revert_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_revert_kernel],
+                  &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_revert_kernel],
+                  &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_revert_kernel],
+                  &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_revert_kernel]);
+  }
 
- }
+}

@@ -353,7 +353,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
           if NDIM==3:
             code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
-    
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
@@ -361,8 +361,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
-  
-  
+
+
     code('')
     comm('user function')
     fid = open(name2+'_kernel.h', 'r')
@@ -416,7 +416,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     k2 = para_parse(text, loc+j2, '{', '}')
 
     body = text[loc+1:k2+2] # body of function
-    
+
     found_consts = find_consts(body,consts)
     #print found_consts
 
@@ -1148,6 +1148,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   file_text =''
   comm('header')
   code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "stdlib.h"')

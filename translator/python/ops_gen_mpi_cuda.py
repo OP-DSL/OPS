@@ -191,8 +191,8 @@ def check_accs(name, arg_list, arg_typ, text):
         if pos < 0:
           break
         pos = pos + len(arg_list[n])
-        
-        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+
+        if text[pos:].find('OPS_ACC_MD') <> -1 :
           pos = pos + text[pos:].find('OPS_ACC_MD')
           pos2 = text[pos+10:].find('(')
           num = int(text[pos+10:pos+10+pos2])
@@ -294,8 +294,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 #  generate constants and MACROS
 ##########################################################################
 
-  
-    
+
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
@@ -322,7 +322,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
-  
+
 
 ##########################################################################
 #  generate headder
@@ -342,7 +342,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
 
-    
+
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
@@ -882,6 +882,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   file_text =''
   comm('header')
   code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
