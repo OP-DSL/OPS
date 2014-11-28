@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
 
   int x_min=field.x_min-2;

@@ -31,6 +31,7 @@
 #include <math.h>
 
 // OPS header file
+ #define OPS_2D
 #include "ops_seq.h"
 
 #include "data.h"

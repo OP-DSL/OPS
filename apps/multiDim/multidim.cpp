@@ -41,6 +41,7 @@
 #include <math.h>
 
 // OPS header file
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "multidim_kernel.h"
@@ -50,41 +51,41 @@
 int main(int argc, char **argv)
 {
   //initialize sizes using global values
-  int x_cells = 10;
-  int y_cells = 10;
-  
+  int x_cells = 4;
+  int y_cells = 4;
+
   /**-------------------------- Initialisation --------------------------**/
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  
+
   /**----------------------------OPS Declarations----------------------------**/
 
   //declare block
   ops_block grid2D = ops_decl_block(2, "grid2D");
-  
+
   //declare stencils
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
-  
-  
+
+
   //declare data on blocks
   int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells, y_cells}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
   double* temp = NULL;
-  
+
   //declare ops_dat with dim = 2
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
-  
+
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
-  
+
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
-  
+
   int iter_range[] = {0,10,0,10};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
@@ -92,11 +93,11 @@ int main(int argc, char **argv)
   ops_par_loop(multidim_copy_kernel,"multidim_copy_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ),
                ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
-    
+
   //ops_printf("\n\n");
   //ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range,
   //             ops_arg_dat(dat1, 2, S2D_00, "double", OPS_READ));
-  
+
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 
+#define OPS_2D
 #include  "ops_lib_cpp.h"
 
 //
@@ -32,21 +33,17 @@ void ops_par_loop_multidim_copy_kernel(char const *, ops_block, int , int*,
 int main(int argc, char **argv)
 {
 
-  int x_cells = 10;
-  int y_cells = 10;
-
+  int x_cells = 4;
+  int y_cells = 4;
 
 
   ops_init(argc,argv,1);
 
 
-
   ops_block grid2D = ops_decl_block(2, "grid2D");
-
 
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
-
 
 
   int d_p[2] = {2,2};
@@ -55,10 +52,8 @@ int main(int argc, char **argv)
   int base[2] = {0,0};
   double* temp = NULL;
 
-
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
-
 
   ops_partition("2D_BLOCK_DECOMPSE");
 
@@ -72,7 +67,6 @@ int main(int argc, char **argv)
   ops_par_loop_multidim_copy_kernel("multidim_copy_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ),
                ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
-
 
 
 

@@ -26,7 +26,7 @@
 #include <math.h>
 
 // OPS header file
-
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "data.h"
@@ -47,7 +47,7 @@ void accelerate()
 
 
   int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; // inner range plus 1
-  
+
   ops_par_loop(accelerate_kernel, "accelerate_kernel", clover_grid, 2, rangexy_inner_plus1,
     ops_arg_dat(density0, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
     ops_arg_dat(volume, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),

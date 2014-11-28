@@ -136,7 +136,7 @@ def para_parse(text, j, op_b, cl_b):
             if depth == 0:
                 return loc2
       loc2 = loc2 + 1
-      
+
 def comment_remover(text):
     """Remove comments from text"""
 
@@ -196,8 +196,8 @@ def check_accs(name, arg_list, arg_typ, text):
         if pos < 0:
           break
         pos = pos + len(arg_list[n])
-        
-        if text[pos:].find('OPS_ACC_MD') <> -1 :          
+
+        if text[pos:].find('OPS_ACC_MD') <> -1 :
           pos = pos + text[pos:].find('OPS_ACC_MD')
           pos2 = text[pos+10:].find('(')
           num = int(text[pos+10:pos+10+pos2])
@@ -212,8 +212,8 @@ def check_accs(name, arg_list, arg_typ, text):
           if num <> n:
             print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
           pos = pos+7+pos2
-          
-        
+
+
 def ops_gen_mpi(master, date, consts, kernels):
 
   global dims, stens
@@ -296,8 +296,8 @@ def ops_gen_mpi(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
-            
-    
+
+
 ##########################################################################
 #  start with seq kernel function
 ##########################################################################
@@ -305,7 +305,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
     comm('user function')
     #code('#include "'+name2+'_kernel.h"')
-    
+
     fid = open(name2+'_kernel.h', 'r')
     text = fid.read()
     fid.close()
@@ -453,7 +453,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         for d in range (0, NDIM):
           code('int off'+str(n)+'_'+str(d)+' = offs['+str(n)+']['+str(d)+'];')
         code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
-        
+
 
     code('')
     comm('set up initial pointers and exchange halos if necessary')
@@ -650,6 +650,8 @@ def ops_gen_mpi(master, date, consts, kernels):
   depth = 0
   file_text =''
   comm('header')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#define OPS_ACC_MD_MACROS')

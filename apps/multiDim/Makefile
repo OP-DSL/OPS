@@ -230,4 +230,4 @@ openacc_error:
 #
 
 clean:
-	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_openacc multidim_mpi_openacc multidim_opencl multidim_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o
+	rm -f multidim_dev_seq multidim_seq multidim_dev_seq multidim_mpi multidim_dev_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_openacc multidim_mpi_openacc multidim_opencl multidim_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o multidim_opencl ./OpenCL/*.o *.o

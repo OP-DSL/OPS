@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void PdV_kernel_nopredict(const double *xarea, const double *xvel0, const double *xvel1,
                 const double *yarea, const double *yvel0, const double *yvel1,
                 double *volume_change, const double *volume,

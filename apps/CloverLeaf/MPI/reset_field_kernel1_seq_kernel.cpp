@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void reset_field_kernel1( double *density0, const double *density1,
                         double *energy0, const double *energy1) {
 

@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void calc_dt_kernel(const double *celldx, const double *celldy, const double *soundspeed,
                     const double *viscosity, const double *density0, const double *xvel0,
                     const double *xarea, const double *volume, const double *yvel0,

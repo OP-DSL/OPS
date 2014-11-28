@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void ideal_gas_kernel( const double *density, const double *energy,
                      double *pressure, double *soundspeed) {
 
