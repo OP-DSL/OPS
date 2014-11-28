@@ -260,6 +260,33 @@ int main(int argc, char **argv) {
   ops_partition("1D_BLOCK_DECOMPOSE");
 
 
+  ops_decl_const2( "nxp",1, "int",&nxp);
+  ops_decl_const2( "nyp",1, "int",&nyp);
+  ops_decl_const2( "xhalo",1, "int",&xhalo);
+  ops_decl_const2( "yhalo",1, "int",&yhalo);
+  ops_decl_const2( "xmin",1, "double",&xmin);
+  ops_decl_const2( "ymin",1, "double",&ymin);
+  ops_decl_const2( "xmax",1, "double",&xmax);
+  ops_decl_const2( "ymax",1, "double",&ymax);
+  ops_decl_const2( "dx",1, "double",&dx);
+  ops_decl_const2( "dy",1, "double",&dy);
+  ops_decl_const2( "pl",1, "double",&pl);
+  ops_decl_const2( "pr",1, "double",&pr);
+  ops_decl_const2( "rhol",1, "double",&rhol);
+  ops_decl_const2( "rhor",1, "double",&rhor);
+  ops_decl_const2( "ul",1, "double",&ul);
+  ops_decl_const2( "ur",1, "double",&ur);
+  ops_decl_const2( "gam",1, "double",&gam);
+  ops_decl_const2( "gam1",1, "double",&gam1);
+  ops_decl_const2( "eps",1, "double",&eps);
+  ops_decl_const2( "lambda",1, "double",&lambda);
+  ops_decl_const2( "dt",1, "double",&dt);
+  ops_decl_const2( "del2",1, "double",&del2);
+  ops_decl_const2( "akap2",1, "double",&akap2);
+  ops_decl_const2( "tvdsmu",1, "double",&tvdsmu);
+  ops_decl_const2( "con",1, "double",&con);
+
+
 
 
 

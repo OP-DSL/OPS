@@ -203,6 +203,34 @@ int main(int argc, char **argv) {
   ops_partition("1D_BLOCK_DECOMPOSE");
 
 
+  //initialize global constants
+  ops_decl_const("nxp", 1, "int", &nxp );
+  ops_decl_const("nyp", 1, "int", &nyp );
+  ops_decl_const("xhalo", 1, "int", &xhalo );
+  ops_decl_const("yhalo", 1, "int", &yhalo );
+  ops_decl_const("xmin", 1, "double", &xmin );
+  ops_decl_const("ymin", 1, "double", &ymin );
+  ops_decl_const("xmax", 1, "double", &xmax );
+  ops_decl_const("ymax", 1, "double", &ymax );
+  ops_decl_const("dx", 1, "double", &dx );
+  ops_decl_const("dy", 1, "double", &dy );
+  ops_decl_const("pl", 1, "double", &pl );
+  ops_decl_const("pr", 1, "double", &pr );
+  ops_decl_const("rhol", 1, "double", &rhol );
+  ops_decl_const("rhor", 1, "double", &rhor );
+  ops_decl_const("ul", 1, "double", &ul );
+  ops_decl_const("ur", 1, "double", &ur );
+  ops_decl_const("gam", 1, "double", &gam );
+  ops_decl_const("gam1", 1, "double", &gam1 );
+  ops_decl_const("eps", 1, "double", &eps );
+  ops_decl_const("lambda", 1, "double", &lambda );
+  ops_decl_const("dt", 1, "double", &dt );
+  ops_decl_const("del2", 1, "double", &del2 );
+  ops_decl_const("akap2", 1, "double", &akap2 );
+  ops_decl_const("tvdsmu", 1, "double", &tvdsmu );
+  ops_decl_const("con", 1, "double", &con );
+
+
   //
   // Initialize with the test case
   //

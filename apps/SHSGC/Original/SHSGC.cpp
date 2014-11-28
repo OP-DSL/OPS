@@ -400,35 +400,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-		//if (nrk == 1) {
-		  //FILE *test_fp;
-		  //test_fp = fopen("shsgc.txt", "w");
-		  //for (int i=0; i<nxp; i++)
-		  //  fprintf(test_fp, "%3.10lf\n",x[i]);
-		  //for (int i=0; i<nxp; i++)
-		  //  fprintf(test_fp, "%3.10lf\n",rho_new[i]);
-		  //for (int i=0; i<nxp; i++)
-		  //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
-		  /*for (int i=0; i<nxp; i++) {
-		    for (int j = 0; j<3;j++)
-		      fprintf(test_fp, "%3.10lf ",al[i][j]);
-		    fprintf(test_fp, "\n");
-		  }*/
-		  /*for (int i=0; i<nxp; i++) {
-		    for (int j = 0; j<3;j++)
-		      for (int k = 0; k<3;k++)
-		        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
-		    fprintf(test_fp, "\n");
-		  }*/
-		  /*for (int i=0; i<nxp; i++) {
-		    for (int j = 0; j<3;j++)
-		      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
-		      fprintf(test_fp, "%3.10lf ",cf[i][j]);
-		    fprintf(test_fp, "\n");
-		  }*/
-		  //fclose(test_fp);
-		  //exit(0);
-		//}
+
 
 
 
@@ -470,6 +442,36 @@ int main(int argc, char **argv)
 
   ops_timers_core(&ct1, &et1);
   printf("\nOriginal Application Total Wall time %lf\n",et1-et0);
+
+	//if (nrk == 1) {
+	  FILE *test_fp;
+	  test_fp = fopen("shsgc.txt", "w");
+	  //for (int i=0; i<nxp; i++)
+	  //  fprintf(test_fp, "%3.10lf\n",x[i]);
+	  for (int i=0; i<nxp; i++)
+	    fprintf(test_fp, "%3.10lf\n",rho_new[i]);
+	  //for (int i=0; i<nxp; i++)
+	  //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
+	  /*for (int i=0; i<nxp; i++) {
+	    for (int j = 0; j<3;j++)
+	      fprintf(test_fp, "%3.10lf ",al[i][j]);
+	    fprintf(test_fp, "\n");
+	  }*/
+	  /*for (int i=0; i<nxp; i++) {
+	    for (int j = 0; j<3;j++)
+	      for (int k = 0; k<3;k++)
+	        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
+	    fprintf(test_fp, "\n");
+	  }*/
+	  /*for (int i=0; i<nxp; i++) {
+	    for (int j = 0; j<3;j++)
+	      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
+	      fprintf(test_fp, "%3.10lf ",cf[i][j]);
+	    fprintf(test_fp, "\n");
+	  }*/
+	  //fclose(test_fp);
+	  //exit(0);
+	//}
 
 
   FILE *fp;
