@@ -391,7 +391,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
           code('int arg_idx0,')
-        if NDIM==2:
+        elif NDIM==2:
           code('int arg_idx0, int arg_idx1,')
         elif NDIM==3:
           code('int arg_idx0, int arg_idx1, int arg_idx2,')
@@ -399,10 +399,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     if NDIM==1:
       code('int size0 ){')
-    if NDIM==2:
+    elif NDIM==2:
       code('int size0, ')
       code('int size1 ){')
-    if NDIM==3:
+    elif NDIM==3:
       code('int size0,')
       code('int size1,')
       code('int size2 ){')
@@ -689,7 +689,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       if NDIM==1:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1);')
-      if NDIM==2:
+      elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')

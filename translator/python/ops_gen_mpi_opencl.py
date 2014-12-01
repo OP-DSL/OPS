@@ -207,6 +207,33 @@ def parse_signature(text2):
   #text2 = re.sub('double','__global double',text2)
   return text2
 
+def check_accs(name, arg_list, arg_typ, text):
+  for n in range(0,len(arg_list)):
+    if arg_typ[n] == 'ops_arg_dat':
+      pos = 0
+      while 1:
+        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        if match == None:
+          break
+        pos = pos + match.start(0)
+        if pos < 0:
+          break
+        pos = pos + len(arg_list[n])
+
+        if text[pos:].find('OPS_ACC_MD') <> -1 :
+          pos = pos + text[pos:].find('OPS_ACC_MD')
+          pos2 = text[pos+10:].find('(')
+          num = int(text[pos+10:pos+10+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+          pos = pos+10+pos2
+        elif text[pos:].find('OPS_ACC') <> -1:
+          pos = pos + text[pos:].find('OPS_ACC')
+          pos2 = text[pos+7:].find('(')
+          num = int(text[pos+7:pos+7+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+          pos = pos+7+pos2
 
 def ops_gen_mpi_opencl(master, date, consts, kernels):
 
@@ -348,6 +375,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n)+'(x) (x)')
           if NDIM==2:
             code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
           if NDIM==3:
@@ -357,6 +386,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
@@ -492,14 +523,19 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+          code('int arg_idx0,')
+      elif NDIM==2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM==3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
-    code('const int size0,')
-    if NDIM==2:
+    if NDIM==1:
+      code('const int size0 ){')
+    elif NDIM==2:
+      code('const int size0,')
       code('const int size1 ){')
-    if NDIM==3:
+    elif NDIM==3:
+      code('const int size0,')
       code('const int size1,')
       code('const int size2 ){')
 
@@ -526,19 +562,23 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('')
     if NDIM==3:
       code('int idx_z = get_global_id(2);')
-    code('int idx_y = get_global_id(1);')
+    if NDIM==2:
+        code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
     if arg_idx:
       code('int arg_idx['+str(NDIM)+'];')
       code('arg_idx[0] = arg_idx0+idx_x;')
-      code('arg_idx[1] = arg_idx1+idx_y;')
+      if NDIM==2:
+        code('arg_idx[1] = arg_idx1+idx_y;')
       if NDIM==3:
         code('arg_idx[2] = arg_idx2+idx_z;')
 
 
     indent = (len(name2)+depth+8)*' '
     n_per_line = 5
+    if NDIM==1:
+      IF('idx_x < size0')
     if NDIM==2:
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
@@ -546,7 +586,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     text = name+'('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
+        if NDIM==1:
+          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+']'
+        elif NDIM==2:
           text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
           ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
         elif NDIM==3:
@@ -818,7 +860,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
-    code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
@@ -868,11 +911,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     #set up OpenCL grid and thread blocks
     comm('set up OpenCL thread blocks')
+    if NDIM==1:
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, 1, 1};')
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
-    code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+
+    if NDIM>1:
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+    else:
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,1,1};')
     code('')
 
     #setup reduction variables
@@ -914,9 +963,11 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      if NDIM==2:
+      if NDIM==1:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1);')
+      elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
-      if NDIM==3:
+      elif NDIM==3:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
@@ -1072,16 +1123,18 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if arg_idx:
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[0] ));')
       nkernel_args = nkernel_args+1
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
-      nkernel_args = nkernel_args+1
+      if NDIM==2:
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        nkernel_args = nkernel_args+1
       if NDIM==3:
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
         nkernel_args = nkernel_args+1
 
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
-    nkernel_args = nkernel_args+1
+    if NDIM==3:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      nkernel_args = nkernel_args+1
     if NDIM==3:
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
       nkernel_args = nkernel_args+1
