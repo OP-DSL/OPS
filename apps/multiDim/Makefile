@@ -207,7 +207,7 @@ multidim_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_ke
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o  -lops_opencl -o multidim_opencl
 
 
-multidim_mpi_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+multidim_mpi_opencl: ./OpenCL/multidim_mpi_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o -lops_mpi_opencl -o multidim_mpi_opencl
 
 ./OpenCL/multidim_opencl_kernels.o: ./OpenCL/multidim_opencl_kernels.cpp Makefile

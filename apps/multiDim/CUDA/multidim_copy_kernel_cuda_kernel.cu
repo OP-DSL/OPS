@@ -28,7 +28,7 @@ void multidim_copy_kernel(const double *src, double *dest){
 __global__ void ops_multidim_copy_kernel(
 const double* __restrict arg0,
 double* __restrict arg1,
-int size0,
+int size0, 
 int size1 ){
 
 

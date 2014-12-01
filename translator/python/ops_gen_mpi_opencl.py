@@ -1049,7 +1049,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
             line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
           code(line[:-1])
           code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-
+        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+',d_m[0]);')
         code('')
 
 
@@ -1132,7 +1132,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
-    if NDIM==3:
+    if NDIM==2:
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
       nkernel_args = nkernel_args+1
     if NDIM==3:

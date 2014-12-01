@@ -777,7 +777,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
           code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-
+        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+'/dat'+str(n)+',d_m[0]);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 

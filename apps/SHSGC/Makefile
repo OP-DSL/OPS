@@ -200,7 +200,7 @@ shsgc_opencl: ./OpenCL/shsgc_opencl_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTA
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) shsgc_ops.cpp ./OpenCL/shsgc_opencl_kernels.o  -lops_opencl -o shsgc_opencl
 
 
-shsgc_mpi_opencl: ./OpenCL/shsgc_opencl_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+shsgc_mpi_opencl: ./OpenCL/shsgc_mpi_opencl_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) shsgc_ops.cpp ./OpenCL/shsgc_opencl_kernels.o -lops_mpi_opencl -o shsgc_mpi_opencl
 
 ./OpenCL/shsgc_opencl_kernels.o: ./OpenCL/shsgc_opencl_kernels.cpp Makefile

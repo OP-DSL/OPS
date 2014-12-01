@@ -23,7 +23,7 @@ void multidim_kernel(double *val, int *idx){
 __global__ void ops_multidim_kernel(
 double* __restrict arg0,
 int arg_idx0, int arg_idx1,
-int size0,
+int size0, 
 int size1 ){
 
 

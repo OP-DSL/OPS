@@ -52,9 +52,9 @@ void save_kernel(__global double * restrict rho_old, __global double * restrict 
 const __global double * restrict rho_new, const __global double * restrict rhou_new, const __global double * restrict rhoE_new)
 
  {
-      rho_old[0]=rho_new[0];
-      rhou_old[0]=rhou_new[0];
-      rhoE_old[0]=rhoE_new[0];
+      rho_old[OPS_ACC0(0)]=rho_new[OPS_ACC3(0)];
+      rhou_old[OPS_ACC1(0)]=rhou_new[OPS_ACC4(0)];
+      rhoE_old[OPS_ACC2(0)]=rhoE_new[OPS_ACC5(0)];
 }
 
 
