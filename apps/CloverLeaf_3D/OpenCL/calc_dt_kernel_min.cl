@@ -71,8 +71,8 @@ const int size2 ){
   double arg1_l[1];
   for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
 
-  int idx_z = get_global_id(2);
   int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {

@@ -561,8 +561,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     code('')
     if NDIM==3:
+      code('int idx_y = get_global_id(1);')
       code('int idx_z = get_global_id(2);')
-    if NDIM==2:
+    elif NDIM==2:
         code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
@@ -571,7 +572,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       code('arg_idx[0] = arg_idx0+idx_x;')
       if NDIM==2:
         code('arg_idx[1] = arg_idx1+idx_y;')
-      if NDIM==3:
+      elif NDIM==3:
+        code('arg_idx[1] = arg_idx1+idx_y;')
         code('arg_idx[2] = arg_idx2+idx_z;')
 
 
@@ -579,7 +581,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     n_per_line = 5
     if NDIM==1:
       IF('idx_x < size0')
-    if NDIM==2:
+    elif NDIM==2:
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
@@ -863,6 +865,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if NDIM==2:
       code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
@@ -1127,6 +1130,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
         nkernel_args = nkernel_args+1
       if NDIM==3:
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
         nkernel_args = nkernel_args+1
 
@@ -1136,6 +1141,8 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
       nkernel_args = nkernel_args+1
     if NDIM==3:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      nkernel_args = nkernel_args+1
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
       nkernel_args = nkernel_args+1
 

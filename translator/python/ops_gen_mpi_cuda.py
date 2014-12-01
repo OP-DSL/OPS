@@ -428,6 +428,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     if NDIM==3:
       code('int idx_z = blockDim.z * blockIdx.z + threadIdx.z;')
+      code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     if NDIM==2:
       code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
@@ -438,6 +439,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if NDIM==2:
         code('arg_idx[1] = arg_idx1+idx_y;')
       if NDIM==3:
+        code('arg_idx[1] = arg_idx1+idx_y;')
         code('arg_idx[2] = arg_idx2+idx_z;')
 
     for n in range (0, nargs):
@@ -585,6 +587,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if NDIM==2:
       code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
