@@ -68,7 +68,7 @@ double* __restrict arg4,
 double* __restrict arg5,
 double* __restrict arg6,
 const int* __restrict arg7,
-int size0,
+int size0, 
 int size1 ){
 
 

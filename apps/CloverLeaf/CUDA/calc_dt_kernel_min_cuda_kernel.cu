@@ -24,7 +24,7 @@ void calc_dt_kernel_min(const double* dt_min ,
 __global__ void ops_calc_dt_kernel_min(
 const double* __restrict arg0,
 double* __restrict arg1,
-int size0,
+int size0, 
 int size1 ){
 
   double arg1_l[1];

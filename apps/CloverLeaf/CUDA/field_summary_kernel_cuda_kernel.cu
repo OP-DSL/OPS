@@ -82,7 +82,7 @@ double* __restrict arg7,
 double* __restrict arg8,
 double* __restrict arg9,
 double* __restrict arg10,
-int size0,
+int size0, 
 int size1 ){
 
   double arg6_l[1];

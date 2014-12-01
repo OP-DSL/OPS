@@ -30,7 +30,7 @@ inline void advec_mom_kernel_mass_flux_x( double *node_flux, const double *mass_
 __global__ void ops_advec_mom_kernel_mass_flux_x(
 double* __restrict arg0,
 const double* __restrict arg1,
-int size0,
+int size0, 
 int size1 ){
 
 

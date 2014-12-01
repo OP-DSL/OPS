@@ -30,7 +30,7 @@ __global__ void ops_update_halo_kernel2_xvel_minus_4_a(
 double* __restrict arg0,
 double* __restrict arg1,
 const int* __restrict arg2,
-int size0,
+int size0, 
 int size1 ){
 
 

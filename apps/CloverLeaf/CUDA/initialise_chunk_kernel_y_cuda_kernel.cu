@@ -48,7 +48,7 @@ __global__ void ops_initialise_chunk_kernel_y(
 double* __restrict arg0,
 const int* __restrict arg1,
 double* __restrict arg2,
-int size0,
+int size0, 
 int size1 ){
 
 

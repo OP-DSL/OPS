@@ -49,7 +49,7 @@ __global__ void ops_initialise_chunk_kernel_cellx(
 const double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
-int size0,
+int size0, 
 int size1 ){
 
 

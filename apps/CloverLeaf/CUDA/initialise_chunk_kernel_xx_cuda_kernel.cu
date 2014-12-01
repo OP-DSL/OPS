@@ -22,7 +22,7 @@ void initialise_chunk_kernel_xx(int *xx, int *idx) {
 __global__ void ops_initialise_chunk_kernel_xx(
 int* __restrict arg0,
 int arg_idx0, int arg_idx1,
-int size0,
+int size0, 
 int size1 ){
 
 

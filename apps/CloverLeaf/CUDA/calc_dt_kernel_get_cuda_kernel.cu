@@ -30,7 +30,7 @@ const double* __restrict arg0,
 const double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
-int size0,
+int size0, 
 int size1 ){
 
   double arg2_l[1];
