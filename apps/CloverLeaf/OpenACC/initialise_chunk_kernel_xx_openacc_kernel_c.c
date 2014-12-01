@@ -16,8 +16,8 @@ void initialise_chunk_kernel_xx(int *xx, int *idx) {
 }
 
 
-
 #undef OPS_ACC0
+
 
 
 void initialise_chunk_kernel_xx_c_wrapper(
@@ -35,7 +35,7 @@ void initialise_chunk_kernel_xx_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      initialise_chunk_kernel_xx(  p_a0 + n_x*1 + n_y*xdim0_initialise_chunk_kernel_xx*0,
+      initialise_chunk_kernel_xx(  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_xx*0*1,
           arg_idx );
 
     }

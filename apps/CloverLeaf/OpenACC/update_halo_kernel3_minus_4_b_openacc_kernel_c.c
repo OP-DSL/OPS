@@ -19,9 +19,9 @@ inline void update_halo_kernel3_minus_4_b(double *vol_flux_x, double *mass_flux_
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
+
 
 
 void update_halo_kernel3_minus_4_b_c_wrapper(
@@ -38,8 +38,8 @@ void update_halo_kernel3_minus_4_b_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      update_halo_kernel3_minus_4_b(  p_a0 + n_x*1 + n_y*xdim0_update_halo_kernel3_minus_4_b*1,
-           p_a1 + n_x*1 + n_y*xdim1_update_halo_kernel3_minus_4_b*1, p_a2 );
+      update_halo_kernel3_minus_4_b(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel3_minus_4_b*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel3_minus_4_b*1*1, p_a2 );
 
     }
   }

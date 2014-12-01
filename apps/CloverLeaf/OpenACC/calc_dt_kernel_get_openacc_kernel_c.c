@@ -19,9 +19,9 @@ void calc_dt_kernel_get(const double* cellx, const double* celly, double* xl_pos
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
+
 
 
 void calc_dt_kernel_get_c_wrapper(
@@ -41,8 +41,8 @@ void calc_dt_kernel_get_c_wrapper(
     #pragma acc loop reduction(+:p_a2_l) reduction(+:p_a3_l)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel_get(  p_a0 + n_x*1 + n_y*xdim0_calc_dt_kernel_get*0,
-           p_a1 + n_x*0 + n_y*xdim1_calc_dt_kernel_get*1, &p_a2_l,
+      calc_dt_kernel_get(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_get*0*1,
+           p_a1 + n_x*0*1 + n_y*xdim1_calc_dt_kernel_get*1*1, &p_a2_l,
            &p_a3_l );
 
     }

@@ -76,7 +76,6 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -84,6 +83,7 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
+
 
 
 void viscosity_kernel_c_wrapper(
@@ -104,10 +104,10 @@ void viscosity_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      viscosity_kernel(  p_a0 + n_x*1 + n_y*xdim0_viscosity_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_viscosity_kernel*1, p_a2 + n_x*1 + n_y*xdim2_viscosity_kernel*0,
-           p_a3 + n_x*0 + n_y*xdim3_viscosity_kernel*1, p_a4 + n_x*1 + n_y*xdim4_viscosity_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_viscosity_kernel*1, p_a6 + n_x*1 + n_y*xdim6_viscosity_kernel*1 );
+      viscosity_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_viscosity_kernel*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_viscosity_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_viscosity_kernel*0*1,
+           p_a3 + n_x*0*1 + n_y*xdim3_viscosity_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_viscosity_kernel*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_viscosity_kernel*1*1, p_a6 + n_x*1*1 + n_y*xdim6_viscosity_kernel*1*1 );
 
     }
   }

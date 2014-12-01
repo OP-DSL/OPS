@@ -812,6 +812,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
   file_text =''
   comm('header')
   code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#ifdef __cplusplus')
