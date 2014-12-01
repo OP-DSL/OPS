@@ -57,7 +57,7 @@ void advec_cell_kernel3_zdir_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};

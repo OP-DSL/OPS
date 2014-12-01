@@ -102,7 +102,7 @@ void PdV_kernel_nopredict_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11, ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15, ops_arg arg16) {
 
   ops_arg args[17] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};

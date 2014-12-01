@@ -28,7 +28,7 @@ void update_halo_kernel2_zvel_plus_4_top_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   ops_arg args[3] = { arg0, arg1, arg2};

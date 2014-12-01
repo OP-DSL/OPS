@@ -8,7 +8,6 @@
 #include <string.h>
 #include <math.h>
 
-
 #define OPS_3D
 #include  "ops_lib_cpp.h"
 
