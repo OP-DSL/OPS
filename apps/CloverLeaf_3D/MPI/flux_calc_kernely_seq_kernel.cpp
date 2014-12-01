@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void flux_calc_kernely( double *vol_flux_y, const double *yarea,
                         const double *yvel0, const double *yvel1) {
 

@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void flux_calc_kernelz( double *vol_flux_z, const double *zarea,
                         const double *zvel0, const double *zvel1) {
 

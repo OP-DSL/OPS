@@ -17,6 +17,8 @@ void flux_calc_kernelx( double *vol_flux_x, const double *xarea,
 
 
 
+
+
 // host stub function
 void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {

@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void revert_kernel( const double *density0, double *density1,
                     const double *energy0,  double *energy1) {
 

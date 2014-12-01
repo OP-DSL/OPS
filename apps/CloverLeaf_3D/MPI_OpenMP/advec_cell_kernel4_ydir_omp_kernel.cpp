@@ -25,6 +25,8 @@ inline void advec_cell_kernel4_ydir( double *density1, double *energy1,
 
 
 
+
+
 // host stub function
 void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,

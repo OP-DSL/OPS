@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void accelerate_kernel( const double *density0, const double *volume,
                 double *stepbymass, const double *xvel0, double *xvel1,
                 const double *xarea, const double *pressure,

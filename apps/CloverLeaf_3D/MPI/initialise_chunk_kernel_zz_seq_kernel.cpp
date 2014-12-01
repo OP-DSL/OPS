@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void initialise_chunk_kernel_zz(int *zz, int *idx) {
   zz[OPS_ACC0(0,0,0)] = idx[2]-2;
 }

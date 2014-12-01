@@ -24,6 +24,8 @@ inline void update_halo_kernel1_ba1(double *density0, double *density1,
 
 
 
+
+
 // host stub function
 void ops_par_loop_update_halo_kernel1_ba1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,

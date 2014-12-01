@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void calc_dt_kernel_print(const double *xvel0, const double *yvel0, const double *zvel0,
                         const double *density0, const double *energy0,
                         const double *pressure, const double *soundspeed, double *output) {

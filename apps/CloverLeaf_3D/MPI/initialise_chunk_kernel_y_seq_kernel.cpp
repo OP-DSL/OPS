@@ -3,7 +3,7 @@
 //
 
 //user function
-
+inline 
 void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
   int y_min=field.y_min-2;
   int y_max=field.y_max-2;
