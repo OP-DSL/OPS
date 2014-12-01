@@ -274,7 +274,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           if NDIM==3:
             code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
-    
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
@@ -282,8 +282,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
-  
-  
+
+
 
 ##########################################################################
 #  generate headder
@@ -313,8 +313,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     else:
       code(text[i:k+2])
     code('')
-    
-    
+
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
@@ -504,7 +504,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
