@@ -121,9 +121,9 @@ endif
 TARGETS = shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi shsgc_mpi_cuda shsgc_opencl shsgc_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += #shsgc_openacc shsgc_mpi_openacc
+TARGETS += shsgc_openacc shsgc_mpi_openacc
 else
-TARGETS += #openacc_error
+TARGETS += openacc_error
 endif
 
 
@@ -213,8 +213,37 @@ shsgc_mpi_opencl: ./OpenCL/shsgc_mpi_opencl_kernels.o shsgc_ops.cpp Makefile $(O
 
 
 #
+# OpenACC version
+#
+
+openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+./OpenACC/shsgc_kernels.o: ./OpenACC/shsgc_kernels.cpp Makefile
+	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 -DOPS_MPI $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+	-I. OpenACC/shsgc_kernels.cpp -c -o OpenACC/shsgc_kernels.o
+
+./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
+	@echo "Compiling kernel" $*
+	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+              -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
+	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+        -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
+
+shsgc_openacc: $(openacc_obj_list) ./OpenACC/shsgc_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
+    shsgc_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o shsgc_openacc
+
+
+shsgc_mpi_openacc: $(openacc_obj_list) ./OpenACC/shsgc_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
+    shsgc_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o shsgc_mpi_openacc
+
+
+
+#
 # cleanup
 #
 
 clean:
-	rm -f shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_mpi shsgc_cuda shsgc_mpi_cuda shsgc_opencl shsgc_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o
+	rm -f shsgc_dev_seq shsgc_dev_mpi shsgc_seq shsgc_openmp shsgc_mpi_openmp shsgc_mpi shsgc_cuda shsgc_mpi_cuda shsgc_opencl shsgc_mpi_opencl shsgc_openacc shsgc_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./OpenCL/*.o *.o

@@ -163,6 +163,49 @@ def remove_trailing_w_space(text):
     if line_end < 0:
       return striped_test
 
+def parse_signature(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+
+def check_accs(name, arg_list, arg_typ, text):
+  for n in range(0,len(arg_list)):
+    if arg_typ[n] == 'ops_arg_dat':
+      pos = 0
+      while 1:
+        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        if match == None:
+          break
+        pos = pos + match.start(0)
+        if pos < 0:
+          break
+        pos = pos + len(arg_list[n])
+
+        if text[pos:].find('OPS_ACC_MD') <> -1 :
+          pos = pos + text[pos:].find('OPS_ACC_MD')
+          pos2 = text[pos+10:].find('(')
+          num = int(text[pos+10:pos+10+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+          pos = pos+10+pos2
+        elif text[pos:].find('OPS_ACC') <> -1:
+          pos = pos + text[pos:].find('OPS_ACC')
+          pos2 = text[pos+7:].find('(')
+          num = int(text[pos+7:pos+7+pos2])
+          if num <> n:
+            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+          pos = pos+7+pos2
 
 def ops_gen_mpi_openacc(master, date, consts, kernels):
 
@@ -269,6 +312,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n)+'(x) (x)')
           if NDIM==2:
             code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
           if NDIM==3:
@@ -278,6 +323,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
@@ -338,14 +385,18 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       else:
         code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
-      if NDIM == 2:
+      if NDIM == 1:
+        code('int arg_idx0, ')
+      elif NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
 
-    if NDIM == 2:
+    if NDIM == 1:
+      code('int x_size) {')
+    elif NDIM == 2:
       code('int x_size, int y_size) {')
-    if NDIM == 3:
+    elif NDIM == 3:
       code('int x_size, int y_size, int z_size) {')
 
 
@@ -395,13 +446,21 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('#ifdef OPS_GPU')
       code(line)
       code('#endif')
-    FOR('n_y','0','y_size')
-    code('#ifdef OPS_GPU')
-    code(line)
-    code('#endif')
+      FOR('n_y','0','y_size')
+      code('#ifdef OPS_GPU')
+      code(line)
+      code('#endif')
+    if NDIM==2:
+      FOR('n_y','0','y_size')
+      code('#ifdef OPS_GPU')
+      code(line)
+      code('#endif')
+
     FOR('n_x','0','x_size')
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+        code('int arg_idx[] = {arg_idx0+n_x};')
+      elif NDIM==2:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
       elif NDIM==3:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
@@ -409,8 +468,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-        if NDIM == 3:
+        if NDIM == 1:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])
+        elif NDIM == 2:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
+          ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+        elif NDIM == 3:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -434,9 +498,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         text = text +'\n          '
     code(text);
     ENDFOR()
-    ENDFOR()
+    if NDIM==2:
+      ENDFOR()
     if NDIM==3:
       ENDFOR()
+      ENDFOR()
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
@@ -488,13 +555,18 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       else:
         code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
-      if NDIM == 2:
+      if NDIM == 1:
+        code('int arg_idx0,')
+      elif NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
-    if NDIM == 2:
+
+    if NDIM == 1:
+      code('int x_size);')
+    elif NDIM == 2:
       code('int x_size, int y_size);')
-    if NDIM == 3:
+    elif NDIM == 3:
       code('int x_size, int y_size, int z_size);')
     depth = depth-2
     code('')
@@ -573,8 +645,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
-    code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
@@ -744,10 +818,15 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       else:
         code('p_a'+str(n)+',')
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+        code('arg_idx[0],')
+      elif NDIM==2:
         code('arg_idx[0], arg_idx[1],')
       elif NDIM==3:
         code('arg_idx[0], arg_idx[1], arg_idx[2],')
+
+    if NDIM == 1:
+      code('x_size);')
     if NDIM == 2:
       code('x_size, y_size);')
     if NDIM == 3:
