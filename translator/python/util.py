@@ -34,6 +34,58 @@ utility functions for code generator
 """
 
 import re
+import config
+
+def comm(line):
+  prefix = ' '*config.depth
+  if len(line) == 0:
+    config.file_text +='\n'
+  else:
+    config.file_text +=prefix+'//'+line+'\n'
+
+def code(text):
+  prefix = ''
+  if len(text) != 0:
+    prefix = ' '*config.depth
+
+  config.file_text += prefix+text+'\n'
+
+def FOR(i,start,finish):
+  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
+  config.depth += 2
+
+def FOR2(i,start,finish,increment):
+  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
+  config.depth += 2
+
+def WHILE(line):
+  code('while ( '+ line+ ' ){')
+  config.depth += 2
+
+def ENDWHILE():
+  config.depth -= 2
+  code('}')
+
+def ENDFOR():
+  config.depth -= 2
+  code('}')
+
+def IF(line):
+  code('if ('+ line + ') {')
+  config.depth += 2
+
+def ELSEIF(line):
+  code('else if ('+ line + ') {')
+  config.depth += 2
+
+def ELSE():
+  code('else {')
+  config.depth += 2
+
+def ENDIF():
+  config.depth -= 2
+  code('}')
+
 
 def mult(text, i, n):
   text = text + '1'
