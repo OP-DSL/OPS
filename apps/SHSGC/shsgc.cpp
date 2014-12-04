@@ -105,7 +105,6 @@ FILE *fp;
 int main(int argc, char **argv) {
 
   double totaltime =0.0f;
-
   // Initialize rk3 co-efficient's
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
