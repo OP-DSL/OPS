@@ -42,6 +42,15 @@ import re
 import datetime
 import os
 
+import util
+
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature_cuda
+check_accs = util.check_accs
+mult = util.mult
+
 def comm(line):
   global file_text, FORTRAN, CPP
   global depth
@@ -114,98 +123,6 @@ def ENDIF():
   depth -= 2
   code('}')
 
-
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
-def parse_signature(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
-
-def check_accs(name, arg_list, arg_typ, text):
-  for n in range(0,len(arg_list)):
-    if arg_typ[n] == 'ops_arg_dat':
-      pos = 0
-      while 1:
-        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
-        if match == None:
-          break
-        pos = pos + match.start(0)
-        if pos < 0:
-          break
-        pos = pos + len(arg_list[n])
-
-        if text[pos:].find('OPS_ACC_MD') <> -1 :
-          pos = pos + text[pos:].find('OPS_ACC_MD')
-          pos2 = text[pos+10:].find('(')
-          num = int(text[pos+10:pos+10+pos2])
-          if num <> n:
-            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
-          pos = pos+10+pos2
-        elif text[pos:].find('OPS_ACC') <> -1:
-          pos = pos + text[pos:].find('OPS_ACC')
-          pos2 = text[pos+7:].find('(')
-          num = int(text[pos+7:pos+7+pos2])
-          if num <> n:
-            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
-          pos = pos+7+pos2
 
 def ops_gen_mpi_cuda(master, date, consts, kernels):
 

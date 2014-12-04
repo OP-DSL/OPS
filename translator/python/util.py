@@ -35,6 +35,13 @@ utility functions for code generator
 
 import re
 
+def mult(text, i, n):
+  text = text + '1'
+  for nn in range (0, i):
+    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
+
+  return text
+
 def para_parse(text, j, op_b, cl_b):
     """Parsing code block, i.e. text to find the correct closing brace"""
 
@@ -98,9 +105,77 @@ def parse_signature(text):
     arg_list.append(args[n].strip())
   return arg_list
 
+def find_consts(text, consts):
+  found_consts = []
+
+  for cn in range(0,len(consts)):
+    pattern = consts[cn]['name'][1:-1]
+    if re.search('\\b'+pattern+'\\b', text):
+      print "found " + consts[cn]['name'][1:-1]
+      found_consts.append(cn)
+
+  return found_consts
 
 
-def check_accs_md(name, arg_list, arg_typ, text):
+def parse_signature_opencl(text2):
+
+  #text2 = text2.replace('const','')
+  text2 = text2.replace('*','* restrict ')
+  text2 = text2.replace('int','__global int')
+  #text2 = re.sub('[\s]int','__global int',text2)
+  text2 = text2.replace('float','__global float')
+  text2 = text2.replace('double','__global double')
+  #text2 = re.sub('double','__global double',text2)
+  return text2
+
+def parse_signature_openacc(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+
+def parse_signature_cuda(text):
+  text2 = text.replace('const','')
+  text2 = text2.replace('int','')
+  text2 = text2.replace('float','')
+  text2 = text2.replace('double','')
+  text2 = text2.replace('*','')
+  text2 = text2.replace(')','')
+  text2 = text2.replace('(','')
+  text2 = text2.replace('\n','')
+  text2 = re.sub('\[[0-9]*\]','',text2)
+  arg_list = []
+  args = text2.split(',')
+  for n in range(0,len(args)):
+    arg_list.append(args[n].strip())
+  return arg_list
+
+def arg_parse(text, j):
+    """Parsing arguments in op_par_loop to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    while 1:
+        if text[loc2] == '(':
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                return loc2
+        loc2 = loc2 + 1
+
+def check_accs(name, arg_list, arg_typ, text):
   for n in range(0,len(arg_list)):
     if arg_typ[n] == 'ops_arg_dat':
       pos = 0

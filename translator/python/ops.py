@@ -73,38 +73,11 @@ from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
 
+import util
 
-# from http://stackoverflow.com/a/241506/396967
-def comment_remover(text):
-    """Remove comments from text"""
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
 
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ""
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test[:-1]
 
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
@@ -697,9 +670,9 @@ def main():
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
 
-  ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
   #ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
 

@@ -48,7 +48,8 @@ para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
 parse_signature = util.parse_signature
-check_accs_md = util.check_accs_md
+check_accs = util.check_accs
+mult = util.mult
 
 def comm(line):
   global file_text, FORTRAN, CPP
@@ -121,13 +122,6 @@ def ENDIF():
   global depth
   depth -= 2
   code('}')
-
-def mult(text, i, n):
-  text = text + '1'
-  for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
-
-  return text
 
 
 def ops_gen_mpi(master, date, consts, kernels):
@@ -241,7 +235,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
-    check_accs_md(name, arg_list, arg_typ, text[i+j:k])
+    check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
       code('inline '+text[i:k+2])

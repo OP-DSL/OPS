@@ -42,6 +42,16 @@ import re
 import datetime
 import os
 
+import util
+
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature_opencl
+check_accs = util.check_accs
+arg_parse = util.arg_parse
+find_consts = util.find_consts
+
 def comm(line):
   global file_text, FORTRAN, CPP
   global depth
@@ -118,122 +128,8 @@ def mult(text, i, n):
   text = text + '1'
   for nn in range (0, i):
     text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
-
   return text
 
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-
-def remove_triling_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
-def arg_parse(text, j):
-    """Parsing arguments in op_par_loop to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-    while 1:
-        if text[loc2] == '(':
-            depth = depth + 1
-
-        elif text[loc2] == ')':
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-        loc2 = loc2 + 1
-
-def find_consts(text, consts):
-  found_consts = []
-
-  for cn in range(0,len(consts)):
-    pattern = consts[cn]['name'][1:-1]
-    if re.search('\\b'+pattern+'\\b', text):
-      print "found " + consts[cn]['name'][1:-1]
-      found_consts.append(cn)
-
-  return found_consts
-
-import re
-def parse_signature(text2):
-
-  #text2 = text2.replace('const','')
-  text2 = text2.replace('*','* restrict ')
-  text2 = text2.replace('int','__global int')
-  #text2 = re.sub('[\s]int','__global int',text2)
-  text2 = text2.replace('float','__global float')
-  text2 = text2.replace('double','__global double')
-  #text2 = re.sub('double','__global double',text2)
-  return text2
-
-def check_accs(name, arg_list, arg_typ, text):
-  for n in range(0,len(arg_list)):
-    if arg_typ[n] == 'ops_arg_dat':
-      pos = 0
-      while 1:
-        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
-        if match == None:
-          break
-        pos = pos + match.start(0)
-        if pos < 0:
-          break
-        pos = pos + len(arg_list[n])
-
-        if text[pos:].find('OPS_ACC_MD') <> -1 :
-          pos = pos + text[pos:].find('OPS_ACC_MD')
-          pos2 = text[pos+10:].find('(')
-          num = int(text[pos+10:pos+10+pos2])
-          if num <> n:
-            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
-          pos = pos+10+pos2
-        elif text[pos:].find('OPS_ACC') <> -1:
-          pos = pos + text[pos:].find('OPS_ACC')
-          pos2 = text[pos+7:].find('(')
-          num = int(text[pos+7:pos+7+pos2])
-          if num <> n:
-            print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
-          pos = pos+7+pos2
 
 def ops_gen_mpi_opencl(master, date, consts, kernels):
 
@@ -401,7 +297,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     fid.close()
     text = comment_remover(text)
 
-    text = remove_triling_w_space(text)
+    text = remove_trailing_w_space(text)
 
 
 
