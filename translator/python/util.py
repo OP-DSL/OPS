@@ -74,6 +74,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 def remove_trailing_w_space(text):
+  text = text+' '
   line_start = 0
   line = ""
   line_end = 0
@@ -87,7 +88,8 @@ def remove_trailing_w_space(text):
     line_start = line_end + 1
     line = ""
     if line_end < 0:
-      return striped_test
+      return striped_test[:-1]
+
 
 def parse_signature(text):
   text2 = text.replace('const','')
