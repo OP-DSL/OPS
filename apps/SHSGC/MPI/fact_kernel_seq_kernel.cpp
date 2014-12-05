@@ -107,9 +107,7 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim, int* r
   p_a[1] = (char *)args[1].data + base1;
 
 
-  ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
-  ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[12].mpi_time += t1-t2;
@@ -117,21 +115,7 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim, int* r
   //initialize global variable with the dimension of dats
 
   int n_x;
-  #pragma novector
-  for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
-    //call kernel function, passing in pointers to data -vectorised
-    #pragma simd
-    for ( int i=0; i<SIMD_VEC; i++ ){
-      fact_kernel(  (double *)p_a[0]+ i*1*3, (double *)p_a[1]+ i*1*3 );
-
-    }
-
-    //shift pointers to data x direction
-    p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
-    p_a[1]= p_a[1] + (dat1 * off1_0)*SIMD_VEC;
-  }
-
-  for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
+  for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
     fact_kernel(  (double *)p_a[0], (double *)p_a[1] );
 

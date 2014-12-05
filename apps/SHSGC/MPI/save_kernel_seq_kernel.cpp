@@ -155,9 +155,7 @@ void ops_par_loop_save_kernel(char const *name, ops_block block, int dim, int* r
   p_a[5] = (char *)args[5].data + base5;
 
 
-  ops_H_D_exchanges_host(args, 6);
   ops_halo_exchanges(args,6,range);
-  ops_H_D_exchanges_host(args, 6);
 
   ops_timers_core(&c1,&t1);
   OPS_kernels[1].mpi_time += t1-t2;
@@ -165,26 +163,7 @@ void ops_par_loop_save_kernel(char const *name, ops_block block, int dim, int* r
   //initialize global variable with the dimension of dats
 
   int n_x;
-  #pragma novector
-  for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
-    //call kernel function, passing in pointers to data -vectorised
-    #pragma simd
-    for ( int i=0; i<SIMD_VEC; i++ ){
-      save_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3]+ i*1*1, (double *)p_a[4]+ i*1*1, (double *)p_a[5]+ i*1*1 );
-
-    }
-
-    //shift pointers to data x direction
-    p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
-    p_a[1]= p_a[1] + (dat1 * off1_0)*SIMD_VEC;
-    p_a[2]= p_a[2] + (dat2 * off2_0)*SIMD_VEC;
-    p_a[3]= p_a[3] + (dat3 * off3_0)*SIMD_VEC;
-    p_a[4]= p_a[4] + (dat4 * off4_0)*SIMD_VEC;
-    p_a[5]= p_a[5] + (dat5 * off5_0)*SIMD_VEC;
-  }
-
-  for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
+  for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
     save_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
            (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );

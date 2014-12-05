@@ -77,6 +77,7 @@ make cuda
 make mpi_cuda
 cd -
 make cloverleaf_openacc
+make cloverleaf_mpi_openacc
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" clover.out

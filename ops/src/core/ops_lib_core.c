@@ -623,7 +623,7 @@ void ops_dump3(ops_dat dat, const char* name) {
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
   //printf("name %s type = %s\n",dat->name, dat->type);
-  
+
   //TODO: this has to be backend-specific
   FILE *fp;
   if ( (fp = fopen(file_name,"a")) == NULL) {
@@ -652,7 +652,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
   }
   fprintf(fp,"\n");
-  
+
 
   if (fprintf(fp,"elem size %d \n", dat->elem_size)<0) {
     printf("error writing to %s\n",file_name);
@@ -759,7 +759,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   else if(dat->block->dims == 1) {
-    
+
     if( strcmp(dat->type,"double") == 0 ) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {

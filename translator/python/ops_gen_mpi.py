@@ -339,9 +339,9 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('')
     code('')
 
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    #code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    #code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
@@ -365,7 +365,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
     #code('for( n_x=0; n_x<ROUND_DOWN((end[0]-start[0]),SIMD_VEC); n_x+=SIMD_VEC ) {')
-    code('#pragma novector')
+    """code('#pragma novector')
     code('for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {')
     config.depth = config.depth+2
 
@@ -398,8 +398,9 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     ENDFOR()
     code('')
-
-    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
+    """
+    #FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
+    FOR('n_x','start[0]','end[0]')
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):

@@ -43,12 +43,12 @@ int main(int argc, char **argv)
   ymax = 0.5;
   dx = (xmax-xmin)/(nxp-(1 + 2*xhalo));
   dy = (ymax-ymin)/(nyp-1);
-  pl = 10.333f;
-  pr = 1.0f;
+  pl = 10.333;//10.333f;
+  pr = 1.0;//  pr = 1.0f;
   rhol = 3.857143;
-  rhor = 1.0f;
+  rhor = 1.0;//  rhor = 1.0f;
   ul = 2.6293690 ;
-  ur = 0.0f;
+  ur = 0.0;//  ur = 0.0f;
   gam = 1.4;
   gam1=gam - 1.0;
   eps = 0.2;
@@ -89,7 +89,8 @@ int main(int argc, char **argv)
   double r[nxp][3][3], al[nxp][3], alam[nxp][3], gt[nxp][3], eff[nxp][3], s[nxp][3], tht[nxp][3];
   double cmp[nxp][3], cf[nxp][3], ep2[nxp][3];
   double akap2 = 0.40;
-  double tvdsmu = 0.25f;
+  //double tvdsmu = 0.25f;
+  double tvdsmu = 0.25;
   printf("%lf\t %lf",akap2, tvdsmu);
 
   // Initialize rk3 co-efficient's
@@ -100,7 +101,8 @@ int main(int argc, char **argv)
   a2[1] = 3.0/20.0;
   a2[2] = 3.0/5.0;
   dt=0.0002;
-  totaltime =0.0f;
+  //totaltime =0.0f;
+  totaltime =0.0;
   niter = 9005;
 // Initialize with the test case
   for (int i = 0; i < nxp; i++) {
@@ -186,7 +188,35 @@ int main(int argc, char **argv)
 			rho_res[i] = deriv;
 		}
 
-
+  //if (iter == 6000) {
+   // FILE *test_fp;
+    //test_fp = fopen("shsgc.txt", "w");
+    //for (int i=0; i<nxp; i++)
+    //  fprintf(test_fp, "%3.10lf\n",x[i]);
+    //for (int i=0; i<nxp; i++)
+      //fprintf(test_fp, "%3.10lf\n",rho_res[i]);
+    //for (int i=0; i<nxp; i++)
+    //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        fprintf(test_fp, "%3.10lf ",al[i][j]);
+      fprintf(test_fp, "\n");
+    }*/
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        for (int k = 0; k<3;k++)
+          fprintf(test_fp, "%3.10lf ",r[i][j][k]);
+      fprintf(test_fp, "\n");
+    }*/
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
+        fprintf(test_fp, "%3.10lf ",cf[i][j]);
+      fprintf(test_fp, "\n");
+    }*/
+    //fclose(test_fp);
+    //exit(0);
+    //}
 
 
 
@@ -386,16 +416,20 @@ int main(int argc, char **argv)
 
 	// vars
 	double  anu, aaa, ga, qf, con, ww;
-	con = pow (tvdsmu,2.f);
+	//con = pow (tvdsmu,2.f);
+  con = pow (tvdsmu,2.0);
 	for (int i=0; i < nxp-1; i++) {
 		for (int m=0; m < 3 ;m++) {
 			anu = alam[i][m];
 			aaa = al[i][m];
-			ga = aaa * ( gt[i+1][m] - gt[i][m]) / (pow(aaa,2.f) + del2);
-			qf = sqrt ( con + pow(anu,2.f));
+			//ga = aaa * ( gt[i+1][m] - gt[i][m]) / (pow(aaa,2.f) + del2);
+      ga = aaa * ( gt[i+1][m] - gt[i][m]) / (pow(aaa,2.0) + del2);
+			//qf = sqrt ( con + pow(anu,2.f));
+      qf = sqrt ( con + pow(anu,2.0));
 			cmp[i][m] = 0.50 * qf;
 			ww = anu + cmp[i][m] * ga;
-			qf = sqrt(con + pow(ww,2.f));
+			//qf = sqrt(con + pow(ww,2.f));
+      qf = sqrt(con + pow(ww,2.0));
 			cf[i][m] = qf;
 		}
 	}
@@ -443,35 +477,39 @@ int main(int argc, char **argv)
   ops_timers_core(&ct1, &et1);
   printf("\nOriginal Application Total Wall time %lf\n",et1-et0);
 
-	//if (nrk == 1) {
-	  FILE *test_fp;
-	  test_fp = fopen("shsgc.txt", "w");
-	  //for (int i=0; i<nxp; i++)
-	  //  fprintf(test_fp, "%3.10lf\n",x[i]);
-	  for (int i=0; i<nxp; i++)
-	    fprintf(test_fp, "%3.10lf\n",rho_new[i]);
-	  //for (int i=0; i<nxp; i++)
-	  //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
-	  /*for (int i=0; i<nxp; i++) {
-	    for (int j = 0; j<3;j++)
-	      fprintf(test_fp, "%3.10lf ",al[i][j]);
-	    fprintf(test_fp, "\n");
-	  }*/
-	  /*for (int i=0; i<nxp; i++) {
-	    for (int j = 0; j<3;j++)
-	      for (int k = 0; k<3;k++)
-	        fprintf(test_fp, "%3.10lf ",r[i][j][k]);
-	    fprintf(test_fp, "\n");
-	  }*/
-	  /*for (int i=0; i<nxp; i++) {
-	    for (int j = 0; j<3;j++)
-	      //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
-	      fprintf(test_fp, "%3.10lf ",cf[i][j]);
-	    fprintf(test_fp, "\n");
-	  }*/
-	  //fclose(test_fp);
-	  //exit(0);
-	//}
+
+
+
+ //if (iter == 6000) {
+    FILE *test_fp;
+    test_fp = fopen("shsgc.txt", "w");
+    //for (int i=0; i<nxp; i++)
+    //  fprintf(test_fp, "%3.10lf\n",x[i]);
+    for (int i=0; i<nxp; i++)
+      fprintf(test_fp, "%3.10lf\n",rho_new[i]);
+    //for (int i=0; i<nxp; i++)
+    //  fprintf(test_fp, "%3.10lf\n",rhou_new[i]);
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        fprintf(test_fp, "%3.10lf ",al[i][j]);
+      fprintf(test_fp, "\n");
+    }*/
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        for (int k = 0; k<3;k++)
+          fprintf(test_fp, "%3.10lf ",r[i][j][k]);
+      fprintf(test_fp, "\n");
+    }*/
+    /*for (int i=0; i<nxp; i++) {
+      for (int j = 0; j<3;j++)
+        //fprintf(test_fp, "%3.10lf ",ep2[i][j]);
+        fprintf(test_fp, "%3.10lf ",cf[i][j]);
+      fprintf(test_fp, "\n");
+    }*/
+    fclose(test_fp);
+    //exit(0);
+    //}
+
 
 
   FILE *fp;

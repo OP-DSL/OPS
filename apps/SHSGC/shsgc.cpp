@@ -58,12 +58,12 @@ double xmax = 5.0;
 double ymax = 0.5;
 double dx = (xmax-xmin)/(nxp-(1 + 2*xhalo));
 double dy = (ymax-ymin)/(nyp-1);
-double pl = 10.333f;
-double pr = 1.0f;
+double pl = 10.333;
+double pr = 1.0;
 double rhol = 3.857143;
-double rhor = 1.0f;
+double rhor = 1.0;
 double ul = 2.6293690 ;
-double ur = 0.0f;
+double ur = 0.0;
 double gam = 1.4;
 double gam1=gam - 1.0;
 double eps = 0.2;
@@ -73,8 +73,8 @@ double a2[3];
 double dt=0.0002;
 double del2 = 1e-8;
 double akap2 = 0.40;
-double tvdsmu = 0.25f;
-double con = pow (tvdsmu,2.f);
+double tvdsmu = 0.25;
+double con = pow (tvdsmu,2.0);
 
 FILE *fp;
 
@@ -282,6 +282,11 @@ int main(int argc, char **argv) {
       ops_par_loop(drhoudx_kernel, "drhoudx_kernel", shsgc_grid, 1, nxp_range_1,
               ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rho_res, 1, S1D_0, "double",OPS_WRITE));
+
+      //if (iter == 6000) {
+      //  ops_print_dat_to_txtfile(rho_res, "shsgc.dat");
+      // exit(0);
+      //}
 
       // calculate d(rhouu + p)/dx
       ops_par_loop(drhouupdx_kernel, "drhouupdx_kernel", shsgc_grid, 1, nxp_range_1,
