@@ -925,6 +925,25 @@ int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
   return idx0;
 }
 
+int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[1*i] == idx0) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d) not found in declaration %s in loop %s arg %d : %s\n",
+             idx0, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx, OPS_curr_args[arg_idx].dat->name);
+      exit(-1);
+    }
+  }
+  return idx0*mult_d+d;
+}
+
+
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
   if (OPS_curr_args) {
     int match = 0;

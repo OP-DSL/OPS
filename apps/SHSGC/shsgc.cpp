@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,7);
 
   //
   //declare 1D block

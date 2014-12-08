@@ -370,6 +370,10 @@ int ops_stencil_check_1d(int arg_idx, int idx0, int dim0);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1);
 
+int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d);
+int ops_stencil_check_2d_md(int arg_idx, int idx0, int idx1, int dim0, int dim1, int mult_d, int d);
+int ops_stencil_check_3d_md(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1, int mult_d, int d);
+
 /* check if these should be placed here */
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
 void ops_set_halo_dirtybit(ops_arg *arg);
