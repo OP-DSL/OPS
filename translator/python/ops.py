@@ -673,8 +673,8 @@ def main():
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
-  #ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
 
 
 

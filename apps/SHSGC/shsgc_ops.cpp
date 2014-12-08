@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
   S1D_01         = ops_decl_stencil( 1, 2, s1D_01, "0,1");
 
   int s1D_0M1[]   = {0,-1};
-  S1D_0M1         = ops_decl_stencil( 1, 2, s1D_01, "0,-1");
+  S1D_0M1         = ops_decl_stencil( 1, 2, s1D_0M1, "0,-1");
 
   ops_partition("1D_BLOCK_DECOMPOSE");
 
@@ -386,7 +386,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(gt, 3, S1D_0, "double", OPS_WRITE));
 
     ops_par_loop_tvd_kernel("tvd_kernel", shsgc_grid, 1, nxp_range_3,
-                 ops_arg_dat(tht, 3, S1D_0M1, "double", OPS_READ),
+                 ops_arg_dat(tht, 3, S1D_01, "double", OPS_READ),
                  ops_arg_dat(ep2, 3, S1D_0, "double", OPS_WRITE));
 
     ops_par_loop_vars_kernel("vars_kernel", shsgc_grid, 1, nxp_range_3,

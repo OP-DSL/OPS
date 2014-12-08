@@ -142,10 +142,29 @@
       #define OPS_ACC16(x) (x)
       #define OPS_ACC17(x) (x)
     #else//do debug checks
-      ///TODO ops_stencil_check_1d
+      #define OPS_ACC0(x) (ops_stencil_check_1d(0, x, xdim0))
+      #define OPS_ACC1(x) (ops_stencil_check_1d(1, x, xdim1))
+      #define OPS_ACC2(x) (ops_stencil_check_1d(2, x, xdim2))
+      #define OPS_ACC3(x) (ops_stencil_check_1d(3, x, xdim3))
+      #define OPS_ACC4(x) (ops_stencil_check_1d(4, x, xdim4))
+      #define OPS_ACC5(x) (ops_stencil_check_1d(5, x, xdim5))
+      #define OPS_ACC6(x) (ops_stencil_check_1d(6, x, xdim6))
+      #define OPS_ACC7(x) (ops_stencil_check_1d(7, x, xdim7))
+      #define OPS_ACC8(x) (ops_stencil_check_1d(8, x, xdim8))
+      #define OPS_ACC9(x) (ops_stencil_check_1d(9, x, xdim9))
+      #define OPS_ACC10(x) (ops_stencil_check_1d(10, x, xdim10))
+      #define OPS_ACC11(x) (ops_stencil_check_1d(11, x, xdim11))
+      #define OPS_ACC12(x) (ops_stencil_check_1d(12, x, xdim12))
+      #define OPS_ACC13(x) (ops_stencil_check_1d(13, x, xdim13))
+      #define OPS_ACC14(x) (ops_stencil_check_1d(14, x, xdim14))
+      #define OPS_ACC15(x) (ops_stencil_check_1d(15, x, xdim15))
+      #define OPS_ACC16(x) (ops_stencil_check_1d(16, x, xdim16))
+      #define OPS_ACC17(x) (ops_stencil_check_1d(17, x, xdim17))
     #endif//end debug checks
   #endif // end macros for 1D application
 #endif //end OPS_ACC_MACROS
+
+
 
 /**---------Multi-D ops_dats macros (multiple elements per grid point)-------**/
 #ifndef OPS_ACC_MD_MACROS
@@ -200,7 +219,24 @@
       #define OPS_ACC_MD16(d,x) ((x)*multi_d16+d)
       #define OPS_ACC_MD17(d,x) ((x)*multi_d17+d)
     #else
-      ///TODO #define OPS_ACC_MD0(x,d) (ops_stencil_check_1d(0, x))
+      #define OPS_ACC_MD0(d,x) (ops_stencil_check_1d(0, x, xdim0))
+      #define OPS_ACC_MD1(d,x) (ops_stencil_check_1d(1, x, xdim1))
+      #define OPS_ACC_MD2(d,x) (ops_stencil_check_1d(2, x, xdim2))
+      #define OPS_ACC_MD3(d,x) (ops_stencil_check_1d(3, x, xdim3))
+      #define OPS_ACC_MD4(d,x) (ops_stencil_check_1d(4, x, xdim4))
+      #define OPS_ACC_MD5(d,x) (ops_stencil_check_1d(5, x, xdim5))
+      #define OPS_ACC_MD6(d,x) (ops_stencil_check_1d(6, x, xdim6))
+      #define OPS_ACC_MD7(d,x) (ops_stencil_check_1d(7, x, xdim7))
+      #define OPS_ACC_MD8(d,x) (ops_stencil_check_1d(8, x, xdim8))
+      #define OPS_ACC_MD9(d,x) (ops_stencil_check_1d(9, x, xdim9))
+      #define OPS_ACC_MD10(d,x) (ops_stencil_check_1d(10, x, xdim10))
+      #define OPS_ACC_MD11(d,x) (ops_stencil_check_1d(11, x, xdim11))
+      #define OPS_ACC_MD12(d,x) (ops_stencil_check_1d(12, x, xdim12))
+      #define OPS_ACC_MD13(d,x) (ops_stencil_check_1d(13, x, xdim13))
+      #define OPS_ACC_MD14(d,x) (ops_stencil_check_1d(14, x, xdim14))
+      #define OPS_ACC_MD15(d,x) (ops_stencil_check_1d(15, x, xdim15))
+      #define OPS_ACC_MD16(d,x) (ops_stencil_check_1d(16, x, xdim16))
+      #define OPS_ACC_MD17(d,x) (ops_stencil_check_1d(17, x, xdim17))
     #endif
   #endif
 #endif
