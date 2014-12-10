@@ -86,7 +86,7 @@ else
 ifeq ($(OPS_COMPILER),xl) #for IBM BlueGene Q
   CC        := mpixlc
   CUDA_ALIGNE_FLAG :=
-  CCFLAGS   := -O3 -qnoeh
+  CCFLAGS   := -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
   CXX       := mpixlcxx
   CXXFLAGS  := $(CCFLAGS)
   MPICXX    := mpixlcxx

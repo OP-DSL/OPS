@@ -88,7 +88,7 @@ ifeq ($(OPS_COMPILER),xl)
 ifdef DEBUG
   CCFLAGS   = -O2 -g
 else
-  CCFLAGS   = -O3 -qnoeh
+  CCFLAGS   = -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qsmp=omp  -qthreaded
