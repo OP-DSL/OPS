@@ -77,9 +77,6 @@ void visc();
 #include "initialize_kernel.h"
 #include "save_kernel.h"
 #include "zerores_kernel.h"
-#include "updateRK3_kernel.h"
-
-
 
 
 /******************************************************************************
