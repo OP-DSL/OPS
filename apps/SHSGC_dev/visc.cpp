@@ -22,9 +22,6 @@
 #include "xder1_kernel.h"
 #include "xder12_kernel.h"
 
-#include "flowvar_kernel.h"
-#include "zerovisc_kernel.h"
-
 void visc()
 {
 int nxp_range_1[] = {2,nxp-2};
