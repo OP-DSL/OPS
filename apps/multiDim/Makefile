@@ -56,7 +56,8 @@ endif
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CPP     = pgCC
+  CPP     = pgc++
+  CC      = pgcc
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
   CCFLAGS   = -O2 -Minline -Kieee -Minform=inform -Minfo=all
@@ -184,25 +185,41 @@ multidim_mpi_cuda: Makefile ./CUDA/multidim_kernels_mpi_cu.o multidim_ops.cpp mu
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
+openacc_mpi_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\_mpi.o/g | tr "\n" " ")
+openacc_mpi_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\_mpi.o/g | tr "\n" " ")
+
+
 ./OpenACC/multidim_kernels.o: ./OpenACC/multidim_kernels.cpp Makefile
-	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 -DOPS_MPI $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+	$(CPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CPPFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 	-I. OpenACC/multidim_kernels.cpp -c -o OpenACC/multidim_kernels.o
+
+
+./OpenACC/multidim_kernels_mpi.o: ./OpenACC/multidim_kernels.cpp Makefile
+	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 -DOPS_MPI $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+	-I. OpenACC/multidim_kernels.cpp -c -o OpenACC/multidim_kernels_mpi.o
+
+./OpenACC/%_mpi.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
+	@echo "Compiling kernel" $*
+	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+              -I. OpenACC/$*_c.c -c -o OpenACC/$*_c_mpi.o
+	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+        -I. OpenACC/$*.cpp -c -o OpenACC/$*_mpi.o
 
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
 	@echo "Compiling kernel" $*
-	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+	$(CC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CCFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
               -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
-	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+	$(CPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CPPFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
 multidim_openacc: $(openacc_obj_list) ./OpenACC/multidim_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
-    multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o multidim_openacc
+    multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o multidim_openacc
 
 
-multidim_mpi_openacc: $(openacc_obj_list) ./OpenACC/multidim_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+multidim_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/multidim_kernels_mpi.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o multidim_mpi_openacc
+    multidim_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda -o multidim_mpi_openacc
 
 
 #
