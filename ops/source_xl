@@ -1,0 +1,4 @@
+#A rough example of environmental variables for compiling with XL compilers for IBM BlueGene
+export OPS_COMPILER=xl
+export OPS_INSTALL_PATH=/home/gihan/OPS/ops
+export MPI_INSTALL_PATH=/soft/compilers/wrappers/xl/

@@ -1,0 +1,5 @@
+export OPS_COMPILER=cray #for Archer
+export OPS_INSTALL_PATH=/home/e159/e159/gihan/work/OPS/OPS/ops
+#export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
+#export MPI_INSTALL_PATH=/opt/cray/craype/2.01/bin/
+
