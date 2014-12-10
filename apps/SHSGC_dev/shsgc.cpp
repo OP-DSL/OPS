@@ -239,20 +239,7 @@ int main(int argc, char **argv) {
        conv();
  	   visc();
 
-      //update use rk3 co-efficient's
-      int nxp_range_2[] = {3,nxp-2};      
-      ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2,
-                   ops_arg_dat(rho_new,  1, S1D_0, "double",OPS_WRITE),
-                   ops_arg_dat(rhou_new, 1, S1D_0, "double",OPS_WRITE),
-                   ops_arg_dat(rhoE_new, 1, S1D_0, "double",OPS_WRITE),
-                   ops_arg_dat(rho_old,  1, S1D_0, "double",OPS_RW),
-                   ops_arg_dat(rhou_old, 1, S1D_0, "double",OPS_RW),
-                   ops_arg_dat(rhoE_old, 1, S1D_0, "double",OPS_RW),                   
-                   ops_arg_dat(rho_res,  1, S1D_0, "double",OPS_READ),
-                   ops_arg_dat(rhou_res, 1, S1D_0, "double",OPS_READ),
-                   ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),              
-                   ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
-                   ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
+      
     }
     
     //
