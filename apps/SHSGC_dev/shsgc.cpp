@@ -211,42 +211,17 @@ int main(int argc, char **argv) {
   int niter = 9005; 
   for (int iter = 0; iter <niter;  iter++){
 
-    // Save previous data arguments
-    ops_par_loop(save_kernel, "save_kernel", shsgc_grid, 1, nxp_range,
-             ops_arg_dat(rho_old, 1, S1D_0, "double", OPS_WRITE),
-             ops_arg_dat(rhou_old, 1, S1D_0, "double", OPS_WRITE),
-             ops_arg_dat(rhoE_old, 1, S1D_0, "double", OPS_WRITE),
-             ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_READ),
-             ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_READ),
-             ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_READ));
-
+ 
     //rk3 loop
-    for (int nrk=0; nrk <3; nrk++){
+  for (int nrk=0; nrk <3; nrk++){
 
-      // make residue equal to zero
-      ops_par_loop(zerores_kernel, "zerores_kernel", shsgc_grid, 1, nxp_range,
-              ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE),
-              ops_arg_dat(rhou_res, 1, S1D_0, "double",OPS_WRITE),
-              ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_WRITE));
-
-      // computations of convective derivatives
-      //TODO
-
-      // calculate drhou/dx
-       conv();
- 	   visc();
+    conv();
+ 	  visc();
 
       
-    }
-    
-    //
-    // viscous terms evaluation
-    //
-//     visc();
-    //
+}
 
-    
-    
+ 
     totaltime = totaltime + dt;
     printf("%d \t %f\n", iter, totaltime);
    
