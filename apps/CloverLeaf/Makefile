@@ -62,12 +62,12 @@ endif
 else
 ifeq ($(OPS_COMPILER),pgi)
   CPP 		= pgc++
-  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
   CCFLAGS 	= -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
+  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CPPFLAGS 	= $(CCFLAGS)
   OMPFLAGS 	= -mp
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpicxx
@@ -88,8 +88,23 @@ endif
   MPICC     = cc
   MPIFLAGS  = $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),xl)
+  CPP       = mpixlc
+  CUDA_ALIGN_FLAG :=
+ifdef DEBUG
+  CCFLAGS   = -O2 -g
+else
+  CCFLAGS   = -O3 -qnoeh
+endif
+  CPPFLAGS  = $(CCFLAGS)
+  OMPFLAGS  = -qsmp=omp  -qthreaded
+  MPICPP    = mpixlcxx
+  MPICC     = mpixlc
+  MPIFLAGS  = $(CPPFLAGS)
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

@@ -68,8 +68,38 @@ endif
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),cray)
+  CPP       = CC
+    CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+ifdef DEBUG
+  CCFLAGS   = -O2
+else
+  CCFLAGS   = -O3
+endif
+  CPPFLAGS  = $(CCFLAGS)
+  OMPFLAGS  =
+  MPICPP    = CC
+  MPICC     = cc
+  MPIFLAGS  = $(CPPFLAGS)
+else
+ifeq ($(OPS_COMPILER),xl)
+  CPP       = mpixlc
+  CUDA_ALIGN_FLAG :=
+ifdef DEBUG
+  CCFLAGS   = -O2 -g
+else
+  CCFLAGS   = -O3 -qnoeh
+endif
+  CPPFLAGS  = $(CCFLAGS)
+  OMPFLAGS  = -qsmp=omp  -qthreaded
+  MPICPP    = mpixlcxx
+  MPICC     = mpixlc
+  MPIFLAGS  = $(CPPFLAGS)
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
+endif
 endif
 endif
 endif

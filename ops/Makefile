@@ -22,9 +22,13 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 
 ifeq ($(OPS_COMPILER),gnu)
   CC 	  	:= gcc
-  CCFLAGS 	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g
+ifdef DEBUG
+  CCFLAGS 	:= -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
+else
+  CCFLAGS 	:= -O3 -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g
+endif
   CXX 	  	:= g++
-  CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g -Wextra
+  CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store
   MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
@@ -32,7 +36,7 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc -std=c99
 ifdef DEBUG
-  CCFLAGS 	:= -O0 -g  #-vec-report -xSSE4.2
+  CCFLAGS 	:= -O0 -g
 else
   CCFLAGS 	:= -O3 -xAVX #vec-report -xAVX
 endif
@@ -45,7 +49,7 @@ else
 ifeq ($(OPS_COMPILER),mic)
   CC    := icc -std=c99
 ifdef DEBUG
-  CCFLAGS   := -O0 -g  -mmic -#-vec-report -xSSE4.2
+  CCFLAGS   := -O0 -g  -mmic 
 else
   CCFLAGS   := -O3 -vec-report -mmic -mcmodel=medium
 endif
@@ -57,15 +61,19 @@ endif
 else
 ifeq ($(OPS_COMPILER),pgi)
   CC 		:= pgcc -c99
+ifdef DEBUG
+  CCFLAGS 	:= -O0 -g
+else
+  CCFLAGS 	:= -O3
+endif
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CCFLAGS 	:= -O3 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   CXX 		:= pgc++
   CXXFLAGS 	:= $(CCFLAGS)
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -c99
   MPIFLAGS 	:= $(CXXFLAGS)
 else
-ifeq ($(OPS_COMPILER),cray)
+ifeq ($(OPS_COMPILER),cray) #Archer and Titan
   CC        := cc
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CCFLAGS   := -O3 -hgnu
@@ -75,8 +83,19 @@ ifeq ($(OPS_COMPILER),cray)
   MPICC     := cc
   MPIFLAGS  := $(CXXFLAGS)
 else
+ifeq ($(OPS_COMPILER),xl) #for IBM BlueGene Q
+  CC        := mpixlc
+  CUDA_ALIGNE_FLAG :=
+  CCFLAGS   := -O3 -qnoeh
+  CXX       := mpixlcxx
+  CXXFLAGS  := $(CCFLAGS)
+  MPICXX    := mpixlcxx
+  MPICC     := mpixlc
+  MPIFLAGS  := $(CXXFLAGS)
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
