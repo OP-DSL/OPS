@@ -28,6 +28,7 @@ include platform specific optimisations such as verctorization
 
 1. set the following environmental variables : e.g. for compiling with Intel compilers
 
+```
    export OPS_COMPILER=intel
 
    export OPS_INSTALL_PATH=~/OPS/ops
@@ -37,6 +38,7 @@ include platform specific optimisations such as verctorization
    export MPI_INSTALL_PATH=/opt/openmpi-intel/
    
    export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0
+```
 
 2. Build the OPS backend libraries:
 
