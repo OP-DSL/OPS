@@ -27,39 +27,31 @@ include platform specific optimisations such as verctorization
 ####Building Cloverleaf
 
 1. set the following environmental variables : e.g. for compiling with Intel compilers
-
 ```
    export OPS_COMPILER=intel
-
    export OPS_INSTALL_PATH=~/OPS/ops
-
    export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
-
    export MPI_INSTALL_PATH=/opt/openmpi-intel/
-   
    export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0
 ```
-
 2. Build the OPS backend libraries:
-
+```
    cd ~/OPS/ops/
-
    make
-
+```
    For systems that does not have CUDA installed comment out the builing of the GPU backend library.
    i.e. change the folloing line
-
+```
    all: clean core seq openmp mpi cuda
-
+```
    to
-
+```
    all: clean core seq openmp mpi #cuda
-
+```
 
 3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP, CUDA, MPI+CUDA, OpenCL, OpenCL+MPI, OpenACC and OpenACC+MPI (if your compiler supports OpenACC)
-
+```
    cd ~/OPS/apps/Cloverleaf/
-
    make
-
+```
 
