@@ -38,7 +38,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-#include <math_constants.h>
+//#include <math_constants.h>
 #include <ops_opencl_rt_support.h>
 
 extern char *halo_buffer_d;
