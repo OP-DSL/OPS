@@ -57,8 +57,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_bot(char const *name, ops_bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(77,"update_halo_kernel2_zvel_plus_4_bot");
-  OPS_kernels[77].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,93)) return;
+  #endif
+
+  ops_timing_realloc(93,"update_halo_kernel2_zvel_plus_4_bot");
+  OPS_kernels[93].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -177,7 +181,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_bot(char const *name, ops_bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[77].mpi_time += t1-t2;
+  OPS_kernels[93].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -188,12 +192,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_bot(char const *name, ops_bloc
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[77].time += t2-t1;
+  OPS_kernels[93].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[77].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[77].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[93].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[93].transfer += ops_compute_transfer(dim, range, &arg1);
 }

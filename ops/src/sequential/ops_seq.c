@@ -203,10 +203,10 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
   (void)name;
 }
 
-void ops_timers(double * cpu, double * et)
+/*void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
-}
+}*/
 
 void ops_partition(char* routine)
 {

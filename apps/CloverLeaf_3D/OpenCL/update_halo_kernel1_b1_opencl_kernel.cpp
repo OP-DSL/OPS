@@ -83,7 +83,7 @@ void buildOpenCLKernels_update_halo_kernel1_b1(int xdim0, int ydim0, int xdim1, 
       printf("compiling update_halo_kernel1_b1 -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[42] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel1_b1", &ret);
+    OPS_opencl_core.kernel[58] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel1_b1", &ret);
     clSafeCall( ret );
 
     isbuilt_update_halo_kernel1_b1 = true;
@@ -99,8 +99,12 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block block, int 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(42,"update_halo_kernel1_b1");
-  OPS_kernels[42].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,8,range,58)) return;
+  #endif
+
+  ops_timing_realloc(58,"update_halo_kernel1_b1");
+  OPS_kernels[58].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -280,30 +284,30 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block block, int 
   ops_H_D_exchanges_device(args, 8);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[42].mpi_time += t1-t2;
+  OPS_kernels[58].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 5, sizeof(cl_mem), (void*) &arg5.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 6, sizeof(cl_mem), (void*) &arg6.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 7, sizeof(cl_mem), (void*) &arg7.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 8, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 9, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 10, sizeof(cl_int), (void*) &base2 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 11, sizeof(cl_int), (void*) &base3 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 12, sizeof(cl_int), (void*) &base4 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 13, sizeof(cl_int), (void*) &base5 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 14, sizeof(cl_int), (void*) &base6 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 15, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 16, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[42], 17, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 4, sizeof(cl_mem), (void*) &arg4.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 5, sizeof(cl_mem), (void*) &arg5.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 6, sizeof(cl_mem), (void*) &arg6.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 7, sizeof(cl_mem), (void*) &arg7.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 8, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 9, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 10, sizeof(cl_int), (void*) &base2 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 11, sizeof(cl_int), (void*) &base3 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 12, sizeof(cl_int), (void*) &base4 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 13, sizeof(cl_int), (void*) &base5 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 14, sizeof(cl_int), (void*) &base6 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 15, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 16, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[58], 17, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[42], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[58], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
@@ -319,12 +323,12 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block block, int 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[42].time += t2-t1;
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[42].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[58].time += t2-t1;
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[58].transfer += ops_compute_transfer(dim, range, &arg6);
 }

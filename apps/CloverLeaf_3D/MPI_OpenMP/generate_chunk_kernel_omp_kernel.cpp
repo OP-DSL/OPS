@@ -105,8 +105,12 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
 
-  ops_timing_realloc(140,"generate_chunk_kernel");
-  OPS_kernels[140].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,11,range,56)) return;
+  #endif
+
+  ops_timing_realloc(56,"generate_chunk_kernel");
+  OPS_kernels[56].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -292,7 +296,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[140].mpi_time += t2-t1;
+  OPS_kernels[56].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -564,7 +568,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[140].time += t1-t2;
+  OPS_kernels[56].time += t1-t2;
 
   ops_set_dirtybit_host(args, 11);
 
@@ -576,16 +580,16 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[140].mpi_time += t2-t1;
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[56].mpi_time += t2-t1;
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg10);
 }

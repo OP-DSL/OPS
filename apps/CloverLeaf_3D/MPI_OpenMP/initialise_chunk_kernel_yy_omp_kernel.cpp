@@ -27,8 +27,12 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
 
 
-  ops_timing_realloc(131,"initialise_chunk_kernel_yy");
-  OPS_kernels[131].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,47)) return;
+  #endif
+
+  ops_timing_realloc(47,"initialise_chunk_kernel_yy");
+  OPS_kernels[47].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -94,7 +98,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[131].mpi_time += t2-t1;
+  OPS_kernels[47].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -189,7 +193,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[131].time += t1-t2;
+  OPS_kernels[47].time += t1-t2;
 
   ops_set_dirtybit_host(args, 2);
 
@@ -197,6 +201,6 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[131].mpi_time += t2-t1;
-  OPS_kernels[131].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[47].mpi_time += t2-t1;
+  OPS_kernels[47].transfer += ops_compute_transfer(dim, range, &arg0);
 }

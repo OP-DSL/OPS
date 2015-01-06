@@ -94,8 +94,12 @@ void ops_par_loop_advec_mom_kernel_z1(char const *name, ops_block block, int dim
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  ops_timing_realloc(12,"advec_mom_kernel_z1");
-  OPS_kernels[12].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,20)) return;
+  #endif
+
+  ops_timing_realloc(20,"advec_mom_kernel_z1");
+  OPS_kernels[20].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -295,7 +299,7 @@ void ops_par_loop_advec_mom_kernel_z1(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,6,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[12].mpi_time += t1-t2;
+  OPS_kernels[20].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -307,16 +311,16 @@ void ops_par_loop_advec_mom_kernel_z1(char const *name, ops_block block, int dim
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[12].time += t2-t1;
+  OPS_kernels[20].time += t2-t1;
   ops_set_dirtybit_device(args, 6);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[12].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[20].transfer += ops_compute_transfer(dim, range, &arg5);
 }

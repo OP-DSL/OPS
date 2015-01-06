@@ -35,8 +35,12 @@ void ops_par_loop_advec_cell_kernel1_zdir(char const *name, ops_block block, int
 
 
 
-  ops_timing_realloc(37,"advec_cell_kernel1_zdir");
-  OPS_kernels[37].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,15)) return;
+  #endif
+
+  ops_timing_realloc(15,"advec_cell_kernel1_zdir");
+  OPS_kernels[15].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -162,7 +166,7 @@ void ops_par_loop_advec_cell_kernel1_zdir(char const *name, ops_block block, int
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[37].mpi_time += t2-t1;
+  OPS_kernels[15].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -332,7 +336,7 @@ void ops_par_loop_advec_cell_kernel1_zdir(char const *name, ops_block block, int
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[37].time += t1-t2;
+  OPS_kernels[15].time += t1-t2;
 
   ops_set_dirtybit_host(args, 6);
 
@@ -341,11 +345,11 @@ void ops_par_loop_advec_cell_kernel1_zdir(char const *name, ops_block block, int
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[37].mpi_time += t2-t1;
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[37].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[15].mpi_time += t2-t1;
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[15].transfer += ops_compute_transfer(dim, range, &arg5);
 }

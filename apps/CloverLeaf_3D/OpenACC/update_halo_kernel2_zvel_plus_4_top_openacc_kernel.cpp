@@ -34,8 +34,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(79,"update_halo_kernel2_zvel_plus_4_top");
-  OPS_kernels[79].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,95)) return;
+  #endif
+
+  ops_timing_realloc(95,"update_halo_kernel2_zvel_plus_4_top");
+  OPS_kernels[95].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -163,7 +167,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[79].mpi_time += t1-t2;
+  OPS_kernels[95].mpi_time += t1-t2;
 
   update_halo_kernel2_zvel_plus_4_top_c_wrapper(
     p_a0,
@@ -172,7 +176,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[79].time += t2-t1;
+  OPS_kernels[95].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -182,6 +186,6 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[95].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[95].transfer += ops_compute_transfer(dim, range, &arg1);
 }

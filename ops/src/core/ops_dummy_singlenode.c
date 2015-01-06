@@ -153,3 +153,8 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_
   }
 }
 
+void ops_timers(double * cpu, double * et)
+{
+    ops_timers_core(cpu,et);
+}
+

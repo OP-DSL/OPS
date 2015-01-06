@@ -56,8 +56,12 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(124,"update_halo_kernel5_minus_2_front");
-  OPS_kernels[124].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,140)) return;
+  #endif
+
+  ops_timing_realloc(140,"update_halo_kernel5_minus_2_front");
+  OPS_kernels[140].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -176,7 +180,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[124].mpi_time += t1-t2;
+  OPS_kernels[140].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -187,12 +191,12 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[124].time += t2-t1;
+  OPS_kernels[140].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[124].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[124].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg1);
 }

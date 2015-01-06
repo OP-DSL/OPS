@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   start();
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   while(1) {
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 
   }
 
-  ops_timers_core(&ct1, &et1);
+  ops_timers(&ct1, &et1);
 
   if(profiler_on == 1) {
 

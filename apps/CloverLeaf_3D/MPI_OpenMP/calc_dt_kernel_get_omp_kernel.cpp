@@ -30,8 +30,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
 
-  ops_timing_realloc(128,"calc_dt_kernel_get");
-  OPS_kernels[128].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,39)) return;
+  #endif
+
+  ops_timing_realloc(39,"calc_dt_kernel_get");
+  OPS_kernels[39].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -152,7 +156,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[128].mpi_time += t2-t1;
+  OPS_kernels[39].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -267,7 +271,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[128].time += t1-t2;
+  OPS_kernels[39].time += t1-t2;
 
 
   // combine reduction data
@@ -287,8 +291,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[128].mpi_time += t2-t1;
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[39].mpi_time += t2-t1;
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
 }

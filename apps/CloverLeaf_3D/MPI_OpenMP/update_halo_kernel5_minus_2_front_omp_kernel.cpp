@@ -28,8 +28,12 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
 
 
 
-  ops_timing_realloc(124,"update_halo_kernel5_minus_2_front");
-  OPS_kernels[124].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,140)) return;
+  #endif
+
+  ops_timing_realloc(140,"update_halo_kernel5_minus_2_front");
+  OPS_kernels[140].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -107,7 +111,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[124].mpi_time += t2-t1;
+  OPS_kernels[140].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -197,7 +201,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[124].time += t1-t2;
+  OPS_kernels[140].time += t1-t2;
 
   ops_set_dirtybit_host(args, 3);
 
@@ -206,7 +210,7 @@ void ops_par_loop_update_halo_kernel5_minus_2_front(char const *name, ops_block 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[124].mpi_time += t2-t1;
-  OPS_kernels[124].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[124].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[140].mpi_time += t2-t1;
+  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[140].transfer += ops_compute_transfer(dim, range, &arg1);
 }

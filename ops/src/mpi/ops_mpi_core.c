@@ -83,6 +83,7 @@
 
 void ops_timers(double * cpu, double * et)
 {
+    MPI_Barrier(MPI_COMM_WORLD);
     ops_timers_core(cpu,et);
 }
 

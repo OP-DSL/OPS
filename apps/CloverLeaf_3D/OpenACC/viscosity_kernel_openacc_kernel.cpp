@@ -83,8 +83,12 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
 
-  ops_timing_realloc(0,"viscosity_kernel");
-  OPS_kernels[0].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,12,range,45)) return;
+  #endif
+
+  ops_timing_realloc(45,"viscosity_kernel");
+  OPS_kernels[45].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -466,7 +470,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   ops_halo_exchanges(args,12,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  OPS_kernels[45].mpi_time += t1-t2;
 
   viscosity_kernel_c_wrapper(
     p_a0,
@@ -484,7 +488,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  OPS_kernels[45].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 12);
   #else
@@ -493,16 +497,16 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block Block, int dim, i
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg10);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg11);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg11);
 }

@@ -43,8 +43,12 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block Block, int dim
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(3,"reset_field_kernel1");
-  OPS_kernels[3].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,4,range,1)) return;
+  #endif
+
+  ops_timing_realloc(1,"reset_field_kernel1");
+  OPS_kernels[1].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -210,7 +214,7 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block Block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[3].mpi_time += t1-t2;
+  OPS_kernels[1].mpi_time += t1-t2;
 
   reset_field_kernel1_c_wrapper(
     p_a0,
@@ -220,7 +224,7 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block Block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[3].time += t2-t1;
+  OPS_kernels[1].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -230,8 +234,8 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block Block, int dim
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
 }
