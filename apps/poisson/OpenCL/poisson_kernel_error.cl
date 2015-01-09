@@ -46,39 +46,40 @@
 //user function
 void poisson_kernel_error(const __global double * restrict u, const __global double * restrict ref,  double * restrict err)
 
-  {
+ {
   *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
 }
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
+#undef OPS_ACC0
+#undef OPS_ACC1
 
 
- __kernel void ops_poisson_kernel_error(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global double* restrict arg2,
- __local double* scratch2,
- int r_bytes2,
- const int base0,
- const int base1,
- const int size0,
- const int size1 ){
 
-   arg2 += r_bytes2;
-   double arg2_l[1];
-   for (int d=0; d<1; d++) arg2_l[d] = ZERO_double;
+__kernel void ops_poisson_kernel_error(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global double* restrict arg2,
+__local double* scratch2,
+int r_bytes2,
+const int base0,
+const int base1,
+const int size0,
+const int size1 ){
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  arg2 += r_bytes2;
+  double arg2_l[1];
+  for (int d=0; d<1; d++) arg2_l[d] = ZERO_double;
 
-   if (idx_x < size0 && idx_y < size1) {
-     poisson_kernel_error(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_poisson_kernel_error],
-                    &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_poisson_kernel_error],
-                    arg2_l);
-   }
-   reduce_double(arg2_l[0], scratch2, arg2, OPS_INC);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
- }
+  if (idx_x < size0 && idx_y < size1) {
+    poisson_kernel_error(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_error],
+                   &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_error],
+                   arg2_l);
+  }
+  reduce_double(arg2_l[0], scratch2, arg2, OPS_INC);
+
+}

@@ -18,6 +18,8 @@ void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx,
 
 
 
+
+
 // host stub function
 void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -105,9 +107,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else
   int nthreads = 1;
   #endif
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
 
   ops_H_D_exchanges_host(args, 6);
 
@@ -190,7 +192,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
           poisson_kernel_populate(  (int * )p_a[0], (int * )p_a[1], arg_idx,
-           (double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (double * )p_a[5]+ i*1 );
+           (double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (double * )p_a[5]+ i*1*1 );
 
           arg_idx[0]++;
         }

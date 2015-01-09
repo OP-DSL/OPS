@@ -12,6 +12,7 @@
 double dx,dy;
 
 
+#define OPS_2D
 #include  "ops_lib_cpp.h"
 
 //
@@ -159,9 +160,9 @@ int main(int argc, char **argv)
                    ops_arg_gbl(&disps[2*(i+ngrid_x*j)], 1, "int", OPS_READ),
                    ops_arg_gbl(&disps[2*(i+ngrid_x*j)+1], 1, "int", OPS_READ),
                    ops_arg_idx(),
-                   ops_arg_dat(u[i+ngrid_x*j], S2D_00, "double", OPS_WRITE),
-                   ops_arg_dat(f[i+ngrid_x*j], S2D_00, "double", OPS_WRITE),
-                   ops_arg_dat(ref[i+ngrid_x*j], S2D_00, "double", OPS_WRITE));
+                   ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE),
+                   ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE),
+                   ops_arg_dat(ref[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
     }
   }
 
@@ -169,7 +170,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
       ops_par_loop_poisson_kernel_initialguess("poisson_kernel_initialguess", blocks[i+ngrid_x*j], 2, iter_range,
-                   ops_arg_dat(u[i+ngrid_x*j], S2D_00, "double", OPS_WRITE));
+                   ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
     }
   }
 
@@ -179,17 +180,17 @@ int main(int argc, char **argv)
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
         ops_par_loop_poisson_kernel_stencil("poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
-                     ops_arg_dat(u[i+ngrid_x*j], S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
-                     ops_arg_dat(f[i+ngrid_x*j], S2D_00, "double", OPS_READ),
-                     ops_arg_dat(u2[i+ngrid_x*j], S2D_00, "double", OPS_WRITE));
+                     ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+                     ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+                     ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
         ops_par_loop_poisson_kernel_update("poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
-                     ops_arg_dat(u2[i+ngrid_x*j], S2D_00, "double", OPS_READ),
-                     ops_arg_dat(u[i+ngrid_x*j], S2D_00, "double", OPS_WRITE));
+                     ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+                     ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
   }
@@ -199,8 +200,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
       ops_par_loop_poisson_kernel_error("poisson_kernel_error", blocks[i+ngrid_x*j], 2, iter_range,
-                   ops_arg_dat(u[i+ngrid_x*j], S2D_00, "double", OPS_READ),
-                   ops_arg_dat(ref[i+ngrid_x*j], S2D_00, "double", OPS_READ),
+                   ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+                   ops_arg_dat(ref[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
                    ops_arg_reduce(red_err, 1, "double", OPS_INC));
     }
   }

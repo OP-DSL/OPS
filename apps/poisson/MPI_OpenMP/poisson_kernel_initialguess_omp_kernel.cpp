@@ -13,6 +13,8 @@ void poisson_kernel_initialguess(double *u) {
 
 
 
+
+
 // host stub function
 void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
@@ -85,7 +87,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   ops_H_D_exchanges_host(args, 1);
 
@@ -130,7 +132,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          poisson_kernel_initialguess(  (double * )p_a[0]+ i*1 );
+          poisson_kernel_initialguess(  (double * )p_a[0]+ i*1*1 );
 
         }
 

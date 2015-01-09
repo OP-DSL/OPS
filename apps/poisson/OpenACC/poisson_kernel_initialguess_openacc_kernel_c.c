@@ -16,8 +16,8 @@ void poisson_kernel_initialguess(double *u) {
 }
 
 
-
 #undef OPS_ACC0
+
 
 
 void poisson_kernel_initialguess_c_wrapper(
@@ -32,7 +32,7 @@ void poisson_kernel_initialguess_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_initialguess(  p_a0 + n_x*1 + n_y*xdim0_poisson_kernel_initialguess*1 );
+      poisson_kernel_initialguess(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_initialguess*1*1 );
 
     }
   }

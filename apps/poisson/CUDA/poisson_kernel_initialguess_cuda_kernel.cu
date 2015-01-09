@@ -28,7 +28,7 @@ int size1 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_poisson_kernel_initialguess;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_initialguess;
 
   if (idx_x < size0 && idx_y < size1) {
     poisson_kernel_initialguess(arg0);
@@ -83,7 +83,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
 
 
   //Timing
@@ -113,7 +113,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *

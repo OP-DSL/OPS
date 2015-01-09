@@ -51,9 +51,9 @@ int size1 ){
   int arg_idx[2];
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_poisson_kernel_populate;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_poisson_kernel_populate;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_poisson_kernel_populate;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_poisson_kernel_populate;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_poisson_kernel_populate;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_poisson_kernel_populate;
 
   if (idx_x < size0 && idx_y < size1) {
     poisson_kernel_populate(&arg0, &arg1, arg_idx, arg3,
@@ -118,9 +118,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
 
 
   //Timing
@@ -156,7 +156,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = dat3 * 1 * 
+  int base3 = dat3 * 1 *
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
   base3 = base3+ dat3 *
     args[3].dat->size[0] *
@@ -168,7 +168,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
   #endif //OPS_MPI
-  int base4 = dat4 * 1 * 
+  int base4 = dat4 * 1 *
   (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
@@ -180,7 +180,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
   #endif //OPS_MPI
-  int base5 = dat5 * 1 * 
+  int base5 = dat5 * 1 *
   (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
   base5 = base5+ dat5 *
     args[5].dat->size[0] *
