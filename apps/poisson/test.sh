@@ -5,7 +5,7 @@ source ./source_intel
 make
 cd -
 make
-#============================ Test Cloverleaf 2D ==========================================================
+#============================ Test Poisson ==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
