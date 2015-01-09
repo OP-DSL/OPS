@@ -98,6 +98,10 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   ops_arg args[2] = { arg0, arg1};
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,3)) return;
+  #endif
+
   ops_timing_realloc(3,"poisson_kernel_update");
   OPS_kernels[3].count++;
 

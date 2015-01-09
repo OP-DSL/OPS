@@ -27,6 +27,10 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,1,range,1)) return;
+  #endif
+
   ops_timing_realloc(1,"poisson_kernel_initialguess");
   OPS_kernels[1].count++;
 

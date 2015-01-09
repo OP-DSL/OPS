@@ -53,11 +53,11 @@ int main(int argc, char **argv)
 
   ops_init(argc,argv,6);
 
-  int logical_size_x = 20;
-  int logical_size_y = 20;
+  int logical_size_x = 200;
+  int logical_size_y = 200;
   int ngrid_x = 1;
   int ngrid_y = 1;
-  int n_iter = 1000;
+  int n_iter = 10000;
   dx = 0.01;
   dy = 0.01;
   ops_decl_const2( "dx",1, "double",&dx);
@@ -146,6 +146,7 @@ int main(int argc, char **argv)
   ops_halo_group u_halos = ops_decl_halo_group(off,halos);
 
   ops_partition("");
+  ops_checkpointing_init("check.h5", 5.0);
 
 
   double ct0, ct1, et0, et1;
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
   ops_printf("Total error: %g\n",err);
 
   ops_timers_core(&ct1, &et1);
-  ops_timing_output();
+  ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 

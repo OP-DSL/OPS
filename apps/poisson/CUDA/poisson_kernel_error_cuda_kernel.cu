@@ -55,6 +55,10 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,4)) return;
+  #endif
+
   ops_timing_realloc(4,"poisson_kernel_error");
   OPS_kernels[4].count++;
 

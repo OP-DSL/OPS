@@ -32,6 +32,10 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block Block, int 
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,2)) return;
+  #endif
+
   ops_timing_realloc(2,"poisson_kernel_stencil");
   OPS_kernels[2].count++;
 

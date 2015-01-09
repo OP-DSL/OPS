@@ -15,6 +15,10 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
 
 
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,0)) return;
+  #endif
+
   ops_timing_realloc(0,"poisson_kernel_populate");
   OPS_kernels[0].count++;
 
