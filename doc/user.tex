@@ -105,6 +105,11 @@ face of another block.  This is awkward and hard to handle simply.
 \item[diags\_level] an integer which defines the level of debugging
                     diagnostics and reporting to be performed
 \end{routine}
+Currently, higher \texttt{diags\_level}s does the following checks\\
+\noindent \texttt{diags\_level} $=$ 1 : no diagnostics, default to achieve best runtime performance.\\
+\noindent \texttt{diags\_level} $>$ 1 : print block decomposition and \texttt{ops\_par\_loop} timing breakdown.\\
+\noindent \texttt{diags\_level} $>$ 4 : print intra-block halo buffer allocation feedback\\
+\noindent \texttt{diags\_level} $>$ 5 : check if intra-block halo MPI sends depth match MPI receives depth\\
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_block}
 \begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
@@ -165,10 +170,11 @@ int *from\_dir, int *to\_dir)}
 \item[from\_dir]          direction of incrementing for "from" for each dimension of {\tt iter\_size}
 \item[to\_dir]           direction of incrementing for "to" for each dimension of {\tt iter\_size}
 \end{routine}
-
-(Simple example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = 
-[1,0,0], to\_base = [-1,0,0], from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers 
-between blocks with different orientations.)\\\\\\
+A from\_dir [1,2] and a to\_dir [2,1] means that x in the first block goes to y in the second block, and y in 
+first block goes to x in second block. A negative sign indicates that the axis is flipped. (Simple example: a transfer 
+from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = [1,0,0], to\_base = [-1,0,0], 
+from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers between blocks with different 
+orientations.)\\
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
 \begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
