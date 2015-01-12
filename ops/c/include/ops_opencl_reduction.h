@@ -54,12 +54,12 @@ void reduce_float(float value,
   // Perform parallel reduction
   int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
   get_local_id(2)*get_local_size(0)*get_local_size(1);
-  
+
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
-  
+
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
   get_group_id(2)*get_num_groups(0)*get_num_groups(1);
-  
+
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
   for(int offset = tot_size / 2;
@@ -89,12 +89,12 @@ void reduce_double(double value,
   // Perform parallel reduction
   int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
   get_local_id(2)*get_local_size(0)*get_local_size(1);
-  
+
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
-  
+
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
   get_group_id(2)*get_num_groups(0)*get_num_groups(1);
-  
+
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
   for(int offset = tot_size / 2;
@@ -124,12 +124,12 @@ void reduce_int(int value,
   // Perform parallel reduction
   int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
   get_local_id(2)*get_local_size(0)*get_local_size(1);
-  
+
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
-  
+
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
   get_group_id(2)*get_num_groups(0)*get_num_groups(1);
-  
+
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
   for(int offset = tot_size / 2;

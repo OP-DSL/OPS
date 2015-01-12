@@ -187,4 +187,3 @@ int file_exist (char const *filename)
   struct stat   buffer;
   return (stat (filename, &buffer) == 0);
 }
-

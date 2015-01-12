@@ -30,144 +30,34 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi+cuda run-time support routines
-  * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the runtime support routines for the OPS mpi+cuda backend
+/** @brief ops cuda specific runtime support functions
+  * @author Gihan Mudalige
+  * @details Implements cuda backend runtime support functions
   */
 
 
-#include <ops_mpi_core.h>
+//
+// header files
+//
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <math_constants.h>
+
+#include <ops_lib_core.h>
 #include <ops_cuda_rt_support.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-int halo_buffer_size = 0;
-char *halo_buffer_d = NULL;
+/*__global__ void copy_kernel(char *dest, char *src, int size ) {
+  int tid = blockIdx.x;
+  memcpy(&dest[tid],&src[tid],size);
+}*/
 
-__global__ void ops_cuda_packer_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
-  int idx = blockIdx.x*blockDim.x+threadIdx.x;
-  int block = idx/len;
-  if (idx < count*len) {
-    dest[idx] = src[stride*block + idx%len];
-  }
-}
-
-__global__ void ops_cuda_unpacker_1(const char * __restrict src, char *__restrict dest, int count, int len, int stride){
-  int idx = blockIdx.x*blockDim.x+threadIdx.x;
-  int block = idx/len;
-  if (idx < count*len) {
-    dest[stride*block + idx%len] = src[idx];
-  }
-}
-
-__global__ void ops_cuda_packer_4(const int * __restrict src, int *__restrict dest, int count, int len, int stride){
-  int idx = blockIdx.x*blockDim.x+threadIdx.x;
-  int block = idx/len;
-  if (idx < count*len) {
-    dest[idx] = src[stride*block + idx%len];
-  }
-}
-
-__global__ void ops_cuda_unpacker_4(const int * __restrict src, int *__restrict dest, int count, int len, int stride){
-  int idx = blockIdx.x*blockDim.x+threadIdx.x;
-  int block = idx/len;
-  if (idx < count*len) {
-    dest[stride*block + idx%len] = src[idx];
-  }
-}
-
-
-
-
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo) {
-  
-	if(dat->dirty_hd == 1){
-    ops_upload_dat(dat);
-    dat->dirty_hd = 0;
-  }
-  
-	const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
-  if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
-    if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-    cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
-    halo_buffer_size = halo->count*halo->blocklength*4;
-  }
-  char *device_buf=NULL;
-  if (OPS_gpu_direct) device_buf = dest;
-  else device_buf = halo_buffer_d;
-
-  if (halo->blocklength%4 == 0) {
-    int num_threads = 128;
-    int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
-    ops_cuda_packer_4<<<num_blocks,num_threads>>>((const int *)src,(int *)device_buf,halo->count, halo->blocklength/4, halo->stride/4);
-  } else {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
-    ops_cuda_packer_1<<<num_blocks,num_threads>>>(src,device_buf,halo->count, halo->blocklength, halo->stride);
-  }
-  if (!OPS_gpu_direct)
-    cutilSafeCall(cudaMemcpy(dest,halo_buffer_d,halo->count*halo->blocklength,cudaMemcpyDeviceToHost));
-  else
-    cutilSafeCall(cudaDeviceSynchronize());
-}
-
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo) {
-  
-	if(dat->dirty_hd == 1){
-    ops_upload_dat(dat);
-    dat->dirty_hd = 0;
-  }
-  char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
-  if (halo_buffer_size<halo->count*halo->blocklength && !OPS_gpu_direct) {
-    if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-    cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,halo->count*halo->blocklength*4));
-    halo_buffer_size = halo->count*halo->blocklength*4;
-  }
-
-  const char *device_buf=NULL;
-  if (OPS_gpu_direct) device_buf = src;
-  else device_buf = halo_buffer_d;
-
-  if (!OPS_gpu_direct)
-    cutilSafeCall(cudaMemcpy(halo_buffer_d,src,halo->count*halo->blocklength,cudaMemcpyHostToDevice));
-  if (halo->blocklength%4 == 0) {
-    int num_threads = 128;
-    int num_blocks = (((halo->blocklength/4) * halo->count)-1)/num_threads + 1;
-    ops_cuda_unpacker_4<<<num_blocks,num_threads>>>((const int*)device_buf,(int *)dest,halo->count, halo->blocklength/4, halo->stride/4);
-  } else {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * halo->count)-1)/num_threads + 1;
-    ops_cuda_unpacker_1<<<num_blocks,num_threads>>>(device_buf,dest,halo->count, halo->blocklength, halo->stride);
-  }
-  
-  dat->dirty_hd = 2;
-  
- //cutilSafeCall(cudaDeviceSynchronize());
-}
-
-void ops_comm_realloc(char **ptr, int size, int prev) {
-  if (OPS_gpu_direct) {
-    if (*ptr == NULL) {
-      cutilSafeCall(cudaMalloc((void**)ptr, size));
-    } else {
-      printf("Warning: cuda cache realloc\n");
-      char *ptr2;
-      cutilSafeCall(cudaMalloc((void**)&ptr2, size));
-      cutilSafeCall(cudaMemcpy(ptr2, *ptr, prev, cudaMemcpyDeviceToDevice));
-      cutilSafeCall(cudaFree(*ptr));
-      *ptr = ptr2;
-    }
-  } else {
-    if (*ptr == NULL) {
-      *ptr = (char *)malloc(size);
-    } else {
-      *ptr = (char*)realloc(*ptr, size);
-    }
-  }
- cutilSafeCall(cudaDeviceSynchronize());
-}
 
 __global__ void copy_kernel_tobuf(char * dest, char * src,
                  int rx_s, int rx_e,
@@ -244,29 +134,16 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
     thr_z = 8;
   }
 
-  int size = abs(src->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
-  char *gpu_ptr;
-  if (OPS_gpu_direct) gpu_ptr = dest;
-  else {
-    if (halo_buffer_size < size) {
-      if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-      cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,size*sizeof(char)));
-      halo_buffer_size = size;
-    }
-    gpu_ptr = halo_buffer_d;
-  }
-
   dim3 grid(blk_x,blk_y,blk_z);
   dim3 tblock(thr_x,thr_y,thr_z);
-  copy_kernel_tobuf<<<grid, tblock>>>(gpu_ptr, src->data_d,
+  copy_kernel_tobuf<<<grid, tblock>>>(dest, src->data_d,
                                   rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
                                   x_step, y_step, z_step,
                                   src->size[0], src->size[1], src->size[2],
                                   buf_strides_x, buf_strides_y, buf_strides_z,
                                   src->elem_size);
 
-  if (!OPS_gpu_direct)
-    cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size*sizeof(char), cudaMemcpyDeviceToHost));
+  //TODO: MPI buffers and GPUDirect
 }
 
 
@@ -298,22 +175,9 @@ void ops_halo_copy_frombuf(ops_dat dest,
     thr_z = 8;
   }
 
-  int size = abs(dest->elem_size*(rx_e-rx_s)*(ry_e-ry_s)*(rz_e-rz_s));
-  char *gpu_ptr;
-  if (OPS_gpu_direct) gpu_ptr = src;
-  else {
-    if (halo_buffer_size < size) {
-      if (halo_buffer_d!=NULL) cutilSafeCall(cudaFree(halo_buffer_d));
-      cutilSafeCall(cudaMalloc((void**)&halo_buffer_d,size*sizeof(char)));
-      halo_buffer_size = size;
-    }
-    gpu_ptr = halo_buffer_d;
-    cutilSafeCall(cudaMemcpy(halo_buffer_d, src, size*sizeof(char), cudaMemcpyHostToDevice));
-  }
-
   dim3 grid(blk_x,blk_y,blk_z);
   dim3 tblock(thr_x,thr_y,thr_z);
-  copy_kernel_frombuf<<<grid, tblock>>>(dest->data_d, gpu_ptr,
+  copy_kernel_frombuf<<<grid, tblock>>>(dest->data_d, src,
                                   rx_s, rx_e, ry_s, ry_e, rz_s, rz_e,
                                   x_step, y_step, z_step,
                                   dest->size[0], dest->size[1], dest->size[2],
@@ -321,7 +185,3 @@ void ops_halo_copy_frombuf(ops_dat dest,
                                   dest->elem_size);
   dest->dirty_hd = 2;
 }
-
-#ifdef __cplusplus
-}
-#endif

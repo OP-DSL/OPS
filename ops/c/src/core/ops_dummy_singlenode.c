@@ -157,4 +157,3 @@ void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
 }
-

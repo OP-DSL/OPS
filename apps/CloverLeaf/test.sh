@@ -1,7 +1,7 @@
 #!/bin/bash
 
-cd ../../ops/
-source ./source_intel
+cd ../../ops/c
+source ../source_intel
 make
 cd -
 make

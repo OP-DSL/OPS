@@ -7,7 +7,6 @@
 #
 # set paths for various files
 #
-
 SRC = src
 INC = include
 LIB = lib
@@ -49,7 +48,7 @@ else
 ifeq ($(OPS_COMPILER),mic)
   CC    := icc -std=c99
 ifdef DEBUG
-  CCFLAGS   := -O0 -g  -mmic 
+  CCFLAGS   := -O0 -g  -mmic
 else
   CCFLAGS   := -O3 -vec-report -mmic -mcmodel=medium
 endif

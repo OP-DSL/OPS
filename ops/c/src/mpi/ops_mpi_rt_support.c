@@ -482,7 +482,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //
   //negative direction
   //
-  
+
   //decide actual depth based on dirtybits
   int actual_depth_send = 0;
   for (int d = 0; d <= left_send_depth; d++)
@@ -510,7 +510,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //Compute size of packed data
   int send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
-  
+
   if (send_recv_offsets[0]+send_size > ops_buffer_send_1_size) {
     if (OPS_diags>4) printf("Realloc ops_buffer_send_1\n");
     ops_buffer_send_1 = (char *)realloc(ops_buffer_send_1,send_recv_offsets[0]+4*send_size);
@@ -539,7 +539,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //
   //similarly for positive direction
   //
-  
+
   //decide actual depth based on dirtybits
   actual_depth_send = 0;
   for (int d = 0; d <= right_send_depth; d++)
@@ -567,7 +567,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //Compute size of packed data
   send_size = sd->halos[MAX_DEPTH*dim+actual_depth_send].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_send].count;
   recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
-  
+
   if (send_recv_offsets[2]+send_size > ops_buffer_send_2_size) {
     if (OPS_diags>4) printf("Realloc ops_buffer_send_2\n");
     ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2,send_recv_offsets[2]+4*send_size);
@@ -643,18 +643,18 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   //
   //negative direction
   //
-  
+
   //decide actual depth based on dirtybits
   int actual_depth_recv = 0;
   for (int d = 0; d <= right_recv_depth; d++)
     if(sd->dirty_dir_recv[2*MAX_DEPTH*dim + MAX_DEPTH + d] == 1) actual_depth_recv = d;
-  
+
   //set up initial pointers
   int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
-  
+
   //Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
-  
+
   //Unpack data
   if (actual_depth_recv>0)
     ops_unpack(dat,i4, ops_buffer_recv_1+send_recv_offsets[1], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
@@ -666,18 +666,18 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   //
   //similarly for positive direction
   //
-  
+
   //decide actual depth based on dirtybits
   actual_depth_recv = 0;
   for (int d = 0; d <= left_recv_depth; d++)
     if(sd->dirty_dir_recv[2*MAX_DEPTH*dim + d] == 1) actual_depth_recv = d;
-  
+
   //set up initial pointers
   int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
-  
+
   //Compute size of packed data
   recv_size = sd->halos[MAX_DEPTH*dim+actual_depth_recv].blocklength * sd->halos[MAX_DEPTH*dim+actual_depth_recv].count;
-  
+
   //Unpack data
   if (actual_depth_recv>0)
     ops_unpack(dat,i1, ops_buffer_recv_2+send_recv_offsets[3], &sd->halos[MAX_DEPTH*dim+actual_depth_recv]);
@@ -703,8 +703,8 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if( dat_ndim <= dim || dat->size[dim] <= 1 ) continue;  //dimension of the sub-block is less than current dim OR has a size of 1 (edge dat)
       comm = OPS_sub_block_list[dat->block->index]->comm; //use communicator for this sub-block
-      
-      //check if there is an intersection of dependency range with my full range 
+
+      //check if there is an intersection of dependency range with my full range
       //in *other* dimensions (i.e. any other dimension d2 ,but the current one dim)
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
@@ -727,11 +727,11 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
     }
     //  ops_timers_core(&c2,&t2);
     //  ops_gather_time += t2-t1;
-    
+
     // early exit - if one of the args does not have an intersection in other dims
-    // then none of the args will have an intersection - as all dats (except edge dats) 
-    // are defined on the whole domain 
-    if (other_dims==0 || comm == MPI_COMM_NULL) continue;  
+    // then none of the args will have an intersection - as all dats (except edge dats)
+    // are defined on the whole domain
+    if (other_dims==0 || comm == MPI_COMM_NULL) continue;
 
     MPI_Request request[4];
     MPI_Isend(ops_buffer_send_1,send_recv_offsets[0],MPI_BYTE,send_recv_offsets[0]>0?id_m:MPI_PROC_NULL,dim,

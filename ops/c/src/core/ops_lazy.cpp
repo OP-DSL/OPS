@@ -40,7 +40,7 @@
 
 #include <vector>
 using namespace std;
-  
+
 std::vector<ops_kernel_descriptor *> ops_kernel_list;
 
 void ops_execute();
