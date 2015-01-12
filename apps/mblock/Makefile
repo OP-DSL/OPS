@@ -126,7 +126,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda #mblock_opencl #mblock_openacc mblock_mpi_openacc
+TARGETS = mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_mpi_openmp mblock_openmp mblock_seq mblock_cuda mblock_mpi_cuda mblock_opencl mblock_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += mblock_openacc mblock_mpi_openacc
@@ -212,11 +212,18 @@ mblock_mpi_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h 
     mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_openacc
 
 mblock_opencl: ./OpenCL/mblock_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB) -o mblock_opencl
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. -lops_opencl -o mblock_opencl
 
 ./OpenCL/mblock_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/mblock_opencl_kernels.o ./OpenCL/mblock_opencl_kernels.cpp
+
+mblock_mpi_opencl: ./OpenCL/mblock_mpi_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_mpi_opencl_kernels.o -I. -lops_mpi_opencl -o mblock_mpi_opencl
+
+./OpenCL/mblock_mpi_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
+	$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
+                -c -o ./OpenCL/mblock_mpi_opencl_kernels.o ./OpenCL/mblock_opencl_kernels.cpp
 
 #
 #error

@@ -41,6 +41,7 @@
 #include <math.h>
 
 // OPS header file
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "mblock_populate_kernel.h"
@@ -163,10 +164,10 @@ int main(int argc, char **argv)
   //populate
   int iter_range[] = {0,20,0,20};
   ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid0, 2, iter_range,
-               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid1, 2, iter_range,
-               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
   ops_halo_transfer(halos0);

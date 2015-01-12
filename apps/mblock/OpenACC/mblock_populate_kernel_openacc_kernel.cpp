@@ -6,7 +6,7 @@
 #define OPS_GPU
 
 extern int xdim0_mblock_populate_kernel;
-int xdim0_mblock_populate_kernel_h;
+int xdim0_mblock_populate_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,11 +22,15 @@ void mblock_populate_kernel_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_mblock_populate_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,0)) return;
+  #endif
 
   ops_timing_realloc(0,"mblock_populate_kernel");
   OPS_kernels[0].count++;
@@ -73,13 +77,14 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block Block, int 
   arg_idx[1] = start[1];
   #endif //OPS_MPI
 
+  xdim0 = args[0].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_mblock_populate_kernel_h) {
-    xdim0_mblock_populate_kernel = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0_mblock_populate_kernel = xdim0;
     xdim0_mblock_populate_kernel_h = xdim0;
   }
 

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 
+#define OPS_2D
 #include  "ops_lib_cpp.h"
 
 //
@@ -43,6 +44,8 @@ int main(int argc, char **argv)
 
   ops_dat data0 = ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "data0");
   ops_dat data1 = ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, "double", "data1");
+
+
 
   ops_halo_group halos0;
   {
@@ -124,18 +127,17 @@ int main(int argc, char **argv)
 
   int iter_range[] = {0,20,0,20};
   ops_par_loop_mblock_populate_kernel("mblock_populate_kernel", grid0, 2, iter_range,
-               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop_mblock_populate_kernel("mblock_populate_kernel", grid1, 2, iter_range,
-               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
   ops_halo_transfer(halos0);
   ops_halo_transfer(halos1);
-  ops_halo_transfer(halos2); 
+  ops_halo_transfer(halos2);
   ops_halo_transfer(halos3);
   ops_halo_transfer(halos4);
-  
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
 
@@ -143,5 +145,6 @@ int main(int argc, char **argv)
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+
   ops_exit();
 }
