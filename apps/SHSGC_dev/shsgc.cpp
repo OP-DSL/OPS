@@ -82,9 +82,9 @@ void visc();
 /******************************************************************************/
 
 int main(int argc, char **argv) {
-  
+
   double totaltime =0.0f;
-  
+
   // Initialize rk3 co-efficient's
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   a2[0] = 1.0/4.0;
   a2[1] = 3.0/20.0;
   a2[2] = 3.0/5.0;
-  
+
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
@@ -135,18 +135,18 @@ int main(int argc, char **argv) {
 
   //extra dat for rhoin
   rhoin = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "rhoin");
-  
+
   u = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "u");
   u_x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "u_x");
   u_xx = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "u_xx");
-  
+
   T = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "T");
   T_x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "T_x");
   T_xx = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "T_xx");
-  
+
   mu = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "mu");
   mu_x = ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, "double", "mu_x");
-  
+
 
   // TVD scheme variables
   r     =  ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, "double", "r");
@@ -161,11 +161,11 @@ int main(int argc, char **argv) {
   s     = ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, "double", "s");
 
   //read in referance solution
-  
-  
+
+
   //reduction handle for rms variable
   rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
-  
+
   //
   //Declare commonly used stencils
   //
@@ -176,12 +176,12 @@ int main(int argc, char **argv) {
 
   int s1D_01[]   = {0,1};
   S1D_01         = ops_decl_stencil( 2, 1, s1D_01, "0,1");
-  
+
   int s1D_0M1[]   = {0,-1};
   S1D_0M1         = ops_decl_stencil( 2, 1, s1D_01, "0,-1");
-  
+
   ops_partition("1D_BLOCK_DECOMPOSE");
-  
+
 
   //
   // Initialize with the test case
@@ -204,32 +204,32 @@ int main(int argc, char **argv) {
   //
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
-  
-  int niter = 9005; 
+  ops_timers(&ct0, &et0);
+
+  int niter = 9005;
   for (int iter = 0; iter <niter;  iter++){
 
- 
+
     //rk3 loop
   for (int nrk=0; nrk <3; nrk++){
 
     conv();
  	  visc();
 
-      
+
 }
 
- 
+
     totaltime = totaltime + dt;
     printf("%d \t %f\n", iter, totaltime);
-   
+
   }
-  
-  ops_timers_core(&ct1, &et1);
+
+  ops_timers(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  
+
   //compare solution to referance solution
- 
+
   ops_exit();
-    
+
 }

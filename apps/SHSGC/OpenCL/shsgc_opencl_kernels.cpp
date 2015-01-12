@@ -341,7 +341,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  
+
 //user kernel files
 #include "initialize_kernel_opencl_kernel.cpp"
 #include "save_kernel_opencl_kernel.cpp"

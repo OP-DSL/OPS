@@ -3,7 +3,7 @@
 //
 
 //user function
-inline 
+inline
 void test_kernel(const double *rho_new, double *rms) {
 
   rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2);
@@ -82,7 +82,7 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   p_a[0] = (char *)args[0].data + base0;
 

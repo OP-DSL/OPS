@@ -23,7 +23,7 @@ void multidim_kernel(double *val, int *idx){
 __global__ void ops_multidim_kernel(
 double* __restrict arg0,
 int arg_idx0, int arg_idx1,
-int size0, 
+int size0,
 int size1 ){
 
 
@@ -126,7 +126,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *

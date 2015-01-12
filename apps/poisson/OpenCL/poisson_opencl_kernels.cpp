@@ -66,7 +66,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  
+
 //user kernel files
 #include "poisson_kernel_populate_opencl_kernel.cpp"
 #include "poisson_kernel_initialguess_opencl_kernel.cpp"

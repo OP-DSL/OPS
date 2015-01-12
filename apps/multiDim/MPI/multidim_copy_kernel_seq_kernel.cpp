@@ -5,7 +5,7 @@
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 //user function
-inline 
+inline
 void multidim_copy_kernel(const double *src, double *dest){
   dest[OPS_ACC_MD1(0,0,0)] = src[OPS_ACC_MD0(0,0,0)];
   dest[OPS_ACC_MD1(1,0,0)] = src[OPS_ACC_MD0(1,0,0)];
@@ -96,7 +96,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
@@ -108,7 +108,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = dat1 * 1 * 
+  int base1 = dat1 * 1 *
     (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *

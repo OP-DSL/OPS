@@ -6,7 +6,7 @@
 #define OPS_ACC_MD5(d,x) ((x)*3+(d))
 
 //user function
-inline 
+inline
 void Riemann_kernel(const double* rho_new, const double *rhou_new, const double* rhoE_new,
                     double* alam, double* r, double* al) {
 
@@ -161,7 +161,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   p_a[0] = (char *)args[0].data + base0;
 
@@ -170,7 +170,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = dat1 * 1 * 
+  int base1 = dat1 * 1 *
     (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   p_a[1] = (char *)args[1].data + base1;
 
@@ -179,7 +179,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = dat2 * 1 * 
+  int base2 = dat2 * 1 *
     (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
   p_a[2] = (char *)args[2].data + base2;
 
@@ -188,7 +188,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = dat3 * 1 * 
+  int base3 = dat3 * 1 *
     (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
   p_a[3] = (char *)args[3].data + base3;
 
@@ -197,7 +197,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
   #endif //OPS_MPI
-  int base4 = dat4 * 1 * 
+  int base4 = dat4 * 1 *
     (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   p_a[4] = (char *)args[4].data + base4;
 
@@ -206,7 +206,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
   #endif //OPS_MPI
-  int base5 = dat5 * 1 * 
+  int base5 = dat5 * 1 *
     (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
   p_a[5] = (char *)args[5].data + base5;
 

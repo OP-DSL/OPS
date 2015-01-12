@@ -169,7 +169,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 *2* 
+  int base0 = 1 *2*
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0 + args[0].dat->size[0] *2*
   (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
@@ -179,7 +179,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 *2* 
+  int base1 = 1 *2*
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   base1 = base1 + args[1].dat->size[0] *2*
   (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);

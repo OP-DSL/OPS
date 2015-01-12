@@ -172,7 +172,7 @@ void ops_par_loop_drhoEpudx_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 *1* 
+  int base0 = 1 *1*
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
 
   #ifdef OPS_MPI
@@ -180,7 +180,7 @@ void ops_par_loop_drhoEpudx_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 *1* 
+  int base1 = 1 *1*
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
 
   #ifdef OPS_MPI
@@ -188,7 +188,7 @@ void ops_par_loop_drhoEpudx_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = 1 *1* 
+  int base2 = 1 *1*
   (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
 
   #ifdef OPS_MPI
@@ -196,7 +196,7 @@ void ops_par_loop_drhoEpudx_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = 1 *1* 
+  int base3 = 1 *1*
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
 
 

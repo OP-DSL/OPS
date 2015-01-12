@@ -214,7 +214,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   p_a[0] = (char *)args[0].data_d + base0;
 
@@ -223,7 +223,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = dat1 * 1 * 
+  int base1 = dat1 * 1 *
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   p_a[1] = (char *)args[1].data_d + base1;
 
@@ -232,7 +232,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = dat2 * 1 * 
+  int base2 = dat2 * 1 *
   (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
   p_a[2] = (char *)args[2].data_d + base2;
 
@@ -241,7 +241,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
   #endif //OPS_MPI
-  int base3 = dat3 * 1 * 
+  int base3 = dat3 * 1 *
   (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
   p_a[3] = (char *)args[3].data_d + base3;
 
@@ -250,7 +250,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
   #endif //OPS_MPI
-  int base4 = dat4 * 1 * 
+  int base4 = dat4 * 1 *
   (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
   p_a[4] = (char *)args[4].data_d + base4;
 
@@ -259,7 +259,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
   #endif //OPS_MPI
-  int base5 = dat5 * 1 * 
+  int base5 = dat5 * 1 *
   (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
   p_a[5] = (char *)args[5].data_d + base5;
 
@@ -268,7 +268,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[6].dat->d_m[d];
   #endif //OPS_MPI
-  int base6 = dat6 * 1 * 
+  int base6 = dat6 * 1 *
   (start[0] * args[6].stencil->stride[0] - args[6].dat->base[0] - d_m[0]);
   p_a[6] = (char *)args[6].data_d + base6;
 
@@ -277,7 +277,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[7].dat->d_m[d];
   #endif //OPS_MPI
-  int base7 = dat7 * 1 * 
+  int base7 = dat7 * 1 *
   (start[0] * args[7].stencil->stride[0] - args[7].dat->base[0] - d_m[0]);
   p_a[7] = (char *)args[7].data_d + base7;
 
@@ -286,7 +286,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[8].dat->d_m[d];
   #endif //OPS_MPI
-  int base8 = dat8 * 1 * 
+  int base8 = dat8 * 1 *
   (start[0] * args[8].stencil->stride[0] - args[8].dat->base[0] - d_m[0]);
   p_a[8] = (char *)args[8].data_d + base8;
 

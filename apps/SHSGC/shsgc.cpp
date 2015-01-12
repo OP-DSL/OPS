@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
   //
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   int niter = 9005;
   for (int iter = 0; iter <niter;  iter++){
@@ -387,7 +387,7 @@ int main(int argc, char **argv) {
 
   }
 
-  ops_timers_core(&ct1, &et1);
+  ops_timers(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   //compare solution to referance solution

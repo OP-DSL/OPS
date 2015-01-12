@@ -42,7 +42,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  
+
 //user kernel files
 #include "multidim_kernel_opencl_kernel.cpp"
 #include "multidim_copy_kernel_opencl_kernel.cpp"

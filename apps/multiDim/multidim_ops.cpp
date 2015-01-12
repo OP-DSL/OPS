@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   int iter_range[] = {0,4,0,4};
   ops_par_loop_multidim_kernel("multidim_kernel", grid2D, 2, iter_range,
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
 
 
-
+  ops_timers(&ct1, &et1);
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 

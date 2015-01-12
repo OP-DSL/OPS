@@ -160,7 +160,7 @@ int main(int argc, char **argv)
 
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   //populate forcing, reference solution and boundary conditions
   for (int j = 0; j < ngrid_y; j++) {
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
   ops_reduction_result(red_err,&err);
   ops_printf("Total error: %g\n",err);
 
-  ops_timers_core(&ct1, &et1);
+  ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);

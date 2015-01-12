@@ -3,7 +3,7 @@
 //
 
 //user function
-inline 
+inline
 void zerores_kernel(double *rho_res, double *rhou_res, double *rhoE_res) {
       rho_res[OPS_ACC0(0)] = 0.0;
       rhou_res[OPS_ACC1(0)] = 0.0;
@@ -91,7 +91,7 @@ void ops_par_loop_zerores_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   p_a[0] = (char *)args[0].data + base0;
 
@@ -100,7 +100,7 @@ void ops_par_loop_zerores_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = dat1 * 1 * 
+  int base1 = dat1 * 1 *
     (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
   p_a[1] = (char *)args[1].data + base1;
 
@@ -109,7 +109,7 @@ void ops_par_loop_zerores_kernel(char const *name, ops_block block, int dim, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
   #endif //OPS_MPI
-  int base2 = dat2 * 1 * 
+  int base2 = dat2 * 1 *
     (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
   p_a[2] = (char *)args[2].data + base2;
 
