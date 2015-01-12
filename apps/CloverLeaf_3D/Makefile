@@ -106,6 +106,14 @@ endif
 endif
 
 
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+  CC = $(MPICC)
+  CPP = $(MPICPP)
+  OPS_INC += $(HDF5_INC)
+endif
+
 # flags for nvcc
 # set NV_ARCH to select the correct one
 ifndef NV_ARCH
@@ -160,7 +168,7 @@ cloverleaf_dev_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp ini
                 ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
                 viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
                 flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
-                advec_mom.cpp -lops_seq -o cloverleaf_dev_seq
+                advec_mom.cpp -lops_seq $(HDF5_LIB) -o cloverleaf_dev_seq
 
 
 cloverleaf_dev_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
@@ -177,7 +185,7 @@ cloverleaf_dev_mpi: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp ini
                 ideal_gas.cpp update_halo.cpp field_summary.cpp time_step.cpp \
                 viscosity.cpp calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp \
                 flux_calc.cpp advection.cpp reset_field.cpp advec_cell.cpp \
-		advec_mom.cpp -lops_mpi -o cloverleaf_dev_mpi
+		advec_mom.cpp -lops_mpi $(HDF5_LIB) -o cloverleaf_dev_mpi
 
 #
 # mpi version
@@ -199,7 +207,7 @@ cloverleaf_mpi: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp ini
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o cloverleaf_mpi
+		advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi
 
 #
 # OpenMP version
@@ -220,7 +228,7 @@ cloverleaf_mpi_openmp: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -o cloverleaf_mpi_openmp
+		advec_mom_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_openmp
 
 
 cloverleaf_openmp: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
@@ -237,7 +245,7 @@ cloverleaf_openmp: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp 
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o cloverleaf_openmp
+                advec_mom_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_openmp
 
 #
 # Sequential version
@@ -256,7 +264,7 @@ cloverleaf_seq: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp ini
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o cloverleaf_seq
+                advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_seq
 
 #
 # CUDA version
@@ -276,7 +284,7 @@ cloverleaf_cuda: ./CUDA/cloverleaf_kernels_cu.o clover_leaf_ops.cpp start.cpp bu
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_cu.o -lcudart -lops_cuda -o cloverleaf_cuda
+		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o cloverleaf_cuda
 
 cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_mpi_cu.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 		initialise.cpp generate_ops.cpp ideal_gas_ops.cpp \
@@ -292,7 +300,7 @@ cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_mpi_cu.o clover_leaf_ops.cpp star
 		ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
 		viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
 		flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o cloverleaf_mpi_cuda
+		advec_mom_ops.cpp ./CUDA/cloverleaf_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_cuda
 
 ./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
@@ -335,7 +343,7 @@ cloverleaf_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_fiel
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o cloverleaf_openacc
+								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o cloverleaf_openacc
 
 cloverleaf_mpi_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
@@ -352,7 +360,7 @@ cloverleaf_mpi_openacc: $(openacc_obj_list) clover_leaf_ops.cpp start.cpp build_
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o cloverleaf_mpi_openacc
+								advec_mom_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_openacc
 
 
 cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
@@ -369,7 +377,7 @@ cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o clover_leaf_ops.cpp star
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp ./OpenCL/cloverleaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o cloverleaf_opencl
+                advec_mom_ops.cpp ./OpenCL/cloverleaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB) -o cloverleaf_opencl
 
 ./OpenCL/cloverleaf_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
 		$(MPICPP) $(CPPFLAGS) $(OCL_FLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
@@ -390,7 +398,7 @@ cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o clover_leaf_ops.
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp ./OpenCL/cloverleaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl -o cloverleaf_mpi_opencl
+                advec_mom_ops.cpp ./OpenCL/cloverleaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl $(HDF5_LIB) -o cloverleaf_mpi_opencl
 
 ./OpenCL/cloverleaf_mpi_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
 	        $(MPICPP) $(MPIFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. -DOPS_MPI \

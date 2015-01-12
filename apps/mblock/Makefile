@@ -16,6 +16,7 @@ CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL
 
+
 ifeq ($(OPS_COMPILER),gnu)
   CPP   = g++
 ifdef DEBUG
@@ -30,13 +31,13 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP   = icpc
 ifdef DEBUG
-  CCFLAGS = -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -50,7 +51,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
@@ -91,6 +92,13 @@ endif
 endif
 endif
 
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+  CC = $(MPICC)
+  CPP = $(MPICPP)
+  OPS_INC += $(HDF5_INC)
+endif
 
 # flags for nvcc
 # set NV_ARCH to select the correct one
@@ -131,11 +139,11 @@ endif
 all: clean $(TARGETS)
 
 mblock_dev_seq: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_seq -o mblock_dev_seq
+	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_seq $(HDF5_LIB) -o mblock_dev_seq
 
 
 mblock_dev_mpi: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_mpi -o mblock_dev_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_mpi $(HDF5_LIB) -o mblock_dev_mpi
 
 #
 # mpi version
@@ -144,7 +152,7 @@ mblock_dev_mpi: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)
 SEQ_KERNELS = mblock_seq_kernels.cpp
 
 mblock_mpi: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o mblock_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o mblock_mpi
 
 #
 # OpenMP version
@@ -152,27 +160,27 @@ mblock_mpi: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)
 OMP_KERNELS = mblock_omp_kernels.cpp
 
 mblock_mpi_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -o mblock_mpi_openmp
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o mblock_mpi_openmp
 
 
 mblock_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o mblock_openmp
+	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o mblock_openmp
 
 #
 # Sequential version
 #
 mblock_seq: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o mblock_seq
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o mblock_seq
 
 #
 # CUDA version
 #
 
 mblock_cuda: Makefile ./CUDA/mblock_kernels_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda -o mblock_cuda
+	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o mblock_cuda
 
 mblock_mpi_cuda: Makefile ./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o mblock_mpi_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_cuda
 
 ./CUDA/mblock_kernels_cu.o: ./CUDA/mblock_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/mblock_kernels_cu.o ./CUDA/mblock_kernels.cu
@@ -191,20 +199,20 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
 	@echo "Compiling kernel" $*
 	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-              -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
+              -I. OpenACC/$*_c.c -c $(HDF5_LIB) -o OpenACC/$*_c.o
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
 mblock_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
-    mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o mblock_openacc
+    mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o mblock_openacc
 
 mblock_mpi_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o mblock_mpi_openacc
+    mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_openacc
 
 mblock_opencl: ./OpenCL/mblock_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o mblock_opencl
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB) -o mblock_opencl
 
 ./OpenCL/mblock_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
