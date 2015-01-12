@@ -98,6 +98,7 @@ face of another block.  This is awkward and hard to handle simply.
 
 \subsection{Initialisation and termination routines}
 
+\addcontentsline{toc}{subsubsection}{ops\_init}
 \begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
 {This routine must be called before all other OPS routines.}
 \item[argc, argv]   the usual command line arguments
@@ -105,6 +106,7 @@ face of another block.  This is awkward and hard to handle simply.
                     diagnostics and reporting to be performed
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_block}
 \begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
 {This routine defines a structured grid block.}
 
@@ -112,6 +114,7 @@ face of another block.  This is awkward and hard to handle simply.
 \item[name]          a name used for output diagnostics
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_dat}
 \begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
 *data, char
 *type, char *name)}
@@ -132,7 +135,7 @@ face of another block.  This is awkward and hard to handle simply.
 \texttt{d\_p} are depth of the ``block halos'' that are used to indicate the offset from the edge of a block (in both 
 the negative and positive directions of each dimension). \\\\
 
-
+\addcontentsline{toc}{subsubsection}{ops\_decl\_dat\_hdf5}
 \begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *size, int *base, int *d\_m, int *d\_p, 
 char *file, char *type, char *name)}
 {This routine defines a dataset to be read in from a named hdf5 file}
@@ -149,7 +152,7 @@ char *file, char *type, char *name)}
 \end{routine}
 
 
-
+\addcontentsline{toc}{subsubsection}{ops\_decl\_halo}
 \begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
 int *from\_dir, int *to\_dir)}
 {This routine defines a halo relationship between two datasets defined on two different blocks.}
@@ -167,6 +170,7 @@ int *from\_dir, int *to\_dir)}
 [1,0,0], to\_base = [-1,0,0], from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers 
 between blocks with different orientations.)\\\\\\
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
 \begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
 {This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
 there is no order defined in which they are carried out.}
@@ -175,6 +179,7 @@ there is no order defined in which they are carried out.}
 \item[halos]           array of halos
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_reduction\_handle}
 \begin{routine} {ops\_reduction ops\_decl\_reduction\_handle(int size, char *type, char *name)}
 {This routine defines a reduction handle to be used in a parallel loop}
 
@@ -190,7 +195,7 @@ there is no order defined in which they are carried out.}
 \item[result]          a pointer to write the results to, memory size has to match the declared
 \end{routine}
 
-
+\addcontentsline{toc}{subsubsection}{ops\_partition}
 \begin{routine} {ops\_partition(char *method)}
 {Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
 function for single node parallelisations). This routine should only be called after all the ops\_halo ops\_decl\_block 
@@ -200,17 +205,19 @@ and ops\_halo ops\_decl\_dat statements have been declared}
 is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
 \item \vspace{-0.3in}
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_exit}
 \begin{routine} {void ops\_exit()}
 {This routine must be called last to cleanly terminate the OPS computation.}
 \item \vspace{-0.3in}
 \end{routine}
 
-\subsubsection{Convenience functions}
+\subsection{Convenience functions}
 
 %Since in many cases blocks and their datasets are perfectly aligned, it is convenient to define the relationship between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
 %
@@ -225,6 +232,7 @@ is simply a place-holder to indicate different partitioning methods in the futur
 %
 %(For example in 2D if (0,0) is the bottom left corner of blocks, then {\tt from\_face}=[1,0] would define a connection between the right face of the origin block and the left face of the destination block.)
 
+\addcontentsline{toc}{subsubsection}{ops\_halo\_group\_add}
 \begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
 {Adds an {ops\_halo} to a halo group}
 
@@ -233,6 +241,7 @@ is simply a place-holder to indicate different partitioning methods in the futur
 \end{routine}
 
 \subsection{Halo exchange}
+\addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
 \begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
 {This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on the exchanged data.}
 
@@ -246,6 +255,7 @@ is simply a place-holder to indicate different partitioning methods in the futur
 
 A parallel loop with N arguments has the following syntax:
 
+\addcontentsline{toc}{subsubsection}{ops\_par\_loop}
 \begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), \\
                  \hspace*{1.4in} char *name, ops\_blck block, int dims, int *range,\\
 \hspace*{1.4in}  ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
@@ -269,7 +279,7 @@ for OPS datasets.
 
 \vspace{0.1in}
 
-
+\addcontentsline{toc}{subsubsection}{ops\_arg\_gbl}
 \begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
 \item[data]       data array
 \item[dim]        array dimension
@@ -277,6 +287,7 @@ for OPS datasets.
 \item[acc]        access type
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_arg\_reduce}
 \begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{}
 \item[handle]       an {\tt ops\_reduction} handle
 \item[dim]        array dimension (according to {\tt type})
@@ -284,6 +295,8 @@ for OPS datasets.
 \item[acc]        access type
 \end{routine}
 \newpage
+
+\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
                  ops\_access acc)}{}
 \item[dat]        dataset
@@ -298,6 +311,7 @@ for OPS datasets.
 
 \noindent The final ingredient is the stencil specification, for which we have two versions: simple and strided.\\
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil}
 \begin{routine} {ops\_stencil ops\_decl\_stencil(int dims,
                  int points, int *stencil, char *name)}{}
 \item[dims]     dimension of loop iteration
@@ -306,7 +320,7 @@ for OPS datasets.
 \item[name] string representing the name of the stencil
 \end{routine}
 
-
+\addcontentsline{toc}{subsubsection}{ops\_decl\_strided\_stencil}
 \begin{routine} {ops\_stencil ops\_decl\_strided\_stencil(int dims, int points,\\
 \hspace*{2.65in} int *stencil, int *stride, char *name)}{}
 \item[dims]       dimension of loop iteration
@@ -342,6 +356,7 @@ dimension applications (with a stride of 0 for the relevant dimensions).
 \subsection{Checkpointing}
 OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} runtime argument has to be used.
 
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
 \begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing system, has to be called after {\tt ops\_partition}}
 \item[filename]        name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
 \item[interval]    average time between checkpoints
