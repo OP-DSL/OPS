@@ -252,7 +252,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     if NDIM==1:
       code('int size0 ){')
     elif NDIM==2:
-      code('int size0, ')
+      code('int size0,')
       code('int size1 ){')
     elif NDIM==3:
       code('int size0,')
@@ -624,7 +624,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'

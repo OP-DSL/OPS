@@ -159,6 +159,8 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
-  ops_cuda_get_data(dat);
-  ops_print_dat_to_txtfile_core(dat, file_name);
+  if(OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_cuda_get_data(dat);
+    ops_print_dat_to_txtfile_core(dat, file_name);
+  }
 }

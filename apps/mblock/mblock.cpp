@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   //populate
   int iter_range[] = {0,20,0,20};
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
 
-  ops_timers_core(&ct1, &et1);
+  ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);

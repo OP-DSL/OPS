@@ -860,7 +860,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = 1 *'+str(dims[n])+'* ')
+        code('int base'+str(n)+' = 1 *'+str(dims[n])+'*')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
@@ -1119,7 +1119,7 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  """
+"""
 
 
   config.depth = -2
