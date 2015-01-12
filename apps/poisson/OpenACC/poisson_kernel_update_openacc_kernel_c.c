@@ -18,9 +18,9 @@ void poisson_kernel_update(const double *u2, double *u) {
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
+
 
 
 void poisson_kernel_update_c_wrapper(
@@ -36,8 +36,8 @@ void poisson_kernel_update_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_update(  p_a0 + n_x*1 + n_y*xdim0_poisson_kernel_update*1,
-           p_a1 + n_x*1 + n_y*xdim1_poisson_kernel_update*1 );
+      poisson_kernel_update(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_update*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_update*1*1 );
 
     }
   }

@@ -51,7 +51,7 @@ void flux_calc_kernelx( __global double * restrict vol_flux_x, const __global do
 const __global double * restrict xvel1, 
   const double dt)
 
-  {
+ {
 
   vol_flux_x[OPS_ACC0(0,0,0)] = 0.125 * dt * (xarea[OPS_ACC1(0,0,0)]) *
   ( xvel0[OPS_ACC2(0,0,0)] + xvel0[OPS_ACC2(0,1,0)] + xvel0[OPS_ACC2(0,0,1)] + xvel0[OPS_ACC2(0,1,1)] +
@@ -60,37 +60,38 @@ const __global double * restrict xvel1,
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
 
- __kernel void ops_flux_calc_kernelx(
- __global double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- const double dt,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_flux_calc_kernelx(
+__global double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+const double dt,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     flux_calc_kernelx(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_flux_calc_kernelx + idx_z * 1 * xdim0_flux_calc_kernelx * ydim0_flux_calc_kernelx],
-                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_flux_calc_kernelx + idx_z * 1 * xdim1_flux_calc_kernelx * ydim1_flux_calc_kernelx],
-                      &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_flux_calc_kernelx + idx_z * 1 * xdim2_flux_calc_kernelx * ydim2_flux_calc_kernelx],
-                      &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_flux_calc_kernelx + idx_z * 1 * xdim3_flux_calc_kernelx * ydim3_flux_calc_kernelx],
-                      dt);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    flux_calc_kernelx(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_flux_calc_kernelx + idx_z * 1*1 * xdim0_flux_calc_kernelx * ydim0_flux_calc_kernelx],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_flux_calc_kernelx + idx_z * 1*1 * xdim1_flux_calc_kernelx * ydim1_flux_calc_kernelx],
+                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_flux_calc_kernelx + idx_z * 1*1 * xdim2_flux_calc_kernelx * ydim2_flux_calc_kernelx],
+                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_flux_calc_kernelx + idx_z * 1*1 * xdim3_flux_calc_kernelx * ydim3_flux_calc_kernelx],
+                     dt);
+  }
 
- }
+}

@@ -50,7 +50,7 @@
 inline void advec_cell_kernel2_xdir( __global double * restrict pre_vol, __global double * restrict post_vol, const __global double * restrict volume, 
 const __global double * restrict vol_flux_x)
 
-  {
+ {
 
   pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
   post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)];
@@ -59,33 +59,34 @@ const __global double * restrict vol_flux_x)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
 
- __kernel void ops_advec_cell_kernel2_xdir(
- __global double* restrict arg0,
- __global double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int size0,
- const int size1 ){
+
+__kernel void ops_advec_cell_kernel2_xdir(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     advec_cell_kernel2_xdir(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_advec_cell_kernel2_xdir],
-                       &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_advec_cell_kernel2_xdir],
-                       &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_advec_cell_kernel2_xdir],
-                       &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_advec_cell_kernel2_xdir]);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    advec_cell_kernel2_xdir(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel2_xdir],
+                      &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel2_xdir],
+                      &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel2_xdir],
+                      &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel2_xdir]);
+  }
 
- }
+}

@@ -24,7 +24,7 @@ void initialise_chunk_kernel_xx_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
   ops_arg args[2] = { arg0, arg1};
@@ -82,7 +82,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block Block, 
   arg_idx[2] = start[2];
   #endif //OPS_MPI
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
 
   //Timing

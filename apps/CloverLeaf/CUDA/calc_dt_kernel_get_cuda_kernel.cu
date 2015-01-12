@@ -30,7 +30,7 @@ const double* __restrict arg0,
 const double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
-int size0,
+int size0, 
 int size1 ){
 
   double arg2_l[1];
@@ -41,8 +41,8 @@ int size1 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 0 * xdim0_calc_dt_kernel_get;
-  arg1 += idx_x * 0 + idx_y * 1 * xdim1_calc_dt_kernel_get;
+  arg0 += idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get;
+  arg1 += idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get;
 
   if (idx_x < size0 && idx_y < size1) {
     calc_dt_kernel_get(arg0, arg1, arg2_l, arg3_l);
@@ -101,8 +101,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
 
 
   //Timing

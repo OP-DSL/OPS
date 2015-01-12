@@ -39,7 +39,7 @@ void update_halo_kernel1_b1_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
@@ -86,13 +86,13 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block Block, int 
   int y_size = MAX(0,end[1]-start[1]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  xdim6 = args[6].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;

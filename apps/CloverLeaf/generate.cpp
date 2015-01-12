@@ -26,7 +26,7 @@
 #include <math.h>
 
 // OPS header file
-
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "data.h"
@@ -47,14 +47,14 @@ void generate()
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
 
   ops_par_loop(generate_chunk_kernel, "generate_chunk_kernel", clover_grid, 2, rangexy,
-    ops_arg_dat(vertexx,  S2D_00_P10_STRID2D_X, "double", OPS_READ),
-    ops_arg_dat(vertexy,  S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
-    ops_arg_dat(energy0,  S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(density0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(xvel0,    S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
-    ops_arg_dat(yvel0,    S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
-    ops_arg_dat(cellx,    S2D_00_P10_STRID2D_X, "double", OPS_READ),
-    ops_arg_dat(celly,    S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
+    ops_arg_dat(vertexx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(vertexy, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+    ops_arg_dat(energy0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(density0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
+    ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
+    ops_arg_dat(cellx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+    ops_arg_dat(celly, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
   /*ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
   ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");

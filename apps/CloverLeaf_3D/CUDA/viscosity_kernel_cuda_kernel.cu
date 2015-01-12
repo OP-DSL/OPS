@@ -179,18 +179,18 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel + idx_z * 1 * xdim0_viscosity_kernel * ydim0_viscosity_kernel;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_viscosity_kernel + idx_z * 1 * xdim1_viscosity_kernel * ydim1_viscosity_kernel;
-  arg2 += idx_x * 1 + idx_y * 0 * xdim2_viscosity_kernel + idx_z * 0 * xdim2_viscosity_kernel * ydim2_viscosity_kernel;
-  arg3 += idx_x * 0 + idx_y * 1 * xdim3_viscosity_kernel + idx_z * 0 * xdim3_viscosity_kernel * ydim3_viscosity_kernel;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_viscosity_kernel + idx_z * 1 * xdim4_viscosity_kernel * ydim4_viscosity_kernel;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel + idx_z * 1 * xdim5_viscosity_kernel * ydim5_viscosity_kernel;
-  arg6 += idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel + idx_z * 1 * xdim6_viscosity_kernel * ydim6_viscosity_kernel;
-  arg7 += idx_x * 1 + idx_y * 1 * xdim7_viscosity_kernel + idx_z * 1 * xdim7_viscosity_kernel * ydim7_viscosity_kernel;
-  arg8 += idx_x * 0 + idx_y * 0 * xdim8_viscosity_kernel + idx_z * 1 * xdim8_viscosity_kernel * ydim8_viscosity_kernel;
-  arg9 += idx_x * 1 + idx_y * 1 * xdim9_viscosity_kernel + idx_z * 1 * xdim9_viscosity_kernel * ydim9_viscosity_kernel;
-  arg10 += idx_x * 1 + idx_y * 1 * xdim10_viscosity_kernel + idx_z * 1 * xdim10_viscosity_kernel * ydim10_viscosity_kernel;
-  arg11 += idx_x * 1 + idx_y * 1 * xdim11_viscosity_kernel + idx_z * 1 * xdim11_viscosity_kernel * ydim11_viscosity_kernel;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_viscosity_kernel + idx_z * 1*1 * xdim0_viscosity_kernel * ydim0_viscosity_kernel;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_viscosity_kernel + idx_z * 1*1 * xdim1_viscosity_kernel * ydim1_viscosity_kernel;
+  arg2 += idx_x * 1*1 + idx_y * 0*1 * xdim2_viscosity_kernel + idx_z * 0*1 * xdim2_viscosity_kernel * ydim2_viscosity_kernel;
+  arg3 += idx_x * 0*1 + idx_y * 1*1 * xdim3_viscosity_kernel + idx_z * 0*1 * xdim3_viscosity_kernel * ydim3_viscosity_kernel;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_viscosity_kernel + idx_z * 1*1 * xdim4_viscosity_kernel * ydim4_viscosity_kernel;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_viscosity_kernel + idx_z * 1*1 * xdim5_viscosity_kernel * ydim5_viscosity_kernel;
+  arg6 += idx_x * 1*1 + idx_y * 1*1 * xdim6_viscosity_kernel + idx_z * 1*1 * xdim6_viscosity_kernel * ydim6_viscosity_kernel;
+  arg7 += idx_x * 1*1 + idx_y * 1*1 * xdim7_viscosity_kernel + idx_z * 1*1 * xdim7_viscosity_kernel * ydim7_viscosity_kernel;
+  arg8 += idx_x * 0*1 + idx_y * 0*1 * xdim8_viscosity_kernel + idx_z * 1*1 * xdim8_viscosity_kernel * ydim8_viscosity_kernel;
+  arg9 += idx_x * 1*1 + idx_y * 1*1 * xdim9_viscosity_kernel + idx_z * 1*1 * xdim9_viscosity_kernel * ydim9_viscosity_kernel;
+  arg10 += idx_x * 1*1 + idx_y * 1*1 * xdim10_viscosity_kernel + idx_z * 1*1 * xdim10_viscosity_kernel * ydim10_viscosity_kernel;
+  arg11 += idx_x * 1*1 + idx_y * 1*1 * xdim11_viscosity_kernel + idx_z * 1*1 * xdim11_viscosity_kernel * ydim11_viscosity_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     viscosity_kernel(arg0, arg1, arg2, arg3,
@@ -250,29 +250,29 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  int xdim5 = args[5].dat->size[0];
   int ydim5 = args[5].dat->size[1];
-  int xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
-  int xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  int xdim7 = args[7].dat->size[0];
   int ydim7 = args[7].dat->size[1];
-  int xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  int xdim8 = args[8].dat->size[0];
   int ydim8 = args[8].dat->size[1];
-  int xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  int xdim9 = args[9].dat->size[0];
   int ydim9 = args[9].dat->size[1];
-  int xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  int xdim10 = args[10].dat->size[0];
   int ydim10 = args[10].dat->size[1];
-  int xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  int xdim11 = args[11].dat->size[0];
   int ydim11 = args[11].dat->size[1];
 
 

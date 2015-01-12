@@ -73,38 +73,11 @@ from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
 
+import util
 
-# from http://stackoverflow.com/a/241506/396967
-def comment_remover(text):
-    """Remove comments from text"""
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
 
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ""
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test[:-1]
 
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
@@ -167,27 +140,29 @@ def get_arg_dat(arg_string, j):
     #print num
 
     # check for syntax errors
-    if not(len(dat_args_string.split(',')) == 4 or len(dat_args_string.split(',')) == 5 ):
+    if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
       print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
       return
 
-    if len(dat_args_string.split(',')) == 4:
-      # split the dat_args_string into  6 and create a struct with the elements
+    if len(dat_args_string.split(',')) == 5:
+      # split the dat_args_string into  5 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat',
                   'dat': dat_args_string.split(',')[0].strip(),
-                  'sten': dat_args_string.split(',')[1].strip(),
-                  'typ': (dat_args_string.split(',')[2].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[3].strip()}
-    elif len(dat_args_string.split(',')) == 5:
+                  'dim': dat_args_string.split(',')[1].strip(),
+                  'sten': dat_args_string.split(',')[2].strip(),
+                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
+                  'acc': dat_args_string.split(',')[4].strip()}
+    elif len(dat_args_string.split(',')) == 6:
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat_opt',
                   'dat': dat_args_string.split(',')[0].strip(),
-                  'sten': dat_args_string.split(',')[1].strip(),
-                  'typ': (dat_args_string.split(',')[2].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[3].strip(),
-                  'opt': dat_args_string.split(',')[4].strip()}
+                  'dim': dat_args_string.split(',')[1].strip(),
+                  'sten': dat_args_string.split(',')[2].strip(),
+                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
+                  'acc': dat_args_string.split(',')[4].strip(),
+                  'opt': dat_args_string.split(',')[5].strip()}
 
 
     return temp_dat
@@ -421,6 +396,7 @@ def main():
 
           if arg_type.strip() == 'ops_arg_dat' or arg_type.strip() == 'ops_arg_dat_opt':
             var[m] = args['dat']
+            dims[m] = args['dim']
             stens[m] = args['sten']
             typs[m] = args['typ']
             typ[m] = 'ops_arg_dat'
@@ -435,7 +411,7 @@ def main():
             else:
                 accs[m] = l + 1
 
-            print var[m]+' '+ str(stens[m]) +' '+str(accs[m])
+            print var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])
 
 
           if arg_type.strip() == 'ops_arg_gbl':
@@ -625,11 +601,11 @@ def main():
               elem = loop_args[curr_loop]['args'][arguments]
               if elem['type'] == 'ops_arg_dat':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + '),\n' + indent
               if elem['type'] == 'ops_arg_dat_opt':
                   line = line + elem['type'] + '(' + elem['dat'] + \
-                      ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + \
                       ', ' + elem['opt'] +'),\n' + indent
                   #loop_args[curr_loop]['args'][arguments]['type'] = 'ops_arg_dat' # make opt arg a normal arg
@@ -693,11 +669,13 @@ def main():
   #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
   #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
+
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
+
 
 
 if __name__ == '__main__':

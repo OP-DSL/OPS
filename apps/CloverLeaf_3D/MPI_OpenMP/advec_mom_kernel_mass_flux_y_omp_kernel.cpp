@@ -18,6 +18,8 @@ inline void advec_mom_kernel_mass_flux_y( double *node_flux, const double *mass_
 
 
 
+
+
 // host stub function
 void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
@@ -103,9 +105,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
 
   ops_H_D_exchanges_host(args, 2);
@@ -173,7 +175,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            advec_mom_kernel_mass_flux_y(  (double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1 );
+            advec_mom_kernel_mass_flux_y(  (double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1 );
 
           }
 

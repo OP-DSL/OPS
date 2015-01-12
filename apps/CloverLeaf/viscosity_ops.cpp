@@ -8,7 +8,7 @@
 #include <string.h>
 #include <math.h>
 
-
+#define OPS_2D
 #include  "ops_lib_cpp.h"
 
 //
@@ -42,11 +42,11 @@ void viscosity_func()
   int rangexy_inner[] = {x_min,x_max,y_min,y_max};
 
   ops_par_loop_viscosity_kernel("viscosity_kernel", clover_grid, 2, rangexy_inner,
-               ops_arg_dat(xvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(yvel0, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
-               ops_arg_dat(celldx, S2D_00_P10_STRID2D_X, "double", OPS_READ),
-               ops_arg_dat(celldy, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
-               ops_arg_dat(pressure, S2D_10_M10_01_0M1, "double", OPS_READ),
-               ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-               ops_arg_dat(viscosity, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_READ),
+               ops_arg_dat(celldx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(celldy, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+               ops_arg_dat(pressure, 1, S2D_10_M10_01_0M1, "double", OPS_READ),
+               ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+               ops_arg_dat(viscosity, 1, S2D_00, "double", OPS_WRITE));
 }

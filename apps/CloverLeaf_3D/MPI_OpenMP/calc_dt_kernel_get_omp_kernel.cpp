@@ -15,6 +15,8 @@ void calc_dt_kernel_get(const double* cellx, const double* celly, double* xl_pos
 
 
 
+
+
 // host stub function
 void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -142,11 +144,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
       arg_gbl5[d+64*thr] = ZERO_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
 
   ops_H_D_exchanges_host(args, 6);
@@ -235,8 +237,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
         for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
           //call kernel function, passing in pointers to data -vectorised
           for ( int i=0; i<SIMD_VEC; i++ ){
-            calc_dt_kernel_get(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, &arg_gbl2[64*thr],
-           &arg_gbl3[64*thr], (const double * )p_a[4]+ i*0, &arg_gbl5[64*thr] );
+            calc_dt_kernel_get(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, &arg_gbl2[64*thr],
+           &arg_gbl3[64*thr], (const double * )p_a[4]+ i*0*1, &arg_gbl5[64*thr] );
 
           }
 

@@ -3,10 +3,15 @@
 //
 
 //header
+#define OPS_2D
 #include "ops_lib_cpp.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
+
+//this is a custom include -- not produced by the code generator
+#include "data.h"
+#include "definitions.h"
 
 //user kernel files
 /*

@@ -265,7 +265,8 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
-  dat->elem_size = type_size*dim;
+  dat->elem_size = type_size*dim;  //note here that the element size is taken to
+                                   //be the type_size in bytes multiplied by the dimension of an element
   dat->e_dat = 0; //default to non-edge dat
 
   for(int n=0;n<block->dims;n++){
@@ -621,6 +622,8 @@ void ops_dump3(ops_dat dat, const char* name) {
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
+  //printf("name %s type = %s\n",dat->name, dat->type);
+
   //TODO: this has to be backend-specific
   FILE *fp;
   if ( (fp = fopen(file_name,"a")) == NULL) {
@@ -632,7 +635,12 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     printf("error writing to %s\n",file_name);
     exit(2);
   }
-  if (fprintf(fp,"Dims : %d ", dat->block->dims)<0) {
+  if (fprintf(fp,"ops_dat dim:  %d \n", dat->dim)<0) {
+    printf("error writing to %s\n",file_name);
+    exit(2);
+  }
+
+  if (fprintf(fp,"block Dims : %d ", dat->block->dims)<0) {
       printf("error writing to %s\n",file_name);
       exit(2);
     }
@@ -645,7 +653,8 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   }
   fprintf(fp,"\n");
 
-  if (fprintf(fp,"size %d \n", dat->elem_size)<0) {
+
+  if (fprintf(fp,"elem size %d \n", dat->elem_size)<0) {
     printf("error writing to %s\n",file_name);
     exit(2);
   }
@@ -707,10 +716,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     if( strcmp(dat->type,"double") == 0 ) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
-          if (fprintf(fp, " %3.10lf",
-            ((double *)dat->data)[i*dat->size[0]+j])<0) {
-            printf("error writing to %s\n",file_name);
-            exit(2);
+          for(int d = 0; d < dat->dim; d++ ) {
+            if (fprintf(fp, " %3.10lf",((double *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
+              printf("error writing to %s\n",file_name);
+              exit(2);
+            }
           }
         }
         fprintf(fp,"\n");
@@ -719,9 +729,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     else if( strcmp(dat->type,"float") == 0 ) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
-          if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->size[0]+j])<0) {
+          for(int d = 0; d < dat->dim; d++ ) {
+            if (fprintf(fp, " %e",((float *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
             printf("error writing to %s\n",file_name);
             exit(2);
+            }
           }
         }
         fprintf(fp,"\n");
@@ -730,9 +742,11 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     else if( strcmp(dat->type,"int") == 0 ) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
-          if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->size[0]+j])<0) {
-            printf("error writing to %s\n",file_name);
-            exit(2);
+          for(int d = 0; d < dat->dim; d++ ) {
+            if (fprintf(fp, "%d ", ((int *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
+              printf("error writing to %s\n",file_name);
+              exit(2);
+            }
           }
         }
         fprintf(fp,"\n");
@@ -745,29 +759,37 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   else if(dat->block->dims == 1) {
+
     if( strcmp(dat->type,"double") == 0 ) {
       for(int j = 0; j < dat->size[0]; j++ ) {
-        if (fprintf(fp, "%3.10lf ", ((double *)dat->data)[j])<0) {
-          printf("error writing to %s\n",file_name);
-          exit(2);
+        for(int d = 0; d < dat->dim; d++ ) {
+          if (fprintf(fp, "%3.10lf", ((double *)dat->data)[j*dat->dim+d])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
+          if(d<dat->dim-1)fprintf(fp," ");
         }
+        fprintf(fp,"\n");
       }
-      fprintf(fp,"\n");
     }
     else if( strcmp(dat->type,"float") == 0 ) {
       for(int j = 0; j < dat->size[0]; j++ ) {
-        if (fprintf(fp, "%e ", ((float *)dat->data)[j])<0) {
-          printf("error writing to %s\n",file_name);
-          exit(2);
+        for(int d = 0; d < dat->dim; d++ ) {
+          if (fprintf(fp, "%e\n", ((float *)dat->data)[j*dat->dim+d])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
         }
       }
       fprintf(fp,"\n");
     }
     else if( strcmp(dat->type,"int") == 0 ) {
       for(int j = 0; j < dat->size[0]; j++ ) {
-        if (fprintf(fp, "%d ", ((int *)dat->data)[j])<0) {
-          printf("error writing to %s\n",file_name);
-          exit(2);
+        for(int d = 0; d < dat->dim; d++ ) {
+          if (fprintf(fp, "%d\n", ((int *)dat->data)[j*dat->dim+d])<0) {
+            printf("error writing to %s\n",file_name);
+            exit(2);
+          }
         }
       }
       fprintf(fp,"\n");
@@ -884,6 +906,43 @@ void ops_register_args(ops_arg *args, const char *name) {
   OPS_curr_args = args;
   OPS_curr_name = name;
 }
+
+int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[1*i] == idx0) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d) not found in declaration %s in loop %s arg %d : %s\n",
+             idx0, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx, OPS_curr_args[arg_idx].dat->name);
+      exit(-1);
+    }
+  }
+  return idx0;
+}
+
+int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[1*i] == idx0) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d) not found in declaration %s in loop %s arg %d : %s\n",
+             idx0, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx, OPS_curr_args[arg_idx].dat->name);
+      exit(-1);
+    }
+  }
+  return idx0*mult_d+d;
+}
+
 
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
   if (OPS_curr_args) {

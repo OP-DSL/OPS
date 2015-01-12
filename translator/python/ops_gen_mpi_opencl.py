@@ -42,176 +42,32 @@ import re
 import datetime
 import os
 
-def comm(line):
-  global file_text, FORTRAN, CPP
-  global depth
-  prefix = ' '*depth
-  if len(line) == 0:
-    file_text +='\n'
-  else:
-    file_text +=prefix+'//'+line+'\n'
+import util
+import config
 
-def code(text):
-  global file_text, g_m
-  global depth
-  prefix = ''
-  if len(text) != 0:
-    prefix = ' '*depth
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature_opencl
+check_accs = util.check_accs
+arg_parse = util.arg_parse
+find_consts = util.find_consts
+mult = util.mult
 
-  file_text += prefix+text+'\n'
-
-def FOR(i,start,finish):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
-  depth += 2
-
-def FOR2(i,start,finish,increment):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
-  depth += 2
-
-def WHILE(line):
-  global file_text
-  global depth
-  code('while ( '+ line+ ' ){')
-  depth += 2
-
-def ENDWHILE():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def ENDFOR():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def IF(line):
-  global file_text
-  global depth
-  code('if ('+ line + ') {')
-  depth += 2
-
-def ELSEIF(line):
-  global file_text
-  global depth
-  code('else if ('+ line + ') {')
-  depth += 2
-
-def ELSE():
-  global file_text
-  global depth
-  code('else {')
-  depth += 2
-
-def ENDIF():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def mult(text, i, n):
-  text = text + '1'
-  for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
-
-  return text
-
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-
-def remove_triling_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
-def arg_parse(text, j):
-    """Parsing arguments in op_par_loop to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-    while 1:
-        if text[loc2] == '(':
-            depth = depth + 1
-
-        elif text[loc2] == ')':
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-        loc2 = loc2 + 1
-
-def find_consts(text, consts):
-  found_consts = []
-
-  for cn in range(0,len(consts)):
-    pattern = consts[cn]['name'][1:-1]
-    if re.search('\\b'+pattern+'\\b', text):
-      print "found " + consts[cn]['name'][1:-1]
-      found_consts.append(cn)
-
-  return found_consts
-
-import re
-def parse_signature(text2):
-
-  #text2 = text2.replace('const','')
-  text2 = text2.replace('*','* restrict ')
-  text2 = text2.replace('int','__global int')
-  #text2 = re.sub('[\s]int','__global int',text2)
-  text2 = text2.replace('float','__global float')
-  text2 = text2.replace('double','__global double')
-  #text2 = re.sub('double','__global double',text2)
-  return text2
+comm = util.comm
+code = util.code
+FOR = util.FOR
+FOR2 = util.FOR2
+WHILE = util.WHILE
+ENDWHILE = util.ENDWHILE
+ENDFOR = util.ENDFOR
+IF = util.IF
+ELSEIF = util.ELSEIF
+ELSE = util.ELSE
+ENDIF = util.ENDIF
 
 
 def ops_gen_mpi_opencl(master, date, consts, kernels):
-
-  global dims, stens
-  global g_m, file_text, depth
 
   OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
 
@@ -291,9 +147,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 #  start with opencl kernel function
 ##########################################################################
 
-    g_m = 0;
-    file_text = ''
-    depth = 0
+    config.file_text = ''
+    config.depth = 0
     n_per_line = 4
 
     i = name.find('kernel')
@@ -347,11 +202,25 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) == 1:
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n)+'(x) (x)')
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+
 
     code('')
     comm('user function')
@@ -360,7 +229,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     fid.close()
     text = comment_remover(text)
 
-    text = remove_triling_w_space(text)
+    text = remove_trailing_w_space(text)
+
+
 
     i = text.find(name)
     if(i < 0):
@@ -413,7 +284,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       sig2 = sig2[0:j]+')'
     code(sig2) # function signature
 
-    depth = depth +2
+    config.depth = config.depth +2
     text = ''
     for c in range(0, len(found_consts)):
       if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
@@ -429,13 +300,19 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code(text)
 
 
-    depth =depth-1
+    config.depth =config.depth-2
     code(body)
     code('')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
 
@@ -474,19 +351,24 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+          code('int arg_idx0,')
+      elif NDIM==2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM==3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
-    code('const int size0,')
-    if NDIM==2:
+    if NDIM==1:
+      code('const int size0 ){')
+    elif NDIM==2:
+      code('const int size0,')
       code('const int size1 ){')
-    if NDIM==3:
+    elif NDIM==3:
+      code('const int size0,')
       code('const int size1,')
       code('const int size2 ){')
 
 
-    depth = depth + 2
+    config.depth = config.depth + 2
 
     #local variable to hold reductions on GPU
     code('')
@@ -507,34 +389,43 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
     code('')
     if NDIM==3:
+      code('int idx_y = get_global_id(1);')
       code('int idx_z = get_global_id(2);')
-    code('int idx_y = get_global_id(1);')
+    elif NDIM==2:
+        code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
     if arg_idx:
       code('int arg_idx['+str(NDIM)+'];')
       code('arg_idx[0] = arg_idx0+idx_x;')
-      code('arg_idx[1] = arg_idx1+idx_y;')
-      if NDIM==3:
+      if NDIM==2:
+        code('arg_idx[1] = arg_idx1+idx_y;')
+      elif NDIM==3:
+        code('arg_idx[1] = arg_idx1+idx_y;')
         code('arg_idx[2] = arg_idx2+idx_z;')
 
 
-    indent = (len(name2)+depth+8)*' '
+    indent = (len(name2)+config.depth+8)*' '
     n_per_line = 5
-    if NDIM==2:
+    if NDIM==1:
+      IF('idx_x < size0')
+    elif NDIM==2:
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
     text = name+'('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
+        if NDIM==1:
+          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+']'
+        elif NDIM==2:
+          text = text +'&arg'+str(n)+'[base'+str(n)+' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+']'
         elif NDIM==3:
           text = text + '&arg'+str(n)+'[base'+str(n)+\
-          ' + idx_x * '+str(stride[NDIM*n])+\
-          ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
-          ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
+          ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+ \
+          ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+kernel_name_list[nk]+' * ydim'+str(n)+'_'+kernel_name_list[nk]+']'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
           text = text +'&arg'+str(n)
@@ -576,7 +467,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
     code('')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 
@@ -585,7 +476,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     fid = open('./OpenCL/'+kernel_name_list[nk]+'.cl','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
 
 ##########################################################################
@@ -614,18 +505,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     arg_text = arg_text.replace(' ',', ')
     arg_text = arg_text[:-2]
     arg_text = arg_text.replace('_',' ')
-
-      #else:
-      #  continue
-      #if n != nargs-1 and arg_typ[n+1] == 'ops_arg_dat':
-      #  arg_text = arg_text + ',\n'+depth*' '
-      #  arg_values = arg_values + ','
-      #else:
-      #  arg_text = arg_text + ''
-      #  arg_values = arg_values + ''
-
-
-
 
     compile_line = compile_line + '"'
 
@@ -726,9 +605,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 ##########################################################################
 #  generate opencl host stub function
 ##########################################################################
-    g_m = 0;
-    file_text = opencl_build_kernel
-    depth = 0
+
+    config.file_text = opencl_build_kernel
+    config.depth = 0
     code('')
     comm(' host stub function')
 
@@ -744,7 +623,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    depth = 2
+    config.depth = 2
 
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
@@ -799,8 +678,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
-    code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
@@ -818,7 +699,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -849,11 +730,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
     #set up OpenCL grid and thread blocks
     comm('set up OpenCL thread blocks')
+    if NDIM==1:
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, 1, 1};')
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
-    code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+
+    if NDIM>1:
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+    else:
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,1,1};')
     code('')
 
     #setup reduction variables
@@ -895,9 +782,11 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      if NDIM==2:
+      if NDIM==1:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1);')
+      elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
-      if NDIM==3:
+      elif NDIM==3:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
@@ -971,15 +860,15 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = 1 * ')
+        code('int base'+str(n)+' = 1 *'+str(dims[n])+'*')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
           for d2 in range (0,d):
-            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] * '
+            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
           code(line[:-1])
           code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-
+        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+',d_m[0]);')
         code('')
 
 
@@ -1053,17 +942,23 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     if arg_idx:
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[0] ));')
       nkernel_args = nkernel_args+1
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
-      nkernel_args = nkernel_args+1
+      if NDIM==2:
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        nkernel_args = nkernel_args+1
       if NDIM==3:
+        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        nkernel_args = nkernel_args+1
         code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
         nkernel_args = nkernel_args+1
 
     code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
-    nkernel_args = nkernel_args+1
+    if NDIM==2:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      nkernel_args = nkernel_args+1
     if NDIM==3:
+      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      nkernel_args = nkernel_args+1
       code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
       nkernel_args = nkernel_args+1
 
@@ -1106,7 +1001,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 ##########################################################################
@@ -1117,7 +1012,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     fid = open('./OpenCL/'+name+'_opencl_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
 
 # end of main kernel call loop
@@ -1125,9 +1020,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 ##########################################################################
 #  output one master kernel file
 ##########################################################################
-  depth = 0
-  file_text =''
+  config.depth = 0
+  config.file_text =''
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "stdlib.h"')
@@ -1157,7 +1055,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
   code('')
   comm('this needs to be a platform specific copy symbol to device function')
   code('void ops_decl_const_char( int dim, char const * type, int typeSize, char * dat, char const * name ) {')
-  depth =depth + 2
+  config.depth =config.depth + 2
   code('cl_int ret = 0;')
   IF('OPS_opencl_core.constant == NULL')
   code('OPS_opencl_core.constant = (cl_mem*) malloc(('+str(len(consts))+')*sizeof(cl_mem));')
@@ -1180,10 +1078,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('else')
 
   code('{')
-  depth = depth + 2
+  config.depth = config.depth + 2
   code('printf("error: unknown const name\\n"); exit(1);')
   ENDIF()
-  depth = depth - 2
+  config.depth = config.depth - 2
   code('}')
 
 
@@ -1221,10 +1119,10 @@ void buildOpenCLKernels() {
   }
   isbuilt = true;
 }
-  """
+"""
 
 
-  depth = -2
+  config.depth = -2
   code(opencl_build)
 
 
@@ -1240,6 +1138,6 @@ void buildOpenCLKernels() {
   master = master.split('.')[0]
   fid = open('./OpenCL/'+master.split('.')[0]+'_opencl_kernels.cpp','w')
   fid.write('//\n// auto-generated by ops.py//\n\n')
-  fid.write(file_text)
+  fid.write(config.file_text)
   fid.close()
 

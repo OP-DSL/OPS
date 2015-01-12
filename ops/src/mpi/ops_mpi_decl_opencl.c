@@ -38,7 +38,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-#include <math_constants.h>
+//#include <math_constants.h>
 #include <ops_opencl_rt_support.h>
 
 extern char *halo_buffer_d;
@@ -140,6 +140,8 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
-  ops_opencl_get_data(dat);
-  ops_print_dat_to_txtfile_core(dat, file_name);
+  if(OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_opencl_get_data(dat);
+    ops_print_dat_to_txtfile_core(dat, file_name);
+  }
 }

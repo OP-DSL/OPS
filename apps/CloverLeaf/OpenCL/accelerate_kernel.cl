@@ -60,7 +60,7 @@ const __global double * restrict yvel0, __global double * restrict yvel1, const 
 
   const double dt)
 
-  {
+ {
 
   double nodal_mass;
 
@@ -99,63 +99,64 @@ const __global double * restrict yvel0, __global double * restrict yvel1, const 
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
- #undef OPS_ACC7
- #undef OPS_ACC8
- #undef OPS_ACC9
- #undef OPS_ACC10
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
 
 
- __kernel void ops_accelerate_kernel(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global double* restrict arg2,
- __global const double* restrict arg3,
- __global double* restrict arg4,
- __global const double* restrict arg5,
- __global const double* restrict arg6,
- __global const double* restrict arg7,
- __global double* restrict arg8,
- __global const double* restrict arg9,
- __global const double* restrict arg10,
- const double dt,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int base7,
- const int base8,
- const int base9,
- const int base10,
- const int size0,
- const int size1 ){
+
+__kernel void ops_accelerate_kernel(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global double* restrict arg2,
+__global const double* restrict arg3,
+__global double* restrict arg4,
+__global const double* restrict arg5,
+__global const double* restrict arg6,
+__global const double* restrict arg7,
+__global double* restrict arg8,
+__global const double* restrict arg9,
+__global const double* restrict arg10,
+const double dt,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     accelerate_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_accelerate_kernel],
-                       &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_accelerate_kernel],
-                       &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_accelerate_kernel],
-                       &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_accelerate_kernel],
-                       &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_accelerate_kernel],
-                       &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_accelerate_kernel],
-                       &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_accelerate_kernel],
-                       &arg7[base7 + idx_x * 1 + idx_y * 1 * xdim7_accelerate_kernel],
-                       &arg8[base8 + idx_x * 1 + idx_y * 1 * xdim8_accelerate_kernel],
-                       &arg9[base9 + idx_x * 1 + idx_y * 1 * xdim9_accelerate_kernel],
-                       &arg10[base10 + idx_x * 1 + idx_y * 1 * xdim10_accelerate_kernel],
-                       dt);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    accelerate_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_accelerate_kernel],
+                      &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_accelerate_kernel],
+                      &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_accelerate_kernel],
+                      &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_accelerate_kernel],
+                      &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_accelerate_kernel],
+                      &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_accelerate_kernel],
+                      &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_accelerate_kernel],
+                      &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_accelerate_kernel],
+                      &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_accelerate_kernel],
+                      &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_accelerate_kernel],
+                      &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_accelerate_kernel],
+                      dt);
+  }
 
- }
+}

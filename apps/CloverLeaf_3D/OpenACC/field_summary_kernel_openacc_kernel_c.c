@@ -78,7 +78,6 @@ void field_summary_kernel( const double *volume, const double *density0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -86,6 +85,7 @@ void field_summary_kernel( const double *volume, const double *density0,
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
+
 
 
 void field_summary_kernel_c_wrapper(
@@ -120,13 +120,13 @@ void field_summary_kernel_c_wrapper(
       #pragma acc loop reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l) reduction(+:p_a11_l)
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        field_summary_kernel(  p_a0 + n_x*1 + n_y*xdim0_field_summary_kernel*1 + n_z*xdim0_field_summary_kernel*ydim0_field_summary_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_field_summary_kernel*1 + n_z*xdim1_field_summary_kernel*ydim1_field_summary_kernel*1,
-           p_a2 + n_x*1 + n_y*xdim2_field_summary_kernel*1 + n_z*xdim2_field_summary_kernel*ydim2_field_summary_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_field_summary_kernel*1 + n_z*xdim3_field_summary_kernel*ydim3_field_summary_kernel*1,
-           p_a4 + n_x*1 + n_y*xdim4_field_summary_kernel*1 + n_z*xdim4_field_summary_kernel*ydim4_field_summary_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_field_summary_kernel*1 + n_z*xdim5_field_summary_kernel*ydim5_field_summary_kernel*1,
-           p_a6 + n_x*1 + n_y*xdim6_field_summary_kernel*1 + n_z*xdim6_field_summary_kernel*ydim6_field_summary_kernel*1,
+        field_summary_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_field_summary_kernel*1*1 + n_z*xdim0_field_summary_kernel*ydim0_field_summary_kernel*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_field_summary_kernel*1*1 + n_z*xdim1_field_summary_kernel*ydim1_field_summary_kernel*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_field_summary_kernel*1*1 + n_z*xdim2_field_summary_kernel*ydim2_field_summary_kernel*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_field_summary_kernel*1*1 + n_z*xdim3_field_summary_kernel*ydim3_field_summary_kernel*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_field_summary_kernel*1*1 + n_z*xdim4_field_summary_kernel*ydim4_field_summary_kernel*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1 + n_z*xdim5_field_summary_kernel*ydim5_field_summary_kernel*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_field_summary_kernel*1*1 + n_z*xdim6_field_summary_kernel*ydim6_field_summary_kernel*1,
            &p_a7_l,
            &p_a8_l,
            &p_a9_l,

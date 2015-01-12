@@ -50,7 +50,7 @@
 inline void advec_mom_kernel2_x(__global double * restrict vel1, const __global double * restrict node_mass_post, const  __global double * restrict node_mass_pre, 
 const __global double * restrict mom_flux)
 
-  {
+ {
 
   vel1[OPS_ACC0(0,0,0)] = ( vel1[OPS_ACC0(0,0,0)] * node_mass_pre[OPS_ACC2(0,0,0)]  +
     mom_flux[OPS_ACC3(-1,0,0)] - mom_flux[OPS_ACC3(0,0,0)] ) / node_mass_post[OPS_ACC1(0,0,0)];
@@ -59,35 +59,36 @@ const __global double * restrict mom_flux)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
 
- __kernel void ops_advec_mom_kernel2_x(
- __global double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_advec_mom_kernel2_x(
+__global double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     advec_mom_kernel2_x(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel2_x + idx_z * 1 * xdim0_advec_mom_kernel2_x * ydim0_advec_mom_kernel2_x],
-                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel2_x + idx_z * 1 * xdim1_advec_mom_kernel2_x * ydim1_advec_mom_kernel2_x],
-                      &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_advec_mom_kernel2_x + idx_z * 1 * xdim2_advec_mom_kernel2_x * ydim2_advec_mom_kernel2_x],
-                      &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_advec_mom_kernel2_x + idx_z * 1 * xdim3_advec_mom_kernel2_x * ydim3_advec_mom_kernel2_x]);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    advec_mom_kernel2_x(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel2_x + idx_z * 1*1 * xdim0_advec_mom_kernel2_x * ydim0_advec_mom_kernel2_x],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel2_x + idx_z * 1*1 * xdim1_advec_mom_kernel2_x * ydim1_advec_mom_kernel2_x],
+                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel2_x + idx_z * 1*1 * xdim2_advec_mom_kernel2_x * ydim2_advec_mom_kernel2_x],
+                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel2_x + idx_z * 1*1 * xdim3_advec_mom_kernel2_x * ydim3_advec_mom_kernel2_x]);
+  }
 
- }
+}

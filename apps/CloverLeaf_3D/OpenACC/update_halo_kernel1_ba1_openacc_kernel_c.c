@@ -46,7 +46,6 @@ inline void update_halo_kernel1_ba1(double *density0, double *density1,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -54,6 +53,7 @@ inline void update_halo_kernel1_ba1(double *density0, double *density1,
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
+
 
 
 void update_halo_kernel1_ba1_c_wrapper(
@@ -79,13 +79,13 @@ void update_halo_kernel1_ba1_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        update_halo_kernel1_ba1(  p_a0 + n_x*1 + n_y*xdim0_update_halo_kernel1_ba1*1 + n_z*xdim0_update_halo_kernel1_ba1*ydim0_update_halo_kernel1_ba1*1,
-           p_a1 + n_x*1 + n_y*xdim1_update_halo_kernel1_ba1*1 + n_z*xdim1_update_halo_kernel1_ba1*ydim1_update_halo_kernel1_ba1*1,
-           p_a2 + n_x*1 + n_y*xdim2_update_halo_kernel1_ba1*1 + n_z*xdim2_update_halo_kernel1_ba1*ydim2_update_halo_kernel1_ba1*1,
-           p_a3 + n_x*1 + n_y*xdim3_update_halo_kernel1_ba1*1 + n_z*xdim3_update_halo_kernel1_ba1*ydim3_update_halo_kernel1_ba1*1,
-           p_a4 + n_x*1 + n_y*xdim4_update_halo_kernel1_ba1*1 + n_z*xdim4_update_halo_kernel1_ba1*ydim4_update_halo_kernel1_ba1*1,
-           p_a5 + n_x*1 + n_y*xdim5_update_halo_kernel1_ba1*1 + n_z*xdim5_update_halo_kernel1_ba1*ydim5_update_halo_kernel1_ba1*1,
-           p_a6 + n_x*1 + n_y*xdim6_update_halo_kernel1_ba1*1 + n_z*xdim6_update_halo_kernel1_ba1*ydim6_update_halo_kernel1_ba1*1,
+        update_halo_kernel1_ba1(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel1_ba1*1*1 + n_z*xdim0_update_halo_kernel1_ba1*ydim0_update_halo_kernel1_ba1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel1_ba1*1*1 + n_z*xdim1_update_halo_kernel1_ba1*ydim1_update_halo_kernel1_ba1*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_update_halo_kernel1_ba1*1*1 + n_z*xdim2_update_halo_kernel1_ba1*ydim2_update_halo_kernel1_ba1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_update_halo_kernel1_ba1*1*1 + n_z*xdim3_update_halo_kernel1_ba1*ydim3_update_halo_kernel1_ba1*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_update_halo_kernel1_ba1*1*1 + n_z*xdim4_update_halo_kernel1_ba1*ydim4_update_halo_kernel1_ba1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_update_halo_kernel1_ba1*1*1 + n_z*xdim5_update_halo_kernel1_ba1*ydim5_update_halo_kernel1_ba1*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_update_halo_kernel1_ba1*1*1 + n_z*xdim6_update_halo_kernel1_ba1*ydim6_update_halo_kernel1_ba1*1,
            p_a7 );
 
       }

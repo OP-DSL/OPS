@@ -52,13 +52,13 @@ void field_summary_kernel( const double *volume, const double *density0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
+
 
 
 void field_summary_kernel_c_wrapper(
@@ -88,10 +88,10 @@ void field_summary_kernel_c_wrapper(
     #pragma acc loop reduction(+:p_a6_l) reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      field_summary_kernel(  p_a0 + n_x*1 + n_y*xdim0_field_summary_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_field_summary_kernel*1, p_a2 + n_x*1 + n_y*xdim2_field_summary_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_field_summary_kernel*1, p_a4 + n_x*1 + n_y*xdim4_field_summary_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_field_summary_kernel*1, &p_a6_l,
+      field_summary_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_field_summary_kernel*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_field_summary_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_field_summary_kernel*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_field_summary_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_field_summary_kernel*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1, &p_a6_l,
            &p_a7_l, &p_a8_l,
            &p_a9_l, &p_a10_l );
 

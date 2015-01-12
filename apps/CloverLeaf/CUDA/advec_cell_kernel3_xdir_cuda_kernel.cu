@@ -127,21 +127,21 @@ const double* __restrict arg4,
 const double* __restrict arg5,
 double* __restrict arg6,
 double* __restrict arg7,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_cell_kernel3_xdir;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_cell_kernel3_xdir;
-  arg2 += idx_x * 1 + idx_y * 0 * xdim2_advec_cell_kernel3_xdir;
-  arg3 += idx_x * 1 + idx_y * 0 * xdim3_advec_cell_kernel3_xdir;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_advec_cell_kernel3_xdir;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_advec_cell_kernel3_xdir;
-  arg6 += idx_x * 1 + idx_y * 1 * xdim6_advec_cell_kernel3_xdir;
-  arg7 += idx_x * 1 + idx_y * 1 * xdim7_advec_cell_kernel3_xdir;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel3_xdir;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel3_xdir;
+  arg2 += idx_x * 1*1 + idx_y * 0*1 * xdim2_advec_cell_kernel3_xdir;
+  arg3 += idx_x * 1*1 + idx_y * 0*1 * xdim3_advec_cell_kernel3_xdir;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel3_xdir;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_advec_cell_kernel3_xdir;
+  arg6 += idx_x * 1*1 + idx_y * 1*1 * xdim6_advec_cell_kernel3_xdir;
+  arg7 += idx_x * 1*1 + idx_y * 1*1 * xdim7_advec_cell_kernel3_xdir;
 
   if (idx_x < size0 && idx_y < size1) {
     advec_cell_kernel3_xdir(arg0, arg1, arg2, arg3,
@@ -198,14 +198,14 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block block, int
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  int xdim6 = args[6].dat->size[0]*args[6].dat->dim;
-  int xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
+  int xdim7 = args[7].dat->size[0];
 
 
   //Timing

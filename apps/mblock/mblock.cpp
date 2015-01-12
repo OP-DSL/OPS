@@ -41,6 +41,7 @@
 #include <math.h>
 
 // OPS header file
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "mblock_populate_kernel.h"
@@ -158,15 +159,15 @@ int main(int argc, char **argv)
 
 
   double ct0, ct1, et0, et1;
-  ops_timers_core(&ct0, &et0);
+  ops_timers(&ct0, &et0);
 
   //populate
   int iter_range[] = {0,20,0,20};
   ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid0, 2, iter_range,
-               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid1, 2, iter_range,
-               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
   ops_halo_transfer(halos0);
@@ -177,7 +178,7 @@ int main(int argc, char **argv)
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
 
-  ops_timers_core(&ct1, &et1);
+  ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);

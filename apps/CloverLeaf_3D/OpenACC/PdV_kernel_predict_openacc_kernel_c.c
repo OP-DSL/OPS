@@ -109,7 +109,6 @@ void PdV_kernel_predict(const double *xarea, const double *xvel0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -124,6 +123,7 @@ void PdV_kernel_predict(const double *xarea, const double *xvel0,
 #undef OPS_ACC11
 #undef OPS_ACC12
 #undef OPS_ACC13
+
 
 
 void PdV_kernel_predict_c_wrapper(
@@ -155,20 +155,20 @@ void PdV_kernel_predict_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        PdV_kernel_predict(  p_a0 + n_x*1 + n_y*xdim0_PdV_kernel_predict*1 + n_z*xdim0_PdV_kernel_predict*ydim0_PdV_kernel_predict*1,
-           p_a1 + n_x*1 + n_y*xdim1_PdV_kernel_predict*1 + n_z*xdim1_PdV_kernel_predict*ydim1_PdV_kernel_predict*1,
-           p_a2 + n_x*1 + n_y*xdim2_PdV_kernel_predict*1 + n_z*xdim2_PdV_kernel_predict*ydim2_PdV_kernel_predict*1,
-           p_a3 + n_x*1 + n_y*xdim3_PdV_kernel_predict*1 + n_z*xdim3_PdV_kernel_predict*ydim3_PdV_kernel_predict*1,
-           p_a4 + n_x*1 + n_y*xdim4_PdV_kernel_predict*1 + n_z*xdim4_PdV_kernel_predict*ydim4_PdV_kernel_predict*1,
-           p_a5 + n_x*1 + n_y*xdim5_PdV_kernel_predict*1 + n_z*xdim5_PdV_kernel_predict*ydim5_PdV_kernel_predict*1,
-           p_a6 + n_x*1 + n_y*xdim6_PdV_kernel_predict*1 + n_z*xdim6_PdV_kernel_predict*ydim6_PdV_kernel_predict*1,
-           p_a7 + n_x*1 + n_y*xdim7_PdV_kernel_predict*1 + n_z*xdim7_PdV_kernel_predict*ydim7_PdV_kernel_predict*1,
-           p_a8 + n_x*1 + n_y*xdim8_PdV_kernel_predict*1 + n_z*xdim8_PdV_kernel_predict*ydim8_PdV_kernel_predict*1,
-           p_a9 + n_x*1 + n_y*xdim9_PdV_kernel_predict*1 + n_z*xdim9_PdV_kernel_predict*ydim9_PdV_kernel_predict*1,
-           p_a10 + n_x*1 + n_y*xdim10_PdV_kernel_predict*1 + n_z*xdim10_PdV_kernel_predict*ydim10_PdV_kernel_predict*1,
-           p_a11 + n_x*1 + n_y*xdim11_PdV_kernel_predict*1 + n_z*xdim11_PdV_kernel_predict*ydim11_PdV_kernel_predict*1,
-           p_a12 + n_x*1 + n_y*xdim12_PdV_kernel_predict*1 + n_z*xdim12_PdV_kernel_predict*ydim12_PdV_kernel_predict*1,
-           p_a13 + n_x*1 + n_y*xdim13_PdV_kernel_predict*1 + n_z*xdim13_PdV_kernel_predict*ydim13_PdV_kernel_predict*1 );
+        PdV_kernel_predict(  p_a0 + n_x*1*1 + n_y*xdim0_PdV_kernel_predict*1*1 + n_z*xdim0_PdV_kernel_predict*ydim0_PdV_kernel_predict*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_PdV_kernel_predict*1*1 + n_z*xdim1_PdV_kernel_predict*ydim1_PdV_kernel_predict*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_PdV_kernel_predict*1*1 + n_z*xdim2_PdV_kernel_predict*ydim2_PdV_kernel_predict*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_PdV_kernel_predict*1*1 + n_z*xdim3_PdV_kernel_predict*ydim3_PdV_kernel_predict*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_PdV_kernel_predict*1*1 + n_z*xdim4_PdV_kernel_predict*ydim4_PdV_kernel_predict*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_PdV_kernel_predict*1*1 + n_z*xdim5_PdV_kernel_predict*ydim5_PdV_kernel_predict*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_PdV_kernel_predict*1*1 + n_z*xdim6_PdV_kernel_predict*ydim6_PdV_kernel_predict*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_PdV_kernel_predict*1*1 + n_z*xdim7_PdV_kernel_predict*ydim7_PdV_kernel_predict*1,
+           p_a8 + n_x*1*1 + n_y*xdim8_PdV_kernel_predict*1*1 + n_z*xdim8_PdV_kernel_predict*ydim8_PdV_kernel_predict*1,
+           p_a9 + n_x*1*1 + n_y*xdim9_PdV_kernel_predict*1*1 + n_z*xdim9_PdV_kernel_predict*ydim9_PdV_kernel_predict*1,
+           p_a10 + n_x*1*1 + n_y*xdim10_PdV_kernel_predict*1*1 + n_z*xdim10_PdV_kernel_predict*ydim10_PdV_kernel_predict*1,
+           p_a11 + n_x*1*1 + n_y*xdim11_PdV_kernel_predict*1*1 + n_z*xdim11_PdV_kernel_predict*ydim11_PdV_kernel_predict*1,
+           p_a12 + n_x*1*1 + n_y*xdim12_PdV_kernel_predict*1*1 + n_z*xdim12_PdV_kernel_predict*ydim12_PdV_kernel_predict*1,
+           p_a13 + n_x*1*1 + n_y*xdim13_PdV_kernel_predict*1*1 + n_z*xdim13_PdV_kernel_predict*ydim13_PdV_kernel_predict*1 );
 
       }
     }

@@ -42,132 +42,29 @@ import re
 import datetime
 import os
 
-def comm(line):
-  global file_text, FORTRAN, CPP
-  global depth
-  prefix = ' '*depth
-  if len(line) == 0:
-    file_text +='\n'
-  else:
-    file_text +=prefix+'//'+line+'\n'
+import util
+import config
 
-def code(text):
-  global file_text, g_m
-  global depth
-  prefix = ''
-  if len(text) != 0:
-    prefix = ' '*depth
-  #file_text += prefix+rep(text,g_m)+'\n'
-  file_text += prefix+text+'\n'
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature_openacc
+check_accs = util.check_accs
+mult = util.mult
 
-def FOR(i,start,finish):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
-  depth += 2
-
-def FOR2(i,start,finish,increment):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
-  depth += 2
-
-def WHILE(line):
-  global file_text
-  global depth
-  code('while ( '+ line+ ' ){')
-  depth += 2
-
-def ENDWHILE():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def ENDFOR():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def IF(line):
-  global file_text
-  global depth
-  code('if ('+ line + ') {')
-  depth += 2
-
-def ELSEIF(line):
-  global file_text
-  global depth
-  code('else if ('+ line + ') {')
-  depth += 2
-
-def ELSE():
-  global file_text
-  global depth
-  code('else {')
-  depth += 2
-
-def ENDIF():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
+comm = util.comm
+code = util.code
+FOR = util.FOR
+FOR2 = util.FOR2
+WHILE = util.WHILE
+ENDWHILE = util.ENDWHILE
+ENDFOR = util.ENDFOR
+IF = util.IF
+ELSEIF = util.ELSEIF
+ELSE = util.ELSE
+ENDIF = util.ENDIF
 
 def ops_gen_mpi_openacc(master, date, consts, kernels):
-
-  global dims, stens
-  global g_m, file_text, depth
 
   OPS_ID   = 1;  OPS_GBL   = 2;
 
@@ -221,11 +118,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduct = 1
 
-
-    g_m = 0;
-    file_text = ''
-    depth = 0
+    config.file_text = ''
+    config.depth = 0
     n_per_line = 2
+
     if NDIM==3:
       n_per_line = 1
 
@@ -268,11 +164,25 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) == 1:
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n)+'(x) (x)')
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+
 
 
 ##########################################################################
@@ -303,10 +213,17 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     else:
       code(text[i:k+2])
     code('')
+
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
 
@@ -314,21 +231,25 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 #  generate C wrapper
 ##########################################################################
     code('void '+name+'_c_wrapper(')
-    depth = depth+2
+    config.depth = config.depth+2
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
         code(typs[n]+' p_a'+str(n)+',')
       else:
         code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
-      if NDIM == 2:
+      if NDIM == 1:
+        code('int arg_idx0, ')
+      elif NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
 
-    if NDIM == 2:
+    if NDIM == 1:
+      code('int x_size) {')
+    elif NDIM == 2:
       code('int x_size, int y_size) {')
-    if NDIM == 3:
+    elif NDIM == 3:
       code('int x_size, int y_size, int z_size) {')
 
 
@@ -378,13 +299,21 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('#ifdef OPS_GPU')
       code(line)
       code('#endif')
-    FOR('n_y','0','y_size')
-    code('#ifdef OPS_GPU')
-    code(line)
-    code('#endif')
+      FOR('n_y','0','y_size')
+      code('#ifdef OPS_GPU')
+      code(line)
+      code('#endif')
+    if NDIM==2:
+      FOR('n_y','0','y_size')
+      code('#ifdef OPS_GPU')
+      code(line)
+      code('#endif')
+
     FOR('n_x','0','x_size')
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+        code('int arg_idx[] = {arg_idx0+n_x};')
+      elif NDIM==2:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
       elif NDIM==3:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
@@ -392,8 +321,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
-        if NDIM == 3:
+        if NDIM == 1:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])
+        elif NDIM == 2:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
+          ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+        elif NDIM == 3:
+          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -417,9 +351,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         text = text +'\n          '
     code(text);
     ENDFOR()
-    ENDFOR()
+    if NDIM==2:
+      ENDFOR()
     if NDIM==3:
       ENDFOR()
+      ENDFOR()
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
@@ -427,7 +364,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
             code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
           else:
             code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'[d] = p_a'+str(n)+'_l[d];')
-    depth = depth-2
+    config.depth = config.depth-2
     code('}')
 
 ##########################################################################
@@ -438,9 +375,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     fid = open('./OpenACC/'+name+'_openacc_kernel_c.c','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
-    file_text = ''
+    config.file_text = ''
 ##########################################################################
 #  now host stub
 ##########################################################################
@@ -464,22 +401,27 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('extern "C" {')
     code('#endif')
     code('void '+name+'_c_wrapper(')
-    depth = depth+2
+    config.depth = config.depth+2
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
         code(typs[n]+' p_a'+str(n)+',')
       else:
         code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
-      if NDIM == 2:
+      if NDIM == 1:
+        code('int arg_idx0,')
+      elif NDIM == 2:
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
-    if NDIM == 2:
+
+    if NDIM == 1:
+      code('int x_size);')
+    elif NDIM == 2:
       code('int x_size, int y_size);')
-    if NDIM == 3:
+    elif NDIM == 3:
       code('int x_size, int y_size, int z_size);')
-    depth = depth-2
+    config.depth = config.depth-2
     code('')
     code('#ifdef __cplusplus')
     code('}')
@@ -487,7 +429,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     comm(' host stub function')
 
-    code('void ops_par_loop_'+name+'(char const *name, ops_block Block, int dim, int* range,')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -499,7 +441,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    depth = 2
+    config.depth = 2
 
     code('');
 
@@ -556,8 +498,10 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
-    code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
@@ -574,7 +518,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     #timing structs
@@ -679,7 +623,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
-            line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
+            line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
           code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
@@ -720,23 +664,28 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
 
     code(name+'_c_wrapper(')
-    depth = depth+2
+    config.depth = config.depth+2
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
         code('*p_a'+str(n)+',')
       else:
         code('p_a'+str(n)+',')
     if arg_idx:
-      if NDIM==2:
+      if NDIM==1:
+        code('arg_idx[0],')
+      elif NDIM==2:
         code('arg_idx[0], arg_idx[1],')
       elif NDIM==3:
         code('arg_idx[0], arg_idx[1], arg_idx[2],')
+
+    if NDIM == 1:
+      code('x_size);')
     if NDIM == 2:
       code('x_size, y_size);')
     if NDIM == 3:
       code('x_size, y_size, z_size);')
 
-    depth = depth-2
+    config.depth = config.depth-2
 
 
 
@@ -771,7 +720,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 
@@ -783,7 +732,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     fid = open('./OpenACC/'+name+'_openacc_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
 
 # end of main kernel call loop
@@ -792,8 +741,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 #  output one master kernel file
 ##########################################################################
 
-  file_text =''
+  config.file_text =''
+  config.depth = 0
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#ifdef __cplusplus')
@@ -826,15 +779,15 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
   fid = open('./OpenACC/'+master.split('.')[0]+'_common.h','w')
   fid.write('//\n// auto-generated by ops.py\n//\n')
-  fid.write(file_text)
+  fid.write(config.file_text)
   fid.close()
-  file_text =''
+  config.file_text =''
   code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
   code('')
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
-  depth = depth + 2
+  config.depth = config.depth + 2
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
@@ -846,11 +799,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('else')
 
   code('{')
-  depth = depth + 2
+  config.depth = config.depth + 2
   code('printf("error: unknown const name\\n"); exit(1);')
   ENDIF()
 
-  depth = depth - 2
+  config.depth = config.depth - 2
   code('}')
   code('')
   #code('')
@@ -865,5 +818,5 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
   fid = open('./OpenACC/'+master.split('.')[0]+'_kernels.cpp','w')
   fid.write('//\n// auto-generated by ops.py//\n\n')
-  fid.write(file_text)
+  fid.write(config.file_text)
   fid.close()

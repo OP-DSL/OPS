@@ -38,7 +38,6 @@ inline void update_halo_kernel1_l2(double *density0, double *density1,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -46,6 +45,7 @@ inline void update_halo_kernel1_l2(double *density0, double *density1,
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
+
 
 
 void update_halo_kernel1_l2_c_wrapper(
@@ -67,10 +67,10 @@ void update_halo_kernel1_l2_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      update_halo_kernel1_l2(  p_a0 + n_x*1 + n_y*xdim0_update_halo_kernel1_l2*1,
-           p_a1 + n_x*1 + n_y*xdim1_update_halo_kernel1_l2*1, p_a2 + n_x*1 + n_y*xdim2_update_halo_kernel1_l2*1,
-           p_a3 + n_x*1 + n_y*xdim3_update_halo_kernel1_l2*1, p_a4 + n_x*1 + n_y*xdim4_update_halo_kernel1_l2*1,
-           p_a5 + n_x*1 + n_y*xdim5_update_halo_kernel1_l2*1, p_a6 + n_x*1 + n_y*xdim6_update_halo_kernel1_l2*1,
+      update_halo_kernel1_l2(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel1_l2*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel1_l2*1*1, p_a2 + n_x*1*1 + n_y*xdim2_update_halo_kernel1_l2*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_update_halo_kernel1_l2*1*1, p_a4 + n_x*1*1 + n_y*xdim4_update_halo_kernel1_l2*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_update_halo_kernel1_l2*1*1, p_a6 + n_x*1*1 + n_y*xdim6_update_halo_kernel1_l2*1*1,
            p_a7 );
 
     }

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <math.h>
 
-
+#define OPS_2D
 #include  "ops_lib_cpp.h"
 
 //
@@ -40,16 +40,16 @@ void ideal_gas(int predict)
 
   if(predict != TRUE) {
     ops_par_loop_ideal_gas_kernel("ideal_gas_kernel", clover_grid, 2, rangexy_inner,
-                 ops_arg_dat(density0, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(energy0, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),
-                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_WRITE));
+                 ops_arg_dat(density0, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(energy0, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(pressure, 1, S2D_00, "double", OPS_WRITE),
+                 ops_arg_dat(soundspeed, 1, S2D_00, "double", OPS_WRITE));
   }
   else {
     ops_par_loop_ideal_gas_kernel("ideal_gas_kernel", clover_grid, 2, rangexy_inner,
-                 ops_arg_dat(density1, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(energy1, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(pressure, S2D_00, "double", OPS_WRITE),
-                 ops_arg_dat(soundspeed, S2D_00, "double", OPS_WRITE));
+                 ops_arg_dat(density1, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(energy1, 1, S2D_00, "double", OPS_READ),
+                 ops_arg_dat(pressure, 1, S2D_00, "double", OPS_WRITE),
+                 ops_arg_dat(soundspeed, 1, S2D_00, "double", OPS_WRITE));
   }
 }

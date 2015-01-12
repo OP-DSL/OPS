@@ -22,9 +22,9 @@ inline void update_halo_kernel2_zvel_plus_4_bot(double *zvel0, double *zvel1, co
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
+
 
 
 void update_halo_kernel2_zvel_plus_4_bot_c_wrapper(
@@ -45,8 +45,8 @@ void update_halo_kernel2_zvel_plus_4_bot_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        update_halo_kernel2_zvel_plus_4_bot(  p_a0 + n_x*1 + n_y*xdim0_update_halo_kernel2_zvel_plus_4_bot*1 + n_z*xdim0_update_halo_kernel2_zvel_plus_4_bot*ydim0_update_halo_kernel2_zvel_plus_4_bot*1,
-           p_a1 + n_x*1 + n_y*xdim1_update_halo_kernel2_zvel_plus_4_bot*1 + n_z*xdim1_update_halo_kernel2_zvel_plus_4_bot*ydim1_update_halo_kernel2_zvel_plus_4_bot*1,
+        update_halo_kernel2_zvel_plus_4_bot(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel2_zvel_plus_4_bot*1*1 + n_z*xdim0_update_halo_kernel2_zvel_plus_4_bot*ydim0_update_halo_kernel2_zvel_plus_4_bot*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel2_zvel_plus_4_bot*1*1 + n_z*xdim1_update_halo_kernel2_zvel_plus_4_bot*ydim1_update_halo_kernel2_zvel_plus_4_bot*1,
            p_a2 );
 
       }

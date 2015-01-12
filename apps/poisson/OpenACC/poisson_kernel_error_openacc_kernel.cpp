@@ -24,7 +24,7 @@ void poisson_kernel_error_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_poisson_kernel_error(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   ops_arg args[3] = { arg0, arg1, arg2};
@@ -71,8 +71,8 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block Block, int di
   int y_size = MAX(0,end[1]-start[1]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;

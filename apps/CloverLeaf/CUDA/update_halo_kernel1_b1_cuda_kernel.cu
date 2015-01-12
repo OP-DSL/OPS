@@ -69,20 +69,20 @@ double* __restrict arg4,
 double* __restrict arg5,
 double* __restrict arg6,
 const int* __restrict arg7,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel1_b1;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel1_b1;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_update_halo_kernel1_b1;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_update_halo_kernel1_b1;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_update_halo_kernel1_b1;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_update_halo_kernel1_b1;
-  arg6 += idx_x * 1 + idx_y * 1 * xdim6_update_halo_kernel1_b1;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel1_b1;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel1_b1;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_update_halo_kernel1_b1;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_update_halo_kernel1_b1;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_update_halo_kernel1_b1;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_update_halo_kernel1_b1;
+  arg6 += idx_x * 1*1 + idx_y * 1*1 * xdim6_update_halo_kernel1_b1;
 
   if (idx_x < size0 && idx_y < size1) {
     update_halo_kernel1_b1(arg0, arg1, arg2, arg3,
@@ -139,13 +139,13 @@ void ops_par_loop_update_halo_kernel1_b1(char const *name, ops_block block, int 
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  int xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
 
 
   //Timing

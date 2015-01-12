@@ -99,7 +99,6 @@ void generate_chunk_kernel( const double *vertexx, const double *vertexy,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -108,6 +107,7 @@ void generate_chunk_kernel( const double *vertexx, const double *vertexy,
 #undef OPS_ACC5
 #undef OPS_ACC6
 #undef OPS_ACC7
+
 
 
 void generate_chunk_kernel_c_wrapper(
@@ -129,11 +129,11 @@ void generate_chunk_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      generate_chunk_kernel(  p_a0 + n_x*1 + n_y*xdim0_generate_chunk_kernel*0,
-           p_a1 + n_x*0 + n_y*xdim1_generate_chunk_kernel*1, p_a2 + n_x*1 + n_y*xdim2_generate_chunk_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_generate_chunk_kernel*1, p_a4 + n_x*1 + n_y*xdim4_generate_chunk_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_generate_chunk_kernel*1, p_a6 + n_x*1 + n_y*xdim6_generate_chunk_kernel*0,
-           p_a7 + n_x*0 + n_y*xdim7_generate_chunk_kernel*1 );
+      generate_chunk_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_generate_chunk_kernel*0*1,
+           p_a1 + n_x*0*1 + n_y*xdim1_generate_chunk_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_generate_chunk_kernel*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_generate_chunk_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_generate_chunk_kernel*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_generate_chunk_kernel*1*1, p_a6 + n_x*1*1 + n_y*xdim6_generate_chunk_kernel*0*1,
+           p_a7 + n_x*0*1 + n_y*xdim7_generate_chunk_kernel*1*1 );
 
     }
   }

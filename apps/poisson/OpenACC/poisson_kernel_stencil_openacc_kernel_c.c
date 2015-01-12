@@ -23,10 +23,10 @@ void poisson_kernel_stencil(const double *u, const double *f, double *u2) {
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
+
 
 
 void poisson_kernel_stencil_c_wrapper(
@@ -43,8 +43,8 @@ void poisson_kernel_stencil_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_stencil(  p_a0 + n_x*1 + n_y*xdim0_poisson_kernel_stencil*1,
-           p_a1 + n_x*1 + n_y*xdim1_poisson_kernel_stencil*1, p_a2 + n_x*1 + n_y*xdim2_poisson_kernel_stencil*1 );
+      poisson_kernel_stencil(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_stencil*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_stencil*1*1, p_a2 + n_x*1*1 + n_y*xdim2_poisson_kernel_stencil*1*1 );
 
     }
   }

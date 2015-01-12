@@ -18,8 +18,8 @@ void calc_dt_kernel_min(const double* dt_min ,
 }
 
 
-
 #undef OPS_ACC0
+
 
 
 void calc_dt_kernel_min_c_wrapper(
@@ -36,7 +36,7 @@ void calc_dt_kernel_min_c_wrapper(
     #pragma acc loop reduction(min:p_a1_l)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel_min(  p_a0 + n_x*1 + n_y*xdim0_calc_dt_kernel_min*1,
+      calc_dt_kernel_min(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_min*1*1,
            &p_a1_l );
 
     }

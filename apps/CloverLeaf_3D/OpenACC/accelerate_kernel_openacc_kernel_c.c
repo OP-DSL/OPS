@@ -110,7 +110,6 @@ void accelerate_kernel( const double *density0, const double *volume,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -125,6 +124,7 @@ void accelerate_kernel( const double *density0, const double *volume,
 #undef OPS_ACC11
 #undef OPS_ACC12
 #undef OPS_ACC13
+
 
 
 void accelerate_kernel_c_wrapper(
@@ -156,20 +156,20 @@ void accelerate_kernel_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        accelerate_kernel(  p_a0 + n_x*1 + n_y*xdim0_accelerate_kernel*1 + n_z*xdim0_accelerate_kernel*ydim0_accelerate_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_accelerate_kernel*1 + n_z*xdim1_accelerate_kernel*ydim1_accelerate_kernel*1,
-           p_a2 + n_x*1 + n_y*xdim2_accelerate_kernel*1 + n_z*xdim2_accelerate_kernel*ydim2_accelerate_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_accelerate_kernel*1 + n_z*xdim3_accelerate_kernel*ydim3_accelerate_kernel*1,
-           p_a4 + n_x*1 + n_y*xdim4_accelerate_kernel*1 + n_z*xdim4_accelerate_kernel*ydim4_accelerate_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_accelerate_kernel*1 + n_z*xdim5_accelerate_kernel*ydim5_accelerate_kernel*1,
-           p_a6 + n_x*1 + n_y*xdim6_accelerate_kernel*1 + n_z*xdim6_accelerate_kernel*ydim6_accelerate_kernel*1,
-           p_a7 + n_x*1 + n_y*xdim7_accelerate_kernel*1 + n_z*xdim7_accelerate_kernel*ydim7_accelerate_kernel*1,
-           p_a8 + n_x*1 + n_y*xdim8_accelerate_kernel*1 + n_z*xdim8_accelerate_kernel*ydim8_accelerate_kernel*1,
-           p_a9 + n_x*1 + n_y*xdim9_accelerate_kernel*1 + n_z*xdim9_accelerate_kernel*ydim9_accelerate_kernel*1,
-           p_a10 + n_x*1 + n_y*xdim10_accelerate_kernel*1 + n_z*xdim10_accelerate_kernel*ydim10_accelerate_kernel*1,
-           p_a11 + n_x*1 + n_y*xdim11_accelerate_kernel*1 + n_z*xdim11_accelerate_kernel*ydim11_accelerate_kernel*1,
-           p_a12 + n_x*1 + n_y*xdim12_accelerate_kernel*1 + n_z*xdim12_accelerate_kernel*ydim12_accelerate_kernel*1,
-           p_a13 + n_x*1 + n_y*xdim13_accelerate_kernel*1 + n_z*xdim13_accelerate_kernel*ydim13_accelerate_kernel*1 );
+        accelerate_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_accelerate_kernel*1*1 + n_z*xdim0_accelerate_kernel*ydim0_accelerate_kernel*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_accelerate_kernel*1*1 + n_z*xdim1_accelerate_kernel*ydim1_accelerate_kernel*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_accelerate_kernel*1*1 + n_z*xdim2_accelerate_kernel*ydim2_accelerate_kernel*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_accelerate_kernel*1*1 + n_z*xdim3_accelerate_kernel*ydim3_accelerate_kernel*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_accelerate_kernel*1*1 + n_z*xdim4_accelerate_kernel*ydim4_accelerate_kernel*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_accelerate_kernel*1*1 + n_z*xdim5_accelerate_kernel*ydim5_accelerate_kernel*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_accelerate_kernel*1*1 + n_z*xdim6_accelerate_kernel*ydim6_accelerate_kernel*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_accelerate_kernel*1*1 + n_z*xdim7_accelerate_kernel*ydim7_accelerate_kernel*1,
+           p_a8 + n_x*1*1 + n_y*xdim8_accelerate_kernel*1*1 + n_z*xdim8_accelerate_kernel*ydim8_accelerate_kernel*1,
+           p_a9 + n_x*1*1 + n_y*xdim9_accelerate_kernel*1*1 + n_z*xdim9_accelerate_kernel*ydim9_accelerate_kernel*1,
+           p_a10 + n_x*1*1 + n_y*xdim10_accelerate_kernel*1*1 + n_z*xdim10_accelerate_kernel*ydim10_accelerate_kernel*1,
+           p_a11 + n_x*1*1 + n_y*xdim11_accelerate_kernel*1*1 + n_z*xdim11_accelerate_kernel*ydim11_accelerate_kernel*1,
+           p_a12 + n_x*1*1 + n_y*xdim12_accelerate_kernel*1*1 + n_z*xdim12_accelerate_kernel*ydim12_accelerate_kernel*1,
+           p_a13 + n_x*1*1 + n_y*xdim13_accelerate_kernel*1*1 + n_z*xdim13_accelerate_kernel*ydim13_accelerate_kernel*1 );
 
       }
     }

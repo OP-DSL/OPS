@@ -44,17 +44,17 @@ double* __restrict arg0,
 double* __restrict arg1,
 const double* __restrict arg2,
 const double* __restrict arg3,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel_x2;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel_x2;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_advec_mom_kernel_x2;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_advec_mom_kernel_x2;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_x2;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_x2;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_x2;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_x2;
 
   if (idx_x < size0 && idx_y < size1) {
     advec_mom_kernel_x2(arg0, arg1, arg2, arg3);
@@ -109,10 +109,10 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
 
 
   //Timing

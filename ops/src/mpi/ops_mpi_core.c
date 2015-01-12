@@ -81,6 +81,28 @@
   int ydim17;
 #endif /* __XDIMS__ */
 
+#ifndef __MULTIDIMS__
+#define __MULTIDIMS__
+int multi_d0;
+int multi_d1;
+int multi_d2;
+int multi_d3;
+int multi_d4;
+int multi_d5;
+int multi_d6;
+int multi_d7;
+int multi_d8;
+int multi_d9;
+int multi_d10;
+int multi_d11;
+int multi_d12;
+int multi_d13;
+int multi_d14;
+int multi_d15;
+int multi_d16;
+int multi_d17;
+#endif /*__MULTIDIMS__*/
+
 void ops_timers(double * cpu, double * et)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -137,12 +159,12 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
   }
 }
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
+ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );
 }
 
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag )
+ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )
 {
   ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
   (&temp)->opt = flag;

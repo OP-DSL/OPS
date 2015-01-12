@@ -43,136 +43,30 @@ import re
 import datetime
 import os
 
-def comm(line):
-  global file_text, FORTRAN, CPP
-  global depth
-  prefix = ' '*depth
-  if len(line) == 0:
-    file_text +='\n'
-  else:
-    file_text +=prefix+'//'+line+'\n'
+import util
+import config
 
-def code(text):
-  global file_text, g_m
-  global depth
-  prefix = ''
-  if len(text) != 0:
-    prefix = ' '*depth
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature
+check_accs = util.check_accs
+mult = util.mult
 
-  file_text += prefix+text+'\n'
+comm = util.comm
+code = util.code
+FOR = util.FOR
+FOR2 = util.FOR2
+WHILE = util.WHILE
+ENDWHILE = util.ENDWHILE
+ENDFOR = util.ENDFOR
+IF = util.IF
+ELSEIF = util.ELSEIF
+ELSE = util.ELSE
+ENDIF = util.ENDIF
 
-def FOR(i,start,finish):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
-  depth += 2
-
-def FOR2(i,start,finish,increment):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
-  depth += 2
-
-def WHILE(line):
-  global file_text
-  global depth
-  code('while ( '+ line+ ' ){')
-  depth += 2
-
-def ENDWHILE():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def ENDFOR():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def IF(line):
-  global file_text
-  global depth
-  code('if ('+ line + ') {')
-  depth += 2
-
-def ELSEIF(line):
-  global file_text
-  global depth
-  code('else if ('+ line + ') {')
-  depth += 2
-
-def ELSE():
-  global file_text
-  global depth
-  code('else {')
-  depth += 2
-
-def ENDIF():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def mult(text, i, n):
-  text = text + '1'
-  for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
-
-  return text
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
 
 def ops_gen_mpi_openmp(master, date, consts, kernels):
-
-  global dims, stens
-  global g_m, file_text, depth
 
   OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
 
@@ -235,13 +129,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-##########################################################################
-#  start with omp kernel function
-##########################################################################
-
-    g_m = 0;
-    file_text = ''
-    depth = 0
+    config.file_text = ''
+    config.depth = 0
     n_per_line = 4
 
     i = name.find('kernel')
@@ -249,6 +138,25 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     reduction = False
     ng_args = 0
+
+
+##########################################################################
+#  generate MACROS
+##########################################################################
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
+
+
+##########################################################################
+#  start with omp kernel function
+##########################################################################
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
@@ -273,11 +181,13 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
-
+    i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
+    arg_list = parse_signature(text[i2+len(name):i+j])
+    check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
       code('inline '+text[i:k+2])
@@ -285,6 +195,16 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       code(text[i:k+2])
     code('')
     comm('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
+    code('')
+
+##########################################################################
+#  now host stub
+##########################################################################
     comm(' host stub function')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
@@ -298,7 +218,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    depth = 2
+    config.depth = 2
 
     code('')
     comm('Timing')
@@ -441,7 +361,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -481,6 +401,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     FOR('thr','0','nthreads')
 
     code('')
+    if NDIM==1:
+      outer = 'x'
     if NDIM==2:
       outer = 'y'
     if NDIM==3:
@@ -522,7 +444,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
-            line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
+            line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
           code('  (start'+str(d)+' * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
 
@@ -547,8 +469,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       FOR('n_y','start[1]','end[1]')
     if NDIM==2:
       FOR('n_y','start_i','finish_i')
-    FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
-    #depth = depth+2
+    if NDIM==1:
+      FOR('n_x','start_i','start_i+(finish_i-start_i)/SIMD_VEC')
+
+    if NDIM > 1:
+      FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
+
 
     comm('call kernel function, passing in pointers to data -vectorised')
     if reduction == 0 and arg_idx == 0:
@@ -558,9 +484,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if accs[n] <> OPS_READ:
-          text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
         else:
-          text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           text = text +' &arg_gbl'+str(n)+'[64*thr]'
@@ -590,8 +516,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     ENDFOR()
     code('')
 
-    FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
-    #depth = depth+2
+    if NDIM==1:
+      FOR('n_x','start_i+((finish_i-start_i)/SIMD_VEC)*SIMD_VEC','finish_i')
+    if NDIM > 1:
+      FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
+
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
@@ -630,21 +559,22 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
 
-    comm('shift pointers to data y direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+    if NDIM > 1:
+      comm('shift pointers to data y direction')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
 
-    if arg_idx:
-      code('#ifdef OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
-      code('#else //OPS_MPI')
-      for n in range (0,1):
-        code('arg_idx['+str(n)+'] = start'+str(n)+';')
-      code('#endif //OPS_MPI')
-      code('arg_idx[1]++;')
-    ENDFOR()
+      if arg_idx:
+        code('#ifdef OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start'+str(n)+';')
+        code('#else //OPS_MPI')
+        for n in range (0,1):
+          code('arg_idx['+str(n)+'] = start'+str(n)+';')
+        code('#endif //OPS_MPI')
+        code('arg_idx[1]++;')
+      ENDFOR()
 
     if NDIM==3:
       comm('shift pointers to data z direction')
@@ -716,7 +646,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 ##########################################################################
@@ -727,7 +657,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     fid = open('./MPI_OpenMP/'+name+'_omp_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
 
 # end of main kernel call loop
@@ -735,11 +665,14 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 ##########################################################################
 #  output one master kernel file
 ##########################################################################
-  depth = 0
-  file_text =''
+  config.depth = 0
+  config.file_text =''
   comm('header')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  code('#define OPS_ACC_MD_MACROS')
   code('#include "ops_lib_cpp.h"')
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
@@ -784,5 +717,5 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
   master = master.split('.')[0]
   fid = open('./MPI_OpenMP/'+master.split('.')[0]+'_omp_kernels.cpp','w')
   fid.write('//\n// auto-generated by ops.py//\n\n')
-  fid.write(file_text)
+  fid.write(config.file_text)
   fid.close()

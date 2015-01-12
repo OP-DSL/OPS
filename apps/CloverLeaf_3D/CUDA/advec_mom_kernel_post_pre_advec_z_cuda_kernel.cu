@@ -70,11 +70,11 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel_post_pre_advec_z + idx_z * 1 * xdim0_advec_mom_kernel_post_pre_advec_z * ydim0_advec_mom_kernel_post_pre_advec_z;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel_post_pre_advec_z + idx_z * 1 * xdim1_advec_mom_kernel_post_pre_advec_z * ydim1_advec_mom_kernel_post_pre_advec_z;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_advec_mom_kernel_post_pre_advec_z + idx_z * 1 * xdim2_advec_mom_kernel_post_pre_advec_z * ydim2_advec_mom_kernel_post_pre_advec_z;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_advec_mom_kernel_post_pre_advec_z + idx_z * 1 * xdim3_advec_mom_kernel_post_pre_advec_z * ydim3_advec_mom_kernel_post_pre_advec_z;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_advec_mom_kernel_post_pre_advec_z + idx_z * 1 * xdim4_advec_mom_kernel_post_pre_advec_z * ydim4_advec_mom_kernel_post_pre_advec_z;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_post_pre_advec_z + idx_z * 1*1 * xdim0_advec_mom_kernel_post_pre_advec_z * ydim0_advec_mom_kernel_post_pre_advec_z;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_post_pre_advec_z + idx_z * 1*1 * xdim1_advec_mom_kernel_post_pre_advec_z * ydim1_advec_mom_kernel_post_pre_advec_z;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_post_pre_advec_z + idx_z * 1*1 * xdim2_advec_mom_kernel_post_pre_advec_z * ydim2_advec_mom_kernel_post_pre_advec_z;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_post_pre_advec_z + idx_z * 1*1 * xdim3_advec_mom_kernel_post_pre_advec_z * ydim3_advec_mom_kernel_post_pre_advec_z;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel_post_pre_advec_z + idx_z * 1*1 * xdim4_advec_mom_kernel_post_pre_advec_z * ydim4_advec_mom_kernel_post_pre_advec_z;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     advec_mom_kernel_post_pre_advec_z(arg0, arg1, arg2, arg3,
@@ -132,15 +132,15 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(char const *name, ops_block 
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
 
 

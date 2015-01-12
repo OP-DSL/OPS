@@ -103,7 +103,6 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -112,6 +111,7 @@ inline void advec_cell_kernel3_ydir( const double *vol_flux_y, const double *pre
 #undef OPS_ACC5
 #undef OPS_ACC6
 #undef OPS_ACC7
+
 
 
 void advec_cell_kernel3_ydir_c_wrapper(
@@ -137,14 +137,14 @@ void advec_cell_kernel3_ydir_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_cell_kernel3_ydir(  p_a0 + n_x*1 + n_y*xdim0_advec_cell_kernel3_ydir*1 + n_z*xdim0_advec_cell_kernel3_ydir*ydim0_advec_cell_kernel3_ydir*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_cell_kernel3_ydir*1 + n_z*xdim1_advec_cell_kernel3_ydir*ydim1_advec_cell_kernel3_ydir*1,
-           p_a2 + n_x*0 + n_y*xdim2_advec_cell_kernel3_ydir*1 + n_z*xdim2_advec_cell_kernel3_ydir*ydim2_advec_cell_kernel3_ydir*0,
-           p_a3 + n_x*0 + n_y*xdim3_advec_cell_kernel3_ydir*1 + n_z*xdim3_advec_cell_kernel3_ydir*ydim3_advec_cell_kernel3_ydir*0,
-           p_a4 + n_x*1 + n_y*xdim4_advec_cell_kernel3_ydir*1 + n_z*xdim4_advec_cell_kernel3_ydir*ydim4_advec_cell_kernel3_ydir*1,
-           p_a5 + n_x*1 + n_y*xdim5_advec_cell_kernel3_ydir*1 + n_z*xdim5_advec_cell_kernel3_ydir*ydim5_advec_cell_kernel3_ydir*1,
-           p_a6 + n_x*1 + n_y*xdim6_advec_cell_kernel3_ydir*1 + n_z*xdim6_advec_cell_kernel3_ydir*ydim6_advec_cell_kernel3_ydir*1,
-           p_a7 + n_x*1 + n_y*xdim7_advec_cell_kernel3_ydir*1 + n_z*xdim7_advec_cell_kernel3_ydir*ydim7_advec_cell_kernel3_ydir*1 );
+        advec_cell_kernel3_ydir(  p_a0 + n_x*1*1 + n_y*xdim0_advec_cell_kernel3_ydir*1*1 + n_z*xdim0_advec_cell_kernel3_ydir*ydim0_advec_cell_kernel3_ydir*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_cell_kernel3_ydir*1*1 + n_z*xdim1_advec_cell_kernel3_ydir*ydim1_advec_cell_kernel3_ydir*1,
+           p_a2 + n_x*0*1 + n_y*xdim2_advec_cell_kernel3_ydir*1*1 + n_z*xdim2_advec_cell_kernel3_ydir*ydim2_advec_cell_kernel3_ydir*0,
+           p_a3 + n_x*0*1 + n_y*xdim3_advec_cell_kernel3_ydir*1*1 + n_z*xdim3_advec_cell_kernel3_ydir*ydim3_advec_cell_kernel3_ydir*0,
+           p_a4 + n_x*1*1 + n_y*xdim4_advec_cell_kernel3_ydir*1*1 + n_z*xdim4_advec_cell_kernel3_ydir*ydim4_advec_cell_kernel3_ydir*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_advec_cell_kernel3_ydir*1*1 + n_z*xdim5_advec_cell_kernel3_ydir*ydim5_advec_cell_kernel3_ydir*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_advec_cell_kernel3_ydir*1*1 + n_z*xdim6_advec_cell_kernel3_ydir*ydim6_advec_cell_kernel3_ydir*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_advec_cell_kernel3_ydir*1*1 + n_z*xdim7_advec_cell_kernel3_ydir*ydim7_advec_cell_kernel3_ydir*1 );
 
       }
     }

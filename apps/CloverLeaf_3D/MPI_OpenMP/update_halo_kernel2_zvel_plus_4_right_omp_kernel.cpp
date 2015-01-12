@@ -15,6 +15,8 @@ inline void update_halo_kernel2_zvel_plus_4_right(double *zvel0, double *zvel1, 
 
 
 
+
+
 // host stub function
 void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
@@ -100,9 +102,9 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_bl
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
 
   ops_H_D_exchanges_host(args, 3);
@@ -172,7 +174,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(char const *name, ops_bl
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            update_halo_kernel2_zvel_plus_4_right(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (int * )p_a[2] );
+            update_halo_kernel2_zvel_plus_4_right(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (int * )p_a[2] );
 
           }
 

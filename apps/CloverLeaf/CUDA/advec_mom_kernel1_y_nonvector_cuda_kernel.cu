@@ -82,18 +82,18 @@ const double* __restrict arg1,
 double* __restrict arg2,
 const double* __restrict arg3,
 const double* __restrict arg4,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel1_y_nonvector;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel1_y_nonvector;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_advec_mom_kernel1_y_nonvector;
-  arg3 += idx_x * 0 + idx_y * 1 * xdim3_advec_mom_kernel1_y_nonvector;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_advec_mom_kernel1_y_nonvector;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel1_y_nonvector;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel1_y_nonvector;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel1_y_nonvector;
+  arg3 += idx_x * 0*1 + idx_y * 1*1 * xdim3_advec_mom_kernel1_y_nonvector;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel1_y_nonvector;
 
   if (idx_x < size0 && idx_y < size1) {
     advec_mom_kernel1_y_nonvector(arg0, arg1, arg2, arg3,
@@ -150,11 +150,11 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block bloc
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
 
 
   //Timing

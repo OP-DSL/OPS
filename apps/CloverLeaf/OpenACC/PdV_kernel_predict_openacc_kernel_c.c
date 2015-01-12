@@ -73,7 +73,6 @@ void PdV_kernel_predict(const double *xarea, const double *xvel0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -86,6 +85,7 @@ void PdV_kernel_predict(const double *xarea, const double *xvel0,
 #undef OPS_ACC9
 #undef OPS_ACC10
 #undef OPS_ACC11
+
 
 
 void PdV_kernel_predict_c_wrapper(
@@ -111,13 +111,13 @@ void PdV_kernel_predict_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      PdV_kernel_predict(  p_a0 + n_x*1 + n_y*xdim0_PdV_kernel_predict*1,
-           p_a1 + n_x*1 + n_y*xdim1_PdV_kernel_predict*1, p_a2 + n_x*1 + n_y*xdim2_PdV_kernel_predict*1,
-           p_a3 + n_x*1 + n_y*xdim3_PdV_kernel_predict*1, p_a4 + n_x*1 + n_y*xdim4_PdV_kernel_predict*1,
-           p_a5 + n_x*1 + n_y*xdim5_PdV_kernel_predict*1, p_a6 + n_x*1 + n_y*xdim6_PdV_kernel_predict*1,
-           p_a7 + n_x*1 + n_y*xdim7_PdV_kernel_predict*1, p_a8 + n_x*1 + n_y*xdim8_PdV_kernel_predict*1,
-           p_a9 + n_x*1 + n_y*xdim9_PdV_kernel_predict*1, p_a10 + n_x*1 + n_y*xdim10_PdV_kernel_predict*1,
-           p_a11 + n_x*1 + n_y*xdim11_PdV_kernel_predict*1 );
+      PdV_kernel_predict(  p_a0 + n_x*1*1 + n_y*xdim0_PdV_kernel_predict*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_PdV_kernel_predict*1*1, p_a2 + n_x*1*1 + n_y*xdim2_PdV_kernel_predict*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_PdV_kernel_predict*1*1, p_a4 + n_x*1*1 + n_y*xdim4_PdV_kernel_predict*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_PdV_kernel_predict*1*1, p_a6 + n_x*1*1 + n_y*xdim6_PdV_kernel_predict*1*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_PdV_kernel_predict*1*1, p_a8 + n_x*1*1 + n_y*xdim8_PdV_kernel_predict*1*1,
+           p_a9 + n_x*1*1 + n_y*xdim9_PdV_kernel_predict*1*1, p_a10 + n_x*1*1 + n_y*xdim10_PdV_kernel_predict*1*1,
+           p_a11 + n_x*1*1 + n_y*xdim11_PdV_kernel_predict*1*1 );
 
     }
   }

@@ -30,11 +30,11 @@ inline void advec_cell_kernel2_xdir( double *pre_vol, double *post_vol, const do
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
+
 
 
 void advec_cell_kernel2_xdir_c_wrapper(
@@ -56,10 +56,10 @@ void advec_cell_kernel2_xdir_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_cell_kernel2_xdir(  p_a0 + n_x*1 + n_y*xdim0_advec_cell_kernel2_xdir*1 + n_z*xdim0_advec_cell_kernel2_xdir*ydim0_advec_cell_kernel2_xdir*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_cell_kernel2_xdir*1 + n_z*xdim1_advec_cell_kernel2_xdir*ydim1_advec_cell_kernel2_xdir*1,
-           p_a2 + n_x*1 + n_y*xdim2_advec_cell_kernel2_xdir*1 + n_z*xdim2_advec_cell_kernel2_xdir*ydim2_advec_cell_kernel2_xdir*1,
-           p_a3 + n_x*1 + n_y*xdim3_advec_cell_kernel2_xdir*1 + n_z*xdim3_advec_cell_kernel2_xdir*ydim3_advec_cell_kernel2_xdir*1 );
+        advec_cell_kernel2_xdir(  p_a0 + n_x*1*1 + n_y*xdim0_advec_cell_kernel2_xdir*1*1 + n_z*xdim0_advec_cell_kernel2_xdir*ydim0_advec_cell_kernel2_xdir*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_cell_kernel2_xdir*1*1 + n_z*xdim1_advec_cell_kernel2_xdir*ydim1_advec_cell_kernel2_xdir*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_advec_cell_kernel2_xdir*1*1 + n_z*xdim2_advec_cell_kernel2_xdir*ydim2_advec_cell_kernel2_xdir*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_advec_cell_kernel2_xdir*1*1 + n_z*xdim3_advec_cell_kernel2_xdir*ydim3_advec_cell_kernel2_xdir*1 );
 
       }
     }

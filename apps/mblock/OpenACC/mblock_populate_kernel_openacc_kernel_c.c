@@ -16,8 +16,8 @@ void mblock_populate_kernel(double *val, int *idx) {
 }
 
 
-
 #undef OPS_ACC0
+
 
 
 void mblock_populate_kernel_c_wrapper(
@@ -35,7 +35,7 @@ void mblock_populate_kernel_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      mblock_populate_kernel(  p_a0 + n_x*1 + n_y*xdim0_mblock_populate_kernel*1,
+      mblock_populate_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_mblock_populate_kernel*1*1,
           arg_idx );
 
     }

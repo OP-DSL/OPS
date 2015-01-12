@@ -42,171 +42,30 @@ import re
 import datetime
 import os
 
-def comm(line):
-  global file_text, FORTRAN, CPP
-  global depth
-  prefix = ' '*depth
-  if len(line) == 0:
-    file_text +='\n'
-  else:
-    file_text +=prefix+'//'+line+'\n'
+import util
+import config
 
-def code(text):
-  global file_text, g_m
-  global depth
-  prefix = ''
-  if len(text) != 0:
-    prefix = ' '*depth
-  #file_text += prefix+rep(text,g_m)+'\n'
-  file_text += prefix+text+'\n'
+para_parse = util.para_parse
+comment_remover = util.comment_remover
+remove_trailing_w_space = util.remove_trailing_w_space
+parse_signature = util.parse_signature_cuda
+check_accs = util.check_accs
+mult = util.mult
 
-def FOR(i,start,finish):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
-  depth += 2
+comm = util.comm
+code = util.code
+FOR = util.FOR
+FOR2 = util.FOR2
+WHILE = util.WHILE
+ENDWHILE = util.ENDWHILE
+ENDFOR = util.ENDFOR
+IF = util.IF
+ELSEIF = util.ELSEIF
+ELSE = util.ELSE
+ENDIF = util.ENDIF
 
-def FOR2(i,start,finish,increment):
-  global file_text
-  global depth
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
-  depth += 2
-
-def WHILE(line):
-  global file_text
-  global depth
-  code('while ( '+ line+ ' ){')
-  depth += 2
-
-def ENDWHILE():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def ENDFOR():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-def IF(line):
-  global file_text
-  global depth
-  code('if ('+ line + ') {')
-  depth += 2
-
-def ELSEIF(line):
-  global file_text
-  global depth
-  code('else if ('+ line + ') {')
-  depth += 2
-
-def ELSE():
-  global file_text
-  global depth
-  code('else {')
-  depth += 2
-
-def ENDIF():
-  global file_text
-  global depth
-  depth -= 2
-  code('}')
-
-
-def para_parse(text, j, op_b, cl_b):
-    """Parsing code block, i.e. text to find the correct closing brace"""
-
-    depth = 0
-    loc2 = j
-
-    while 1:
-      if text[loc2] == op_b:
-            depth = depth + 1
-
-      elif text[loc2] == cl_b:
-            depth = depth - 1
-            if depth == 0:
-                return loc2
-      loc2 = loc2 + 1
-
-def comment_remover(text):
-    """Remove comments from text"""
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return ''
-        else:
-            return s
-    pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-        re.DOTALL | re.MULTILINE
-    )
-    return re.sub(pattern, replacer, text)
-
-
-def remove_trailing_w_space(text):
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  count = 0
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test
-
-def parse_signature(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
-
-def check_accs(name, arg_list, arg_typ, text):
-  for n in range(0,len(arg_list)):
-    if arg_typ[n] == 'ops_arg_dat':
-      pos = 0
-      while 1:
-        #pos = pos + text[pos:].find(arg_list[n])
-        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
-        if match == None:
-          break
-        pos = pos + match.start(0)
-#        print text[pos:pos+len(arg_list[n])+10]
-        if pos < 0:
-          break
-        pos = pos + len(arg_list[n])
-        #print text[pos:pos+len(arg_list[n])+10]
-        pos = pos + text[pos:].find('OPS_ACC')
-        #print text[pos:pos+len(arg_list[n])+10]
-        pos2 = text[pos+7:].find('(')
-  #      print text[pos+7:pos+7+pos2]
-        num = int(text[pos+7:pos+7+pos2])
-        if num <> n:
-          print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
-        pos = pos+7+pos2
 
 def ops_gen_mpi_cuda(master, date, consts, kernels):
-
-  global dims, stens
-  global g_m, file_text, depth
 
   OPS_ID   = 1;  OPS_GBL   = 2;
 
@@ -262,10 +121,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduct = 1
 
-
-    g_m = 0;
-    file_text = ''
-    depth = 0
+    config.file_text = ''
+    config.depth = 0
     n_per_line = 4
 
     i = name.find('kernel')
@@ -290,6 +147,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 #  generate constants and MACROS
 ##########################################################################
 
+
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('__constant__ int xdim'+str(n)+'_'+name+';')
@@ -302,11 +161,24 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-        if NDIM==3:
-          code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+        if int(dims[n]) == 1:
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n)+'(x) (x)')
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
 
 
 ##########################################################################
@@ -327,7 +199,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
 
-    print name
+
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
@@ -335,14 +207,18 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     arg_list = parse_signature(text[i2+len(name):i+j])
     check_accs(name, arg_list, arg_typ, text[i+j:k])
     code('__device__')
-    #file_text += text[i:k+2]
     code(text[i:k+2])
     code('')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#undef OPS_ACC'+str(n))
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
     code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
     code('')
 
 
@@ -365,20 +241,25 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         else:
           code(typs[n]+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_idx':
-        if NDIM==2:
+        if NDIM==1:
+          code('int arg_idx0,')
+        elif NDIM==2:
           code('int arg_idx0, int arg_idx1,')
         elif NDIM==3:
           code('int arg_idx0, int arg_idx1, int arg_idx2,')
 
 
-    code('int size0,')
-    if NDIM==2:
+    if NDIM==1:
+      code('int size0 ){')
+    elif NDIM==2:
+      code('int size0,')
       code('int size1 ){')
-    if NDIM==3:
+    elif NDIM==3:
+      code('int size0,')
       code('int size1,')
       code('int size2 ){')
 
-    depth = depth + 2
+    config.depth = config.depth + 2
 
     #local variable to hold reductions on GPU
     code('')
@@ -399,25 +280,33 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     if NDIM==3:
       code('int idx_z = blockDim.z * blockIdx.z + threadIdx.z;')
-    code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
+      code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
+    if NDIM==2:
+      code('int idx_y = blockDim.y * blockIdx.y + threadIdx.y;')
     code('int idx_x = blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
     if arg_idx:
       code('int arg_idx['+str(NDIM)+'];')
       code('arg_idx[0] = arg_idx0+idx_x;')
-      code('arg_idx[1] = arg_idx1+idx_y;')
+      if NDIM==2:
+        code('arg_idx[1] = arg_idx1+idx_y;')
       if NDIM==3:
+        code('arg_idx[1] = arg_idx1+idx_y;')
         code('arg_idx[2] = arg_idx2+idx_z;')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==2:
-          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+';')
+        if NDIM == 1:
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
+        elif NDIM == 2:
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+';')
         elif NDIM==3:
-          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+          code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
 
     code('')
     n_per_line = 5
+    if NDIM==1:
+      IF('idx_x < size0')
     if NDIM==2:
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
@@ -450,6 +339,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     ENDIF()
 
     #reduction across blocks
+    if NDIM==1:
+      cont = 'blockIdx.x + blockIdx.y*gridDim.x'
     if NDIM==2:
       cont = 'blockIdx.x + blockIdx.y*gridDim.x'
     elif NDIM==3:
@@ -467,7 +358,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
     code('')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 
@@ -489,7 +380,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    depth = 2
+    config.depth = 2
 
     code('');
 
@@ -545,8 +436,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
-    code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
     if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
@@ -563,7 +456,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
@@ -611,11 +504,18 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('')
 
     #set up CUDA grid and thread blocks
+    if NDIM==1:
+      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, 1, 1);')
     if NDIM==2:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
     if NDIM==3:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);')
-    code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);')
+
+    if NDIM>1:
+      code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);')
+    else:
+      code('dim3 tblock(OPS_block_size_x,1,1);')
+
     code('')
 
     GBL_READ = False
@@ -642,7 +542,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      if NDIM==2:
+      if NDIM==1:
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1);')
+      elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
@@ -722,15 +624,15 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
-            line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
+            line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
           code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-
+        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+'/dat'+str(n)+',d_m[0]);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 
@@ -782,6 +684,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         else:
           text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
       elif arg_typ[n] == 'ops_arg_idx':
+        if NDIM==1:
+          text = text + ' arg_idx[0],'
         if NDIM==2:
           text = text + ' arg_idx[0], arg_idx[1],'
         elif NDIM==3:
@@ -789,6 +693,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n          '
+    if NDIM==1:
+      text = text +'x_size);'
     if NDIM==2:
       text = text +'x_size, y_size);'
     elif NDIM==3:
@@ -838,7 +744,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
-    depth = depth - 2
+    config.depth = config.depth - 2
     code('}')
 
 
@@ -850,7 +756,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     fid = open('./CUDA/'+name+'_cuda_kernel.cu','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
-    fid.write(file_text)
+    fid.write(config.file_text)
     fid.close()
 
 # end of main kernel call loop
@@ -859,8 +765,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 #  output one master kernel file
 ##########################################################################
 
-  file_text =''
+  config.file_text =''
+  config.depth = 0
   comm('header')
+  code('#define OPS_ACC_MD_MACROS')
+  if NDIM==2:
+    code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
@@ -890,7 +800,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
-  depth = depth + 2
+  config.depth = config.depth + 2
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
@@ -904,11 +814,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('else')
 
   code('{')
-  depth = depth + 2
+  config.depth = config.depth + 2
   code('printf("error: unknown const name\\n"); exit(1);')
   ENDIF()
 
-  depth = depth - 2
+  config.depth = config.depth - 2
   code('}')
   code('')
 
@@ -925,5 +835,5 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   master = master.split('.')[0]
   fid = open('./CUDA/'+master.split('.')[0]+'_kernels.cu','w')
   fid.write('//\n// auto-generated by ops.py//\n\n')
-  fid.write(file_text)
+  fid.write(config.file_text)
   fid.close()

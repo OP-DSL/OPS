@@ -50,7 +50,7 @@ void poisson_kernel_stencil(const __global double * restrict u, const __global d
   const double dx,
 const double dy)
 
-  {
+ {
   u2[OPS_ACC2(0,0)] = ((u[OPS_ACC0(-1,0)]+u[OPS_ACC0(1,0)])*dx*dx
                      + (u[OPS_ACC0(0,-1)]+u[OPS_ACC0(0,1)])*dy*dy
                      - dx*dx*dy*dy*f[OPS_ACC1(0,0)])
@@ -59,33 +59,34 @@ const double dy)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
 
 
- __kernel void ops_poisson_kernel_stencil(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global double* restrict arg2,
- const double dx,
- const double dy,
- const int base0,
- const int base1,
- const int base2,
- const int size0,
- const int size1 ){
+
+__kernel void ops_poisson_kernel_stencil(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global double* restrict arg2,
+const double dx,
+const double dy,
+const int base0,
+const int base1,
+const int base2,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     poisson_kernel_stencil(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_poisson_kernel_stencil],
-                    &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_poisson_kernel_stencil],
-                    &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_poisson_kernel_stencil],
-                    dx,
-                    dy);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    poisson_kernel_stencil(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_stencil],
+                   &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_stencil],
+                   &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_poisson_kernel_stencil],
+                   dx,
+                   dy);
+  }
 
- }
+}

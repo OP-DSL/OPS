@@ -54,7 +54,7 @@ void calc_dt_kernel_print(const __global double * restrict xvel0, const __global
 const __global double * restrict density0, const __global double * restrict energy0, const __global double * restrict pressure, const __global double * restrict soundspeed, 
  double * restrict output)
 
-  {
+ {
   output[0] = xvel0[OPS_ACC0(0,0,0)];
   output[1] = yvel0[OPS_ACC1(0,0,0)];
   output[2] = zvel0[OPS_ACC2(0,0,0)];
@@ -88,55 +88,56 @@ const __global double * restrict density0, const __global double * restrict ener
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
 
 
- __kernel void ops_calc_dt_kernel_print(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- __global const double* restrict arg5,
- __global const double* restrict arg6,
- __global double* restrict arg7,
- __local double* scratch7,
- int r_bytes7,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int size0,
- const int size1,
- const int size2 ){
 
-   arg7 += r_bytes7;
-   double arg7_l[28];
-   for (int d=0; d<28; d++) arg7_l[d] = ZERO_double;
+__kernel void ops_calc_dt_kernel_print(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global const double* restrict arg6,
+__global double* restrict arg7,
+__local double* scratch7,
+int r_bytes7,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int size0,
+const int size1,
+const int size2 ){
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  arg7 += r_bytes7;
+  double arg7_l[28];
+  for (int d=0; d<28; d++) arg7_l[d] = ZERO_double;
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     calc_dt_kernel_print(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_calc_dt_kernel_print + idx_z * 1 * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print],
-                    &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_calc_dt_kernel_print + idx_z * 1 * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print],
-                    &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_calc_dt_kernel_print + idx_z * 1 * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print],
-                    &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_calc_dt_kernel_print + idx_z * 1 * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print],
-                    &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_calc_dt_kernel_print + idx_z * 1 * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print],
-                    &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_calc_dt_kernel_print + idx_z * 1 * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print],
-                    &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_calc_dt_kernel_print + idx_z * 1 * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print],
-                    arg7_l);
-   }
-   reduce_double(arg7_l[0], scratch7, arg7, OPS_INC);
+  int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
+  int idx_x = get_global_id(0);
 
- }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    calc_dt_kernel_print(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_print + idx_z * 1*1 * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print],
+                   &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_print + idx_z * 1*1 * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print],
+                   &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel_print + idx_z * 1*1 * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print],
+                   &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel_print + idx_z * 1*1 * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print],
+                   &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel_print + idx_z * 1*1 * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print],
+                   &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel_print + idx_z * 1*1 * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print],
+                   &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel_print + idx_z * 1*1 * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print],
+                   arg7_l);
+  }
+  reduce_double(arg7_l[0], scratch7, arg7, OPS_INC);
+
+}

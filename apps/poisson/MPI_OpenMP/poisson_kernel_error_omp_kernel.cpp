@@ -13,6 +13,8 @@ void poisson_kernel_error(const double *u, const double *ref, double *err) {
 
 
 
+
+
 // host stub function
 void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
@@ -105,8 +107,8 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
       arg_gbl2[d+64*thr] = ZERO_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
 
   ops_H_D_exchanges_host(args, 3);
 
@@ -164,7 +166,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
       for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
-          poisson_kernel_error(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1, &arg_gbl2[64*thr] );
+          poisson_kernel_error(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1, &arg_gbl2[64*thr] );
 
         }
 

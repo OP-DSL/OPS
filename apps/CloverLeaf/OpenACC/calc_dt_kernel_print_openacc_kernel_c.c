@@ -38,13 +38,13 @@ void calc_dt_kernel_print(const double *xvel0, const double *yvel0,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
+
 
 
 void calc_dt_kernel_print_c_wrapper(
@@ -67,10 +67,10 @@ void calc_dt_kernel_print_c_wrapper(
     #pragma acc loop reduction(+:p_a6_l)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel_print(  p_a0 + n_x*1 + n_y*xdim0_calc_dt_kernel_print*1,
-           p_a1 + n_x*1 + n_y*xdim1_calc_dt_kernel_print*1, p_a2 + n_x*1 + n_y*xdim2_calc_dt_kernel_print*1,
-           p_a3 + n_x*1 + n_y*xdim3_calc_dt_kernel_print*1, p_a4 + n_x*1 + n_y*xdim4_calc_dt_kernel_print*1,
-           p_a5 + n_x*1 + n_y*xdim5_calc_dt_kernel_print*1, p_a6_l );
+      calc_dt_kernel_print(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1, p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel_print*1*1, p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1, p_a6_l );
 
     }
   }

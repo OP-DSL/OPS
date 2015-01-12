@@ -53,7 +53,7 @@
 void viscosity_kernel( const __global double * restrict xvel0, const __global double * restrict yvel0, const __global double * restrict celldx, 
 const __global double * restrict celldy, const __global double * restrict pressure, const __global double * restrict density0, __global double * restrict viscosity)
 
-  {
+ {
 
   double ugrad, vgrad,
          grad2,
@@ -104,45 +104,46 @@ const __global double * restrict celldy, const __global double * restrict pressu
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
 
 
- __kernel void ops_viscosity_kernel(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- __global const double* restrict arg5,
- __global double* restrict arg6,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int size0,
- const int size1 ){
+
+__kernel void ops_viscosity_kernel(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global double* restrict arg6,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     viscosity_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_viscosity_kernel],
-                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_viscosity_kernel],
-                      &arg2[base2 + idx_x * 1 + idx_y * 0 * xdim2_viscosity_kernel],
-                      &arg3[base3 + idx_x * 0 + idx_y * 1 * xdim3_viscosity_kernel],
-                      &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_viscosity_kernel],
-                      &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_viscosity_kernel],
-                      &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_viscosity_kernel]);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    viscosity_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_viscosity_kernel],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_viscosity_kernel],
+                     &arg2[base2 + idx_x * 1*1 + idx_y * 0*1 * xdim2_viscosity_kernel],
+                     &arg3[base3 + idx_x * 0*1 + idx_y * 1*1 * xdim3_viscosity_kernel],
+                     &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_viscosity_kernel],
+                     &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_viscosity_kernel],
+                     &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_viscosity_kernel]);
+  }
 
- }
+}

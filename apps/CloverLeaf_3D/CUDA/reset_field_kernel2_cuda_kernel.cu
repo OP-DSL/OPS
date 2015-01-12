@@ -71,12 +71,12 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_reset_field_kernel2 + idx_z * 1 * xdim0_reset_field_kernel2 * ydim0_reset_field_kernel2;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_reset_field_kernel2 + idx_z * 1 * xdim1_reset_field_kernel2 * ydim1_reset_field_kernel2;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_reset_field_kernel2 + idx_z * 1 * xdim2_reset_field_kernel2 * ydim2_reset_field_kernel2;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_reset_field_kernel2 + idx_z * 1 * xdim3_reset_field_kernel2 * ydim3_reset_field_kernel2;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_reset_field_kernel2 + idx_z * 1 * xdim4_reset_field_kernel2 * ydim4_reset_field_kernel2;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_reset_field_kernel2 + idx_z * 1 * xdim5_reset_field_kernel2 * ydim5_reset_field_kernel2;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_reset_field_kernel2 + idx_z * 1*1 * xdim0_reset_field_kernel2 * ydim0_reset_field_kernel2;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_reset_field_kernel2 + idx_z * 1*1 * xdim1_reset_field_kernel2 * ydim1_reset_field_kernel2;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_reset_field_kernel2 + idx_z * 1*1 * xdim2_reset_field_kernel2 * ydim2_reset_field_kernel2;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_reset_field_kernel2 + idx_z * 1*1 * xdim3_reset_field_kernel2 * ydim3_reset_field_kernel2;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_reset_field_kernel2 + idx_z * 1*1 * xdim4_reset_field_kernel2 * ydim4_reset_field_kernel2;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_reset_field_kernel2 + idx_z * 1*1 * xdim5_reset_field_kernel2 * ydim5_reset_field_kernel2;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     reset_field_kernel2(arg0, arg1, arg2, arg3,
@@ -134,17 +134,17 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  int xdim5 = args[5].dat->size[0];
   int ydim5 = args[5].dat->size[1];
 
 

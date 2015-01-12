@@ -68,12 +68,12 @@ inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
 #undef OPS_ACC4
+
 
 
 void advec_mom_kernel1_x_nonvector_c_wrapper(
@@ -96,11 +96,11 @@ void advec_mom_kernel1_x_nonvector_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel1_x_nonvector(  p_a0 + n_x*1 + n_y*xdim0_advec_mom_kernel1_x_nonvector*1 + n_z*xdim0_advec_mom_kernel1_x_nonvector*ydim0_advec_mom_kernel1_x_nonvector*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_mom_kernel1_x_nonvector*1 + n_z*xdim1_advec_mom_kernel1_x_nonvector*ydim1_advec_mom_kernel1_x_nonvector*1,
-           p_a2 + n_x*1 + n_y*xdim2_advec_mom_kernel1_x_nonvector*1 + n_z*xdim2_advec_mom_kernel1_x_nonvector*ydim2_advec_mom_kernel1_x_nonvector*1,
-           p_a3 + n_x*1 + n_y*xdim3_advec_mom_kernel1_x_nonvector*0 + n_z*xdim3_advec_mom_kernel1_x_nonvector*ydim3_advec_mom_kernel1_x_nonvector*0,
-           p_a4 + n_x*1 + n_y*xdim4_advec_mom_kernel1_x_nonvector*1 + n_z*xdim4_advec_mom_kernel1_x_nonvector*ydim4_advec_mom_kernel1_x_nonvector*1 );
+        advec_mom_kernel1_x_nonvector(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel1_x_nonvector*1*1 + n_z*xdim0_advec_mom_kernel1_x_nonvector*ydim0_advec_mom_kernel1_x_nonvector*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel1_x_nonvector*1*1 + n_z*xdim1_advec_mom_kernel1_x_nonvector*ydim1_advec_mom_kernel1_x_nonvector*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel1_x_nonvector*1*1 + n_z*xdim2_advec_mom_kernel1_x_nonvector*ydim2_advec_mom_kernel1_x_nonvector*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel1_x_nonvector*0*1 + n_z*xdim3_advec_mom_kernel1_x_nonvector*ydim3_advec_mom_kernel1_x_nonvector*0,
+           p_a4 + n_x*1*1 + n_y*xdim4_advec_mom_kernel1_x_nonvector*1*1 + n_z*xdim4_advec_mom_kernel1_x_nonvector*ydim4_advec_mom_kernel1_x_nonvector*1 );
 
       }
     }

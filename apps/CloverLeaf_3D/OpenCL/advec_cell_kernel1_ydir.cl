@@ -51,7 +51,7 @@
 inline void advec_cell_kernel1_ydir( __global double * restrict pre_vol, __global double * restrict post_vol, const __global double * restrict volume, 
 const __global double * restrict vol_flux_z, const __global double * restrict vol_flux_y)
 
-  {
+ {
 
   pre_vol[OPS_ACC0(0,0,0)] = volume[OPS_ACC2(0,0,0)] +  vol_flux_y[OPS_ACC4(0,1,0)] - vol_flux_y[OPS_ACC4(0,0,0)] +
                                                         vol_flux_z[OPS_ACC3(0,0,1)] - vol_flux_z[OPS_ACC3(0,0,0)];
@@ -61,39 +61,40 @@ const __global double * restrict vol_flux_z, const __global double * restrict vo
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
 
 
- __kernel void ops_advec_cell_kernel1_ydir(
- __global double* restrict arg0,
- __global double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_advec_cell_kernel1_ydir(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     advec_cell_kernel1_ydir(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_advec_cell_kernel1_ydir + idx_z * 1 * xdim0_advec_cell_kernel1_ydir * ydim0_advec_cell_kernel1_ydir],
-                       &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_advec_cell_kernel1_ydir + idx_z * 1 * xdim1_advec_cell_kernel1_ydir * ydim1_advec_cell_kernel1_ydir],
-                       &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_advec_cell_kernel1_ydir + idx_z * 1 * xdim2_advec_cell_kernel1_ydir * ydim2_advec_cell_kernel1_ydir],
-                       &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_advec_cell_kernel1_ydir + idx_z * 1 * xdim3_advec_cell_kernel1_ydir * ydim3_advec_cell_kernel1_ydir],
-                       &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_advec_cell_kernel1_ydir + idx_z * 1 * xdim4_advec_cell_kernel1_ydir * ydim4_advec_cell_kernel1_ydir]);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    advec_cell_kernel1_ydir(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim0_advec_cell_kernel1_ydir * ydim0_advec_cell_kernel1_ydir],
+                      &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim1_advec_cell_kernel1_ydir * ydim1_advec_cell_kernel1_ydir],
+                      &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim2_advec_cell_kernel1_ydir * ydim2_advec_cell_kernel1_ydir],
+                      &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim3_advec_cell_kernel1_ydir * ydim3_advec_cell_kernel1_ydir],
+                      &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim4_advec_cell_kernel1_ydir * ydim4_advec_cell_kernel1_ydir]);
+  }
 
- }
+}

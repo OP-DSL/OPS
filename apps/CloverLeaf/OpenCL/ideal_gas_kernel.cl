@@ -50,7 +50,7 @@
 void ideal_gas_kernel( const __global double * restrict density, const __global double * restrict energy, __global double * restrict pressure, 
 __global double * restrict soundspeed)
 
-  {
+ {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
@@ -64,33 +64,34 @@ __global double * restrict soundspeed)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
 
- __kernel void ops_ideal_gas_kernel(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global double* restrict arg2,
- __global double* restrict arg3,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int size0,
- const int size1 ){
+
+__kernel void ops_ideal_gas_kernel(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global double* restrict arg2,
+__global double* restrict arg3,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     ideal_gas_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_ideal_gas_kernel],
-                      &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_ideal_gas_kernel],
-                      &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_ideal_gas_kernel],
-                      &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_ideal_gas_kernel]);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    ideal_gas_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_ideal_gas_kernel],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_ideal_gas_kernel],
+                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_ideal_gas_kernel],
+                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_ideal_gas_kernel]);
+  }
 
- }
+}

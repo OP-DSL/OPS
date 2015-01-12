@@ -13,6 +13,8 @@ void mblock_populate_kernel(double *val, int *idx) {
 
 
 
+
+
 // host stub function
 void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
@@ -26,6 +28,10 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   ops_arg args[2] = { arg0, arg1};
 
 
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,0)) return;
+  #endif
 
   ops_timing_realloc(0,"mblock_populate_kernel");
   OPS_kernels[0].count++;
@@ -81,7 +87,7 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
 
   ops_H_D_exchanges_host(args, 2);
 
@@ -135,7 +141,7 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
       for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
         //call kernel function, passing in pointers to data -vectorised
         for ( int i=0; i<SIMD_VEC; i++ ){
-          mblock_populate_kernel(  (double * )p_a[0]+ i*1, arg_idx );
+          mblock_populate_kernel(  (double * )p_a[0]+ i*1*1, arg_idx );
 
           arg_idx[0]++;
         }

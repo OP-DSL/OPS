@@ -29,15 +29,15 @@ __global__ void ops_update_halo_kernel2_yvel_plus_4_b(
 double* __restrict arg0,
 double* __restrict arg1,
 const int* __restrict arg2,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel2_yvel_plus_4_b;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel2_yvel_plus_4_b;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_yvel_plus_4_b;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_yvel_plus_4_b;
 
   if (idx_x < size0 && idx_y < size1) {
     update_halo_kernel2_yvel_plus_4_b(arg0, arg1, arg2);
@@ -92,8 +92,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_b(char const *name, ops_block 
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
 
 
   //Timing

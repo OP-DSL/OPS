@@ -102,7 +102,7 @@ void PdV_kernel_nopredict_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11, ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15, ops_arg arg16) {
 
   ops_arg args[17] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
@@ -150,39 +150,39 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block Block, int di
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim7 = args[7].dat->size[0];
   ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim8 = args[8].dat->size[0];
   ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim9 = args[9].dat->size[0];
   ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim10 = args[10].dat->size[0];
   ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  xdim11 = args[11].dat->size[0];
   ydim11 = args[11].dat->size[1];
-  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  xdim12 = args[12].dat->size[0];
   ydim12 = args[12].dat->size[1];
-  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  xdim13 = args[13].dat->size[0];
   ydim13 = args[13].dat->size[1];
-  xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+  xdim14 = args[14].dat->size[0];
   ydim14 = args[14].dat->size[1];
-  xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+  xdim15 = args[15].dat->size[0];
   ydim15 = args[15].dat->size[1];
-  xdim16 = args[16].dat->size[0]*args[16].dat->dim;
+  xdim16 = args[16].dat->size[0];
   ydim16 = args[16].dat->size[1];
 
   //Timing

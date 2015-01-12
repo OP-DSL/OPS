@@ -77,7 +77,6 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -89,6 +88,7 @@ void calc_dt_kernel(const double *celldx, const double *celldy, const double *so
 #undef OPS_ACC8
 #undef OPS_ACC9
 #undef OPS_ACC10
+
 
 
 void calc_dt_kernel_c_wrapper(
@@ -113,12 +113,12 @@ void calc_dt_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel(  p_a0 + n_x*1 + n_y*xdim0_calc_dt_kernel*0,
-           p_a1 + n_x*0 + n_y*xdim1_calc_dt_kernel*1, p_a2 + n_x*1 + n_y*xdim2_calc_dt_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_calc_dt_kernel*1, p_a4 + n_x*1 + n_y*xdim4_calc_dt_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_calc_dt_kernel*1, p_a6 + n_x*1 + n_y*xdim6_calc_dt_kernel*1,
-           p_a7 + n_x*1 + n_y*xdim7_calc_dt_kernel*1, p_a8 + n_x*1 + n_y*xdim8_calc_dt_kernel*1,
-           p_a9 + n_x*1 + n_y*xdim9_calc_dt_kernel*1, p_a10 + n_x*1 + n_y*xdim10_calc_dt_kernel*1 );
+      calc_dt_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel*0*1,
+           p_a1 + n_x*0*1 + n_y*xdim1_calc_dt_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel*1*1, p_a6 + n_x*1*1 + n_y*xdim6_calc_dt_kernel*1*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_calc_dt_kernel*1*1, p_a8 + n_x*1*1 + n_y*xdim8_calc_dt_kernel*1*1,
+           p_a9 + n_x*1*1 + n_y*xdim9_calc_dt_kernel*1*1, p_a10 + n_x*1*1 + n_y*xdim10_calc_dt_kernel*1*1 );
 
     }
   }

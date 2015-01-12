@@ -50,7 +50,7 @@ void accelerate_kernel_c_wrapper(
 #endif
 
 // host stub function
-void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, int* range,
+void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
@@ -97,17 +97,17 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block Block, int dim, 
   int y_size = MAX(0,end[1]-start[1]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  xdim6 = args[6].dat->size[0];
+  xdim7 = args[7].dat->size[0];
+  xdim8 = args[8].dat->size[0];
+  xdim9 = args[9].dat->size[0];
+  xdim10 = args[10].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;

@@ -63,7 +63,7 @@ const __global double * restrict volume, const __global double * restrict pressu
 const __global double * restrict viscosity, const __global double * restrict energy0, __global double * restrict energy1, 
   const double dt)
 
-  {
+ {
 
 
   double recip_volume, energy_change, min_cell_volume;
@@ -98,75 +98,76 @@ const __global double * restrict viscosity, const __global double * restrict ene
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
- #undef OPS_ACC7
- #undef OPS_ACC8
- #undef OPS_ACC9
- #undef OPS_ACC10
- #undef OPS_ACC11
- #undef OPS_ACC12
- #undef OPS_ACC13
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
 
 
- __kernel void ops_PdV_kernel_nopredict(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- __global const double* restrict arg5,
- __global double* restrict arg6,
- __global const double* restrict arg7,
- __global const double* restrict arg8,
- __global const double* restrict arg9,
- __global double* restrict arg10,
- __global const double* restrict arg11,
- __global const double* restrict arg12,
- __global double* restrict arg13,
- const double dt,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int base7,
- const int base8,
- const int base9,
- const int base10,
- const int base11,
- const int base12,
- const int base13,
- const int size0,
- const int size1 ){
+
+__kernel void ops_PdV_kernel_nopredict(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global double* restrict arg6,
+__global const double* restrict arg7,
+__global const double* restrict arg8,
+__global const double* restrict arg9,
+__global double* restrict arg10,
+__global const double* restrict arg11,
+__global const double* restrict arg12,
+__global double* restrict arg13,
+const double dt,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int base11,
+const int base12,
+const int base13,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     PdV_kernel_nopredict(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_PdV_kernel_nopredict],
-                &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_PdV_kernel_nopredict],
-                &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_PdV_kernel_nopredict],
-                &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_PdV_kernel_nopredict],
-                &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_PdV_kernel_nopredict],
-                &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_PdV_kernel_nopredict],
-                &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_PdV_kernel_nopredict],
-                &arg7[base7 + idx_x * 1 + idx_y * 1 * xdim7_PdV_kernel_nopredict],
-                &arg8[base8 + idx_x * 1 + idx_y * 1 * xdim8_PdV_kernel_nopredict],
-                &arg9[base9 + idx_x * 1 + idx_y * 1 * xdim9_PdV_kernel_nopredict],
-                &arg10[base10 + idx_x * 1 + idx_y * 1 * xdim10_PdV_kernel_nopredict],
-                &arg11[base11 + idx_x * 1 + idx_y * 1 * xdim11_PdV_kernel_nopredict],
-                &arg12[base12 + idx_x * 1 + idx_y * 1 * xdim12_PdV_kernel_nopredict],
-                &arg13[base13 + idx_x * 1 + idx_y * 1 * xdim13_PdV_kernel_nopredict],
-                dt);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    PdV_kernel_nopredict(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_PdV_kernel_nopredict],
+               &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_PdV_kernel_nopredict],
+               &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_PdV_kernel_nopredict],
+               &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_PdV_kernel_nopredict],
+               &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_PdV_kernel_nopredict],
+               &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_PdV_kernel_nopredict],
+               &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_PdV_kernel_nopredict],
+               &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_PdV_kernel_nopredict],
+               &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_PdV_kernel_nopredict],
+               &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_PdV_kernel_nopredict],
+               &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_PdV_kernel_nopredict],
+               &arg11[base11 + idx_x * 1*1 + idx_y * 1*1 * xdim11_PdV_kernel_nopredict],
+               &arg12[base12 + idx_x * 1*1 + idx_y * 1*1 * xdim12_PdV_kernel_nopredict],
+               &arg13[base13 + idx_x * 1*1 + idx_y * 1*1 * xdim13_PdV_kernel_nopredict],
+               dt);
+  }
 
- }
+}

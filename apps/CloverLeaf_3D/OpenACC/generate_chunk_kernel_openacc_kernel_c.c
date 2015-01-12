@@ -121,7 +121,6 @@ void generate_chunk_kernel( const double *vertexx,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -133,6 +132,7 @@ void generate_chunk_kernel( const double *vertexx,
 #undef OPS_ACC8
 #undef OPS_ACC9
 #undef OPS_ACC10
+
 
 
 void generate_chunk_kernel_c_wrapper(
@@ -161,17 +161,17 @@ void generate_chunk_kernel_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        generate_chunk_kernel(  p_a0 + n_x*1 + n_y*xdim0_generate_chunk_kernel*0 + n_z*xdim0_generate_chunk_kernel*ydim0_generate_chunk_kernel*0,
-           p_a1 + n_x*0 + n_y*xdim1_generate_chunk_kernel*1 + n_z*xdim1_generate_chunk_kernel*ydim1_generate_chunk_kernel*0,
-           p_a2 + n_x*0 + n_y*xdim2_generate_chunk_kernel*0 + n_z*xdim2_generate_chunk_kernel*ydim2_generate_chunk_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_generate_chunk_kernel*1 + n_z*xdim3_generate_chunk_kernel*ydim3_generate_chunk_kernel*1,
-           p_a4 + n_x*1 + n_y*xdim4_generate_chunk_kernel*1 + n_z*xdim4_generate_chunk_kernel*ydim4_generate_chunk_kernel*1,
-           p_a5 + n_x*1 + n_y*xdim5_generate_chunk_kernel*1 + n_z*xdim5_generate_chunk_kernel*ydim5_generate_chunk_kernel*1,
-           p_a6 + n_x*1 + n_y*xdim6_generate_chunk_kernel*1 + n_z*xdim6_generate_chunk_kernel*ydim6_generate_chunk_kernel*1,
-           p_a7 + n_x*1 + n_y*xdim7_generate_chunk_kernel*1 + n_z*xdim7_generate_chunk_kernel*ydim7_generate_chunk_kernel*1,
-           p_a8 + n_x*1 + n_y*xdim8_generate_chunk_kernel*0 + n_z*xdim8_generate_chunk_kernel*ydim8_generate_chunk_kernel*0,
-           p_a9 + n_x*0 + n_y*xdim9_generate_chunk_kernel*1 + n_z*xdim9_generate_chunk_kernel*ydim9_generate_chunk_kernel*0,
-           p_a10 + n_x*0 + n_y*xdim10_generate_chunk_kernel*0 + n_z*xdim10_generate_chunk_kernel*ydim10_generate_chunk_kernel*1 );
+        generate_chunk_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_generate_chunk_kernel*0*1 + n_z*xdim0_generate_chunk_kernel*ydim0_generate_chunk_kernel*0,
+           p_a1 + n_x*0*1 + n_y*xdim1_generate_chunk_kernel*1*1 + n_z*xdim1_generate_chunk_kernel*ydim1_generate_chunk_kernel*0,
+           p_a2 + n_x*0*1 + n_y*xdim2_generate_chunk_kernel*0*1 + n_z*xdim2_generate_chunk_kernel*ydim2_generate_chunk_kernel*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_generate_chunk_kernel*1*1 + n_z*xdim3_generate_chunk_kernel*ydim3_generate_chunk_kernel*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_generate_chunk_kernel*1*1 + n_z*xdim4_generate_chunk_kernel*ydim4_generate_chunk_kernel*1,
+           p_a5 + n_x*1*1 + n_y*xdim5_generate_chunk_kernel*1*1 + n_z*xdim5_generate_chunk_kernel*ydim5_generate_chunk_kernel*1,
+           p_a6 + n_x*1*1 + n_y*xdim6_generate_chunk_kernel*1*1 + n_z*xdim6_generate_chunk_kernel*ydim6_generate_chunk_kernel*1,
+           p_a7 + n_x*1*1 + n_y*xdim7_generate_chunk_kernel*1*1 + n_z*xdim7_generate_chunk_kernel*ydim7_generate_chunk_kernel*1,
+           p_a8 + n_x*1*1 + n_y*xdim8_generate_chunk_kernel*0*1 + n_z*xdim8_generate_chunk_kernel*ydim8_generate_chunk_kernel*0,
+           p_a9 + n_x*0*1 + n_y*xdim9_generate_chunk_kernel*1*1 + n_z*xdim9_generate_chunk_kernel*ydim9_generate_chunk_kernel*0,
+           p_a10 + n_x*0*1 + n_y*xdim10_generate_chunk_kernel*0*1 + n_z*xdim10_generate_chunk_kernel*ydim10_generate_chunk_kernel*1 );
 
       }
     }

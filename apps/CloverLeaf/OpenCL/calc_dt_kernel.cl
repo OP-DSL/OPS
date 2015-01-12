@@ -65,7 +65,7 @@ const double dtu_safe,
 const double dtv_safe,
 const double dtdiv_safe)
 
-  {
+ {
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
 
@@ -109,73 +109,74 @@ const double dtdiv_safe)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
- #undef OPS_ACC7
- #undef OPS_ACC8
- #undef OPS_ACC9
- #undef OPS_ACC10
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
 
 
- __kernel void ops_calc_dt_kernel(
- __global const double* restrict arg0,
- __global const double* restrict arg1,
- __global const double* restrict arg2,
- __global const double* restrict arg3,
- __global const double* restrict arg4,
- __global const double* restrict arg5,
- __global const double* restrict arg6,
- __global const double* restrict arg7,
- __global const double* restrict arg8,
- __global const double* restrict arg9,
- __global double* restrict arg10,
- const double g_small,
- const double g_big,
- const double dtc_safe,
- const double dtu_safe,
- const double dtv_safe,
- const double dtdiv_safe,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int base7,
- const int base8,
- const int base9,
- const int base10,
- const int size0,
- const int size1 ){
+
+__kernel void ops_calc_dt_kernel(
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global const double* restrict arg6,
+__global const double* restrict arg7,
+__global const double* restrict arg8,
+__global const double* restrict arg9,
+__global double* restrict arg10,
+const double g_small,
+const double g_big,
+const double dtc_safe,
+const double dtu_safe,
+const double dtv_safe,
+const double dtdiv_safe,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     calc_dt_kernel(&arg0[base0 + idx_x * 1 + idx_y * 0 * xdim0_calc_dt_kernel],
-                    &arg1[base1 + idx_x * 0 + idx_y * 1 * xdim1_calc_dt_kernel],
-                    &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_calc_dt_kernel],
-                    &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_calc_dt_kernel],
-                    &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_calc_dt_kernel],
-                    &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_calc_dt_kernel],
-                    &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_calc_dt_kernel],
-                    &arg7[base7 + idx_x * 1 + idx_y * 1 * xdim7_calc_dt_kernel],
-                    &arg8[base8 + idx_x * 1 + idx_y * 1 * xdim8_calc_dt_kernel],
-                    &arg9[base9 + idx_x * 1 + idx_y * 1 * xdim9_calc_dt_kernel],
-                    &arg10[base10 + idx_x * 1 + idx_y * 1 * xdim10_calc_dt_kernel],
-                    g_small,
-                    g_big,
-                    dtc_safe,
-                    dtu_safe,
-                    dtv_safe,
-                    dtdiv_safe);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    calc_dt_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel],
+                   &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel],
+                   &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel],
+                   &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel],
+                   &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel],
+                   &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel],
+                   &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel],
+                   &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_calc_dt_kernel],
+                   &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_calc_dt_kernel],
+                   &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_calc_dt_kernel],
+                   &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_calc_dt_kernel],
+                   g_small,
+                   g_big,
+                   dtc_safe,
+                   dtu_safe,
+                   dtv_safe,
+                   dtdiv_safe);
+  }
 
- }
+}

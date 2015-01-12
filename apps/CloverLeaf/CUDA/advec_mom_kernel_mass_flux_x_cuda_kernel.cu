@@ -30,15 +30,15 @@ inline void advec_mom_kernel_mass_flux_x( double *node_flux, const double *mass_
 __global__ void ops_advec_mom_kernel_mass_flux_x(
 double* __restrict arg0,
 const double* __restrict arg1,
-int size0,
+int size0, 
 int size1 ){
 
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_mom_kernel_mass_flux_x;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_mom_kernel_mass_flux_x;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_x;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_x;
 
   if (idx_x < size0 && idx_y < size1) {
     advec_mom_kernel_mass_flux_x(arg0, arg1);
@@ -93,8 +93,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
 
 
   //Timing

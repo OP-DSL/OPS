@@ -52,7 +52,7 @@
 #include <CL/cl_ext.h>
 #endif
 
-#include <math_constants.h>
+//#include <math_constants.h>
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
@@ -316,7 +316,7 @@ void ops_upload_dat(ops_dat dat) {
   //if (!OPS_hybrid_gpu) return;
   int bytes = dat->elem_size;
   for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
-  //printf("uploading to device from host %d bytes\n",bytes);
+  printf("uploading to device from host %d bytes\n",bytes);
 
   clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, (cl_mem) dat->data_d, CL_TRUE, 0, bytes, dat->data, 0, NULL, NULL) );
   //clSafeCall( clFlush(OPS_opencl_core.command_queue) );

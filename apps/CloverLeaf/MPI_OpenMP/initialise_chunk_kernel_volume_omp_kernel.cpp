@@ -22,6 +22,8 @@ void initialise_chunk_kernel_volume(double *volume, const double *celldy, double
 
 
 
+
+
 // host stub function
 void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -123,11 +125,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
 
   ops_H_D_exchanges_host(args, 5);
 
@@ -220,8 +222,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          initialise_chunk_kernel_volume(  (double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, (double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1 );
+          initialise_chunk_kernel_volume(  (double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, (double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1 );
 
         }
 

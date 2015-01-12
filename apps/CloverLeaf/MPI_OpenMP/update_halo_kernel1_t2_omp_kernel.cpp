@@ -23,6 +23,8 @@ inline void update_halo_kernel1_t2(double *density0, double *density1,
 
 
 
+
+
 // host stub function
 void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
@@ -138,13 +140,13 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  xdim6 = args[6].dat->size[0];
 
   ops_H_D_exchanges_host(args, 8);
 
@@ -263,8 +265,8 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
         //call kernel function, passing in pointers to data -vectorised
         #pragma simd
         for ( int i=0; i<SIMD_VEC; i++ ){
-          update_halo_kernel1_t2(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (double * )p_a[2]+ i*1,
-           (double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (double * )p_a[5]+ i*1, (double * )p_a[6]+ i*1,
+          update_halo_kernel1_t2(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (double * )p_a[2]+ i*1*1,
+           (double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (double * )p_a[5]+ i*1*1, (double * )p_a[6]+ i*1*1,
            (int * )p_a[7] );
 
         }

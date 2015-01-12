@@ -79,6 +79,27 @@ int ops_halo_buffer_size = 0;
   int ydim17;
 #endif /* __XDIMS__ */
 
+#ifndef __MULTIDIMS__
+#define __MULTIDIMS__
+int multi_d0;
+int multi_d1;
+int multi_d2;
+int multi_d3;
+int multi_d4;
+int multi_d5;
+int multi_d6;
+int multi_d7;
+int multi_d8;
+int multi_d9;
+int multi_d10;
+int multi_d11;
+int multi_d12;
+int multi_d13;
+int multi_d14;
+int multi_d15;
+int multi_d16;
+int multi_d17;
+#endif /*__MULTIDIMS__*/
 
 void
 ops_init ( int argc, char ** argv, int diags )
@@ -100,7 +121,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
-
+    
   //Allocate memory immediately
   int bytes = size*type_size;
   for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
@@ -172,12 +193,12 @@ void ops_halo_transfer(ops_halo_group group) {
   }
 }
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc )
+ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc )
 {
   return ops_arg_dat_core( dat, stencil, acc );
 }
 
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag )
+ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )
 {
   ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
   (&temp)->opt = flag;

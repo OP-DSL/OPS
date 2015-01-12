@@ -54,7 +54,7 @@ inline void update_halo_kernel1_r1(__global double * restrict density0, __global
 __global double * restrict energy1, __global double * restrict pressure, __global double * restrict viscosity, __global double * restrict soundspeed, 
 const __global int* restrict  fields)
 
-  {
+ {
   if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0,0)] = density0[OPS_ACC0(-1,0,0)];
   if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0,0)] = density1[OPS_ACC1(-1,0,0)];
   if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0,0)] = energy0[OPS_ACC2(-1,0,0)];
@@ -67,49 +67,50 @@ const __global int* restrict  fields)
 
 
 
- #undef OPS_ACC0
- #undef OPS_ACC1
- #undef OPS_ACC2
- #undef OPS_ACC3
- #undef OPS_ACC4
- #undef OPS_ACC5
- #undef OPS_ACC6
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
 
 
- __kernel void ops_update_halo_kernel1_r1(
- __global double* restrict arg0,
- __global double* restrict arg1,
- __global double* restrict arg2,
- __global double* restrict arg3,
- __global double* restrict arg4,
- __global double* restrict arg5,
- __global double* restrict arg6,
- __global const int* restrict arg7,
- const int base0,
- const int base1,
- const int base2,
- const int base3,
- const int base4,
- const int base5,
- const int base6,
- const int size0,
- const int size1,
- const int size2 ){
+
+__kernel void ops_update_halo_kernel1_r1(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global double* restrict arg2,
+__global double* restrict arg3,
+__global double* restrict arg4,
+__global double* restrict arg5,
+__global double* restrict arg6,
+__global const int* restrict arg7,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int size0,
+const int size1,
+const int size2 ){
 
 
-   int idx_z = get_global_id(2);
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_z = get_global_id(2);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-     update_halo_kernel1_r1(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel1_r1 + idx_z * 1 * xdim0_update_halo_kernel1_r1 * ydim0_update_halo_kernel1_r1],
-                        &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel1_r1 + idx_z * 1 * xdim1_update_halo_kernel1_r1 * ydim1_update_halo_kernel1_r1],
-                        &arg2[base2 + idx_x * 1 + idx_y * 1 * xdim2_update_halo_kernel1_r1 + idx_z * 1 * xdim2_update_halo_kernel1_r1 * ydim2_update_halo_kernel1_r1],
-                        &arg3[base3 + idx_x * 1 + idx_y * 1 * xdim3_update_halo_kernel1_r1 + idx_z * 1 * xdim3_update_halo_kernel1_r1 * ydim3_update_halo_kernel1_r1],
-                        &arg4[base4 + idx_x * 1 + idx_y * 1 * xdim4_update_halo_kernel1_r1 + idx_z * 1 * xdim4_update_halo_kernel1_r1 * ydim4_update_halo_kernel1_r1],
-                        &arg5[base5 + idx_x * 1 + idx_y * 1 * xdim5_update_halo_kernel1_r1 + idx_z * 1 * xdim5_update_halo_kernel1_r1 * ydim5_update_halo_kernel1_r1],
-                        &arg6[base6 + idx_x * 1 + idx_y * 1 * xdim6_update_halo_kernel1_r1 + idx_z * 1 * xdim6_update_halo_kernel1_r1 * ydim6_update_halo_kernel1_r1],
-                        arg7);
-   }
+  if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
+    update_halo_kernel1_r1(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel1_r1 + idx_z * 1*1 * xdim0_update_halo_kernel1_r1 * ydim0_update_halo_kernel1_r1],
+                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel1_r1 + idx_z * 1*1 * xdim1_update_halo_kernel1_r1 * ydim1_update_halo_kernel1_r1],
+                       &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_update_halo_kernel1_r1 + idx_z * 1*1 * xdim2_update_halo_kernel1_r1 * ydim2_update_halo_kernel1_r1],
+                       &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_update_halo_kernel1_r1 + idx_z * 1*1 * xdim3_update_halo_kernel1_r1 * ydim3_update_halo_kernel1_r1],
+                       &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_update_halo_kernel1_r1 + idx_z * 1*1 * xdim4_update_halo_kernel1_r1 * ydim4_update_halo_kernel1_r1],
+                       &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_update_halo_kernel1_r1 + idx_z * 1*1 * xdim5_update_halo_kernel1_r1 * ydim5_update_halo_kernel1_r1],
+                       &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_update_halo_kernel1_r1 + idx_z * 1*1 * xdim6_update_halo_kernel1_r1 * ydim6_update_halo_kernel1_r1],
+                       arg7);
+  }
 
- }
+}

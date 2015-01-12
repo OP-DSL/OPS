@@ -26,7 +26,7 @@
 #include <math.h>
 
 // OPS header file
-
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "data.h"
@@ -48,17 +48,17 @@ void reset_field()
   int rangexy_inner[] = {x_min,x_max,y_min,y_max}; // inner range without border
 
   ops_par_loop(reset_field_kernel1, "reset_field_kernel1", clover_grid, 2, rangexy_inner,
-    ops_arg_dat(density0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(density1, S2D_00, "double", OPS_READ),
-    ops_arg_dat(energy0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(energy1, S2D_00, "double", OPS_READ));
+    ops_arg_dat(density0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(density1, 1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(energy0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(energy1, 1, S2D_00, "double", OPS_READ));
 
   int rangexy_inner_plus1xy[] = {x_min,x_max+1,y_min,y_max+1}; // inner range without border
 
   ops_par_loop(reset_field_kernel2, "reset_field_kernel2", clover_grid, 2, rangexy_inner_plus1xy,
-    ops_arg_dat(xvel0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(xvel1, S2D_00, "double", OPS_READ),
-    ops_arg_dat(yvel0, S2D_00, "double", OPS_WRITE),
-    ops_arg_dat(yvel1, S2D_00, "double", OPS_READ));
+    ops_arg_dat(xvel0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(xvel1, 1, S2D_00, "double", OPS_READ),
+    ops_arg_dat(yvel0, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(yvel1, 1, S2D_00, "double", OPS_READ));
 
 }

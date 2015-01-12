@@ -18,9 +18,9 @@ void poisson_kernel_error(const double *u, const double *ref, double *err) {
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
+
 
 
 void poisson_kernel_error_c_wrapper(
@@ -38,8 +38,8 @@ void poisson_kernel_error_c_wrapper(
     #pragma acc loop reduction(+:p_a2_l)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_error(  p_a0 + n_x*1 + n_y*xdim0_poisson_kernel_error*1,
-           p_a1 + n_x*1 + n_y*xdim1_poisson_kernel_error*1, &p_a2_l );
+      poisson_kernel_error(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_error*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_error*1*1, &p_a2_l );
 
     }
   }

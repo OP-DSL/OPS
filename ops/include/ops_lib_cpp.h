@@ -151,7 +151,7 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
     printf ( "incorrect type specified for dataset \"%s\" \n", name );
     exit ( 1 );
   }
-
+  
   return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p, (char *)data, sizeof(T), type, name );
 
 }

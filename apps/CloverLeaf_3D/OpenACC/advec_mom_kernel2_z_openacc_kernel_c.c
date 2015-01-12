@@ -29,11 +29,11 @@ inline void advec_mom_kernel2_z( double *vel1, const double *node_mass_post,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
+
 
 
 void advec_mom_kernel2_z_c_wrapper(
@@ -55,10 +55,10 @@ void advec_mom_kernel2_z_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel2_z(  p_a0 + n_x*1 + n_y*xdim0_advec_mom_kernel2_z*1 + n_z*xdim0_advec_mom_kernel2_z*ydim0_advec_mom_kernel2_z*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_mom_kernel2_z*1 + n_z*xdim1_advec_mom_kernel2_z*ydim1_advec_mom_kernel2_z*1,
-           p_a2 + n_x*1 + n_y*xdim2_advec_mom_kernel2_z*1 + n_z*xdim2_advec_mom_kernel2_z*ydim2_advec_mom_kernel2_z*1,
-           p_a3 + n_x*1 + n_y*xdim3_advec_mom_kernel2_z*1 + n_z*xdim3_advec_mom_kernel2_z*ydim3_advec_mom_kernel2_z*1 );
+        advec_mom_kernel2_z(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel2_z*1*1 + n_z*xdim0_advec_mom_kernel2_z*ydim0_advec_mom_kernel2_z*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel2_z*1*1 + n_z*xdim1_advec_mom_kernel2_z*ydim1_advec_mom_kernel2_z*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel2_z*1*1 + n_z*xdim2_advec_mom_kernel2_z*ydim2_advec_mom_kernel2_z*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel2_z*1*1 + n_z*xdim3_advec_mom_kernel2_z*ydim3_advec_mom_kernel2_z*1 );
 
       }
     }

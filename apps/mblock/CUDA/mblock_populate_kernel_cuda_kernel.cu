@@ -32,7 +32,7 @@ int size1 ){
   int arg_idx[2];
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_mblock_populate_kernel;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_mblock_populate_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
     mblock_populate_kernel(arg0, arg_idx);
@@ -46,6 +46,10 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
 
   ops_arg args[2] = { arg0, arg1};
 
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,0)) return;
+  #endif
 
   ops_timing_realloc(0,"mblock_populate_kernel");
   OPS_kernels[0].count++;
@@ -91,7 +95,7 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
 
 
   //Timing
@@ -121,7 +125,7 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
@@ -145,7 +149,6 @@ void ops_par_loop_mblock_populate_kernel(char const *name, ops_block block, int 
   ops_timers_core(&c2,&t2);
   OPS_kernels[0].time += t2-t1;
   ops_set_dirtybit_device(args, 2);
-  ops_H_D_exchanges_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record

@@ -40,12 +40,12 @@ inline void advec_mom_kernel_post_pre_advec_y( double *node_mass_post, const dou
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
 #undef OPS_ACC4
+
 
 
 void advec_mom_kernel_post_pre_advec_y_c_wrapper(
@@ -68,11 +68,11 @@ void advec_mom_kernel_post_pre_advec_y_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel_post_pre_advec_y(  p_a0 + n_x*1 + n_y*xdim0_advec_mom_kernel_post_pre_advec_y*1 + n_z*xdim0_advec_mom_kernel_post_pre_advec_y*ydim0_advec_mom_kernel_post_pre_advec_y*1,
-           p_a1 + n_x*1 + n_y*xdim1_advec_mom_kernel_post_pre_advec_y*1 + n_z*xdim1_advec_mom_kernel_post_pre_advec_y*ydim1_advec_mom_kernel_post_pre_advec_y*1,
-           p_a2 + n_x*1 + n_y*xdim2_advec_mom_kernel_post_pre_advec_y*1 + n_z*xdim2_advec_mom_kernel_post_pre_advec_y*ydim2_advec_mom_kernel_post_pre_advec_y*1,
-           p_a3 + n_x*1 + n_y*xdim3_advec_mom_kernel_post_pre_advec_y*1 + n_z*xdim3_advec_mom_kernel_post_pre_advec_y*ydim3_advec_mom_kernel_post_pre_advec_y*1,
-           p_a4 + n_x*1 + n_y*xdim4_advec_mom_kernel_post_pre_advec_y*1 + n_z*xdim4_advec_mom_kernel_post_pre_advec_y*ydim4_advec_mom_kernel_post_pre_advec_y*1 );
+        advec_mom_kernel_post_pre_advec_y(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel_post_pre_advec_y*1*1 + n_z*xdim0_advec_mom_kernel_post_pre_advec_y*ydim0_advec_mom_kernel_post_pre_advec_y*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel_post_pre_advec_y*1*1 + n_z*xdim1_advec_mom_kernel_post_pre_advec_y*ydim1_advec_mom_kernel_post_pre_advec_y*1,
+           p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel_post_pre_advec_y*1*1 + n_z*xdim2_advec_mom_kernel_post_pre_advec_y*ydim2_advec_mom_kernel_post_pre_advec_y*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel_post_pre_advec_y*1*1 + n_z*xdim3_advec_mom_kernel_post_pre_advec_y*ydim3_advec_mom_kernel_post_pre_advec_y*1,
+           p_a4 + n_x*1*1 + n_y*xdim4_advec_mom_kernel_post_pre_advec_y*1*1 + n_z*xdim4_advec_mom_kernel_post_pre_advec_y*ydim4_advec_mom_kernel_post_pre_advec_y*1 );
 
       }
     }

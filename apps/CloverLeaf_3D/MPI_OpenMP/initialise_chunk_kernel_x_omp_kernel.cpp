@@ -26,6 +26,8 @@ void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx)
 
 
 
+
+
 // host stub function
 void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
@@ -121,11 +123,11 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
 
   ops_H_D_exchanges_host(args, 3);
@@ -209,7 +211,7 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            initialise_chunk_kernel_x(  (double * )p_a[0]+ i*1, (const int * )p_a[1]+ i*1, (double * )p_a[2]+ i*1 );
+            initialise_chunk_kernel_x(  (double * )p_a[0]+ i*1*1, (const int * )p_a[1]+ i*1*1, (double * )p_a[2]+ i*1*1 );
 
           }
 

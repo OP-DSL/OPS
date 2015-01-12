@@ -25,11 +25,11 @@ void revert_kernel( const double *density0, double *density1,
 }
 
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
+
 
 
 void revert_kernel_c_wrapper(
@@ -47,9 +47,9 @@ void revert_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      revert_kernel(  p_a0 + n_x*1 + n_y*xdim0_revert_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_revert_kernel*1, p_a2 + n_x*1 + n_y*xdim2_revert_kernel*1,
-           p_a3 + n_x*1 + n_y*xdim3_revert_kernel*1 );
+      revert_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_revert_kernel*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_revert_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_revert_kernel*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_revert_kernel*1*1 );
 
     }
   }

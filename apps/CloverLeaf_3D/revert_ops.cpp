@@ -43,8 +43,8 @@ void revert()
   int rangexyz_inner[] = {x_min,x_max,y_min,y_max,z_min,z_max};
 
   ops_par_loop_revert_kernel("revert_kernel", clover_grid, 3, rangexyz_inner,
-               ops_arg_dat(density0, S3D_000, "double", OPS_READ),
-               ops_arg_dat(density1, S3D_000, "double", OPS_WRITE),
-               ops_arg_dat(energy0, S3D_000, "double", OPS_READ),
-               ops_arg_dat(energy1, S3D_000, "double", OPS_WRITE));
+               ops_arg_dat(density0, 1, S3D_000, "double", OPS_READ),
+               ops_arg_dat(density1, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(energy0, 1, S3D_000, "double", OPS_READ),
+               ops_arg_dat(energy1, 1, S3D_000, "double", OPS_WRITE));
 }

@@ -45,27 +45,28 @@
 //user function
 void poisson_kernel_initialguess(__global double * restrict u)
 
-  {
+ {
   u[OPS_ACC0(0,0)] = 0.0;
 }
 
 
 
- #undef OPS_ACC0
+#undef OPS_ACC0
 
 
- __kernel void ops_poisson_kernel_initialguess(
- __global double* restrict arg0,
- const int base0,
- const int size0,
- const int size1 ){
+
+__kernel void ops_poisson_kernel_initialguess(
+__global double* restrict arg0,
+const int base0,
+const int size0,
+const int size1 ){
 
 
-   int idx_y = get_global_id(1);
-   int idx_x = get_global_id(0);
+  int idx_y = get_global_id(1);
+  int idx_x = get_global_id(0);
 
-   if (idx_x < size0 && idx_y < size1) {
-     poisson_kernel_initialguess(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_poisson_kernel_initialguess]);
-   }
+  if (idx_x < size0 && idx_y < size1) {
+    poisson_kernel_initialguess(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_initialguess]);
+  }
 
- }
+}

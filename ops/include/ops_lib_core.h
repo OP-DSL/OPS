@@ -310,8 +310,8 @@ ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, int*, char *, int, c
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* base, int* d_m, int* d_p,
                            char* data, int type_size, char const * type, char const * name );
 
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
+ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc );
+ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag );
 ops_arg ops_arg_idx( );
 ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc);
 ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, ops_access acc);
@@ -366,8 +366,13 @@ void ops_timers_core( double *cpu, double *et );
 float ops_compute_transfer(int dims, int *range, ops_arg *arg);
 
 void ops_register_args(ops_arg *args, const char *name);
+int ops_stencil_check_1d(int arg_idx, int idx0, int dim0);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1);
+
+int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d);
+int ops_stencil_check_2d_md(int arg_idx, int idx0, int idx1, int dim0, int dim1, int mult_d, int d);
+int ops_stencil_check_3d_md(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1, int mult_d, int d);
 
 /* check if these should be placed here */
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
