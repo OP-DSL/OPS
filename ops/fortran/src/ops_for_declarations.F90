@@ -44,5 +44,91 @@ module OPS_Fortran_Declarations
   use cudafor
 #endif
 
+!################################################
+! Inteoperable data types for in ops_lib_core.h
+!################################################
+
+type, BIND(C) :: ops_block_core
+  integer(kind=c_int) :: index        ! index
+  integer(kind=c_int) :: dims         ! dimension of vlock, 2D, 3D .. etc
+  type(c_ptr)         :: name         ! name if the block
+end type ops_block_core
+
+type :: ops_block
+  type (ops_block_core), pointer :: setPtr => null()
+  type (c_ptr)                   :: blockCptr
+end type ops_block
+
+type, BIND(C)         :: ops_dat_core
+  integer(kind=c_int) :: index       ! index
+  type(c_ptr)         :: block       ! block on which data is defined
+  integer(kind=c_int) :: dims        ! number of elements per grid point
+  integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
+  type(c_ptr)         :: data        ! data on host
+#ifdef OPS_WITH_CUDAFOR
+  type(c_devptr)      :: data_d      ! data on device
+#else
+  type(c_ptr)         :: data_d      ! data on device
+#endif
+  type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
+  type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
+  type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
+  type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
+  type(c_ptr)         :: name        ! name if the dat
+  type(c_ptr)         :: type        ! data type
+  integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
+  integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
+  integer(kind=c_int) :: e_dat       ! is this an edge dat?
+end type ops_dat_core
+
+type :: ops_dat
+    type (ops_dat_core), pointer :: setPtr => null()
+    type (c_ptr)                 :: datCptr
+    integer (kind=c_int)         :: status = -1
+end type ops_dat
+
+type, BIND(C) :: ops_stencil_core
+  integer(kind=c_int) :: index        ! index
+  integer(kind=c_int) :: dims         ! dimensionality of the stencil
+  type(c_ptr)         :: name         ! name of stencil
+  integer(kind=c_int) :: points       ! number of stencil elements
+  type(c_ptr)         :: stencil      ! elements in the stencil
+  type(c_ptr)         :: stride       ! stride of the stencil
+end type ops_stencil_core
+
+type :: ops_stencil
+  type (ops_stencil_core), pointer :: stencilPtr => null()
+  type (c_ptr)                     :: stencilCptr
+end type ops_stencil
+
+type, BIND(C) :: ops_arg
+  type(c_ptr)         :: dataset      ! dataset
+  type(c_ptr)         :: stencil      ! the stencil
+  integer(kind=c_int) :: dim          ! dimension of data
+  type(c_ptr)         :: data         ! data on host
+  type(c_ptr)         :: data_d       ! data on device (for CUDA)
+  integer(kind=c_int) :: acc;         ! access type
+  integer(kind=c_int) :: argtype      ! arg type
+  integer(kind=c_int) :: opt          ! falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional
+end type ops_arg
+
+
+
+!#################################################
+! Fortran interfaces for ops declaration routines
+! - binds *_c routines to ops C backend routines
+!#################################################
+
+!##################################################################
+! Fortran interfaces for different sized ops declaration routines
+!##################################################################
+
+!###################################################################
+! Fortran subroutines that gets called by an OPS Fortran application
+! - these calls the relevant *_c routine internally where the *_c
+! routine is bound to the OPS C backend's actual implemented routine
+!###################################################################
+
+
 
 end module OPS_Fortran_Declarations
