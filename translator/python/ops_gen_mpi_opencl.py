@@ -256,16 +256,16 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] != OPS_READ:
-          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
-            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
           else:
-            sig2 = sig2 + sig.split(',')[n].strip()+', '
+            sig2 = sig2 + sig.split(',')[n].strip()+','
       elif arg_typ[n] == 'ops_arg_idx':
-        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+', '
+        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
       else:
-        sig2 = sig2 + sig.split(',')[n].strip()+', '
+        sig2 = sig2 + sig.split(',')[n].strip()+','
       if n%4 == 2:
         sig2 = sig2 + '\n'
 
@@ -566,9 +566,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
         sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);

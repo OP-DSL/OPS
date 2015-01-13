@@ -190,7 +190,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
-      code('inline '+text[i:k+2])
+      code('inline'+text[i:k+2])
     else:
       code(text[i:k+2])
     code('')
@@ -430,7 +430,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('arg_idx['+str(n)+'] = start'+str(n)+';')
       code('#endif //OPS_MPI')
 
-    comm('set up initial pointers ')
+    comm('set up initial pointers')
     code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -439,7 +439,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
         code('#else //OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
+        code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
         code('(start0 * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
