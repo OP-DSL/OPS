@@ -6,17 +6,17 @@ export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0/
 export MPI_INSTALL_PATH=/opt/intel/impi/4.1.3.048/intel64
 #source /opt/intel/composer_xe_2013_sp1.2.144/bin/compilervars.sh intel64
 source /opt/intel/composer_xe_2015/bin/compilervars.sh intel64
-#source /opt/intel/composer_xe_2013.1.117/bin/ifortvars.sh intel64
+source /opt/intel/composer_xe_2013.1.117/bin/ifortvars.sh intel64
 source /opt/intel/impi/4.1.3.048/intel64/bin/mpivars.sh intel64
 #export INTEL_PATH=/opt/intel/composer_xe_2013_sp1.2.144
 export INTEL_PATH=/opt/intel/composer_xe_2015
 export MPICH_CXX=/opt/intel/composer_xe_2015/bin/icpc
 export MPICH_CC=/opt/intel/composer_xe_2015/bin/icc
-#export MPICH_F90=/opt/intel/composer_xe_2013.1.117/bin/intel64/ifort
+export MPICH_F90=/opt/intel/composer_xe_2013.1.117/bin/intel64/ifort
 
 export MPICH_CXX=/opt/intel/bin/icpc
 export MPICH_CC=/opt/intel/bin/icc
-#export MPICH_F90=/opt/intel/bin/ifort
+export MPICH_F90=/opt/intel/bin/ifort
 #for GPU-direct
 #export PATH=/opt/mvapich2/2.0-intel-gpu/bin:$PATH
 #export LD_LIBRARY_PATH=/opt/mvapich2/2.0-intel-gpu/lib:$LD_LIBRARY_PATH

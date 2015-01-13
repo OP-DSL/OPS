@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ../../ops/c
+cd ../../../ops/c
 source ../source_intel
 make
 cd -
