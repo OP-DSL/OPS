@@ -55,7 +55,7 @@ module OPS_Fortran_Declarations
   end type ops_block_core
 
   type :: ops_block
-    type (ops_block_core), pointer :: setPtr => null()
+    type (ops_block_core), pointer :: blockPtr => null()
     type (c_ptr)                   :: blockCptr
   end type ops_block
 
@@ -82,8 +82,8 @@ module OPS_Fortran_Declarations
   end type ops_dat_core
 
   type :: ops_dat
-      type (ops_dat_core), pointer :: setPtr => null()
-      type (c_ptr)                 :: datCptr
+      type (ops_dat_core), pointer :: dataPtr => null()
+      type (c_ptr)                 :: dataCptr
       integer (kind=c_int)         :: status = -1
   end type ops_dat
 
@@ -156,17 +156,17 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in)  :: name(*)
     end function ops_decl_block_c
 
-    type(c_ptr) function ops_decl_dat_c ( block, size, dat_size, base, d_m, d_p, data, type, type_size, name ) BIND(C,name='ops_decl_dat_char')
+    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type, type_size, name ) BIND(C,name='ops_decl_dat_char')
 
       use, intrinsic :: ISO_C_BINDING
 
       import :: ops_block_core, ops_dat_core
 
       type(c_ptr), value, intent(in)           :: block
-      integer(kind=c_int), value               :: size, type_size
+      integer(kind=c_int), value               :: dim, type_size
       character(kind=c_char,len=1), intent(in) :: type(*)
       type(c_ptr), intent(in), value           :: data
-      type(c_ptr), intent(in), value           :: dat_size
+      type(c_ptr), intent(in), value           :: size
       type(c_ptr), intent(in), value           :: base
       type(c_ptr), intent(in), value           :: d_m
       type(c_ptr), intent(in), value           :: d_p
@@ -190,13 +190,12 @@ module OPS_Fortran_Declarations
 
       import :: ops_arg
 
-      type(ops_arg) :: ops_arg_dat_c
-
+      type(ops_arg)                  :: ops_arg_dat_c
       type(c_ptr), value, intent(in) :: dat
-      integer(kind=c_int), value :: dim
+      integer(kind=c_int), value     :: dim
       type(c_ptr), value, intent(in) :: sten
-      character(kind=c_char,len=1) :: type(*)
-      integer(kind=c_int), value :: acc
+      character(kind=c_char,len=1)   :: type(*)
+      integer(kind=c_int), value     :: acc
 
     end function ops_arg_dat_c
 
@@ -204,23 +203,21 @@ module OPS_Fortran_Declarations
     function ops_arg_dat_opt_c ( dat, dim, sten, type, acc, flag ) BIND(C,name='ops_arg_dat_opt')
 
       use, intrinsic :: ISO_C_BINDING
-
       import :: ops_arg
 
-      type(ops_arg) :: ops_arg_dat_c
-
+      type(ops_arg)                  :: ops_arg_dat_c
       type(c_ptr), value, intent(in) :: dat
-      integer(kind=c_int), value :: dim
+      integer(kind=c_int), value     :: dim
       type(c_ptr), value, intent(in) :: sten
-      character(kind=c_char,len=1) :: type(*)
-      integer(kind=c_int), value :: acc
-      integer(kind=c_int), value :: flag
+      character(kind=c_char,len=1)   :: type(*)
+      integer(kind=c_int), value     :: acc
+      integer(kind=c_int), value     :: flag
     end function ops_arg_dat_opt_c
 
     function ops_arg_idx_c ( ) BIND(C,name='ops_arg_idx')
       use, intrinsic :: ISO_C_BINDING
-      import :: ops_arg
-      type(ops_arg) :: ops_arg_idx_c
+      import         :: ops_arg
+      type(ops_arg)  :: ops_arg_idx_c
     end function ops_arg_idx_c
 
 
@@ -233,24 +230,24 @@ module OPS_Fortran_Declarations
       type(ops_arg) :: ops_arg_reduce_c
 
       type(c_ptr), value, intent(in) :: handle
-      integer(kind=c_int), value :: dim
+      integer(kind=c_int), value   :: dim
       character(kind=c_char,len=1) :: type(*)
-      integer(kind=c_int), value :: acc
+      integer(kind=c_int), value   :: acc
 
     end function ops_arg_reduce_c
 
     subroutine ops_timers_core_f ( cpu, et ) BIND(C,name='ops_timers_core')
-      use, intrinsic :: ISO_C_BINDING
+      use, intrinsic      :: ISO_C_BINDING
       real(kind=c_double) :: cpu, et
     end subroutine ops_timers_core_f
 
     subroutine ops_timers_f ( cpu, et ) BIND(C,name='ops_timers')
-      use, intrinsic :: ISO_C_BINDING
+      use, intrinsic      :: ISO_C_BINDING
       real(kind=c_double) :: cpu, et
     end subroutine ops_timers_f
 
     subroutine ops_timing_output (file) BIND(C,name='ops_timing_output')
-      use, intrinsic :: ISO_C_BINDING
+      use, intrinsic             :: ISO_C_BINDING
       integer(kind=c_int), value :: file
     end subroutine ops_timing_output
 
@@ -266,22 +263,20 @@ module OPS_Fortran_Declarations
     subroutine ops_fprintf_c (file, line) BIND(C,name='ops_fprintf')
       use ISO_C_BINDING
       integer(kind=c_int), value :: file
-      character(kind=c_char) :: line(*)
+      character(kind=c_char)     :: line(*)
     end subroutine ops_fprintf_c
 
     subroutine ops_print_dat_to_txtfile_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile')
       use ISO_C_BINDING
-      type(c_ptr), value, intent(in) :: dat
+      type(c_ptr), value, intent(in)           :: dat
       character(kind=c_char,len=1), intent(in) :: file_name(*)
     end subroutine ops_print_dat_to_txtfile_c
 
     subroutine ops_print_dat_to_txtfile_core_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile_core')
       use ISO_C_BINDING
-      type(c_ptr), value, intent(in) :: dat
+      type(c_ptr), value, intent(in)           :: dat
       character(kind=c_char,len=1), intent(in) :: file_name(*)
     end subroutine ops_print_dat_to_txtfile_core_c
-
-
 
   end interface
 
@@ -289,11 +284,106 @@ module OPS_Fortran_Declarations
   ! Fortran interfaces for different sized ops declaration routines
   !##################################################################
 
+  interface ops_decl_dat
+    module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4
+  end interface ops_decl_dat
+
+  !interface ops_arg_reduce -- different sizes interfaced to same name
+  !interface ops_arg_dat -- why needed ??
+  !interface ops_arg_dat_opt -- why needed ??
+
+
   !###################################################################
   ! Fortran subroutines that gets called by an OPS Fortran application
   ! - these calls the relevant *_c routine internally where the *_c
   ! routine is bound to the OPS C backend's actual implemented routine
   !###################################################################
+
+  contains
+
+  subroutine ops_init ( diags )
+    integer(4) :: diags
+    integer(4) :: argc = 0
+    call op_init_c ( argc, C_NULL_PTR, diags )
+  end subroutine ops_init
+
+  subroutine ops_exit ( )
+    call ops_exit_c (  )
+  end subroutine ops_exit
+
+  subroutine ops_decl_block ( dims, block, name )
+
+    integer(kind=c_int), value, intent(in) :: dims
+    type(ops_block)                        :: block
+    character(kind=c_char,len=*)           :: name
+
+    block%blockCPtr = ops_decl_block_c ( dims, name//char(0) )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_set variable
+    call c_f_pointer ( block%blockCPtr, block%blockPtr )
+
+  end subroutine ops_decl_block
+
+
+
+  !subroutine ops_decl_stencil
+  !    use, intrinsic :: ISO_C_BINDING
+
+  !    integer(kind=c_int), value               :: dims, points
+  !    type(c_ptr), intent(in), value           :: sten
+  !    character(kind=c_char,len=1), intent(in) :: name(*)
+
+  !  ops_decl_stencil_c ( dims, points, sten, name ) BIND(C,name='ops_decl_stencil')
+
+  !end subroutine ops_decl_stencil
+
+
+
+
+
+
+
+  subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
+
+    type(ops_block), intent(in)                  :: block
+    integer, intent(in)                          :: dim
+    integer(4), dimension(*), intent(in), target :: size
+    integer(4), dimension(*), intent(in), target :: base
+    integer(4), dimension(*), intent(in), target :: d_m
+    integer(4), dimension(*), intent(in), target :: d_p
+    real(8), dimension(*), intent(in), target    :: dat
+    type(ops_dat)                                :: data
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: type
+
+    data%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( dat ), type, 8, name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( data%dataCPtr, data%dataPtr )
+
+  end subroutine ops_decl_dat_real_8
+
+  subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
+
+    type(ops_block), intent(in)                  :: block
+    integer, intent(in)                          :: dim
+    integer(4), dimension(*), intent(in), target :: size
+    integer(4), dimension(*), intent(in), target :: base
+    integer(4), dimension(*), intent(in), target :: d_m
+    integer(4), dimension(*), intent(in), target :: d_p
+    integer(4), dimension(*), intent(in), target :: dat
+    type(ops_dat)                                :: data
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: type
+
+    data%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( dat ), type, 4, name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( data%dataCPtr, data%dataPtr )
+
+  end subroutine ops_decl_dat_integer_4
+
+
 
 
 
