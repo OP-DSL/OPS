@@ -187,7 +187,6 @@ module OPS_Fortran_Declarations
     function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
 
       use, intrinsic :: ISO_C_BINDING
-
       import :: ops_arg
 
       type(ops_arg)                  :: ops_arg_dat_c
@@ -205,7 +204,7 @@ module OPS_Fortran_Declarations
       use, intrinsic :: ISO_C_BINDING
       import :: ops_arg
 
-      type(ops_arg)                  :: ops_arg_dat_c
+      type(ops_arg)                  :: ops_arg_dat_opt_c
       type(c_ptr), value, intent(in) :: dat
       integer(kind=c_int), value     :: dim
       type(c_ptr), value, intent(in) :: sten
@@ -251,7 +250,7 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), value :: file
     end subroutine ops_timing_output
 
-    subroutine ops_diagnostic_output (  ) BIND(C,name='ops_diagnostic_output')
+    subroutine ops_diagnostic_output ( ) BIND(C,name='ops_diagnostic_output')
       use, intrinsic :: ISO_C_BINDING
     end subroutine ops_diagnostic_output
 
@@ -289,8 +288,6 @@ module OPS_Fortran_Declarations
   end interface ops_decl_dat
 
   !interface ops_arg_reduce -- different sizes interfaced to same name
-  !interface ops_arg_dat -- why needed ??
-  !interface ops_arg_dat_opt -- why needed ??
 
 
   !###################################################################
@@ -319,29 +316,24 @@ module OPS_Fortran_Declarations
 
     block%blockCPtr = ops_decl_block_c ( dims, name//char(0) )
 
-    ! convert the generated C pointer to Fortran pointer and store it inside the op_set variable
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_block variable
     call c_f_pointer ( block%blockCPtr, block%blockPtr )
 
   end subroutine ops_decl_block
 
+  subroutine ops_decl_stencil ( dims, points, stencil_data, stencil, name )
 
+    integer, intent(in) :: dims, points
+    integer(4), dimension(*), intent(in), target :: stencil_data
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*):: name
 
-  !subroutine ops_decl_stencil
-  !    use, intrinsic :: ISO_C_BINDING
+    stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_dats ), name//C_NULL_CHAR )
 
-  !    integer(kind=c_int), value               :: dims, points
-  !    type(c_ptr), intent(in), value           :: sten
-  !    character(kind=c_char,len=1), intent(in) :: name(*)
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+    call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
 
-  !  ops_decl_stencil_c ( dims, points, sten, name ) BIND(C,name='ops_decl_stencil')
-
-  !end subroutine ops_decl_stencil
-
-
-
-
-
-
+  end subroutine ops_decl_stencil
 
   subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
 
@@ -384,7 +376,54 @@ module OPS_Fortran_Declarations
   end subroutine ops_decl_dat_integer_4
 
 
+  type(ops_arg) function ops_arg_dat(dat, dim, sten, type, access)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_dat) :: dat
+    integer(kind=c_int) :: dim
+    type(ops_stencil) :: sten
+    character(kind=c_char,len=*) :: type
+    integer(kind=c_int) :: access
+
+    if (dat%dataPtr%dims .ne. dim) then
+      print *, "Wrong dim",dim,dat%dataPtr%dims
+    endif
+    ! warning: access and idx are in FORTRAN style, while the C style is required here
+    ops_arg_dat = ops_arg_dat_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1 )
+
+  end function ops_arg_dat
+
+  type(ops_arg) function ops_arg_dat_opt(dat, dim, sten, type, access, flag)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_dat) :: dat
+    integer(kind=c_int) :: dim, flag
+    type(ops_stencil) :: sten
+    character(kind=c_char,len=*) :: type
+    integer(kind=c_int) :: access
+
+    if (dat%dataPtr%dims .ne. dim) then
+      print *, "Wrong dim",dim,dat%dataPtr%dims
+    endif
+    ! warning: access and idx are in FORTRAN style, while the C style is required here
+    ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1, flag )
+
+  end function ops_arg_dat_opt
 
 
+
+  !ops_reduction -- various versions
+  !ops_timers
+  !ops_timers_core
+  !ops_printf
+  !ops_fprintf
+  !ops_print_dat_to_txtfile
+  !ops_print_dat_to_txtfile_core
 
 end module OPS_Fortran_Declarations
