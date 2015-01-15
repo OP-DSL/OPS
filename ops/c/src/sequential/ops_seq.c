@@ -231,6 +231,7 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
 
 void ops_partition(char* routine)
 {
+  //printf("Partitioning ops_dats\n");
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs)

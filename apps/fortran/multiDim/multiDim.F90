@@ -34,6 +34,7 @@
 
 program MULTIDIM
   use OPS_Fortran_Declarations
+  use OPS_Fortran_RT_Support
   !use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -67,13 +68,16 @@ program MULTIDIM
   !null array
   real(8) temp[allocatable](:)
 
+  ! profiling
+  real(kind=c_double) :: startTime = 0
+  real(kind=c_double) :: endTime = 0
 
 
 
   !-------------------------- Initialisation --------------------------
 
   !OPS initialisation
-  call ops_init(1)
+  call ops_init(2)
 
   !----------------------------OPS Declarations------------------------
 
@@ -87,6 +91,18 @@ program MULTIDIM
   !declare ops_dat with dim = 2
   call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "double", "dat0");
   call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "double", "dat1");
+
+  !decompose the block
+  call ops_partition("2D_BLOCK_DECOMPSE")
+  call ops_diagnostic_output()
+  ! start timer
+  call ops_timers ( startTime )
+
+  call ops_timers ( endTime )
+  !call ops_timing_output (6) ! where is this pringing to ? .. problem in what stdout is in fortran
+  if (ops_is_root() .eq. 1) then
+    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+  end if
 
   call ops_exit( )
 
