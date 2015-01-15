@@ -1,40 +1,39 @@
-/*
-* Open source copyright declaration based on BSD open source template:
-* http://www.opensource.org/licenses/bsd-license.php
-*
-* This file is part of the OPS distribution.
-*
-* Copyright (c) 2013, Mike Giles and others. Please see the AUTHORS file in
-* the main source directory for a full list of copyright holders.
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-* Redistributions of source code must retain the above copyright
-* notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright
-* notice, this list of conditions and the following disclaimer in the
-* documentation and/or other materials provided with the distribution.
-* The name of Mike Giles may not be used to endorse or promote products
-* derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY Mike Giles ''AS IS'' AND ANY
-* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL Mike Giles BE LIABLE FOR ANY
-* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+! Open source copyright declaration based on BSD open source template:
+! http://www.opensource.org/licenses/bsd-license.php
+!
+! This file is part of the OPS distribution.
+!
+! Copyright (c) 2013, Mike Giles and others. Please see the AUTHORS file in
+! the main source directory for a full list of copyright holders.
+! All rights reserved.
+!
+! Redistribution and use in source and binary forms, with or without
+! modification, are permitted provided that the following conditions are met:
+! Redistributions of source code must retain the above copyright
+! notice, this list of conditions and the following disclaimer.
+! Redistributions in binary form must reproduce the above copyright
+! notice, this list of conditions and the following disclaimer in the
+! documentation and/or other materials provided with the distribution.
+! The name of Mike Giles may not be used to endorse or promote products
+! derived from this software without specific prior written permission.
+!
+! THIS SOFTWARE IS PROVIDED BY Mike Giles ''AS IS'' AND ANY
+! EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+! WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+! DISCLAIMED. IN NO EVENT SHALL Mike Giles BE LIABLE FOR ANY
+! DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+! (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+! LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+! ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+! (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+!
 
-/** @brief ops fortran back-end library functions declarations
-  * @author Gihan Mudalige
-  * @details Defines the interoperable data types between OPS-C and OPS-Fortran
-  * and the Fortran interface for OPS declaration functions
-  */
+! @brief ops fortran back-end library functions declarations
+! @author Gihan Mudalige
+! @details Defines the interoperable data types between OPS-C and OPS-Fortran
+! and the Fortran interface for OPS declaration functions
+!
 
 
 module OPS_Fortran_Declarations
@@ -308,9 +307,9 @@ module OPS_Fortran_Declarations
     module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4
   end interface ops_decl_dat
 
-  interface ops_reduction_result
-    module procedure ops_reduction_result_real_8, ops_reduction_result_int_4
-  end interface ops_reduction_result
+  !interface ops_reduction_result
+  !  module procedure ops_reduction_result_real_8, ops_reduction_result_int_4
+  !end interface ops_reduction_result
 
 
 
@@ -322,15 +321,15 @@ module OPS_Fortran_Declarations
 
   contains
 
-  subroutine ops_init ( diags )
-    integer(4) :: diags
-    integer(4) :: argc = 0
-    call op_init_c ( argc, C_NULL_PTR, diags )
-  end subroutine ops_init
+    subroutine ops_init ( diags )
+      integer(4) :: diags
+      integer(4) :: argc = 0
+      call ops_init_c ( argc, C_NULL_PTR, diags )
+    end subroutine ops_init
 
-  subroutine ops_exit ( )
-    call ops_exit_c (  )
-  end subroutine ops_exit
+    subroutine ops_exit ( )
+      call ops_exit_c (  )
+    end subroutine ops_exit
 
   subroutine ops_decl_block ( dims, block, name )
 
@@ -507,21 +506,21 @@ module OPS_Fortran_Declarations
     call ops_print_dat_to_txtfile_core_c (dat%dataCptr, fileName)
   end subroutine ops_print_dat_to_txtfile_core
 
- subroutine ops_reduction_result_real_8 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    real(8), dimension(*), target    :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
-  end subroutine ops_reduction_result_real_8
+ !subroutine ops_reduction_result_real_8 (reduction_handle, var)
+ !   use, intrinsic :: ISO_C_BINDING
+ !   type(ops_reduction) :: reduction_handle
+ !   real(8), dimension(*), target    :: var
+ !   call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
+ ! end subroutine ops_reduction_result_real_8
 
-  subroutine ops_reduction_result_int_4 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    integer(4), dimension(*), target    :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
-  end subroutine ops_reduction_result_int_4
+ ! subroutine ops_reduction_result_int_4 (reduction_handle, var)
+ !   use, intrinsic :: ISO_C_BINDING
+ !   type(ops_reduction) :: reduction_handle
+ !   integer(4), dimension(*), target    :: var
+ !   call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
+ ! end subroutine ops_reduction_result_int_4
 
- !ops_decl_strided_stencil( 2, 3, s2D_00_0P1_0M1, stride2D_y, "self_stride2D_y")
+
  !ops_decl_const -- various versions .. no-ops in ref ?
 
 end module OPS_Fortran_Declarations
