@@ -296,7 +296,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   dat->data_d = NULL;
   dat->user_managed = 1;
   dat->dirty_hd = 0;
-  dat->type = copy_str( type );
+  dat->type = copy_str(type);
   dat->name = copy_str(name);
 
   /* Create a pointer to an item in the ops_dats doubly linked list */

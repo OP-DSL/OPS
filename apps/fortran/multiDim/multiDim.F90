@@ -39,7 +39,54 @@ program MULTIDIM
   use, intrinsic :: ISO_C_BINDING
 
   implicit none
+
+  !initialize sizes using global values
+  integer x_cells /4/
+  integer y_cells /4/
+
+  ! integer references (valid inside the OPS library) for ops_block
+  type(ops_block)   :: grid2D
+
+  !ops_dats
+  type(ops_dat)     :: dat0, dat1
+
+  ! vars for stencils
+  integer s2D_00_arry(2) / 0,0 /
+  type(ops_stencil) :: S2D_00
+
+  ! vars for halo_depths
+  integer d_p(2) /1,1/   !max halo depths for the dat in the possitive direction
+  integer d_m(2) /-1,-1/ !max halo depths for the dat in the negative direction
+
+  !size
+  integer size(2) /4,4/
+
+  !base
+  integer base(2) /0,0/ !size of the dat -- should be identical to the block on which its define on
+
+  !null array
+  real(8) temp[allocatable](:)
+
+
+
+
+  !-------------------------- Initialisation --------------------------
+
+  !OPS initialisation
   call ops_init(1)
+
+  !----------------------------OPS Declarations------------------------
+
+  !declare block
+  call ops_decl_block(2, grid2D, "grid2D")
+
+  !declare stencils
+  call ops_decl_stencil( 2, 1, s2D_00_arry, S2D_00, "00");
+
+  !declare data on blocks
+  !declare ops_dat with dim = 2
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "double", "dat0");
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "double", "dat1");
 
   call ops_exit( )
 

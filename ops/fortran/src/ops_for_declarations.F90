@@ -155,7 +155,7 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in)  :: name(*)
     end function ops_decl_block_c
 
-    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type, type_size, name ) BIND(C,name='ops_decl_dat_char')
+    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
 
       use, intrinsic :: ISO_C_BINDING
 
@@ -351,7 +351,7 @@ module OPS_Fortran_Declarations
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*):: name
 
-    stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_dats ), name//C_NULL_CHAR )
+    stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_data ), name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
     call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
@@ -366,14 +366,14 @@ module OPS_Fortran_Declarations
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*):: name
 
-    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_dats ), c_loc ( stride_data ), name//C_NULL_CHAR )
+    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), c_loc ( stride_data ), name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
     call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
 
   end subroutine ops_decl_strided_stencil
 
-  subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
+  subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
 
     type(ops_block), intent(in)                  :: block
     integer, intent(in)                          :: dim
@@ -381,19 +381,20 @@ module OPS_Fortran_Declarations
     integer(4), dimension(*), intent(in), target :: base
     integer(4), dimension(*), intent(in), target :: d_m
     integer(4), dimension(*), intent(in), target :: d_p
-    real(8), dimension(*), intent(in), target    :: dat
-    type(ops_dat)                                :: data
+    real(8), dimension(*), intent(in), target    :: data
+    type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: type
+    character(kind=c_char,len=*)                 :: typ
 
-    data%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( dat ), type, 8, name//C_NULL_CHAR )
+
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( data%dataCPtr, data%dataPtr )
+    call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
 
   end subroutine ops_decl_dat_real_8
 
-  subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
+  subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
 
     type(ops_block), intent(in)                  :: block
     integer, intent(in)                          :: dim
@@ -401,15 +402,15 @@ module OPS_Fortran_Declarations
     integer(4), dimension(*), intent(in), target :: base
     integer(4), dimension(*), intent(in), target :: d_m
     integer(4), dimension(*), intent(in), target :: d_p
-    integer(4), dimension(*), intent(in), target :: dat
-    type(ops_dat)                                :: data
+    integer(4), dimension(*), intent(in), target :: data
+    type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: type
+    character(kind=c_char,len=*)                 :: typ
 
-    data%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( dat ), type, 4, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( data%dataCPtr, data%dataPtr )
+    call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
 
   end subroutine ops_decl_dat_integer_4
 

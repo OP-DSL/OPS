@@ -19,7 +19,7 @@ endif
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= multiDim_seq
+  TARGETS	:= clean multiDim_seq
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -33,3 +33,10 @@ all: $(TARGETS)
 multiDim_seq: multiDim.F90
 	$(FC) $(OPT) $(FMODS) -c multiDim.F90
 	$(FC) $(OPT) $(FLINK) multiDim.o -o multiDim_seq -lops_for_seq
+
+clean:
+	rm -f *.o
+	rm -f *.mod
+	rm -f $(EXEC)
+	rm -f *~
+	rm -f multiDim_seq
