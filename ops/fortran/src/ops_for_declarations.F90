@@ -184,6 +184,18 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_stencil_c
 
+    type(c_ptr) function ops_decl_strided_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_strided_stencil')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value               :: dims, points
+      type(c_ptr), intent(in), value           :: sten
+      type(c_ptr), intent(in), value           :: stride
+      character(kind=c_char,len=1), intent(in) :: name(*)
+
+    end function ops_decl_strided_stencil_c
+
+
     function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
 
       use, intrinsic :: ISO_C_BINDING
@@ -234,6 +246,15 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), value   :: acc
 
     end function ops_arg_reduce_c
+
+
+    subroutine ops_reduction_result_c (handle, var) BIND(C,name='ops_reduction_result')
+      use, intrinsic      :: ISO_C_BINDING
+      import :: ops_reduction
+      type(c_ptr), value, intent(in) :: handle
+      type(c_ptr)                    :: var
+    end subroutine ops_reduction_result_c
+
 
     subroutine ops_timers_core_f ( cpu, et ) BIND(C,name='ops_timers_core')
       use, intrinsic      :: ISO_C_BINDING
@@ -287,7 +308,10 @@ module OPS_Fortran_Declarations
     module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4
   end interface ops_decl_dat
 
-  !interface ops_arg_reduce -- different sizes interfaced to same name
+  interface ops_reduction_result
+    module procedure ops_reduction_result_real_8, ops_reduction_result_int_4
+  end interface ops_reduction_result
+
 
 
   !###################################################################
@@ -334,6 +358,21 @@ module OPS_Fortran_Declarations
     call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
 
   end subroutine ops_decl_stencil
+
+  subroutine ops_decl_strided_stencil ( dims, points, stencil_data, stride_data, stencil, name )
+
+    integer, intent(in) :: dims, points
+    integer(4), dimension(*), intent(in), target :: stencil_data
+    integer(4), dimension(*), intent(in), target :: stride_data
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*):: name
+
+    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_dats ), c_loc ( stride_data ), name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+    call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
+
+  end subroutine ops_decl_strided_stencil
 
   subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, dat, data, type, name )
 
@@ -411,19 +450,78 @@ module OPS_Fortran_Declarations
     if (dat%dataPtr%dims .ne. dim) then
       print *, "Wrong dim",dim,dat%dataPtr%dims
     endif
-    ! warning: access and idx are in FORTRAN style, while the C style is required here
+    ! warning: access is in FORTRAN style, while the C style is required here
     ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1, flag )
 
   end function ops_arg_dat_opt
 
 
+  type(ops_arg) function ops_arg_reduce(handle, dim, type, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_reduction) :: handle
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: type
+    integer(kind=c_int) :: access
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, type, access-1 )
 
-  !ops_reduction -- various versions
-  !ops_timers
-  !ops_timers_core
-  !ops_printf
-  !ops_fprintf
-  !ops_print_dat_to_txtfile
-  !ops_print_dat_to_txtfile_core
+  end function ops_arg_reduce
+
+  subroutine ops_timers ( et )
+    real(kind=c_double) :: et
+    real(kind=c_double) :: cpu = 0
+    call ops_timers_f (cpu, et)
+  end subroutine ops_timers
+
+  subroutine ops_timers_core ( et )
+    real(kind=c_double) :: et
+    real(kind=c_double) :: cpu = 0
+    call ops_timers_core_f (cpu, et)
+  end subroutine ops_timers_core
+
+  subroutine ops_printf (line)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    character(kind=c_char,len=*) :: line
+    call ops_printf_c (line//C_NULL_CHAR)
+  end subroutine
+
+  subroutine ops_fprintf (file, line)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    character(kind=c_char,len=*) :: line
+    integer(kind=c_int) :: file
+    call ops_fprintf_c (file, line//C_NULL_CHAR)
+  end subroutine
+
+  subroutine ops_print_dat_to_txtfile (dat, fileName)
+    type(ops_dat) :: dat
+    character(len=*) :: fileName
+    call ops_print_dat_to_txtfile_c (dat%dataCptr, fileName)
+  end subroutine ops_print_dat_to_txtfile
+
+  subroutine ops_print_dat_to_txtfile_core (dat, fileName)
+    type(ops_dat) :: dat
+    character(len=*) :: fileName
+    call ops_print_dat_to_txtfile_core_c (dat%dataCptr, fileName)
+  end subroutine ops_print_dat_to_txtfile_core
+
+ subroutine ops_reduction_result_real_8 (reduction_handle, var)
+    use, intrinsic :: ISO_C_BINDING
+    type(ops_reduction) :: reduction_handle
+    real(8), dimension(*), target    :: var
+    call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
+  end subroutine ops_reduction_result_real_8
+
+  subroutine ops_reduction_result_int_4 (reduction_handle, var)
+    use, intrinsic :: ISO_C_BINDING
+    type(ops_reduction) :: reduction_handle
+    integer(4), dimension(*), target    :: var
+    call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
+  end subroutine ops_reduction_result_int_4
+
+ !ops_decl_strided_stencil( 2, 3, s2D_00_0P1_0M1, stride2D_y, "self_stride2D_y")
+ !ops_decl_const -- various versions .. no-ops in ref ?
 
 end module OPS_Fortran_Declarations
