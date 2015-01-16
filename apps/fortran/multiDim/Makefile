@@ -2,6 +2,7 @@ OPS = $(OPS_INSTALL_PATH)
 F_OPS = $(OPS)/fortran
 F_OPS_LIB = $(F_OPS)/lib
 F_OPS_MOD = $(F_OPS)/mod/$(OPS_COMPILER)
+F_OPS_INC = $(F_OPS)/include
 
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc -std=c99
@@ -26,13 +27,13 @@ print:
 endif
 
 FLINK = -L$(F_OPS_LIB)
-FMODS = -I$(F_OPS_MOD)
+FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 
 all: $(TARGETS)
 
-multiDim_seq: multiDim.F90
-	$(FC) $(OPT) $(FMODS) -c multiDim.F90
-	$(FC) $(OPT) $(FLINK) multiDim.o -o multiDim_seq -lops_for_seq
+multiDim_seq: multiDim.F90 multiDim_seqfun.F90
+	$(FC) $(OPT) $(FMODS) -c multiDim_seqfun.F90 multiDim.F90
+	$(FC) $(OPT) $(FLINK) multiDim.o multiDim_seqfun.o -o multiDim_seq -lops_for_seq
 
 clean:
 	rm -f *.o

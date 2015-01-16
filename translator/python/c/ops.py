@@ -29,16 +29,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-OPS source code transformation tool
+OPS source code transformation tool (for the C/C++ API)
 
 This tool parses the user's original source code to produce
 target-specific code to execute the user's kernel functions.
 
 This prototype is written in Python
 
-usage: ./ops 'file1','file2',...
+usage: ./ops.py file1, file2 ,...
 
 This takes as input
 
@@ -51,7 +50,7 @@ file1_ops.cpp, file2_ops.cpp, ...
 then calls a number of target-specific code generators
 to produce individual kernel files of the form
 
-xxx_seq_kernel.cpp -- for single threaded x86 execution
+xxx_seq_kernel.cpp -- for single threaded x86 execution (also used for MPI)
 xxx_omp_kernel.cpp -- for OpenMP x86 execution
 xxx_kernel.cu -- for CUDA execution
 
@@ -61,12 +60,7 @@ import sys
 import re
 import datetime
 
-# import SEQ, OpenMP and CUDA code generation functions
-
-#from ops_gen_seq_macro import ops_gen_seq_macro # deprecated .. use ops_gen_mpi
-#from ops_gen_openmp_macro import ops_gen_openmp_macro # deprecated .. use ops_gen_mpi_openmp
-#from ops_gen_cuda import ops_gen_cuda # deprecated .. use ops_gen_mpi_cuda
-
+"""import SEQ, OpenMP and CUDA code generation functions"""
 from ops_gen_mpi import ops_gen_mpi
 from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda

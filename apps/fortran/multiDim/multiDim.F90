@@ -32,9 +32,12 @@
 ! @brief test application for multi-dimensionsl ops_dats functionality
 ! @author Gihan Mudalige
 
+
+
 program MULTIDIM
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
+  use multiDim_seq
   !use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -73,7 +76,7 @@ program MULTIDIM
   real(kind=c_double) :: endTime = 0
 
   !iteration range
-  integer iter_range /0,4,0,4/
+  integer iter_range(4) /0,4,0,4/
 
 
   !-------------------------- Initialisation --------------------------
@@ -91,8 +94,8 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "double", "dat0");
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "double", "dat1");
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "real(8)", "dat0");
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "real(8)", "dat1");
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")
@@ -100,7 +103,9 @@ program MULTIDIM
   ! start timer
   call ops_timers ( startTime )
 
-
+  !call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE),
+  !             & ops_arg_idx());
 
 
 
