@@ -806,6 +806,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
 void ops_timing_output(FILE *stream)
 {
+  if (stream == NULL)
+    stream = stdout;
+
   if ( OPS_diags > 1 ) {
     int maxlen = 0;
     for (int i = 0; i < OPS_kern_max; i++) {

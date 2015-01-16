@@ -72,6 +72,8 @@ program MULTIDIM
   real(kind=c_double) :: startTime = 0
   real(kind=c_double) :: endTime = 0
 
+  !iteration range
+  integer iter_range /0,4,0,4/
 
 
   !-------------------------- Initialisation --------------------------
@@ -98,7 +100,13 @@ program MULTIDIM
   ! start timer
   call ops_timers ( startTime )
 
+
+
+
+
   call ops_timers ( endTime )
+  call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+
   !call ops_timing_output (6) ! where is this pringing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
