@@ -109,7 +109,7 @@ module OPS_Fortran_Declarations
   end type ops_stencil
 
   type, BIND(C) :: ops_arg
-    type(c_ptr)         :: dataset      ! dataset
+    type(c_ptr)         :: dat          ! dat
     type(c_ptr)         :: stencil      ! the stencil
     integer(kind=c_int) :: dim          ! dimension of data
     type(c_ptr)         :: data         ! data on host
@@ -462,6 +462,12 @@ module OPS_Fortran_Declarations
     ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1, flag )
 
   end function ops_arg_dat_opt
+
+  type(ops_arg) function ops_arg_idx()
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    ops_arg_idx = ops_arg_idx_c ()
+  end function ops_arg_idx
 
 
   type(ops_arg) function ops_arg_reduce(handle, dim, type, access)

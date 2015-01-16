@@ -15,7 +15,8 @@ subroutine multidim_kernel(val, idx, multi_d0, xdim0)
   REAL(kind=8)   , DIMENSION(1) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
 
-  ! These and the function signature can be code generated
+  ! These vars and them appearing in the
+  ! function signature ned to be code generated
   INTEGER multi_d0
   INTEGER xdim0
 
@@ -26,19 +27,52 @@ end subroutine
 
 
 ! host stub routine
-SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, iter_range, &
+SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   & opsArg1, &
-  & opsArg2 &
- )
+  & opsArg2 )
 
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
-  INTEGER(kind=4), INTENT(IN):: dim
-  INTEGER(kind=4)   , DIMENSION(4), INTENT(IN) :: iter_range
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   type ( ops_arg )  , INTENT(IN) :: opsArg2
 
+  type ( ops_dat_core ) , POINTER :: opsDatCore
+  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  integer(kind=4) :: opsDat1Cardinality
+
+
+  integer start(2) /0,0/
+  integer end(2) /0,0/
+  integer base0
+  integer dat0 /1/
+  integer multi_d0 /2/
+  integer xdim0 /10/
+
+  integer(kind=4) :: i1,i2,n
+
+  ! no OPS_MPI #defined
+  DO n = 1, 2
+    !write (*,*) n,"  ",2*n-1,2*n
+    start(n) = range(2*n-1)
+    end(n)   = range(2*n);
+  END DO
+
+  !dat0 = args[0].dat->elem_size;
+
+  !set up initial pointers and exchange halos if necessary
+  !base0 = dat0 * 1 *
+
+
+  opsDat1Cardinality = opsArg1%dim * getDatSizeFromOpsArg(opsArg1)
+  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+
+  !CALL op_wrap_adt_calc( opDat1Local
+  write (*,*) getDatSizeFromOpsArg(opsArg1)
+
+  !call multidim_kernel(opsDat1Local, start, multi_d0, xdim0 );
 
 END SUBROUTINE
 END MODULE

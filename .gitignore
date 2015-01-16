@@ -16,7 +16,9 @@ cloverleaf_mpi_opencl
 cloverleaf_dev_seq
 cloverleaf_dev_mpi
 *.n001.*
-ops/lib
+ops/c/lib
+ops/fortran/lib
+ops/fortran/mod
 mblock_dev*
 mblock_seq
 mblock_mpi*
@@ -34,3 +36,6 @@ poisson_openacc
 *.optrpt
 *.h5
 *.h5.*
+*.mod
+*.dat
+*.txt

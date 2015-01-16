@@ -55,7 +55,7 @@ program MULTIDIM
   type(ops_dat)     :: dat0, dat1
 
   ! vars for stencils
-  integer s2D_00_arry(2) / 0,0 /
+  integer s2D_00_arry(2) /0,0/
   type(ops_stencil) :: S2D_00
 
   ! vars for halo_depths
@@ -63,10 +63,10 @@ program MULTIDIM
   integer d_m(2) /-1,-1/ !max halo depths for the dat in the negative direction
 
   !size
-  integer size(2) /4,4/
+  integer size(2) /4,4/ !size of the dat -- should be identical to the block on which its define on
 
   !base
-  integer base(2) /0,0/ !size of the dat -- should be identical to the block on which its define on
+  integer base(2) /0,0/ ! this should be in fortran indexing
 
   !null array
   real(8) temp[allocatable](:)
@@ -76,7 +76,10 @@ program MULTIDIM
   real(kind=c_double) :: endTime = 0
 
   !iteration range
-  integer iter_range(4) /0,4,0,4/
+  !iterange needs to be fortran indexed here
+  ! inclusive indexing for both min and max points in the range
+  !.. but internally will convert to c index
+  integer iter_range(4) /1,4,1,4/
 
 
   !-------------------------- Initialisation --------------------------
@@ -94,8 +97,8 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "real(8)", "dat0");
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "real(8)", "dat1");
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "double", "dat0"); ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "double", "dat1"); ! "double" should be "read(8)"
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")
@@ -115,7 +118,7 @@ program MULTIDIM
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat0, "multidim.dat");
 
-  !call ops_timing_output (6) ! where is this pringing to ? .. problem in what stdout is in fortran
+  !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
   end if

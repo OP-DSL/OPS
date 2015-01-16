@@ -157,3 +157,12 @@ void ops_timers(double * cpu, double * et)
 {
     ops_timers_core(cpu,et);
 }
+
+int getDatSizeFromOpsArg (ops_arg * arg)
+{
+  int size = 0;
+  for (int i=0; i<arg->dat->block->dims; i++)
+    size = size*arg->dat->size[i];
+  printf("size = %d\n",size);
+  return arg->opt ? size : 0;
+}

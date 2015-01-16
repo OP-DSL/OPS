@@ -60,7 +60,7 @@ import sys
 import re
 import datetime
 
-"""import SEQ, OpenMP and CUDA code generation functions"""
+"""import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
 from ops_gen_mpi import ops_gen_mpi
 from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
