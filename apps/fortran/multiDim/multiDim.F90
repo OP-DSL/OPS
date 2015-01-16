@@ -44,6 +44,7 @@ program MULTIDIM
 
   implicit none
 
+  intrinsic :: sqrt, real
   !initialize sizes using global values
   integer x_cells /4/
   integer y_cells /4/

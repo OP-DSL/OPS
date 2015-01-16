@@ -153,16 +153,15 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_
   }
 }
 
-void ops_timers(double * cpu, double * et)
-{
+void ops_timers(double * cpu, double * et){
     ops_timers_core(cpu,et);
 }
 
-int getDatSizeFromOpsArg (ops_arg * arg)
-{
-  int size = 0;
-  for (int i=0; i<arg->dat->block->dims; i++)
-    size = size*arg->dat->size[i];
-  printf("size = %d\n",size);
-  return arg->opt ? size : 0;
+int getDatSizeFromOpsArg (ops_arg * arg){
+  int size = arg->dat->size[0];
+  for (int i=1; i<arg->dat->block->dims; i++) {
+    size = size * arg->dat->size[i];
+    printf("arg->dat->size[%d]= %d\n",i,arg->dat->size[i]);
+  }
+  return size;
 }

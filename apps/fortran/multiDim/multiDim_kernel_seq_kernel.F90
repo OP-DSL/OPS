@@ -5,6 +5,7 @@
 MODULE MULTIDIM_KERNEL_MODULE
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
+  use ISO_C_BINDING
 
 #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
 
@@ -20,8 +21,9 @@ subroutine multidim_kernel(val, idx, multi_d0, xdim0)
   INTEGER multi_d0
   INTEGER xdim0
 
-  val(OPS_ACC_MD0(0,0,0)) = idx(0)
-  val(OPS_ACC_MD0(1,0,0)) = idx(1)
+  val(OPS_ACC_MD0(0,0,0)+1) = idx(0+1)
+  val(OPS_ACC_MD0(1,0,0)+1) = idx(1+1)
+
 end subroutine
 
 
@@ -39,7 +41,6 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   type ( ops_arg )  , INTENT(IN) :: opsArg2
 
-  type ( ops_dat_core ) , POINTER :: opsDatCore
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
 
@@ -66,13 +67,14 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   !base0 = dat0 * 1 *
 
 
-  opsDat1Cardinality = opsArg1%dim * getDatSizeFromOpsArg(opsArg1)
+  opsDat1Cardinality = 6 !opsArg1%dim * getDatSizeFromOpsArg(opsArg1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
   !CALL op_wrap_adt_calc( opDat1Local
   write (*,*) getDatSizeFromOpsArg(opsArg1)
+  write (*,*) opsArg1%dim
 
-  !call multidim_kernel(opsDat1Local, start, multi_d0, xdim0 );
+  call multidim_kernel(opsDat1Local, start, multi_d0, xdim0 );
 
 END SUBROUTINE
 END MODULE
