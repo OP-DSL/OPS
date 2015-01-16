@@ -32,8 +32,8 @@ FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 all: $(TARGETS)
 
 multiDim_seq: multiDim.F90 multiDim_seqfun.F90
-	$(FC) $(OPT) $(FMODS) -c multiDim_seqfun.F90 multiDim.F90
-	$(FC) $(OPT) $(FLINK) multiDim.o multiDim_seqfun.o -o multiDim_seq -lops_for_seq
+	$(FC) $(OPT) $(FMODS) -c multiDim_seqfun.F90 multiDim_kernel_seq_kernel.F90 multiDim.F90
+	$(FC) $(OPT) $(FLINK) multiDim.o multiDim_kernel_seq_kernel.o -o multiDim_seq -lops_for_seq
 
 clean:
 	rm -f *.o

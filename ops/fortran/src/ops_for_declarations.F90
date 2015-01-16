@@ -43,6 +43,14 @@ module OPS_Fortran_Declarations
   use cudafor
 #endif
 
+  ! accessing operation codes
+  integer(c_int) :: OPS_READ = 1
+  integer(c_int) :: OPS_WRITE = 2
+  integer(c_int) :: OPS_RW = 3
+  integer(c_int) :: OPS_INC = 4
+  integer(c_int) :: OPS_MIN = 5
+  integer(c_int) :: OPS_MAX = 6
+
 !################################################
 ! Inteoperable data types for in ops_lib_core.h
 !################################################

@@ -37,7 +37,7 @@
 program MULTIDIM
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
-  use multiDim_seq
+  use MULTIDIM_KERNEL_MODULE
   !use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -107,6 +107,9 @@ program MULTIDIM
   !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE),
   !             & ops_arg_idx());
 
+  call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
+               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
+               & ops_arg_idx());
 
 
   call ops_timers ( endTime )
