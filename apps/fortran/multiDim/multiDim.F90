@@ -38,6 +38,8 @@ program MULTIDIM
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
   use MULTIDIM_KERNEL_MODULE
+  use MULTIDIM_PRINT_KERNEL_MODULE
+  use MULTIDIM_COPY_KERNEL_MODULE
   !use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -115,8 +117,16 @@ program MULTIDIM
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                & ops_arg_idx());
 
+  call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
+               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
+               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+
+
+  !call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
   call ops_timers ( endTime )
+  call ops_print_dat_to_txtfile(dat1, "multidim.dat");
   call ops_print_dat_to_txtfile(dat0, "multidim.dat");
 
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran

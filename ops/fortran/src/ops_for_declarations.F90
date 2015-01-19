@@ -295,13 +295,15 @@ module OPS_Fortran_Declarations
 
     subroutine ops_print_dat_to_txtfile_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile')
       use ISO_C_BINDING
-      type(c_ptr), value, intent(in)           :: dat
+      import :: ops_dat_core
+      type(ops_dat_core) :: dat
       character(kind=c_char,len=1), intent(in) :: file_name(*)
     end subroutine ops_print_dat_to_txtfile_c
 
     subroutine ops_print_dat_to_txtfile_core_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile_core')
       use ISO_C_BINDING
-      type(c_ptr), value, intent(in)           :: dat
+      import :: ops_dat_core
+      type(ops_dat_core) :: dat
       character(kind=c_char,len=1), intent(in) :: file_name(*)
     end subroutine ops_print_dat_to_txtfile_core_c
 
@@ -521,13 +523,13 @@ module OPS_Fortran_Declarations
   subroutine ops_print_dat_to_txtfile (dat, fileName)
     type(ops_dat) :: dat
     character(len=*) :: fileName
-    call ops_print_dat_to_txtfile_c (dat%dataCptr, fileName)
+    call ops_print_dat_to_txtfile_c (dat%dataPtr, fileName)
   end subroutine ops_print_dat_to_txtfile
 
   subroutine ops_print_dat_to_txtfile_core (dat, fileName)
     type(ops_dat) :: dat
     character(len=*) :: fileName
-    call ops_print_dat_to_txtfile_core_c (dat%dataCptr, fileName)
+    call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName)
   end subroutine ops_print_dat_to_txtfile_core
 
  !subroutine ops_reduction_result_real_8 (reduction_handle, var)
