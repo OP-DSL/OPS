@@ -7,26 +7,45 @@ MODULE MULTIDIM_KERNEL_MODULE
   use OPS_Fortran_RT_Support
   use ISO_C_BINDING
 
-#define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))
+  INTEGER(KIND=4) xdim1
+  INTEGER(KIND=4) multi_d1
+#define OPS_ACC_MD1(d,x,y) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1))
 
 contains
 ! user function
-subroutine multidim_kernel(val, idx, multi_d0, xdim0)
+subroutine multidim_kernel(val, idx)
   IMPLICIT NONE
-  REAL(kind=8)   , DIMENSION(1) :: val
+  REAL   (kind=8), DIMENSION(2) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
+  !write (*,*) val(OPS_ACC_MD1(0,0,0)),val(OPS_ACC_MD1(1,0,0))
+  val(OPS_ACC_MD1(0,0,0)) = idx(1)
+  val(OPS_ACC_MD1(1,0,0)) = idx(2)
+  !write (*,*) val(OPS_ACC_MD1(0,0,0)),val(OPS_ACC_MD1(1,0,0))
+end subroutine
 
-  ! These vars and them appearing in the
-  ! function signature ned to be code generated
-  INTEGER multi_d0
-  INTEGER xdim0
-
-  val(OPS_ACC_MD0(0,0,0)+1) = idx(0+1)
-  val(OPS_ACC_MD0(1,0,0)+1) = idx(1+1)
-
+subroutine multidim_print_kernel(val)
+  IMPLICIT NONE
+  REAL   (kind=8), DIMENSION(2) :: val
+  write (*,*) val(OPS_ACC_MD1(0,0,0)),val(OPS_ACC_MD1(1,0,0))
 end subroutine
 
 
+subroutine multidim_kernel_wrap(opsDat1Local, idx, dat1_base, n_x, n_y)
+  IMPLICIT NONE
+  real(8) opsDat1Local(*)
+  integer(4) idx(2)
+  integer dat1_base,n_x,n_y
+  call multidim_kernel(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2), idx);
+end subroutine
+
+
+subroutine multidim_print_kernel_wrap(opsDat1Local, idx, dat1_base, n_x, n_y)
+  IMPLICIT NONE
+  real(8) opsDat1Local(*)
+  integer(4) idx(2)
+  integer dat1_base,n_x,n_y
+  call multidim_print_kernel(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2));
+end subroutine
 
 ! host stub routine
 SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
@@ -43,23 +62,30 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
 
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4) :: dat1_base
+
 
 
   integer start(2) /0,0/
   integer end(2) /0,0/
-  integer base0
-  integer dat0 /1/
-  integer multi_d0 /2/
-  integer xdim0 /10/
+  integer arg_idx(2) /0,0/
+  integer ydim1
+  integer n_x, n_y, count
+  integer base
 
   integer(kind=4) :: i1,i2,n
 
   ! no OPS_MPI #defined
   DO n = 1, 2
-    !write (*,*) n,"  ",2*n-1,2*n
+    write (*,*) n,"  ",2*n-1,2*n
     start(n) = range(2*n-1)
     end(n)   = range(2*n);
   END DO
+
+  arg_idx(1) = start(1)
+  arg_idx(2) = start(2)
+
 
   !dat0 = args[0].dat->elem_size;
 
@@ -67,14 +93,48 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   !base0 = dat0 * 1 *
 
 
-  opsDat1Cardinality = 6 !opsArg1%dim * getDatSizeFromOpsArg(opsArg1)
+  !opsDat => opsArg1%dat
+
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/2/)) !2 here is dimension of block
+  xdim1 = dat1_size(1)
+  ydim1 = dat1_size(2)
+  multi_d1 = 2 ! dimension of the dat
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,dim)
+
+  opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
-  !CALL op_wrap_adt_calc( opDat1Local
-  write (*,*) getDatSizeFromOpsArg(opsArg1)
-  write (*,*) opsArg1%dim
 
-  call multidim_kernel(opsDat1Local, start, multi_d0, xdim0 );
+  !write (*,*) opsArg1%dim
+  !write (*,*) dat1_size
+  write (*,*) dat1_base/8 ! 8 = sizeof(real)
+  !write (*,*) dim
+  base = dat1_base/8 + 1
+  DO n_y = start(2), end(2)
+    arg_idx(2) = n_y
+    DO n_x = start(1), end(1)
+      arg_idx(1) = n_x
+      call multidim_kernel_wrap(opsDat1Local,arg_idx,dat1_base,n_x,n_y)
+    end DO
+  end DO
+
+  DO n_y = start(2), end(2)
+    arg_idx(2) = n_y
+    DO n_x = start(1), end(1)
+      arg_idx(1) = n_x
+      call multidim_print_kernel_wrap(opsDat1Local,arg_idx,dat1_base,n_x,n_y)
+    end DO
+  end DO
+
+  !count = 0
+  !DO n_y = start(2), end(2)
+  !  DO n_x = start(1), end(1)
+  !    print *, opsDat1Local(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2))
+  !  end DO
+  !write  (*,*) opsDat1Local
+  !end DO
+
+
 
 END SUBROUTINE
 END MODULE

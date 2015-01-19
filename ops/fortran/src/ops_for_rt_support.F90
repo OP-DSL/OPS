@@ -62,10 +62,18 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
   end function
 
-  integer(kind=c_int) function getDatSizeFromOpsArg (arg) BIND(C,name='getDatSizeFromOpsArg')
+  type(c_ptr) function getDatSizeFromOpsArg (arg) BIND(C,name='getDatSizeFromOpsArg')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     type(ops_arg) :: arg
+  end function
+
+  integer function getDatBaseFromOpsArg (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+    integer(4), dimension(*), intent(in), target :: start
+    integer(kind=c_int), value, intent(in)    :: dim
   end function
 
   end interface

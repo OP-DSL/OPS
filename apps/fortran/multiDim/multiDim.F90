@@ -67,7 +67,7 @@ program MULTIDIM
   integer size(2) /4,4/ !size of the dat -- should be identical to the block on which its define on
 
   !base
-  integer base(2) /0,0/ ! this should be in fortran indexing
+  integer base(2) /1,1/ ! this is in fortran indexing
 
   !null array
   real(8) temp[allocatable](:)

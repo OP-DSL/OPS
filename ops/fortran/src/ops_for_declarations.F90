@@ -386,7 +386,7 @@ module OPS_Fortran_Declarations
     type(ops_block), intent(in)                  :: block
     integer, intent(in)                          :: dim
     integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*), intent(in), target :: base
+    integer(4), dimension(*),             target :: base
     integer(4), dimension(*), intent(in), target :: d_m
     integer(4), dimension(*), intent(in), target :: d_p
     real(8), dimension(*), intent(in), target    :: data
@@ -394,6 +394,10 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
 
+    integer d;
+    DO d = 1,2
+      base(d) = base(d)-1
+    end DO
 
     dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
@@ -407,13 +411,18 @@ module OPS_Fortran_Declarations
     type(ops_block), intent(in)                  :: block
     integer, intent(in)                          :: dim
     integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*), intent(in), target :: base
+    integer(4), dimension(*),             target :: base
     integer(4), dimension(*), intent(in), target :: d_m
     integer(4), dimension(*), intent(in), target :: d_p
     integer(4), dimension(*), intent(in), target :: data
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
+
+    integer d;
+    DO d = 1,2
+      base(d) = base(d)-1
+    end DO
 
     dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
