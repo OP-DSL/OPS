@@ -16,7 +16,7 @@ MODULE MULTIDIM_COPY_KERNEL_MODULE
 
 contains
 ! user function
-
+!DEC$ ATTRIBUTES FORCEINLINE :: multidim_copy_kernel
 subroutine multidim_copy_kernel(val1, val2)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2) :: val1
@@ -36,10 +36,10 @@ subroutine multidim_copy_kernel_wrap(opsDat1Local, opsDat2Local, dat1_base, dat2
   integer dat2_base
 
   DO n_y = start(2), end(2)
-
+    !DIR$ SIMD
     DO n_x = start(1), end(1)
       !write (*,*) (dat1_base + (n_x-1)*2 + (n_y-1)*xdim1*2 ), n_x, n_y, xdim1
-      write (*,*) (dat2_base + (n_x-1)*2 + (n_y-1)*xdim2*2 ), n_x, n_y, xdim2
+      !write (*,*) (dat2_base + (n_x-1)*2 + (n_y-1)*xdim2*2 ), n_x, n_y, xdim2
       call multidim_copy_kernel(opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
                               & opsDat2Local(dat2_base+(n_x-1)*2 + (n_y-1)*xdim2*2));
     end DO
