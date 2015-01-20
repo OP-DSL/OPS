@@ -157,13 +157,16 @@ void ops_timers(double * cpu, double * et){
     ops_timers_core(cpu,et);
 }
 
-/* Functions required only use in the Fortran Backend */
+
+/************* Functions only use in the Fortran Backend ************/
+
 int* getDatSizeFromOpsArg (ops_arg * arg){
   return arg->dat->size;
 }
 
 int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
 
+  /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
 
@@ -171,7 +174,7 @@ int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
          start[0],start[1],arg->dat->base[0],dim);
 
   int dat = arg->dat->elem_size;
-
+  printf("dat = %d\n",dat);
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
@@ -180,7 +183,10 @@ int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
   base = base+ dat *
     arg->dat->size[0] *
     (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
-  //double *p_a0 = (double *)((char *)arg->data + base0);
 
-  return base;
+  /*revert to Fortran indexing*/
+  start[0] += 1;
+  start[1] += 1;
+
+  return base/(dat/dim) + dim;
 }

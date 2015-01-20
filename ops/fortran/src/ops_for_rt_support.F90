@@ -74,6 +74,7 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
     integer(4), dimension(*), intent(in), target :: start
     integer(kind=c_int), value, intent(in)    :: dim
+
   end function
 
   end interface

@@ -28,12 +28,16 @@ subroutine multidim_kernel_wrap(opsDat1Local, idx, dat1_base, start, end)
   integer(4) start(2)
   integer(4) end(2)
   integer dat1_base,n_x,n_y
+  integer base
+  write (*,*) "start = ", start(1), start(2)
+  write (*,*) "end = ", end(1), end(2)
 
   DO n_y = start(2), end(2)
     idx(2) = n_y
     DO n_x = start(1), end(1)
       idx(1) = n_x
-      call multidim_kernel(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2), idx);
+      !write (*,*) (dat1_base + (n_x-1)*2 + (n_y-1)*xdim1*2 ), n_x, n_y, xdim1
+      call multidim_kernel(opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), idx);
     end DO
   end DO
 
@@ -59,18 +63,18 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
 
 
 
-  integer start(2) /0,0/
-  integer end(2) /0,0/
-  integer arg_idx(2) /0,0/
+  integer start(2) !/0,0/
+  integer end(2) !/0,0/
+  integer arg_idx(2) !/0,0/
   integer ydim1
   integer n_x, n_y, count
   integer base
 
-  integer(kind=4) :: i1,i2,n
+  integer(kind=4) :: n
 
   ! no OPS_MPI #defined
   DO n = 1, 2
-    !write (*,*) n,"  ",2*n-1,2*n
+    !write (*,*) n,"  ",range(2*n-1),range(2*n)
     start(n) = range(2*n-1)
     end(n)   = range(2*n);
   END DO
@@ -78,22 +82,15 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   arg_idx(1) = start(1)
   arg_idx(2) = start(2)
 
+
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/2/)) !2 here is dimension of block
   xdim1 = dat1_size(1)
   ydim1 = dat1_size(2)
   multi_d1 = 2 ! dimension of the dat
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,dim)
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
 
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
-
-
-  !write (*,*) opsArg1%dim
-  !write (*,*) dat1_size
-
-  dat1_base = dat1_base/8
-
-  write (*,*) dat1_base ! 8 = sizeof(real)
 
   call multidim_kernel_wrap(opsDat1Local,arg_idx,dat1_base,start,end)
 

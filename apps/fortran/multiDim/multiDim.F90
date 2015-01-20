@@ -69,7 +69,8 @@ program MULTIDIM
   integer size(2) /4,4/ !size of the dat -- should be identical to the block on which its define on
 
   !base
-  integer base(2) /1,1/ ! this is in fortran indexing
+  integer base1(2) /1,1/ ! this is in fortran indexing
+  integer base2(2) /1,1/ ! this is in fortran indexing
 
   !null array
   real(8) temp[allocatable](:)
@@ -100,8 +101,8 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat0, "double", "dat0"); ! "double" should be "read(8)"
-  call ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp,  dat1, "double", "dat1"); ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0"); ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1"); ! "double" should be "read(8)"
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")

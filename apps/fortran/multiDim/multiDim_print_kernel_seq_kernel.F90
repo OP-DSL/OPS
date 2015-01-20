@@ -73,16 +73,14 @@ SUBROUTINE multidim_print_kernel_host( userSubroutine, block, dim, range, &
   arg_idx(1) = start(1)
   arg_idx(2) = start(2)
 
-  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/2/)) !2 here is dimension of block
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/)) !2 here is dimension of block
   xdim1 = dat1_size(1)
   ydim1 = dat1_size(2)
   multi_d1 = 2 ! dimension of the dat
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,dim)
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
 
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
-
-  dat1_base = dat1_base/8 + 1
 
   call multidim_print_kernel_wrap(opsDat1Local,dat1_base,start,end)
 
