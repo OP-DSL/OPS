@@ -317,7 +317,9 @@ def main():
       ninit = ninit + inits
       nexit = nexit + exits
 
+      #
       # parse and process constants
+      #
 
       const_args = ops_decl_const_parse(text)
       print str(len(const_args))
@@ -453,7 +455,7 @@ def main():
                     kernels[nk]['dims'][arg] == dims[arg] and \
                     kernels[nk]['typs'][arg] == typs[arg] and \
                     kernels[nk]['accs'][arg] == accs[arg]
-#                    kernels[nk]['var'][arg] == var[arg] and \
+                    #kernels[nk]['var'][arg] == var[arg] and \
             if rep2:
               print 'repeated kernel with compatible arguments: ' + \
                     kernels[nk]['name'],
@@ -469,7 +471,7 @@ def main():
         #
 
         ##
-        ##todo -- not sure what are interesting here
+        ##todo -- not sure what will be interesting here
         ##
 
         #
