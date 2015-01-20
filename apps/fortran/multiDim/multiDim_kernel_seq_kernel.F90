@@ -28,12 +28,11 @@ subroutine multidim_kernel_wrap(opsDat1Local, idx, dat1_base, start, end)
   integer(4) start(2)
   integer(4) end(2)
   integer dat1_base,n_x,n_y
-  integer base
-  write (*,*) "start = ", start(1), start(2)
-  write (*,*) "end = ", end(1), end(2)
+
 
   DO n_y = start(2), end(2)
     idx(2) = n_y
+    !DIR$ SIMD
     DO n_x = start(1), end(1)
       idx(1) = n_x
       !write (*,*) (dat1_base + (n_x-1)*2 + (n_y-1)*xdim1*2 ), n_x, n_y, xdim1
@@ -61,8 +60,6 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
 
-
-
   integer start(2) !/0,0/
   integer end(2) !/0,0/
   integer arg_idx(2) !/0,0/
@@ -83,10 +80,10 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   arg_idx(2) = start(2)
 
 
-  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/2/)) !2 here is dimension of block
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
   ydim1 = dat1_size(2)
-  multi_d1 = 2 ! dimension of the dat
+  multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
   dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
 
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1

@@ -164,17 +164,22 @@ int* getDatSizeFromOpsArg (ops_arg * arg){
   return arg->dat->size;
 }
 
+int getDatDimFromOpsArg (ops_arg * arg){
+  return arg->dat->dim;
+}
+
+//need differet routines for 1D, 2D 3D etc.
 int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
 
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
 
-  printf("start[0] = %d, start[1] = %d, base = %d, dim = %d\n",
-         start[0],start[1],arg->dat->base[0],dim);
+  //printf("start[0] = %d, start[1] = %d, base = %d, dim = %d\n",
+  //       start[0],start[1],arg->dat->base[0],dim);
 
   int dat = arg->dat->elem_size;
-  printf("dat = %d\n",dat);
+
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];

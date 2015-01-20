@@ -68,6 +68,12 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
   end function
 
+  integer function getDatDimFromOpsArg (arg) BIND(C,name='getDatDimFromOpsArg')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+  end function
+
   integer function getDatBaseFromOpsArg (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations

@@ -9,7 +9,7 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   OPT	 	:= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX #vec-report -xAVX
+  OPT	 	:= -O3 -xAVX -vec-report #-xAVX
 endif
   CCFLAGS       := $(OPT) -Wall -Werror -wd981
   CXX 		:= icpc
