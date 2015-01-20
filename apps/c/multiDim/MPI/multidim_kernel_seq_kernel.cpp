@@ -104,7 +104,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
   p_a[1] = (char *)arg_idx;
 
-  printf("base0 = %d\n",base0/8);
+
 
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);

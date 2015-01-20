@@ -110,17 +110,22 @@ program MULTIDIM
   ! start timer
   call ops_timers ( startTime )
 
-  !call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
-  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE),
-  !             & ops_arg_idx());
-
-  call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
+  call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                & ops_arg_idx());
 
-  call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
+  !call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
+  !             & ops_arg_idx());
+
+  call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+
+
+  !call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
+  !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
 
 
   !call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
