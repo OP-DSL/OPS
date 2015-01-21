@@ -25,6 +25,7 @@ program MULTIDIM
   use MULTIDIM_KERNEL_MODULE
   use MULTIDIM_COPY_KERNEL_MODULE
   use MULTIDIM_PRINT_KERNEL_MODULE
+  use MULTIDIM_REDUCE_KERNEL_MODULE
   use OPS_CONSTANTS
 
 
@@ -48,7 +49,7 @@ program MULTIDIM
   integer s2D_00_arry(2) /0,0/
   type(ops_stencil) :: S2D_00
 
-  type(ops_reduction) :: redu_dat1
+  type(ops_reduction) :: reduct_dat1
 
   integer d_p(2) /1,1/
   integer d_m(2) /-1,-1/
@@ -83,6 +84,7 @@ program MULTIDIM
   call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1");
 
   const1 = 5.44_8
+  call ops_decl_reduction_handle(8, reduct_dat1, "double", "reduct_dat1");
 
   call ops_partition("2D_BLOCK_DECOMPSE")
   call ops_diagnostic_output()
@@ -100,8 +102,9 @@ program MULTIDIM
   call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
-
-
+  call multidim_reduce_kernel_host("multidim_reduce_kernel", grid2D, 2, iter_range, &
+                    & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
+                    & ops_arg_reduce(reduct_dat1, 1, "real(8)", OPS_INC));
 
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat1, "multidim.dat");

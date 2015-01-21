@@ -181,6 +181,18 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_dat_c
 
+    type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      import :: ops_reduction_core
+
+      integer(kind=c_int), value               :: size
+      character(kind=c_char,len=1), intent(in) :: type(*)
+      character(kind=c_char,len=1), intent(in) :: name(*)
+
+    end function ops_decl_reduction_handle_c
+
     type(c_ptr) function ops_decl_stencil_c ( dims, points, sten, name ) BIND(C,name='ops_decl_stencil')
 
       use, intrinsic :: ISO_C_BINDING
@@ -432,6 +444,20 @@ module OPS_Fortran_Declarations
     call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
 
   end subroutine ops_decl_dat_integer_4
+
+  subroutine ops_decl_reduction_handle ( size, handle, typ, name )
+
+    integer, intent(in)                          :: size
+    type(ops_reduction)                          :: handle
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: typ
+
+    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( handle%reductionCPtr, handle%reductionPtr )
+
+  end subroutine ops_decl_reduction_handle
 
 
   type(ops_arg) function ops_arg_dat(dat, dim, sten, type, access)

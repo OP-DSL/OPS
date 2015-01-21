@@ -33,9 +33,9 @@ all: $(TARGETS)
 
 multiDim_seq: multiDim_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) -c constants.F90 multiDim_print_kernel_seq_kernel.F90 \
-	multiDim_copy_kernel_seq_kernel.F90 multiDim_kernel_seq_kernel.F90 multiDim_ops.F90
+	multiDim_copy_kernel_seq_kernel.F90 multiDim_kernel_seq_kernel.F90 multiDim_reduce_kernel_seq_kernel.F90 multiDim_ops.F90
 	$(FC) $(OPT) $(FLINK) multiDim_ops.o constants.o multiDim_kernel_seq_kernel.o multiDim_copy_kernel_seq_kernel.o \
-	multiDim_print_kernel_seq_kernel.o -o multiDim_seq -lops_for_seq
+	multiDim_print_kernel_seq_kernel.o multiDim_reduce_kernel_seq_kernel.o -o multiDim_seq -lops_for_seq
 
 clean:
 	rm -f *.o
