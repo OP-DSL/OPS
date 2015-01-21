@@ -560,7 +560,7 @@ def main():
                 else:
                   line = line + '& ops_arg_reduce(' + elem['data'] + \
                         ', ' + elem['dim'] + ', "' +  elem['typ'] + \
-                        '", ' +  elem['acc'] + '),\n' + indent
+                        '", ' +  elem['acc'] + '), &\n' + indent
               elif elem['type'] == 'ops_arg_idx':
                   line = line + '& '+elem['type'] + '(), &\n' + indent
 

@@ -48,6 +48,8 @@ program MULTIDIM
   integer s2D_00_arry(2) /0,0/
   type(ops_stencil) :: S2D_00
 
+  type(ops_reduction) :: redu_dat1
+
   integer d_p(2) /1,1/
   integer d_m(2) /-1,-1/
 
@@ -91,16 +93,9 @@ program MULTIDIM
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                     & ops_arg_idx());
 
-
-
-
   call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
-
-
-
-
 
   call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));

@@ -63,6 +63,9 @@ program MULTIDIM
   integer s2D_00_arry(2) /0,0/
   type(ops_stencil) :: S2D_00
 
+  !vars for reduction
+  type(ops_reduction) :: redu_dat1
+
   ! vars for halo_depths
   integer d_p(2) /1,1/   !max halo depths for the dat in the possitive direction
   integer d_m(2) /-1,-1/ !max halo depths for the dat in the negative direction
@@ -122,25 +125,16 @@ program MULTIDIM
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                & ops_arg_idx());
 
-  !call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
-  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
-  !             & ops_arg_idx());
-
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
 
-
-  !call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
-  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
-  !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
-
   call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
-
-  !call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
-  !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
+  !call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
+  !             & ops_arg_reduce(redu_dat1, 1, "real(8)", OPS_INC));
 
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat1, "multidim.dat");
