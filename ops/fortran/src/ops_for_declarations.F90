@@ -267,11 +267,12 @@ module OPS_Fortran_Declarations
     end function ops_arg_reduce_c
 
 
-    subroutine ops_reduction_result_c (handle, var) BIND(C,name='ops_reduction_result')
+    subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
       use, intrinsic      :: ISO_C_BINDING
       import :: ops_reduction
-      type(c_ptr), value, intent(in) :: handle
-      type(c_ptr)                    :: var
+      type(c_ptr), value, intent(in)        :: handle
+      type(c_ptr)                           :: var
+      integer(kind=c_int), value, intent(in):: type_size
     end subroutine ops_reduction_result_c
 
 
@@ -329,9 +330,9 @@ module OPS_Fortran_Declarations
     module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4
   end interface ops_decl_dat
 
-  !interface ops_reduction_result
-  !  module procedure ops_reduction_result_real_8, ops_reduction_result_int_4
-  !end interface ops_reduction_result
+  interface ops_reduction_result
+    module procedure ops_reduction_result_scalar_real_8, ops_reduction_result_scalar_int_4
+  end interface ops_reduction_result
 
 
 
@@ -558,19 +559,19 @@ module OPS_Fortran_Declarations
     call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName)
   end subroutine ops_print_dat_to_txtfile_core
 
- !subroutine ops_reduction_result_real_8 (reduction_handle, var)
- !   use, intrinsic :: ISO_C_BINDING
- !   type(ops_reduction) :: reduction_handle
- !   real(8), dimension(*), target    :: var
- !   call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
- ! end subroutine ops_reduction_result_real_8
+ subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
+    use, intrinsic :: ISO_C_BINDING
+    type(ops_reduction) :: reduction_handle
+    real(8), target    :: var
+    call ops_reduction_result_c (reduction_handle%reductionCptr, 8, c_loc(var))
+  end subroutine ops_reduction_result_scalar_real_8
 
- ! subroutine ops_reduction_result_int_4 (reduction_handle, var)
- !   use, intrinsic :: ISO_C_BINDING
- !   type(ops_reduction) :: reduction_handle
- !   integer(4), dimension(*), target    :: var
- !   call ops_reduction_result_c (reduction_handle%reductionCptr, c_loc(var))
- ! end subroutine ops_reduction_result_int_4
+ subroutine ops_reduction_result_scalar_int_4 (reduction_handle, var)
+    use, intrinsic :: ISO_C_BINDING
+    type(ops_reduction) :: reduction_handle
+    integer(4), target  :: var
+    call ops_reduction_result_c (reduction_handle%reductionCptr, 4, c_loc(var))
+  end subroutine ops_reduction_result_scalar_int_4
 
 
  !ops_decl_const -- various versions .. no-ops in ref ?

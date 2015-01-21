@@ -322,6 +322,7 @@ void ops_execute_reduction(ops_reduction handle);
 
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 void ops_decl_const_char( int, char const *, int, char *, char const* );
+void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr);
 
 void ops_init_core( int argc, char **argv, int diags_level );
 

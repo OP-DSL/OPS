@@ -92,11 +92,8 @@ void ops_reduction_result(ops_reduction handle, T *ptr) {
     printf ( "incorrect type specified for constant in op_decl_const" );
     exit ( 1 );
   }
-  ops_execute();
-  //ops_execute_reduction(handle);
-  ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
-  handle->initialized = 0;
+  ops_reduction_result_char(handle, sizeof ( T ), (char *) ptr);
+
 }
 
 template < class T >
