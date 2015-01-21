@@ -5,6 +5,9 @@
 MODULE MULTIDIM_PRINT_KERNEL_MODULE
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
+
+  use OPS_CONSTANTS
+
   use ISO_C_BINDING
 
   INTEGER(KIND=4) xdim1
@@ -18,6 +21,7 @@ subroutine multidim_print_kernel(val)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2) :: val
   write (*,*) val(OPS_ACC_MD1(0,0,0)),val(OPS_ACC_MD1(1,0,0))
+  write (*,*) "const = ", const1
 end subroutine
 
 subroutine multidim_print_kernel_wrap(opsDat1Local, dat1_base, start, end)

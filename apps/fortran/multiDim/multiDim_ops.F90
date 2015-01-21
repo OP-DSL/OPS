@@ -23,8 +23,13 @@ program MULTIDIM
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
   use MULTIDIM_KERNEL_MODULE
-  use MULTIDIM_PRINT_KERNEL_MODULE
   use MULTIDIM_COPY_KERNEL_MODULE
+  use MULTIDIM_PRINT_KERNEL_MODULE
+  use OPS_CONSTANTS
+
+
+
+
 
 
   use, intrinsic :: ISO_C_BINDING
@@ -53,6 +58,7 @@ program MULTIDIM
 
   real(8) temp[allocatable](:)
 
+
   real(kind=c_double) :: startTime = 0
   real(kind=c_double) :: endTime = 0
 
@@ -74,25 +80,30 @@ program MULTIDIM
   call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0");
   call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1");
 
+  const1 = 5.44_8
+
   call ops_partition("2D_BLOCK_DECOMPSE")
   call ops_diagnostic_output()
 
   call ops_timers ( startTime )
 
   call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
-            & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
-            & ops_arg_idx());
+                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
+                    & ops_arg_idx());
 
 
 
 
   call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
-            & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
-            & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
+                    & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
 
 
 
 
+
+  call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
+                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
 
 

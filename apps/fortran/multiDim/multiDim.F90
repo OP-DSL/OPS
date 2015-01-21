@@ -35,12 +35,14 @@
 
 
 program MULTIDIM
-  use OPS_Fortran_Declarations
-  use OPS_Fortran_RT_Support
-  use MULTIDIM_KERNEL_MODULE
-  use MULTIDIM_PRINT_KERNEL_MODULE
-  use MULTIDIM_COPY_KERNEL_MODULE
-  !use OPS_CONSTANTS
+  use OPS_Fortran_Reference
+  use OPS_CONSTANTS
+  !use OPS_Fortran_Declarations
+  !use OPS_Fortran_RT_Support
+  !use MULTIDIM_KERNEL_MODULE
+  !use MULTIDIM_PRINT_KERNEL_MODULE
+  !use MULTIDIM_COPY_KERNEL_MODULE
+
 
   use, intrinsic :: ISO_C_BINDING
 
@@ -75,6 +77,7 @@ program MULTIDIM
   !null array
   real(8) temp[allocatable](:)
 
+
   ! profiling
   real(kind=c_double) :: startTime = 0
   real(kind=c_double) :: endTime = 0
@@ -104,6 +107,11 @@ program MULTIDIM
   call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0"); ! "double" should be "read(8)"
   call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1"); ! "double" should be "read(8)"
 
+  !initialize and declare constants
+  const1 = 5.44_8
+  call ops_decl_const("const1", 1, "double", const1);
+
+
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")
   call ops_diagnostic_output()
@@ -126,6 +134,9 @@ program MULTIDIM
   !call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
   !             & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
   !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+
+  call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
+               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
 
   !call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
