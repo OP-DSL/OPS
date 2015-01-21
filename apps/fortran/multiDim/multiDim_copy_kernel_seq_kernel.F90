@@ -38,8 +38,6 @@ subroutine multidim_copy_kernel_wrap(opsDat1Local, opsDat2Local, dat1_base, dat2
   DO n_y = start(2), end(2)
     !DIR$ SIMD
     DO n_x = start(1), end(1)
-      !write (*,*) (dat1_base + (n_x-1)*2 + (n_y-1)*xdim1*2 ), n_x, n_y, xdim1
-      !write (*,*) (dat2_base + (n_x-1)*2 + (n_y-1)*xdim2*2 ), n_x, n_y, xdim2
       call multidim_copy_kernel(opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
                               & opsDat2Local(dat2_base+(n_x-1)*2 + (n_y-1)*xdim2*2));
     end DO
@@ -96,7 +94,7 @@ SUBROUTINE multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
   dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
 
-  write (*,*) dat1_base
+  !write (*,*) dat1_base
 
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
@@ -108,7 +106,7 @@ SUBROUTINE multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   multi_d2 = getDatDimFromOpsArg(opsArg2) ! dimension of the dat
   dat2_base = getDatBaseFromOpsArg(opsArg2,start,multi_d2)
 
-  write (*,*) dat2_base
+  !write (*,*) dat2_base
 
   opsDat2Cardinality = opsArg2%dim * xdim2 * ydim2
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))

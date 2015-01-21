@@ -87,6 +87,8 @@ SUBROUTINE multidim_kernel_host( userSubroutine, block, dim, range, &
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
   dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
 
+  write (*,*) dat1_base
+
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 

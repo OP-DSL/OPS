@@ -33,7 +33,7 @@ subroutine multidim_print_kernel_wrap(opsDat1Local, dat1_base, start, end)
 
   DO n_y = start(2), end(2)
     DO n_x = start(1), end(1)
-      call multidim_print_kernel(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2));
+      call multidim_print_kernel(opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2));
     end DO
   end DO
 

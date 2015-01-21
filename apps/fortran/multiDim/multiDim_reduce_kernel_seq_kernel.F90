@@ -17,23 +17,26 @@ MODULE MULTIDIM_REDUCE_KERNEL_MODULE
 contains
 ! user function
 
-subroutine multidim_print_kernel(val, redu_dat1)
+subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val
   REAL(kind=8) :: redu_dat1
-  redu_dat1 = redu_dat1 + val(OPS_ACC_MD1(0,0,0)) + val(OPS_ACC_MD1(1,0,0))
+  redu_dat1 = redu_dat1 + val(OPS_ACC_MD1(1,0,0)) + val(OPS_ACC_MD1(0,0,0))
+  !write(*,*) redu_dat1, val(OPS_ACC_MD1(1,0,0))
 end subroutine
 
-subroutine multidim_reduce_kernel_wrap(opsDat1Local, dat1_base, start, end)
+subroutine multidim_reduce_kernel_wrap(opsDat1Local, opsDat2Local, dat1_base,  start, end)
   IMPLICIT NONE
   real(8) opsDat1Local(*)
+  real(8) opsDat2Local(*)
   integer(4) start(2)
   integer(4) end(2)
   integer dat1_base,n_x,n_y
 
   DO n_y = start(2), end(2)
     DO n_x = start(1), end(1)
-      !call multidim_reduce_kernel(opsDat1Local(dat1_base+n_x*2 + n_y*xdim1*2));
+      !write (*,*) dat1_base+n_x*2 + n_y*xdim1*2
+      call multidim_reduce_kernel(opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), opsDat2Local(1));
     end DO
   end DO
 
@@ -58,11 +61,41 @@ SUBROUTINE multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), POINTER, DIMENSION(:) :: opsDat2Local
-  integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
 
 
+  integer start(2)
+  integer end(2)
+  integer ydim1, ydim2
+  integer n_x, n_y
+
+  integer(kind=4) :: n
+
+  ! no OPS_MPI #defined
+  DO n = 1, 2
+    start(n) = range(2*n-1)
+    end(n)   = range(2*n);
+  END DO
+
+  write (*,*) start
+  write (*,*) end
+
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
+  xdim1 = dat1_size(1)
+  ydim1 = dat1_size(2)
+  multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+
+  write (*,*) dat1_base
+
+  opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
+  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+
+  !reductions
+  call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))
+
+
+  call multidim_reduce_kernel_wrap(opsDat1Local,opsDat2Local,dat1_base,start,end)
+  write(*,*) "Reduction result = ", opsDat2Local
 
 END SUBROUTINE
 END MODULE
