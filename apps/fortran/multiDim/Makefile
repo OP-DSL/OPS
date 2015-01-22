@@ -27,7 +27,7 @@ print:
 	@echo "unrecognised value for OPS_COMPILER"
 endif
 
-FLINK = -L$(F_OPS_LIB)
+FLINK = -L$(F_OPS_LIB) $(CXXLINK)
 FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 
 all: $(TARGETS)
