@@ -60,10 +60,11 @@ import sys
 import re
 import datetime
 
+"""import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
+from ops_fortran_gen_mpi import ops_fortran_gen_mpi
 
 
 """import fortran code generation function"""
-from fortran import gen_fortran_source_file
 import util_fortran
 
 comment_remover = util_fortran.comment_remover
@@ -601,7 +602,7 @@ def main():
   #
   # finally, generate target-specific kernel files
   #
-  #ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

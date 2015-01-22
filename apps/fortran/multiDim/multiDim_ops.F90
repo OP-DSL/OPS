@@ -106,9 +106,7 @@ program MULTIDIM
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
                     & ops_arg_reduce(reduct_dat1, 1, "real(8)", OPS_INC));
 
-  call ops_reduction_result(reduct_dat1, reduct_result)
 
-  write(*,*) "Reduction result = ", reduct_dat1
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat1, "multidim.dat");
   call ops_print_dat_to_txtfile(dat0, "multidim.dat");

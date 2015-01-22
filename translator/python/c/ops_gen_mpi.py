@@ -29,7 +29,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-OPS MPI_seq code generator
+OPS MPI_seq code generator (for C/C++ applications)
 
 This routine is called by ops.py which parses the input files
 
@@ -67,7 +67,7 @@ ENDIF = util.ENDIF
 
 def ops_gen_mpi(master, date, consts, kernels):
 
-  OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
+  OPS_GBL   = 2;
 
   OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
   OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;

@@ -27,7 +27,7 @@ end subroutine
 
 subroutine multidim_copy_kernel_wrap(opsDat1Local, opsDat2Local, dat1_base, dat2_base, start, end)
   IMPLICIT NONE
-  real(8) opsDat1Local(*)
+  real(8) , INTENT(IN) :: opsDat1Local(*)
   real(8) opsDat2Local(*)
   integer(4) start(2)
   integer(4) end(2)

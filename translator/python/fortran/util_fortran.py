@@ -36,6 +36,28 @@ utility functions for code generator
 import re
 import config
 
+def comm(line):
+  prefix = ' '*config.depth
+  if len(line) == 0:
+    config.file_text +='\n'
+  else:
+    config.file_text +=prefix+'!'+line+'\n'
+
+def code(text):
+  prefix = ''
+  if len(text) != 0:
+    prefix = ' '*config.depth
+
+  config.file_text += prefix+text+'\n'
+
+def DO(i,start,finish):
+  code('DO '+i+' = '+start+', '+finish)
+  config.depth += 2
+
+def ENDDO():
+  config.depth -= 2
+  code('end DO')
+
 def remove_trailing_w_space(text):
   text = text+' '
   line_start = 0

@@ -1,4 +1,4 @@
-subroutine multidim_print_kernel(val, redu_dat1)
+subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val
   REAL(kind=8) :: redu_dat1
