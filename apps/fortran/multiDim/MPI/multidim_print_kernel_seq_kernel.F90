@@ -40,7 +40,6 @@ subroutine multidim_print_kernel_wrap( &
   integer n_x, n_y
 
   DO n_y = start(2), end(2)
-    !DIR$ SIMD
     DO n_x = start(1), end(1)
       call multidim_print_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2) )
