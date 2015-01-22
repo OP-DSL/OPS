@@ -455,7 +455,7 @@ module OPS_Fortran_Declarations
 
     handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
     call c_f_pointer ( handle%reductionCPtr, handle%reductionPtr )
 
   end subroutine ops_decl_reduction_handle

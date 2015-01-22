@@ -162,6 +162,14 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
   return ops_arg_gbl_core( data, dim, size, acc );
 }
 
+void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
+  //ops_execute();
+  //ops_execute_reduction(handle); ???
+  //ops_checkpointing_reduction(handle);
+  memcpy(ptr, handle->data, handle->size);
+  handle->initialized = 0;
+}
+
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
   //need to get data from GPU

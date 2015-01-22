@@ -149,6 +149,15 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   return dat;
 }
 
+void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
+  //ops_execute();
+  //ops_execute_reduction(handle); ???
+  //ops_checkpointing_reduction(handle);
+  memcpy(ptr, handle->data, handle->size);
+  handle->initialized = 0;
+}
+
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
   ops_halo halo = ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
   return halo;
