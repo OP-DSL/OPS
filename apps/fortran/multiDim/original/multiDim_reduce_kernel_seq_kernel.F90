@@ -42,7 +42,7 @@ subroutine multidim_reduce_kernel_wrap(opsDat1Local, opsDat2Local, dat1_base,  d
 
 end subroutine
 
-! host stub routine
+! host stubroutine
 SUBROUTINE multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   & opsArg1, &
   & opsArg2 )

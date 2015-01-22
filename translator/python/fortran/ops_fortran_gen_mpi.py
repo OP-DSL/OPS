@@ -109,8 +109,9 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('MODULE '+name.upper()+'_MODULE')
     code('USE OPS_FORTRAN_DECLARATIONS')
     code('USE OPS_FORTRAN_RT_SUPPORT')
-    code('USE ISO_C_BINDING')
+    code('')
     code('USE OPS_CONSTANTS')
+    code('USE ISO_C_BINDING')
     code('')
 
 ##########################################################################
@@ -134,11 +135,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('INTEGER(KIND=4) multi_d'+str(n+1))
           code('INTEGER(KIND=4) xdim'+str(n+1))
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(nn+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
 
     code('')
     code('contains')
@@ -184,10 +185,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 ##########################################################################
     code('subroutine '+name+'_wrap( &')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
+      if arg_typ[n] == 'ops_arg_idx':
+        code('& idx, &')
+      else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
+      if arg_typ[n] <> 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
@@ -195,12 +198,17 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
+      if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
         code(typs[n]+', INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
-      elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+      elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code(typs[n]+'opsDat'+str(n+1)+'Local(*)')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code(typs[n]+' opsDat'+str(n+1)+'Local(*)')
+      elif arg_typ[n] == 'ops_arg_idx':
+        code('integer(4) idx('+str(NDIM)+')')
+
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
+      if arg_typ[n] <> 'ops_arg_idx':
         code('integer dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
@@ -213,32 +221,51 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('')
 
     if NDIM==1:
+      if reduction <> 1:
+        code('!DIR$ SIMD')
       DO('n_x','start(1)','end(1)')
+      if arg_idx == 1:
+        code('idx(1) = n_x')
     elif NDIM==2:
       DO('n_y','start(2)','end(2)')
+      if arg_idx == 1:
+        code('idx(2) = n_y')
+      if reduction <> 1:
+        code('!DIR$ SIMD')
       DO('n_x','start(1)','end(1)')
+      if arg_idx == 1:
+        code('idx(1) = n_x')
     elif NDIM==3:
       DO('n_z','start(3)','end(3)')
+      if arg_idx == 1:
+        code('idx(1) = n_z')
       DO('n_y','start(2)','end(2)')
+      if arg_idx == 1:
+        code('idx(1) = n_y')
+      if reduction <> 1:
+        code('!DIR$ SIMD')
       DO('n_x','start(1)','end(1)')
+      if arg_idx == 1:
+        code('idx(1) = n_x')
 
     code('call '+name + '( &')
     indent = config.depth *' '
     line = ''
     for n in range (0, nargs):
-      print arg_typ[n]
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
-          line = line + '& opsDat'+str(n+1)+'(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
         elif NDIM==2:
-          line = line + '& opsDat'+str(n+1)+'(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
              ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
         elif NDIM==3:
-          line = line + '& opsDat'+str(n+1)+'(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
              ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+'), '+\
              ' + (n_z-1)*ydim'+str(n+1)+'*'+str(dims[n])+')'
       elif arg_typ[n] == 'ops_arg_gbl':
-        line = line + '& opsDat'+str(n+1)+'(dat'+str(n+1)+'_base)'
+        line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
+      elif arg_typ[n] == 'ops_arg_idx':
+        line = line + '& idx'
 
       if n == nargs-1:
         line = line + ' )'
@@ -263,6 +290,111 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 #  host subroutine
 ##########################################################################
 
+    code('')
+    comm('host subroutine')
+    code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
+    for n in range (0, nargs):
+      if n == nargs-1:
+        code('& opsArg'+str(n+1)+')')
+      else:
+        code('& opsArg'+str(n+1)+', &')
+
+
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
+    code('type ( ops_block ), INTENT(IN) :: block')
+    code('integer(kind=4), INTENT(IN):: dim')
+    code('integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code('')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
+        code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
+        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        if NDIM==2:
+          code('integer ydim'+str(n+1))
+        elif NDIM==2:
+          code('integer ydim'+str(n+1)+', zdim'+str(n+1))
+        code('')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code('')
+
+    if NDIM==1:
+        code('integer n_x')
+    elif NDIM==2:
+      code('integer n_x, n_y')
+    elif NDIM==2:
+      code('integer n_x, n_y, n_z')
+    code('integer start('+str(NDIM)+')')
+    code('integer end('+str(NDIM)+')')
+    if arg_idx == 1:
+      code('integer idx('+str(NDIM)+')')
+    code('integer(kind=4) :: n')
+    code('')
+
+    comm('no OPS_MPI #defined')
+    DO('n','1',str(NDIM))
+    code('start(n) = range(2*n-1)')
+    code('end(n) = range(2*n);')
+    ENDDO()
+    code('')
+    if arg_idx == 1:
+      for n in range (0, NDIM):
+        code('idx('+str(n+1)+') = start('+str(n+1)+')')
+      code('')
+
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('call c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'),dat'+str(n+1)+'_size,(/dim/))')
+        if NDIM==1:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1))
+        elif NDIM==2:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1)+' * ydim'+str(n+1))
+        elif NDIM==3:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
+          code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
+        code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
+        code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+        code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
+        code('')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))')
+        code('dat2_base = 1')
+        code('')
+
+    #Call user kernel wrapper
+    code('call '+name+'_wrap( &')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('& idx, &')
+      else:
+        code('& opsDat'+str(n+1)+'Local, &')
+    for n in range (0, nargs):
+      if arg_typ[n] <> 'ops_arg_idx':
+        code('& dat'+str(n+1)+'_base, &')
+    code('& start, &')
+    code('& end )')
+    code('')
+
+
+    config.depth = config.depth - 2
+    code('end subroutine')
+    code('END MODULE')
 
 ##########################################################################
 #  output individual kernel file

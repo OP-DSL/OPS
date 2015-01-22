@@ -4,28 +4,29 @@
 MODULE MULTIDIM_KERNEL_MODULE
 USE OPS_FORTRAN_DECLARATIONS
 USE OPS_FORTRAN_RT_SUPPORT
-USE ISO_C_BINDING
+
 USE OPS_CONSTANTS
+USE ISO_C_BINDING
 
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
-#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim0*(y)*2))
+#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 contains
 
 !user function
 !DEC$ ATTRIBUTES FORCEINLINE :: multidim_kernel
-subroutine multidim_kernel(val, idx, multi_d0, xdim0)
+subroutine multidim_kernel(val, idx)
   IMPLICIT NONE
   REAL(kind=8)   , DIMENSION(1) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
 
-  INTEGER multi_d0
-  INTEGER xdim0
+  INTEGER multi_d1
+  INTEGER xdim1
 
-  val(OPS_ACC_MD0(0,0,0)) = idx(0)
-  val(OPS_ACC_MD0(1,0,0)) = idx(1)
+  val(OPS_ACC_MD1(0,0,0)) = idx(1)
+  val(OPS_ACC_MD1(1,0,0)) = idx(2)
 end subroutine
 
 
@@ -34,21 +35,78 @@ end subroutine
 
 subroutine multidim_kernel_wrap( &
 & opsDat1Local, &
+& idx, &
 & dat1_base, &
 & start, &
 & end )
   IMPLICIT NONE
   real(8)opsDat1Local(*)
+  integer(4) idx(2)
   integer dat1_base
   integer(4) start(2)
   integer(4) end(2)
   integer n_x, n_y
 
   DO n_y = start(2), end(2)
+    idx(2) = n_y
+    !DIR$ SIMD
     DO n_x = start(1), end(1)
+      idx(1) = n_x
       call multidim_kernel( &
-      & opsDat1(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
-       )
+      & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
+      & idx )
     end DO
   end DO
 end subroutine
+
+!host subroutine
+subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1, &
+& opsArg2)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  integer(kind=4) :: opsDat1Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4) :: dat1_base
+  integer ydim1
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg2
+
+  integer n_x, n_y
+  integer start(2)
+  integer end(2)
+  integer idx(2)
+  integer(kind=4) :: n
+
+  !no OPS_MPI #defined
+  DO n = 1, 2
+    start(n) = range(2*n-1)
+    end(n) = range(2*n);
+  end DO
+
+  idx(1) = start(1)
+  idx(2) = start(2)
+
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
+  xdim1 = dat1_size(1)
+  ydim1 = dat1_size(2)
+  opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
+  multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+
+  call multidim_kernel_wrap( &
+  & opsDat1Local, &
+  & idx, &
+  & dat1_base, &
+  & start, &
+  & end )
+
+end subroutine
+END MODULE

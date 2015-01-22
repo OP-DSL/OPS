@@ -4,16 +4,17 @@
 MODULE MULTIDIM_COPY_KERNEL_MODULE
 USE OPS_FORTRAN_DECLARATIONS
 USE OPS_FORTRAN_RT_SUPPORT
-USE ISO_C_BINDING
+
 USE OPS_CONSTANTS
+USE ISO_C_BINDING
 
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
-#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim0*(y)*2))
+#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 INTEGER(KIND=4) multi_d2
 INTEGER(KIND=4) xdim2
-#define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
+#define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2*(y)*2))
 
 contains
 
@@ -49,10 +50,73 @@ subroutine multidim_copy_kernel_wrap( &
   integer n_x, n_y
 
   DO n_y = start(2), end(2)
+    !DIR$ SIMD
     DO n_x = start(1), end(1)
       call multidim_copy_kernel( &
-      & opsDat1(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
-      & opsDat2(dat2_base+(n_x-1)*2 + (n_y-1)*xdim2*2) )
+      & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
+      & opsDat2Local(dat2_base+(n_x-1)*2 + (n_y-1)*xdim2*2) )
     end DO
   end DO
 end subroutine
+
+!host subroutine
+subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1, &
+& opsArg2)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  integer(kind=4) :: opsDat1Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4) :: dat1_base
+  integer ydim1
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg2
+  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  integer(kind=4) :: opsDat2Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4) :: dat2_base
+  integer ydim2
+
+  integer n_x, n_y
+  integer start(2)
+  integer end(2)
+  integer(kind=4) :: n
+
+  !no OPS_MPI #defined
+  DO n = 1, 2
+    start(n) = range(2*n-1)
+    end(n) = range(2*n);
+  end DO
+
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
+  xdim1 = dat1_size(1)
+  ydim1 = dat1_size(2)
+  opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
+  multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
+  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+
+  call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
+  xdim2 = dat2_size(1)
+  ydim2 = dat2_size(2)
+  opsDat2Cardinality = opsArg1%dim * xdim2 * ydim2
+  multi_d2 = getDatDimFromOpsArg(opsArg2) ! dimension of the dat
+  dat2_base = getDatBaseFromOpsArg(opsArg2,start,multi_d2)
+  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+
+  call multidim_copy_kernel_wrap( &
+  & opsDat1Local, &
+  & opsDat2Local, &
+  & dat1_base, &
+  & dat2_base, &
+  & start, &
+  & end )
+
+end subroutine
+END MODULE
