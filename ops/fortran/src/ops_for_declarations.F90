@@ -270,8 +270,8 @@ module OPS_Fortran_Declarations
     subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
       use, intrinsic      :: ISO_C_BINDING
       import :: ops_reduction
-      !type(c_ptr), value, intent(in)  :: handle
-      type(c_ptr), intent(in)  :: handle
+      type(c_ptr), value, intent(in)  :: handle
+      !type(c_ptr), intent(in)  :: handle
       type(c_ptr) , value       :: var
 
       integer(kind=c_int), value, intent(in):: type_size
@@ -333,8 +333,8 @@ module OPS_Fortran_Declarations
   end interface ops_decl_dat
 
   interface ops_reduction_result
-    module procedure ops_reduction_result_scalar_real_8, ops_reduction_result_scalar_int_4, &
-    & ops_reduction_result_real_8
+    module procedure ops_reduction_result_scalar_real_8, ops_reduction_result_scalar_int_4!, &
+    !& ops_reduction_result_real_8
   end interface ops_reduction_result
 
 
@@ -461,6 +461,7 @@ module OPS_Fortran_Declarations
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
     call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
+    write (*,*) "size in Fortran size at decl = ", handle%reductionPtr%size
 
   end subroutine ops_decl_reduction_handle
 
@@ -519,6 +520,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: dim
     character(kind=c_char,len=*) :: type
     integer(kind=c_int) :: access
+
     ! warning: access is in FORTRAN style, while the C style is required here
     ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, type, access-1 )
 
@@ -566,9 +568,11 @@ module OPS_Fortran_Declarations
  subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
-    real(8), target    :: var
-
+    !real(8), target    :: var
+    real(8), dimension(:) :: var
+    !write (*,*) "reduction_handle%reductionPtr%size = ", reduction_handle%reductionPtr%size
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    !call ops_reduction_result_c (reduction_handle%reductionCptr, 16, c_loc(var))
 
   end subroutine ops_reduction_result_scalar_real_8
 
@@ -579,12 +583,13 @@ module OPS_Fortran_Declarations
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_scalar_int_4
 
- subroutine ops_reduction_result_real_8 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    real(8), dimension(:) :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
-  end subroutine ops_reduction_result_real_8
+ !subroutine ops_reduction_result_real_8 (reduction_handle, var)
+ !   use, intrinsic :: ISO_C_BINDING
+ !   type(ops_reduction) :: reduction_handle
+ !   real(8), dimension(:) :: var
+    !write (*,*) "in here", reduction_handle%reductionPtr%size
+ !   call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+ ! end subroutine ops_reduction_result_real_8
 
 
  !ops_decl_const -- various versions .. no-ops in ref ?

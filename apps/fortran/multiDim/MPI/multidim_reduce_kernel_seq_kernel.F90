@@ -20,8 +20,9 @@ contains
 subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val
-  REAL(kind=8) :: redu_dat1
-  redu_dat1 = redu_dat1 + val(OPS_ACC_MD1(0,0,0)) + val(OPS_ACC_MD1(1,0,0))
+  REAL(kind=8), DIMENSION(2) :: redu_dat1
+  redu_dat1(1) = redu_dat1(1) + val(OPS_ACC_MD1(0,0,0))
+  redu_dat1(2) = redu_dat1(2) + val(OPS_ACC_MD1(1,0,0))
 end subroutine
 
 
@@ -94,8 +95,11 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
-  call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))
+
+  !call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
+
 
   call multidim_reduce_kernel_wrap( &
   & opsDat1Local, &
@@ -105,7 +109,7 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   & start, &
   & end )
 
-  !write (*,*) "Reduction result =",opsDat2Local
+  write (*,*) "opsDat2Local = ",opsDat2Local
 
 end subroutine
 END MODULE

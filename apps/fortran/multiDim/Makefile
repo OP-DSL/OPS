@@ -7,8 +7,8 @@ F_OPS_INC = $(F_OPS)/include
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc -std=c99
 ifdef DEBUG
-  OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
-  #OPT	 	:= -O0 -g
+  #OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
+  OPT	 	:= -O0 -g
 else
   OPT	 	:= -O3 -xAVX -vec-report2 #-xAVX
 endif

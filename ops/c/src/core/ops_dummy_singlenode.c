@@ -55,6 +55,7 @@ ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_ac
 }
 
 ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+  printf("size in C side at decl %d\n",size);
   return ops_decl_reduction_handle_core(size, type, name);
 }
 
@@ -194,4 +195,8 @@ int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
   start[1] += 1;
 
   return base/(dat/dim) + dim;
+}
+
+double* getReductionPtrFromOpsArg(ops_arg* arg) {
+  return (double *)((ops_reduction)arg->data)->data;
 }

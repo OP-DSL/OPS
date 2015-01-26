@@ -86,7 +86,7 @@ program MULTIDIM
   const1 = 5.44_8
   reduct_result(1) = 0.0_8
   reduct_result(2) = 0.0_8
-  call ops_decl_reduction_handle(8, reduct_dat1, "double", "reduct_dat1");
+  call ops_decl_reduction_handle(16, reduct_dat1, "double", "reduct_dat1");
 
   call ops_partition("2D_BLOCK_DECOMPSE")
   call ops_diagnostic_output()
@@ -103,14 +103,17 @@ program MULTIDIM
 
 
 
+  !write (*,*) "before reduct_dat1%reductionPtr%size = ", reduct_dat1%reductionPtr%size
+
   call multidim_reduce_kernel_host("multidim_reduce_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-                    & ops_arg_reduce(reduct_dat1, 1, "real(8)", OPS_INC));
+                    & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC));
 
+  !write (*,*) "after reduct_dat1%reductionPtr%size = ", reduct_dat1%reductionPtr%size
   call ops_reduction_result(reduct_dat1, reduct_result)
 
-  write(*,*) "Reduction result = ", reduct_result(1)
-  write(*,*) "Reduction result = ", reduct_result(2)
+  write(*,*) "Reduction result = ", reduct_result
+
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat1, "multidim.dat");
   call ops_print_dat_to_txtfile(dat0, "multidim.dat");

@@ -80,7 +80,12 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
     integer(4), dimension(*), intent(in), target :: start
     integer(kind=c_int), value, intent(in)    :: dim
+  end function
 
+  type(c_ptr) function getReductionPtrFromOpsArg (arg) BIND(C,name='getReductionPtrFromOpsArg')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
   end function
 
   end interface

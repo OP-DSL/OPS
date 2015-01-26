@@ -373,8 +373,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))')
-        code('dat2_base = 1')
+        code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+        code('dat'+str(n+1)+'_base = 1')
         code('')
 
     #Call user kernel wrapper
