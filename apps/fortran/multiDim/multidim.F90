@@ -64,7 +64,7 @@ program MULTIDIM
   type(ops_stencil) :: S2D_00
 
   !vars for reduction
-  real(8), dimension(1:2) :: reduct_result
+  real(8), dimension(2) :: reduct_result
   type(ops_reduction) :: reduct_dat1
 
   ! vars for halo_depths
@@ -143,8 +143,8 @@ program MULTIDIM
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 
-  write(*,*) "Reduction result(1) = ", reduct_result(1)
-  write(*,*) "Reduction result(2) = ", reduct_result(2)
+  write(*,*) "Reduction result = ", reduct_result
+
   call ops_timers ( endTime )
   call ops_print_dat_to_txtfile(dat1, "multidim.dat");
   call ops_print_dat_to_txtfile(dat0, "multidim.dat");

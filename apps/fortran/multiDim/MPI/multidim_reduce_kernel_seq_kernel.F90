@@ -95,11 +95,8 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
-
-  !call c_f_pointer(opsArg2%data,opsDat2Local, (/opsArg2%dim/))
   call c_f_pointer(getReductionPtrFromOpsArg(opsArg2),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
-
 
   call multidim_reduce_kernel_wrap( &
   & opsDat1Local, &
@@ -108,8 +105,6 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   & dat2_base, &
   & start, &
   & end )
-
-  write (*,*) "opsDat2Local = ",opsDat2Local
 
 end subroutine
 END MODULE
