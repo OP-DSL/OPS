@@ -105,5 +105,7 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   & start, &
   & end )
 
+  !write (*,*) "Reduction result =",opsDat2Local
+
 end subroutine
 END MODULE

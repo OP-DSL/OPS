@@ -197,7 +197,7 @@ ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * typ
 {
   ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
   (&temp)->dim = dim;
-  return temp;//ops_arg_dat_core( dat, stencil, acc );
+  return temp;
 }
 
 ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )
@@ -214,9 +214,12 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
+
   ops_execute();
   ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
+  memcpy(ptr, handle->data, type_size);
+  //memcpy(ptr, handle->data, handle->size); ?? not workign with Fortran
+  //printf("value in ptr %lf\n",*((double *)ptr));
   handle->initialized = 0;
 }
 

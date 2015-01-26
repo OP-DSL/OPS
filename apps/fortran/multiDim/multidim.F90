@@ -64,7 +64,7 @@ program MULTIDIM
   type(ops_stencil) :: S2D_00
 
   !vars for reduction
-  real(8) reduct_result
+  real(8), dimension(2) :: reduct_result
   type(ops_reduction) :: reduct_dat1
 
   ! vars for halo_depths
@@ -116,8 +116,9 @@ program MULTIDIM
   call ops_decl_const("const1", 1, "double", const1);
 
   !declare reduction handles
-  reduct_result = 0.0_8
-  call ops_decl_reduction_handle(8, reduct_dat1, "double", "reduct_dat1");
+  reduct_result(1) = 0.0_8
+  reduct_result(2) = 0.0_8
+  call ops_decl_reduction_handle(8*2, reduct_dat1, "double", "reduct_dat1");
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")

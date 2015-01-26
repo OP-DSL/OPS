@@ -270,8 +270,10 @@ module OPS_Fortran_Declarations
     subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
       use, intrinsic      :: ISO_C_BINDING
       import :: ops_reduction
-      type(c_ptr), value, intent(in)        :: handle
-      type(c_ptr)                           :: var
+      !type(c_ptr), value, intent(in)  :: handle
+      type(c_ptr), intent(in)  :: handle
+      type(c_ptr) , value       :: var
+
       integer(kind=c_int), value, intent(in):: type_size
     end subroutine ops_reduction_result_c
 
@@ -331,7 +333,8 @@ module OPS_Fortran_Declarations
   end interface ops_decl_dat
 
   interface ops_reduction_result
-    module procedure ops_reduction_result_scalar_real_8, ops_reduction_result_scalar_int_4
+    module procedure ops_reduction_result_scalar_real_8, ops_reduction_result_scalar_int_4, &
+    & ops_reduction_result_real_8
   end interface ops_reduction_result
 
 
@@ -363,7 +366,7 @@ module OPS_Fortran_Declarations
     block%blockCPtr = ops_decl_block_c ( dims, name//char(0) )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the op_block variable
-    call c_f_pointer ( block%blockCPtr, block%blockPtr )
+    call c_f_pointer ( block%blockCptr, block%blockPtr )
 
   end subroutine ops_decl_block
 
@@ -377,7 +380,7 @@ module OPS_Fortran_Declarations
     stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_data ), name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
-    call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
+    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
 
   end subroutine ops_decl_stencil
 
@@ -392,7 +395,7 @@ module OPS_Fortran_Declarations
     stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), c_loc ( stride_data ), name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
-    call c_f_pointer (stencil%stencilCPtr, stencil%stencilPtr)
+    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
 
   end subroutine ops_decl_strided_stencil
 
@@ -410,14 +413,14 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: typ
 
     integer d;
-    DO d = 1,2
+     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
+    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
 
   end subroutine ops_decl_dat_real_8
 
@@ -435,14 +438,15 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: typ
 
     integer d;
-    DO d = 1,2
+    !DO d = 1,2
+    DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCPtr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
+    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
 
   end subroutine ops_decl_dat_integer_4
 
@@ -456,7 +460,7 @@ module OPS_Fortran_Declarations
     handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
-    call c_f_pointer ( handle%reductionCPtr, handle%reductionPtr )
+    call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
 
   end subroutine ops_decl_reduction_handle
 
@@ -477,7 +481,7 @@ module OPS_Fortran_Declarations
       print *, "Wrong dim",dim,dat%dataPtr%dims
     endif
     ! warning: access and idx are in FORTRAN style, while the C style is required here
-    ops_arg_dat = ops_arg_dat_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1 )
+    ops_arg_dat = ops_arg_dat_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1 )
 
   end function ops_arg_dat
 
@@ -497,7 +501,7 @@ module OPS_Fortran_Declarations
       print *, "Wrong dim",dim,dat%dataPtr%dims
     endif
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCPtr, dim, sten%stencilCPtr, type, access-1, flag )
+    ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1, flag )
 
   end function ops_arg_dat_opt
 
@@ -563,15 +567,24 @@ module OPS_Fortran_Declarations
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
     real(8), target    :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, 8, c_loc(var))
+
+    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+
   end subroutine ops_reduction_result_scalar_real_8
 
  subroutine ops_reduction_result_scalar_int_4 (reduction_handle, var)
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
     integer(4), target  :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, 4, c_loc(var))
+    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_scalar_int_4
+
+ subroutine ops_reduction_result_real_8 (reduction_handle, var)
+    use, intrinsic :: ISO_C_BINDING
+    type(ops_reduction) :: reduction_handle
+    real(8), dimension(:) :: var
+    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+  end subroutine ops_reduction_result_real_8
 
 
  !ops_decl_const -- various versions .. no-ops in ref ?

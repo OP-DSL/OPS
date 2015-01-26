@@ -92,7 +92,8 @@ void ops_reduction_result(ops_reduction handle, T *ptr) {
     printf ( "incorrect type specified for constant in op_decl_const" );
     exit ( 1 );
   }
-  ops_reduction_result_char(handle, sizeof ( T ), (char *) ptr);
+  //ops_reduction_result_char(handle, sizeof ( T ), (char *) ptr);
+  ops_reduction_result_char(handle, handle->size, (char *) ptr);
 
 }
 
