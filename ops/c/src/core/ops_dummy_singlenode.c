@@ -44,7 +44,6 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
   for (int n=0; n<nargs; n++) {
     if((args[n].argtype == OPS_ARG_DAT) &&
        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
-      //printf("setting dirty bit on host\n");
       args[n].dat->dirty_hd = 1;
     }
   }
@@ -55,7 +54,6 @@ ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_ac
 }
 
 ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
-  printf("size in C side at decl %d\n",size);
   return ops_decl_reduction_handle_core(size, type, name);
 }
 
@@ -159,7 +157,7 @@ void ops_timers(double * cpu, double * et){
 }
 
 
-/************* Functions only use in the Fortran Backend ************/
+/************* Functions only use in the s Backend ************/
 
 int* getDatSizeFromOpsArg (ops_arg * arg){
   return arg->dat->size;

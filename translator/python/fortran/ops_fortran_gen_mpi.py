@@ -305,7 +305,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range')
+    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -368,8 +368,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
-        code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+        if int(dims[n]) <> 1:
+          print dims[n]
+          code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+        else:
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':

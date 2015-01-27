@@ -196,7 +196,8 @@ def ops_par_loop_parse(text):
   search = "ops_par_loop"
   i = text.find(search)
   while i > -1:
-      arg_string = text[text.find('(', i) + 1:text.find(';', i + 12)]
+      arg_string = text[text.find('(',i)+1:arg_parse(text,i+11)]
+
 
       # parse arguments in par loop
       temp_args = []
@@ -532,7 +533,7 @@ def main():
 
         if locs[loc] in loc_loops:
           indent = indent + ' ' * len('ops_par_loop')
-          endofcall = text.find(';', locs[loc])
+          endofcall = arg_parse(text,locs[loc]+11)
           curr_loop = loc_loops.index(locs[loc])
           name = loop_args[curr_loop]['name1']
           line = str(' '+loop_args[curr_loop]['name1'] + '_host(' +
@@ -565,7 +566,7 @@ def main():
               elif elem['type'] == 'ops_arg_idx':
                   line = line + '& '+elem['type'] + '(), &\n' + indent
 
-          fid.write(line[0:-len(indent) - 4] + ');')
+          fid.write(line[0:-len(indent) - 4] + ')')
 
           loc_old = endofcall + 1
           continue
