@@ -173,21 +173,20 @@ int getDatBaseFromOpsArg1D (ops_arg * arg, int* start, int dim){
   /*convert to C indexing*/
   start[0] -= 1;
 
-  printf("start[0] = %d, base = %d, dim = %d\n",
-         start[0],arg->dat->base[0],dim);
-
   int dat = arg->dat->elem_size;
+
+  printf("start[0] = %d, base = %d, dim = %d, d_m[0] = %d dat = %d\n",
+         start[0],arg->dat->base[0],dim, arg->dat->d_m[0], dat);
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
   int base = dat * 1 *
    (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-
+   printf("base = %d\n",base/(dat/dim)+dim);
   /*revert to Fortran indexing*/
   start[0] += 1;
-  printf("base = %d\n",base);
-  return base/(dat/dim) + dim;
+  return base/(dat/dim) + dim ;
 }
 
 int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
@@ -196,24 +195,27 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
   start[0] -= 1;
   start[1] -= 1;
 
-  //printf("start[0] = %d, start[1] = %d, base = %d, dim = %d\n",
-  //       start[0],start[1],arg->dat->base[0],dim);
-
   int dat = arg->dat->elem_size;
+
+  printf("start[0] = %d, start[1] = %d, base = %d, dim = %d, dat = %d\n",
+         start[0],start[1],arg->dat->base[0],dim,dat);
+
+
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
   int base = dat * 1 *
-   (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-  base = base+ dat *
+   (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]) ;
+  base = base + dat *
     arg->dat->size[0] *
     (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
 
+  printf("base = %d\n",base/(dat/dim)+dim);
   /*revert to Fortran indexing*/
   start[0] += 1;
   start[1] += 1;
-  return base/(dat/dim) + dim;
+  return base/(dat/dim) + dim ;
 }
 
 int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){

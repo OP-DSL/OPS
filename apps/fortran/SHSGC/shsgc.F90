@@ -124,6 +124,7 @@ program SHSGC
   !extra dat for rhoin
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin");
 
+
   !
   ! Initialize with the test case
   !

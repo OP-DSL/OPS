@@ -110,6 +110,7 @@ program SHSGC
 
 
 
+
   nxp_range(1) =  1
   nxp_range(2) =  nxp
   call initialize_kernel_host("initialize_kernel", shsgc_grid, 1, nxp_range, &
