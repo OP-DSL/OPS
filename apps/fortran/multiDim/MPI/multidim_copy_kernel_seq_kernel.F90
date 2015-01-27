@@ -67,7 +67,7 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
-  integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range
+  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
@@ -99,7 +99,7 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   ydim1 = dat1_size(2)
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+  dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
@@ -107,7 +107,7 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   ydim2 = dat2_size(2)
   opsDat2Cardinality = opsArg1%dim * xdim2 * ydim2
   multi_d2 = getDatDimFromOpsArg(opsArg2) ! dimension of the dat
-  dat2_base = getDatBaseFromOpsArg(opsArg2,start,multi_d2)
+  dat2_base = getDatBaseFromOpsArg2D(opsArg2,start,multi_d2)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 
   call multidim_copy_kernel_wrap( &

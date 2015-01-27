@@ -74,7 +74,23 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
   end function
 
-  integer function getDatBaseFromOpsArg (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg')
+  integer function getDatBaseFromOpsArg1D (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg1D')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+    integer(4), dimension(*), intent(in), target :: start
+    integer(kind=c_int), value, intent(in)    :: dim
+  end function
+
+  integer function getDatBaseFromOpsArg2D (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg2D')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+    integer(4), dimension(*), intent(in), target :: start
+    integer(kind=c_int), value, intent(in)    :: dim
+  end function
+
+  integer function getDatBaseFromOpsArg3D (arg, start, dim) BIND(C,name='getDatBaseFromOpsArg3D')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     type(ops_arg) :: arg

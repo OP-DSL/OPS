@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
                ops_arg_dat(rhoin, 1, S1D_0, "double", OPS_WRITE),
                ops_arg_idx());
 
-  //ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
+  ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
 
 
   //

@@ -1,5 +1,4 @@
 numawrap*
-clover.in
 clover.out
 *_cu.o
 *.o
@@ -39,3 +38,12 @@ poisson_openacc
 *.mod
 *.dat
 *.txt
+*_seq
+*_mpi
+*_openmp
+*_cuda
+*_openacc
+*_opencl
+*_mpi_openmp
+*_mpi_opencl
+*_mpi_cuda

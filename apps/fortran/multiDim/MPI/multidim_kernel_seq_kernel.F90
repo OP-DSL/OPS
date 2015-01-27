@@ -19,11 +19,8 @@ contains
 !DEC$ ATTRIBUTES FORCEINLINE :: multidim_kernel
 subroutine multidim_kernel(val, idx)
   IMPLICIT NONE
-  REAL(kind=8)   , DIMENSION(1) :: val
+  REAL(kind=8)   , DIMENSION(2) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
-
-  INTEGER multi_d1
-  INTEGER xdim1
 
   val(OPS_ACC_MD1(0,0,0)) = idx(1)
   val(OPS_ACC_MD1(1,0,0)) = idx(2)
@@ -67,7 +64,7 @@ subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
-  integer(kind=4)   , DIMENSION(4), INTENT(IN) :: range
+  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
@@ -98,7 +95,7 @@ subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
   ydim1 = dat1_size(2)
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+  dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
   call multidim_kernel_wrap( &

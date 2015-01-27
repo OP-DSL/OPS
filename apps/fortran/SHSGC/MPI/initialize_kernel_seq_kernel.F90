@@ -28,17 +28,18 @@ subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
   real (kind=8) , DIMENSION(1) :: x, rho_new, rhou_new, rhoE_new, rhoin
   INTEGER(kind=4), DIMENSION(1), INTENT(IN) :: idx
 
+  x(OPS_ACC1(0)) = xmin + (idx(1)-2.0_8) * dx
+  if (x(OPS_ACC1(0)) .ge. -4.0_8) then
+    rho_new(OPS_ACC2(0)) = 1.0_8 + eps * dsin(lambda * x(OPS_ACC1(0)))
+    rhou_new(OPS_ACC3(0)) = ur * rho_new(OPS_ACC2(0))
+    rhoE_new(OPS_ACC4(0)) = (pr / gam1) + 0.5_8 * (rhou_new(OPS_ACC3(0))**2_8)/rho_new(OPS_ACC2(0))
+  else
+    rho_new(OPS_ACC2(0)) = rhol
+    rhou_new(OPS_ACC3(0)) = ul * rho_new(OPS_ACC2(0))
+    rhoE_new(OPS_ACC4(0)) = (pl / gam1) + 0.5_8 * (rhou_new(OPS_ACC3(0))**2_8)/rho_new(OPS_ACC2(0))
+  end if
 
-
-
-
-
-
-
-
-
-
-
+  rhoin(OPS_ACC5(0)) = gam1 * (rhoE_new(OPS_ACC4(0)) - 0.5_8 * rhou_new(OPS_ACC3(0)) * rhou_new(OPS_ACC3(0)) / rho_new(OPS_ACC2(0)))
 
 end subroutine
 
@@ -156,31 +157,31 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
   opsDat1Cardinality = opsArg1%dim * xdim1
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,1)
+  dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg1%dim * xdim2
-  dat2_base = getDatBaseFromOpsArg(opsArg2,start,1)
+  dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
   opsDat3Cardinality = opsArg1%dim * xdim3
-  dat3_base = getDatBaseFromOpsArg(opsArg3,start,1)
+  dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
   call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
   opsDat4Cardinality = opsArg1%dim * xdim4
-  dat4_base = getDatBaseFromOpsArg(opsArg4,start,1)
+  dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
   call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
   opsDat5Cardinality = opsArg1%dim * xdim5
-  dat5_base = getDatBaseFromOpsArg(opsArg5,start,1)
+  dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,1)
   call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
 
   call initialize_kernel_wrap( &

@@ -13,9 +13,10 @@ program SHSGC
 
   use, intrinsic :: ISO_C_BINDING
 
-   implicit none
+  implicit none
 
-   intrinsic :: sqrt, real
+  intrinsic :: sqrt, real
+
 
   type(ops_block) :: shsgc_grid
 
@@ -40,45 +41,72 @@ program SHSGC
 
   integer base(1) /1/
 
-  integer nxp /204/
   integer size(1) /204/
 
-  real(8) temp[allocatable](:)
+  real(kind=c_double) temp[allocatable](:)
 
 
 
 
   integer nxp_range(2)
 
+  nxp = 204
+  nyp = 5
+  xhalo = 2
+  yhalo = 2
+  xmin = -5.0_8
+  ymin = 0_8
+  xmax = 5.0_8
+  ymax = 0.5_8
+  dx = (xmax-xmin)/(nxp-(1.0_8 + 2.0_8*xhalo))
+  dy = (ymax-ymin)/(nyp-1.0_8)
+  pl = 10.333_8
+  pr = 1.0_8
+  rhol = 3.857143_8
+  rhor = 1.0_8
+  ul = 2.6293690_8
+  ur = 0.0_8
+  gam = 1.4_8
+  gam1=gam - 1.0_8
+  eps = 0.2_8
+  lambda = 5.0_8
+
+
+  dt=0.0002_8
+  del2 = 1e-8_8
+  akap2 = 0.40_8
+  tvdsmu = 0.25_8
+  con = tvdsmu**2.0_8
+
 
   call ops_init(2)
 
 
-  call ops_decl_block(2, shsgc_grid, "shsgc grid")
+  call ops_decl_block(1, shsgc_grid, "shsgc grid")
 
   call ops_decl_stencil( 2, 1, S1D_0_array, S1D_0, "0")
   call ops_decl_stencil( 2, 1, S1D_01_array, S1D_01, "0,1")
   call ops_decl_stencil( 2, 1, S1D_0M1_array, S1D_0M1, "0,-1")
   call ops_decl_stencil( 2, 1, S1D_0M1M2P1P2_array, S1D_0M1M2P1P2, "0,-1,-2,1,2")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, x, "real(8)", "x")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, x, "double", "x")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_old, "real(8)", "rho_old")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_new, "real(8)", "rho_new")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_res, "real(8)", "rho_res")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_old, "double", "rho_old")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_new, "double", "rho_new")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rho_res, "double", "rho_res")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_old, "real(8)", "rhou_old")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_new, "real(8)", "rhou_new")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_res, "real(8)", "rhou_res")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_old, "double", "rhou_old")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_new, "double", "rhou_new")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhou_res, "double", "rhou_res")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhov_old, "real(8)", "rhov_old")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhov_new, "real(8)", "rhov_new")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhov_old, "double", "rhov_old")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhov_new, "double", "rhov_new")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_old, "real(8)", "rhoE_old")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_new, "real(8)", "rhoE_new")
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_res, "real(8)", "rhoE_res")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_old, "double", "rhoE_old")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_new, "double", "rhoE_new")
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_res, "double", "rhoE_res")
 
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "real(8)", "rhoin");
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin");
 
 
 
@@ -91,6 +119,8 @@ program SHSGC
                     & ops_arg_dat(rhoE_new, 1, S1D_0, "real(8)", OPS_WRITE), &
                     & ops_arg_dat(rhoin, 1, S1D_0, "real(8)", OPS_WRITE), &
                     & ops_arg_idx())
+
+  call ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
 
   call ops_exit( )
 

@@ -371,9 +371,9 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         if int(dims[n]) <> 1:
           print dims[n]
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg(opsArg'+str(n+1)+',start,1)')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':

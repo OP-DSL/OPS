@@ -79,7 +79,7 @@ subroutine multidim_print_kernel_host( userSubroutine, block, dim, range, &
   ydim1 = dat1_size(2)
   opsDat1Cardinality = opsArg1%dim * xdim1 * ydim1
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
-  dat1_base = getDatBaseFromOpsArg(opsArg1,start,multi_d1)
+  dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
   call multidim_print_kernel_wrap( &

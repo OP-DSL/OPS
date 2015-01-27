@@ -168,7 +168,29 @@ int getDatDimFromOpsArg (ops_arg * arg){
 }
 
 //need differet routines for 1D, 2D 3D etc.
-int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
+int getDatBaseFromOpsArg1D (ops_arg * arg, int* start, int dim){
+
+  /*convert to C indexing*/
+  start[0] -= 1;
+
+  printf("start[0] = %d, base = %d, dim = %d\n",
+         start[0],arg->dat->base[0],dim);
+
+  int dat = arg->dat->elem_size;
+
+  //set up initial pointers
+  int d_m[OPS_MAX_DIM];
+  for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
+  int base = dat * 1 *
+   (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
+
+  /*revert to Fortran indexing*/
+  start[0] += 1;
+  printf("base = %d\n",base);
+  return base/(dat/dim) + dim;
+}
+
+int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
 
   /*convert to C indexing*/
   start[0] -= 1;
@@ -191,8 +213,11 @@ int getDatBaseFromOpsArg (ops_arg * arg, int* start, int dim){
   /*revert to Fortran indexing*/
   start[0] += 1;
   start[1] += 1;
-
   return base/(dat/dim) + dim;
+}
+
+int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
+  return 1;
 }
 
 double* getReductionPtrFromOpsArg(ops_arg* arg) {
