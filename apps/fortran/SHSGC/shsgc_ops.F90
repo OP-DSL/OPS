@@ -9,6 +9,10 @@ program SHSGC
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
   use INITIALIZE_KERNEL_MODULE
+  use SAVE_KERNEL_MODULE
+  use ZERORES_KERNEL_MODULE
+  use DRHOUDX_KERNEL_MODULE
+  use DRHOUUPDX_KERNEL_MODULE
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -17,6 +21,7 @@ program SHSGC
 
   intrinsic :: sqrt, real
 
+  integer niter, iter, nrk
 
   type(ops_block) :: shsgc_grid
 
@@ -48,7 +53,7 @@ program SHSGC
 
 
 
-  integer nxp_range(2)
+  integer nxp_range(2), nxp_range_1(2)
 
   nxp = 204
   nyp = 5
@@ -121,7 +126,50 @@ program SHSGC
                     & ops_arg_dat(rhoin, 1, S1D_0, "real(8)", OPS_WRITE), &
                     & ops_arg_idx())
 
-  call ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
+
+
+
+  niter = 9005
+  DO iter = 1, niter
+
+    call save_kernel_host("save_kernel", shsgc_grid, 1, nxp_range, &
+                      & ops_arg_dat(rho_old, 1, S1D_0, "real(8)", OPS_WRITE), &
+                      & ops_arg_dat(rhou_old, 1, S1D_0, "real(8)", OPS_WRITE), &
+                      & ops_arg_dat(rhoE_old, 1, S1D_0, "real(8)", OPS_WRITE), &
+                      & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_READ), &
+                      & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)", OPS_READ), &
+                      & ops_arg_dat(rhoE_new, 1, S1D_0, "real(8)", OPS_READ))
+
+    DO nrk = 1, 3
+
+      call zerores_kernel_host("zerores_kernel", shsgc_grid, 1, nxp_range, &
+                        & ops_arg_dat(rho_res, 1, S1D_0, "real(8)", OPS_WRITE), &
+                        & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)", OPS_WRITE), &
+                        & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)", OPS_WRITE))
+
+
+
+      nxp_range_1(1) = 2
+      nxp_range_1(2) = nxp-2
+      call drhoudx_kernel_host("drhoudx_kernel", shsgc_grid, 1, nxp_range_1, &
+                        & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rho_res, 1, S1D_0, "real(8)", OPS_WRITE))
+
+
+      call drhouupdx_kernel_host("drhouupdx_kernel", shsgc_grid, 1, nxp_range_1, &
+                        & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)", OPS_WRITE))
+
+      call ops_print_dat_to_txtfile(rhou_res, "shsgc.dat")
+      call exit()
+
+    END DO
+
+
+  ENDDO
+
 
   call ops_exit( )
 
