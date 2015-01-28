@@ -98,10 +98,10 @@ program SHSGC
   call ops_decl_block(1, shsgc_grid, "shsgc grid")
 
   !declare stencils
-  call ops_decl_stencil( 2, 1, S1D_0_array, S1D_0, "0")
-  call ops_decl_stencil( 2, 1, S1D_01_array, S1D_01, "0,1")
-  call ops_decl_stencil( 2, 1, S1D_0M1_array, S1D_0M1, "0,-1")
-  call ops_decl_stencil( 2, 1, S1D_0M1M2P1P2_array, S1D_0M1M2P1P2, "0,-1,-2,1,2")
+  call ops_decl_stencil( 1, 1, S1D_0_array, S1D_0, "0")
+  call ops_decl_stencil( 1, 2, S1D_01_array, S1D_01, "0,1")
+  call ops_decl_stencil( 1, 2, S1D_0M1_array, S1D_0M1, "0,-1")
+  call ops_decl_stencil( 1, 5, S1D_0M1M2P1P2_array, S1D_0M1M2P1P2, "0,-1,-2,1,2")
 
 
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, x, "double", "x")
@@ -139,6 +139,10 @@ program SHSGC
           & ops_arg_idx())
 
   call ops_print_dat_to_txtfile(rhoin, "shsgc.dat");
+
+  !
+  ! main iterative loop
+  !
 
   call ops_exit( )
 

@@ -9,15 +9,15 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim1
-#define OPS_ACC1(x) (x)
+#define OPS_ACC1(x) (x+1)
 INTEGER(KIND=4) xdim2
-#define OPS_ACC2(x) (x)
+#define OPS_ACC2(x) (x+1)
 INTEGER(KIND=4) xdim3
-#define OPS_ACC3(x) (x)
+#define OPS_ACC3(x) (x+1)
 INTEGER(KIND=4) xdim4
-#define OPS_ACC4(x) (x)
+#define OPS_ACC4(x) (x+1)
 INTEGER(KIND=4) xdim5
-#define OPS_ACC5(x) (x)
+#define OPS_ACC5(x) (x+1)
 
 
 contains
