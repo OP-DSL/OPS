@@ -56,7 +56,7 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2)
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -79,13 +79,19 @@ program SHSGC
   gam1=gam - 1.0_8
   eps = 0.2_8
   lambda = 5.0_8
-  !a1[3]
-  !a2[3]
   dt=0.0002_8
   del2 = 1e-8_8
   akap2 = 0.40_8
   tvdsmu = 0.25_8
   con = tvdsmu**2.0_8
+
+  !Initialize rk3 co-efficients
+  a1(1) = 2.0_8/3.0_8
+  a1(2) = 5.0_8/12.0_8
+  a1(3) = 3.0_8/5.0_8
+  a2(1) = 1.0_8/4.0_8
+  a2(2) = 3.0_8/20.0_8
+  a2(3) = 3.0_8/5.0_8
 
   !-------------------------- Initialisation --------------------------
 
@@ -182,7 +188,31 @@ program SHSGC
             & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
             & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)",OPS_WRITE))
 
-      call ops_print_dat_to_txtfile(rhou_res, "shsgc.dat")
+      ! Energy equation derivative d(rhoE+p)u/dx
+      call ops_par_loop(drhoEpudx_kernel, "drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1, &
+            & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
+            & ops_arg_dat(rho_new,  1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)",OPS_WRITE))
+
+      ! update use rk3 co-efficients
+      nxp_range_2(1) = 3
+      nxp_range_2(2) = nxp-2
+      call ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
+            & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(rhoE_new, 1, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(rho_old,  1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(rhou_old, 1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(rhoE_old, 1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(rho_res,  1, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_gbl(a1(nrk), 1, "real(8)", OPS_READ), &
+            & ops_arg_gbl(a2(nrk), 1, "real(8)", OPS_READ))
+
+
+      call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
       call exit()
 
     END DO

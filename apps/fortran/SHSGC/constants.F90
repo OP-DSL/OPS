@@ -25,8 +25,8 @@ real(8) :: gam
 real(8) :: gam1
 real(8) :: eps
 real(8) :: lambda
-!real(8) :: a1[3];
-!real(8) :: a2[3];
+real(8) :: a1(3)
+real(8) :: a2(3)
 real(8) :: dt
 real(8) :: del2
 real(8) :: akap2

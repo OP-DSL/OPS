@@ -13,6 +13,8 @@ program SHSGC
   use ZERORES_KERNEL_MODULE
   use DRHOUDX_KERNEL_MODULE
   use DRHOUUPDX_KERNEL_MODULE
+  use DRHOEPUDX_KERNEL_MODULE
+  use UPDATERK3_KERNEL_MODULE
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -53,7 +55,7 @@ program SHSGC
 
 
 
-  integer nxp_range(2), nxp_range_1(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2)
 
   nxp = 204
   nyp = 5
@@ -75,13 +77,18 @@ program SHSGC
   gam1=gam - 1.0_8
   eps = 0.2_8
   lambda = 5.0_8
-
-
   dt=0.0002_8
   del2 = 1e-8_8
   akap2 = 0.40_8
   tvdsmu = 0.25_8
   con = tvdsmu**2.0_8
+
+  a1(1) = 2.0_8/3.0_8
+  a1(2) = 5.0_8/12.0_8
+  a1(3) = 3.0_8/5.0_8
+  a2(1) = 1.0_8/4.0_8
+  a2(2) = 3.0_8/20.0_8
+  a2(3) = 3.0_8/5.0_8
 
 
   call ops_init(2)
@@ -162,7 +169,28 @@ program SHSGC
                         & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)", OPS_WRITE))
 
-      call ops_print_dat_to_txtfile(rhou_res, "shsgc.dat")
+      call drhoEpudx_kernel_host("drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1, &
+                        & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)", OPS_WRITE))
+
+      nxp_range_2(1) = 3
+      nxp_range_2(2) = nxp-2
+      call updateRK3_kernel_host("updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
+                        & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_WRITE), &
+                        & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)", OPS_WRITE), &
+                        & ops_arg_dat(rhoE_new, 1, S1D_0, "real(8)", OPS_WRITE), &
+                        & ops_arg_dat(rho_old, 1, S1D_0, "real(8)", OPS_RW), &
+                        & ops_arg_dat(rhou_old, 1, S1D_0, "real(8)", OPS_RW), &
+                        & ops_arg_dat(rhoE_old, 1, S1D_0, "real(8)", OPS_RW), &
+                        & ops_arg_dat(rho_res, 1, S1D_0, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)", OPS_READ), &
+                        & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)", OPS_READ), &
+                        & ops_arg_gbl(a1(nrk), 1, "real(8)", OPS_READ), &
+                        & ops_arg_gbl(a2(nrk), 1, "real(8)", OPS_READ))
+
+      call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
       call exit()
 
     END DO
