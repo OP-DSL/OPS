@@ -159,31 +159,31 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
-  opsDat2Cardinality = opsArg1%dim * xdim2
+  opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
-  opsDat3Cardinality = opsArg1%dim * xdim3
+  opsDat3Cardinality = opsArg3%dim * xdim3
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
   call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
-  opsDat4Cardinality = opsArg1%dim * xdim4
+  opsDat4Cardinality = opsArg4%dim * xdim4
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
   call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
-  opsDat5Cardinality = opsArg1%dim * xdim5
+  opsDat5Cardinality = opsArg5%dim * xdim5
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,1)
   call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg6),dat6_size,(/dim/))
   xdim6 = dat6_size(1)
-  opsDat6Cardinality = opsArg1%dim * xdim6
+  opsDat6Cardinality = opsArg6%dim * xdim6
   dat6_base = getDatBaseFromOpsArg1D(opsArg6,start,1)
   call c_f_pointer(opsArg6%data,opsDat6Local,(/opsDat6Cardinality/))
 

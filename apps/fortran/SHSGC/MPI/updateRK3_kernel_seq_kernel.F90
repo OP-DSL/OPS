@@ -35,10 +35,17 @@ contains
 subroutine updateRK3_kernel(rho_new, rhou_new, rhoE_new, rho_old, &
                              & rhou_old, rhoE_old, rho_res, rhou_res, rhoE_res, a1, a2)
 
-  real (kind=8) , INTENT(in), DIMENSION(1) :: rho_new, rhou_new, rhoE_new, rho_old, rhou_old, rhoE_old
+  real (kind=8) , DIMENSION(1) :: rho_new, rhou_new, rhoE_new, rho_old, rhou_old, rhoE_old
   real (kind=8), DIMENSION(2), INTENT(IN) :: rho_res, rhou_res, rhoE_res
   real(8) :: a1, a2
 
+  rho_new(OPS_ACC1(0)) = rho_old(OPS_ACC4(0)) + dt * a1 * (-rho_res(OPS_ACC7(0)));
+  rhou_new(OPS_ACC2(0)) = rhou_old(OPS_ACC5(0)) + dt * a1 * (-rhou_res(OPS_ACC8(0)));
+  rhoE_new(OPS_ACC3(0)) = rhoE_old(OPS_ACC6(0)) + dt * a1 * (-rhoE_res(OPS_ACC9(0)));
+
+  rho_old(OPS_ACC4(0)) = rho_old(OPS_ACC4(0)) + dt * a2 * (-rho_res(OPS_ACC7(0)));
+  rhou_old(OPS_ACC5(0)) = rhou_old(OPS_ACC5(0)) + dt * a2 * (-rhou_res(OPS_ACC8(0)));
+  rhoE_old(OPS_ACC6(0)) = rhoE_old(OPS_ACC6(0)) + dt * a2 * (-rhoE_res(OPS_ACC9(0)));
 
 end subroutine
 
@@ -223,56 +230,56 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
-  opsDat2Cardinality = opsArg1%dim * xdim2
+  opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
-  opsDat3Cardinality = opsArg1%dim * xdim3
+  opsDat3Cardinality = opsArg3%dim * xdim3
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
   call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
-  opsDat4Cardinality = opsArg1%dim * xdim4
+  opsDat4Cardinality = opsArg4%dim * xdim4
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
   call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
-  opsDat5Cardinality = opsArg1%dim * xdim5
+  opsDat5Cardinality = opsArg5%dim * xdim5
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,1)
   call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg6),dat6_size,(/dim/))
   xdim6 = dat6_size(1)
-  opsDat6Cardinality = opsArg1%dim * xdim6
+  opsDat6Cardinality = opsArg6%dim * xdim6
   dat6_base = getDatBaseFromOpsArg1D(opsArg6,start,1)
   call c_f_pointer(opsArg6%data,opsDat6Local,(/opsDat6Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg7),dat7_size,(/dim/))
   xdim7 = dat7_size(1)
-  opsDat7Cardinality = opsArg1%dim * xdim7
+  opsDat7Cardinality = opsArg7%dim * xdim7
   dat7_base = getDatBaseFromOpsArg1D(opsArg7,start,1)
   call c_f_pointer(opsArg7%data,opsDat7Local,(/opsDat7Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg8),dat8_size,(/dim/))
   xdim8 = dat8_size(1)
-  opsDat8Cardinality = opsArg1%dim * xdim8
+  opsDat8Cardinality = opsArg8%dim * xdim8
   dat8_base = getDatBaseFromOpsArg1D(opsArg8,start,1)
   call c_f_pointer(opsArg8%data,opsDat8Local,(/opsDat8Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg9),dat9_size,(/dim/))
   xdim9 = dat9_size(1)
-  opsDat9Cardinality = opsArg1%dim * xdim9
+  opsDat9Cardinality = opsArg9%dim * xdim9
   dat9_base = getDatBaseFromOpsArg1D(opsArg9,start,1)
   call c_f_pointer(opsArg9%data,opsDat9Local,(/opsDat9Cardinality/))
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg10),opsDat10Local, (/opsArg10%dim/))
+  call c_f_pointer(getGblPtrFromOpsArg(opsArg10),opsDat10Local, (/opsArg10%dim/))
   dat10_base = 1
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg11),opsDat11Local, (/opsArg11%dim/))
+  call c_f_pointer(getGblPtrFromOpsArg(opsArg11),opsDat11Local, (/opsArg11%dim/))
   dat11_base = 1
 
   call updateRK3_kernel_wrap( &

@@ -358,16 +358,16 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('call c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'),dat'+str(n+1)+'_size,(/dim/))')
         if NDIM==1:
           code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1))
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1))
         elif NDIM==2:
           code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1)+' * ydim'+str(n+1))
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1))
         elif NDIM==3:
           code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg1%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
         if int(dims[n]) <> 1:
           print dims[n]
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
@@ -377,9 +377,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
-        code('dat'+str(n+1)+'_base = 1')
-        code('')
+        if accs[n] == OPS_READ:
+          code('call c_f_pointer(getGblPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+          code('dat'+str(n+1)+'_base = 1')
+          code('')
+        else:
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+          code('dat'+str(n+1)+'_base = 1')
+          code('')
 
     #Call user kernel wrapper
     code('call '+name+'_wrap( &')

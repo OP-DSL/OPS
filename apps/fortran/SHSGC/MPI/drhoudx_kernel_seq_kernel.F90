@@ -105,7 +105,7 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
-  opsDat2Cardinality = opsArg1%dim * xdim2
+  opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 

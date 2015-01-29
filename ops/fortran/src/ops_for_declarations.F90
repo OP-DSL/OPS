@@ -266,6 +266,20 @@ module OPS_Fortran_Declarations
 
     end function ops_arg_reduce_c
 
+    function ops_arg_gbl_c ( data, dim, size, acc ) BIND(C,name='ops_arg_gbl_char')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      import :: ops_arg
+
+      type(ops_arg) :: ops_arg_gbl_c
+
+      type(c_ptr), value :: data
+      integer(kind=c_int), value :: dim, size
+      integer(kind=c_int), value :: acc
+
+    end function ops_arg_gbl_c
+
 
     subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
       use, intrinsic      :: ISO_C_BINDING
@@ -337,6 +351,9 @@ module OPS_Fortran_Declarations
     & ops_reduction_result_real_8
   end interface ops_reduction_result
 
+  interface ops_arg_gbl
+    module procedure ops_arg_gbl_scalar
+  end interface ops_arg_gbl
 
 
   !###################################################################
@@ -531,6 +548,19 @@ module OPS_Fortran_Declarations
     ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, type, access-1 )
 
   end function ops_arg_reduce
+
+  type(ops_arg) function ops_arg_gbl_scalar(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_gbl_scalar = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+
+  end function ops_arg_gbl_scalar
 
   subroutine ops_timers ( et )
     real(kind=c_double) :: et
