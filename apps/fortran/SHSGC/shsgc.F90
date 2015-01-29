@@ -56,7 +56,7 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), nxp_range_4(2)
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -243,7 +243,15 @@ program SHSGC
             & ops_arg_dat(r,  9, S1D_01, "real(8)",OPS_WRITE), &
             & ops_arg_dat(al, 3, S1D_01, "real(8)",OPS_WRITE))
 
-      call ops_print_dat_to_txtfile(alam, "shsgc.dat")
+    ! limiter function
+    nxp_range_4(1) = 1
+    nxp_range_4(2) = nxp
+    call ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4, &
+            & ops_arg_dat(al, 3, S1D_0M1, "real(8)",OPS_READ), &
+            & ops_arg_dat(tht,3, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(gt, 3, S1D_0, "real(8)",OPS_WRITE))
+
+      call ops_print_dat_to_txtfile(gt, "shsgc.dat")
       !call ops_print_dat_to_txtfile(rhou_new, "shsgc.dat")
       !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
       !call ops_print_dat_to_txtfile(rhoE_new, "shsgc.dat")

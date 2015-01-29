@@ -262,7 +262,6 @@ int main(int argc, char **argv) {
              ops_arg_dat(rhou_new, 1, S1D_0, "double", OPS_READ),
              ops_arg_dat(rhoE_new, 1, S1D_0, "double", OPS_READ));
 
-
     //rk3 loop
     for (int nrk=0; nrk <3; nrk++){
 
@@ -271,8 +270,6 @@ int main(int argc, char **argv) {
               ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE),
               ops_arg_dat(rhou_res, 1, S1D_0, "double",OPS_WRITE),
               ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_WRITE));
-
-
 
       // computations of convective derivatives
       //TODO
@@ -303,8 +300,6 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
               ops_arg_dat(rhoE_res,  1, S1D_0, "double",OPS_WRITE));
 
-
-
       //if (nrk == 1) {
       //  ops_print_dat_to_txtfile(rhoE_res, "shsgc.dat");
       //  exit(0);
@@ -327,7 +322,6 @@ int main(int argc, char **argv) {
     }
 
 
-
     //
     // TVD scheme
     //
@@ -342,15 +336,15 @@ int main(int argc, char **argv) {
                  ops_arg_dat(r,  9, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(al, 3, S1D_01, "double",OPS_WRITE));
 
-          ops_print_dat_to_txtfile(alam, "shsgc.dat");
-          exit(0);
-
     // limiter function
     int nxp_range_4[] = {1,nxp};
     ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4,
                  ops_arg_dat(al, 3, S1D_0M1, "double",OPS_READ),
                  ops_arg_dat(tht,3, S1D_0, "double",OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double",OPS_WRITE));
+
+          ops_print_dat_to_txtfile(gt, "shsgc.dat");
+          exit(0);
 
     // Second order tvd dissipation
     ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
