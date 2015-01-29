@@ -17,7 +17,8 @@ program SHSGC
   intrinsic :: sqrt, real
 
   integer niter, iter, nrk
-  real(8) :: local_rms, totaltime
+  real(8) :: totaltime
+  real(8) :: local_rms
 
   !ops blocks
   type(ops_block) :: shsgc_grid
@@ -165,6 +166,9 @@ program SHSGC
           & ops_arg_idx())
 
 
+      !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+      !call exit()
+
 
   !
   ! main iterative loop
@@ -194,8 +198,8 @@ program SHSGC
       ! TODO
 
       ! calculate drhou/dx
-      nxp_range_1(1) = 2
-      nxp_range_1(2) = nxp-3
+      nxp_range_1(1) = 3
+      nxp_range_1(2) = nxp-2
       call ops_par_loop(drhoudx_kernel, "drhoudx_kernel", shsgc_grid, 1, nxp_range_1, &
             & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
             & ops_arg_dat(rho_res, 1, S1D_0, "real(8)",OPS_WRITE))
@@ -208,6 +212,11 @@ program SHSGC
             & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
             & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)",OPS_WRITE))
 
+      !if (iter .eq. 6001) then
+      !call ops_print_dat_to_txtfile(rhou_res, "shsgc.dat")
+      !call exit()
+      !end if
+
       ! Energy equation derivative d(rhoE+p)u/dx
       call ops_par_loop(drhoEpudx_kernel, "drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1, &
             & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
@@ -216,8 +225,8 @@ program SHSGC
             & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)",OPS_WRITE))
 
       ! update use rk3 co-efficients
-      nxp_range_2(1) = 3
-      nxp_range_2(2) = nxp-3
+      nxp_range_2(1) = 4
+      nxp_range_2(2) = nxp-2
       call ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
             & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_WRITE), &
             & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)",OPS_WRITE), &
@@ -251,8 +260,8 @@ program SHSGC
             & ops_arg_dat(al, 3, S1D_01, "real(8)",OPS_WRITE))
 
     ! limiter function
-    nxp_range_4(1) = 1
-    nxp_range_4(2) = nxp
+    nxp_range_4(1) = 2
+    nxp_range_4(2) = nxp-1
     call ops_par_loop(limiter_kernel, "limiter_kernel", shsgc_grid, 1, nxp_range_4, &
             & ops_arg_dat(al, 3, S1D_0M1, "real(8)",OPS_READ), &
             & ops_arg_dat(tht,3, S1D_0, "real(8)",OPS_WRITE), &
@@ -287,8 +296,8 @@ program SHSGC
             & ops_arg_dat(s,    3, S1D_0,   "real(8)",OPS_WRITE))
 
     ! update loop
-    nxp_range_5(1) = 3
-    nxp_range_5(2) = nxp-5
+    nxp_range_5(1) = 4
+    nxp_range_5(2) = nxp-3
     call ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5, &
             & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_RW), &
             & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)",OPS_RW), &
@@ -298,10 +307,10 @@ program SHSGC
     totaltime = totaltime + dt
     write (*,*) iter, totaltime
 
-    if (iter .eq. 1) then
-    call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-    call exit()
-    end if
+    !if (iter .eq. 1) then
+    !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+    !call exit()
+    !end if
 
   ENDDO
 
@@ -314,7 +323,7 @@ program SHSGC
             & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
   call ops_reduction_result(rms, local_rms);
-  write (*,*), "RMS = " , rms !sqrt(local_rms)/nxp; !Correct RMS = 0.233689
+  write (*,*), "RMS = " , sqrt(local_rms)/nxp; !Correct RMS = 0.233689
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
 

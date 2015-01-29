@@ -32,7 +32,8 @@ program SHSGC
   intrinsic :: sqrt, real
 
   integer niter, iter, nrk
-  real(8) :: local_rms, totaltime
+  real(8) :: totaltime
+  real(8) :: local_rms
 
   type(ops_block) :: shsgc_grid
 
@@ -162,6 +163,9 @@ program SHSGC
 
 
 
+
+
+
   niter = 9005
   DO iter = 1, niter
 
@@ -182,8 +186,8 @@ program SHSGC
 
 
 
-      nxp_range_1(1) = 2
-      nxp_range_1(2) = nxp-3
+      nxp_range_1(1) = 3
+      nxp_range_1(2) = nxp-2
       call drhoudx_kernel_host("drhoudx_kernel", shsgc_grid, 1, nxp_range_1, &
                         & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rho_res, 1, S1D_0, "real(8)", OPS_WRITE))
@@ -195,14 +199,18 @@ program SHSGC
                         & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rhou_res, 1, S1D_0, "real(8)", OPS_WRITE))
 
+
+
+
+
       call drhoEpudx_kernel_host("drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1, &
                         & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)", OPS_WRITE))
 
-      nxp_range_2(1) = 3
-      nxp_range_2(2) = nxp-3
+      nxp_range_2(1) = 4
+      nxp_range_2(2) = nxp-2
       call updateRK3_kernel_host("updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
                         & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_WRITE), &
                         & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)", OPS_WRITE), &
@@ -232,8 +240,8 @@ program SHSGC
                       & ops_arg_dat(r, 9, S1D_01, "real(8)", OPS_WRITE), &
                       & ops_arg_dat(al, 3, S1D_01, "real(8)", OPS_WRITE))
 
-    nxp_range_4(1) = 1
-    nxp_range_4(2) = nxp
+    nxp_range_4(1) = 2
+    nxp_range_4(2) = nxp-1
     call limiter_kernel_host("limiter_kernel", shsgc_grid, 1, nxp_range_4, &
                       & ops_arg_dat(al, 3, S1D_0M1, "real(8)", OPS_READ), &
                       & ops_arg_dat(tht, 3, S1D_0, "real(8)", OPS_WRITE), &
@@ -263,7 +271,7 @@ program SHSGC
                       & ops_arg_dat(eff, 3, S1D_0M1, "real(8)", OPS_READ), &
                       & ops_arg_dat(s, 3, S1D_0, "real(8)", OPS_WRITE))
 
-    nxp_range_5(1) = 3
+    nxp_range_5(1) = 4
     nxp_range_5(2) = nxp-3
     call update_kernel_host("update_kernel", shsgc_grid, 1, nxp_range_5, &
                       & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_RW), &
@@ -274,10 +282,9 @@ program SHSGC
     totaltime = totaltime + dt
     write (*,*) iter, totaltime
 
-    if (iter .eq. 1) then
-    call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-    call exit()
-    end if
+
+
+
 
   ENDDO
 
@@ -288,7 +295,7 @@ program SHSGC
                     & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
   call ops_reduction_result(rms, local_rms);
-  write (*,*), "RMS = " , rms
+  write (*,*), "RMS = " , sqrt(local_rms)/nxp;
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
 

@@ -223,30 +223,30 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     if NDIM==1:
       if reduction <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','start(1)','end(1)')
+      DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = n_x')
+        code('idx(1) = start(1) + n_x - 1')
     elif NDIM==2:
-      DO('n_y','start(2)','end(2)')
+      DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
-        code('idx(2) = n_y')
+        code('idx(2) = start(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','start(1)','end(1)')
+      DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = n_x')
+        code('idx(1) = start(1) + n_x - 1')
     elif NDIM==3:
-      DO('n_z','start(3)','end(3)')
+      DO('n_z','1','end(3)-start(3)+1')
       if arg_idx == 1:
-        code('idx(1) = n_z')
-      DO('n_y','start(2)','end(2)')
+        code('idx(3) = start(3) + n_z - 1')
+      DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
-        code('idx(1) = n_y')
+        code('idx(2) = start(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','start(1)','end(1)')
+      DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = n_x')
+        code('idx(1) = start(1) + n_x - 1')
 
     code('call '+name + '( &')
     indent = config.depth *' '

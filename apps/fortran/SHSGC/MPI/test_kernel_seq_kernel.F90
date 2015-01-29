@@ -19,9 +19,9 @@ contains
 subroutine test_kernel(rho_new, rms)
 
   real (kind=8), INTENT(in), DIMENSION(1) :: rho_new
-  real (kind=8), DIMENSION(1) :: rms
+  real (kind=8) :: rms
 
-  rms(1) = rms(1) + rho_new(OPS_ACC1(0))**2.0_8
+  rms = rms + rho_new(OPS_ACC1(0))**2.0_8
 
 end subroutine
 
@@ -45,7 +45,7 @@ subroutine test_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  DO n_x = start(1), end(1)
+  DO n_x = 1, end(1)-start(1)+1
     call test_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local(dat2_base) )

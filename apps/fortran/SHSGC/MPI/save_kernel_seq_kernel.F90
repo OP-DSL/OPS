@@ -79,7 +79,7 @@ subroutine save_kernel_wrap( &
   integer n_x
 
   !DIR$ SIMD
-  DO n_x = start(1), end(1)
+  DO n_x = 1, end(1)-start(1)+1
     call save_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local(dat2_base+(n_x-1)*1), &
