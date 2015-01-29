@@ -17,6 +17,7 @@ program SHSGC
   intrinsic :: sqrt, real
 
   integer niter, iter, nrk
+  real(8) :: local_rms, totaltime
 
   !ops blocks
   type(ops_block) :: shsgc_grid
@@ -30,6 +31,9 @@ program SHSGC
   type(ops_dat) :: rhoin
   type(ops_dat) :: r, al, alam, gt, tht, ep2, cmp, cf, eff, s
   type(ops_dat) :: readvar
+
+  !ops_reduction
+  type(ops_reduction) :: rms
 
   ! vars for stencils
   integer S1D_0_array(1) /0/
@@ -56,7 +60,8 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), nxp_range_4(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
+  & nxp_range_4(2), nxp_range_5(2)
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -85,6 +90,7 @@ program SHSGC
   tvdsmu = 0.25_8
   con = tvdsmu**2.0_8
 
+  totaltime = 0.0_8
   !Initialize rk3 co-efficients
   a1(1) = 2.0_8/3.0_8
   a1(2) = 5.0_8/12.0_8
@@ -128,21 +134,22 @@ program SHSGC
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_res, "double", "rhoE_res")
 
   ! extra dat for rhoin
-  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin");
+  call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin")
 
   ! TVD scheme variables
-  call ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, r, "double", "r");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, al, "double", "al");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, alam, "double", "alam");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, gt, "double", "gt");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, tht, "double", "tht");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, ep2, "double", "ep2");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cmp, "double", "cmp");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cf, "double", "cf");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, eff, "double", "eff");
-  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, s, "double", "s");
+  call ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, r, "double", "r")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, al, "double", "al")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, alam, "double", "alam")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, gt, "double", "gt")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, tht, "double", "tht")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, ep2, "double", "ep2")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cmp, "double", "cmp")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cf, "double", "cf")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, eff, "double", "eff")
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, s, "double", "s")
 
-
+  ! reduction handle for rms variable
+  call ops_decl_reduction_handle(8, rms, "double", "rms")
 
   !
   ! Initialize with the test case
@@ -251,17 +258,65 @@ program SHSGC
             & ops_arg_dat(tht,3, S1D_0, "real(8)",OPS_WRITE), &
             & ops_arg_dat(gt, 3, S1D_0, "real(8)",OPS_WRITE))
 
-      call ops_print_dat_to_txtfile(gt, "shsgc.dat")
-      !call ops_print_dat_to_txtfile(rhou_new, "shsgc.dat")
-      !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-      !call ops_print_dat_to_txtfile(rhoE_new, "shsgc.dat")
-      call exit()
+    ! Second order tvd dissipation
+    call ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3, &
+            & ops_arg_dat(tht, 3, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(ep2, 3, S1D_0, "real(8)",OPS_WRITE))
 
+    ! vars
+    call ops_par_loop(vars_kernel, "vars_kernel", shsgc_grid, 1, nxp_range_3, &
+            & ops_arg_dat(alam,3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(al,  3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(gt,  3, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(cmp, 3, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(cf,  3, S1D_0, "real(8)",OPS_WRITE))
 
+    ! cal upwind eff
+    call ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3, &
+            & ops_arg_dat(cmp,3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(gt, 3, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(cf, 3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(al, 3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(ep2,3, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(r,  9, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_dat(eff,3, S1D_0, "real(8)",OPS_WRITE))
+
+    ! fact
+    call ops_par_loop(fact_kernel, "fact_kernel", shsgc_grid, 1, nxp_range_4, &
+            & ops_arg_dat(eff,  3, S1D_0M1, "real(8)",OPS_READ), &
+            & ops_arg_dat(s,    3, S1D_0,   "real(8)",OPS_WRITE))
+
+    ! update loop
+    nxp_range_5(1) = 3
+    nxp_range_5(2) = nxp-5
+    call ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5, &
+            & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(rhoE_new, 1, S1D_0, "real(8)",OPS_RW), &
+            & ops_arg_dat(s,        3, S1D_0, "real(8)",OPS_READ))
+
+    totaltime = totaltime + dt
+    write (*,*) iter, totaltime
+
+    if (iter .eq. 501) then
+    call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+    call exit()
+    end if
 
   ENDDO
 
 
+
+  ! compare solution to referance solution
+  local_rms = 0.0_8
+  call ops_par_loop(test_kernel, "test_kernel", shsgc_grid, 1, nxp_range, &
+            & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_READ), &
+            & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
+
+  call ops_reduction_result(rms, local_rms);
+  write (*,*), "RMS = " , rms !sqrt(local_rms)/nxp; !Correct RMS = 0.233689
+
+  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
 
   call ops_exit( )
 

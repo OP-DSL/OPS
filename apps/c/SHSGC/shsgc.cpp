@@ -343,8 +343,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(tht,3, S1D_0, "double",OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double",OPS_WRITE));
 
-          ops_print_dat_to_txtfile(gt, "shsgc.dat");
-          exit(0);
+
 
     // Second order tvd dissipation
     ops_par_loop(tvd_kernel, "tvd_kernel", shsgc_grid, 1, nxp_range_3,
@@ -358,7 +357,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(gt,  3, S1D_01, "double",OPS_READ),
                  ops_arg_dat(cmp, 3, S1D_0, "double",OPS_WRITE),
                  ops_arg_dat(cf,  3, S1D_0, "double",OPS_WRITE));
-
 
     // cal upwind eff
     ops_par_loop(calupwindeff_kernel, "calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
@@ -375,7 +373,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(eff,  3, S1D_0M1, "double",OPS_READ),
                  ops_arg_dat(s,    3, S1D_0,   "double",OPS_WRITE));
 
-
     // update loop
     int nxp_range_5[] = {3,nxp-3};
     ops_par_loop(update_kernel, "update_kernel", shsgc_grid, 1, nxp_range_5,
@@ -387,10 +384,19 @@ int main(int argc, char **argv) {
     totaltime = totaltime + dt;
     ops_printf("%d \t %f\n", iter, totaltime);
 
+    if (iter == 500) {
+      ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
+      exit(0);
+    }
+
+
   }
+
 
   ops_timers(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+
+
 
   //compare solution to referance solution
   double local_rms = 0.0;
