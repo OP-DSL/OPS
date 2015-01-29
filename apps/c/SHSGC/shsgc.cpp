@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
     totaltime = totaltime + dt;
     ops_printf("%d \t %f\n", iter, totaltime);
 
-    if (iter == 500) {
+    if (iter == 0) {
       ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
       exit(0);
     }

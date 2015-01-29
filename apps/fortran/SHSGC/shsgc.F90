@@ -298,7 +298,7 @@ program SHSGC
     totaltime = totaltime + dt
     write (*,*) iter, totaltime
 
-    if (iter .eq. 501) then
+    if (iter .eq. 1) then
     call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
     call exit()
     end if

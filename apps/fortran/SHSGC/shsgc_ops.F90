@@ -264,7 +264,7 @@ program SHSGC
                       & ops_arg_dat(s, 3, S1D_0, "real(8)", OPS_WRITE))
 
     nxp_range_5(1) = 3
-    nxp_range_5(2) = nxp-5
+    nxp_range_5(2) = nxp-3
     call update_kernel_host("update_kernel", shsgc_grid, 1, nxp_range_5, &
                       & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_RW), &
                       & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)", OPS_RW), &
@@ -274,7 +274,7 @@ program SHSGC
     totaltime = totaltime + dt
     write (*,*) iter, totaltime
 
-    if (iter .eq. 501) then
+    if (iter .eq. 1) then
     call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
     call exit()
     end if
