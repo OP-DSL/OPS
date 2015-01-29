@@ -56,7 +56,7 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2)
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -95,15 +95,15 @@ program SHSGC
 
   !-------------------------- Initialisation --------------------------
 
-  !OPS initialisation
+  ! OPS initialisation
   call ops_init(2)
 
   !----------------------------OPS Declarations------------------------
 
-  !declare block
+  ! declare block
   call ops_decl_block(1, shsgc_grid, "shsgc grid")
 
-  !declare stencils
+  ! declare stencils
   call ops_decl_stencil( 1, 1, S1D_0_array, S1D_0, "0")
   call ops_decl_stencil( 1, 2, S1D_01_array, S1D_01, "0,1")
   call ops_decl_stencil( 1, 2, S1D_0M1_array, S1D_0M1, "0,-1")
@@ -127,8 +127,21 @@ program SHSGC
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_new, "double", "rhoE_new")
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoE_res, "double", "rhoE_res")
 
-  !extra dat for rhoin
+  ! extra dat for rhoin
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin");
+
+  ! TVD scheme variables
+  call ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, r, "double", "r");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, al, "double", "al");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, alam, "double", "alam");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, gt, "double", "gt");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, tht, "double", "tht");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, ep2, "double", "ep2");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cmp, "double", "cmp");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cf, "double", "cf");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, eff, "double", "eff");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, s, "double", "s");
+
 
 
   !
@@ -175,7 +188,7 @@ program SHSGC
 
       ! calculate drhou/dx
       nxp_range_1(1) = 2
-      nxp_range_1(2) = nxp-2
+      nxp_range_1(2) = nxp-3
       call ops_par_loop(drhoudx_kernel, "drhoudx_kernel", shsgc_grid, 1, nxp_range_1, &
             & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)",OPS_READ), &
             & ops_arg_dat(rho_res, 1, S1D_0, "real(8)",OPS_WRITE))
@@ -197,7 +210,7 @@ program SHSGC
 
       ! update use rk3 co-efficients
       nxp_range_2(1) = 3
-      nxp_range_2(2) = nxp-2
+      nxp_range_2(2) = nxp-3
       call ops_par_loop(updateRK3_kernel, "updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
             & ops_arg_dat(rho_new,  1, S1D_0, "real(8)",OPS_WRITE), &
             & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)",OPS_WRITE), &
@@ -211,12 +224,30 @@ program SHSGC
             & ops_arg_gbl(a1(nrk), 1, "real(8)", OPS_READ), &
             & ops_arg_gbl(a2(nrk), 1, "real(8)", OPS_READ))
 
-
-      call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-      call exit()
-
     END DO
 
+    !
+    ! TVD scheme
+    !
+
+
+
+    ! Riemann invariants
+    nxp_range_3(1) = 1
+    nxp_range_3(2) = nxp-1
+    call ops_par_loop(Riemann_kernel, "Riemann_kernel", shsgc_grid, 1, nxp_range_3, &
+            & ops_arg_dat(rho_new,  1, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhou_new,  1, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(rhoE_new,  1, S1D_01, "real(8)",OPS_READ), &
+            & ops_arg_dat(alam,  3, S1D_01, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(r,  9, S1D_01, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(al, 3, S1D_01, "real(8)",OPS_WRITE))
+
+      call ops_print_dat_to_txtfile(alam, "shsgc.dat")
+      !call ops_print_dat_to_txtfile(rhou_new, "shsgc.dat")
+      !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+      !call ops_print_dat_to_txtfile(rhoE_new, "shsgc.dat")
+      call exit()
 
 
 

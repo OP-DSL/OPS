@@ -41,11 +41,12 @@ subroutine drhouupdx_kernel(rhou_new, rho_new, rhoE_new, rhou_res)
       p = gam1 * (rhoE_new(OPS_ACC3(1)) - 0.5_8 * fnip1)
       fnip1 = fnip1 + p
       fnip2 = rhou_new(OPS_ACC1(2)) * rhou_new(OPS_ACC1(2)) / rho_new(OPS_ACC2(2))
+
       p = gam1 * (rhoE_new(OPS_ACC3(2)) - 0.5_8 * fnip2)
       fnip2 = fnip2 + p
-
       deriv = (fnim2 - fnip2 + 8.0_8* (fnip1 - fnim1))/(12.00_8*dx)
       rhou_res(OPS_ACC4(0)) = deriv
+      write (*,*) deriv
 
 end subroutine
 

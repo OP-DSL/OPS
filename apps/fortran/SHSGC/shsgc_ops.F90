@@ -15,6 +15,7 @@ program SHSGC
   use DRHOUUPDX_KERNEL_MODULE
   use DRHOEPUDX_KERNEL_MODULE
   use UPDATERK3_KERNEL_MODULE
+  use RIEMANN_KERNEL_MODULE
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -55,7 +56,7 @@ program SHSGC
 
 
 
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2)
+  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2)
 
   nxp = 204
   nyp = 5
@@ -120,6 +121,17 @@ program SHSGC
 
   call ops_decl_dat(shsgc_grid, 1, size, base, d_m, d_p, temp, rhoin, "double", "rhoin");
 
+  call ops_decl_dat(shsgc_grid, 9, size, base, d_m, d_p, temp, r, "double", "r");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, al, "double", "al");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, alam, "double", "alam");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, gt, "double", "gt");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, tht, "double", "tht");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, ep2, "double", "ep2");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cmp, "double", "cmp");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, cf, "double", "cf");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, eff, "double", "eff");
+  call ops_decl_dat(shsgc_grid, 3, size, base, d_m, d_p, temp, s, "double", "s");
+
 
 
 
@@ -157,7 +169,7 @@ program SHSGC
 
 
       nxp_range_1(1) = 2
-      nxp_range_1(2) = nxp-2
+      nxp_range_1(2) = nxp-3
       call drhoudx_kernel_host("drhoudx_kernel", shsgc_grid, 1, nxp_range_1, &
                         & ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "real(8)", OPS_READ), &
                         & ops_arg_dat(rho_res, 1, S1D_0, "real(8)", OPS_WRITE))
@@ -176,7 +188,7 @@ program SHSGC
                         & ops_arg_dat(rhoE_res, 1, S1D_0, "real(8)", OPS_WRITE))
 
       nxp_range_2(1) = 3
-      nxp_range_2(2) = nxp-2
+      nxp_range_2(2) = nxp-3
       call updateRK3_kernel_host("updateRK3_kernel", shsgc_grid, 1, nxp_range_2, &
                         & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_WRITE), &
                         & ops_arg_dat(rhou_new, 1, S1D_0, "real(8)", OPS_WRITE), &
@@ -190,10 +202,27 @@ program SHSGC
                         & ops_arg_gbl(a1(nrk), 1, "real(8)", OPS_READ), &
                         & ops_arg_gbl(a2(nrk), 1, "real(8)", OPS_READ))
 
-      call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-      call exit()
-
     END DO
+
+
+
+
+
+    nxp_range_3(1) = 1
+    nxp_range_3(2) = nxp-1
+    call Riemann_kernel_host("Riemann_kernel", shsgc_grid, 1, nxp_range_3, &
+                      & ops_arg_dat(rho_new, 1, S1D_01, "real(8)", OPS_READ), &
+                      & ops_arg_dat(rhou_new, 1, S1D_01, "real(8)", OPS_READ), &
+                      & ops_arg_dat(rhoE_new, 1, S1D_01, "real(8)", OPS_READ), &
+                      & ops_arg_dat(alam, 3, S1D_01, "real(8)", OPS_WRITE), &
+                      & ops_arg_dat(r, 9, S1D_01, "real(8)", OPS_WRITE), &
+                      & ops_arg_dat(al, 3, S1D_01, "real(8)", OPS_WRITE))
+
+      call ops_print_dat_to_txtfile(alam, "shsgc.dat")
+
+
+
+      call exit()
 
 
   ENDDO

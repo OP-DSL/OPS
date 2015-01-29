@@ -296,7 +296,6 @@ int main(int argc, char **argv) {
               ops_arg_dat(rhou_res,  1, S1D_0, "double",OPS_WRITE));
 
 
-
       // Energy equation derivative d(rhoE+p)u/dx
       ops_par_loop(drhoEpudx_kernel, "drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1,
               ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double",OPS_READ),
@@ -325,10 +324,9 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhoE_res, 1, S1D_0, "double",OPS_READ),
                    ops_arg_gbl(&a1[nrk], 1, "double", OPS_READ),
                    ops_arg_gbl(&a2[nrk], 1, "double", OPS_READ));
-
-      ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
-      exit(0);
     }
+
+
 
     //
     // TVD scheme
@@ -343,6 +341,9 @@ int main(int argc, char **argv) {
                  ops_arg_dat(alam,  3, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(r,  9, S1D_01, "double",OPS_WRITE),
                  ops_arg_dat(al, 3, S1D_01, "double",OPS_WRITE));
+
+          ops_print_dat_to_txtfile(alam, "shsgc.dat");
+          exit(0);
 
     // limiter function
     int nxp_range_4[] = {1,nxp};

@@ -174,13 +174,14 @@ int getDatBaseFromOpsArg1D (ops_arg * arg, int* start, int dim){
   start[0] -= 1;
 
   int dat = arg->dat->elem_size;
+  int block_dim = arg->dat->block->dims;
 
   //printf("start[0] = %d, base = %d, dim = %d, d_m[0] = %d dat = %d\n",
    //      start[0],arg->dat->base[0],dim, arg->dat->d_m[0], dat);
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
-  for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
+  for (int d = 0; d < block_dim; d++) d_m[d] = arg->dat->d_m[d];
   int base = dat * 1 *
    (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
   // printf("base = %d\n",base/(dat/dim));
@@ -196,7 +197,7 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
   start[1] -= 1;
 
   int dat = arg->dat->elem_size;
-
+  int block_dim = arg->dat->block->dims;
   //printf("start[0] = %d, start[1] = %d, base(1) = %d, base(2) = %d, dim = %d, dat = %d\n",
      //    start[0],start[1],arg->dat->base[0], arg->dat->base[1], dim, dat);
 
@@ -205,7 +206,7 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
-  for (int d = 0; d < dim; d++) d_m[d] = arg->dat->d_m[d];
+  for (int d = 0; d < block_dim; d++) d_m[d] = arg->dat->d_m[d];
   int base = dat * 1 *
    (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]) ;
   base = base + dat *
@@ -223,12 +224,10 @@ int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
   return 1;
 }
 
-//will need different return types
-double* getReductionPtrFromOpsArg(ops_arg* arg) {
-  return (double *)((ops_reduction)arg->data)->data;
+char* getReductionPtrFromOpsArg(ops_arg* arg) {
+  return (char *)((ops_reduction)arg->data)->data;
 }
 
-//will need different return types
-double* getGblPtrFromOpsArg(ops_arg* arg) {
-  return (double *)(arg->data);
+char* getGblPtrFromOpsArg(ops_arg* arg) {
+  return (char *)(arg->data);
 }
