@@ -79,8 +79,13 @@ void advection(int step)
   fields[FIELD_YVEL1]     = 1;
   fields[FIELD_VOL_FLUX_X] = 0;
   fields[FIELD_VOL_FLUX_Y] = 0;
-  fields[FIELD_MASS_FLUX_X] = 1;
-  fields[FIELD_MASS_FLUX_Y] = 1;
+  if (direction == g_xdir) {
+    fields[FIELD_MASS_FLUX_X] = 1;
+    fields[FIELD_MASS_FLUX_Y] = 0;
+  } else {
+    fields[FIELD_MASS_FLUX_X] = 0;
+    fields[FIELD_MASS_FLUX_Y] = 1;
+  }
   update_halo(fields,2);
 
 
