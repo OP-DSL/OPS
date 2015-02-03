@@ -888,6 +888,8 @@ void ops_timing_output(FILE *stream)
     stream = stdout;
 
   if ( OPS_diags > 1 ) {
+    if (OPS_enable_checkpointing)
+      ops_printf("\nTotal time spent in checkpointing: %g seconds\n", OPS_checkpointing_time);
     int maxlen = 0;
     for (int i = 0; i < OPS_kern_max; i++) {
       if (OPS_kernels[i].count > 0) maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
@@ -1112,3 +1114,4 @@ void ops_dump_to_hdf5(char const *file_name) {
     ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
   }
 }
+

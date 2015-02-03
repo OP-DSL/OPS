@@ -115,7 +115,7 @@ int main(int argc, char **argv)
   /**-------------------------- OPS Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
   ops_printf(" Clover version %f\n", g_version);
 
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     ops_fprintf(g_out," Setting up initial geometry\n");
     ops_fprintf(g_out,"\n");
   }
-
+  
   clover_time  = 0.0;
   step  = 0;
   dtold = dtinit;

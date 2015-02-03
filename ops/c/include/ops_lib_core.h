@@ -301,6 +301,7 @@ extern ops_halo_group * OPS_halo_group_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
 extern int OPS_enable_checkpointing;
+extern double OPS_checkpointing_time;
 
 /*******************************************************************************
 * Core lib function prototypes
