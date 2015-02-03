@@ -46,6 +46,7 @@
 ops_backup_state backup_state = OPS_NONE;
 char *OPS_dat_ever_written = NULL;
 ops_checkpoint_types *OPS_dat_status = NULL;
+double OPS_checkpointing_time = 0.0;
 
 #ifdef CHECKPOINTING
 
@@ -82,7 +83,7 @@ int OPS_checkpointing_payload_nbytes = 0;
 char *OPS_checkpointing_payload = NULL;
 
 int ops_reduction_counter = 0;
-int ops_sync_frequency = 10;
+int ops_sync_frequency = 50;
 double ops_reduction_avg_time = 0.0;
 
 int ops_checkpointing_options = 0;
@@ -93,7 +94,7 @@ hid_t file;
 herr_t status;
 
 FILE *diagf;
-int diagnostics = 1;
+int diagnostics = 0;
 
 #define check_hdf5_error(err)           __check_hdf5_error      (err, __FILE__, __LINE__)
 void __check_hdf5_error(herr_t err, const char *file, const int line) {
@@ -327,6 +328,8 @@ bool ops_checkpointing_initstate() {
     if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
       //we are not restoring anything during lead-in and will be resuming execution the first time we encounter the API call
     } else {
+      double cpu,t1,t2;
+      ops_timers_core(&cpu, &t1);
       //read backup point
       check_hdf5_error(H5LTread_dataset (file,  "ops_backup_point", H5T_NATIVE_INT, &ops_backup_point));
 
@@ -338,6 +341,8 @@ bool ops_checkpointing_initstate() {
       OPS_chk_red_size = OPS_chk_red_offset;
       OPS_chk_red_offset = 0;
       check_hdf5_error(H5LTread_dataset (file,  "OPS_chk_red_storage", H5T_NATIVE_CHAR, OPS_chk_red_storage));
+      ops_timers_core(&cpu, &t2);
+      OPS_checkpointing_time += t2-t1;
     }
     return true;
   }
@@ -390,6 +395,8 @@ void ops_checkpointing_initphase_done() {
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
   if (backup_state == OPS_BACKUP_GATHER) {
     if (pre_backup) {
+      double cpu,t1,t2;
+      ops_timers_core(&cpu, &t1);
       //increment call counter (as if we began checkpointing at the next loop) and save the list of datasets + aux info
       ops_call_counter++;
 
@@ -433,11 +440,13 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       check_hdf5_error(H5LTmake_dataset(file, "OPS_chk_red_storage", 1, dims, H5T_NATIVE_CHAR, OPS_chk_red_storage));
 
       check_hdf5_error(H5Fclose(file));
-      if (OPS_diags>1) ops_printf("\nCheckpoint created\n");
       //finished backing up, reset everything, prepare to be backed up at a later point
       backup_state = OPS_BACKUP_GATHER;
       pre_backup = false;
       ops_call_counter--;
+      ops_timers_core(&cpu, &t2);
+      OPS_checkpointing_time += t2-t1;
+      if (OPS_diags>1) ops_printf("Checkpoint created (manual datlist) in %g seconds\n", t2-t1);
     }
   } else if (backup_state == OPS_BACKUP_LEADIN) {
     // do nothing, will get triggered anyway
@@ -454,7 +463,7 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
     }
   } else if (backup_state == OPS_BACKUP_LEADIN) {
     backup_state = OPS_BACKUP_GATHER;
-    double cpu, now;
+    double cpu, now,t2;
     ops_timers_core(&cpu, &now);
     last_checkpoint = now;
     ops_dat_entry *item, *tmp_item;
@@ -465,7 +474,9 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
     }
     check_hdf5_error(H5LTread_dataset (file,  "OPS_checkpointing_payload", H5T_NATIVE_CHAR, payload));
     check_hdf5_error(H5Fclose(file));
-    if (OPS_diags>1) ops_printf("\nRestored at fast-forward point, continuing normal execution...\n");
+    ops_timers_core(&cpu, &t2);
+    OPS_checkpointing_time += t2-now;
+    if (OPS_diags>1) ops_printf("\nRestored at fast-forward point (in %g seconds), continuing normal execution...\n", t2-now);
     return true;
   }
   return false;
@@ -486,6 +497,8 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nb
 }
 
 void ops_checkpointing_reduction(ops_reduction red) {
+  double t1,t2,cpu;
+  ops_timers_core(&cpu, &t1);
   if (diagnostics && OPS_enable_checkpointing) {
     fprintf(diagf, "reduction;red->name\n");
   }
@@ -499,9 +512,16 @@ void ops_checkpointing_reduction(ops_reduction red) {
       memcpy(red->data, &OPS_chk_red_storage[OPS_chk_red_offset], red->size);
       OPS_chk_red_offset += red->size;
     }
+    ops_timers_core(&cpu, &t2);
+    OPS_checkpointing_time += t2-t1;
     return;
   }
+  ops_timers_core(&cpu, &t2);
+  OPS_checkpointing_time += t2-t1;
+
   ops_execute_reduction(red);
+
+  ops_timers_core(&cpu, &t1);
   if (backup_state == OPS_BACKUP_GATHER || backup_state == OPS_BACKUP_IN_PROCESS) {
     if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
       memcpy(&OPS_chk_red_storage[OPS_chk_red_offset], red->data, red->size);
@@ -536,6 +556,8 @@ void ops_checkpointing_reduction(ops_reduction red) {
       }
     }
   }
+  ops_timers_core(&cpu, &t2);
+  OPS_checkpointing_time += t2-t1;
 }
 
 #define HASHSIZE 5000
@@ -574,6 +596,7 @@ bool should_backup(ops_arg *args, int nargs, int loop_id, int *range) {
   //Initial strategy: if this range is over a very small part (one fifth) of the dataset, then don't do a checkpoint here
   int i = 0;
   for (; i < nargs; i ++) if (args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0) break;
+  if (i == nargs) return false;
   int larger = 1;
   for (int d = 0; d < args[i].dat->block->dims; d++) {
     if ((double)(range[2*d+1]-range[2*d]) <= 1) larger = 0;
@@ -598,6 +621,10 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       }
     }
   }
+
+  double cpu,t1,t2;
+  ops_timers_core(&cpu, &t1);
+
   ops_call_counter++;
   for (int i = 0; i < nargs; i++) { //flag variables that are touched (we do this every time it is called, may be a little redundant), should make a loop_id filter
     if (args[i].argtype == OPS_ARG_DAT && args[i].argtype != OPS_READ && args[i].opt == 1 ) OPS_dat_ever_written[args[i].dat->index] = true;
@@ -644,7 +671,8 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     }
     free(reduction_state);
     check_hdf5_error(H5Fclose(file));
-    if (OPS_diags>1) ops_printf("\nRestored, continuing normal execution...\n");
+    ops_timers_core(&cpu, &t2);
+    if (OPS_diags>1) ops_printf("\nRestored in %g seconds, continuing normal execution...\n", t2-t1);
   }
 
   if (backup_state == OPS_BACKUP_BEGIN) {
@@ -757,6 +785,8 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
     }
   }
+  ops_timers_core(&cpu, &t2);
+  OPS_checkpointing_time += t2-t1;
   return true;
 }
 
@@ -812,6 +842,14 @@ void ops_checkpointing_reduction(ops_reduction red) {
 }
 
 void ops_checkpointing_initphase_done() {}
+
+void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {}
+bool ops_checkpointing_fastfw(int nbytes, char *payload) {
+  return false;
+}
+bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nbytes, char *payload) {
+  return false;
+}
 
 #ifdef __cplusplus
 }
