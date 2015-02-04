@@ -207,8 +207,10 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
   return red;
 }
 
-void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
+  sprintf(filename_out2, "%s.%d.dup", file_name, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size );
+  return (OPS_enable_checkpointing>0);
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
@@ -233,3 +235,35 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_
     //   discarded_range[2*d+1] = (range[2*d+1] - (sd->decomp_disp[d] - sd->d_im[d]));
   }
 }
+
+char *OPS_checkpoiting_dup_buffer = NULL;
+int OPS_checkpoiting_dup_buffer_size = 0;
+int recv_stats[2+2*OPS_MAX_DIM];
+
+void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, char *my_data, int *my_range,
+                                               int *rm_type, int *rm_elems, char **rm_data, int **rm_range) {
+
+  MPI_Status statuses[2];
+  MPI_Request requests[2];
+  int send_stats[2+2*OPS_MAX_DIM];
+  send_stats[0] = my_type;
+  send_stats[1] = my_nelems;
+  memcpy(&send_stats[2], my_range, 2*OPS_MAX_DIM*sizeof(int));
+  MPI_Isend(send_stats, 2+2*OPS_MAX_DIM, MPI_INT, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size, 1000+OPS_dat_index+dat->index, OPS_MPI_GLOBAL, &requests[0]);
+  int bytesize = dat->elem_size/dat->dim;
+  MPI_Isend(my_data, my_nelems*bytesize, MPI_CHAR, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size, 1000+dat->index, OPS_MPI_GLOBAL, &requests[1]);
+
+
+  MPI_Recv(recv_stats, 2+2*OPS_MAX_DIM, MPI_INT, (ops_my_global_rank - OPS_ranks_per_node)%ops_comm_global_size, 1000+OPS_dat_index+dat->index, OPS_MPI_GLOBAL, &statuses[0]);
+  if (recv_stats[1]*bytesize > OPS_checkpoiting_dup_buffer_size) {
+    OPS_checkpoiting_dup_buffer = (char *)realloc(OPS_checkpoiting_dup_buffer, recv_stats[1]*bytesize*2*sizeof(char));
+    OPS_checkpoiting_dup_buffer_size = recv_stats[1]*bytesize*2;
+  }
+  *rm_data = OPS_checkpoiting_dup_buffer;
+  MPI_Recv(*rm_data, recv_stats[1]*bytesize, MPI_CHAR, (ops_my_global_rank - OPS_ranks_per_node)%ops_comm_global_size, 1000+dat->index, OPS_MPI_GLOBAL, &statuses[1]);
+  *rm_type = recv_stats[0];
+  *rm_elems = recv_stats[1];
+  *rm_range = &recv_stats[2];
+  MPI_Waitall(2, requests, statuses);
+}
+
