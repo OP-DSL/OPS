@@ -70,7 +70,6 @@ Double_linked_list OPS_dat_list; //Head of the double linked list
 int OPS_block_size_x = 32;
 int OPS_block_size_y = 4;
 
-
 double ops_gather_time=0.0;
 double ops_scatter_time=0.0;
 double ops_sendrecv_time=0.0;
@@ -123,13 +122,13 @@ void ops_init_core( int argc, char ** argv, int diags )
     if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
     {
       OPS_block_size_x = atoi ( argv[n] + 17 );
-      printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
+      ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
     }
 
     if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_Y=", 17 ) == 0 )
     {
       OPS_block_size_y = atoi ( argv[n] + 17 );
-      printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+      ops_printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
     }
 
     if ( strncmp ( argv[n], "-gpudirect", 10 ) == 0 )
@@ -140,12 +139,18 @@ void ops_init_core( int argc, char ** argv, int diags )
     if ( strncmp ( argv[n], "OPS_DIAGS=", 10 ) == 0 )
     {
       OPS_diags = atoi ( argv[n] + 10 );
-      printf ( "\n OPS_diags = %d \n", OPS_diags );
+      ops_printf ( "\n OPS_diags = %d \n", OPS_diags );
     }
     if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
     {
       OPS_enable_checkpointing = 1;
-      printf ( "\n OPS Checkpointing enabled\n");
+      ops_printf ( "\n OPS Checkpointing enabled\n");
+    }
+    if ( strncmp ( argv[n], "OPS_CHECKPOINT=", 15 ) == 0 )
+    {
+      OPS_enable_checkpointing = 2;
+      OPS_ranks_per_node = atoi ( argv[n] + 15 );
+      ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n", OPS_ranks_per_node);
     }
   }
 

@@ -151,8 +151,16 @@ void ops_fprintf(FILE *stream, const char *format, ...)
   va_end(argptr);
 }
 
-void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2) {
   strcpy(filename_out, file_name);
+  filename_out2 = "";
+  return false;
+}
+
+void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, char *my_data, int *my_range,
+                                               int *rm_type, int *rm_elems, char **rm_data, int **rm_range) {
+  *rm_type = 0;
+  *rm_elems = 0;
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {

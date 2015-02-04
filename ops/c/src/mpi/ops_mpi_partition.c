@@ -50,7 +50,7 @@ extern int ops_buffer_recv_1_size;
 extern int ops_buffer_send_2_size;
 extern int ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
-
+extern char *OPS_checkpoiting_dup_buffer;
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
@@ -737,4 +737,5 @@ void ops_mpi_exit()
   }
   free(OPS_mpi_halo_group_list);
   free(mpi_neigh_size);
+  if (OPS_enable_checkpointing) free(OPS_checkpoiting_dup_buffer);
 }

@@ -58,6 +58,7 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nb
 extern ops_backup_state backup_state;
 extern char *OPS_dat_ever_written;
 extern ops_checkpoint_types *OPS_dat_status;
+extern int OPS_ranks_per_node;
 
 #ifdef __cplusplus
 }
