@@ -362,14 +362,13 @@ void ops_restore_dataset(ops_dat dat) {
 
 
 bool ops_checkpointing_initstate() {
-    if (!file_exists(filename)) {
+  for (int i = 0; i < OPS_dat_index; i++) {
+    OPS_dat_status[i] = OPS_UNDECIDED;
+    OPS_dat_ever_written[i] = 0;
+  }
+  if (!file_exists(filename)) {
     backup_state = OPS_BACKUP_GATHER;
     ops_printf("//\n// OPS Checkpointing -- Backup mode\n//\n");
-
-    for (int i = 0; i < OPS_dat_index; i++) {
-      OPS_dat_status[i] = OPS_UNDECIDED;
-      OPS_dat_ever_written[i] = 0;
-    }
     return false;
   } else {
     file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -608,7 +607,7 @@ void ops_checkpointing_reduction(ops_reduction red) {
       if (timing[1] == 1.0) {
         ops_reduction_counter = 0;
         if (backup_state == OPS_BACKUP_GATHER) {
-          if (OPS_diags>4) ops_printf("\nIt's time to checkpoint...\n");
+          if (OPS_diags>4) ops_printf("\nIt's time to checkpoint... %s\n", red->name);
           ops_last_checkpoint = now;
           if (ops_pre_backup_phase == true && !(ops_checkpointing_options & (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST))) {
             if (OPS_diags>1) ops_printf("Double timeout for checkpointing forcing immediate begin\n");
@@ -705,15 +704,6 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 
   if (backup_state == OPS_BACKUP_GATHER) {
     gather_statistics(args, nargs, loop_id, range);
-    if (ops_call_counter == 399424) {
-      printf("REACHED %d\n", loop_id);
-      backup_state = OPS_BACKUP_BEGIN;
-      ops_pre_backup_phase = false;
-      double cpu, now;
-      ops_timers_core(&cpu, &now);
-      ops_last_checkpoint = now;
-      ops_reduction_counter = 0;
-    }
     if (ops_pre_backup_phase && should_backup(args, nargs, loop_id, range)
       && !(ops_checkpointing_options & (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST))) {
       backup_state = OPS_BACKUP_BEGIN;
