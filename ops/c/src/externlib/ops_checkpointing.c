@@ -59,6 +59,8 @@ int OPS_ranks_per_node = 0;
 extern "C" {
 #endif
 
+//TODO: True temp dat support
+
 //Internal function definitions
 void ops_download_dat(ops_dat dat);
 void ops_upload_dat(ops_dat dat);
@@ -70,6 +72,7 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, c
 //checkpoint and execution progress information
 int ops_call_counter = 0;
 int ops_backup_point = -1;
+int ops_best_backup_point = -1;
 double ops_checkpoint_interval = -1;
 double ops_last_checkpoint = -1;
 bool ops_pre_backup_phase = false;
@@ -382,6 +385,7 @@ bool ops_checkpointing_initstate() {
       ops_timers_core(&cpu, &t1);
       //read backup point
       check_hdf5_error(H5LTread_dataset (file,  "ops_backup_point", H5T_NATIVE_INT, &ops_backup_point));
+      check_hdf5_error(H5LTread_dataset (file,  "ops_best_backup_point", H5T_NATIVE_INT, &ops_best_backup_point));
 
       //loading of datasets is postponed until we reach the restore point
 
@@ -447,6 +451,8 @@ void ops_checkpointing_save_control(hid_t file_out) {
   hsize_t dims[1];
   dims[0] = 1;
   check_hdf5_error(H5LTmake_dataset(file_out, "ops_backup_point", 1, dims, H5T_NATIVE_INT, &ops_backup_point));
+  check_hdf5_error(H5LTmake_dataset(file_out, "ops_best_backup_point", 1, dims, H5T_NATIVE_INT, &ops_best_backup_point));
+
   int total_size = 0;
   for (int i = 0; i < OPS_reduction_index; i++)
     if (OPS_reduction_list[i]->initialized == 1)
@@ -657,8 +663,13 @@ bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range, const c
   return ops_checkpointing_before(args, nargs, range, loop_id);
 }
 
-void gather_statistics(ops_arg *args, int nargs, int loop_id, int *range) {}
-bool should_backup(ops_arg *args, int nargs, int loop_id, int *range) {
+void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id, int *range);
+bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id, int *range);
+void ops_statistics_exit();
+
+/*
+void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id, int *range) {}
+bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id, int *range) {
   //Initial strategy: if this range is over a very small part (one fifth) of the dataset, then don't do a checkpoint here
   int i = 0;
   for (; i < nargs; i ++) if (args[i].argtype == OPS_ARG_DAT && args[i].dat->e_dat == 0) break;
@@ -669,6 +680,7 @@ bool should_backup(ops_arg *args, int nargs, int loop_id, int *range) {
   }
   return (larger == 1);
 }
+*/
 
 /**
 * Checkpointing utility function called right before the execution of the parallel loop itself.
@@ -703,9 +715,12 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       && !(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) backup_state = OPS_BACKUP_RESTORE;
 
   if (backup_state == OPS_BACKUP_GATHER) {
-    gather_statistics(args, nargs, loop_id, range);
-    if (ops_pre_backup_phase && should_backup(args, nargs, loop_id, range)
-      && !(ops_checkpointing_options & (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST))) {
+    if (!(ops_checkpointing_options & (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST)))
+      ops_strat_gather_statistics(args, nargs, loop_id, range);
+
+    if (ops_pre_backup_phase
+      && !(ops_checkpointing_options & (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST))
+      && ops_strat_should_backup(args, nargs, loop_id, range)) {
       backup_state = OPS_BACKUP_BEGIN;
       ops_pre_backup_phase = false;
     }
@@ -843,7 +858,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     check_hdf5_error(H5Fclose(file));
     if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
 
-    if (OPS_diags>1) ops_printf("\nCheckpoint created\n");
+    if (OPS_diags>1) ops_printf("\nCheckpoint created %d bytes reduction data\n", OPS_chk_red_offset);
     //finished backing up, reset everything, prepare to be backed up at a later point
     backup_state = OPS_BACKUP_GATHER;
     for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
@@ -858,14 +873,17 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 
 void ops_checkpointing_exit() {
   if (backup_state != OPS_NONE) {
+    ops_statistics_exit();
     if (backup_state == OPS_BACKUP_IN_PROCESS) {
       check_hdf5_error(H5Fclose(file));
-      remove(filename);
-      if (ops_duplicate_backup) {
+      if (ops_duplicate_backup)
         check_hdf5_error(H5Fclose(file_dup));
-        remove(filename_dup);
-      }
     }
+
+    remove(filename);
+    if (ops_duplicate_backup)
+      remove(filename_dup);
+
     if (diagnostics) {
       fprintf(diagf, "FINISHED\n");
       fclose(diagf);
