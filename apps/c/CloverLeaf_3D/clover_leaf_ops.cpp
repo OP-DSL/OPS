@@ -124,6 +124,7 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
 
+  ops_checkpointing_initphase_done();
   while(1) {
 
     step = step + 1;

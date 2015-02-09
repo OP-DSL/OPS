@@ -187,6 +187,7 @@ for i in range(0,len(names)):
 #statistics for datasets
 ever_written = [0]*ndatasets
 totsaved = [0] * nkernels
+max_region = 0
 for i in range (0, nkernels):
 	dat_status = [OPS_UNDECIDED]*ndatasets
 	saved = 0
@@ -245,6 +246,7 @@ for i in range (0, nkernels):
 				break
 
 		if done:
+			max_region = max(max_region,k-i)
 			break
 #	if i == 1246:
 #		print dat_status
@@ -263,7 +265,7 @@ for i in range (0, nkernels):
 		if dat_status[j] == OPS_SAVED:
 			saved_list[idx][j] = OPS_SAVED
 
-
+print 'Max checkpointing region length: ' + str(max_region)
 print '############ OPS Checkpointing Statistics ############'
 print '\nDatasets never written to and excluded from any checkpoint:'
 line = ''

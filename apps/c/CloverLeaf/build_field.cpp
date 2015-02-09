@@ -241,7 +241,7 @@ void build_field()
 
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
-  ops_checkpointing_init("check.h5", 15.0, OPS_CHECKPOINT_INITPHASE); //| OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST
+  ops_checkpointing_init("check.h5", 15.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST);
   //print ops blocks and dats details
   ops_diagnostic_output();
 

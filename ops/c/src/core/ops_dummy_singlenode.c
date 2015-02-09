@@ -163,6 +163,10 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, c
   *rm_elems = 0;
 }
 
+void ops_get_dat_full_range(ops_dat dat, int **full_range) {
+  *full_range = dat->size;
+}
+
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
   for (int d = 0; d < dat->block->dims; d++) {
     discarded_range[2*d] = range[2*d]-dat->base[d]-dat->d_m[d];
