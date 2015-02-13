@@ -70,6 +70,9 @@ program SHSGC
   integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
   & nxp_range_4(2), nxp_range_5(2)
 
+  real(kind=c_double) :: startTime = 0
+  real(kind=c_double) :: endTime = 0
+
   nxp = 204
   nyp = 5
   xhalo = 2
@@ -163,6 +166,7 @@ program SHSGC
 
 
 
+  call ops_timers(startTime)
 
 
 
@@ -288,6 +292,7 @@ program SHSGC
 
   ENDDO
 
+  call ops_timers(endTime)
 
   local_rms = 0.0_8
   call test_kernel_host("test_kernel", shsgc_grid, 1, nxp_range, &
@@ -296,6 +301,10 @@ program SHSGC
 
   call ops_reduction_result(rms, local_rms);
   write (*,*), "RMS = " , sqrt(local_rms)/nxp;
+
+  if (ops_is_root() .eq. 1) then
+    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+  end if
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
 

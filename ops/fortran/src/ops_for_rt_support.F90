@@ -57,6 +57,18 @@ module OPS_Fortran_RT_Support
     character(kind=c_char) :: routine(*)
   end subroutine
 
+
+  subroutine ops_halo_exchanges (args, argsNumber, range) BIND(C,name='ops_halo_exchanges')
+
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+
+      integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
+
+  end subroutine
+
   integer(kind=c_int) function ops_is_root () BIND(C,name='ops_is_root')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations

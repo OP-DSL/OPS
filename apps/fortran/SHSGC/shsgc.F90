@@ -64,6 +64,10 @@ program SHSGC
   integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
   & nxp_range_4(2), nxp_range_5(2)
 
+  ! profiling
+  real(kind=c_double) :: startTime = 0
+  real(kind=c_double) :: endTime = 0
+
   !-------------------------- Initialis constants--------------------------
   nxp = 204
   nyp = 5
@@ -169,6 +173,8 @@ program SHSGC
       !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
       !call exit()
 
+  ! start timer
+  call ops_timers(startTime)
 
   !
   ! main iterative loop
@@ -314,7 +320,7 @@ program SHSGC
 
   ENDDO
 
-
+  call ops_timers(endTime)
 
   ! compare solution to referance solution
   local_rms = 0.0_8
@@ -324,6 +330,10 @@ program SHSGC
 
   call ops_reduction_result(rms, local_rms);
   write (*,*), "RMS = " , sqrt(local_rms)/nxp; !Correct RMS = 0.233689
+
+  if (ops_is_root() .eq. 1) then
+    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+  end if
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
 

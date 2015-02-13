@@ -81,7 +81,6 @@ subroutine initialize_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !DIR$ SIMD
   DO n_x = 1, end(1)-start(1)+1
     idx(1) = start(1) + n_x - 1
     call initialize_kernel( &

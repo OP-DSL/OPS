@@ -221,7 +221,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('')
 
     if NDIM==1:
-      if reduction <> 1:
+      if reduction <> 1 and arg_idx <> 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
