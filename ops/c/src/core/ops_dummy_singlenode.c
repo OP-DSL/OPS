@@ -198,11 +198,6 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
 
   int dat = arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
-  //printf("start[0] = %d, start[1] = %d, base(1) = %d, base(2) = %d, dim = %d, dat = %d\n",
-     //    start[0],start[1],arg->dat->base[0], arg->dat->base[1], dim, dat);
-
-  //printf("arg->dat->size[0] = %d, arg->dat->size[1] = %d\n",arg->dat->size[0],arg->dat->size[1]);
-
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -224,10 +219,13 @@ int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
   return 1;
 }
 
-char* getReductionPtrFromOpsArg(ops_arg* arg) {
+char* getReductionPtrFromOpsArg(ops_arg* arg, ops_block block) {
   return (char *)((ops_reduction)arg->data)->data;
 }
 
 char* getGblPtrFromOpsArg(ops_arg* arg) {
   return (char *)(arg->data);
+}
+
+void getRange(ops_block block, int* start, int* end, int* range){
 }

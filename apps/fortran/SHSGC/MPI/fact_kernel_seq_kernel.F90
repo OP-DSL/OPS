@@ -96,11 +96,14 @@ subroutine fact_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(1) = opsArg1
   opsArgArray(2) = opsArg2
 
-  !no OPS_MPI #defined
+#ifdef OPS_MPI
+  call getRange(block, start, end, range)
+#else
   DO n = 1, 1
     start(n) = range(2*n-1)
     end(n) = range(2*n);
   end DO
+#endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)

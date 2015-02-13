@@ -348,11 +348,20 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
 
-    comm('no OPS_MPI #defined')
+    config.depth = config.depth - 2
+    code('#ifdef OPS_MPI')
+    config.depth = config.depth + 2
+    code('call getRange(block, start, end, range)')
+    config.depth = config.depth - 2
+    code('#else')
+    config.depth = config.depth + 2
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1)')
     code('end(n) = range(2*n);')
     ENDDO()
+    config.depth = config.depth - 2
+    code('#endif')
+    config.depth = config.depth + 2
     code('')
     if arg_idx == 1:
       for n in range (0, NDIM):
@@ -388,7 +397,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = 1')
           code('')
         else:
-          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
           code('dat'+str(n+1)+'_base = 1')
           code('')
 

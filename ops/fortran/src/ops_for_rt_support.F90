@@ -133,10 +133,11 @@ module OPS_Fortran_RT_Support
     integer(kind=c_int), value, intent(in)    :: dim
   end function
 
-  type(c_ptr) function getReductionPtrFromOpsArg (arg) BIND(C,name='getReductionPtrFromOpsArg')
+  type(c_ptr) function getReductionPtrFromOpsArg_c (arg, block) BIND(C,name='getReductionPtrFromOpsArg')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     type(ops_arg) :: arg
+    type(c_ptr), value, intent(in)           :: block
   end function
 
   type(c_ptr) function getGblPtrFromOpsArg (arg) BIND(C,name='getGblPtrFromOpsArg')
@@ -144,6 +145,15 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
     type(ops_arg) :: arg
   end function
+
+  subroutine getRange_c (block, start, end, range) BIND(C,name='getRange')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(c_ptr), value, intent(in)           :: block
+    type(c_ptr)           :: start
+    type(c_ptr)           :: end
+    type(c_ptr), intent(in), value           :: range
+  end subroutine getRange_c
 
   end interface
 
@@ -164,6 +174,28 @@ module OPS_Fortran_RT_Support
     call ops_partition_c (routine//C_NULL_CHAR)
   end subroutine
 
+  subroutine getRange(block, start, end, range )
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+    type(ops_block), intent(in)  :: block
+    integer(4), dimension(*) :: start
+    integer(4), dimension(*) :: end
+    integer(4), dimension(*), intent(in), target :: range
 
+    call getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
+
+  end subroutine
+
+  type(c_ptr) function getReductionPtrFromOpsArg(arg, block)
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+    type(ops_block), intent(in)  :: block
+    type(ops_arg), intent(in)  :: arg
+
+    getReductionPtrFromOpsArg =  getReductionPtrFromOpsArg_c ( arg, block%blockCptr)
+
+  end function getReductionPtrFromOpsArg
 
 end module OPS_Fortran_RT_Support

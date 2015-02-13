@@ -156,6 +156,8 @@ program SHSGC
   ! reduction handle for rms variable
   call ops_decl_reduction_handle(8, rms, "double", "rms")
 
+  call ops_partition("1D_BLOCK_DECOMPOSE")
+
   !
   ! Initialize with the test case
   !

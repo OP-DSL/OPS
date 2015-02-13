@@ -82,11 +82,14 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(1) = opsArg1
   opsArgArray(2) = opsArg2
 
-  !no OPS_MPI #defined
+#ifdef OPS_MPI
+  call getRange(block, start, end, range)
+#else
   DO n = 1, 1
     start(n) = range(2*n-1)
     end(n) = range(2*n);
   end DO
+#endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
@@ -94,7 +97,7 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
   call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2),opsDat2Local, (/opsArg2%dim/))
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
 
   call ops_H_D_exchanges_host(opsArgArray,2)
@@ -110,6 +113,8 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_set_dirtybit_host(opsArgArray, 2)
+
+  write (*,*) opsDat2Local
 
 end subroutine
 END MODULE
