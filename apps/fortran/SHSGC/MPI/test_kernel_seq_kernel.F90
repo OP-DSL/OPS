@@ -77,6 +77,11 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   integer end(1)
   integer(kind=4) :: n
 
+  type ( ops_arg ) , DIMENSION(2) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+
   !no OPS_MPI #defined
   DO n = 1, 1
     start(n) = range(2*n-1)
@@ -92,6 +97,10 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getReductionPtrFromOpsArg(opsArg2),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
 
+  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_host(opsArgArray,2)
+
   call test_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -99,6 +108,8 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   & dat2_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 2)
 
 end subroutine
 END MODULE

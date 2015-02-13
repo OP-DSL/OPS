@@ -33,7 +33,7 @@ endif
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= clean core f_seq
+  TARGETS	:= clean core f_seq f_mpi
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -66,6 +66,19 @@ f_seq: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	ar -r $(F_OPS_LIB)/libops_for_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_seq.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+
+f_mpi: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
+	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_decl.c -o $(F_OPS_OBJ)/ops_mpi_decl.o
+	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_core.c -o $(F_OPS_OBJ)/ops_mpi_core.o
+	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_partition.c -o $(F_OPS_OBJ)/ops_mpi_partition.o
+	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support.c -o $(F_OPS_OBJ)/ops_mpi_rt_support.o
+	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_host.c -o $(F_OPS_OBJ)/ops_mpi_rt_support_host.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+	ar -r $(F_OPS_LIB)/libops_for_mpi.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl.o $(F_OPS_OBJ)/ops_mpi_core.o $(F_OPS_OBJ)/ops_mpi_rt_support.o \
+	$(F_OPS_OBJ)/ops_mpi_partition.o $(F_OPS_OBJ)/ops_mpi_rt_support_host.o \
+	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o

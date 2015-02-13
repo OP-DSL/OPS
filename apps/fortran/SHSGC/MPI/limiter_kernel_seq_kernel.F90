@@ -113,6 +113,12 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   integer end(1)
   integer(kind=4) :: n
 
+  type ( ops_arg ) , DIMENSION(3) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+  opsArgArray(3) = opsArg3
+
   !no OPS_MPI #defined
   DO n = 1, 1
     start(n) = range(2*n-1)
@@ -140,6 +146,10 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,multi_d3)
   call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
 
+  call ops_H_D_exchanges_host(opsArgArray,3)
+  call ops_halo_exchanges(opsArgArray,3,range)
+  call ops_H_D_exchanges_host(opsArgArray,3)
+
   call limiter_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -149,6 +159,10 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   & dat3_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 3)
+  call ops_set_halo_dirtybit3(opsArg2,range)
+  call ops_set_halo_dirtybit3(opsArg3,range)
 
 end subroutine
 END MODULE

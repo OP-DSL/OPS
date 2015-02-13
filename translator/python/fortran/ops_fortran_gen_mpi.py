@@ -341,6 +341,13 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('integer(kind=4) :: n')
     code('')
 
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+    code('')
+
+    for n in range (0, nargs):
+      code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+    code('')
+
     comm('no OPS_MPI #defined')
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1)')
@@ -385,6 +392,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = 1')
           code('')
 
+    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
+    code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
+    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
+    code('')
+
     #Call user kernel wrapper
     code('call '+name+'_wrap( &')
     for n in range (0, nargs):
@@ -399,6 +411,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('& end )')
     code('')
 
+    code('call ops_set_dirtybit_host(opsArgArray, '+str(nargs)+')')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
+    code('')
 
     config.depth = config.depth - 2
     code('end subroutine')

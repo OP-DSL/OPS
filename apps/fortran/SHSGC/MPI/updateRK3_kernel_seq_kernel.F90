@@ -216,6 +216,20 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   integer end(1)
   integer(kind=4) :: n
 
+  type ( ops_arg ) , DIMENSION(11) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+  opsArgArray(3) = opsArg3
+  opsArgArray(4) = opsArg4
+  opsArgArray(5) = opsArg5
+  opsArgArray(6) = opsArg6
+  opsArgArray(7) = opsArg7
+  opsArgArray(8) = opsArg8
+  opsArgArray(9) = opsArg9
+  opsArgArray(10) = opsArg10
+  opsArgArray(11) = opsArg11
+
   !no OPS_MPI #defined
   DO n = 1, 1
     start(n) = range(2*n-1)
@@ -282,6 +296,10 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getGblPtrFromOpsArg(opsArg11),opsDat11Local, (/opsArg11%dim/))
   dat11_base = 1
 
+  call ops_H_D_exchanges_host(opsArgArray,11)
+  call ops_halo_exchanges(opsArgArray,11,range)
+  call ops_H_D_exchanges_host(opsArgArray,11)
+
   call updateRK3_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -307,6 +325,14 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   & dat11_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 11)
+  call ops_set_halo_dirtybit3(opsArg1,range)
+  call ops_set_halo_dirtybit3(opsArg2,range)
+  call ops_set_halo_dirtybit3(opsArg3,range)
+  call ops_set_halo_dirtybit3(opsArg4,range)
+  call ops_set_halo_dirtybit3(opsArg5,range)
+  call ops_set_halo_dirtybit3(opsArg6,range)
 
 end subroutine
 END MODULE

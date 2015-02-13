@@ -91,6 +91,11 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
   integer end(1)
   integer(kind=4) :: n
 
+  type ( ops_arg ) , DIMENSION(2) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+
   !no OPS_MPI #defined
   DO n = 1, 1
     start(n) = range(2*n-1)
@@ -109,6 +114,10 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
 
+  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_host(opsArgArray,2)
+
   call drhoudx_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -116,6 +125,9 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
   & dat2_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 2)
+  call ops_set_halo_dirtybit3(opsArg2,range)
 
 end subroutine
 END MODULE

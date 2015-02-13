@@ -116,6 +116,13 @@ subroutine update_kernel_host( userSubroutine, block, dim, range, &
   integer end(1)
   integer(kind=4) :: n
 
+  type ( ops_arg ) , DIMENSION(4) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+  opsArgArray(3) = opsArg3
+  opsArgArray(4) = opsArg4
+
   !no OPS_MPI #defined
   DO n = 1, 1
     start(n) = range(2*n-1)
@@ -147,6 +154,10 @@ subroutine update_kernel_host( userSubroutine, block, dim, range, &
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,multi_d4)
   call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
 
+  call ops_H_D_exchanges_host(opsArgArray,4)
+  call ops_halo_exchanges(opsArgArray,4,range)
+  call ops_H_D_exchanges_host(opsArgArray,4)
+
   call update_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -158,6 +169,11 @@ subroutine update_kernel_host( userSubroutine, block, dim, range, &
   & dat4_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 4)
+  call ops_set_halo_dirtybit3(opsArg1,range)
+  call ops_set_halo_dirtybit3(opsArg2,range)
+  call ops_set_halo_dirtybit3(opsArg3,range)
 
 end subroutine
 END MODULE
