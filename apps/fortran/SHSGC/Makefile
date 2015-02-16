@@ -23,7 +23,7 @@ endif
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= clean shsgc_seq shsgc_mpi shsgc_openmp
+  TARGETS	:= clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -51,23 +51,6 @@ shsgc_seq: shsgc_ops.F90 constants.F90
 	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
 	-o shsgc_seq -lops_for_seq
 
-shsgc_mpi: shsgc_ops.F90 constants.F90
-	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -c constants.F90 ./MPI/initialize_kernel_seq_kernel.F90 \
-	./MPI/drhouupdx_kernel_seq_kernel.F90 ./MPI/zerores_kernel_seq_kernel.F90 \
-	./MPI/drhoudx_kernel_seq_kernel.F90 ./MPI/save_kernel_seq_kernel.F90 \
-        ./MPI/drhoEpudx_kernel_seq_kernel.F90 ./MPI/updateRK3_kernel_seq_kernel.F90 \
-	./MPI/Riemann_kernel_seq_kernel.F90 ./MPI/limiter_kernel_seq_kernel.F90 \
-	./MPI/tvd_kernel_seq_kernel.F90 ./MPI/vars_kernel_seq_kernel.F90 \
-	./MPI/calupwindeff_kernel_seq_kernel.F90 ./MPI/fact_kernel_seq_kernel.F90 \
-	./MPI/update_kernel_seq_kernel.F90 ./MPI/test_kernel_seq_kernel.F90 shsgc_ops.F90
-	$(MPIF90) $(OPT) $(FLINK) -DOPS_MPI shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
-	drhouupdx_kernel_seq_kernel.o zerores_kernel_seq_kernel.o save_kernel_seq_kernel.o \
-	drhoudx_kernel_seq_kernel.o drhoEpudx_kernel_seq_kernel.o updateRK3_kernel_seq_kernel.o \
-	Riemann_kernel_seq_kernel.o limiter_kernel_seq_kernel.o tvd_kernel_seq_kernel.o \
-	vars_kernel_seq_kernel.o calupwindeff_kernel_seq_kernel.o \
-	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
-	-o shsgc_mpi -lops_for_mpi
-
 shsgc_openmp: shsgc_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) $(OMPFLAGS) -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/drhouupdx_kernel_omp_kernel.F90 ./MPI_OpenMP/zerores_kernel_omp_kernel.F90 \
@@ -85,6 +68,40 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
         -o shsgc_openmp -lops_for_seq
 
+shsgc_mpi: shsgc_ops.F90 constants.F90
+	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -c constants.F90 ./MPI/initialize_kernel_seq_kernel.F90 \
+	./MPI/drhouupdx_kernel_seq_kernel.F90 ./MPI/zerores_kernel_seq_kernel.F90 \
+	./MPI/drhoudx_kernel_seq_kernel.F90 ./MPI/save_kernel_seq_kernel.F90 \
+        ./MPI/drhoEpudx_kernel_seq_kernel.F90 ./MPI/updateRK3_kernel_seq_kernel.F90 \
+	./MPI/Riemann_kernel_seq_kernel.F90 ./MPI/limiter_kernel_seq_kernel.F90 \
+	./MPI/tvd_kernel_seq_kernel.F90 ./MPI/vars_kernel_seq_kernel.F90 \
+	./MPI/calupwindeff_kernel_seq_kernel.F90 ./MPI/fact_kernel_seq_kernel.F90 \
+	./MPI/update_kernel_seq_kernel.F90 ./MPI/test_kernel_seq_kernel.F90 shsgc_ops.F90
+	$(MPIF90) $(OPT) $(FLINK) -DOPS_MPI shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
+	drhouupdx_kernel_seq_kernel.o zerores_kernel_seq_kernel.o save_kernel_seq_kernel.o \
+	drhoudx_kernel_seq_kernel.o drhoEpudx_kernel_seq_kernel.o updateRK3_kernel_seq_kernel.o \
+	Riemann_kernel_seq_kernel.o limiter_kernel_seq_kernel.o tvd_kernel_seq_kernel.o \
+	vars_kernel_seq_kernel.o calupwindeff_kernel_seq_kernel.o \
+	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
+	-o shsgc_mpi -lops_for_mpi
+
+shsgc_mpi_openmp: shsgc_ops.F90 constants.F90
+	$(MPIF90) $(OPT) $(FMODS) $(OMPFLAGS) -DOPS_MPI -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhouupdx_kernel_omp_kernel.F90 ./MPI_OpenMP/zerores_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhoudx_kernel_omp_kernel.F90 ./MPI_OpenMP/save_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhoEpudx_kernel_omp_kernel.F90 ./MPI_OpenMP/updateRK3_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/Riemann_kernel_omp_kernel.F90 ./MPI_OpenMP/limiter_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/tvd_kernel_omp_kernel.F90 ./MPI_OpenMP/vars_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/calupwindeff_kernel_omp_kernel.F90 ./MPI_OpenMP/fact_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/update_kernel_omp_kernel.F90 ./MPI_OpenMP/test_kernel_omp_kernel.F90 shsgc_ops.F90
+	$(MPIF90) $(OPT) $(FLINK) $(OMPFLAGS) -DOPS_MPI shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
+        drhouupdx_kernel_omp_kernel.o zerores_kernel_omp_kernel.o save_kernel_omp_kernel.o \
+        drhoudx_kernel_omp_kernel.o drhoEpudx_kernel_omp_kernel.o updateRK3_kernel_omp_kernel.o \
+        Riemann_kernel_omp_kernel.o limiter_kernel_omp_kernel.o tvd_kernel_omp_kernel.o \
+        vars_kernel_omp_kernel.o calupwindeff_kernel_omp_kernel.o \
+        fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
+        -o shsgc_mpi_openmp -lops_for_mpi
+
 
 clean:
 	rm -f *.o
@@ -94,3 +111,4 @@ clean:
 	rm -f shsgc_seq
 	rm -f shsgc_mpi
 	rm -f shsgc_openmp
+	rm -f shsgc_mpi_openmp
