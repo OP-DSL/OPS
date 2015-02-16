@@ -229,3 +229,10 @@ char* getGblPtrFromOpsArg(ops_arg* arg) {
 
 void getRange(ops_block block, int* start, int* end, int* range){
 }
+
+void getIdx(ops_block block, int* start, int* idx) {
+  int block_dim = block->dims;
+  for ( int n=0; n<block_dim; n++ ) {
+    idx[n] = start[n];
+  }
+}

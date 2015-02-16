@@ -10,8 +10,9 @@ ifdef DEBUG
   #OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
   OPT	 	:= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX -vec-report2 #-xAVX
+  OPT	 	:= -O3 -xAVX #-vec-report2 #-xAVX
 endif
+  OMPFLAGS  	= -openmp -openmp-report2
   CCFLAGS       := $(OPT) -Wall -Werror -wd981
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
@@ -22,7 +23,7 @@ endif
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= clean shsgc_seq shsgc_mpi
+  TARGETS	:= clean shsgc_seq shsgc_mpi shsgc_openmp
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -67,6 +68,24 @@ shsgc_mpi: shsgc_ops.F90 constants.F90
 	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
 	-o shsgc_mpi -lops_for_mpi
 
+shsgc_openmp: shsgc_ops.F90 constants.F90
+	$(FC) $(OPT) $(FMODS) $(OMPFLAGS) -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhouupdx_kernel_omp_kernel.F90 ./MPI_OpenMP/zerores_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhoudx_kernel_omp_kernel.F90 ./MPI_OpenMP/save_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/drhoEpudx_kernel_omp_kernel.F90 ./MPI_OpenMP/updateRK3_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/Riemann_kernel_omp_kernel.F90 ./MPI_OpenMP/limiter_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/tvd_kernel_omp_kernel.F90 ./MPI_OpenMP/vars_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/calupwindeff_kernel_omp_kernel.F90 ./MPI_OpenMP/fact_kernel_omp_kernel.F90 \
+        ./MPI_OpenMP/update_kernel_omp_kernel.F90 ./MPI_OpenMP/test_kernel_omp_kernel.F90 shsgc_ops.F90
+	$(FC) $(OPT) $(FLINK) $(OMPFLAGS) shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
+        drhouupdx_kernel_omp_kernel.o zerores_kernel_omp_kernel.o save_kernel_omp_kernel.o \
+        drhoudx_kernel_omp_kernel.o drhoEpudx_kernel_omp_kernel.o updateRK3_kernel_omp_kernel.o \
+        Riemann_kernel_omp_kernel.o limiter_kernel_omp_kernel.o tvd_kernel_omp_kernel.o \
+        vars_kernel_omp_kernel.o calupwindeff_kernel_omp_kernel.o \
+        fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
+        -o shsgc_openmp -lops_for_seq
+
+
 clean:
 	rm -f *.o
 	rm -f *.mod
@@ -74,3 +93,4 @@ clean:
 	rm -f *~
 	rm -f shsgc_seq
 	rm -f shsgc_mpi
+	rm -f shsgc_openmp
