@@ -135,15 +135,16 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 
 void getRange(ops_block block, int* start, int* end, int* range){
 
+  int block_dim = block->dims;
   /*convert to C indexing*/
-  for ( int n=0; n<1; n++ ){
+  for ( int n=0; n<block_dim; n++ ){
     range[2*n] -= 1;
-    range[2*n+1] -= 1;
+    //range[2*n+1] -= 1; -- c indexing end is exclusive so do not reduce
   }
 
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) return;
-  for ( int n=0; n<1; n++ ){
+  for ( int n=0; n<block_dim; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
       start[n] = 0;
@@ -163,13 +164,26 @@ void getRange(ops_block block, int* start, int* end, int* range){
   }
 
   /*revert to Fortran indexing*/
-  for ( int n=0; n<1; n++ ){
+  for ( int n=0; n<block_dim; n++ ){
     range[2*n] += 1;
-    range[2*n+1] += 1;
     start[n] += 1;
-    end[n] += 1;
+    //end[n] += 1; -- no need as fortran indexing is inclusive
   }
+
+  //for ( int n=0; n<block_dim; n++ ){
+  //  printf("start[%d] = %d, end[%d] = %d\n", n,start[n],n,end[n]);
+  //}
 }
+
+void getIdx(ops_block block, int* start, int* idx) {
+  int block_dim = block->dims;
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  for ( int n=0; n<block_dim; n++ ) {
+    idx[n] = sb->decomp_disp[n]+start[n];
+  }
+  //printf("start[0] = %d, idx[0] = %d\n",start[0], idx[0]);
+}
+
 
 int* getDatSizeFromOpsArg (ops_arg * arg){
   return arg->dat->size;
@@ -232,7 +246,7 @@ int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
 
 char* getReductionPtrFromOpsArg(ops_arg* arg, ops_block block) {
   //return (char *)((ops_reduction)arg->data)->data;
-  printf("block->index %d ((ops_reduction)arg->data)->size = %d\n",block->index, ((ops_reduction)arg->data)->size);
+  //printf("block->index %d ((ops_reduction)arg->data)->size = %d\n",block->index, ((ops_reduction)arg->data)->size);
   return (char *)((ops_reduction)arg->data)->data + ((ops_reduction)arg->data)->size * block->index;
 }
 

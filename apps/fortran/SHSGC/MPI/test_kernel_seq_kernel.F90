@@ -114,7 +114,5 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
 
   call ops_set_dirtybit_host(opsArgArray, 2)
 
-  write (*,*) opsDat2Local
-
 end subroutine
 END MODULE

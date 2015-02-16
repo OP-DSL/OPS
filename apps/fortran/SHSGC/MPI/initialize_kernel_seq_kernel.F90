@@ -71,7 +71,7 @@ subroutine initialize_kernel_wrap( &
   real(8)opsDat3Local(*)
   real(8)opsDat4Local(*)
   real(8)opsDat5Local(*)
-  integer(4) idx(1)
+  integer(4) idx(1),idx_local(1)
   integer dat1_base
   integer dat2_base
   integer dat3_base
@@ -82,14 +82,14 @@ subroutine initialize_kernel_wrap( &
   integer n_x
 
   DO n_x = 1, end(1)-start(1)+1
-    idx(1) = start(1) + n_x - 1
+    idx_local(1) = idx(1) + n_x - 1
     call initialize_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local(dat2_base+(n_x-1)*1), &
     & opsDat3Local(dat3_base+(n_x-1)*1), &
     & opsDat4Local(dat4_base+(n_x-1)*1), &
     & opsDat5Local(dat5_base+(n_x-1)*1), &
-    & idx )
+    & idx_local )
   end DO
 end subroutine
 
@@ -163,7 +163,11 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   end DO
 #endif
 
+#ifdef OPS_MPI
+  call getIdx(block,start,idx)
+#else
   idx(1) = start(1)
+#endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)

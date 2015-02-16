@@ -205,7 +205,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_gbl':
         code(typs[n]+' opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_idx':
-        code('integer(4) idx('+str(NDIM)+')')
+        code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
 
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
@@ -225,28 +225,34 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = start(1) + n_x - 1')
+        #code('idx(1) = start(1) + n_x - 1')
+        code('idx_local(1) = idx(1) + n_x - 1')
     elif NDIM==2:
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
-        code('idx(2) = start(2) + n_y - 1')
+        #code('idx(2) = start(2) + n_y - 1')
+        code('idx_local(2) = idx(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = start(1) + n_x - 1')
+        #code('idx(1) = start(1) + n_x - 1')
+        code('idx_local(1) = idx(1) + n_x - 1')
     elif NDIM==3:
       DO('n_z','1','end(3)-start(3)+1')
       if arg_idx == 1:
-        code('idx(3) = start(3) + n_z - 1')
+        #code('idx(3) = start(3) + n_z - 1')
+        code('id3_local(3) = idx(3) + n_z - 1')
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
-        code('idx(2) = start(2) + n_y - 1')
+        #code('idx(2) = start(2) + n_y - 1')
+        code('idx_local(2) = idx(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
-        code('idx(1) = start(1) + n_x - 1')
+        #code('idx(1) = start(1) + n_x - 1')
+        code('idx_local(1) = idx(1) + n_x - 1')
 
     code('call '+name + '( &')
     indent = config.depth *' '
@@ -265,7 +271,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
       elif arg_typ[n] == 'ops_arg_idx':
-        line = line + '& idx'
+        line = line + '& idx_local'
 
       if n == nargs-1:
         line = line + ' )'
@@ -364,9 +370,23 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     config.depth = config.depth + 2
     code('')
     if arg_idx == 1:
+      config.depth = config.depth - 2
+      code('#ifdef OPS_MPI')
+      config.depth = config.depth + 2
+      code('call getIdx(block,start,idx)')
+      config.depth = config.depth - 2
+      code('#else')
+      config.depth = config.depth + 2
       for n in range (0, NDIM):
         code('idx('+str(n+1)+') = start('+str(n+1)+')')
+      config.depth = config.depth - 2
+      code('#endif')
+      config.depth = config.depth + 2
       code('')
+    #if arg_idx == 1:
+    #  for n in range (0, NDIM):
+    #    code('idx('+str(n+1)+') = start('+str(n+1)+')')
+    #  code('')
 
 
     for n in range (0, nargs):

@@ -175,6 +175,11 @@ program SHSGC
       !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
       !call exit()
 
+    !if (iter .eq. 2) then
+    !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+    !call exit()
+    !end if
+
   ! start timer
   call ops_timers(startTime)
 
@@ -313,12 +318,9 @@ program SHSGC
             & ops_arg_dat(s,        3, S1D_0, "real(8)",OPS_READ))
 
     totaltime = totaltime + dt
-    write (*,*) iter, totaltime
-
-    !if (iter .eq. 1) then
-    !call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-    !call exit()
-    !end if
+    if (ops_is_root() .eq. 1) then
+      write (*,*) iter, totaltime
+    endif
 
   ENDDO
 
@@ -331,7 +333,9 @@ program SHSGC
             & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
   call ops_reduction_result(rms, local_rms);
-  write (*,*), "RMS = " , sqrt(local_rms)/nxp; !Correct RMS = 0.233689
+  if (ops_is_root() .eq. 1) then
+    write (*,*), "RMS = " , sqrt(local_rms)/nxp; !Correct RMS = 0.233689
+  end if
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'

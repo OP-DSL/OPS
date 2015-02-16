@@ -332,15 +332,15 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rho_res, 1, S1D_0, "double", OPS_WRITE));
 
-
-
-
-
       ops_par_loop_drhouupdx_kernel("drhouupdx_kernel", shsgc_grid, 1, nxp_range_1,
                    ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rho_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rhoE_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
                    ops_arg_dat(rhou_res, 1, S1D_0, "double", OPS_WRITE));
+
+
+
+
 
       ops_par_loop_drhoEpudx_kernel("drhoEpudx_kernel", shsgc_grid, 1, nxp_range_1,
                    ops_arg_dat(rhou_new, 1, S1D_0M1M2P1P2, "double", OPS_READ),
@@ -370,6 +370,7 @@ int main(int argc, char **argv) {
 
 
 
+
     int nxp_range_3[] = {0,nxp-1};
     ops_par_loop_Riemann_kernel("Riemann_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(rho_new, 1, S1D_01, "double", OPS_READ),
@@ -385,6 +386,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(tht, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(gt, 3, S1D_0, "double", OPS_WRITE));
 
+
     ops_par_loop_tvd_kernel("tvd_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(tht, 3, S1D_01, "double", OPS_READ),
                  ops_arg_dat(ep2, 3, S1D_0, "double", OPS_WRITE));
@@ -395,7 +397,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(gt, 3, S1D_01, "double", OPS_READ),
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_WRITE),
                  ops_arg_dat(cf, 3, S1D_0, "double", OPS_WRITE));
-
 
     ops_par_loop_calupwindeff_kernel("calupwindeff_kernel", shsgc_grid, 1, nxp_range_3,
                  ops_arg_dat(cmp, 3, S1D_0, "double", OPS_READ),
@@ -410,7 +411,6 @@ int main(int argc, char **argv) {
                  ops_arg_dat(eff, 3, S1D_0M1, "double", OPS_READ),
                  ops_arg_dat(s, 3, S1D_0, "double", OPS_WRITE));
 
-
     int nxp_range_5[] = {3,nxp-3};
     ops_par_loop_update_kernel("update_kernel", shsgc_grid, 1, nxp_range_5,
                  ops_arg_dat(rho_new, 1, S1D_0, "double", OPS_RW),
@@ -421,10 +421,15 @@ int main(int argc, char **argv) {
     totaltime = totaltime + dt;
     ops_printf("%d \t %f\n", iter, totaltime);
 
+
+
+
+
   }
 
   ops_timers(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+
 
   double local_rms = 0.0;
   ops_par_loop_test_kernel("test_kernel", shsgc_grid, 1, nxp_range,

@@ -168,6 +168,10 @@ program SHSGC
 
 
 
+
+
+
+
   call ops_timers(startTime)
 
 
@@ -286,11 +290,9 @@ program SHSGC
                       & ops_arg_dat(s, 3, S1D_0, "real(8)", OPS_READ))
 
     totaltime = totaltime + dt
-    write (*,*) iter, totaltime
-
-
-
-
+    if (ops_is_root() .eq. 1) then
+      write (*,*) iter, totaltime
+    endif
 
   ENDDO
 
@@ -302,7 +304,9 @@ program SHSGC
                     & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
   call ops_reduction_result(rms, local_rms);
-  write (*,*), "RMS = " , sqrt(local_rms)/nxp;
+  if (ops_is_root() .eq. 1) then
+    write (*,*), "RMS = " , sqrt(local_rms)/nxp;
+  end if
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'

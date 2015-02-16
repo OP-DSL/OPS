@@ -150,10 +150,18 @@ module OPS_Fortran_RT_Support
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     type(c_ptr), value, intent(in)           :: block
-    type(c_ptr)           :: start
-    type(c_ptr)           :: end
+    type(c_ptr), value :: start
+    type(c_ptr), value :: end
     type(c_ptr), intent(in), value           :: range
   end subroutine getRange_c
+
+  subroutine getIdx_c (block, start, idx) BIND(C,name='getIdx')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(c_ptr), value, intent(in)           :: block
+    type(c_ptr), intent(in), value :: start
+    type(c_ptr), value :: idx
+  end subroutine getIdx_c
 
   end interface
 
@@ -184,7 +192,17 @@ module OPS_Fortran_RT_Support
     integer(4), dimension(*), intent(in), target :: range
 
     call getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
+  end subroutine
 
+  subroutine getIdx(block, start, idx )
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+    type(ops_block), intent(in)  :: block
+    integer(4), dimension(*), intent(in):: start
+    integer(4), dimension(*), target :: idx
+
+    call getIdx_c ( block%blockCptr, c_loc(start), c_loc(idx))
   end subroutine
 
   type(c_ptr) function getReductionPtrFromOpsArg(arg, block)
