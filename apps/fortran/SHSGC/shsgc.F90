@@ -55,7 +55,8 @@ program SHSGC
   integer size(1) /204/ !size of the dat -- should be identical to the block on which its define on
 
   !null array
-  real(kind=c_double) temp[allocatable](:)
+  !real(kind=c_double) temp[allocatable](:)
+  real(kind=c_double), dimension(:), allocatable :: temp
 
   !iteration range
   !iterange needs to be fortran indexed here

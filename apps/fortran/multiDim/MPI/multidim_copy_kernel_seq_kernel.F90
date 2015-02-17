@@ -49,9 +49,9 @@ subroutine multidim_copy_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
-  DO n_y = start(2), end(2)
+  DO n_y = 1, end(2)-start(2)+1
     !DIR$ SIMD
-    DO n_x = start(1), end(1)
+    DO n_x = 1, end(1)-start(1)+1
       call multidim_copy_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
       & opsDat2Local(dat2_base+(n_x-1)*2 + (n_y-1)*xdim2*2) )
@@ -88,11 +88,19 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   integer end(2)
   integer(kind=4) :: n
 
-  !no OPS_MPI #defined
+  type ( ops_arg ) , DIMENSION(2) :: opsArgArray
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+
+#ifdef OPS_MPI
+  call getRange(block, start, end, range)
+#else
   DO n = 1, 2
     start(n) = range(2*n-1)
     end(n) = range(2*n);
   end DO
+#endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
@@ -105,10 +113,14 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   ydim2 = dat2_size(2)
-  opsDat2Cardinality = opsArg1%dim * xdim2 * ydim2
+  opsDat2Cardinality = opsArg2%dim * xdim2 * ydim2
   multi_d2 = getDatDimFromOpsArg(opsArg2) ! dimension of the dat
   dat2_base = getDatBaseFromOpsArg2D(opsArg2,start,multi_d2)
   call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+
+  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_host(opsArgArray,2)
 
   call multidim_copy_kernel_wrap( &
   & opsDat1Local, &
@@ -117,6 +129,9 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   & dat2_base, &
   & start, &
   & end )
+
+  call ops_set_dirtybit_host(opsArgArray, 2)
+  call ops_set_halo_dirtybit3(opsArg2,range)
 
 end subroutine
 END MODULE

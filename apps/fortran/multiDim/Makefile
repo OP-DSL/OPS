@@ -17,14 +17,36 @@ endif
   CXXFLAGS 	:= $(CCFLAGS)
   CXXLINK	:= -lstdc++
   FC		:= ifort
+  OMPFLAGS 	:= -openmp -openmp-report2
   FFLAGS	:= $(OPT)
   MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS	:= clean multidim_seq
 else
+ifeq ($(OPS_COMPILER),pgi)
+ifdef DEBUG
+  #OPT          := -O2 -g
+  OPT           := -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
+else
+  OPT           := -O3 -Kieee -Minline
+endif
+  CCFLAGS       := $(OPT) -Wall -Werror -wd981
+  CXX           := pgc++
+  CXXFLAGS      := $(CCFLAGS)
+  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CXXLINK       := -lstdc++ #-pgcpplibs
+  OMPFLAGS 	:= -mp
+  FC            := pgfortran
+  FFLAGS        := $(OPT)
+  MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS      := $(CXXFLAGS)
+  TARGETS       := clean multidim_cuda multidim_seq
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 
 FLINK = -L$(F_OPS_LIB) $(CXXLINK)
@@ -37,6 +59,12 @@ multidim_seq: multidim_ops.F90 constants.F90
 	./MPI/multidim_copy_kernel_seq_kernel.F90 ./MPI/multidim_kernel_seq_kernel.F90 ./MPI/multidim_reduce_kernel_seq_kernel.F90 multidim_ops.F90
 	$(FC) $(OPT) $(FLINK) multidim_ops.o constants.o multidim_kernel_seq_kernel.o multidim_copy_kernel_seq_kernel.o \
 	multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_seq -lops_for_seq
+
+multidim_cuda: multidim_ops.F90 constants.F90
+	$(FC) $(OPT) $(FMODS) -c constants.F90 ./CUDA/multidim_print_kernel_cuda_kernel.CUF \
+	./CUDA/multidim_copy_kernel_cuda_kernel.CUF ./CUDA/multidim_kernel_cuda_kernel.CUF ./MPI/multidim_reduce_kernel_cuda_kernel.CUF multidim_ops.F90
+	$(FC) $(OPT) $(FLINK) multidim_ops.o constants.o multidim_kernel_cuda_kernel.o multidim_copy_kernel_cuda_kernel.o \
+	multidim_print_kernel_cuda_kernel.o multidim_reduce_kernel_cuda_kernel.o -o multidim_cuda -lops_for_cuda
 
 clean:
 	rm -f *.o

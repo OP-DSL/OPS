@@ -17,6 +17,23 @@ F_OPS_OBJ = $(F_OPS)/obj
 F_OPS_LIB = $(F_OPS)/lib
 F_OPS_MOD = $(F_OPS)/mod
 
+# flags for nvcc
+# set NV_ARCH to select the correct one
+ifndef NV_ARCH
+  MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
+  NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+  CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda5.5,cc20
+else
+ifeq ($(NV_ARCH),Kepler)
+  CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda5.5,cc35
+endif
+endif
+
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc -std=c99
 ifdef DEBUG
@@ -35,8 +52,29 @@ endif
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS	:= clean core f_seq f_mpi
 else
+ifeq ($(OPS_COMPILER),pgi)
+  CC            := pgcc
+ifdef DEBUG
+  OPT           := -O0 -g
+else
+  OPT           := -O3
+endif
+  CCFLAGS       := $(OPT) -c99
+  NVCC		:= nvcc
+  CXX           := pgc++
+  CXXFLAGS      := $(CCFLAGS)
+  F_INC_MOD     := $(F_OPS_MOD)/pgi
+  FC            := pgfortran
+  FFLAGS        := $(OPT) -module $(F_INC_MOD)
+  PGFFLAGS      := $(OPT) -module $(F_INC_MOD) $(PGI_CUDA_FORT_FLAGS) -Minform=inform -DOPS_WITH_CUDAFOR -Mvect –Mvect=cachesize:12288
+  MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc
+  MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS      := $(CXXFLAGS)
+  TARGETS       := clean core f_seq f_mpi #f_cuda
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 
 ifdef HDF5_INSTALL_PATH

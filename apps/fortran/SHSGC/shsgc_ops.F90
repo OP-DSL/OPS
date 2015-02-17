@@ -62,7 +62,8 @@ program SHSGC
 
   integer size(1) /204/
 
-  real(kind=c_double) temp[allocatable](:)
+
+  real(kind=c_double), dimension(:), allocatable :: temp
 
 
 

@@ -79,8 +79,8 @@ program MULTIDIM
   integer base2(2) /1,1/ ! this is in fortran indexing
 
   !null array
-  real(8) temp[allocatable](:)
-
+  !real(8) temp[allocatable](:)
+  real(8), dimension(:), allocatable :: temp
 
   ! profiling
   real(kind=c_double) :: startTime = 0

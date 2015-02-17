@@ -156,4 +156,4 @@ inline int off3D(int dim, int* start, int* end, int* size, int* stride)
 }
 #endif
 
-#endif /* __OP_UTIL_H */
+#endif/* __OP_UTIL_H */

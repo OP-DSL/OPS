@@ -59,4 +59,4 @@ extern ops_checkpoint_types *OPS_dat_status;
 }
 #endif
 
-#endif /* __OPS_CHECKPOINTING_H */
+#endif/* __OPS_CHECKPOINTING_H */

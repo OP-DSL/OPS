@@ -10,7 +10,7 @@ ifdef DEBUG
   #OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
   OPT	 	:= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX #-vec-report2 #-xAVX
+  OPT	 	:= -O3 -xAVX -vec-report2 #-xAVX
 endif
   OMPFLAGS  	= -openmp -openmp-report2
   CCFLAGS       := $(OPT) -Wall -Werror -wd981
@@ -25,8 +25,30 @@ endif
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS	:= clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp
 else
+ifeq ($(OPS_COMPILER),pgi)
+ifdef DEBUG
+  #OPT          := -O2 -g
+  OPT           := -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
+else
+  OPT           := -O3 -Kieee -Minline
+endif
+  OMPFLAGS      := -mp
+  CCFLAGS       := $(OPT) -Wall -Werror -wd981
+  CXX           := pgc++
+  CXXFLAGS      := $(CCFLAGS)
+  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CXXLINK       := -lstdc++ #-pgcpplibs
+  FC            := pgfortran
+  FFLAGS        := $(OPT)
+  MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90
+  MPIFLAGS      := $(CXXFLAGS)
+  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 
 FLINK = -L$(F_OPS_LIB) $(CXXLINK)

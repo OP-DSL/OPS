@@ -59,7 +59,8 @@ program MULTIDIM
   integer base1(2) /1,1/
   integer base2(2) /1,1/
 
-  real(8) temp[allocatable](:)
+
+  real(8), dimension(:), allocatable :: temp
 
 
   real(kind=c_double) :: startTime = 0
