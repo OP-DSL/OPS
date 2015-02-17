@@ -24,6 +24,7 @@ program MULTIDIM
   use OPS_Fortran_RT_Support
   use MULTIDIM_KERNEL_MODULE
   use MULTIDIM_COPY_KERNEL_MODULE
+  use MULTIDIM_PRINT_KERNEL_MODULE
   use MULTIDIM_REDUCE_KERNEL_MODULE
   use OPS_CONSTANTS
 
@@ -61,7 +62,6 @@ program MULTIDIM
 
 
   real(8), dimension(:), allocatable :: temp
-
 
   real(kind=c_double) :: startTime = 0
   real(kind=c_double) :: endTime = 0
@@ -102,7 +102,8 @@ program MULTIDIM
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
 
-
+  call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
+                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
 
   call multidim_reduce_kernel_host("multidim_reduce_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &

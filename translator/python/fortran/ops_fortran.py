@@ -63,6 +63,7 @@ import datetime
 """import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
 from ops_fortran_gen_mpi import ops_fortran_gen_mpi
 from ops_fortran_gen_mpi_openmp import ops_fortran_gen_mpi_openmp
+from ops_fortran_gen_mpi_cuda import ops_fortran_gen_mpi_cuda
 
 
 """import fortran code generation function"""
@@ -606,6 +607,7 @@ def main():
   #
   ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
   ops_fortran_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

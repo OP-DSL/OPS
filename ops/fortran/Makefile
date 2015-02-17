@@ -17,6 +17,8 @@ F_OPS_OBJ = $(F_OPS)/obj
 F_OPS_LIB = $(F_OPS)/lib
 F_OPS_MOD = $(F_OPS)/mod
 
+CUDA_INC = $(CUDA_INSTALL_PATH)/include
+
 # flags for nvcc
 # set NV_ARCH to select the correct one
 ifndef NV_ARCH
@@ -59,8 +61,8 @@ ifdef DEBUG
 else
   OPT           := -O3
 endif
-  CCFLAGS       := $(OPT) -c99
-  NVCC		:= nvcc
+  CCFLAGS       := $(OPT)
+  NVCC		:= nvcc -Xcompiler="-std=c99 -Wall -fPIC -pedantic -pipe"
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
   F_INC_MOD     := $(F_OPS_MOD)/pgi
@@ -70,7 +72,7 @@ endif
   MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean core f_seq f_mpi #f_cuda
+  TARGETS       := clean core f_seq f_mpi f_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -104,6 +106,14 @@ f_seq: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	ar -r $(F_OPS_LIB)/libops_for_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_seq.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+
+f_cuda: mkdir core $(F_OPS_OBJ)/ops_lib_core.o
+	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
+	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+	ar -r $(F_OPS_LIB)/libops_for_cuda.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 f_mpi: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_decl.c -o $(F_OPS_OBJ)/ops_mpi_decl.o

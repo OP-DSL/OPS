@@ -35,7 +35,7 @@ endif
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXXLINK       := -lstdc++ #-pgcpplibs
+  CXXLINK       := -lstdc++ -pgcpplibs
   OMPFLAGS 	:= -mp
   FC            := pgfortran
   FFLAGS        := $(OPT)
@@ -62,7 +62,7 @@ multidim_seq: multidim_ops.F90 constants.F90
 
 multidim_cuda: multidim_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) -c constants.F90 ./CUDA/multidim_print_kernel_cuda_kernel.CUF \
-	./CUDA/multidim_copy_kernel_cuda_kernel.CUF ./CUDA/multidim_kernel_cuda_kernel.CUF ./MPI/multidim_reduce_kernel_cuda_kernel.CUF multidim_ops.F90
+	./CUDA/multidim_copy_kernel_cuda_kernel.CUF ./CUDA/multidim_kernel_cuda_kernel.CUF ./CUDA/multidim_reduce_kernel_cuda_kernel.CUF multidim_ops.F90
 	$(FC) $(OPT) $(FLINK) multidim_ops.o constants.o multidim_kernel_cuda_kernel.o multidim_copy_kernel_cuda_kernel.o \
 	multidim_print_kernel_cuda_kernel.o multidim_reduce_kernel_cuda_kernel.o -o multidim_cuda -lops_for_cuda
 
