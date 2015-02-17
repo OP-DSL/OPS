@@ -31,48 +31,49 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda5.5,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.0,cc35
 endif
 endif
 
 
 ifeq ($(OPS_COMPILER),intel)
-  CC 		:= icc -std=c99
+  CC 		= icc -std=c99
 ifdef DEBUG
-  OPT	 	:= -O0 -g
+  OPT	 	= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX #vec-report -xAVX
+  OPT	 	= -O3 -xAVX #vec-report -xAVX
 endif
-  CCFLAGS       := $(OPT) -Wall -Werror -wd981
-  CXX 		:= icpc
-  CXXFLAGS 	:= $(CCFLAGS)
-  F_INC_MOD	:= $(F_OPS_MOD)/intel
-  FC		:= ifort
-  FFLAGS	:= $(OPT) -module $(F_INC_MOD)
-  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= clean core f_seq f_mpi
+  CCFLAGS       = $(OPT) -Wall -Werror -wd981
+  CXX 		= icpc
+  CXXFLAGS 	= $(CCFLAGS)
+  F_INC_MOD	= $(F_OPS_MOD)/intel
+  FC		= ifort
+  FFLAGS	= $(OPT) -module $(F_INC_MOD)
+  MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+  TARGETS	= clean core f_seq f_mpi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CC            := pgcc
+  CC            = pgcc
 ifdef DEBUG
-  OPT           := -O0 -g
+  OPT           = -O0 -g
 else
-  OPT           := -O3
+  OPT           = -O3
 endif
-  CCFLAGS       := $(OPT)
-  NVCC		:= nvcc -Xcompiler="-std=c99 -Wall -fPIC -pedantic -pipe"
-  CXX           := pgc++
-  CXXFLAGS      := $(CCFLAGS)
-  F_INC_MOD     := $(F_OPS_MOD)/pgi
-  FC            := pgfortran
-  FFLAGS        := $(OPT) -module $(F_INC_MOD)
-  PGFFLAGS      := $(OPT) -module $(F_INC_MOD) $(PGI_CUDA_FORT_FLAGS) -Minform=inform -DOPS_WITH_CUDAFOR -Mvect –Mvect=cachesize:12288
-  MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc
-  MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean core f_seq f_mpi f_cuda
+  CCFLAGS       = $(OPT)
+  NVCC		= nvcc $(CODE_GEN_CUDA) -Xcompiler="-std=c99 -Wall -fPIC -pedantic -pipe"
+  CUDA_ALIGNE_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CXX           = pgc++
+  CXXFLAGS      = $(CCFLAGS)
+  F_INC_MOD     = $(F_OPS_MOD)/pgi
+  FC            = pgfortran
+  FFLAGS        = $(OPT) -module $(F_INC_MOD)
+  PGFFLAGS      = $(OPT) -module $(F_INC_MOD) $(PGI_CUDA_FORT_FLAGS) -Minform=inform -DOPS_WITH_CUDAFOR -Mvect –Mvect=cachesize:12288
+  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
+  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS      = $(CXXFLAGS)
+  TARGETS       = clean core f_seq f_mpi f_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -107,13 +108,14 @@ f_seq: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	ar -r $(F_OPS_LIB)/libops_for_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_seq.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
-f_cuda: mkdir core $(F_OPS_OBJ)/ops_lib_core.o
-	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
-	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
-	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
-	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+f_cuda: mkdir core
+	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
+	$(NVCC) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(NVCC) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
+	$(FC) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
+	$(FC) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	ar -r $(F_OPS_LIB)/libops_for_cuda.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
-	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 f_mpi: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_decl.c -o $(F_OPS_OBJ)/ops_mpi_decl.o

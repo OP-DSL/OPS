@@ -5,44 +5,43 @@ F_OPS_MOD = $(F_OPS)/mod/$(OPS_COMPILER)
 F_OPS_INC = $(F_OPS)/include
 
 ifeq ($(OPS_COMPILER),intel)
-  CC 		:= icc -std=c99
+  CC 		= icc -std=c99
 ifdef DEBUG
-  #OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
-  OPT	 	:= -O0 -g
+  OPT	 	= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX -vec-report2 #-xAVX
+  OPT	 	= -O3 -xAVX -vec-report2
 endif
-  CCFLAGS       := $(OPT) -Wall -Werror -wd981
-  CXX 		:= icpc
-  CXXFLAGS 	:= $(CCFLAGS)
-  CXXLINK	:= -lstdc++
-  FC		:= ifort
-  OMPFLAGS 	:= -openmp -openmp-report2
-  FFLAGS	:= $(OPT)
-  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	:= clean multidim_seq
+  CCFLAGS       = $(OPT) -Wall -Werror -wd981
+  CXX 		= icpc
+  CXXFLAGS 	= $(CCFLAGS)
+  CXXLINK	= -lstdc++
+  FC		= ifort
+  OMPFLAGS 	= -openmp -openmp-report2
+  FFLAGS	= $(OPT)
+  MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+  TARGETS	= clean multidim_seq
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
-  #OPT          := -O2 -g
-  OPT           := -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
+  OPT           = -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
-  OPT           := -O3 -Kieee -Minline
+  OPT           = -O3 -Kieee -Minline
 endif
-  CCFLAGS       := $(OPT) -Wall -Werror -wd981
-  CXX           := pgc++
-  CXXFLAGS      := $(CCFLAGS)
-  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXXLINK       := -lstdc++ -pgcpplibs
-  OMPFLAGS 	:= -mp
-  FC            := pgfortran
-  FFLAGS        := $(OPT)
-  MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
-  MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean multidim_cuda multidim_seq
+  CCFLAGS       = $(OPT) -Wall -Werror -wd981
+  CXX           = pgc++
+  CXXFLAGS      = $(CCFLAGS)
+  CUDA_ALIGN_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CXXLINK       = -lstdc++ -pgcpplibs
+  OMPFLAGS 	= -mp
+  FC            = pgfortran
+  FFLAGS        = $(OPT)
+  PGFFLAGS	= -fast -Mcuda=cuda5.5,cc35,fastmath,ptxinfo -DOPS_WITH_CUDAFOR
+  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS      = $(CXXFLAGS)
+  TARGETS       = clean multidim_cuda multidim_seq
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -61,9 +60,9 @@ multidim_seq: multidim_ops.F90 constants.F90
 	multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_seq -lops_for_seq
 
 multidim_cuda: multidim_ops.F90 constants.F90
-	$(FC) $(OPT) $(FMODS) -c constants.F90 ./CUDA/multidim_print_kernel_cuda_kernel.CUF \
+	$(FC) $(PGFFLAGS) $(OPT) $(FMODS) $(CUDA_ALIGN_FLAG) -c constants.F90 ./CUDA/multidim_print_kernel_cuda_kernel.CUF \
 	./CUDA/multidim_copy_kernel_cuda_kernel.CUF ./CUDA/multidim_kernel_cuda_kernel.CUF ./CUDA/multidim_reduce_kernel_cuda_kernel.CUF multidim_ops.F90
-	$(FC) $(OPT) $(FLINK) multidim_ops.o constants.o multidim_kernel_cuda_kernel.o multidim_copy_kernel_cuda_kernel.o \
+	$(FC) $(PGFFLAGS) $(OPT) $(FLINK) $(CUDA_ALIGN_FLAG) multidim_ops.o constants.o multidim_kernel_cuda_kernel.o multidim_copy_kernel_cuda_kernel.o \
 	multidim_print_kernel_cuda_kernel.o multidim_reduce_kernel_cuda_kernel.o -o multidim_cuda -lops_for_cuda
 
 clean:

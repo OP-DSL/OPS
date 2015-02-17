@@ -83,7 +83,71 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
+    reduction = 0
+    reduction_vars = ''
+    reduct_op = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+        reduction = 1
 
+    arg_idx = 0
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        arg_idx = 1
+
+    config.file_text = ''
+    config.depth = 0
+    n_per_line = 4
+
+    i = name.find('kernel')
+    name2 = name[0:i-1]
+
+##########################################################################
+#  generate HEADER
+##########################################################################
+
+    code('MODULE '+name.upper()+'_MODULE')
+    code('USE OPS_FORTRAN_DECLARATIONS')
+    code('USE OPS_FORTRAN_RT_SUPPORT')
+    code('')
+    code('USE OPS_CONSTANTS')
+    code('USE ISO_C_BINDING')
+    #code('USE CUDAFOR')
+    code('')
+
+##########################################################################
+#  generate MACROS
+##########################################################################
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('INTEGER(KIND=4), constant :: xdim'+str(n+1))
+          if NDIM==1:
+            code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
+          if NDIM==2:
+            code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'_'+name+'*(y)+1)')
+          if NDIM==3:
+            code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'_'+name+'*(y)+xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)+1)')
+    code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('INTEGER(KIND=4), constant :: multi_d'+str(n+1))
+          code('INTEGER(KIND=4), constant :: xdim'+str(n+1))
+          if NDIM==1:
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+          if NDIM==2:
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
+          if NDIM==3:
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
+
+    code('')
+    code('contains')
+    code('')
+
+
+    code('END MODULE')
 
 ##########################################################################
 #  output individual kernel file
