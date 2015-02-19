@@ -124,6 +124,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
+          code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
@@ -135,8 +136,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
-          #code('INTEGER(KIND=4), constant :: multi_d'+str(n+1))
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
+          code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
@@ -323,6 +324,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code('INTEGER(KIND=4) :: xdim'+str(n+1))
+        if int(dims[n]) > 1:
+          code('INTEGER(KIND=4) :: multi_d'+str(n+1))
         if NDIM==2:
           code('integer ydim'+str(n+1))
         elif NDIM==2:
@@ -334,11 +338,117 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('')
 
-    #NEED TO COMPY CONSTANTS TO Symbol
-    #if (xdim0 != xdim0+'_'+name_multidim_kernel_h) {
-    #  cudaMemcpyToSymbol( xdim0_multidim_kernel, &xdim0, sizeof(int) );
-    #  xdim0_multidim_kernel_h = xdim0;
-    #}
+    if NDIM==1:
+      code('integer x_size')
+    elif NDIM==2:
+      code('integer x_size, y_size')
+    elif NDIM==2:
+      code('integer x_size, y_size, z_size')
+    code('integer start('+str(NDIM)+')')
+    code('integer end('+str(NDIM)+')')
+    if arg_idx == 1:
+      code('integer idx('+str(NDIM)+')')
+    code('integer(kind=4) :: n')
+    code('')
+
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+    code('')
+
+
+    for n in range (0, nargs):
+      code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+    code('')
+
+    config.depth = config.depth - 2
+    code('#ifdef OPS_MPI')
+    config.depth = config.depth + 2
+    code('call getRange(block, start, end, range)')
+    config.depth = config.depth - 2
+    code('#else')
+    config.depth = config.depth + 2
+    DO('n','1',str(NDIM))
+    code('start(n) = range(2*n-1)')
+    code('end(n) = range(2*n);')
+    ENDDO()
+    config.depth = config.depth - 2
+    code('#endif')
+    config.depth = config.depth + 2
+    code('')
+    if arg_idx == 1:
+      config.depth = config.depth - 2
+      code('#ifdef OPS_MPI')
+      config.depth = config.depth + 2
+      code('call getIdx(block,start,idx)')
+      config.depth = config.depth - 2
+      code('#else')
+      config.depth = config.depth + 2
+      for n in range (0, NDIM):
+        code('idx('+str(n+1)+') = start('+str(n+1)+')')
+      config.depth = config.depth - 2
+      code('#endif')
+      config.depth = config.depth + 2
+      code('')
+
+
+    code('')
+    code('x_size = MAX(0,end(1)-start(1));')
+    if NDIM==2:
+      code('y_size = MAX(0,end(2)-start(2));')
+    if NDIM==3:
+      code('y_size = MAX(0,end(2)-start(2));')
+      code('z_size = MAX(0,end(3)-start(3));')
+    code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('call c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'),dat'+str(n+1)+'_size,(/dim/))')
+        if NDIM==1:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1))
+        elif NDIM==2:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1))
+        elif NDIM==3:
+          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
+          code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
+        if int(dims[n]) <> 1:
+          code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+        else:
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
+        code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
+        code('')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ:
+          code('call c_f_pointer(getGblPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+          code('dat'+str(n+1)+'_base = 1')
+          code('')
+        else:
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
+          code('dat'+str(n+1)+'_base = 1')
+          code('')
+
+    #NEED TO COPY CONSTANTS TO SYmbol
+    condition = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        condition = condition + 'xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h .OR. '
+        if NDIM==3:
+          condition = condition + 'ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h .OR. '
+    condition = condition[:-4]
+
+    IF(condition)
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        #code('call cudaMemcpyToSymbol( xdim'+str(n+1)+'_'+name+', &xdim'+str(n+1)+', 4 )')
+        code('xdim'+str(n+1)+'_'+name+'_h = xdim'+str(n+1))
+        if NDIM==3:
+          code('cudaMemcpyToSymbol( ydim'+str(n+1)+'_'+name+', &ydim'+str(n+1)+', 4 )')
+          code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+    ENDIF()
 
 
     config.depth = config.depth - 2
