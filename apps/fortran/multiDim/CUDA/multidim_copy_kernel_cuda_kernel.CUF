@@ -18,4 +18,45 @@ INTEGER(KIND=4), constant :: xdim2
 
 contains
 
+!user function
+!DEC$ ATTRIBUTES FORCEINLINE :: multidim_copy_kernel
+attributes (device) subroutine multidim_copy_kernel(val1, val2)
+  IMPLICIT NONE
+  REAL   (kind=8), DIMENSION(2) :: val1
+  REAL   (kind=8), DIMENSION(2) :: val2
+  val2(OPS_ACC_MD2(1,0,0)) = val1(OPS_ACC_MD1(1,0,0))
+  val2(OPS_ACC_MD2(2,0,0)) = val1(OPS_ACC_MD1(2,0,0))
+end subroutine
+
+
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
+
+
+
+!host subroutine
+attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1, &
+& opsArg2)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  integer(kind=4) :: opsDat1Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4) :: dat1_base
+  integer ydim1
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg2
+  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  integer(kind=4) :: opsDat2Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4) :: dat2_base
+  integer ydim2
+
+end subroutine
 END MODULE

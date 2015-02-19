@@ -146,7 +146,85 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('contains')
     code('')
 
+##########################################################################
+#  user kernel subroutine
+##########################################################################
+    comm('user function')
+    code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
+    fid = open(name2+'_kernel.inc', 'r')
+    text = fid.read()
+    fid.close()
+    text = comment_remover(text)
+    text = remove_trailing_w_space(text)
+    i = text.find(name)
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
 
+    # need to check accs here - under fortran the
+    # parameter vars are declared inside the subroutine
+    # for now no check is done
+
+    code('attributes (device) '+text)
+    code('')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n+1))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n+1))
+    code('')
+    code('')
+
+
+#########################################################################
+#  host subroutine
+##########################################################################
+
+    code('')
+    comm('host subroutine')
+    code('attributes (host) subroutine '+name+'_host( userSubroutine, block, dim, range, &')
+    for n in range (0, nargs):
+      if n == nargs-1:
+        code('& opsArg'+str(n+1)+')')
+      else:
+        code('& opsArg'+str(n+1)+', &')
+
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
+    code('type ( ops_block ), INTENT(IN) :: block')
+    code('integer(kind=4), INTENT(IN):: dim')
+    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code('')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
+        code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
+        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        if NDIM==2:
+          code('integer ydim'+str(n+1))
+        elif NDIM==2:
+          code('integer ydim'+str(n+1)+', zdim'+str(n+1))
+        code('')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code('')
+
+    config.depth = config.depth - 2
+    code('end subroutine')
     code('END MODULE')
 
 ##########################################################################

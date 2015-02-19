@@ -15,4 +15,40 @@ INTEGER(KIND=4), constant :: xdim1
 
 contains
 
+!user function
+!DEC$ ATTRIBUTES FORCEINLINE :: multidim_kernel
+attributes (device) subroutine multidim_kernel(val, idx)
+  IMPLICIT NONE
+  REAL(kind=8)   , DIMENSION(2) :: val
+  INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
+
+  val(OPS_ACC_MD1(1,0,0)) = idx(1)
+  val(OPS_ACC_MD1(2,0,0)) = idx(2)
+end subroutine
+
+
+#undef OPS_ACC_MD1
+
+
+
+!host subroutine
+attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1, &
+& opsArg2)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  integer(kind=4) :: opsDat1Cardinality
+  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4) :: dat1_base
+  integer ydim1
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg2
+
+end subroutine
 END MODULE
