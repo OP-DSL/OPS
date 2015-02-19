@@ -41,7 +41,7 @@ endif
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean multidim_cuda multidim_seq
+  TARGETS       = clean multidim_seq multidim_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"

@@ -157,7 +157,7 @@ void ops_timers(double * cpu, double * et){
 }
 
 
-/************* Functions only use in the s Backend ************/
+/************* Functions only use in the Fortran Backend ************/
 
 int* getDatSizeFromOpsArg (ops_arg * arg){
   return arg->dat->size;
@@ -215,6 +215,7 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
   return base/(dat/dim)+1;
 }
 
+// this routine needs the correct body !!!!
 int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
   return 1;
 }

@@ -9,12 +9,10 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 
-INTEGER(KIND=4), constant :: multi_d1
-INTEGER(KIND=4), constant :: xdim1
-#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
-INTEGER(KIND=4), constant :: multi_d2
-INTEGER(KIND=4), constant :: xdim2
-#define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2*(y)*2))
+INTEGER(KIND=4), constant :: xdim1_multidim_copy_kernel
+#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1_multidim_copy_kernel*(y)*2))
+INTEGER(KIND=4), constant :: xdim2_multidim_copy_kernel
+#define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2_multidim_copy_kernel*(y)*2))
 
 contains
 
@@ -33,6 +31,38 @@ end subroutine
 #undef OPS_ACC_MD2
 
 
+!CUDA kernel function
+attributes (global) subroutine multidim_copy_kernel_wrap( &
+& opsDat1Local, &
+& opsDat2Local, &
+& dat1_base, &
+& dat2_base, &
+& size1, size2, &
+& start, &
+& end )
+  IMPLICIT NONE
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
+  integer(4) arg1
+  real(8), DEVICE :: opsDat2Local(*)
+  integer(4) arg2
+  integer dat1_base
+  integer dat2_base
+  integer(4) start(2)
+  integer(4) end(2)
+  integer n_x, n_y, size1, size2
+
+
+  n_y = blockDim%y * blockIdx%y + threadIdx%y
+  n_x = blockDim%x * blockIdx%x + threadIdx%x
+
+  arg1 = arg1 + n_x * 1*2 + n_y * 1*2 * xdim1_multidim_copy_kernel
+  arg2 = arg2 + n_x * 1*2 + n_y * 1*2 * xdim2_multidim_copy_kernel
+  IF (n_x < size1 .AND. n_y < size2) THEN
+    call multidim_copy_kernel( &
+    & opsDat1Local(arg1), &
+    & opsDat2Local(arg2) )
+  ENDIF
+end subroutine
 
 !host subroutine
 attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &

@@ -58,6 +58,23 @@ def ENDDO():
   config.depth -= 2
   code('end DO')
 
+def IF(line):
+  code('IF ('+ line + ') THEN')
+  config.depth += 2
+
+def ELSEIF(line):
+  code('ELSEIF ('+ line + ') THEN')
+  config.depth += 2
+
+def ELSE():
+  code('ELSE')
+  config.depth += 2
+
+def ENDIF():
+  config.depth -= 2
+  code('ENDIF')
+
+
 def remove_trailing_w_space(text):
   text = text+' '
   line_start = 0

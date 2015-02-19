@@ -52,6 +52,8 @@ code = util_fortran.code
 
 DO = util_fortran.DO
 ENDDO = util_fortran.ENDDO
+IF = util_fortran.IF
+ENDIF = util_fortran.ENDIF
 
 def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
@@ -121,26 +123,26 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
-          code('INTEGER(KIND=4), constant :: xdim'+str(n+1))
+          code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
-            code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'_'+name+'*(y)+1)')
+            code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'_'+name+'_'+name+'*(y)+1)')
           if NDIM==3:
-            code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'_'+name+'*(y)+xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)+1)')
+            code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'_'+name+'_'+name+'*(y)+xdim'+str(n+1)+'_'+name+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)+1)')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
-          code('INTEGER(KIND=4), constant :: multi_d'+str(n+1))
-          code('INTEGER(KIND=4), constant :: xdim'+str(n+1))
+          #code('INTEGER(KIND=4), constant :: multi_d'+str(n+1))
+          code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
 
     code('')
     code('contains')
@@ -182,6 +184,115 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('')
 
 
+##########################################################################
+#  generate kernel wrapper subroutine
+##########################################################################
+    comm('CUDA kernel function')
+    code('attributes (global) subroutine '+name+'_wrap( &')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('& idx, &')
+      else:
+        code('& opsDat'+str(n+1)+'Local, &')
+    for n in range (0, nargs):
+      if arg_typ[n] <> 'ops_arg_idx':
+        code('& dat'+str(n+1)+'_base, &')
+    if NDIM==1:
+      code('& size1, &')
+    elif NDIM==2:
+      code('& size1, size2, &')
+    elif NDIM==3:
+      code('& size1, size2, size3, &')
+    code('& start, &')
+    code('& end )')
+
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
+        code(typs[n]+', DEVICE, INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
+        code('integer(4) arg'+str(n+1))
+      elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code(typs[n]+', DEVICE :: opsDat'+str(n+1)+'Local(*)')
+        code('integer(4) arg'+str(n+1))
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code(typs[n]+' opsDat'+str(n+1)+'Local('+str(dims[n])+')')
+      elif arg_typ[n] == 'ops_arg_idx':
+        code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
+
+    for n in range (0, nargs):
+      if arg_typ[n] <> 'ops_arg_idx':
+        code('integer dat' + str(n+1)+'_base')
+    code('integer(4) start('+str(NDIM)+')')
+    code('integer(4) end('+str(NDIM)+')')
+
+    if NDIM==1:
+      code('integer n_x, size1')
+    elif NDIM==2:
+      code('integer n_x, n_y, size1, size2')
+    elif NDIM==3:
+      code('integer n_x, n_y, n_z, size1, size2, size3')
+    code('')
+
+    code('')
+    if NDIM==1:
+      code('n_z = blockDim%z * blockIdx%z + threadIdx%z')
+      code('n_y = blockDim%y * blockIdx%y + threadIdx%y')
+    if NDIM==2:
+      code('n_y = blockDim%y * blockIdx%y + threadIdx%y')
+    code('n_x = blockDim%x * blockIdx%x + threadIdx%x')
+    code('')
+    if arg_idx:
+      code('idx_local(1) = idx(1)+n_x')
+      if NDIM==2:
+        code('idx_local(2) = idx(2)+n_y')
+      if NDIM==3:
+        code('idx_local(2) = idx(2}+n_y')
+        code('idx_local(3) = idx(3)+n_z')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if NDIM == 1:
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n]))
+        elif NDIM == 2:
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
+        elif NDIM==3:
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + n_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
+
+    if NDIM==1:
+      IF('n_x < size1')
+    if NDIM==2:
+      IF('n_x < size1 .AND. n_y < size2')
+    elif NDIM==3:
+      IF('n_x < size1 .AND. n_y < size2 .AND. n_z < size3')
+
+    code('call '+name + '( &')
+    indent = config.depth *' '
+    line = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if NDIM==1:
+          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+        elif NDIM==2:
+          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+        elif NDIM==3:
+          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+      elif arg_typ[n] == 'ops_arg_gbl':
+        line = line + '& opsDat'+str(n+1)+'Local'
+      elif arg_typ[n] == 'ops_arg_idx':
+        line = line + '& idx_local'
+
+      if n == nargs-1:
+        line = line + ' )'
+      else:
+        line = line + ', &\n'+indent
+
+    code(line)
+    ENDIF()
+
+    config.depth = config.depth - 2
+    code('end subroutine')
+
 #########################################################################
 #  host subroutine
 ##########################################################################
@@ -222,6 +333,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('')
+
+    #NEED TO COMPY CONSTANTS TO Symbol
+    #if (xdim0 != xdim0+'_'+name_multidim_kernel_h) {
+    #  cudaMemcpyToSymbol( xdim0_multidim_kernel, &xdim0, sizeof(int) );
+    #  xdim0_multidim_kernel_h = xdim0;
+    #}
+
 
     config.depth = config.depth - 2
     code('end subroutine')

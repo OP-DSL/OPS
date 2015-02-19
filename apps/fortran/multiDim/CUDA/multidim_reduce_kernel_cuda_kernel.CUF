@@ -9,9 +9,8 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 
-INTEGER(KIND=4), constant :: multi_d1
-INTEGER(KIND=4), constant :: xdim1
-#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
+INTEGER(KIND=4), constant :: xdim1_multidim_reduce_kernel
+#define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1_multidim_reduce_kernel*(y)*2))
 
 contains
 
@@ -30,6 +29,36 @@ end subroutine
 #undef OPS_ACC_MD1
 
 
+!CUDA kernel function
+attributes (global) subroutine multidim_reduce_kernel_wrap( &
+& opsDat1Local, &
+& opsDat2Local, &
+& dat1_base, &
+& dat2_base, &
+& size1, size2, &
+& start, &
+& end )
+  IMPLICIT NONE
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
+  integer(4) arg1
+  real(8) opsDat2Local(2)
+  integer dat1_base
+  integer dat2_base
+  integer(4) start(2)
+  integer(4) end(2)
+  integer n_x, n_y, size1, size2
+
+
+  n_y = blockDim%y * blockIdx%y + threadIdx%y
+  n_x = blockDim%x * blockIdx%x + threadIdx%x
+
+  arg1 = arg1 + n_x * 1*2 + n_y * 1*2 * xdim1_multidim_reduce_kernel
+  IF (n_x < size1 .AND. n_y < size2) THEN
+    call multidim_reduce_kernel( &
+    & opsDat1Local(arg1), &
+    & opsDat2Local )
+  ENDIF
+end subroutine
 
 !host subroutine
 attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
