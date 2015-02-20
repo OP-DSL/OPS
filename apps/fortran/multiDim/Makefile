@@ -75,4 +75,4 @@ clean:
 	rm -f *.mod
 	rm -f $(EXEC)
 	rm -f *~
-	rm -f multidim_seq
+	rm -f multidim_seq multidim_cuda

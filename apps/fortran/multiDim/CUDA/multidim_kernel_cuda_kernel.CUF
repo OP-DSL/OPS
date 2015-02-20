@@ -7,6 +7,7 @@ USE OPS_FORTRAN_RT_SUPPORT
 
 USE OPS_CONSTANTS
 USE ISO_C_BINDING
+USE CUDAFOR
 
 
 INTEGER(KIND=4), constant :: xdim1_multidim_kernel
@@ -121,7 +122,8 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-  IF (xdim1 .NE. xdim1_multidim_kernel_h .) THEN
+  IF ((xdim1 .NE. xdim1_multidim_kernel_h) ) THEN
+    xdim1_multidim_kernel = xdim1
     xdim1_multidim_kernel_h = xdim1
   ENDIF
 end subroutine

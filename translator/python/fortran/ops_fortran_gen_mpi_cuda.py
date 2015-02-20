@@ -114,7 +114,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('')
     code('USE OPS_CONSTANTS')
     code('USE ISO_C_BINDING')
-    #code('USE CUDAFOR')
+    code('USE CUDAFOR')
     code('')
 
 ##########################################################################
@@ -354,7 +354,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
     code('')
 
-
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
@@ -435,18 +434,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h .OR. '
+        condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. '
         if NDIM==3:
-          condition = condition + 'ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h .OR. '
-    condition = condition[:-4]
+          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. '
+    condition = condition[:-5]
 
     IF(condition)
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        #code('call cudaMemcpyToSymbol( xdim'+str(n+1)+'_'+name+', &xdim'+str(n+1)+', 4 )')
+        code('xdim'+str(n+1)+'_'+name+' = xdim'+str(n+1))
         code('xdim'+str(n+1)+'_'+name+'_h = xdim'+str(n+1))
         if NDIM==3:
-          code('cudaMemcpyToSymbol( ydim'+str(n+1)+'_'+name+', &ydim'+str(n+1)+', 4 )')
+          code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
           code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
     ENDIF()
 
