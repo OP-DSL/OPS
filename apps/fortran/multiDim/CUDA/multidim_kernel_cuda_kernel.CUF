@@ -137,5 +137,19 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);
 
+  call ops_H_D_exchanges_device(opsArgArray,2)
+  call ops_halo_exchanges(opsArgArray,2,range)
+
+  call multidim_kernel_wrap <<<grid,tblock>>> (&
+  & opsDat1Local, &
+  & idx, &
+  & dat1_base, &
+  & size1, size2, &
+  & start, &
+  & end )
+
+  call ops_set_dirtybit_device(opsArgArray, 2)
+  call ops_set_halo_dirtybit3(opsArg1,range)
+
 end subroutine
 END MODULE

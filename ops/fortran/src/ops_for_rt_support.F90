@@ -77,7 +77,21 @@ module OPS_Fortran_RT_Support
       type(ops_arg), dimension(*) :: args       ! array with ops_args
   end subroutine
 
+  subroutine ops_H_D_exchanges_device (args, argsNumber) BIND(C,name='ops_H_D_exchanges_device')
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+  end subroutine
+
   subroutine ops_set_dirtybit_host (args, argsNumber) BIND(C,name='ops_set_dirtybit_host')
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+  end subroutine
+
+  subroutine ops_set_dirtybit_device (args, argsNumber) BIND(C,name='ops_set_dirtybit_device')
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
       integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop

@@ -503,7 +503,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
 
-    #set up CUDA grid and thread blocks
+    #set up CUDA grid and thread blocks for kernel call
     if NDIM==1:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, 1, 1);')
     if NDIM==2:
@@ -634,7 +634,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 
-
+    #halo exchange
     code('')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')

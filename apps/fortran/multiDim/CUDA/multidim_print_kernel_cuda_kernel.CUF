@@ -68,17 +68,18 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), POINTER, DEVICE, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4) ,DEVICE :: dat1_base
   INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
   integer ydim1
 
   integer x_size, y_size
-  integer start(2)
-  integer end(2)
+  integer, DEVICE:: size1, size2
+  integer, DEVICE:: start(2)
+  integer, DEVICE:: end(2)
   integer(kind=4) :: n
 
   !cuda grid and thread block sizes
@@ -116,6 +117,18 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
 
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);
+
+  call ops_H_D_exchanges_device(opsArgArray,1)
+  call ops_halo_exchanges(opsArgArray,1,range)
+
+  call multidim_print_kernel_wrap <<<grid,tblock>>> (&
+  & opsDat1Local, &
+  & dat1_base, &
+  & size1, size2, &
+  & start, &
+  & end )
+
+  call ops_set_dirtybit_device(opsArgArray, 1)
 
 end subroutine
 END MODULE

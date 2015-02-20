@@ -500,12 +500,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
     ENDIF()
 
-    #setup reduction variables
-    ##
-    ## TODO
-    ##
 
-    #set up CUDA grid and thread blocks
+    #set up CUDA grid and thread blocks for kernel call
     code('')
     if NDIM==1:
       code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1);')
@@ -518,6 +514,46 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);')
     else:
       code('tblock = dim3(getOPS_block_size_x(),1,1);')
+    code('')
+
+    #setup reduction variables
+    ##
+    ## TODO
+    ##
+
+    #set up shared memory for reduction
+
+    #halo exchange
+    code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
+    code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
+    code('')
+
+    #Call cuda kernel  - i.e. the wrapper calling the user kernel
+    code('call '+name+'_wrap <<<grid,tblock>>> (&')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('& idx, &')
+      else:
+        code('& opsDat'+str(n+1)+'Local, &')
+    for n in range (0, nargs):
+      if arg_typ[n] <> 'ops_arg_idx':
+        code('& dat'+str(n+1)+'_base, &')
+    if NDIM==1:
+      code('& size1, &')
+    elif NDIM==2:
+      code('& size1, size2, &')
+    elif NDIM==3:
+      code('& size1, size2, size3, &')
+    code('& start, &')
+    code('& end )')
+    code('')
+
+
+    code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
     code('')
 
 
