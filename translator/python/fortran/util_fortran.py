@@ -56,7 +56,7 @@ def DO(i,start,finish):
 
 def ENDDO():
   config.depth -= 2
-  code('end DO')
+  code('END DO')
 
 def IF(line):
   code('IF ('+ line + ') THEN')

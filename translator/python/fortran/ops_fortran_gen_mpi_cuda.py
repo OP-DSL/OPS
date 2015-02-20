@@ -188,7 +188,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 ##########################################################################
 #  generate kernel wrapper subroutine
 ##########################################################################
-    comm('CUDA kernel function')
+    comm('CUDA kernel function -- wrapper calling user kernel')
     code('attributes (global) subroutine '+name+'_wrap( &')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -226,6 +226,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('integer dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
+    code('integer(4) d')
 
     if NDIM==1:
       code('integer n_x, size1')
@@ -234,6 +235,27 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     elif NDIM==3:
       code('integer n_x, n_y, n_z, size1, size2, size3')
     code('')
+
+    #local variable to hold reductions on GPU
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+        code(typs[n]+' arg'+str(n)+'_l('+str(dims[n])+')')
+
+    # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        DO('d','1',str(dims[n]))
+        code('arg'+str(n)+'_l(d) = 0')
+        ENDDO()
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        DO('d','1',str(dims[n]))
+        code('arg'+str(n)+'_l(d) = HUGE(arg'+str(n)+'_l(d))')
+        ENDDO()
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        DO('d','1',str(dims[n]))
+        code('arg'+str(n)+'_l(d) = -HUGE(arg'+str(n)+'_l(d))')
+        ENDDO()
 
     code('')
     if NDIM==1:
@@ -290,6 +312,33 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     code(line)
     ENDIF()
+
+    code('')
+    #reduction across blocks
+    if NDIM==1:
+      cont = 'blockIdx%x + blockIdx%y*gridDim%x'
+    if NDIM==2:
+      cont = 'blockIdx%x + blockIdx%y*gridDim%x'
+    elif NDIM==3:
+      cont = 'blockIdx%x + blockIdx%y*gridDim%x + blockIdx%z*gridDim%x*gridDim%y'
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        comm('CALL ReductionFloat')
+        #DO('d','1',str(dims[n]))
+        #code('ops_reduction_cuda<OPS_INC>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
+        #ENDDO()
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
+        comm('CALL ReductionFloat')
+        #DO('d','1',str(dims[n]))
+        #code('ops_reduction_cuda<OPS_MIN>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
+        #ENDDO()
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
+        comm('CALL ReductionFloat')
+        #DO('d','1',str(dims[n]))
+        #code('ops_reduction_cuda<OPS_MAX>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
+        #ENDDO()
+    code('')
+
 
     config.depth = config.depth - 2
     code('end subroutine')
@@ -350,7 +399,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('integer idx('+str(NDIM)+')')
     code('integer(kind=4) :: n')
     code('')
-
+    comm('cuda grid and thread block sizes')
+    code('type(dim3) :: grid, tblock')
+    code('')
     code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
     code('')
 
@@ -448,6 +499,27 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
           code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
     ENDIF()
+
+    #setup reduction variables
+    ##
+    ## TODO
+    ##
+
+    #set up CUDA grid and thread blocks
+    code('')
+    if NDIM==1:
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1);')
+    if NDIM==2:
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);')
+    if NDIM==3:
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, z_size);')
+
+    if NDIM>1:
+      code('tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);')
+    else:
+      code('tblock = dim3(getOPS_block_size_x(),1,1);')
+    code('')
+
 
 
     config.depth = config.depth - 2

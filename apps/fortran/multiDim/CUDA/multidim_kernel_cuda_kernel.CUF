@@ -31,7 +31,7 @@ end subroutine
 #undef OPS_ACC_MD1
 
 
-!CUDA kernel function
+!CUDA kernel function -- wrapper calling user kernel
 attributes (global) subroutine multidim_kernel_wrap( &
 & opsDat1Local, &
 & idx, &
@@ -46,7 +46,9 @@ attributes (global) subroutine multidim_kernel_wrap( &
   integer dat1_base
   integer(4) start(2)
   integer(4) end(2)
+  integer(4) d
   integer n_x, n_y, size1, size2
+
 
 
   n_y = blockDim%y * blockIdx%y + threadIdx%y
@@ -60,6 +62,8 @@ attributes (global) subroutine multidim_kernel_wrap( &
     & opsDat1Local(arg1), &
     & idx_local )
   ENDIF
+
+
 end subroutine
 
 !host subroutine
@@ -89,6 +93,9 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   integer idx(2)
   integer(kind=4) :: n
 
+  !cuda grid and thread block sizes
+  type(dim3) :: grid, tblock
+
   type ( ops_arg ) , DIMENSION(2) :: opsArgArray
 
   opsArgArray(1) = opsArg1
@@ -100,7 +107,7 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   DO n = 1, 2
     start(n) = range(2*n-1)
     end(n) = range(2*n);
-  end DO
+  END DO
 #endif
 
 #ifdef OPS_MPI
@@ -126,5 +133,9 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
     xdim1_multidim_kernel = xdim1
     xdim1_multidim_kernel_h = xdim1
   ENDIF
+
+  grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);
+  tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);
+
 end subroutine
 END MODULE

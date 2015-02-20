@@ -277,3 +277,12 @@ void ops_halo_transfer(ops_halo_group group) {
     halo->to->dirty_hd = 2;
   }
 }
+
+/************* Functions only use in the Fortran Backend ************/
+
+int getOPS_block_size_x(){
+  return OPS_block_size_x;
+}
+int getOPS_block_size_y(){
+  return OPS_block_size_y;
+}

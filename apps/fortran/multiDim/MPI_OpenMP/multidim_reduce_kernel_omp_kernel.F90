@@ -52,8 +52,8 @@ subroutine multidim_reduce_kernel_wrap( &
       call multidim_reduce_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
       & opsDat2Local(dat2_base) )
-    end DO
-  end DO
+    END DO
+  END DO
 end subroutine
 
 !host subroutine
@@ -93,7 +93,7 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   DO n = 1, 2
     start(n) = range(2*n-1)
     end(n) = range(2*n);
-  end DO
+  END DO
 #endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))

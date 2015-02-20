@@ -525,7 +525,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     GBL_MIN = False
     GBL_WRITE = False
 
-
+    #set up reduction variables
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -605,8 +605,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
         code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
     code('')
@@ -635,14 +633,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+'/dat'+str(n)+',d_m[0]);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
-
-
-    #for n in range (0, nargs):
-    #  if arg_typ[n] == 'ops_arg_dat':
-    #    code('p_a['+str(n)+'] = &args['+str(n)+'].data_d[')
-    #    code('+ args['+str(n)+'].dat->elem_size * args['+str(n)+'].dat->size[0] * ( range[2] * '+str(stride[2*n+1])+' - args['+str(n)+'].dat->offset[1] )')
-    #    code('+ args['+str(n)+'].dat->elem_size * ( range[0] * '+str(stride[2*n])+' - args['+str(n)+'].dat->offset[0] ) ];')
-    #    code('')
 
 
     code('')
