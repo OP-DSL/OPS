@@ -369,10 +369,10 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('')
       if arg_typ[n] == 'ops_arg_dat':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code(typs[n]+', POINTER, DEVICE, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
-        code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
-        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
+        code('integer(kind=4), DEVICE  :: dat'+str(n+1)+'_base')
         code('INTEGER(KIND=4) :: xdim'+str(n+1))
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) :: multi_d'+str(n+1))
@@ -383,20 +383,22 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
-        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code(typs[n]+', POINTER, DEVICE, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4), DEVICE :: dat'+str(n+1)+'_base')
         code('')
 
     if NDIM==1:
-      code('integer x_size')
+      code('integer, DEVICE :: x_size')
     elif NDIM==2:
-      code('integer x_size, y_size')
+      code('integer, DEVICE :: x_size, y_size')
     elif NDIM==2:
-      code('integer x_size, y_size, z_size')
+      code('integer, DEVICE :: x_size, y_size, z_size')
     code('integer start('+str(NDIM)+')')
+    code('integer, DEVICE :: start_d('+str(NDIM)+')')
     code('integer end('+str(NDIM)+')')
+    code('integer, DEVICE :: end_d('+str(NDIM)+')')
     if arg_idx == 1:
-      code('integer idx('+str(NDIM)+')')
+      code('integer, DEVICE :: idx('+str(NDIM)+')')
     code('integer(kind=4) :: n')
     code('')
     comm('cuda grid and thread block sizes')
@@ -413,12 +415,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('#ifdef OPS_MPI')
     config.depth = config.depth + 2
     code('call getRange(block, start, end, range)')
+    DO('n','1',str(NDIM))
+    code('start_d(n) = start(n)')
+    code('end_d(n) = end(n);')
+    ENDDO()
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1)')
     code('end(n) = range(2*n);')
+    code('start_d(n) = range(2*n-1)')
+    code('end_d(n) = range(2*n);')
     ENDDO()
     config.depth = config.depth - 2
     code('#endif')
@@ -540,13 +548,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] <> 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     if NDIM==1:
-      code('& size1, &')
+      code('& x_size, &')
     elif NDIM==2:
-      code('& size1, size2, &')
+      code('& x_size, y_size, &')
     elif NDIM==3:
-      code('& size1, size2, size3, &')
-    code('& start, &')
-    code('& end )')
+      code('& x_size, y_size, z_size, &')
+    code('& start_d, &')
+    code('& end_d )')
     code('')
 
 

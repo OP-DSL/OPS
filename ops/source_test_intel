@@ -1,0 +1,13 @@
+#A rough example of environmental variables for compiling with Intel compilers
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/home/gihan/OPS/ops
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5/
+export MPI_INSTALL_PATH=/opt/intel/impi/5.0.1.035/intel64/
+source /opt/intel/composer_xe_2015/bin/compilervars.sh intel64
+source /opt/intel/impi/5.0.1.035/intel64/bin/mpivars.sh intel64
+
+export INTEL_PATH=/opt/intel/composer_xe_2015
+export MPICH_CXX=/opt/intel/composer_xe_2015/bin/icpc
+export MPICH_CC=/opt/intel/composer_xe_2015/bin/icc
+export MPICH_F90=/opt/intel/composer_xe_2015/bin/ifort

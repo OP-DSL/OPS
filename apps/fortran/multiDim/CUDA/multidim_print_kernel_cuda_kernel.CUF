@@ -70,16 +70,17 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), POINTER, DEVICE, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) ,DEVICE :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE  :: dat1_base
   INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
   integer ydim1
 
-  integer x_size, y_size
-  integer, DEVICE:: size1, size2
-  integer, DEVICE:: start(2)
-  integer, DEVICE:: end(2)
+  integer, DEVICE :: x_size, y_size
+  integer start(2)
+  integer, DEVICE :: start_d(2)
+  integer end(2)
+  integer, DEVICE :: end_d(2)
   integer(kind=4) :: n
 
   !cuda grid and thread block sizes
@@ -91,10 +92,16 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
 
 #ifdef OPS_MPI
   call getRange(block, start, end, range)
+  DO n = 1, 2
+    start_d(n) = start(n)
+    end_d(n) = end(n);
+  END DO
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)
     end(n) = range(2*n);
+    start_d(n) = range(2*n-1)
+    end_d(n) = range(2*n);
   END DO
 #endif
 
@@ -124,9 +131,9 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
   call multidim_print_kernel_wrap <<<grid,tblock>>> (&
   & opsDat1Local, &
   & dat1_base, &
-  & size1, size2, &
-  & start, &
-  & end )
+  & x_size, y_size, &
+  & start_d, &
+  & end_d )
 
   call ops_set_dirtybit_device(opsArgArray, 1)
 
