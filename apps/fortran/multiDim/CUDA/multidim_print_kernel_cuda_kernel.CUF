@@ -49,7 +49,7 @@ attributes (global) subroutine multidim_print_kernel_wrap( &
   n_y = blockDim%y * blockIdx%y + threadIdx%y
   n_x = blockDim%x * blockIdx%x + threadIdx%x
 
-  arg1 = arg1 + n_x * 1*2 + n_y * 1*2 * xdim1_multidim_print_kernel
+  arg1 = arg1 + (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_print_kernel
   IF (n_x < size1 .AND. n_y < size2) THEN
     call multidim_print_kernel( &
     & opsDat1Local(arg1) )

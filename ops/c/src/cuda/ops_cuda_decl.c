@@ -143,6 +143,14 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
   dat->user_managed = 0;
 
+  for(int i = 0; i < dat->size[1]; i++ ) {
+    for(int j = 0; j < dat->size[0]; j++ ) {
+      for(int d = 0; d < dat->dim; d++ ) {
+        ((double *)dat->data)[(i*dat->size[0]+j)*dat->dim+d] = 4994.99;
+      }
+    }
+  }
+
   ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
     ( void ** ) &( dat->data ), bytes );
 
@@ -181,6 +189,7 @@ ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc )
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 {
+  //printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
   //need to get data from GPU
   ops_cuda_get_data(dat);
   ops_print_dat_to_txtfile_core(dat, file_name);

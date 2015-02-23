@@ -622,7 +622,7 @@ void ops_dump3(ops_dat dat, const char* name) {
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 {
-  //printf("name %s type = %s\n",dat->name, dat->type);
+  //printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
 
   //TODO: this has to be backend-specific
   FILE *fp;

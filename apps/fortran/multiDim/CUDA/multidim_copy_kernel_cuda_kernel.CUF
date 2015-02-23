@@ -60,8 +60,8 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   n_y = blockDim%y * blockIdx%y + threadIdx%y
   n_x = blockDim%x * blockIdx%x + threadIdx%x
 
-  arg1 = arg1 + n_x * 1*2 + n_y * 1*2 * xdim1_multidim_copy_kernel
-  arg2 = arg2 + n_x * 1*2 + n_y * 1*2 * xdim2_multidim_copy_kernel
+  arg1 = arg1 + (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_copy_kernel
+  arg2 = arg2 + (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim2_multidim_copy_kernel
   IF (n_x < size1 .AND. n_y < size2) THEN
     call multidim_copy_kernel( &
     & opsDat1Local(arg1), &

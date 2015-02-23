@@ -693,6 +693,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
 
+    #
+    # Complete Reduction Operation by moving data onto host
+    # and reducing over blocks
+    #
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToHost(reduct_bytes);')
 
@@ -717,6 +721,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].time += t2-t1;')
 
+    # This is not doen any more due to redution_handles treatement under MPI
     # if reduction == 1 :
     #   for n in range (0, nargs):
     #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:

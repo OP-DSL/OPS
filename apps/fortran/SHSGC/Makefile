@@ -4,6 +4,23 @@ F_OPS_LIB = $(F_OPS)/lib
 F_OPS_MOD = $(F_OPS)/mod/$(OPS_COMPILER)
 F_OPS_INC = $(F_OPS)/include
 
+# flags for nvcc
+# set NV_ARCH to select the correct one
+ifndef NV_ARCH
+  MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
+  NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+  CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.5,cc20
+else
+ifeq ($(NV_ARCH),Kepler)
+  CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.0,cc35
+endif
+endif
+
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		:= icc -std=c99
 ifdef DEBUG

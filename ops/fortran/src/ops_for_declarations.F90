@@ -591,14 +591,14 @@ module OPS_Fortran_Declarations
 
   subroutine ops_print_dat_to_txtfile (dat, fileName)
     type(ops_dat) :: dat
-    character(len=*) :: fileName
-    call ops_print_dat_to_txtfile_c (dat%dataPtr, fileName)
+    character(kind=c_char,len=*) :: fileName
+    call ops_print_dat_to_txtfile_c (dat%dataPtr, fileName//C_NULL_CHAR)
   end subroutine ops_print_dat_to_txtfile
 
   subroutine ops_print_dat_to_txtfile_core (dat, fileName)
     type(ops_dat) :: dat
-    character(len=*) :: fileName
-    call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName)
+    character(kind=c_char,len=*) :: fileName
+    call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName//C_NULL_CHAR)
   end subroutine ops_print_dat_to_txtfile_core
 
  subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)

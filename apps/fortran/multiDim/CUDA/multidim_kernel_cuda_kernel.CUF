@@ -54,9 +54,9 @@ attributes (global) subroutine multidim_kernel_wrap( &
   n_y = blockDim%y * blockIdx%y + threadIdx%y
   n_x = blockDim%x * blockIdx%x + threadIdx%x
 
-  idx_local(1) = idx(1)+n_x
-  idx_local(2) = idx(2)+n_y
-  arg1 = arg1 + n_x * 1*2 + n_y * 1*2 * xdim1_multidim_kernel
+  idx_local(1) = idx(1)+ n_x-1
+  idx_local(2) = idx(2)+ n_y-1
+  arg1 = arg1 + (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_kernel
   IF (n_x < size1 .AND. n_y < size2) THEN
     call multidim_kernel( &
     & opsDat1Local(arg1), &

@@ -266,21 +266,21 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('n_x = blockDim%x * blockIdx%x + threadIdx%x')
     code('')
     if arg_idx:
-      code('idx_local(1) = idx(1)+n_x')
+      code('idx_local(1) = idx(1)+ n_x-1')
       if NDIM==2:
-        code('idx_local(2) = idx(2)+n_y')
+        code('idx_local(2) = idx(2)+ n_y-1')
       if NDIM==3:
-        code('idx_local(2) = idx(2}+n_y')
-        code('idx_local(3) = idx(3)+n_z')
+        code('idx_local(2) = idx(2}+ n_y-1')
+        code('idx_local(3) = idx(3)+ n_z-1')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM == 1:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n]))
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n]))
         elif NDIM == 2:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
         elif NDIM==3:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + n_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + n_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
+          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
 
     if NDIM==1:
       IF('n_x < size1')
@@ -489,7 +489,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = 1')
           code('')
 
-    #NEED TO COPY CONSTANTS TO SYmbol
+    #NEED TO COPY CONSTANTS TO Symbol
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -530,6 +530,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     ##
 
     #set up shared memory for reduction
+    ##
+    ## TODO
+    ##
 
     #halo exchange
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
@@ -557,13 +560,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('& end_d )')
     code('')
 
+    #
+    # Complete Reduction Operation by moving data onto host
+    # and reducing over blocks
+    #
+    # TODO
+    #
 
     code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
     code('')
-
 
 
     config.depth = config.depth - 2

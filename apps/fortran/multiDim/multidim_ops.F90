@@ -98,6 +98,9 @@ program MULTIDIM
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                     & ops_arg_idx());
 
+  call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+  call exit()
+
   call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
@@ -114,8 +117,8 @@ program MULTIDIM
   write(*,*) "Reduction result = ", reduct_result
 
   call ops_timers ( endTime )
-  call ops_print_dat_to_txtfile(dat1, "multidim.dat");
-  call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+
+
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
