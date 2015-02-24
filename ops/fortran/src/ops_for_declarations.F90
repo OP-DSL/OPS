@@ -134,6 +134,36 @@ module OPS_Fortran_Declarations
     type (c_ptr)                       :: reductionCptr
   end type ops_reduction
 
+  type, BIND(C) :: ops_halo_core
+    type(c_ptr)         :: from
+    type(c_ptr)         :: to
+    type(c_ptr)         :: iter_size
+    type(c_ptr)         :: from_base
+    type(c_ptr)         :: to_base
+    type(c_ptr)         :: from_dir
+    type(c_ptr)         :: to_dir
+    integer             :: index
+  end type ops_halo_core
+
+  type :: ops_halo
+      type (ops_halo_core), pointer :: haloPtr => null()
+      type (c_ptr)                 :: haloCptr
+  end type ops_halo
+
+
+  type, BIND(C) :: ops_halo_group_core
+    integer             :: nhalos
+    !type(c_ptr)         :: halos
+    type (ops_halos), pointer :: halos => null()
+    integer             :: index
+  end type ops_halo_group_core
+
+  type :: ops_halo_group
+      type (ops_halo_group_core), pointer :: halogroupPtr => null()
+      type (c_ptr)                 :: halogroupCptr
+  end type ops_halo_group
+
+
 
   !#################################################
   ! Fortran interfaces for ops declaration routines
