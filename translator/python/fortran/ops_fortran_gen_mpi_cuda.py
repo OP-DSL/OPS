@@ -153,7 +153,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 #  user kernel subroutine
 ##########################################################################
     comm('user function')
-    code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
     fid = open(name2+'_kernel.inc', 'r')
     text = fid.read()
     fid.close()
@@ -369,7 +368,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('')
       if arg_typ[n] == 'ops_arg_dat':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DEVICE, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4), DEVICE  :: dat'+str(n+1)+'_base')
@@ -417,16 +416,16 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('call getRange(block, start, end, range)')
     DO('n','1',str(NDIM))
     code('start_d(n) = start(n)')
-    code('end_d(n) = end(n);')
+    code('end_d(n) = end(n)')
     ENDDO()
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1)')
-    code('end(n) = range(2*n);')
+    code('end(n) = range(2*n)')
     code('start_d(n) = range(2*n-1)')
-    code('end_d(n) = range(2*n);')
+    code('end_d(n) = range(2*n)')
     ENDDO()
     config.depth = config.depth - 2
     code('#endif')
@@ -449,12 +448,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
 
     code('')
-    code('x_size = MAX(0,end(1)-start(1));')
+    code('x_size = MAX(0,end(1)-start(1))')
     if NDIM==2:
-      code('y_size = MAX(0,end(2)-start(2));')
+      code('y_size = MAX(0,end(2)-start(2))')
     if NDIM==3:
-      code('y_size = MAX(0,end(2)-start(2));')
-      code('z_size = MAX(0,end(3)-start(3));')
+      code('y_size = MAX(0,end(2)-start(2))')
+      code('z_size = MAX(0,end(3)-start(3))')
     code('')
 
     for n in range (0, nargs):
@@ -512,16 +511,16 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     #set up CUDA grid and thread blocks for kernel call
     code('')
     if NDIM==1:
-      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1);')
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1)')
     if NDIM==2:
-      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);')
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)')
     if NDIM==3:
-      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, z_size);')
+      code('grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, z_size)')
 
     if NDIM>1:
-      code('tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);')
+      code('tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)')
     else:
-      code('tblock = dim3(getOPS_block_size_x(),1,1);')
+      code('tblock = dim3(getOPS_block_size_x(),1,1)')
     code('')
 
     #setup reduction variables

@@ -113,14 +113,19 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: stencil      ! the stencil
     integer(kind=c_int) :: dim          ! dimension of data
     type(c_ptr)         :: data         ! data on host
-    type(c_ptr)         :: data_d       ! data on device (for CUDA)
+#ifdef OPS_WITH_CUDAFOR
+    type(c_devptr)      :: data_d       ! data on device (for CUDA)
+#else
+    type(c_ptr)         :: data_d
+#endif
+
     integer(kind=c_int) :: acc          ! access type
     integer(kind=c_int) :: argtype      ! arg type
     integer(kind=c_int) :: opt          ! falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional
   end type ops_arg
 
   type, BIND(C) :: ops_reduction_core
-    type(c_ptr)         :: data         ! The data
+    type(c_ptr)           :: data       ! The data
     integer(kind=c_int) :: size         ! size of data in bytes
     integer(kind=c_int) :: initialized  ! flag indicating whether data has been initialized
     integer(kind=c_int) :: index        ! unique identifier

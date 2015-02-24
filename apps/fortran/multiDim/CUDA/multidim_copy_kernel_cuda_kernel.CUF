@@ -82,7 +82,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DEVICE, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4), DEVICE  :: dat1_base
@@ -91,7 +91,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DEVICE, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4), DEVICE  :: dat2_base
@@ -118,20 +118,20 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   call getRange(block, start, end, range)
   DO n = 1, 2
     start_d(n) = start(n)
-    end_d(n) = end(n);
+    end_d(n) = end(n)
   END DO
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)
-    end(n) = range(2*n);
+    end(n) = range(2*n)
     start_d(n) = range(2*n-1)
-    end_d(n) = range(2*n);
+    end_d(n) = range(2*n)
   END DO
 #endif
 
 
-  x_size = MAX(0,end(1)-start(1));
-  y_size = MAX(0,end(2)-start(2));
+  x_size = MAX(0,end(1)-start(1))
+  y_size = MAX(0,end(2)-start(2))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
@@ -156,8 +156,8 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
     xdim2_multidim_copy_kernel_h = xdim2
   ENDIF
 
-  grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1);
-  tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1);
+  grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)
+  tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)
 
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)

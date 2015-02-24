@@ -108,8 +108,8 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0"); ! "double" should be "read(8)"
-  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1"); ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0") ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1") ! "double" should be "read(8)"
 
   !initialize and declare constants
   const1 = 5.44_8
@@ -128,29 +128,29 @@ program MULTIDIM
 
   call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
-               & ops_arg_idx());
+               & ops_arg_idx())
 
-  call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+  call ops_print_dat_to_txtfile(dat0, "multidim.dat")
   call exit()
 
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
-               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE))
 
   call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
+               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ))
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC));
+               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 
   write(*,*) "Reduction result = ", reduct_result
 
   call ops_timers ( endTime )
-  !call ops_print_dat_to_txtfile(dat1, "multidim.dat");
-  !call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+  !call ops_print_dat_to_txtfile(dat1, "multidim.dat")
+  !call ops_print_dat_to_txtfile(dat0, "multidim.dat")
 
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then

@@ -81,8 +81,8 @@ program MULTIDIM
   call ops_decl_stencil( 2, 1, s2D_00_arry, S2D_00, "00");
 
 
-  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0");
-  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1");
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0")
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1")
 
   const1 = 5.44_8
   reduct_result(1) = 0.0_8
@@ -96,21 +96,21 @@ program MULTIDIM
 
   call multidim_kernel_host("multidim_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
-                    & ops_arg_idx());
+                    & ops_arg_idx())
 
-  call ops_print_dat_to_txtfile(dat0, "multidim.dat");
+  call ops_print_dat_to_txtfile(dat0, "multidim.dat")
   call exit()
 
   call multidim_copy_kernel_host("multidim_copy_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
-                    & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE));
+                    & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE))
 
   call multidim_print_kernel_host("multidim_print_kernel", grid2D, 2, iter_range, &
-                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ));
+                    & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ))
 
   call multidim_reduce_kernel_host("multidim_reduce_kernel", grid2D, 2, iter_range, &
                     & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-                    & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC));
+                    & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 

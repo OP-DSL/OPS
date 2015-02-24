@@ -65,8 +65,10 @@ program MBLOCK
   !real(kind=c_double) temp[allocatable](:)
   real(kind=c_double), dimension(:), allocatable :: temp
 
-
   !block-holos
+  type(ops_halo) :: h0, h1
+
+  !block-holo groups
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
 
   !iteration range
