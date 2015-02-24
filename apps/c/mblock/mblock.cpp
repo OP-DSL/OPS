@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   //declare datasets
   int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
-  int size[2] = {20, 20}; //size of the dat -- should be identical to the block on which its define on
+  int size[2] = {20, 20}; //size of the dat
   int base[2] = {0,0};
   double* temp = NULL;
 

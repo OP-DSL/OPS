@@ -238,4 +238,4 @@ openacc_error:
 #
 
 clean:
-	rm -f mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_seq mblock_openmp mblock_mpi_openmp mblock_cuda mblock_mpi_cuda mblock_openacc mblock_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o mblock_opencl ./OpenCL/*.o *.o
+	rm -f mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_seq mblock_openmp mblock_mpi_openmp mblock_cuda mblock_mpi_cuda mblock_openacc mblock_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o mblock_opencl mblock_mpi_opencl ./OpenCL/*.o *.o
