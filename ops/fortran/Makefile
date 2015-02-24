@@ -62,7 +62,7 @@ else
   OPT           = -O3
 endif
   CCFLAGS       = $(OPT)
-  NVCC		= nvcc $(CODE_GEN_CUDA)
+  NVCC		= nvcc $(CODE_GEN_CUDA) -G
   NVCCFLAGS	= -Xcompiler="-std=c99 -Wall -fPIC -pedantic -pipe"
   CUDA_ALIGNE_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXX           = pgc++

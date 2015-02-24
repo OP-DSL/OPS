@@ -67,9 +67,13 @@ program MBLOCK
 
   !block-holos
   type(ops_halo) :: h0, h1
+  type(ops_halo) grp(2)
 
   !block-holo groups
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
+
+  !halo vars
+  integer halo_iter(2), base_from(2), base_to(2), dir(2)
 
   !iteration range
   !iterange needs to be fortran indexed here
@@ -95,6 +99,18 @@ program MBLOCK
   call ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, data0, "double", "data0")
   call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data0, "double", "data1")
 
+  ! straightforward matching orientation halos data0 - data1 in x
+  ! last two x lines of data0 and first two of data1
+  ! ops_halo_group halos0
+  halo_iter(1) = 2
+  halo_iter(2) = 20
+  base_from(1) = 18
+  base_from(2) = 0
+  base_to(1) = -2
+  base_to(2) = 0
+  dir(1) = 1
+  dir(2) = 2
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
 
   call ops_partition("1D_BLOCK_DECOMPOSE")
 

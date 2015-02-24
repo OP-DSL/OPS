@@ -41,7 +41,7 @@ endif
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
-  OPT           = -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
+  OPT           = -O0 -g #-Minline -Kieee -Minform=inform -Minfo=all
 else
   OPT           = -O3 -Kieee -Minline
 endif
