@@ -136,6 +136,22 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 }
 
 void ops_halo_transfer(ops_halo_group group) {
+
+
+  // Test contents of halo group
+  /*ops_halo halo;
+  for(int i = 0; i<group->nhalos; i++) {
+    halo = group->halos[i];
+    printf("halo->from->name = %s, halo->to->name %s\n",halo->from->name, halo->to->name);
+    for (int i = 0; i < halo->from->block->dims; i++) {
+      printf("halo->iter_size[i] %d ",halo->iter_size[i]);
+      printf("halo->from_base[i] %d ",halo->from_base[i]);
+      printf("halo->to_base[i] %d ",halo->to_base[i]);
+      printf("halo->from_dir[i] %d ",halo->from_dir[i]);
+      printf("halo->to_dir[i] %d \n",halo->to_dir[i]);
+    }
+  }*/
+
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
     int size = halo->from->elem_size * halo->iter_size[0];

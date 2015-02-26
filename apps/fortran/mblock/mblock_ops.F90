@@ -81,93 +81,15 @@ program MBLOCK
   base_to(2) = 0
   dir(1) = 1
   dir(2) = 2
+  write(*,*) base_from, base_to
   call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
   base_from(1) = 0
   base_to(1) = 20
+  write(*,*) base_from, base_to
   call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
   grp(1) = h0
   grp(2) = h1
   call ops_decl_halo_group(2,grp, halos0)
-
-
-
-
-  halo_iter(1) = 20
-  halo_iter(2) = 2
-  base_from(1) = 0
-  base_from(2) = 18
-  base_to(1) = 0
-  base_to(2) = -2
-  dir(1) = 1
-  dir(2) = 2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
-  base_from(2) = 0
-  base_to(2) = 20
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
-  grp(1) = h0
-  grp(2) = h1
-  call ops_decl_halo_group(2,grp,halos1)
-
-
-
-  halo_iter(1) = 2
-  halo_iter(2) = 20
-  base_from(1) = 0
-  base_from(2) = 0
-  base_to(1) = 20
-  base_to(2) = 0
-  dir(1) = 1
-  dir(2) = 2
-  dir_to(1) = 1
-  dir_to(2) = -2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
-  base_from(1) = 18
-  base_to(1) = -2
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir,h1)
-  grp(1) = h0
-  grp(2) = h1
-  call ops_decl_halo_group(2,grp,halos2)
-
-
-
-  halo_iter(1) = 20
-  halo_iter(2) = 2
-  base_from(1) = 0
-  base_from(2) = 0
-  base_to(1) = 0
-  base_to(2) = 20
-  dir(1) = 1
-  dir(2) = 2
-  dir_to(1) = -1
-  dir_to(2) = 2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
-  base_from(2) = 18
-  base_to(2) = -2
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
-  grp(1) = h0
-  grp(2) = h1
-  call ops_decl_halo_group(2,grp,halos3)
-
-
-
-  halo_iter(1) = 2
-  halo_iter(2) = 20
-  base_from(1) = 18
-  base_from(2) = 0
-  base_to(1) = 0
-  base_to(2) = -2
-  dir(1) = 2
-  dir(2) = 1
-  dir_to(1) = 2
-  dir_to(2) = 1
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
-  base_from(1) = 0
-  base_to(1) = 20
-  base_to(2) = 0
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
-  grp(1) = h0
-  grp(2) = h1
-  call ops_decl_halo_group(2,grp,halos4)
 
 
 

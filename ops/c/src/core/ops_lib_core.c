@@ -467,7 +467,12 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
 
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
-  grp->halos = halos; //TODO: make a copy?
+
+  //grp->halos = halos; //TODO: make a copy?
+  //make a copy
+  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
+  memcpy(halos_temp, halos, nhalos*sizeof(ops_halo_core));
+  grp->halos = halos_temp;
   grp->index = OPS_halo_group_index;
   OPS_halo_group_list[OPS_halo_group_index++] = grp;
 

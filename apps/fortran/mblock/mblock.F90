@@ -224,6 +224,7 @@ program MBLOCK
               & ops_arg_dat(data1, 1, S2D_00, "real(8)", OPS_WRITE),  &
               & ops_arg_idx())
 
+  !call ops_print_dat_to_txtfile(data1, "data1.txt")
   call ops_halo_transfer(halos0)
 
   !call ops_halo_transfer(halos1)
