@@ -73,7 +73,7 @@ program MBLOCK
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
 
   !halo vars
-  integer halo_iter(2), base_from(2), base_to(2), dir(2)
+  integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
   !iteration range
   !iterange needs to be fortran indexed here
@@ -113,10 +113,99 @@ program MBLOCK
   call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
   base_from(1) = 0
   base_to(1) = 20
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1);
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
   grp(1) = h0
   grp(2) = h1
   call ops_decl_halo_group(2,grp, halos0)
+
+
+  ! straightforward matching orientation halos data0 - data1 in y
+  ! last two y lines of data0 and first two of data1
+  ! ops_halo_group halos1
+  halo_iter(1) = 20
+  halo_iter(2) = 2
+  base_from(1) = 0
+  base_from(2) = 18
+  base_to(1) = 0
+  base_to(2) = -2
+  dir(1) = 1
+  dir(2) = 2
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
+  base_from(2) = 0
+  base_to(2) = 20
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
+  grp(1) = h0
+  grp(2) = h1
+  call ops_decl_halo_group(2,grp,halos1)
+
+  ! reverse data1 - data0 in x
+  ! last two x lines of data0 and first two of data1, but data1 is flipped in y
+  ! ops_halo_group halos2
+  halo_iter(1) = 2
+  halo_iter(2) = 20
+  base_from(1) = 0
+  base_from(2) = 0
+  base_to(1) = 20
+  base_to(2) = 0
+  dir(1) = 1
+  dir(2) = 2
+  dir_to(1) = 1
+  dir_to(2) = -2
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  base_from(1) = 18
+  base_to(1) = -2
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir,h1)
+  grp(1) = h0
+  grp(2) = h1
+  call ops_decl_halo_group(2,grp,halos2)
+
+  ! reverse data1 - data0 in y
+  ! last two y lines of data0 and first two of data1, but data1 is flipped in x
+  ! ops_halo_group halos3
+  halo_iter(1) = 20
+  halo_iter(2) = 2
+  base_from(1) = 0
+  base_from(2) = 0
+  base_to(1) = 0
+  base_to(2) = 20
+  dir(1) = 1
+  dir(2) = 2
+  dir_to(1) = -1
+  dir_to(2) = 2
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  base_from(2) = 18
+  base_to(2) = -2
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
+  grp(1) = h0
+  grp(2) = h1
+  call ops_decl_halo_group(2,grp,halos3)
+
+  ! rotated data0-data1 x<->y
+  ! last two x lines of data0 to first two y lines of data1 (and back)
+  ! ops_halo_group halos4
+  halo_iter(1) = 2
+  halo_iter(2) = 20
+  base_from(1) = 18
+  base_from(2) = 0
+  base_to(1) = 0
+  base_to(2) = -2
+  dir(1) = 2
+  dir(2) = 1
+  dir_to(1) = 2
+  dir_to(2) = 1
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  base_from(1) = 0
+  base_to(1) = 20
+  base_to(2) = 0
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
+  grp(1) = h0
+  grp(2) = h1
+  call ops_decl_halo_group(2,grp,halos4)
+
+
+
+
+
 
   call ops_partition("1D_BLOCK_DECOMPOSE")
 
@@ -131,6 +220,19 @@ program MBLOCK
               & ops_arg_dat(data0, 1, S2D_00, "real(8)", OPS_WRITE), &
               & ops_arg_idx())
 
-  call ops_exit( )
+  call ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid1, 2, iter_range, &
+              & ops_arg_dat(data1, 1, S2D_00, "real(8)", OPS_WRITE),  &
+              & ops_arg_idx())
 
+  call ops_halo_transfer(halos0)
+  call ops_halo_transfer(halos0)
+  call ops_halo_transfer(halos1)
+  call ops_halo_transfer(halos2)
+  call ops_halo_transfer(halos3)
+  call ops_halo_transfer(halos4)
+
+  call ops_print_dat_to_txtfile(data0, "data0.txt")
+  call ops_print_dat_to_txtfile(data1, "data1.txt")
+
+  call ops_exit( )
 end program MBLOCK

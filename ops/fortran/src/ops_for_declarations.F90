@@ -243,6 +243,12 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_halo_group_c
 
+    subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_halo_group_core, ops_halo_core
+      type(c_ptr), value, intent(in)        :: group
+    end subroutine ops_halo_transfer_c
+
 
 
     type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
@@ -658,6 +664,10 @@ module OPS_Fortran_Declarations
 
   end subroutine ops_decl_halo_group
 
+  subroutine ops_halo_transfer (group)
+      type(ops_halo_group)                :: group
+      call ops_halo_transfer_c(group%halogroupCptr)
+  end subroutine ops_halo_transfer
 
   subroutine ops_timers ( et )
     real(kind=c_double) :: et
