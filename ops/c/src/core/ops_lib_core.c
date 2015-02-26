@@ -450,6 +450,21 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
       exit ( -1 );
     }
   }
+
+  /* // Test contents of halo group
+  ops_halo halo;
+  for(int i = 0; i<nhalos; i++) {
+    halo = halos[i];
+    printf("halo->from->name = %s, halo->to->name %s\n",halo->from->name, halo->to->name);
+    for (int i = 0; i < halo->from->block->dims; i++) {
+      printf("halo->iter_size[i] %d ",halo->iter_size[i]);
+      printf("halo->from_base[i] %d ",halo->from_base[i]);
+      printf("halo->to_base[i] %d ",halo->to_base[i]);
+      printf("halo->from_dir[i] %d ",halo->from_dir[i]);
+      printf("halo->to_dir[i] %d \n",halo->to_dir[i]);
+    }
+  } */
+
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
   grp->halos = halos; //TODO: make a copy?

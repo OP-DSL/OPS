@@ -97,7 +97,7 @@ program MBLOCK
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
 
   call ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, data0, "double", "data0")
-  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data0, "double", "data1")
+  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "double", "data1")
 
   ! straightforward matching orientation halos data0 - data1 in x
   ! last two x lines of data0 and first two of data1
@@ -111,6 +111,12 @@ program MBLOCK
   dir(1) = 1
   dir(2) = 2
   call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
+  base_from(1) = 0
+  base_to(1) = 20
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1);
+  grp(1) = h0
+  grp(2) = h1
+  call ops_decl_halo_group(2,grp, halos0)
 
   call ops_partition("1D_BLOCK_DECOMPOSE")
 

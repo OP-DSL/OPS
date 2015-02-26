@@ -216,6 +216,35 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_dat_c
 
+    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      import :: ops_block_core, ops_dat_core, ops_halo_core
+
+      type(c_ptr), value, intent(in)           :: from
+      type(c_ptr), value, intent(in)           :: to
+      type(c_ptr), intent(in), value           :: iter_size
+      type(c_ptr), intent(in), value           :: from_base
+      type(c_ptr), intent(in), value           :: to_base
+      type(c_ptr), intent(in), value           :: from_dir
+      type(c_ptr), intent(in), value           :: to_dir
+
+    end function ops_decl_halo_c
+
+    type(c_ptr) function ops_decl_halo_group_c ( nhalos, halos) BIND(C,name='ops_decl_halo_group')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      import :: ops_block_core, ops_dat_core, ops_halo_core
+
+      integer(kind=c_int), value               :: nhalos
+      type(c_ptr), value, intent(in)           :: halos
+
+    end function ops_decl_halo_group_c
+
+
+
     type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
 
       use, intrinsic :: ISO_C_BINDING
@@ -596,6 +625,39 @@ module OPS_Fortran_Declarations
     ops_arg_gbl_scalar = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
 
   end function ops_arg_gbl_scalar
+
+
+  subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
+
+    type(ops_dat)                                :: from
+    type(ops_dat)                                :: to
+    integer(4), dimension(*), intent(in), target :: iter_size
+    integer(4), dimension(*), intent(in), target :: from_base
+    integer(4), dimension(*), intent(in), target :: to_base
+    integer(4), dimension(*), intent(in), target :: from_dir
+    integer(4), dimension(*), intent(in), target :: to_dir
+    type(ops_halo)                               :: halo
+
+    halo%haloCptr = ops_decl_halo_c ( from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( halo%haloCptr, halo%haloPtr )
+
+  end subroutine ops_decl_halo
+
+  subroutine ops_decl_halo_group (nhalos, group, halos)
+
+    integer(4), intent(in)                :: nhalos
+    type(ops_halo), dimension(*), target  :: group
+    type(ops_halo_group)                  :: halos
+
+    halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group))
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
+
+  end subroutine ops_decl_halo_group
+
 
   subroutine ops_timers ( et )
     real(kind=c_double) :: et
