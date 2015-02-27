@@ -44,7 +44,7 @@ program MBLOCK
   integer size(2) /20,20/
 
 
-  real(kind=c_double), dimension(:), allocatable :: temp
+  real(8), dimension(:), allocatable :: temp
 
   type(ops_halo) :: h0, h1
   type(ops_halo) , DIMENSION(2) :: grp

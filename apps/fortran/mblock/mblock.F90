@@ -63,7 +63,7 @@ program MBLOCK
 
   !null array
   !real(kind=c_double) temp[allocatable](:)
-  real(kind=c_double), dimension(:), allocatable :: temp
+  real(8), dimension(:), allocatable :: temp
 
   !block-holos
   type(ops_halo) :: h0, h1

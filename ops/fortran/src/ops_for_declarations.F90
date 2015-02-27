@@ -147,7 +147,7 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: to_base
     type(c_ptr)         :: from_dir
     type(c_ptr)         :: to_dir
-    integer             :: index
+    integer(kind=c_int) :: index
   end type ops_halo_core
 
   type :: ops_halo
@@ -235,10 +235,10 @@ module OPS_Fortran_Declarations
 
     type(c_ptr) function ops_decl_halo_group_c ( nhalos, halos) BIND(C,name='ops_decl_halo_group')
       use, intrinsic :: ISO_C_BINDING
-      import :: ops_block_core, ops_dat_core, ops_halo
+      import :: ops_halo
       integer(kind=c_int), value               :: nhalos
       !type(c_ptr), value, intent(in)           :: halos
-      type(ops_halo), dimension(*)      :: halos
+      type(ops_halo), dimension(nhalos)      :: halos
     end function ops_decl_halo_group_c
 
     subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
@@ -650,9 +650,12 @@ module OPS_Fortran_Declarations
   end subroutine ops_decl_halo
 
   subroutine ops_decl_halo_group (nhalos, group, halos)
-    integer(kind=c_int), value               :: nhalos
-    type(ops_halo), dimension(*)          :: group
-    type(ops_halo_group)                  :: halos
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(kind=c_int), value                        :: nhalos
+    !type(ops_halo), intent(in), target, dimension(*)  :: group
+    type(ops_halo), dimension(nhalos)                 :: group
+    type(ops_halo_group)                              :: halos
 
     !halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group))
     halos%halogroupCptr = ops_decl_halo_group_c (nhalos, group)

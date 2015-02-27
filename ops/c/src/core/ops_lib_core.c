@@ -440,7 +440,7 @@ ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, o
   return arg;
 }
 
-ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   if ( OPS_halo_group_index == OPS_halo_group_max ) {
     OPS_halo_group_max += 10;
     OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
@@ -469,11 +469,11 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
-  grp->halos = &halos[0]; //TODO: make a copy?
+  //grp->halos = &halos[0]; //TODO: make a copy?
   //make a copy
-  //ops_halo* halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
-  //memcpy(halos_temp, &halos[0], nhalos*sizeof(ops_halo_core));
-  //grp->halos = halos_temp;
+  ops_halo* halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
+  memcpy(halos_temp, &halos[0], nhalos*sizeof(ops_halo_core));
+  grp->halos = halos_temp;
 
   grp->index = OPS_halo_group_index;
   OPS_halo_group_list[OPS_halo_group_index++] = grp;
@@ -494,6 +494,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
 
   ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index;
+  printf("halo->index %d\n",halo->index);
   halo->from = from;
   halo->to = to;
   for (int i = 0; i < from->block->dims; i++) {

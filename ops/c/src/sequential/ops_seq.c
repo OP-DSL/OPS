@@ -137,7 +137,6 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 
 void ops_halo_transfer(ops_halo_group group) {
 
-
   // Test contents of halo group
   ops_halo halo;
   for(int i = 0; i<group->nhalos; i++) {
