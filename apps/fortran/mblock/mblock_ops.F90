@@ -47,7 +47,7 @@ program MBLOCK
   real(kind=c_double), dimension(:), allocatable :: temp
 
   type(ops_halo) :: h0, h1
-  type(ops_halo) grp(2)
+  type(ops_halo) , DIMENSION(2) :: grp
 
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
 

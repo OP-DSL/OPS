@@ -451,28 +451,30 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos) {
     }
   }
 
-  /* // Test contents of halo group
-  ops_halo halo;
+  // Test contents of halo group
+  /*ops_halo halo;
   for(int i = 0; i<nhalos; i++) {
     halo = halos[i];
-    printf("halo->from->name = %s, halo->to->name %s\n",halo->from->name, halo->to->name);
+    printf("%d, %d halo->from->name = %s, halo->to->name %s\n",i,nhalos, halo->from->name, halo->to->name);
     for (int i = 0; i < halo->from->block->dims; i++) {
-      printf("halo->iter_size[i] %d ",halo->iter_size[i]);
-      printf("halo->from_base[i] %d ",halo->from_base[i]);
-      printf("halo->to_base[i] %d ",halo->to_base[i]);
-      printf("halo->from_dir[i] %d ",halo->from_dir[i]);
-      printf("halo->to_dir[i] %d \n",halo->to_dir[i]);
+      printf("halo->iter_size[%d] %d ", i, halo->iter_size[i]);
+      printf("halo->from_base[%d] %d ", i, halo->from_base[i]);
+      printf("halo->to_base[%d] %d ", i, halo->to_base[i]);
+      printf("halo->from_dir[%d] %d ", i, halo->from_dir[i]);
+      printf("halo->to_dir[%d] %d \n", i, halo->to_dir[i]);
     }
-  } */
+    halo = NULL;
+  }*/
 
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
   //grp->halos = halos; //TODO: make a copy?
   //make a copy
-  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
-  memcpy(halos_temp, halos, nhalos*sizeof(ops_halo_core));
+  ops_halo* halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
+  memcpy(halos_temp, &halos[1], nhalos*sizeof(ops_halo_core));
   grp->halos = halos_temp;
+
   grp->index = OPS_halo_group_index;
   OPS_halo_group_list[OPS_halo_group_index++] = grp;
 

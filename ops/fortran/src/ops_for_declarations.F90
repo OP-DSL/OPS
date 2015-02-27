@@ -233,14 +233,11 @@ module OPS_Fortran_Declarations
     end function ops_decl_halo_c
 
     type(c_ptr) function ops_decl_halo_group_c ( nhalos, halos) BIND(C,name='ops_decl_halo_group')
-
       use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_block_core, ops_dat_core, ops_halo_core
-
+      import :: ops_block_core, ops_dat_core, ops_halo
       integer(kind=c_int), value               :: nhalos
-      type(c_ptr), value, intent(in)           :: halos
-
+      !type(c_ptr), intent(in)                  :: halos
+      type(ops_halo), value, dimension(*)      :: halos
     end function ops_decl_halo_group_c
 
     subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
@@ -644,24 +641,23 @@ module OPS_Fortran_Declarations
     integer(4), dimension(*), intent(in), target :: to_dir
     type(ops_halo)                               :: halo
 
-    halo%haloCptr = ops_decl_halo_c ( from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
+    halo%haloCptr = ops_decl_halo_c (from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
 
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_decl_halo variable
     call c_f_pointer ( halo%haloCptr, halo%haloPtr )
 
   end subroutine ops_decl_halo
 
   subroutine ops_decl_halo_group (nhalos, group, halos)
-
-    integer(4), intent(in)                :: nhalos
-    type(ops_halo), dimension(*), target  :: group
+    integer(kind=c_int), value               :: nhalos
+    type(ops_halo), dimension(*)          :: group
     type(ops_halo_group)                  :: halos
 
-    halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group))
+    !halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group(1)))
+    halos%halogroupCptr = ops_decl_halo_group_c (nhalos, group)
 
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
-
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
+    !call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
   end subroutine ops_decl_halo_group
 
   subroutine ops_halo_transfer (group)
