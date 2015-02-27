@@ -158,8 +158,9 @@ module OPS_Fortran_Declarations
 
   type, BIND(C) :: ops_halo_group_core
     integer             :: nhalos
-    !type(c_ptr)         :: halos
-    type (ops_halos), pointer :: halos => null()
+    type(c_ptr)         :: halos
+    !type (ops_halo), pointer :: halos => null()
+    !type (ops_halo), dimension(*) :: halos
     integer             :: index
   end type ops_halo_group_core
 
@@ -236,8 +237,8 @@ module OPS_Fortran_Declarations
       use, intrinsic :: ISO_C_BINDING
       import :: ops_block_core, ops_dat_core, ops_halo
       integer(kind=c_int), value               :: nhalos
-      !type(c_ptr), intent(in)                  :: halos
-      type(ops_halo), value, dimension(*)      :: halos
+      !type(c_ptr), value, intent(in)           :: halos
+      type(ops_halo), dimension(*)      :: halos
     end function ops_decl_halo_group_c
 
     subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
@@ -653,11 +654,11 @@ module OPS_Fortran_Declarations
     type(ops_halo), dimension(*)          :: group
     type(ops_halo_group)                  :: halos
 
-    !halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group(1)))
+    !halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group))
     halos%halogroupCptr = ops_decl_halo_group_c (nhalos, group)
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
-    !call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
+    call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
   end subroutine ops_decl_halo_group
 
   subroutine ops_halo_transfer (group)

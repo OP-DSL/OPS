@@ -81,15 +81,15 @@ program MBLOCK
   base_to(2) = 0
   dir(1) = 1
   dir(2) = 2
-  write(*,*) base_from, base_to
   call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
   base_from(1) = 0
   base_to(1) = 20
-  write(*,*) base_from, base_to
   call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
   grp(1) = h0
   grp(2) = h1
   call ops_decl_halo_group(2,grp, halos0)
+
+
 
 
 
