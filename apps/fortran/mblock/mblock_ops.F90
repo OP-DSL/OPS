@@ -47,8 +47,7 @@ program MBLOCK
   real(8), dimension(:), allocatable :: temp
 
   type(ops_halo) :: h0, h1
-  !type(ops_halo) , DIMENSION(2) :: grp
-  type(ops_halo) , DIMENSION(:), allocatable :: grp
+  type(ops_halo) , DIMENSION(2) :: grp
 
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
 
@@ -86,13 +85,11 @@ program MBLOCK
   base_from(1) = 0
   base_to(1) = 20
   call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
-  allocate(grp(2))
   grp(1) = h0
   grp(2) = h1
   call ops_decl_halo_group(2,grp, halos0)
 
 
-  !call exit()
 
 
   call ops_partition("1D_BLOCK_DECOMPOSE")
