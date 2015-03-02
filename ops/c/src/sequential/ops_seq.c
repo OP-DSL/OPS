@@ -138,7 +138,7 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 void ops_halo_transfer(ops_halo_group group) {
 
   // Test contents of halo group
-  ops_halo halo;
+  /*ops_halo halo;
   for(int i = 0; i<group->nhalos; i++) {
     halo = group->halos[i];
     printf("halo->from->name = %s, halo->to->name %s\n",halo->from->name, halo->to->name);
@@ -150,6 +150,7 @@ void ops_halo_transfer(ops_halo_group group) {
       printf("halo->to_dir[i] %d \n",halo->to_dir[i]);
     }
   }
+  //return;*/
 
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];

@@ -237,17 +237,25 @@ module OPS_Fortran_Declarations
       use, intrinsic :: ISO_C_BINDING
       import :: ops_halo
       integer(kind=c_int), value               :: nhalos
-      !type(c_ptr), value, intent(in)           :: halos
-      type(ops_halo), dimension(nhalos)      :: halos
+      type(c_ptr), value, intent(in)           :: halos
+      !type(ops_halo), dimension(nhalos)      :: halos
     end function ops_decl_halo_group_c
+
+    type(c_ptr) function ops_decl_halo_group_elem_c ( nhalos, halos, group) BIND(C,name='ops_decl_halo_group_elem')
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_halo
+      integer(kind=c_int), value               :: nhalos
+      type(c_ptr), value, intent(in)           :: halos
+      type(c_ptr), value :: group
+      !type(ops_halo), dimension(nhalos)      :: halos
+    end function ops_decl_halo_group_elem_c
+
 
     subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
       use, intrinsic :: ISO_C_BINDING
       import :: ops_halo_group_core, ops_halo_core
       type(c_ptr), value, intent(in)        :: group
     end subroutine ops_halo_transfer_c
-
-
 
     type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
 
@@ -649,19 +657,27 @@ module OPS_Fortran_Declarations
 
   end subroutine ops_decl_halo
 
-  subroutine ops_decl_halo_group (nhalos, group, halos)
+  subroutine ops_decl_halo_group (nhalos, halos, group)
     use, intrinsic :: ISO_C_BINDING
     implicit none
     integer(kind=c_int), value                        :: nhalos
-    !type(ops_halo), intent(in), target, dimension(*)  :: group
-    type(ops_halo), dimension(nhalos)                 :: group
-    type(ops_halo_group)                              :: halos
+    !type(ops_halo), intent(in), target, dimension(*)  :: halos
+    type(ops_halo), dimension(nhalos)                 :: halos
+    type(ops_halo_group)                              :: group
+    integer i
+    type(c_ptr) :: temp = c_null_ptr
+    !type(ops_halo_group) :: temp = c_null_ptr
 
-    !halos%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(group))
-    halos%halogroupCptr = ops_decl_halo_group_c (nhalos, group)
+    DO i = 1, nhalos
+      temp = ops_decl_halo_group_elem_c ( nhalos, c_loc(halos(i)), temp)
+    END DO
+
+    !group%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(halos))
+    !group%halogroupCptr = ops_decl_halo_group_c (nhalos, halos)
+    group%halogroupCptr = temp
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
-    call c_f_pointer ( halos%halogroupCptr, halos%halogroupPtr )
+    call c_f_pointer ( group%halogroupCptr, group%halogroupPtr )
   end subroutine ops_decl_halo_group
 
   subroutine ops_halo_transfer (group)

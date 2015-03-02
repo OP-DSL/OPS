@@ -452,7 +452,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   }
 
   // Test contents of halo group
-  /*ops_halo halo;
+  ops_halo halo;
   for(int i = 0; i<nhalos; i++) {
     halo = halos[i];
     printf("%d, %d halo->from->name = %s, halo->to->name %s\n",i,nhalos, halo->from->name, halo->to->name);
@@ -464,7 +464,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
       printf("halo->to_dir[%d] %d \n", i, halo->to_dir[i]);
     }
     halo = NULL;
-  }*/
+  }
 
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
@@ -480,6 +480,52 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
 
   return grp;
 }
+
+
+ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo* halos, ops_halo_group grp) {
+
+if ( OPS_halo_group_index == OPS_halo_group_max ) {
+    OPS_halo_group_max += 10;
+    OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
+
+    if ( OPS_halo_group_list == NULL ) {
+      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  // Test contents of halo group
+  /*ops_halo halo;
+  halo = halos[0];
+  printf("%d halo->from->name = %s, halo->to->name %s\n",nhalos, halo->from->name, halo->to->name);
+  for (int i = 0; i < halo->from->block->dims; i++) {
+    printf("halo->iter_size[%d] %d ", i, halo->iter_size[i]);
+    printf("halo->from_base[%d] %d ", i, halo->from_base[i]);
+    printf("halo->to_base[%d] %d ", i, halo->to_base[i]);
+    printf("halo->from_dir[%d] %d ", i, halo->from_dir[i]);
+    printf("halo->to_dir[%d] %d \n", i, halo->to_dir[i]);
+  }*/
+
+
+  if(grp == NULL){
+    grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+    grp->nhalos = 0;
+    printf("null grp, grp->nhalos = %d\n",grp->nhalos);
+    ops_halo* halos_temp = (ops_halo *)xmalloc(1*sizeof(ops_halo_core));
+    memcpy(halos_temp, halos, 1*sizeof(ops_halo_core));
+    grp->halos = halos_temp;
+    grp->nhalos++;
+  }
+  else{
+    printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
+    grp->halos = (ops_halo *)xrealloc(grp->halos,(grp->nhalos+1)*sizeof(ops_halo_core));
+    memcpy(&grp->halos[grp->nhalos], &halos[0], 1*sizeof(ops_halo_core));
+    grp->nhalos++;
+  }
+  return grp;
+}
+
+
 
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
   if ( OPS_halo_index == OPS_halo_max ) {
