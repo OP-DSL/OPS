@@ -515,6 +515,8 @@ if ( OPS_halo_group_index == OPS_halo_group_max ) {
     memcpy(halos_temp, halos, 1*sizeof(ops_halo_core));
     grp->halos = halos_temp;
     grp->nhalos++;
+    grp->index = OPS_halo_group_index;
+    OPS_halo_group_list[OPS_halo_group_index++] = grp;
   }
   else{
     printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);

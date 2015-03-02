@@ -661,13 +661,13 @@ module OPS_Fortran_Declarations
     use, intrinsic :: ISO_C_BINDING
     implicit none
     integer(kind=c_int), value                        :: nhalos
-    !type(ops_halo), intent(in), target, dimension(*)  :: halos
     type(ops_halo), dimension(nhalos)                 :: halos
     type(ops_halo_group)                              :: group
     integer i
     type(c_ptr) :: temp = c_null_ptr
-    !type(ops_halo_group) :: temp = c_null_ptr
 
+    !need to call special routine for each halo in the hlos array
+    !-- due to issues in passing an array for types in fortran
     DO i = 1, nhalos
       temp = ops_decl_halo_group_elem_c ( nhalos, c_loc(halos(i)), temp)
     END DO

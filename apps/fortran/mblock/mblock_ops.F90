@@ -47,7 +47,11 @@ program MBLOCK
   real(8), dimension(:), allocatable :: temp
 
   type(ops_halo) :: h0, h1
-  type(ops_halo) , DIMENSION(2) :: grp
+  type(ops_halo) , DIMENSION(2) :: grp_1
+  type(ops_halo) , DIMENSION(2) :: grp_2
+  type(ops_halo) , DIMENSION(2) :: grp_3
+  type(ops_halo) , DIMENSION(2) :: grp_4
+  type(ops_halo) , DIMENSION(2) :: grp_5
 
   type(ops_halo_group) :: halos0, halos1, halos2, halos3, halos4
 
@@ -85,9 +89,29 @@ program MBLOCK
   base_from(1) = 0
   base_to(1) = 20
   call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
-  grp(1) = h0
-  grp(2) = h1
-  call ops_decl_halo_group(2,grp, halos0)
+  grp_1(1) = h0
+  grp_1(2) = h1
+  call ops_decl_halo_group(2,grp_1, halos0)
+
+
+
+
+  halo_iter(1) = 20
+  halo_iter(2) = 2
+  base_from(1) = 0
+  base_from(2) = 18
+  base_to(1) = 0
+  base_to(2) = -2
+  dir(1) = 1
+  dir(2) = 2
+  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
+  base_from(2) = 0
+  base_to(2) = 20
+  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
+  grp_2(1) = h0
+  grp_2(2) = h1
+  !call ops_decl_halo_group(2,grp_2,halos1)
+
 
 
 
