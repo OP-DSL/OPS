@@ -217,7 +217,7 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_dat_c
 
-    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo')
+    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo_convert')
 
       use, intrinsic :: ISO_C_BINDING
 

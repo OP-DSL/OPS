@@ -135,6 +135,8 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
   return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
 }
 
+
+
 void ops_halo_transfer(ops_halo_group group) {
 
   // Test contents of halo group
@@ -284,4 +286,23 @@ void ops_download_dat(ops_dat dat) {
 
 void ops_upload_dat(ops_dat dat) {
   (void)dat;
+}
+
+/* Called from Fortran to set the indices to C*/
+
+ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+
+  for(int i = 0; i<from->block->dims; i++) {
+    from_base[i]--; to_base[i]--;
+    printf("from_base = %d\n", from_base[i]);
+    printf("to_base = %d\n", to_base[i]);
+  }
+
+  ops_halo temp = ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+
+  for(int i = 0; i<from->block->dims; i++) {
+    from_base[i]++; to_base[i]++;
+  }
+
+  return temp;
 }

@@ -29,12 +29,12 @@ program MBLOCK
 
   implicit none
 
-  type(ops_block) :: grid0, grid1
+  type(ops_block) :: grid1, grid2
 
   integer S2D_00_array(2) /0,0/
   type(ops_stencil) :: S2D_00
 
-  type(ops_dat) :: data0, data1
+  type(ops_dat) :: data1, data2
 
   integer d_p(2) /2,2/
   integer d_m(2) /-2,-2/
@@ -46,7 +46,7 @@ program MBLOCK
 
   real(8), dimension(:), allocatable :: temp
 
-  type(ops_halo) :: h0, h1
+  type(ops_halo) :: h1, h2
   type(ops_halo) , DIMENSION(2) :: grp_1, grp_2, grp_3, grp_4, grp_5
 
   type(ops_halo_group) :: halos1, halos2, halos3, halos4, halos5
@@ -63,30 +63,30 @@ program MBLOCK
   call ops_init(2)
 
 
-  call ops_decl_block(2, grid0, "grid0")
   call ops_decl_block(2, grid1, "grid1")
+  call ops_decl_block(2, grid2, "grid2")
 
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
 
-  call ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, data0, "double", "data0")
   call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "double", "data1")
+  call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "double", "data2")
 
 
 
   halo_iter(1) = 2
   halo_iter(2) = 20
-  base_from(1) = 18
-  base_from(2) = 0
-  base_to(1) = -2
-  base_to(2) = 0
+  base_from(1) = 19 !18
+  base_from(2) = 1 !0
+  base_to(1) = -1 !-2
+  base_to(2) = 1 !0
   dir(1) = 1
   dir(2) = 2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
-  base_from(1) = 0
-  base_to(1) = 20
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
-  grp_1(1) = h0
-  grp_1(2) = h1
+  call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir, h1)
+  base_from(1) = 1 !0
+  base_to(1) = 21 !20
+  call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir, dir, h2)
+  grp_1(1) = h1
+  grp_1(2) = h2
   call ops_decl_halo_group(2,grp_1, halos1)
 
 
@@ -100,13 +100,13 @@ program MBLOCK
   base_to(2) = -2
   dir(1) = 1
   dir(2) = 2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir, h0)
+ ! call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir, h1)
   base_from(2) = 0
   base_to(2) = 20
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir, h1)
-  grp_2(1) = h0
-  grp_2(2) = h1
-  call ops_decl_halo_group(2,grp_2,halos2)
+  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir, dir, h2)
+  grp_2(1) = h1
+  grp_2(2) = h2
+  !call ops_decl_halo_group(2,grp_2,halos2)
 
 
 
@@ -120,13 +120,13 @@ program MBLOCK
   dir(2) = 2
   dir_to(1) = 1
   dir_to(2) = -2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
   base_from(1) = 18
   base_to(1) = -2
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir,h1)
-  grp_3(1) = h0
-  grp_3(2) = h1
-  call ops_decl_halo_group(2,grp_3,halos3)
+  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir,h2)
+  grp_3(1) = h1
+  grp_3(2) = h2
+  !call ops_decl_halo_group(2,grp_3,halos3)
 
 
 
@@ -140,13 +140,13 @@ program MBLOCK
   dir(2) = 2
   dir_to(1) = -1
   dir_to(2) = 2
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
   base_from(2) = 18
   base_to(2) = -2
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
-  grp_4(1) = h0
-  grp_4(2) = h1
-  call ops_decl_halo_group(2,grp_4,halos4)
+  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
+  grp_4(1) = h1
+  grp_4(2) = h2
+  !call ops_decl_halo_group(2,grp_4,halos4)
 
 
 
@@ -160,14 +160,14 @@ program MBLOCK
   dir(2) = 2
   dir_to(1) = 2
   dir_to(2) = 1
-  call ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir_to, h0)
+  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
   base_from(1) = 0
   base_to(1) = 20
   base_to(2) = 0
-  call ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir_to, dir, h1)
-  grp_5(1) = h0
-  grp_5(2) = h1
-  call ops_decl_halo_group(2,grp_5,halos5)
+  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
+  grp_5(1) = h1
+  grp_5(2) = h2
+  !call ops_decl_halo_group(2,grp_5,halos5)
 
 
 
@@ -178,22 +178,22 @@ program MBLOCK
   iter_range(2) =  20
   iter_range(3) =  1
   iter_range(4) =  20
-  call mblock_populate_kernel_host("mblock_populate_kernel", grid0, 2, iter_range, &
-                    & ops_arg_dat(data0, 1, S2D_00, "real(8)", OPS_WRITE), &
-                    & ops_arg_idx())
-
   call mblock_populate_kernel_host("mblock_populate_kernel", grid1, 2, iter_range, &
                     & ops_arg_dat(data1, 1, S2D_00, "real(8)", OPS_WRITE), &
                     & ops_arg_idx())
 
-  call ops_halo_transfer(halos1)
-  call ops_halo_transfer(halos2)
-  call ops_halo_transfer(halos3)
-  call ops_halo_transfer(halos4)
-  call ops_halo_transfer(halos5)
+  call mblock_populate_kernel_host("mblock_populate_kernel", grid2, 2, iter_range, &
+                    & ops_arg_dat(data2, 1, S2D_00, "real(8)", OPS_WRITE), &
+                    & ops_arg_idx())
 
-  call ops_print_dat_to_txtfile(data0, "data0.txt")
+  call ops_halo_transfer(halos1)
+  !call ops_halo_transfer(halos2)
+  !call ops_halo_transfer(halos3)
+  !call ops_halo_transfer(halos4)
+  !call ops_halo_transfer(halos5)
+
   call ops_print_dat_to_txtfile(data1, "data1.txt")
+  call ops_print_dat_to_txtfile(data2, "data2.txt")
 
   call ops_exit( )
 end program MBLOCK
