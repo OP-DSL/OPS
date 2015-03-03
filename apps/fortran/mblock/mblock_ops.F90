@@ -75,15 +75,15 @@ program MBLOCK
 
   halo_iter(1) = 2
   halo_iter(2) = 20
-  base_from(1) = 19 !18
-  base_from(2) = 1 !0
-  base_to(1) = -1 !-2
-  base_to(2) = 1 !0
+  base_from(1) = 19
+  base_from(2) = 1
+  base_to(1) = -1
+  base_to(2) = 1
   dir(1) = 1
   dir(2) = 2
   call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir, h1)
-  base_from(1) = 1 !0
-  base_to(1) = 21 !20
+  base_from(1) = 1
+  base_to(1) = 21
   call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir, dir, h2)
   grp_1(1) = h1
   grp_1(2) = h2
@@ -94,80 +94,80 @@ program MBLOCK
 
   halo_iter(1) = 20
   halo_iter(2) = 2
-  base_from(1) = 0
-  base_from(2) = 18
-  base_to(1) = 0
-  base_to(2) = -2
+  base_from(1) = 1
+  base_from(2) = 19
+  base_to(1) = 1
+  base_to(2) = -1
   dir(1) = 1
   dir(2) = 2
- ! call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir, h1)
-  base_from(2) = 0
-  base_to(2) = 20
-  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir, dir, h2)
+  call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir, h1)
+  base_from(2) = 1
+  base_to(2) = 21
+  call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir, dir, h2)
   grp_2(1) = h1
   grp_2(2) = h2
-  !call ops_decl_halo_group(2,grp_2,halos2)
+  call ops_decl_halo_group(2,grp_2,halos2)
 
 
 
   halo_iter(1) = 2
   halo_iter(2) = 20
-  base_from(1) = 0
-  base_from(2) = 0
-  base_to(1) = 20
-  base_to(2) = 0
+  base_from(1) = 1
+  base_from(2) = 1
+  base_to(1) = 21
+  base_to(2) = 1
   dir(1) = 1
   dir(2) = 2
   dir_to(1) = 1
   dir_to(2) = -2
-  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
-  base_from(1) = 18
-  base_to(1) = -2
-  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir,h2)
+  call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
+  base_from(1) = 19
+  base_to(1) = -1
+  call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir,h2)
   grp_3(1) = h1
   grp_3(2) = h2
-  !call ops_decl_halo_group(2,grp_3,halos3)
+  call ops_decl_halo_group(2,grp_3,halos3)
 
 
 
   halo_iter(1) = 20
   halo_iter(2) = 2
-  base_from(1) = 0
-  base_from(2) = 0
-  base_to(1) = 0
-  base_to(2) = 20
+  base_from(1) = 1
+  base_from(2) = 1
+  base_to(1) = 1
+  base_to(2) = 21
   dir(1) = 1
   dir(2) = 2
   dir_to(1) = -1
   dir_to(2) = 2
-  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
-  base_from(2) = 18
-  base_to(2) = -2
-  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
+  call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
+  base_from(2) = 19
+  base_to(2) = -1
+  call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
   grp_4(1) = h1
   grp_4(2) = h2
-  !call ops_decl_halo_group(2,grp_4,halos4)
+  call ops_decl_halo_group(2,grp_4,halos4)
 
 
 
   halo_iter(1) = 2
   halo_iter(2) = 20
-  base_from(1) = 18
-  base_from(2) = 0
-  base_to(1) = 0
-  base_to(2) = -2
+  base_from(1) = 19
+  base_from(2) = 1
+  base_to(1) = 1
+  base_to(2) = -1
   dir(1) = 1
   dir(2) = 2
   dir_to(1) = 2
   dir_to(2) = 1
-  !call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
-  base_from(1) = 0
-  base_to(1) = 20
-  base_to(2) = 0
-  !call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
+  call ops_decl_halo(data1, data2, halo_iter, base_from, base_to, dir, dir_to, h1)
+  base_from(1) = 1
+  base_to(1) = 21
+  base_to(2) = 1
+  call ops_decl_halo(data2, data1, halo_iter, base_from, base_to, dir_to, dir, h2)
   grp_5(1) = h1
   grp_5(2) = h2
-  !call ops_decl_halo_group(2,grp_5,halos5)
+  call ops_decl_halo_group(2,grp_5,halos5)
 
 
 
@@ -187,10 +187,10 @@ program MBLOCK
                     & ops_arg_idx())
 
   call ops_halo_transfer(halos1)
-  !call ops_halo_transfer(halos2)
-  !call ops_halo_transfer(halos3)
-  !call ops_halo_transfer(halos4)
-  !call ops_halo_transfer(halos5)
+  call ops_halo_transfer(halos2)
+  call ops_halo_transfer(halos3)
+  call ops_halo_transfer(halos4)
+  call ops_halo_transfer(halos5)
 
   call ops_print_dat_to_txtfile(data1, "data1.txt")
   call ops_print_dat_to_txtfile(data2, "data2.txt")

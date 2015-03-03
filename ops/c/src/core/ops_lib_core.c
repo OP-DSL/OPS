@@ -510,7 +510,7 @@ if ( OPS_halo_group_index == OPS_halo_group_max ) {
   if(grp == NULL){
     grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
     grp->nhalos = 0;
-    printf("null grp, grp->nhalos = %d\n",grp->nhalos);
+    //printf("null grp, grp->nhalos = %d\n",grp->nhalos);
     ops_halo* halos_temp = (ops_halo *)xmalloc(1*sizeof(ops_halo_core));
     memcpy(halos_temp, halos, 1*sizeof(ops_halo_core));
     grp->halos = halos_temp;
@@ -519,7 +519,7 @@ if ( OPS_halo_group_index == OPS_halo_group_max ) {
     OPS_halo_group_list[OPS_halo_group_index++] = grp;
   }
   else{
-    printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
+    //printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
     grp->halos = (ops_halo *)xrealloc(grp->halos,(grp->nhalos+1)*sizeof(ops_halo_core));
     memcpy(&grp->halos[grp->nhalos], &halos[0], 1*sizeof(ops_halo_core));
     grp->nhalos++;
