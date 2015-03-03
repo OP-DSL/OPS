@@ -542,7 +542,6 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
 
   ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index;
-  printf("halo->index %d\n",halo->index);
   halo->from = from;
   halo->to = to;
   for (int i = 0; i < from->block->dims; i++) {

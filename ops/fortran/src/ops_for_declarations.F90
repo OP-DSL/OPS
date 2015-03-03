@@ -675,7 +675,7 @@ module OPS_Fortran_Declarations
     !group%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(halos))
     !group%halogroupCptr = ops_decl_halo_group_c (nhalos, halos)
     group%halogroupCptr = temp
-
+    temp = c_null_ptr
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
     call c_f_pointer ( group%halogroupCptr, group%halogroupPtr )
   end subroutine ops_decl_halo_group
