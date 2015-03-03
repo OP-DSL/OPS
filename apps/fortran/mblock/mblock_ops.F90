@@ -169,8 +169,6 @@ program MBLOCK
   grp_5(2) = h2
   call ops_decl_halo_group(2,grp_5,halos5)
 
-
-
   call ops_partition("1D_BLOCK_DECOMPOSE")
 
 

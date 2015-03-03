@@ -37,7 +37,7 @@ endif
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	= clean mblock_seq
+  TARGETS	= clean mblock_seq mblock_openmp
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
@@ -56,7 +56,7 @@ endif
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean mblock_seq #mblock_cuda
+  TARGETS       = clean mblock_seq mblock_openmp
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -73,6 +73,13 @@ mblock_seq: mblock_ops.F90 constants.F90
 	mblock_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) mblock_ops.o constants.o mblock_populate_kernel_seq_kernel.o \
 	-o mblock_seq -lops_for_seq
+
+mblock_openmp: mblock_ops.F90 constants.F90
+	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c ./MPI_OpenMP/mblock_populate_kernel_omp_kernel.F90 \
+        mblock_ops.F90
+	$(FC) $(FFLAGS) $(FLINK) mblock_ops.o constants.o mblock_populate_kernel_omp_kernel.o \
+        -o mblock_openmp -lops_for_seq
+
 
 clean:
 	rm -f *.o

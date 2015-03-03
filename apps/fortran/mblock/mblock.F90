@@ -4,7 +4,7 @@
 !
 ! This file is part of the OPS distribution.
 !
-! Copyright (c) 2013, Mike Giles and others. Please see the AUTHORS file in
+! Copyright (c) 2015, Mike Giles and others. Please see the AUTHORS file in
 ! the main source directory for a full list of copyright holders.
 ! All rights reserved.
 !
@@ -201,10 +201,6 @@ program MBLOCK
   grp_5(1) = h1
   grp_5(2) = h2
   call ops_decl_halo_group(2,grp_5,halos5)
-
-
-
-
 
 
   call ops_partition("1D_BLOCK_DECOMPOSE")
