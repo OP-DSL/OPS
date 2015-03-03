@@ -225,11 +225,11 @@ program MBLOCK
               & ops_arg_idx())
 
   !call ops_print_dat_to_txtfile(data1, "data1.txt")
-  !call ops_halo_transfer(halos0)
-  !call ops_halo_transfer(halos1)
-  !call ops_halo_transfer(halos2)
-  !call ops_halo_transfer(halos3)
+  call ops_halo_transfer(halos1)
+  call ops_halo_transfer(halos2)
+  call ops_halo_transfer(halos3)
   call ops_halo_transfer(halos4)
+  call ops_halo_transfer(halos5)
 
   call ops_print_dat_to_txtfile(data0, "data0.txt")
   call ops_print_dat_to_txtfile(data1, "data1.txt")
