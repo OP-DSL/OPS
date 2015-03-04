@@ -42,16 +42,14 @@ program POISSON
 
   implicit none
 
-  integer logical_size_x /200/
-  integer logical_size_y /200/
-  integer ngrid_x /1/
-  integer ngrid_y /1/
-  integer n_iter /10000/
-  real(8) dx /0.01_8/
-  real(8) dy /0.01_8/
+  integer logical_size_x
+  integer logical_size_y
+  integer ngrid_x
+  integer ngrid_y
+  integer n_iter
 
   !ops blocks
-  type(ops_block) :: blocks(ngrid_x*ngrid_y)
+  type(ops_block), dimension(:), allocatable :: blocks
 
   ! vars for stencils
   integer S2D_00_array(2) /0,0/
@@ -80,13 +78,45 @@ program POISSON
   real(8), dimension(:), allocatable :: temp
 
   !halo vars
-  integer sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+  integer(4), dimension(:), allocatable :: sizes, disps
   integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
+
+  integer i,j
+  character(len=10) buf
+
+  ! constants
+  dx = 0.01_8
+  dy = 0.01_8
+
+  ! sizes
+  logical_size_x =200
+  logical_size_y =200
+  ngrid_x= 1
+  ngrid_y= 1
+  n_iter = 10000
+
+  ALLOCATE(blocks(ngrid_x*ngrid_y))
+  ALLOCATE(sizes(2*ngrid_x*ngrid_y))
+  ALLOCATE(disps(2*ngrid_x*ngrid_y))
+
+
 
   !-------------------------- Initialisation --------------------------
 
+  ! OPS initialisation
+  call ops_init(2)
+
+  !----------------------------OPS Declarations------------------------
+
+  ! declare blocks
+  DO j=1,ngrid_y
+    DO i=1,ngrid_x
+    write(buf,"(A5,I2,A1,I2)") "block",i," ",j
+    call ops_decl_block(2, blocks(i+ngrid_x*j), buf)
+    END DO
+  END DO
 
 
 
-
+  call ops_exit( )
 end program POISSON
