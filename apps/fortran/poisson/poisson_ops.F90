@@ -66,6 +66,8 @@ program POISSON
   type(ops_dat) :: coordx(ngrid_x*ngrid_y), coordy(ngrid_x*ngrid_y)
   type(ops_dat) :: u(ngrid_x*ngrid_y), u2(ngrid_x*ngrid_y), f(ngrid_x*ngrid_y), ref(ngrid_x*ngrid_y)
 
+  type(ops_halo) :: halos((2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)))
+
   integer i,j
   character(len=20) buf
 
@@ -102,12 +104,16 @@ program POISSON
     DO i=1,ngrid_x
     size(1) = uniform_size(1)
     size(2) = uniform_size(2)
-    if ((i+1)*size(1)>logical_size_x) then
-      size(1) = logical_size_x - i*size(1)
+    if ((i)*size(1)>logical_size_x) then
+      size(1) = logical_size_x - (i-1)*size(1)
+
     end if
-    if ((j+1)*size(2)>logical_size_y) then
-      size(2) = logical_size_y - j*size(2)
+    if ((j)*size(2)>logical_size_y) then
+      size(2) = logical_size_y - (j-1)*size(2)
+
     end if
+    write (*,*) size(1)
+    write (*,*) size(2)
 
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "double", buf)
@@ -127,6 +133,7 @@ program POISSON
 
     END DO
   END DO
+
 
 
   call ops_exit( )

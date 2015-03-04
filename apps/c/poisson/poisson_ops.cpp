@@ -99,6 +99,7 @@ int main(int argc, char **argv)
       int size[2] = {uniform_size[0], uniform_size[1]};
       if ((i+1)*size[0]>logical_size_x) size[0] = logical_size_x - i*size[0];
       if ((j+1)*size[1]>logical_size_y) size[1] = logical_size_y - j*size[1];
+      printf("size[0] = %d,size[1] = %d\n", size[0],size[1]);
       sprintf(buf,"coordx %d,%d",i,j);
       coordx[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"coordy %d,%d",i,j);
