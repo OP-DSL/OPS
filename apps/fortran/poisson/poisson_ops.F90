@@ -19,6 +19,13 @@
 
 
 
+
+#define logical_size_x 200
+#define logical_size_y 200
+#define ngrid_x 1
+#define ngrid_y 1
+#define n_iter  10000
+
 program POISSON
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
@@ -28,22 +35,10 @@ program POISSON
 
   implicit none
 
-  integer logical_size_x
-  integer logical_size_y
-  integer ngrid_x
-  integer ngrid_y
-  integer n_iter
 
-  type(ops_block), dimension(:), allocatable :: blocks
 
-  integer S2D_00_array(2) /0,0/
-  type(ops_stencil) :: S2D_00
-  integer S2D_00_P10_M10_0P1_0M1_array(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
-  type(ops_stencil) :: S2D_00_P10_M10_0P1_0M1
 
-  type(ops_reduction) :: red_err
 
-  type(ops_dat),dimension(:), allocatable :: coordx, coordy, u, u2, f, ref
 
   integer d_p(2) /1,1/
   integer d_m(2) /-1,-1/
@@ -55,8 +50,21 @@ program POISSON
 
   real(8), dimension(:), allocatable :: temp
 
-  integer(4), dimension(:), allocatable :: sizes, disps
+  integer :: sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+
   integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
+
+  type(ops_block) :: blocks(ngrid_x*ngrid_y)
+
+  integer S2D_00_array(2) /0,0/
+  type(ops_stencil) :: S2D_00
+  integer S2D_00_P10_M10_0P1_0M1_array(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
+  type(ops_stencil) :: S2D_00_P10_M10_0P1_0M1
+
+  type(ops_reduction) :: red_err
+
+  type(ops_dat) :: coordx(ngrid_x*ngrid_y), coordy(ngrid_x*ngrid_y)
+  type(ops_dat) :: u(ngrid_x*ngrid_y), u2(ngrid_x*ngrid_y), f(ngrid_x*ngrid_y), ref(ngrid_x*ngrid_y)
 
   integer i,j
   character(len=20) buf
@@ -64,13 +72,6 @@ program POISSON
   dx = 0.01_8
   dy = 0.01_8
 
-  logical_size_x =200
-  logical_size_y =200
-  ngrid_x= 1
-  ngrid_y= 1
-  n_iter = 10000
-
-  ALLOCATE(blocks(ngrid_x*ngrid_y))
 
 
   call ops_init(2)
@@ -79,12 +80,12 @@ program POISSON
   DO j=1,ngrid_y
     DO i=1,ngrid_x
     write(buf,"(A5,I2,A1,I2)") "block",i,",",j
-    call ops_decl_block(2, blocks(i+ngrid_x*j), buf)
+    call ops_decl_block(2, blocks((i-1)+ngrid_x*(j-1)+1), buf)
     END DO
   END DO
 
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
-  call ops_decl_stencil( 2, 1, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
+  call ops_decl_stencil( 2, 5, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
 
   call ops_decl_reduction_handle(8, red_err, "double", "err")
 
@@ -96,16 +97,6 @@ program POISSON
   base(2) = 0
   uniform_size(1) = (logical_size_x-1)/ngrid_x+1
   uniform_size(2) = (logical_size_y-1)/ngrid_y+1
-
-  ALLOCATE(coordx(ngrid_x*ngrid_y))
-  ALLOCATE(coordy(ngrid_x*ngrid_y))
-  ALLOCATE(u(ngrid_x*ngrid_y))
-  ALLOCATE(u2(ngrid_x*ngrid_y))
-  ALLOCATE(f(ngrid_x*ngrid_y))
-  ALLOCATE(ref(ngrid_x*ngrid_y))
-
-  ALLOCATE(sizes(2*ngrid_x*ngrid_y))
-  ALLOCATE(disps(2*ngrid_x*ngrid_y))
 
   DO j=1,ngrid_y
     DO i=1,ngrid_x
@@ -119,7 +110,20 @@ program POISSON
     end if
 
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
-    call ops_decl_dat(blocks(i+ngrid_x*j), 1, size, base, d_m, d_p, temp, coordx(i+ngrid_x*j), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    write(buf,"(A6,I2,A1,I2)") "coordy",i,",",j
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    write(buf,"(A6,I2,A1,I2)") "u",i,",",j
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    write(buf,"(A6,I2,A1,I2)") "f",i,",",j
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    write(buf,"(A6,I2,A1,I2)") "ref",i,",",j
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "double", buf)
+
+    sizes(2*((i-1)+ngrid_x*(j-1)+1)) = size(1)
+    sizes(2*((i-1)+ngrid_x*(j-1)+2)) = size(2)
+    disps(2*((i-1)+ngrid_x*(j-1)+1)) = i*uniform_size(1)
+    disps(2*((i-1)+ngrid_x*(j-1)+2)) = j*uniform_size(2)
 
     END DO
   END DO
