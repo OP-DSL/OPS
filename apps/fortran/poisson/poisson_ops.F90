@@ -22,8 +22,8 @@
 
 #define logical_size_x 200
 #define logical_size_y 200
-#define ngrid_x 1
-#define ngrid_y 1
+#define ngrid_x 2
+#define ngrid_y 2
 #define n_iter  10000
 
 program POISSON
@@ -68,7 +68,9 @@ program POISSON
 
   type(ops_halo) :: halos((2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)))
 
-  integer i,j
+  type(ops_halo_group) :: u_halos
+
+  integer i,j, off
   character(len=20) buf
 
   dx = 0.01_8
@@ -112,9 +114,6 @@ program POISSON
       size(2) = logical_size_y - (j-1)*size(2)
 
     end if
-    write (*,*) size(1)
-    write (*,*) size(2)
-
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "double", buf)
     write(buf,"(A6,I2,A1,I2)") "coordy",i,",",j
@@ -134,6 +133,47 @@ program POISSON
     END DO
   END DO
 
+  off = 1
+  DO j = 1, ngrid_y
+    DO i = 1, ngrid_x
+      if (i > 1) then
+      halo_iter(1) = 1
+      halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1)+2))
+      base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1)+1))
+      base_from(2) = 1
+      base_to(1) = 0
+      base_to(2) = 1
+      dir(1) = 1
+      dir(2) = 2
+      call ops_decl_halo(u((i-2)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+      off = off + 1
+      base_from(1) = 1; base_to(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
+      call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-2)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+      off = off + 1
+      end if
+      if (j > 1) then
+      halo_iter(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+      halo_iter(2) = 1
+      base_from(1) = 0
+      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+2)
+      base_to(1) = 1
+      base_to(2) = 0
+      dir(1) = 1
+      dir(2) = 2
+      call ops_decl_halo(u((i-1)+ngrid_x*(j-2)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+      off = off + 1
+      base_from(1) = 0; base_to(1) = sizes(2*(i+ngrid_x*j)+1)
+      call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-2)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+      off = off + 1
+      end if
+    end do
+  end do
+  if ((off-1) .NE. 2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)) then
+    write (*,*) "Something is not right"
+  end if
+  call ops_decl_halo_group((off-1),halos, u_halos)
+
+  call ops_partition("")
 
 
   call ops_exit( )
