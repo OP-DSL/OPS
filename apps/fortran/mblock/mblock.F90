@@ -96,6 +96,7 @@ program MBLOCK
   ! declare stencils
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
 
+  !declare dats
   call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "double", "data1")
   call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "double", "data2")
 

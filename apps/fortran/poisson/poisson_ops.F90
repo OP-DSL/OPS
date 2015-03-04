@@ -43,7 +43,7 @@ program POISSON
 
   type(ops_reduction) :: red_err
 
-  type(ops_dat) :: coordx, coordy, u, u2, f, ref
+  type(ops_dat),dimension(:), allocatable :: coordx, coordy, u, u2, f, ref
 
   integer d_p(2) /1,1/
   integer d_m(2) /-1,-1/
@@ -59,7 +59,7 @@ program POISSON
   integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
   integer i,j
-  character(len=10) buf
+  character(len=20) buf
 
   dx = 0.01_8
   dy = 0.01_8
@@ -71,9 +71,6 @@ program POISSON
   n_iter = 10000
 
   ALLOCATE(blocks(ngrid_x*ngrid_y))
-  ALLOCATE(sizes(2*ngrid_x*ngrid_y))
-  ALLOCATE(disps(2*ngrid_x*ngrid_y))
-
 
 
   call ops_init(2)
@@ -81,8 +78,49 @@ program POISSON
 
   DO j=1,ngrid_y
     DO i=1,ngrid_x
-    write(buf,"(A5,I2,A1,I2)") "block",i," ",j
+    write(buf,"(A5,I2,A1,I2)") "block",i,",",j
     call ops_decl_block(2, blocks(i+ngrid_x*j), buf)
+    END DO
+  END DO
+
+  call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
+  call ops_decl_stencil( 2, 1, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
+
+  call ops_decl_reduction_handle(8, red_err, "double", "err")
+
+  d_p(1) = 1
+  d_p(2) = 1
+  d_m(1) = -1
+  d_m(2) = -1
+  base(1) = 0
+  base(2) = 0
+  uniform_size(1) = (logical_size_x-1)/ngrid_x+1
+  uniform_size(2) = (logical_size_y-1)/ngrid_y+1
+
+  ALLOCATE(coordx(ngrid_x*ngrid_y))
+  ALLOCATE(coordy(ngrid_x*ngrid_y))
+  ALLOCATE(u(ngrid_x*ngrid_y))
+  ALLOCATE(u2(ngrid_x*ngrid_y))
+  ALLOCATE(f(ngrid_x*ngrid_y))
+  ALLOCATE(ref(ngrid_x*ngrid_y))
+
+  ALLOCATE(sizes(2*ngrid_x*ngrid_y))
+  ALLOCATE(disps(2*ngrid_x*ngrid_y))
+
+  DO j=1,ngrid_y
+    DO i=1,ngrid_x
+    size(1) = uniform_size(1)
+    size(2) = uniform_size(2)
+    if ((i+1)*size(1)>logical_size_x) then
+      size(1) = logical_size_x - i*size(1)
+    end if
+    if ((j+1)*size(2)>logical_size_y) then
+      size(2) = logical_size_y - j*size(2)
+    end if
+
+    write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
+    call ops_decl_dat(blocks(i+ngrid_x*j), 1, size, base, d_m, d_p, temp, coordx(i+ngrid_x*j), "double", buf)
+
     END DO
   END DO
 
