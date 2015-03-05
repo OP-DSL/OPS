@@ -56,8 +56,8 @@ int main(int argc, char **argv)
 
   int logical_size_x = 10;
   int logical_size_y = 10;
-  int ngrid_x = 1;
-  int ngrid_y = 1;
+  int ngrid_x = 2;
+  int ngrid_y = 2;
   int n_iter = 10000;
   dx = 0.01;
   dy = 0.01;

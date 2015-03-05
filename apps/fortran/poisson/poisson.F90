@@ -37,8 +37,8 @@
 ! sizes
 #define logical_size_x 10
 #define logical_size_y 10
-#define ngrid_x 1
-#define ngrid_y 1
+#define ngrid_x 2
+#define ngrid_y 2
 #define n_iter  10000
 
 program POISSON
@@ -215,6 +215,8 @@ program POISSON
   end if
   call ops_decl_halo_group((off-1),halos, u_halos)
 
+  write(*,*) off
+
   call ops_partition("")
 
   !-------------------------- Computations --------------------------
@@ -257,7 +259,7 @@ program POISSON
   !
   DO iter = 0, n_iter
 
-    ! call ops_halo_transfer(u_halos)
+    call ops_halo_transfer(u_halos)
 
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
@@ -273,7 +275,7 @@ program POISSON
     END DO
 
     call ops_print_dat_to_txtfile(u(1), "poisson.dat")
-    !call ops_print_dat_to_txtfile(u(2), "poisson.dat")
+    call ops_print_dat_to_txtfile(u(2), "poisson.dat")
     call exit()
 
   END DO

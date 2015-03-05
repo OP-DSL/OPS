@@ -678,12 +678,18 @@ module OPS_Fortran_Declarations
     type(ops_halo_group)                              :: group
     integer i
     type(c_ptr) :: temp = c_null_ptr
+    type(c_ptr) :: dummy = c_null_ptr
 
     !need to call special routine for each halo in the hlos array
     !-- due to issues in passing an array for types in fortran
     DO i = 1, nhalos
       temp = ops_decl_halo_group_elem_c ( nhalos, c_loc(halos(i)), temp)
     END DO
+
+    !special case if nhalos == 0
+    if (nhalos .EQ. 0) then
+      temp = ops_decl_halo_group_elem_c ( nhalos, dummy, temp)
+    end if
 
     !group%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(halos))
     !group%halogroupCptr = ops_decl_halo_group_c (nhalos, halos)

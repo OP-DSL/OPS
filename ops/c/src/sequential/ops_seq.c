@@ -153,6 +153,7 @@ void ops_halo_transfer(ops_halo_group group) {
     }
   }
   //return;*/
+  //printf("group->nhalos %d\n",group->nhalos);
 
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
