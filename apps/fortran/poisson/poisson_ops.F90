@@ -31,6 +31,7 @@ program POISSON
   use OPS_Fortran_RT_Support
   use POISSON_POPULATE_KERNEL_MODULE
   use POISSON_INITIALGUESS_KERNEL_MODULE
+  use POISSON_STENCIL_KERNEL_MODULE
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -74,7 +75,7 @@ program POISSON
 
   integer iter_range(4)
 
-  integer i,j, off
+  integer i,j, off, iter
   character(len=20) buf
 
   dx = 0.01_8
@@ -123,6 +124,8 @@ program POISSON
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "double", buf)
     write(buf,"(A6,I2,A1,I2)") "u",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    write(buf,"(A6,I2,A1,I2)") "u2",i,",",j
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u2((i-1)+ngrid_x*(j-1)+1), "double", buf)
     write(buf,"(A6,I2,A1,I2)") "f",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "double", buf)
     write(buf,"(A6,I2,A1,I2)") "ref",i,",",j
@@ -212,7 +215,29 @@ program POISSON
     END DO
   END DO
 
-  call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+
+
+  DO iter = 0, n_iter
+
+
+    DO j = 1, ngrid_y
+      DO i = 1, ngrid_x
+      iter_range(1) = 1
+      iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+      iter_range(1) = 1
+      iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        call poisson_stencil_kernel_host("poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                          & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(8)", OPS_READ), &
+                          & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
+                          & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE));
+      END DO
+    END DO
+
+    call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+
+    call exit()
+
+  END DO
 
 
   call ops_exit( )

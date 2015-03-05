@@ -71,10 +71,13 @@ all: $(TARGETS)
 poisson_seq: poisson_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(FMODS) -c constants.F90 \
 	./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
-	./MPI/poisson_populate_kernel_seq_kernel.F90 poisson_ops.F90
+	./MPI/poisson_populate_kernel_seq_kernel.F90 \
+	./MPI/poisson_stencil_kernel_seq_kernel.F90 \
+	poisson_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
 	poisson_populate_kernel_seq_kernel.o \
 	poisson_initialguess_kernel_seq_kernel.o \
+	poisson_stencil_kernel_seq_kernel.o \
 	-o poisson_seq -lops_for_seq
 
 poisson_openmp: poisson_ops.F90 constants.F90
