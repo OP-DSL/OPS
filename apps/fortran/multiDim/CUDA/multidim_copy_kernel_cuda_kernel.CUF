@@ -20,7 +20,6 @@ INTEGER(KIND=4):: xdim2_multidim_copy_kernel_h  = -1
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: multidim_copy_kernel
 attributes (device) subroutine multidim_copy_kernel(val1, val2)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2) :: val1

@@ -17,7 +17,6 @@ INTEGER(KIND=4):: xdim1_multidim_print_kernel_h  = -1
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: multidim_print_kernel
 attributes (device) subroutine multidim_print_kernel(val)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2) :: val

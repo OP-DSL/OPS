@@ -69,13 +69,13 @@ FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 all: $(TARGETS)
 
 poisson_seq: poisson_ops.F90 constants.F90
-	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c \
-	poisson_ops.F90
-	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
+	$(FC) $(FFLAGS) $(FMODS) -c constants.F90 \
+	./MPI/poisson_populate_kernel_seq_kernel.F90 poisson_ops.F90
+	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o poisson_populate_kernel_seq_kernel.o \
 	-o poisson_seq -lops_for_seq
 
 poisson_openmp: poisson_ops.F90 constants.F90
-	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c \
+	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c poisson_populate_kernel_seq_kernel.o \
         poisson_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
         -o poisson_openmp -lops_for_seq

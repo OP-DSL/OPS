@@ -176,6 +176,7 @@ int main(int argc, char **argv)
     }
   }
 
+
   //initial guess 0
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {

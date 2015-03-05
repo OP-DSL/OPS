@@ -17,7 +17,6 @@ INTEGER(KIND=4):: xdim1_multidim_reduce_kernel_h  = -1
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: multidim_reduce_kernel
 attributes (device) subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val

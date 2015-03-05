@@ -22,8 +22,8 @@ attributes (device) subroutine multidim_kernel(val, idx)
   REAL(kind=8)   , DIMENSION(2) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
 
-  val(1) = 65.878!idx(1)
-  val(2) = 65.998!idx(2)
+  val(OPS_ACC_MD1(1,0,0)) = idx(1)
+  val(OPS_ACC_MD1(2,0,0)) = idx(2)
 end subroutine
 
 
@@ -58,7 +58,7 @@ attributes (global) subroutine multidim_kernel_wrap( &
   arg1 = arg1 + (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_kernel
   IF (n_x < size1 .AND. n_y < size2) THEN
     call multidim_kernel( &
-    & opsDat1Local(10), &
+    & opsDat1Local(arg1), &
     & idx_local )
   ENDIF
 

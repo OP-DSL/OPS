@@ -96,6 +96,9 @@ program POISSON
   !ops_halo group
   type(ops_halo_group) :: u_halos
 
+  !iteration ranges
+  integer iter_range(4)
+
   integer i,j, off
   character(len=20) buf
 
@@ -210,7 +213,27 @@ program POISSON
 
   call ops_partition("")
 
+  !-------------------------- Computations --------------------------
 
+
+  ! populate forcing, reference solution and boundary conditions
+  DO j = 1, ngrid_y
+    DO i = 1, ngrid_x
+      iter_range(1) = 0
+      iter_range(2) = sizes(2*(i+ngrid_x*j))+1
+      iter_range(3) = 0
+      iter_range(4) = sizes(2*(i+ngrid_x*j)+1)+1
+      call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(4)", OPS_READ), &
+            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(4)", OPS_READ), &
+            &  ops_arg_idx(), &
+            &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE), &
+            &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE), &
+            &  ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
+    END DO
+  END DO
+
+  call ops_print_dat_to_txtfile(u(1), "poisson.dat")
 
   call ops_exit( )
 end program POISSON
