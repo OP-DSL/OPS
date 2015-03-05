@@ -20,10 +20,10 @@
 
 
 
-#define logical_size_x 200
-#define logical_size_y 200
-#define ngrid_x 2
-#define ngrid_y 2
+#define logical_size_x 10
+#define logical_size_y 10
+#define ngrid_x 1
+#define ngrid_y 1
 #define n_iter  10000
 
 program POISSON
@@ -100,8 +100,8 @@ program POISSON
   d_p(2) = 1
   d_m(1) = -1
   d_m(2) = -1
-  base(1) = 0
-  base(2) = 0
+  base(1) = 1
+  base(2) = 1
   uniform_size(1) = (logical_size_x-1)/ngrid_x+1
   uniform_size(2) = (logical_size_y-1)/ngrid_y+1
 
@@ -111,12 +111,11 @@ program POISSON
     size(2) = uniform_size(2)
     if ((i)*size(1)>logical_size_x) then
       size(1) = logical_size_x - (i-1)*size(1)
-
     end if
     if ((j)*size(2)>logical_size_y) then
       size(2) = logical_size_y - (j-1)*size(2)
-
     end if
+
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "double", buf)
     write(buf,"(A6,I2,A1,I2)") "coordy",i,",",j
@@ -128,13 +127,16 @@ program POISSON
     write(buf,"(A6,I2,A1,I2)") "ref",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "double", buf)
 
-    sizes(2*((i-1)+ngrid_x*(j-1)+1)) = size(1)
-    sizes(2*((i-1)+ngrid_x*(j-1)+2)) = size(2)
-    disps(2*((i-1)+ngrid_x*(j-1)+1)) = i*uniform_size(1)
-    disps(2*((i-1)+ngrid_x*(j-1)+2)) = j*uniform_size(2)
+    sizes(2*((i-1)+ngrid_x*(j-1))+1) = size(1)
+    sizes(2*((i-1)+ngrid_x*(j-1))+2) = size(2)
+    disps(2*((i-1)+ngrid_x*(j-1))+1) = (i-1)*uniform_size(1)
+    disps(2*((i-1)+ngrid_x*(j-1))+2) = (j-1)*uniform_size(2)
 
     END DO
   END DO
+
+  write (*,*) "sizes", sizes
+  write (*,*) "disps", disps
 
   off = 1
   DO j = 1, ngrid_y
@@ -183,9 +185,10 @@ program POISSON
   DO j = 1, ngrid_y
     DO i = 1, ngrid_x
       iter_range(1) = 0
-      iter_range(2) = sizes(2*(i+ngrid_x*j))+1
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1) +1
       iter_range(3) = 0
-      iter_range(4) = sizes(2*(i+ngrid_x*j)+1)+1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2) +1
+      write(*,*) iter_range
       call poisson_populate_kernel_host("poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                         & ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(4)", OPS_READ), &
                         & ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(4)", OPS_READ), &

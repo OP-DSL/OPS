@@ -59,8 +59,8 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,6);
 
-  int logical_size_x = 200;
-  int logical_size_y = 200;
+  int logical_size_x = 10; //200
+  int logical_size_y = 10; //200
   int ngrid_x = 1;
   int ngrid_y = 1;
   int n_iter = 10000;
@@ -107,6 +107,9 @@ int main(int argc, char **argv)
       int size[2] = {uniform_size[0], uniform_size[1]};
       if ((i+1)*size[0]>logical_size_x) size[0] = logical_size_x - i*size[0];
       if ((j+1)*size[1]>logical_size_y) size[1] = logical_size_y - j*size[1];
+
+      //printf("%d, %d\n", size[0],size[1]);
+
       sprintf(buf,"coordx %d,%d",i,j);
       coordx[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"coordy %d,%d",i,j);
@@ -126,6 +129,13 @@ int main(int argc, char **argv)
       disps[2*(i+ngrid_x*j)+1] = j*uniform_size[1];
     }
   }
+
+  /*for (int j = 0; j < ngrid_y; j++) {
+    for (int i = 0; i < ngrid_x; i++) {
+      printf("sizes %d, %d\n", sizes[2*(i+ngrid_x*j)],sizes[2*(i+ngrid_x*j)+1]);
+      printf("disps %d, %d\n", disps[2*(i+ngrid_x*j)],disps[2*(i+ngrid_x*j)+1]);
+    }
+  }*/
 
   ops_halo *halos = (ops_halo *)malloc(2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)*sizeof(ops_halo *));
   int off = 0;
@@ -166,6 +176,10 @@ int main(int argc, char **argv)
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {-1,sizes[2*(i+ngrid_x*j)]+1,-1,sizes[2*(i+ngrid_x*j)+1]+1};
+
+      //for (int k = 0;k<4; k++)
+       // printf("iter_range[%d] = %d\n",k,iter_range[k]);
+
       ops_par_loop(poisson_kernel_populate, "poisson_kernel_populate", blocks[i+ngrid_x*j], 2, iter_range,
                ops_arg_gbl(&disps[2*(i+ngrid_x*j)], 1, "int", OPS_READ),
                ops_arg_gbl(&disps[2*(i+ngrid_x*j)+1], 1, "int", OPS_READ),
@@ -176,6 +190,8 @@ int main(int argc, char **argv)
     }
   }
 
+  //ops_print_dat_to_txtfile(u[0], "poisson.dat");
+  //exit(0);
 
   //initial guess 0
   for (int j = 0; j < ngrid_y; j++) {
