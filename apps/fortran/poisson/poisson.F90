@@ -170,8 +170,8 @@ program POISSON
     END DO
   END DO
 
-  write (*,*) "sizes", sizes
-  write (*,*) "disps", disps
+  !write (*,*) "sizes", sizes
+  !write (*,*) "disps", disps
 
   off = 1
   DO j = 1, ngrid_y
@@ -179,7 +179,7 @@ program POISSON
       if (i > 1) then
       halo_iter(1) = 1
       halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1)+2))
-      base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1)+1))
+      base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1))+1)
       base_from(2) = 1
       base_to(1) = 0
       base_to(2) = 1
@@ -195,7 +195,7 @@ program POISSON
       halo_iter(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
       halo_iter(2) = 1
       base_from(1) = 0
-      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+2)
+      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+1)
       base_to(1) = 1
       base_to(2) = 0
       dir(1) = 1
@@ -236,7 +236,23 @@ program POISSON
     END DO
   END DO
 
+  ! initial guess 0
+  DO j = 1, ngrid_y
+    DO i = 1, ngrid_x
+      iter_range(1) = 1
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+      iter_range(3) = 1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      write(*,*) iter_range
+      call ops_par_loop(poisson_initialguess_kernel, "poisson_initialguess_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
+
+    END DO
+  END DO
+
+
   call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+  !call ops_print_dat_to_txtfile(u(2), "poisson.dat")
 
   call ops_exit( )
 end program POISSON

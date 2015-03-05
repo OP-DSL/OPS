@@ -177,8 +177,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {-1,sizes[2*(i+ngrid_x*j)]+1,-1,sizes[2*(i+ngrid_x*j)+1]+1};
 
-      //for (int k = 0;k<4; k++)
-       // printf("iter_range[%d] = %d\n",k,iter_range[k]);
+      for (int k = 0;k<4; k++)
+        printf("iter_range[%d] = %d\n",k,iter_range[k]);
 
       ops_par_loop(poisson_kernel_populate, "poisson_kernel_populate", blocks[i+ngrid_x*j], 2, iter_range,
                ops_arg_gbl(&disps[2*(i+ngrid_x*j)], 1, "int", OPS_READ),
@@ -190,17 +190,22 @@ int main(int argc, char **argv)
     }
   }
 
-  //ops_print_dat_to_txtfile(u[0], "poisson.dat");
-  //exit(0);
-
   //initial guess 0
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+
+      for (int k = 0;k<4; k++)
+        printf("iter_range[%d] = %d\n",k,iter_range[k]);
+
       ops_par_loop(poisson_kernel_initialguess, "poisson_kernel_initialguess", blocks[i+ngrid_x*j], 2, iter_range,
                ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
     }
   }
+
+  ops_print_dat_to_txtfile(u[0], "poisson.dat");
+  //ops_print_dat_to_txtfile(u[1], "poisson.dat");
+  exit(0);
 
   for (int iter = 0; iter < n_iter; iter++) {
     ops_halo_transfer(u_halos);
