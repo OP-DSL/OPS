@@ -22,8 +22,8 @@
 
 #define logical_size_x 200
 #define logical_size_y 200
-#define ngrid_x 1
-#define ngrid_y 1
+#define ngrid_x 2
+#define ngrid_y 2
 #define n_iter  10000
 
 program POISSON
@@ -237,7 +237,7 @@ program POISSON
 
 
 
-  DO iter = 0, n_iter
+  DO iter = 1, n_iter
 
     call ops_halo_transfer(u_halos)
 
@@ -266,10 +266,10 @@ program POISSON
       END DO
     END DO
 
-
-
-
   END DO
+
+
+
 
   err = 0.0_8
   DO j = 1, ngrid_y

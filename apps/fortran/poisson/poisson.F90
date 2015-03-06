@@ -37,8 +37,8 @@
 ! sizes
 #define logical_size_x 200
 #define logical_size_y 200
-#define ngrid_x 1
-#define ngrid_y 1
+#define ngrid_x 2
+#define ngrid_y 2
 #define n_iter  10000
 
 program POISSON
@@ -278,7 +278,7 @@ program POISSON
   !
   ! Main iterative loop
   !
-  DO iter = 0, n_iter
+  DO iter = 1, n_iter
 
     call ops_halo_transfer(u_halos)
 
@@ -308,12 +308,11 @@ program POISSON
       END DO
     END DO
 
-    !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
-    !call ops_print_dat_to_txtfile(u(2), "poisson.dat")
-    !call exit()
-
-
   END DO
+
+  !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+  !call ops_print_dat_to_txtfile(ref(1), "poisson.dat")
+  !call exit()
 
   err = 0.0_8
   DO j = 1, ngrid_y
