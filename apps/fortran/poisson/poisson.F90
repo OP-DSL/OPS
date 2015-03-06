@@ -35,8 +35,8 @@
 !
 
 ! sizes
-#define logical_size_x 10
-#define logical_size_y 10
+#define logical_size_x 200
+#define logical_size_y 200
 #define ngrid_x 2
 #define ngrid_y 2
 #define n_iter  10000
@@ -85,6 +85,7 @@ program POISSON
 
   !ops_reduction
   type(ops_reduction) :: red_err
+  real(8) :: err
 
   !ops_dats
   type(ops_dat) :: coordx(ngrid_x*ngrid_y), coordy(ngrid_x*ngrid_y)
@@ -301,14 +302,32 @@ program POISSON
       END DO
     END DO
 
-    call ops_print_dat_to_txtfile(u(1), "poisson.dat")
-    call ops_print_dat_to_txtfile(u(2), "poisson.dat")
-    call exit()
+    !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+    !call ops_print_dat_to_txtfile(u(2), "poisson.dat")
+    !call exit()
 
 
   END DO
 
+  err = 0.0_8
+  DO j = 1, ngrid_y
+    DO i = 1, ngrid_x
+      iter_range(1) = 1
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+      iter_range(1) = 1
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      call ops_par_loop(poisson_error_kernel, "poisson_error_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+              & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
+              & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(8)", OPS_READ), &
+              & ops_arg_reduce(red_err, 1, "real(8)", OPS_INC))
+    END DO
+  END DO
 
+  call ops_reduction_result(red_err, err)
+
+  if (ops_is_root() .eq. 1) then
+    write (*,*) 'Total error: ', err
+  end if
 
   call ops_exit( )
 end program POISSON

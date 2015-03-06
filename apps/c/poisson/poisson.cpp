@@ -59,8 +59,8 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,6);
 
-  int logical_size_x = 10; //200
-  int logical_size_y = 10; //200
+  int logical_size_x = 200;
+  int logical_size_y = 200;
   int ngrid_x = 2;
   int ngrid_y = 2;
   int n_iter = 10000;
@@ -240,9 +240,9 @@ int main(int argc, char **argv)
       }
     }
 
-    ops_print_dat_to_txtfile(u[0], "poisson.dat");
-    ops_print_dat_to_txtfile(u[1], "poisson.dat");
-    exit(0);
+    //ops_print_dat_to_txtfile(u[0], "poisson.dat");
+    //ops_print_dat_to_txtfile(u[1], "poisson.dat");
+    //exit(0);
 
   }
 
