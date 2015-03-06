@@ -12,6 +12,8 @@
 // global constants
 extern double dx;
 extern double dy;
+extern double dx;
+extern double dy;
 //user kernel files
 #include "poisson_kernel_populate_seq_kernel.cpp"
 #include "poisson_kernel_initialguess_seq_kernel.cpp"

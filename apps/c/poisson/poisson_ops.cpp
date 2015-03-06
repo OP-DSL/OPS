@@ -131,8 +131,14 @@ int main(int argc, char **argv)
         int base_from[] = {sizes[2*(i-1+ngrid_x*j)]-1,0};
         int base_to[] = {-1,0};
         int dir[] = {1,2};
+
+
+
+
         halos[off++] = ops_decl_halo(u[i-1+ngrid_x*j], u[i+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
         base_from[0] = 0; base_to[0] = sizes[2*(i+ngrid_x*j)];
+
+        printf("base_to = %d %d %d  %d\n",i,j,base_to[0],base_to[1]);
         halos[off++] = ops_decl_halo(u[i+ngrid_x*j], u[i-1+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
       }
       if (j > 0) {
@@ -140,8 +146,14 @@ int main(int argc, char **argv)
         int base_from[] = {0,sizes[2*(i+ngrid_x*(j-1))+1]-1};
         int base_to[] = {0,-1};
         int dir[] = {1,2};
+
+
+
+
         halos[off++] = ops_decl_halo(u[i+ngrid_x*(j-1)], u[i+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
         base_from[1] = 0; base_to[1] = sizes[2*(i+ngrid_x*j)+1];
+
+        printf("base_to = %d %d %d  %d\n",i,j,base_to[0],base_to[1]);
         halos[off++] = ops_decl_halo(u[i+ngrid_x*j], u[i+ngrid_x*(j-1)], halo_iter, base_from, base_to, dir, dir);
       }
     }
@@ -195,8 +207,9 @@ int main(int argc, char **argv)
       }
     }
 
-
-
+    ops_print_dat_to_txtfile(u[0], "poisson.dat");
+    ops_print_dat_to_txtfile(u[1], "poisson.dat");
+    exit(0);
 
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
@@ -206,6 +219,8 @@ int main(int argc, char **argv)
                      ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
+
+
   }
 
   double err = 0.0;

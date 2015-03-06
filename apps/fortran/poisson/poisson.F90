@@ -178,33 +178,47 @@ program POISSON
   off = 1
   DO j = 1, ngrid_y
     DO i = 1, ngrid_x
-      if (i > 1) then
+      if ((i-1) > 0) then
       halo_iter(1) = 1
-      halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1)+2))
+      halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
       base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1))+1)
       base_from(2) = 1
       base_to(1) = 0
       base_to(2) = 1
       dir(1) = 1
       dir(2) = 2
+
+      !write (*,*) "in first ", i,j, halo_iter
+      !write (*,*) "in first ", i,j, base_from
+      !write (*,*) "in first ", i,j, base_to
+
       call ops_decl_halo(u((i-2)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
       base_from(1) = 1; base_to(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
+      !write (*,*) "in first", i,j, base_from
+      write (*,*) "in first base to", i,j, base_to
       call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-2)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
       end if
-      if (j > 1) then
+      if ((j-1) > 0) then
       halo_iter(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
       halo_iter(2) = 1
-      base_from(1) = 0
-      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+1)
+      base_from(1) = 1
+      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+2)
       base_to(1) = 1
       base_to(2) = 0
       dir(1) = 1
       dir(2) = 2
+
+      !write (*,*) "in second", i,j, halo_iter
+      !write (*,*) "in second", i,j, base_from
+      !write (*,*) "in second", i,j, base_to
+
       call ops_decl_halo(u((i-1)+ngrid_x*(j-2)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
-      base_from(1) = 0; base_to(1) = sizes(2*(i+ngrid_x*j)+1)
+      base_from(2) = 1; base_to(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
+      !write (*,*) "in second", i,j, base_from
+      write (*,*) "in second base to", i,j, base_to
       call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-2)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
       end if
@@ -215,7 +229,7 @@ program POISSON
   end if
   call ops_decl_halo_group((off-1),halos, u_halos)
 
-  write(*,*) off
+
 
   call ops_partition("")
 
@@ -229,7 +243,7 @@ program POISSON
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1) +1
       iter_range(3) = 0
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2) +1
-      write(*,*) iter_range
+      !write(*,*) iter_range
       call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
             &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(4)", OPS_READ), &
             &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(4)", OPS_READ), &
@@ -247,7 +261,7 @@ program POISSON
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
       iter_range(3) = 1
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
-      write(*,*) iter_range
+      !write(*,*) iter_range
       call ops_par_loop(poisson_initialguess_kernel, "poisson_initialguess_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                 & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
 
@@ -277,6 +291,21 @@ program POISSON
     call ops_print_dat_to_txtfile(u(1), "poisson.dat")
     call ops_print_dat_to_txtfile(u(2), "poisson.dat")
     call exit()
+
+
+    DO j = 1, ngrid_y
+      DO i = 1, ngrid_x
+        iter_range(1) = 1
+        iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+        iter_range(1) = 1
+        iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
+                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(8)", OPS_WRITE))
+      END DO
+    END DO
+
+
 
   END DO
 
