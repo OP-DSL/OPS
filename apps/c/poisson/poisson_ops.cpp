@@ -56,8 +56,8 @@ int main(int argc, char **argv)
 
   int logical_size_x = 200;
   int logical_size_y = 200;
-  int ngrid_x = 2;
-  int ngrid_y = 2;
+  int ngrid_x = 1;
+  int ngrid_y = 1;
   int n_iter = 10000;
   dx = 0.01;
   dy = 0.01;
@@ -132,13 +132,8 @@ int main(int argc, char **argv)
         int base_to[] = {-1,0};
         int dir[] = {1,2};
 
-
-
-
         halos[off++] = ops_decl_halo(u[i-1+ngrid_x*j], u[i+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
         base_from[0] = 0; base_to[0] = sizes[2*(i+ngrid_x*j)];
-
-
         halos[off++] = ops_decl_halo(u[i+ngrid_x*j], u[i-1+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
       }
       if (j > 0) {
@@ -147,13 +142,8 @@ int main(int argc, char **argv)
         int base_to[] = {0,-1};
         int dir[] = {1,2};
 
-
-
-
         halos[off++] = ops_decl_halo(u[i+ngrid_x*(j-1)], u[i+ngrid_x*j], halo_iter, base_from, base_to, dir, dir);
         base_from[1] = 0; base_to[1] = sizes[2*(i+ngrid_x*j)+1];
-
-
         halos[off++] = ops_decl_halo(u[i+ngrid_x*j], u[i+ngrid_x*(j-1)], halo_iter, base_from, base_to, dir, dir);
       }
     }

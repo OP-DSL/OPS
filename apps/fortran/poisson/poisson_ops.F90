@@ -22,8 +22,8 @@
 
 #define logical_size_x 200
 #define logical_size_y 200
-#define ngrid_x 2
-#define ngrid_y 2
+#define ngrid_x 1
+#define ngrid_y 1
 #define n_iter  10000
 
 program POISSON
@@ -80,6 +80,9 @@ program POISSON
 
   integer i,j, off, iter
   character(len=20) buf
+
+  real(kind=c_double) :: startTime = 0
+  real(kind=c_double) :: endTime = 0
 
   dx = 0.01_8
   dy = 0.01_8
@@ -200,6 +203,7 @@ program POISSON
   call ops_partition("")
 
 
+  call ops_timers(startTime)
 
   DO j = 1, ngrid_y
     DO i = 1, ngrid_x
@@ -283,8 +287,14 @@ program POISSON
 
   call ops_reduction_result(red_err, err)
 
+  call ops_timers(endTime)
+
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Total error: ', err
+  end if
+
+  if (ops_is_root() .eq. 1) then
+    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
   end if
 
   call ops_exit( )

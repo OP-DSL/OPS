@@ -37,7 +37,7 @@ endif
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	= clean poisson_seq #poisson_openmp
+  TARGETS	= clean poisson_seq poisson_openmp
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
@@ -85,9 +85,19 @@ poisson_seq: poisson_ops.F90 constants.F90
 	-o poisson_seq -lops_for_seq
 
 poisson_openmp: poisson_ops.F90 constants.F90
-	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c poisson_populate_kernel_seq_kernel.o \
-        poisson_ops.F90
+	$(FC) $(FFLAGS) $(FMODS) -c constants.F90 \
+	./MPI_OpenMP/poisson_initialguess_kernel_omp_kernel.F90 \
+	./MPI_OpenMP/poisson_populate_kernel_omp_kernel.F90 \
+	./MPI_OpenMP/poisson_stencil_kernel_omp_kernel.F90 \
+	./MPI_OpenMP/poisson_update_kernel_omp_kernel.F90 \
+	./MPI_OpenMP/poisson_error_kernel_omp_kernel.F90 \
+	poisson_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
+	poisson_initialguess_kernel_omp_kernel.o \
+	poisson_populate_kernel_omp_kernel.o \
+	poisson_stencil_kernel_omp_kernel.o \
+	poisson_update_kernel_omp_kernel.o \
+	poisson_error_kernel_omp_kernel.o \
         -o poisson_openmp -lops_for_seq
 
 
