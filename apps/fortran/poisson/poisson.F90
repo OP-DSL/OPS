@@ -196,7 +196,7 @@ program POISSON
       off = off + 1
       base_from(1) = 1; base_to(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
       !write (*,*) "in first", i,j, base_from
-      write (*,*) "in first base to", i,j, base_to
+      !write (*,*) "in first base to", i,j, base_to
       call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-2)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
       end if
@@ -218,7 +218,7 @@ program POISSON
       off = off + 1
       base_from(2) = 1; base_to(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
       !write (*,*) "in second", i,j, base_from
-      write (*,*) "in second base to", i,j, base_to
+      !write (*,*) "in second base to", i,j, base_to
       call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-2)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
       off = off + 1
       end if
@@ -278,9 +278,9 @@ program POISSON
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
       iter_range(1) = 1
-      iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
       iter_range(1) = 1
-      iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                 & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(8)", OPS_READ), &
                 & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
@@ -288,23 +288,22 @@ program POISSON
       END DO
     END DO
 
-    call ops_print_dat_to_txtfile(u(1), "poisson.dat")
-    call ops_print_dat_to_txtfile(u(2), "poisson.dat")
-    call exit()
-
 
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
         iter_range(1) = 1
-        iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+        iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
         iter_range(1) = 1
-        iter_range(1) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                 & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
                 & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(8)", OPS_WRITE))
       END DO
     END DO
 
+    call ops_print_dat_to_txtfile(u(1), "poisson.dat")
+    call ops_print_dat_to_txtfile(u(2), "poisson.dat")
+    call exit()
 
 
   END DO
