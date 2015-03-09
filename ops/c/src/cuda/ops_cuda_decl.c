@@ -172,7 +172,10 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 
 ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc )
 {
-  return ops_arg_dat_core( dat, stencil, acc );
+  //return ops_arg_dat_core( dat, stencil, acc );
+  ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->dim = dim;
+  return temp;
 }
 
 ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )

@@ -51,7 +51,7 @@ endif
   CUDA_ALIGN_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXXLINK       = -lstdc++ -pgcpplibs
   OMPFLAGS 	= -mp
-  FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
+  FC            = pgfortran $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
   FFLAGS        = $(OPT) $(PGFLAGS)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx

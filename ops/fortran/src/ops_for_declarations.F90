@@ -443,6 +443,12 @@ module OPS_Fortran_Declarations
     subroutine ops_init ( diags )
       integer(4) :: diags
       integer(4) :: argc = 0
+!#ifdef OPS_WITH_CUDAFOR
+!    integer(4) :: setDevReturnVal = -1
+!    integer(4) :: devPropRetVal = -1
+!    type(cudadeviceprop) :: deviceProperties
+!#endif
+
       call ops_init_c ( argc, C_NULL_PTR, diags )
     end subroutine ops_init
 

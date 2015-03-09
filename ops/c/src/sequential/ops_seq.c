@@ -222,6 +222,7 @@ ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * typ
 ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )
 {
   ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->dim = dim;
   (&temp)->opt = flag;
   return temp;
 }
