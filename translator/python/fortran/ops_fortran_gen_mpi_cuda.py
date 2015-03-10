@@ -118,11 +118,23 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('')
 
 ##########################################################################
+#  generate Vars for reductions
+##########################################################################
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        comm('Vars for reductions')
+        if (accs[n]== OPS_INC or accs[n]== OPS_MIN or accs[n]== OPS_MAX):
+          code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice_'+str(n+1)+name)
+        if ((accs[n]==OPS_READ and dims[n] > 1) or accs[n]==OPS_WRITE):
+          code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat'+str(n+1)+'Device_'+name)
+
+##########################################################################
 #  generate MACROS
 ##########################################################################
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
+          comm('single-dim macros')
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
@@ -136,6 +148,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
+          comm('multi-dim macros')
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
@@ -192,10 +205,15 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         code('& idx, &')
-      else:
+      elif arg_typ[n] == 'ops_arg_dat':
         code('& opsDat'+str(n+1)+'Local, &')
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+        code('& reductionArrayDevice'+str(n+1)+',   &')
+      elif accs[n] == OPS_READ and dims[n]==1:
+        code('& opsGblDat'+str(n+1)+'Device_'+name+',   &')
+
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] == 'ops_arg_dat':
         code('& dat'+str(n+1)+'_base, &')
     if NDIM==1:
       code('& size1, &')
@@ -220,6 +238,23 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_idx':
         code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
 
+    #vars for reductions
+    for n in range (0, nargs):
+      if accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX:
+          #if it's a global reduction, then we pass in a reductionArrayDevice
+          code(typs[n]+', DIMENSION(:), DEVICE :: reductionArrayDevice'+str(n+1))
+          #and additionally we need registers to store contributions, depending on dim:
+          if dims[n] == 1:
+            code(typs[n]+' :: opsGblDat'+str(n+1)+'Device_'+name)
+          else:
+            code(typs[n]+', DIMENSION(0:'+dims[n]+'-1) :: opsGblDat'+str(n+1)+'Device_'+name)
+      else:
+        #if it's not  a global reduction, and multidimensional then we pass in a device array
+        if dims[n] == 1:
+          if accs[n] == OPS_READ: #if OPS_READ and dim 1, we can pass in by value
+            code(typs[n]+', VALUE :: opsGblDat'+str(n+1)+'Device_'+name)
+
+    #vars for arg_idx
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
         code('integer dat' + str(n+1)+'_base')
@@ -235,26 +270,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('integer n_x, n_y, n_z, size1, size2, size3')
     code('')
 
-    #local variable to hold reductions on GPU
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-        code(typs[n]+' arg'+str(n)+'_l('+str(dims[n])+')')
-
-    # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        DO('d','1',str(dims[n]))
-        code('arg'+str(n)+'_l(d) = 0')
-        ENDDO()
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        DO('d','1',str(dims[n]))
-        code('arg'+str(n)+'_l(d) = HUGE(arg'+str(n)+'_l(d))')
-        ENDDO()
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        DO('d','1',str(dims[n]))
-        code('arg'+str(n)+'_l(d) = -HUGE(arg'+str(n)+'_l(d))')
-        ENDDO()
 
     code('')
     if NDIM==3:
@@ -314,28 +329,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
     #reduction across blocks
-    if NDIM==1:
-      cont = 'blockIdx%x + blockIdx%y*gridDim%x'
-    if NDIM==2:
-      cont = 'blockIdx%x + blockIdx%y*gridDim%x'
-    elif NDIM==3:
-      cont = 'blockIdx%x + blockIdx%y*gridDim%x + blockIdx%z*gridDim%x*gridDim%y'
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        comm('CALL ReductionFloat')
-        #DO('d','1',str(dims[n]))
-        #code('ops_reduction_cuda<OPS_INC>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
-        #ENDDO()
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        comm('CALL ReductionFloat')
-        #DO('d','1',str(dims[n]))
-        #code('ops_reduction_cuda<OPS_MIN>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
-        #ENDDO()
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        comm('CALL ReductionFloat')
-        #DO('d','1',str(dims[n]))
-        #code('ops_reduction_cuda<OPS_MAX>(opsDat'+str(n)+'Local(d+'+cont+'),arg'+str(n)+'_l(d);')
-        #ENDDO()
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
+        if 'real' in typs[n].lower():
+          if dims[n].isdigit() and int(dims[n])==1:
+            code('!call ReductionFloat8(reductionArrayDevice'+str(n+1)+'(blockIdx%x - 1 + 1:),opsGblDat'+str(n+1)+'Device_'+name+',0)')
+          else:
+            code('!call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device_'+name+',0,'+dims[n]+')')
+        elif 'integer' in typs[n].lower():
+          if dims[n].isdigit() and int(dims[n])==1:
+            code('!call ReductionInt4(reductionArrayDevice'+str(n+1)+'(blockIdx%x - 1 + 1:),opsGblDat'+str(n+1)+'Device_'+name+',0)')
+          else:
+            code('!call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device_'+name+',0,'+dims[n]+')')
     code('')
 
 
@@ -380,11 +385,20 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         elif NDIM==2:
           code('integer ydim'+str(n+1)+', zdim'+str(n+1))
         code('')
-      elif arg_typ[n] == 'ops_arg_gbl':
+
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DEVICE, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
-        code('integer(kind=4), DEVICE :: dat'+str(n+1)+'_base')
-        code('')
+        code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
+        if accs[n] == OPS_WRITE or dims[n] > 1:
+          code(typs[n]+', DIMENSION(:), POINTER :: opsDat'+str(n+1)+'Host')
+        else:
+          code(typs[n]+', POINTER :: opsDat'+str(n+1)+'Host')
+        if (accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN):
+          code(typs[n]+', DIMENSION(:), ALLOCATABLE :: reductionArrayHost'+str(n+1))
+          code('INTEGER(kind=4) :: reductionCardinality'+str(n+1))
+    code('')
+
 
     if NDIM==1:
       code('integer, DEVICE :: x_size')
@@ -399,6 +413,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     if arg_idx == 1:
       code('integer, DEVICE :: idx('+str(NDIM)+')')
     code('integer(kind=4) :: n')
+    code('integer(kind=4) :: i10')
+    code('integer(kind=4) :: i20')
+
+    code('integer(kind=4) :: blocksPerGrid')
+    code('integer(kind=4) :: dynamicSharedMemorySize')
+
+
     code('')
     comm('cuda grid and thread block sizes')
     code('type(dim3) :: grid, tblock')
@@ -477,16 +498,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         else:
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
-        code('')
-      elif arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          code('call c_f_pointer(getGblPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
-          code('dat'+str(n+1)+'_base = 1')
-          code('')
+
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_WRITE or int(dims[n])>1:
+          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
-          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
-          code('dat'+str(n+1)+'_base = 1')
-          code('')
+          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host)')
+      code('')
 
     #NEED TO COPY CONSTANTS TO Symbol
     condition = ''
@@ -523,31 +541,52 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('tblock = dim3(getOPS_block_size_x(),1,1)')
     code('')
 
-    #setup reduction variables
-    ##
-    ## TODO
-    ##
+    #setup reduction variables and shared memory for reduction
+    code('blocksPerGrid = 200')
+    code('dynamicSharedMemorySize = 100*8')
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN):
+        code('reductionCardinality'+str(n+1)+' = blocksPerGrid * 1')
+        code('allocate( reductionArrayHost'+str(n+1)+'(reductionCardinality'+str(n+1)+'* ('+dims[n]+')) )')
+        IF ('.not. allocated(reductionArrayDevice_'+str(n+1)+name+')')
+        code('allocate( reductionArrayDevice_'+str(n+1)+name+'(reductionCardinality'+str(n+1)+'* ('+dims[n]+')) )')
+        ENDIF()
+        code('')
+        DO('i10','0','reductionCardinality'+str(n+1)+'')
+        if int(dims[n]) == 1:
+          code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
+        else:
+          code('reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+')) = 0.0')
+        ENDDO()
+        code('')
+        code('reductionArrayDevice_'+str(n+1)+name+' = reductionArrayHost'+str(n+1)+'')
 
-    #set up shared memory for reduction
-    ##
-    ## TODO
-    ##
 
     #halo exchange
+    code('')
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
     code('')
 
     #Call cuda kernel  - i.e. the wrapper calling the user kernel
-    code('call '+name+'_wrap <<<grid,tblock>>> (&')
+    if reduction:
+      code('call '+name+'_wrap <<<grid,tblock,dynamicSharedMemorySize>>> (&')
+    else:
+      code('call '+name+'_wrap <<<grid,tblock>>> (&')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         code('& idx, &')
-      else:
+      elif arg_typ[n] == 'ops_arg_dat':
         code('& opsDat'+str(n+1)+'Local, &')
+      elif arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX:
+          code('& reductionArrayDevice_'+str(n+1)+name+', &')
+        elif accs[n] == OPS_READ and dims[n]==1:
+          code('& opsDat'+str(n+1)+'Host, &')
+
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] == 'ops_arg_dat' :
         code('& dat'+str(n+1)+'_base, &')
     if NDIM==1:
       code('& x_size, &')
@@ -563,8 +602,26 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     # Complete Reduction Operation by moving data onto host
     # and reducing over blocks
     #
-    # TODO
-    #
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_WRITE:
+        code('opsDat'+str(n+1)+'Host(1:opsArg'+str(n+1)+'%dim) = opGblDat'+str(n+1)+'Device_'+name+'(1:opsArg'+str(n+1)+'%dim)')
+
+    if reduction:
+      #reductions
+      for n in range(0,nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+          code('reductionArrayHost'+str(n+1)+' = reductionArrayDevice_'+str(n+1)+name+'')
+          code('')
+          DO('i10','0','reductionCardinality'+str(n+1)+'')
+          if dims[n].isdigit() and int(dims[n]) == 1:
+            code('opsDat'+str(n+1)+'Host = opsDat'+str(n+1)+'Host + reductionArrayHost'+str(n+1)+'(i10+1)')
+          else:
+            code('opsDat'+str(n+1)+'Host(1:'+dims[n]+') = opsDat'+str(n+1)+'Host(1:'+dims[n]+') + reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+'))')
+          ENDDO()
+          code('')
+          code('deallocate( reductionArrayHost'+str(n+1)+' )')
+
+
 
     code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):

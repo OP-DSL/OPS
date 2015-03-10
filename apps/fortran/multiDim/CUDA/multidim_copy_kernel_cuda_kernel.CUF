@@ -10,9 +10,11 @@ USE ISO_C_BINDING
 USE CUDAFOR
 
 
+!multi-dim macros
 INTEGER(KIND=4), constant :: xdim1_multidim_copy_kernel
 INTEGER(KIND=4):: xdim1_multidim_copy_kernel_h  = -1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1_multidim_copy_kernel*(y)*2))
+!multi-dim macros
 INTEGER(KIND=4), constant :: xdim2_multidim_copy_kernel
 INTEGER(KIND=4):: xdim2_multidim_copy_kernel_h  = -1
 #define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2_multidim_copy_kernel*(y)*2))
@@ -53,7 +55,6 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   integer(4) end(2)
   integer(4) d
   integer n_x, n_y, size1, size2
-
 
 
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
@@ -98,12 +99,17 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   INTEGER(KIND=4) :: multi_d2
   integer ydim2
 
+
   integer, DEVICE :: x_size, y_size
   integer start(2)
   integer, DEVICE :: start_d(2)
   integer end(2)
   integer, DEVICE :: end_d(2)
   integer(kind=4) :: n
+  integer(kind=4) :: i10
+  integer(kind=4) :: i20
+  integer(kind=4) :: blocksPerGrid
+  integer(kind=4) :: dynamicSharedMemorySize
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -157,6 +163,9 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
 
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)
+
+  blocksPerGrid = 200
+  dynamicSharedMemorySize = 100*8
 
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)

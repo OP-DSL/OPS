@@ -137,11 +137,11 @@ program MULTIDIM
   call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ))
 
-  !call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
-  !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-  !             & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
+  call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
+               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
+               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
 
-  !call ops_reduction_result(reduct_dat1, reduct_result)
+  call ops_reduction_result(reduct_dat1, reduct_result)
 
   !write(*,*) "Reduction result = ", reduct_result
 
