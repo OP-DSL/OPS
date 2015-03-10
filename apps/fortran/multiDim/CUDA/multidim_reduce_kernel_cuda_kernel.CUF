@@ -10,7 +10,7 @@ USE ISO_C_BINDING
 USE CUDAFOR
 
 !Vars for reductions
-real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice_2multidim_reduce_kernel
+real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice2_multidim_reduce_kernel
 
 !multi-dim macros
 INTEGER(KIND=4), constant :: xdim1_multidim_reduce_kernel
@@ -46,7 +46,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
   integer(4) arg1
   real(8) opsDat2Local(2)
   real(8), DIMENSION(:), DEVICE :: reductionArrayDevice2
-  real(8), DIMENSION(0:2-1) :: opsGblDat2Device_multidim_reduce_kernel
+  real(8), DIMENSION(0:2-1) :: opsGblDat2Device
   integer dat1_base
   integer dat2_base
   integer(4) start(2)
@@ -65,7 +65,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
     & opsDat2Local )
   ENDIF
 
-  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsGblDat2Device_multidim_reduce_kernel,0,2)
+  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsGblDat2Device,0,2)
 
 end subroutine
 
@@ -103,7 +103,8 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   integer(kind=4) :: i10
   integer(kind=4) :: i20
   integer(kind=4) :: blocksPerGrid
-  integer(kind=4) :: dynamicSharedMemorySize
+  integer(kind=4) :: nshared
+  integer(kind=4) :: nthread
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -150,32 +151,38 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)
 
+  !Reduction vars and shared memory for reductions
+  nshared = 0
+  nthread = getOPS_block_size_x()*getOPS_block_size_y()
+
+  nshared = MAX(nshared,8*2)
+
   blocksPerGrid = 200
-  dynamicSharedMemorySize = 100*8
   reductionCardinality2 = blocksPerGrid * 1
   allocate( reductionArrayHost2(reductionCardinality2* (2)) )
-  IF (.not. allocated(reductionArrayDevice_2multidim_reduce_kernel)) THEN
-    allocate( reductionArrayDevice_2multidim_reduce_kernel(reductionCardinality2* (2)) )
+  IF (.not. allocated(reductionArrayDevice2_multidim_reduce_kernel)) THEN
+    allocate( reductionArrayDevice2_multidim_reduce_kernel(reductionCardinality2* (2)) )
   ENDIF
 
   DO i10 = 0, reductionCardinality2
     reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0
   END DO
 
-  reductionArrayDevice_2multidim_reduce_kernel = reductionArrayHost2
+  reductionArrayDevice2_multidim_reduce_kernel = reductionArrayHost2
 
+  !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
 
-  call multidim_reduce_kernel_wrap <<<grid,tblock,dynamicSharedMemorySize>>> (&
+  call multidim_reduce_kernel_wrap <<<grid,tblock,nshared>>> (&
   & opsDat1Local, &
-  & reductionArrayDevice_2multidim_reduce_kernel, &
+  & reductionArrayDevice2_multidim_reduce_kernel, &
   & dat1_base, &
   & x_size, y_size, &
   & start_d, &
   & end_d )
 
-  reductionArrayHost2 = reductionArrayDevice_2multidim_reduce_kernel
+  reductionArrayHost2 = reductionArrayDevice2_multidim_reduce_kernel
 
   DO i10 = 0, reductionCardinality2
     opsDat2Host(1:2) = opsDat2Host(1:2) + reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2))

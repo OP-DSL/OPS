@@ -97,7 +97,8 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   integer(kind=4) :: i10
   integer(kind=4) :: i20
   integer(kind=4) :: blocksPerGrid
-  integer(kind=4) :: dynamicSharedMemorySize
+  integer(kind=4) :: nshared
+  integer(kind=4) :: nthread
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -150,9 +151,14 @@ attributes (host) subroutine multidim_kernel_host( userSubroutine, block, dim, r
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)
 
-  blocksPerGrid = 200
-  dynamicSharedMemorySize = 100*8
+  !Reduction vars and shared memory for reductions
+  nshared = 0
+  nthread = getOPS_block_size_x()*getOPS_block_size_y()
 
+
+  blocksPerGrid = 200
+
+  !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
 
