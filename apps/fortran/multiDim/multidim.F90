@@ -130,9 +130,6 @@ program MULTIDIM
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
                & ops_arg_idx())
 
-  call ops_print_dat_to_txtfile(dat0, "multidim.dat")
-  call exit()
-
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
                & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE))
@@ -140,13 +137,13 @@ program MULTIDIM
   call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ))
 
-  call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
+  !call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
+  !             & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
+  !             & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
 
-  call ops_reduction_result(reduct_dat1, reduct_result)
+  !call ops_reduction_result(reduct_dat1, reduct_result)
 
-  write(*,*) "Reduction result = ", reduct_result
+  !write(*,*) "Reduction result = ", reduct_result
 
   call ops_timers ( endTime )
   !call ops_print_dat_to_txtfile(dat1, "multidim.dat")

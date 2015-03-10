@@ -257,12 +257,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         ENDDO()
 
     code('')
-    if NDIM==1:
-      code('n_z = blockDim%z * blockIdx%z + threadIdx%z')
-      code('n_y = blockDim%y * blockIdx%y + threadIdx%y')
+    if NDIM==3:
+      code('n_z = blockDim%z * (blockIdx%z-1) + threadIdx%z')
+      code('n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y')
     if NDIM==2:
-      code('n_y = blockDim%y * blockIdx%y + threadIdx%y')
-    code('n_x = blockDim%x * blockIdx%x + threadIdx%x')
+      code('n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y')
+    code('n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x')
     code('')
     if arg_idx:
       code('idx_local(1) = idx(1)+ n_x-1')
@@ -275,18 +275,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM == 1:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n]))
+          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n]))
         elif NDIM == 2:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
+          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
         elif NDIM==3:
-          code('arg'+str(n+1)+' = arg'+str(n+1)+' + (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
+          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
 
     if NDIM==1:
-      IF('n_x < size1')
+      IF('(n_x_1) < size1')
     if NDIM==2:
-      IF('n_x < size1 .AND. n_y < size2')
+      IF('(n_x-1) < size1 .AND. (n_y-1) < size2')
     elif NDIM==3:
-      IF('n_x < size1 .AND. n_y < size2 .AND. n_z < size3')
+      IF('(n_x-1) < size1 .AND. (n_y-1) < size2 .AND. (n_z-1) < size3')
 
     code('call '+name + '( &')
     indent = config.depth *' '
@@ -294,11 +294,11 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
-          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+arg'+str(n+1)+')'
         elif NDIM==2:
-          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+arg'+str(n+1)+')'
         elif NDIM==3:
-          line = line + '& opsDat'+str(n+1)+'Local(arg'+str(n+1)+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+arg'+str(n+1)+')'
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local'
       elif arg_typ[n] == 'ops_arg_idx':
@@ -448,12 +448,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
 
     code('')
-    code('x_size = MAX(0,end(1)-start(1))')
+    code('x_size = MAX(0,end(1)-start(1)+1)')
     if NDIM==2:
-      code('y_size = MAX(0,end(2)-start(2))')
+      code('y_size = MAX(0,end(2)-start(2)+1)')
     if NDIM==3:
-      code('y_size = MAX(0,end(2)-start(2))')
-      code('z_size = MAX(0,end(3)-start(3))')
+      code('y_size = MAX(0,end(2)-start(2)+1)')
+      code('z_size = MAX(0,end(3)-start(3)+1)')
     code('')
 
     for n in range (0, nargs):
