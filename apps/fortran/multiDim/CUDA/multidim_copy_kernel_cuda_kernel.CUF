@@ -51,7 +51,6 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   integer dat2_base
   integer(4) start(2)
   integer(4) end(2)
-  integer(4) d
   integer n_x, n_y, size1, size2
 
 
@@ -64,9 +63,9 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
     call multidim_copy_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2) )
+
+
   ENDIF
-
-
 end subroutine
 
 !host subroutine

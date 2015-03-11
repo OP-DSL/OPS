@@ -29,15 +29,15 @@ attributes (device) SUBROUTINE ReductionFloat8Mdim(reductionResult,inputValue,re
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: d
   INTEGER(kind=4) :: threadID
-  threadID = threadIdx%x - 1
-  i1 = ishft(blockDim%x,-1)
+  threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+  i1 = ishft(blockDim%x*blockDim%y,-1)
 
   CALL syncthreads()
   sharedDouble8(threadID*dim:threadID*dim+dim-1) = inputValue(1:dim)
   DO WHILE (i1 > 0 )
     CALL syncthreads()
     IF (threadID < i1) THEN
-      DO i2 = 0, dim
+      DO i2 = 0, dim-1
         sharedDouble8(threadID*dim + i2) = sharedDouble8(threadID*dim + i2) + sharedDouble8((threadID + i1)*dim + i2)
       END DO
     ENDIF
@@ -71,34 +71,29 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
 & dat1_base, &
 & size1, size2 )
   IMPLICIT NONE
-  real(8), DEVICE :: opsDat1Local(*)
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
   integer(4) arg1
-  real(8), DIMENSION(2), DEVICE :: opsDat2Local
   real(8), DIMENSION(:), DEVICE :: reductionArrayDevice2
   real(8), DIMENSION(0:2-1) :: opsGblDat2Device
   integer dat1_base
-  integer dat2_base
   integer(4) start(2)
   integer(4) end(2)
-  integer(4) d
-  integer(4) n_x, n_y, size1, size2
+  integer n_x, n_y, size1, size2
+
 
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
   n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
-  opsDat2Local(1) = 0.0_8
-  opsDat2Local(2) = 0.0_8
+
   arg1 = (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_reduce_kernel
+  opsGblDat2Device = 0.0_8
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
     call multidim_reduce_kernel( &
     & opsDat1Local(dat1_base+arg1), &
-    & opsDat2Local )
-    call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x-1)*(blockIdx%y-1)*(2) + 1:),opsDat2Local,0,2)
+    & opsGblDat2Device )
+
+    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%y-1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
+
   ENDIF
-
-
-  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsGblDat2Device,0,2)
-  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsDat2Local,0,2)
-
 end subroutine
 
 !host subroutine
@@ -168,10 +163,8 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-
   opsDat2Cardinality = opsArg2%dim
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Host, (/opsDat2Cardinality/))
-
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Host,(/opsDat2Cardinality/))
 
   IF ((xdim1 .NE. xdim1_multidim_reduce_kernel_h) ) THEN
     xdim1_multidim_reduce_kernel = xdim1
@@ -195,7 +188,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   ENDIF
 
   DO i10 = 0, reductionCardinality2
-    reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0_8
+    reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0
   END DO
 
   reductionArrayDevice2_multidim_reduce_kernel = reductionArrayHost2
@@ -204,8 +197,6 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
 
-  write (*,*) grid
-  write (*,*) tblock
   call multidim_reduce_kernel_wrap <<<grid,tblock,nshared>>> (&
   & opsDat1Local, &
   & reductionArrayDevice2_multidim_reduce_kernel, &
