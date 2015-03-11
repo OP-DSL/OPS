@@ -115,7 +115,7 @@ program MULTIDIM
 
   call ops_timers ( endTime )
 
-  call ops_print_dat_to_txtfile(dat0, "multidim.dat")
+  call ops_print_dat_to_txtfile(dat1, "multidim.dat")
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'

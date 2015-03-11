@@ -389,8 +389,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code(typs[n]+', DEVICE :: opsDat'+str(n+1)+'Local(*)')
         code('integer(4) arg'+str(n+1))
-      elif arg_typ[n] == 'ops_arg_gbl':
-        code(typs[n]+' opsDat'+str(n+1)+'Local('+str(dims[n])+')')
       elif arg_typ[n] == 'ops_arg_idx':
         code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
 
@@ -472,7 +470,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         elif NDIM==3:
           line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+arg'+str(n+1)+')'
       elif arg_typ[n] == 'ops_arg_gbl':
-        line = line + '& opsDat'+str(n+1)+'Local'
+        line =line + '& opsGblDat'+str(n+1)+'Device'
       elif arg_typ[n] == 'ops_arg_idx':
         line = line + '& idx_local'
 
@@ -657,7 +655,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
 
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_WRITE or int(dims[n])>1:
+        if accs[n] == OPS_WRITE or (not dims[n].isdigit()) or int(dims[n])>1:
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
           code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
           code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host)')

@@ -54,8 +54,10 @@ attributes (device) subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val
   REAL(kind=8), DIMENSION(2) :: redu_dat1
-  redu_dat1(1) = redu_dat1(1) + val(OPS_ACC_MD1(1,0,0))
-  redu_dat1(2) = redu_dat1(2) + val(OPS_ACC_MD1(2,0,0))
+  !redu_dat1(1) = redu_dat1(1) + val(OPS_ACC_MD1(1,0,0))
+  !redu_dat1(2) = redu_dat1(2) + val(OPS_ACC_MD1(2,0,0))
+  redu_dat1(1) = 968.99
+  redu_dat1(2) = 102.89
 end subroutine
 
 
@@ -72,7 +74,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
   IMPLICIT NONE
   real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
   integer(4) arg1
-  real(8) opsDat2Local(2)
+  real(8), DEVICE :: opsDat2Local(2)
   real(8), DIMENSION(:), DEVICE :: reductionArrayDevice2
   real(8), DIMENSION(0:2-1) :: opsGblDat2Device
   integer dat1_base
@@ -81,7 +83,6 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
   integer(4) end(2)
   integer(4) d
   integer n_x, n_y, size1, size2
-
 
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
   n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
@@ -92,8 +93,13 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local )
   ENDIF
+  !opsDat2Local(1) = 568.9_8
+  !opsDat2Local(2) = 3454.9_8
+  reductionArrayDevice2(1) = opsDat2Local(1)!opsGblDat2Device(0)
+  reductionArrayDevice2(2) = opsDat2Local(2)
 
-  call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsGblDat2Device,0,2)
+  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsGblDat2Device,0,2)
+  !call ReductionFloat8Mdim(reductionArrayDevice2((blockIdx%x - 1)*(2) + 1:),opsDat2Local,0,2)
 
 end subroutine
 
@@ -164,7 +170,11 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-  call c_f_pointer(opsArg2%data,opsDat2Host,(/opsDat2Cardinality/))
+
+  opsDat2Cardinality = opsArg2%dim
+  !call c_f_pointer(opsArg2%data,opsDat2Host,(/opsDat2Cardinality/))
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Host, (/opsDat2Cardinality/))
+
 
   IF ((xdim1 .NE. xdim1_multidim_reduce_kernel_h) ) THEN
     xdim1_multidim_reduce_kernel = xdim1
@@ -188,7 +198,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   ENDIF
 
   DO i10 = 0, reductionCardinality2
-    reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0
+    reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0_8
   END DO
 
   reductionArrayDevice2_multidim_reduce_kernel = reductionArrayHost2
@@ -208,6 +218,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   DO i10 = 0, reductionCardinality2
     opsDat2Host(1:2) = opsDat2Host(1:2) + reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2))
   END DO
+
 
   deallocate( reductionArrayHost2 )
   call ops_set_dirtybit_device(opsArgArray, 2)
