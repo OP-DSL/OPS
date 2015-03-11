@@ -74,6 +74,10 @@ def ENDIF():
   config.depth -= 2
   code('ENDIF')
 
+def DOWHILE(line):
+  code('DO WHILE ('+line+' )')
+  config.depth += 2
+
 
 def remove_trailing_w_space(text):
   text = text+' '

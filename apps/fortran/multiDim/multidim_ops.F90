@@ -111,6 +111,7 @@ program MULTIDIM
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 
+  write(*,*) "Reduction result = ", reduct_result
 
   call ops_timers ( endTime )
 
