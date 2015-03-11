@@ -182,8 +182,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('REAL(kind=8), DIMENSION(0:*), SHARED :: sharedDouble8')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: threadID')
-      code('threadID = threadIdx%x - 1')
-      code('i1 = ishft(blockDim%x,-1)')
+      code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
+      code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
       code('sharedDouble8(threadID) = inputValue')
 
@@ -234,8 +234,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: threadID')
-      code('threadID = threadIdx%x - 1')
-      code('i1 = ishft(blockDim%x,-1)')
+      code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
+      code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
       code('sharedInt4(threadID) = inputValue')
 
@@ -291,8 +291,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: d')
       code('INTEGER(kind=4) :: threadID')
-      code('threadID = threadIdx%x - 1')
-      code('i1 = ishft(blockDim%x,-1)')
+      code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
+      code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
       code('sharedDouble8(threadID*dim:threadID*dim+dim-1) = inputValue(1:dim)')
 
@@ -495,14 +495,14 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
         if 'real' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+'(blockIdx%x - 1 + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
         elif 'integer' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+'(blockIdx%x - 1 + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
     code('')
     ENDIF()
 
@@ -732,7 +732,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('allocate( reductionArrayDevice'+str(n+1)+'_'+name+'(reductionCardinality'+str(n+1)+'* ('+dims[n]+')) )')
         ENDIF()
         code('')
-        DO('i10','0','reductionCardinality'+str(n+1)+'')
+        DO('i10','0','reductionCardinality'+str(n+1)+'-1')
         if dims[n].isdigit() and int(dims[n]) == 1:
           code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
         else:
@@ -791,7 +791,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
           code('reductionArrayHost'+str(n+1)+' = reductionArrayDevice'+str(n+1)+'_'+name+'')
           code('')
-          DO('i10','0','reductionCardinality'+str(n+1)+'')
+          DO('i10','0','reductionCardinality'+str(n+1)+'-1')
           if dims[n].isdigit() and int(dims[n]) == 1:
             code('opsDat'+str(n+1)+'Host = opsDat'+str(n+1)+'Host + reductionArrayHost'+str(n+1)+'(i10+1)')
           else:

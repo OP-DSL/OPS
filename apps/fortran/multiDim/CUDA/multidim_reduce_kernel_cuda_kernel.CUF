@@ -31,7 +31,6 @@ attributes (device) SUBROUTINE ReductionFloat8Mdim(reductionResult,inputValue,re
   INTEGER(kind=4) :: threadID
   threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
   i1 = ishft(blockDim%x*blockDim%y,-1)
-
   CALL syncthreads()
   sharedDouble8(threadID*dim:threadID*dim+dim-1) = inputValue(1:dim)
   DO WHILE (i1 > 0 )
@@ -91,7 +90,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 
-    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%y-1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
+    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
 
   ENDIF
 end subroutine
@@ -187,7 +186,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
     allocate( reductionArrayDevice2_multidim_reduce_kernel(reductionCardinality2* (2)) )
   ENDIF
 
-  DO i10 = 0, reductionCardinality2
+  DO i10 = 0, reductionCardinality2-1
     reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2)) = 0.0
   END DO
 
@@ -205,10 +204,9 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
 
   reductionArrayHost2 = reductionArrayDevice2_multidim_reduce_kernel
 
-  DO i10 = 0, reductionCardinality2
+  DO i10 = 0, reductionCardinality2-1
     opsDat2Host(1:2) = opsDat2Host(1:2) + reductionArrayHost2(i10 * (2) + 1 : i10 * (2) + (2))
   END DO
-
 
   deallocate( reductionArrayHost2 )
   call ops_set_dirtybit_device(opsArgArray, 2)
