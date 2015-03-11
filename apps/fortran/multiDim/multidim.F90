@@ -108,17 +108,17 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0") ! "double" should be "read(8)"
-  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1") ! "double" should be "read(8)"
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "real(8)", "dat0")
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "real(8)", "dat1")
 
   !initialize and declare constants
   const1 = 5.44_8
-  call ops_decl_const("const1", 1, "double", const1);
+  call ops_decl_const("const1", 1, "double", const1)
 
   !declare reduction handles
   reduct_result(1) = 0.0_8
   reduct_result(2) = 0.0_8
-  call ops_decl_reduction_handle(16, reduct_dat1, "double", "reduct_dat1");
+  call ops_decl_reduction_handle(16, reduct_dat1, "real(8)", "reduct_dat1");
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")

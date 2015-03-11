@@ -718,7 +718,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   }
 
   if(dat->block->dims == 3) {
-    if( strcmp(dat->type,"double") == 0 ) {
+    if( strcmp(dat->type,"double")  == 0 ||
+        strcmp(dat->type,"real(8)") == 0||
+        strcmp(dat->type,"double precision" ) == 0) {
       for(int i = 0; i < dat->size[2]; i++ ) {
         for(int j = 0; j < dat->size[1]; j++ ) {
           for(int k = 0; k < dat->size[0]; k++ ) {
@@ -734,7 +736,8 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         fprintf(fp,"\n");
       }
     }
-    else if( strcmp(dat->type,"float") == 0 ) {
+    else if( strcmp(dat->type,"float") == 0 ||
+             strcmp(dat->type,"real")  == 0) {
       for(int i = 0; i < dat->size[2]; i++ ) {
         for(int j = 0; j < dat->size[1]; j++ ) {
           for(int k = 0; k < dat->size[0]; k++ ) {
@@ -749,7 +752,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         fprintf(fp,"\n");
       }
     }
-    else if( strcmp(dat->type,"int") == 0 ) {
+    else if( strcmp(dat->type,"int")     == 0 ||
+             strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"int(4)")  == 0) {
       for(int i = 0; i < dat->size[2]; i++ ) {
         for(int j = 0; j < dat->size[1]; j++ ) {
           for(int k = 0; k < dat->size[0]; k++ ) {
@@ -771,7 +776,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     fprintf(fp,"\n");
   }
   else if(dat->block->dims == 2) {
-    if( strcmp(dat->type,"double") == 0 ) {
+    if( strcmp(dat->type,"double")  == 0 ||
+        strcmp(dat->type,"real(8)") == 0 ||
+        strcmp(dat->type,"double precision" ) == 0 ) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
@@ -784,7 +791,8 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         fprintf(fp,"\n");
       }
     }
-    else if( strcmp(dat->type,"float") == 0 ) {
+    else if( strcmp(dat->type,"float") == 0 ||
+             strcmp(dat->type,"real")  == 0) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
@@ -797,7 +805,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         fprintf(fp,"\n");
       }
     }
-    else if( strcmp(dat->type,"int") == 0 ) {
+    else if( strcmp(dat->type,"int") == 0 ||
+             strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"int(4)")  == 0) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
@@ -818,7 +828,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   }
   else if(dat->block->dims == 1) {
 
-    if( strcmp(dat->type,"double") == 0 ) {
+    if( strcmp(dat->type,"double")  == 0 ||
+        strcmp(dat->type,"real(8)") == 0 ||
+        strcmp(dat->type,"double precision") == 0) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%3.10lf", ((double *)dat->data)[j*dat->dim+d])<0) {
@@ -830,7 +842,8 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         fprintf(fp,"\n");
       }
     }
-    else if( strcmp(dat->type,"float") == 0 ) {
+    else if( strcmp(dat->type,"float") == 0 ||
+             strcmp(dat->type,"real")  == 0) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%e\n", ((float *)dat->data)[j*dat->dim+d])<0) {
@@ -841,7 +854,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
       fprintf(fp,"\n");
     }
-    else if( strcmp(dat->type,"int") == 0 ) {
+    else if( strcmp(dat->type,"int") == 0 ||
+             strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"int(4)") == 0) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%d\n", ((int *)dat->data)[j*dat->dim+d])<0) {

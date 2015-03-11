@@ -81,13 +81,13 @@ program MULTIDIM
   call ops_decl_stencil( 2, 1, s2D_00_arry, S2D_00, "00");
 
 
-  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "double", "dat0")
-  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "double", "dat1")
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "real(8)", "dat0")
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "real(8)", "dat1")
 
   const1 = 5.44_8
   reduct_result(1) = 0.0_8
   reduct_result(2) = 0.0_8
-  call ops_decl_reduction_handle(16, reduct_dat1, "double", "reduct_dat1");
+  call ops_decl_reduction_handle(16, reduct_dat1, "real(8)", "reduct_dat1");
 
   call ops_partition("2D_BLOCK_DECOMPSE")
   call ops_diagnostic_output()

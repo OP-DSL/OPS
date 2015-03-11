@@ -89,7 +89,7 @@ def ops_decl_const_parse(text):
   consts = []
   for m in re.finditer('(.*)call(.+)ops_decl_const(.*)\((.*)\)', text):
     args = m.group(4).split(',')
-
+    print m.group(4)
     # check for syntax errors
     if len(args) != 4:
       print 'Error in ops_decl_const : must have four arguments'
