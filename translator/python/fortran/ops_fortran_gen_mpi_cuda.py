@@ -657,9 +657,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_WRITE or (not dims[n].isdigit()) or int(dims[n])>1:
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
-          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
-          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host)')
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host)')
       code('')
 
     #NEED TO COPY CONSTANTS TO Symbol
