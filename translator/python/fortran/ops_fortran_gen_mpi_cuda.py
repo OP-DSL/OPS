@@ -555,7 +555,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('opsGblDat'+str(n+1)+'Device = 0.0d')
 
     if NDIM==1:
-      IF('(n_x_1) < size1')
+      IF('(n_x-1) < size1')
     if NDIM==2:
       IF('(n_x-1) < size1 .AND. (n_y-1) < size2')
     elif NDIM==3:
@@ -761,17 +761,17 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
           code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
-          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host)')
+          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,1)')
       code('')
 
     #NEED TO COPY CONSTANTS TO Symbol
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. '
+        condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
         if NDIM==3:
-          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. '
-    condition = condition[:-5]
+          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n   '
+    condition = condition[:-9]
 
     IF(condition)
     for n in range (0, nargs):

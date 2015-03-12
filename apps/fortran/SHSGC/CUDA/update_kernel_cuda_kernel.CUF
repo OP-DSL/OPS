@@ -83,7 +83,7 @@ attributes (global) subroutine update_kernel_wrap( &
   arg2 = (n_x-1) * 1*1
   arg3 = (n_x-1) * 1*1
   arg4 = (n_x-1) * 1*3
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call update_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -195,7 +195,10 @@ attributes (host) subroutine update_kernel_host( userSubroutine, block, dim, ran
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,multi_d4)
   call c_f_pointer(opsArg4%data_d,opsDat4Local,(/opsDat4Cardinality/))
 
-  IF ((xdim1 .NE. xdim1_update_kernel_h) .OR. (xdim2 .NE. xdim2_update_kernel_h) .OR. (xdim3 .NE. xdim3_update_kernel_h) .OR. (xdim4 .NE. xdim4_update_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_update_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_update_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_update_kernel_h) .OR. &
+  (xdim4 .NE. xdim4_update_kernel_h) ) THEN
     xdim1_update_kernel = xdim1
     xdim1_update_kernel_h = xdim1
     xdim2_update_kernel = xdim2

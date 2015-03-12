@@ -107,6 +107,27 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
         -o shsgc_openmp -lops_for_seq
 
+shsgc_cuda: shsgc_ops.F90 constants.F90
+ifeq ($(OPS_COMPILER),pgi)
+	$(FC) $(OPT) $(FMODS) -DOPS_WITH_CUDAFOR -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
+        ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
+        ./CUDA/drhoudx_kernel_cuda_kernel.CUF ./CUDA/save_kernel_cuda_kernel.CUF \
+        ./CUDA/drhoEpudx_kernel_cuda_kernel.CUF ./CUDA/updateRK3_kernel_cuda_kernel.CUF \
+        ./CUDA/Riemann_kernel_cuda_kernel.CUF ./CUDA/limiter_kernel_cuda_kernel.CUF \
+        ./CUDA/tvd_kernel_cuda_kernel.CUF ./CUDA/vars_kernel_cuda_kernel.CUF \
+        ./CUDA/calupwindeff_kernel_cuda_kernel.CUF ./CUDA/fact_kernel_cuda_kernel.CUF \
+        ./CUDA/update_kernel_cuda_kernel.CUF ./CUDA/test_kernel_cuda_kernel.CUF shsgc_ops.F90
+	$(FC) $(OPT) $(FLINK) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
+        drhouupdx_kernel_cuda_kernel.o zerores_kernel_cuda_kernel.o save_kernel_cuda_kernel.o \
+        drhoudx_kernel_cuda_kernel.o drhoEpudx_kernel_cuda_kernel.o updateRK3_kernel_cuda_kernel.o \
+        Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
+        vars_kernel_cuda_kernel.o calupwindeff_kernel_cuda_kernel.o \
+        fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
+        -o shsgc_openmp -lops_for_cuda
+else
+        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+endif
+
 shsgc_mpi: shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -c constants.F90 ./MPI/initialize_kernel_seq_kernel.F90 \
 	./MPI/drhouupdx_kernel_seq_kernel.F90 ./MPI/zerores_kernel_seq_kernel.F90 \

@@ -104,7 +104,7 @@ attributes (global) subroutine vars_kernel_wrap( &
   arg3 = (n_x-1) * 1*3
   arg4 = (n_x-1) * 1*3
   arg5 = (n_x-1) * 1*3
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call vars_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -240,7 +240,11 @@ attributes (host) subroutine vars_kernel_host( userSubroutine, block, dim, range
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,multi_d5)
   call c_f_pointer(opsArg5%data_d,opsDat5Local,(/opsDat5Cardinality/))
 
-  IF ((xdim1 .NE. xdim1_vars_kernel_h) .OR. (xdim2 .NE. xdim2_vars_kernel_h) .OR. (xdim3 .NE. xdim3_vars_kernel_h) .OR. (xdim4 .NE. xdim4_vars_kernel_h) .OR. (xdim5 .NE. xdim5_vars_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_vars_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_vars_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_vars_kernel_h) .OR. &
+  (xdim4 .NE. xdim4_vars_kernel_h) .OR. &
+  (xdim5 .NE. xdim5_vars_kernel_h) ) THEN
     xdim1_vars_kernel = xdim1
     xdim1_vars_kernel_h = xdim1
     xdim2_vars_kernel = xdim2

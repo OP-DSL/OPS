@@ -1,9 +1,34 @@
 MODULE OPS_CONSTANTS
 !----------shsgc Vars/Consts--------------
 #ifdef OPS_WITH_CUDAFOR
-  !use cudafor
-  !real(8), constant :: const1_OPS
-  !real(8) :: const1
+use cudafor
+integer, constant :: nxp
+integer, constant :: nyp
+integer, constant :: xhalo
+integer, constant :: yhalo
+real(8), constant :: xmin
+real(8), constant :: ymin
+real(8), constant :: xmax
+real(8), constant :: ymax
+real(8), constant :: dx
+real(8), constant :: dy
+real(8), constant :: pl
+real(8), constant :: pr
+real(8), constant :: rhol
+real(8), constant :: rhor
+real(8), constant :: ul
+real(8), constant :: ur
+real(8), constant :: gam
+real(8), constant :: gam1
+real(8), constant :: eps
+real(8), constant :: lambda
+real(8), constant :: a1(3)
+real(8), constant :: a2(3)
+real(8), constant :: dt
+real(8), constant :: del2
+real(8), constant :: akap2
+real(8), constant :: tvdsmu
+real(8), constant :: con
 #else
 integer nxp
 integer nyp

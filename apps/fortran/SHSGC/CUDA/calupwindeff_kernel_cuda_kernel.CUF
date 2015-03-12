@@ -123,7 +123,7 @@ attributes (global) subroutine calupwindeff_kernel_wrap( &
   arg5 = (n_x-1) * 1*3
   arg6 = (n_x-1) * 1*9
   arg7 = (n_x-1) * 1*3
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call calupwindeff_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -295,7 +295,13 @@ attributes (host) subroutine calupwindeff_kernel_host( userSubroutine, block, di
   dat7_base = getDatBaseFromOpsArg1D(opsArg7,start,multi_d7)
   call c_f_pointer(opsArg7%data_d,opsDat7Local,(/opsDat7Cardinality/))
 
-  IF ((xdim1 .NE. xdim1_calupwindeff_kernel_h) .OR. (xdim2 .NE. xdim2_calupwindeff_kernel_h) .OR. (xdim3 .NE. xdim3_calupwindeff_kernel_h) .OR. (xdim4 .NE. xdim4_calupwindeff_kernel_h) .OR. (xdim5 .NE. xdim5_calupwindeff_kernel_h) .OR. (xdim6 .NE. xdim6_calupwindeff_kernel_h) .OR. (xdim7 .NE. xdim7_calupwindeff_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_calupwindeff_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_calupwindeff_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_calupwindeff_kernel_h) .OR. &
+  (xdim4 .NE. xdim4_calupwindeff_kernel_h) .OR. &
+  (xdim5 .NE. xdim5_calupwindeff_kernel_h) .OR. &
+  (xdim6 .NE. xdim6_calupwindeff_kernel_h) .OR. &
+  (xdim7 .NE. xdim7_calupwindeff_kernel_h) ) THEN
     xdim1_calupwindeff_kernel = xdim1
     xdim1_calupwindeff_kernel_h = xdim1
     xdim2_calupwindeff_kernel = xdim2

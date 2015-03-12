@@ -150,7 +150,7 @@ attributes (global) subroutine updateRK3_kernel_wrap( &
   arg7 = (n_x-1) * 1*1
   arg8 = (n_x-1) * 1*1
   arg9 = (n_x-1) * 1*1
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call updateRK3_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -352,11 +352,19 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
   dat9_base = getDatBaseFromOpsArg1D(opsArg9,start,1)
   call c_f_pointer(opsArg9%data_d,opsDat9Local,(/opsDat9Cardinality/))
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg10,block),opsDat10Host)
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg10,block),opsDat10Host,1)
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg11,block),opsDat11Host)
+  call c_f_pointer(getReductionPtrFromOpsArg(opsArg11,block),opsDat11Host,1)
 
-  IF ((xdim1 .NE. xdim1_updateRK3_kernel_h) .OR. (xdim2 .NE. xdim2_updateRK3_kernel_h) .OR. (xdim3 .NE. xdim3_updateRK3_kernel_h) .OR. (xdim4 .NE. xdim4_updateRK3_kernel_h) .OR. (xdim5 .NE. xdim5_updateRK3_kernel_h) .OR. (xdim6 .NE. xdim6_updateRK3_kernel_h) .OR. (xdim7 .NE. xdim7_updateRK3_kernel_h) .OR. (xdim8 .NE. xdim8_updateRK3_kernel_h) .OR. (xdim9 .NE. xdim9_updateRK3_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_updateRK3_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_updateRK3_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_updateRK3_kernel_h) .OR. &
+  (xdim4 .NE. xdim4_updateRK3_kernel_h) .OR. &
+  (xdim5 .NE. xdim5_updateRK3_kernel_h) .OR. &
+  (xdim6 .NE. xdim6_updateRK3_kernel_h) .OR. &
+  (xdim7 .NE. xdim7_updateRK3_kernel_h) .OR. &
+  (xdim8 .NE. xdim8_updateRK3_kernel_h) .OR. &
+  (xdim9 .NE. xdim9_updateRK3_kernel_h) ) THEN
     xdim1_updateRK3_kernel = xdim1
     xdim1_updateRK3_kernel_h = xdim1
     xdim2_updateRK3_kernel = xdim2

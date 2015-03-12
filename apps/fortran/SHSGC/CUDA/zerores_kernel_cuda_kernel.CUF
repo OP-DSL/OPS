@@ -71,7 +71,7 @@ attributes (global) subroutine zerores_kernel_wrap( &
   arg1 = (n_x-1) * 1*1
   arg2 = (n_x-1) * 1*1
   arg3 = (n_x-1) * 1*1
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call zerores_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -165,7 +165,9 @@ attributes (host) subroutine zerores_kernel_host( userSubroutine, block, dim, ra
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
   call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
-  IF ((xdim1 .NE. xdim1_zerores_kernel_h) .OR. (xdim2 .NE. xdim2_zerores_kernel_h) .OR. (xdim3 .NE. xdim3_zerores_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_zerores_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_zerores_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_zerores_kernel_h) ) THEN
     xdim1_zerores_kernel = xdim1
     xdim1_zerores_kernel_h = xdim1
     xdim2_zerores_kernel = xdim2

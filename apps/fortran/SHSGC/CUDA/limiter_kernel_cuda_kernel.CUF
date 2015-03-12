@@ -82,7 +82,7 @@ attributes (global) subroutine limiter_kernel_wrap( &
   arg1 = (n_x-1) * 1*3
   arg2 = (n_x-1) * 1*3
   arg3 = (n_x-1) * 1*3
-  IF ((n_x_1) < size1) THEN
+  IF ((n_x-1) < size1) THEN
     call limiter_kernel( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
@@ -182,7 +182,9 @@ attributes (host) subroutine limiter_kernel_host( userSubroutine, block, dim, ra
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,multi_d3)
   call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
-  IF ((xdim1 .NE. xdim1_limiter_kernel_h) .OR. (xdim2 .NE. xdim2_limiter_kernel_h) .OR. (xdim3 .NE. xdim3_limiter_kernel_h) ) THEN
+  IF ((xdim1 .NE. xdim1_limiter_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_limiter_kernel_h) .OR. &
+  (xdim3 .NE. xdim3_limiter_kernel_h) ) THEN
     xdim1_limiter_kernel = xdim1
     xdim1_limiter_kernel_h = xdim1
     xdim2_limiter_kernel = xdim2
