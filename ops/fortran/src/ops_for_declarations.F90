@@ -563,7 +563,20 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
 
-    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    if (typ == "double" .OR. &
+    &    typ == "real(8)" .OR. &
+    &    typ == "double precision") then
+      typ = "double"//C_NULL_CHAR
+    else if (typ == "float" .OR. &
+    &    typ == "real" ) then
+      typ = "float"//C_NULL_CHAR
+    else if (typ == "int" .OR. &
+    &    typ == "integer(4)" .OR. &
+    &    typ == "integer") then
+      typ = "int"//C_NULL_CHAR
+    end if
+
+    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
     call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )

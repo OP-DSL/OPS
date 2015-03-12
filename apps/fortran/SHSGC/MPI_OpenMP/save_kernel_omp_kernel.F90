@@ -88,7 +88,7 @@ subroutine save_kernel_wrap( &
     & opsDat4Local(dat4_base+(n_x-1)*1), &
     & opsDat5Local(dat5_base+(n_x-1)*1), &
     & opsDat6Local(dat6_base+(n_x-1)*1) )
-  end DO
+  END DO
 end subroutine
 
 !host subroutine
@@ -161,7 +161,7 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
   DO n = 1, 1
     start(n) = range(2*n-1)
     end(n) = range(2*n);
-  end DO
+  END DO
 #endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))

@@ -237,20 +237,3 @@ void getIdx(ops_block block, int* start, int* idx) {
     idx[n] = start[n];
   }
 }
-
-
-/* Called from Fortran to set the indices to C*/
-ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
-
-  for(int i = 0; i<from->block->dims; i++) {
-    from_base[i]--; to_base[i]--;
-  }
-
-  ops_halo temp = ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
-
-  for(int i = 0; i<from->block->dims; i++) {
-    from_base[i]++; to_base[i]++;
-  }
-
-  return temp;
-}

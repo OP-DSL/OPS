@@ -7,29 +7,38 @@ USE OPS_FORTRAN_RT_SUPPORT
 
 USE OPS_CONSTANTS
 USE ISO_C_BINDING
+USE CUDAFOR
 
-INTEGER(KIND=4) xdim1
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim1_Riemann_kernel
+INTEGER(KIND=4):: xdim1_Riemann_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)
-INTEGER(KIND=4) xdim2
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim2_Riemann_kernel
+INTEGER(KIND=4):: xdim2_Riemann_kernel_h  = -1
 #define OPS_ACC2(x) (x+1)
-INTEGER(KIND=4) xdim3
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim3_Riemann_kernel
+INTEGER(KIND=4):: xdim3_Riemann_kernel_h  = -1
 #define OPS_ACC3(x) (x+1)
 
-INTEGER(KIND=4) multi_d4
-INTEGER(KIND=4) xdim4
+!multi-dim macros
+INTEGER(KIND=4), constant :: xdim4_Riemann_kernel
+INTEGER(KIND=4):: xdim4_Riemann_kernel_h  = -1
 #define OPS_ACC_MD4(d,x) ((x)*3+(d))
-INTEGER(KIND=4) multi_d5
-INTEGER(KIND=4) xdim5
+!multi-dim macros
+INTEGER(KIND=4), constant :: xdim5_Riemann_kernel
+INTEGER(KIND=4):: xdim5_Riemann_kernel_h  = -1
 #define OPS_ACC_MD5(d,x) ((x)*9+(d))
-INTEGER(KIND=4) multi_d6
-INTEGER(KIND=4) xdim6
+!multi-dim macros
+INTEGER(KIND=4), constant :: xdim6_Riemann_kernel
+INTEGER(KIND=4):: xdim6_Riemann_kernel_h  = -1
 #define OPS_ACC_MD6(d,x) ((x)*3+(d))
 
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: Riemann_kernel
-subroutine Riemann_kernel(rho_new, rhou_new, rhoE_new, alam, r, al)
+attributes (device) subroutine Riemann_kernel(rho_new, rhou_new, rhoE_new, alam, r, al)
 
   real (kind=8) , DIMENSION(1) :: rho_new, rhou_new, rhoE_new
   real (kind=8), DIMENSION(3) :: alam
@@ -105,7 +114,8 @@ end subroutine
 #undef OPS_ACC_MD6
 
 
-subroutine Riemann_kernel_wrap( &
+!CUDA kernel function -- wrapper calling user kernel
+attributes (global) subroutine Riemann_kernel_wrap( &
 & opsDat1Local, &
 & opsDat2Local, &
 & opsDat3Local, &
@@ -118,15 +128,20 @@ subroutine Riemann_kernel_wrap( &
 & dat4_base, &
 & dat5_base, &
 & dat6_base, &
-& start, &
-& end )
+& size1 )
   IMPLICIT NONE
-  real(8), INTENT(IN) :: opsDat1Local(*)
-  real(8), INTENT(IN) :: opsDat2Local(*)
-  real(8), INTENT(IN) :: opsDat3Local(*)
-  real(8)opsDat4Local(*)
-  real(8)opsDat5Local(*)
-  real(8)opsDat6Local(*)
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
+  integer(4) arg1
+  real(8), DEVICE, INTENT(IN) :: opsDat2Local(*)
+  integer(4) arg2
+  real(8), DEVICE, INTENT(IN) :: opsDat3Local(*)
+  integer(4) arg3
+  real(8), DEVICE :: opsDat4Local(*)
+  integer(4) arg4
+  real(8), DEVICE :: opsDat5Local(*)
+  integer(4) arg5
+  real(8), DEVICE :: opsDat6Local(*)
+  integer(4) arg6
   integer dat1_base
   integer dat2_base
   integer dat3_base
@@ -135,23 +150,32 @@ subroutine Riemann_kernel_wrap( &
   integer dat6_base
   integer(4) start(1)
   integer(4) end(1)
-  integer n_x
+  integer n_x, size1
 
-  !$OMP PARALLEL DO
-  !DIR$ SIMD
-  DO n_x = 1, end(1)-start(1)+1
+
+  n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
+
+  arg1 = (n_x-1) * 1*1
+  arg2 = (n_x-1) * 1*1
+  arg3 = (n_x-1) * 1*1
+  arg4 = (n_x-1) * 1*3
+  arg5 = (n_x-1) * 1*9
+  arg6 = (n_x-1) * 1*3
+  IF ((n_x_1) < size1) THEN
     call Riemann_kernel( &
-    & opsDat1Local(dat1_base+(n_x-1)*1), &
-    & opsDat2Local(dat2_base+(n_x-1)*1), &
-    & opsDat3Local(dat3_base+(n_x-1)*1), &
-    & opsDat4Local(dat4_base+(n_x-1)*3), &
-    & opsDat5Local(dat5_base+(n_x-1)*9), &
-    & opsDat6Local(dat6_base+(n_x-1)*3) )
-  END DO
+    & opsDat1Local(dat1_base+arg1), &
+    & opsDat2Local(dat2_base+arg2), &
+    & opsDat3Local(dat3_base+arg3), &
+    & opsDat4Local(dat4_base+arg4), &
+    & opsDat5Local(dat5_base+arg5), &
+    & opsDat6Local(dat6_base+arg6) )
+
+
+  ENDIF
 end subroutine
 
 !host subroutine
-subroutine Riemann_kernel_host( userSubroutine, block, dim, range, &
+attributes (host) subroutine Riemann_kernel_host( userSubroutine, block, dim, range, &
 & opsArg1, &
 & opsArg2, &
 & opsArg3, &
@@ -165,45 +189,64 @@ subroutine Riemann_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE  :: dat1_base
+  INTEGER(KIND=4) :: xdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4), DEVICE  :: dat2_base
+  INTEGER(KIND=4) :: xdim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), POINTER, DIMENSION(:) :: opsDat3Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4) :: dat3_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
+  integer(kind=4), DEVICE  :: dat3_base
+  INTEGER(KIND=4) :: xdim3
 
   type ( ops_arg )  , INTENT(IN) :: opsArg4
-  real(8), POINTER, DIMENSION(:) :: opsDat4Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat4_size
-  integer(kind=4) :: dat4_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat4_size
+  integer(kind=4), DEVICE  :: dat4_base
+  INTEGER(KIND=4) :: xdim4
+  INTEGER(KIND=4) :: multi_d4
 
   type ( ops_arg )  , INTENT(IN) :: opsArg5
-  real(8), POINTER, DIMENSION(:) :: opsDat5Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat5_size
-  integer(kind=4) :: dat5_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat5_size
+  integer(kind=4), DEVICE  :: dat5_base
+  INTEGER(KIND=4) :: xdim5
+  INTEGER(KIND=4) :: multi_d5
 
   type ( ops_arg )  , INTENT(IN) :: opsArg6
-  real(8), POINTER, DIMENSION(:) :: opsDat6Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat6Local
   integer(kind=4) :: opsDat6Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat6_size
-  integer(kind=4) :: dat6_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat6_size
+  integer(kind=4), DEVICE  :: dat6_base
+  INTEGER(KIND=4) :: xdim6
+  INTEGER(KIND=4) :: multi_d6
 
-  integer n_x
+
+  integer, DEVICE :: x_size
+  integer :: x_size_h
   integer start(1)
   integer end(1)
   integer(kind=4) :: n
+  integer(kind=4) :: i10
+  integer(kind=4) :: i20
+  integer(kind=4) :: blocksPerGrid
+  integer(kind=4) :: nshared
+  integer(kind=4) :: nthread
+
+  !cuda grid and thread block sizes
+  type(dim3) :: grid, tblock
 
   type ( ops_arg ) , DIMENSION(6) :: opsArgArray
 
@@ -219,54 +262,77 @@ subroutine Riemann_kernel_host( userSubroutine, block, dim, range, &
 #else
   DO n = 1, 1
     start(n) = range(2*n-1)
-    end(n) = range(2*n);
+    end(n) = range(2*n)
   END DO
 #endif
+
+
+  x_size = MAX(0,end(1)-start(1)+1)
+  x_size_h = MAX(0,end(1)-start(1)+1)
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
   opsDat1Cardinality = opsArg1%dim * xdim1
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
-  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+  call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
-  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+  call c_f_pointer(opsArg2%data_d,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
   opsDat3Cardinality = opsArg3%dim * xdim3
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
-  call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
+  call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
   opsDat4Cardinality = opsArg4%dim * xdim4
   multi_d4 = getDatDimFromOpsArg(opsArg4) ! dimension of the dat
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,multi_d4)
-  call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
+  call c_f_pointer(opsArg4%data_d,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
   opsDat5Cardinality = opsArg5%dim * xdim5
   multi_d5 = getDatDimFromOpsArg(opsArg5) ! dimension of the dat
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,multi_d5)
-  call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
+  call c_f_pointer(opsArg5%data_d,opsDat5Local,(/opsDat5Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg6),dat6_size,(/dim/))
   xdim6 = dat6_size(1)
   opsDat6Cardinality = opsArg6%dim * xdim6
   multi_d6 = getDatDimFromOpsArg(opsArg6) ! dimension of the dat
   dat6_base = getDatBaseFromOpsArg1D(opsArg6,start,multi_d6)
-  call c_f_pointer(opsArg6%data,opsDat6Local,(/opsDat6Cardinality/))
+  call c_f_pointer(opsArg6%data_d,opsDat6Local,(/opsDat6Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,6)
+  IF ((xdim1 .NE. xdim1_Riemann_kernel_h) .OR. (xdim2 .NE. xdim2_Riemann_kernel_h) .OR. (xdim3 .NE. xdim3_Riemann_kernel_h) .OR. (xdim4 .NE. xdim4_Riemann_kernel_h) .OR. (xdim5 .NE. xdim5_Riemann_kernel_h) .OR. (xdim6 .NE. xdim6_Riemann_kernel_h) ) THEN
+    xdim1_Riemann_kernel = xdim1
+    xdim1_Riemann_kernel_h = xdim1
+    xdim2_Riemann_kernel = xdim2
+    xdim2_Riemann_kernel_h = xdim2
+    xdim3_Riemann_kernel = xdim3
+    xdim3_Riemann_kernel_h = xdim3
+    xdim4_Riemann_kernel = xdim4
+    xdim4_Riemann_kernel_h = xdim4
+    xdim5_Riemann_kernel = xdim5
+    xdim5_Riemann_kernel_h = xdim5
+    xdim6_Riemann_kernel = xdim6
+    xdim6_Riemann_kernel_h = xdim6
+  ENDIF
+
+  grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1)
+  tblock = dim3(getOPS_block_size_x(),1,1)
+
+
+  !halo exchanges
+  call ops_H_D_exchanges_device(opsArgArray,6)
   call ops_halo_exchanges(opsArgArray,6,range)
-  call ops_H_D_exchanges_host(opsArgArray,6)
 
-  call Riemann_kernel_wrap( &
+  call Riemann_kernel_wrap <<<grid,tblock>>> (&
   & opsDat1Local, &
   & opsDat2Local, &
   & opsDat3Local, &
@@ -279,10 +345,9 @@ subroutine Riemann_kernel_host( userSubroutine, block, dim, range, &
   & dat4_base, &
   & dat5_base, &
   & dat6_base, &
-  & start, &
-  & end )
+  & x_size )
 
-  call ops_set_dirtybit_host(opsArgArray, 6)
+  call ops_set_dirtybit_device(opsArgArray, 6)
   call ops_set_halo_dirtybit3(opsArg4,range)
   call ops_set_halo_dirtybit3(opsArg5,range)
   call ops_set_halo_dirtybit3(opsArg6,range)

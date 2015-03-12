@@ -90,7 +90,7 @@ subroutine initialize_kernel_wrap( &
     & opsDat4Local(dat4_base+(n_x-1)*1), &
     & opsDat5Local(dat5_base+(n_x-1)*1), &
     & idx_local )
-  end DO
+  END DO
 end subroutine
 
 !host subroutine
@@ -160,7 +160,7 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   DO n = 1, 1
     start(n) = range(2*n-1)
     end(n) = range(2*n);
-  end DO
+  END DO
 #endif
 
 #ifdef OPS_MPI

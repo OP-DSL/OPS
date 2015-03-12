@@ -454,7 +454,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
-  //grp->halos = &halos[0]; //TODO: make a copy?
+  //grp->halos = &halos[0];
 
   //make a copy
   ops_halo* halos_temp = (ops_halo *)xmalloc(nhalos*sizeof(ops_halo_core));
@@ -754,6 +754,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
     else if( strcmp(dat->type,"int")     == 0 ||
              strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"integer(4)") == 0 ||
              strcmp(dat->type,"int(4)")  == 0) {
       for(int i = 0; i < dat->size[2]; i++ ) {
         for(int j = 0; j < dat->size[1]; j++ ) {
@@ -807,6 +808,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
     else if( strcmp(dat->type,"int") == 0 ||
              strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"integer(4)") == 0 ||
              strcmp(dat->type,"int(4)")  == 0) {
       for(int i = 0; i < dat->size[1]; i++ ) {
         for(int j = 0; j < dat->size[0]; j++ ) {
@@ -856,6 +858,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
     }
     else if( strcmp(dat->type,"int") == 0 ||
              strcmp(dat->type,"integer") == 0 ||
+             strcmp(dat->type,"integer(4)") == 0 ||
              strcmp(dat->type,"int(4)") == 0) {
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
@@ -1056,4 +1059,21 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, in
     }
   }
   return idx0+dim0*(idx1)+dim0*dim1*(idx2);
+}
+
+
+/* Called from Fortran to set the indices to C*/
+ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
+
+  for(int i = 0; i<from->block->dims; i++) {
+    from_base[i]--; to_base[i]--;
+  }
+
+  ops_halo temp = ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
+
+  for(int i = 0; i<from->block->dims; i++) {
+    from_base[i]++; to_base[i]++;
+  }
+
+  return temp;
 }

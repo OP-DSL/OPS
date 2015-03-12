@@ -7,24 +7,34 @@ USE OPS_FORTRAN_RT_SUPPORT
 
 USE OPS_CONSTANTS
 USE ISO_C_BINDING
+USE CUDAFOR
 
-INTEGER(KIND=4) xdim1
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim1_initialize_kernel
+INTEGER(KIND=4):: xdim1_initialize_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)
-INTEGER(KIND=4) xdim2
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim2_initialize_kernel
+INTEGER(KIND=4):: xdim2_initialize_kernel_h  = -1
 #define OPS_ACC2(x) (x+1)
-INTEGER(KIND=4) xdim3
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim3_initialize_kernel
+INTEGER(KIND=4):: xdim3_initialize_kernel_h  = -1
 #define OPS_ACC3(x) (x+1)
-INTEGER(KIND=4) xdim4
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim4_initialize_kernel
+INTEGER(KIND=4):: xdim4_initialize_kernel_h  = -1
 #define OPS_ACC4(x) (x+1)
-INTEGER(KIND=4) xdim5
+!single-dim macros
+INTEGER(KIND=4), constant :: xdim5_initialize_kernel
+INTEGER(KIND=4):: xdim5_initialize_kernel_h  = -1
 #define OPS_ACC5(x) (x+1)
 
 
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: initialize_kernel
-subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
+attributes (device) subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
   real (kind=8) , DIMENSION(1) :: x, rho_new, rhou_new, rhoE_new, rhoin
   INTEGER(kind=4), DIMENSION(1), INTENT(IN) :: idx
 
@@ -51,7 +61,8 @@ end subroutine
 
 
 
-subroutine initialize_kernel_wrap( &
+!CUDA kernel function -- wrapper calling user kernel
+attributes (global) subroutine initialize_kernel_wrap( &
 & opsDat1Local, &
 & opsDat2Local, &
 & opsDat3Local, &
@@ -63,14 +74,18 @@ subroutine initialize_kernel_wrap( &
 & dat3_base, &
 & dat4_base, &
 & dat5_base, &
-& start, &
-& end )
+& size1 )
   IMPLICIT NONE
-  real(8)opsDat1Local(*)
-  real(8)opsDat2Local(*)
-  real(8)opsDat3Local(*)
-  real(8)opsDat4Local(*)
-  real(8)opsDat5Local(*)
+  real(8), DEVICE :: opsDat1Local(*)
+  integer(4) arg1
+  real(8), DEVICE :: opsDat2Local(*)
+  integer(4) arg2
+  real(8), DEVICE :: opsDat3Local(*)
+  integer(4) arg3
+  real(8), DEVICE :: opsDat4Local(*)
+  integer(4) arg4
+  real(8), DEVICE :: opsDat5Local(*)
+  integer(4) arg5
   integer(4) idx(1),idx_local(1)
   integer dat1_base
   integer dat2_base
@@ -79,22 +94,32 @@ subroutine initialize_kernel_wrap( &
   integer dat5_base
   integer(4) start(1)
   integer(4) end(1)
-  integer n_x
+  integer n_x, size1
 
-  DO n_x = 1, end(1)-start(1)+1
-    idx_local(1) = idx(1) + n_x - 1
+
+  n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
+
+  idx_local(1) = idx(1)+ n_x-1
+  arg1 = (n_x-1) * 1*1
+  arg2 = (n_x-1) * 1*1
+  arg3 = (n_x-1) * 1*1
+  arg4 = (n_x-1) * 1*1
+  arg5 = (n_x-1) * 1*1
+  IF ((n_x_1) < size1) THEN
     call initialize_kernel( &
-    & opsDat1Local(dat1_base+(n_x-1)*1), &
-    & opsDat2Local(dat2_base+(n_x-1)*1), &
-    & opsDat3Local(dat3_base+(n_x-1)*1), &
-    & opsDat4Local(dat4_base+(n_x-1)*1), &
-    & opsDat5Local(dat5_base+(n_x-1)*1), &
+    & opsDat1Local(dat1_base+arg1), &
+    & opsDat2Local(dat2_base+arg2), &
+    & opsDat3Local(dat3_base+arg3), &
+    & opsDat4Local(dat4_base+arg4), &
+    & opsDat5Local(dat5_base+arg5), &
     & idx_local )
-  END DO
+
+
+  ENDIF
 end subroutine
 
 !host subroutine
-subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
+attributes (host) subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
 & opsArg1, &
 & opsArg2, &
 & opsArg3, &
@@ -108,42 +133,57 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE  :: dat1_base
+  INTEGER(KIND=4) :: xdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4), DEVICE  :: dat2_base
+  INTEGER(KIND=4) :: xdim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), POINTER, DIMENSION(:) :: opsDat3Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4) :: dat3_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
+  integer(kind=4), DEVICE  :: dat3_base
+  INTEGER(KIND=4) :: xdim3
 
   type ( ops_arg )  , INTENT(IN) :: opsArg4
-  real(8), POINTER, DIMENSION(:) :: opsDat4Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat4_size
-  integer(kind=4) :: dat4_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat4_size
+  integer(kind=4), DEVICE  :: dat4_base
+  INTEGER(KIND=4) :: xdim4
 
   type ( ops_arg )  , INTENT(IN) :: opsArg5
-  real(8), POINTER, DIMENSION(:) :: opsDat5Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat5_size
-  integer(kind=4) :: dat5_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat5_size
+  integer(kind=4), DEVICE  :: dat5_base
+  INTEGER(KIND=4) :: xdim5
 
   type ( ops_arg )  , INTENT(IN) :: opsArg6
 
-  integer n_x
+
+  integer, DEVICE :: x_size
+  integer :: x_size_h
   integer start(1)
   integer end(1)
-  integer idx(1)
+  integer, DEVICE :: idx(1)
   integer(kind=4) :: n
+  integer(kind=4) :: i10
+  integer(kind=4) :: i20
+  integer(kind=4) :: blocksPerGrid
+  integer(kind=4) :: nshared
+  integer(kind=4) :: nthread
+
+  !cuda grid and thread block sizes
+  type(dim3) :: grid, tblock
 
   type ( ops_arg ) , DIMENSION(6) :: opsArgArray
 
@@ -159,7 +199,7 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
 #else
   DO n = 1, 1
     start(n) = range(2*n-1)
-    end(n) = range(2*n);
+    end(n) = range(2*n)
   END DO
 #endif
 
@@ -169,41 +209,63 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   idx(1) = start(1)
 #endif
 
+
+  x_size = MAX(0,end(1)-start(1)+1)
+  x_size_h = MAX(0,end(1)-start(1)+1)
+
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
   opsDat1Cardinality = opsArg1%dim * xdim1
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
-  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+  call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
-  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+  call c_f_pointer(opsArg2%data_d,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
   opsDat3Cardinality = opsArg3%dim * xdim3
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
-  call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
+  call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
   opsDat4Cardinality = opsArg4%dim * xdim4
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
-  call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
+  call c_f_pointer(opsArg4%data_d,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
   opsDat5Cardinality = opsArg5%dim * xdim5
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,1)
-  call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
+  call c_f_pointer(opsArg5%data_d,opsDat5Local,(/opsDat5Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,6)
+
+  IF ((xdim1 .NE. xdim1_initialize_kernel_h) .OR. (xdim2 .NE. xdim2_initialize_kernel_h) .OR. (xdim3 .NE. xdim3_initialize_kernel_h) .OR. (xdim4 .NE. xdim4_initialize_kernel_h) .OR. (xdim5 .NE. xdim5_initialize_kernel_h) ) THEN
+    xdim1_initialize_kernel = xdim1
+    xdim1_initialize_kernel_h = xdim1
+    xdim2_initialize_kernel = xdim2
+    xdim2_initialize_kernel_h = xdim2
+    xdim3_initialize_kernel = xdim3
+    xdim3_initialize_kernel_h = xdim3
+    xdim4_initialize_kernel = xdim4
+    xdim4_initialize_kernel_h = xdim4
+    xdim5_initialize_kernel = xdim5
+    xdim5_initialize_kernel_h = xdim5
+  ENDIF
+
+  grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, 1, 1)
+  tblock = dim3(getOPS_block_size_x(),1,1)
+
+
+  !halo exchanges
+  call ops_H_D_exchanges_device(opsArgArray,6)
   call ops_halo_exchanges(opsArgArray,6,range)
-  call ops_H_D_exchanges_host(opsArgArray,6)
 
-  call initialize_kernel_wrap( &
+  call initialize_kernel_wrap <<<grid,tblock>>> (&
   & opsDat1Local, &
   & opsDat2Local, &
   & opsDat3Local, &
@@ -215,10 +277,9 @@ subroutine initialize_kernel_host( userSubroutine, block, dim, range, &
   & dat3_base, &
   & dat4_base, &
   & dat5_base, &
-  & start, &
-  & end )
+  & x_size )
 
-  call ops_set_dirtybit_host(opsArgArray, 6)
+  call ops_set_dirtybit_device(opsArgArray, 6)
   call ops_set_halo_dirtybit3(opsArg1,range)
   call ops_set_halo_dirtybit3(opsArg2,range)
   call ops_set_halo_dirtybit3(opsArg3,range)

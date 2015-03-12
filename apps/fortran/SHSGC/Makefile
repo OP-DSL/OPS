@@ -55,11 +55,11 @@ endif
   CXXFLAGS      := $(CCFLAGS)
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXXLINK       := -lstdc++ #-pgcpplibs
-  FC            := pgfortran
+  FC            := pgfortran $(PGI_CUDA_FORT_FLAGS)
   FFLAGS        := $(OPT)
   MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90
+  MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(CXXFLAGS)
   TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp
 else

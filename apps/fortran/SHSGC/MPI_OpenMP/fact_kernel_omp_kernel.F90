@@ -62,7 +62,7 @@ subroutine fact_kernel_wrap( &
     call fact_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &
     & opsDat2Local(dat2_base+(n_x-1)*3) )
-  end DO
+  END DO
 end subroutine
 
 !host subroutine
@@ -103,7 +103,7 @@ subroutine fact_kernel_host( userSubroutine, block, dim, range, &
   DO n = 1, 1
     start(n) = range(2*n-1)
     end(n) = range(2*n);
-  end DO
+  END DO
 #endif
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
