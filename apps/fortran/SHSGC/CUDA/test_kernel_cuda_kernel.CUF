@@ -9,9 +9,7 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 USE CUDAFOR
 
-!Vars for reductions
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice2_test_kernel
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim1_test_kernel
 INTEGER(KIND=4):: xdim1_test_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)

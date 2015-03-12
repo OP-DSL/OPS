@@ -129,7 +129,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 ##########################################################################
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        comm('Vars for reductions')
+        #comm('Vars for reductions')
         if (accs[n]== OPS_INC or accs[n]== OPS_MIN or accs[n]== OPS_MAX):
           code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice'+str(n+1)+'_'+name)
         if ((accs[n]==OPS_READ and ((not dims[n].isdigit()) or int(dims[n]) > 1)) or accs[n]==OPS_WRITE):
@@ -141,7 +141,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
-          comm('single-dim macros')
+          #comm('single-dim macros')
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
@@ -155,7 +155,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
-          comm('multi-dim macros')
+          #comm('multi-dim macros')
           code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
           code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
@@ -859,7 +859,10 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         if accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX:
           code('& reductionArrayDevice'+str(n+1)+'_'+name+', &')
         elif accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
-          code('& opsDat'+str(n+1)+'Host, &')
+          code('& opsDat'+str(n+1)+'Host(1), &')
+        #need to support multi-dim OPS_READS here
+
+
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' :

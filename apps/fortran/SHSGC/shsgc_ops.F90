@@ -77,7 +77,6 @@ program SHSGC
   real(8) :: a1(3)
   real(8) :: a2(3)
 
-
   nxp = 204
   nyp = 5
   xhalo = 2
@@ -308,10 +307,14 @@ program SHSGC
                     & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_READ), &
                     & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
-  call ops_reduction_result(rms, local_rms);
+  call ops_reduction_result(rms, local_rms)
+  write (*,*), "completed ---"
+
   if (ops_is_root() .eq. 1) then
     write (*,*), "RMS = " , sqrt(local_rms)/nxp;
   end if
+
+  write (*,*), "completed --- 2"
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'

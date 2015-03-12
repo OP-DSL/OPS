@@ -9,28 +9,22 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 USE CUDAFOR
 
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim1_Riemann_kernel
 INTEGER(KIND=4):: xdim1_Riemann_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim2_Riemann_kernel
 INTEGER(KIND=4):: xdim2_Riemann_kernel_h  = -1
 #define OPS_ACC2(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim3_Riemann_kernel
 INTEGER(KIND=4):: xdim3_Riemann_kernel_h  = -1
 #define OPS_ACC3(x) (x+1)
 
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim4_Riemann_kernel
 INTEGER(KIND=4):: xdim4_Riemann_kernel_h  = -1
 #define OPS_ACC_MD4(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim5_Riemann_kernel
 INTEGER(KIND=4):: xdim5_Riemann_kernel_h  = -1
 #define OPS_ACC_MD5(d,x) ((x)*9+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim6_Riemann_kernel
 INTEGER(KIND=4):: xdim6_Riemann_kernel_h  = -1
 #define OPS_ACC_MD6(d,x) ((x)*3+(d))

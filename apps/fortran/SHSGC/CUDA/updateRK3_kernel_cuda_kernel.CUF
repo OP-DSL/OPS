@@ -9,41 +9,30 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 USE CUDAFOR
 
-!Vars for reductions
-!Vars for reductions
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim1_updateRK3_kernel
 INTEGER(KIND=4):: xdim1_updateRK3_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim2_updateRK3_kernel
 INTEGER(KIND=4):: xdim2_updateRK3_kernel_h  = -1
 #define OPS_ACC2(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim3_updateRK3_kernel
 INTEGER(KIND=4):: xdim3_updateRK3_kernel_h  = -1
 #define OPS_ACC3(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim4_updateRK3_kernel
 INTEGER(KIND=4):: xdim4_updateRK3_kernel_h  = -1
 #define OPS_ACC4(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim5_updateRK3_kernel
 INTEGER(KIND=4):: xdim5_updateRK3_kernel_h  = -1
 #define OPS_ACC5(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim6_updateRK3_kernel
 INTEGER(KIND=4):: xdim6_updateRK3_kernel_h  = -1
 #define OPS_ACC6(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim7_updateRK3_kernel
 INTEGER(KIND=4):: xdim7_updateRK3_kernel_h  = -1
 #define OPS_ACC7(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim8_updateRK3_kernel
 INTEGER(KIND=4):: xdim8_updateRK3_kernel_h  = -1
 #define OPS_ACC8(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim9_updateRK3_kernel
 INTEGER(KIND=4):: xdim9_updateRK3_kernel_h  = -1
 #define OPS_ACC9(x) (x+1)
@@ -403,8 +392,8 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
   & opsDat7Local, &
   & opsDat8Local, &
   & opsDat9Local, &
-  & opsDat10Host, &
-  & opsDat11Host, &
+  & opsDat10Host(1), &
+  & opsDat11Host(1), &
   & dat1_base, &
   & dat2_base, &
   & dat3_base, &

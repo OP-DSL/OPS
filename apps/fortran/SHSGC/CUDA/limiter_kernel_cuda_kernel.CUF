@@ -10,15 +10,12 @@ USE ISO_C_BINDING
 USE CUDAFOR
 
 
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim1_limiter_kernel
 INTEGER(KIND=4):: xdim1_limiter_kernel_h  = -1
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim2_limiter_kernel
 INTEGER(KIND=4):: xdim2_limiter_kernel_h  = -1
 #define OPS_ACC_MD2(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim3_limiter_kernel
 INTEGER(KIND=4):: xdim3_limiter_kernel_h  = -1
 #define OPS_ACC_MD3(d,x) ((x)*3+(d))

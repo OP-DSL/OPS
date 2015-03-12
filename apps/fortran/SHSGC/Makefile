@@ -54,7 +54,7 @@ endif
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXXLINK       := -lstdc++ #-pgcpplibs
+  CXXLINK       := -lstdc++ -lgcc_s #-pgcpplibs
   FC            := pgfortran $(PGI_CUDA_FORT_FLAGS)
   FFLAGS        := $(OPT)
   MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
@@ -123,7 +123,7 @@ ifeq ($(OPS_COMPILER),pgi)
         Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
         vars_kernel_cuda_kernel.o calupwindeff_kernel_cuda_kernel.o \
         fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
-        -o shsgc_openmp -lops_for_cuda
+        -o shsgc_cuda -lops_for_cuda
 else
         @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
@@ -172,3 +172,4 @@ clean:
 	rm -f shsgc_mpi
 	rm -f shsgc_openmp
 	rm -f shsgc_mpi_openmp
+	rm -f shsgc_cuda

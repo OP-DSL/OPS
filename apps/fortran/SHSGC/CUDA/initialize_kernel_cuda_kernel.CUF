@@ -9,23 +9,18 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 USE CUDAFOR
 
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim1_initialize_kernel
 INTEGER(KIND=4):: xdim1_initialize_kernel_h  = -1
 #define OPS_ACC1(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim2_initialize_kernel
 INTEGER(KIND=4):: xdim2_initialize_kernel_h  = -1
 #define OPS_ACC2(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim3_initialize_kernel
 INTEGER(KIND=4):: xdim3_initialize_kernel_h  = -1
 #define OPS_ACC3(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim4_initialize_kernel
 INTEGER(KIND=4):: xdim4_initialize_kernel_h  = -1
 #define OPS_ACC4(x) (x+1)
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim5_initialize_kernel
 INTEGER(KIND=4):: xdim5_initialize_kernel_h  = -1
 #define OPS_ACC5(x) (x+1)

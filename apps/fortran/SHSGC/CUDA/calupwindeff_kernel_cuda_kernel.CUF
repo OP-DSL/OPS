@@ -10,31 +10,24 @@ USE ISO_C_BINDING
 USE CUDAFOR
 
 
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim1_calupwindeff_kernel
 INTEGER(KIND=4):: xdim1_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim2_calupwindeff_kernel
 INTEGER(KIND=4):: xdim2_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD2(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim3_calupwindeff_kernel
 INTEGER(KIND=4):: xdim3_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD3(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim4_calupwindeff_kernel
 INTEGER(KIND=4):: xdim4_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD4(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim5_calupwindeff_kernel
 INTEGER(KIND=4):: xdim5_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD5(d,x) ((x)*3+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim6_calupwindeff_kernel
 INTEGER(KIND=4):: xdim6_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD6(d,x) ((x)*9+(d))
-!multi-dim macros
 INTEGER(KIND=4), constant :: xdim7_calupwindeff_kernel
 INTEGER(KIND=4):: xdim7_calupwindeff_kernel_h  = -1
 #define OPS_ACC_MD7(d,x) ((x)*3+(d))
