@@ -279,6 +279,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       config.depth = config.depth - 2;
       code('END SUBROUTINE')
       code('')
+
     if reduct_mdim:
       comm('Multidimensional reduction cuda kernel')
       code('attributes (device) SUBROUTINE ReductionFloat8Mdim(reductionResult,inputValue,reductionOperation,dim)')
@@ -299,17 +300,46 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       DOWHILE('i1 > 0')
       code('CALL syncthreads()')
       IF('threadID < i1')
+      code('SELECT CASE(reductionOperation)')
+      code('CASE (0)') #inc
       DO('i2','0','dim-1')
       code('sharedDouble8(threadID*dim + i2) = sharedDouble8(threadID*dim + i2) + sharedDouble8((threadID + i1)*dim + i2)')
       ENDDO()
+      code('CASE (1)')#max
+      DO('i2','0','dim-1')
+      IF('sharedDouble8(threadID*dim + i2) < sharedDouble8((threadID + i1)*dim + i2)')
+      code('sharedDouble8(threadID*dim + i2) = sharedDouble8((threadID + i1)*dim + i2)')
+      ENDIF()
+      ENDDO()
+      code('CASE (2)')#min
+      DO('i2','0','dim-1')
+      IF('sharedDouble8(threadID*dim + i2) < sharedDouble8((threadID + i1)*dim + i2)')
+      code('sharedDouble8(threadID*dim + i2) = sharedDouble8((threadID + i1)*dim + i2)')
+      ENDIF()
+      ENDDO()
+      code('END SELECT')
       ENDIF()
       code('i1 = ishft(i1,-1)')
       ENDDO()
 
       code('CALL syncthreads()')
-
       IF('threadID .EQ. 0')
+      code('SELECT CASE(reductionOperation)')
+      code('CASE (0)')#inc
       code('reductionResult(1:dim) = reductionResult(1:dim) + sharedDouble8(0:dim-1)')
+      code('CASE (1)')#max
+      DO('i2','1','dim')
+      IF('reductionResult(i2) < sharedDouble8(i2-1)')
+      code('reductionResult(i2) = sharedDouble8(i2-1)')
+      ENDIF()
+      ENDDO()
+      code('CASE (2)')#min
+      DO('i2','1','dim')
+      IF('reductionResult(i2) > sharedDouble8(i2-1)')
+      code('reductionResult(i2) = sharedDouble8(i2-1)')
+      ENDIF()
+      ENDDO()
+      code('END SELECT')
       ENDIF()
 
       code('CALL syncthreads()')
@@ -317,6 +347,71 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('END SUBROUTINE')
       code('')
 
+      comm('Multidimensional reduction cuda kernel')
+      code('attributes (device) SUBROUTINE ReductionInt4Mdim(reductionResult,inputValue,reductionOperation,dim)')
+      config.depth = config.depth +2;
+      code('INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult')
+      code('INTEGER(kind=4), DIMENSION(:) :: inputValue')
+      code('INTEGER(kind=4), VALUE :: reductionOperation')
+      code('INTEGER(kind=4), VALUE :: dim')
+      code('INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4')
+      code('INTEGER(kind=4) :: i1')
+      code('INTEGER(kind=4) :: d')
+      code('INTEGER(kind=4) :: threadID')
+      code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
+      code('i1 = ishft(blockDim%x*blockDim%y,-1)')
+      code('CALL syncthreads()')
+      code('sharedInt4(threadID*dim:threadID*dim+dim-1) = inputValue(1:dim)')
+
+      DOWHILE('i1 > 0')
+      code('CALL syncthreads()')
+      IF('threadID < i1')
+      code('SELECT CASE(reductionOperation)')
+      code('CASE (0)') #inc
+      DO('i2','0','dim-1')
+      code('sharedInt4(threadID*dim + i2) = sharedInt4(threadID*dim + i2) + sharedInt4((threadID + i1)*dim + i2)')
+      ENDDO()
+      code('CASE (1)')#max
+      DO('i2','0','dim-1')
+      IF('sharedInt4(threadID*dim + i2) < sharedInt4((threadID + i1)*dim + i2)')
+      code('sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)')
+      ENDIF()
+      ENDDO()
+      code('CASE (2)')#min
+      DO('i2','0','dim-1')
+      IF('sharedInt4(threadID*dim + i2) < sharedInt4((threadID + i1)*dim + i2)')
+      code('sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)')
+      ENDIF()
+      ENDDO()
+      code('END SELECT')
+      ENDIF()
+      code('i1 = ishft(i1,-1)')
+      ENDDO()
+
+      code('CALL syncthreads()')
+      IF('threadID .EQ. 0')
+      code('SELECT CASE(reductionOperation)')
+      code('CASE (0)')#inc
+      code('reductionResult(1:dim) = reductionResult(1:dim) + sharedInt4(0:dim-1)')
+      code('CASE (1)')#max
+      DO('i2','1','dim')
+      IF('reductionResult(i2) < sharedInt4(i2-1)')
+      code('reductionResult(i2) = sharedInt4(i2-1)')
+      ENDIF()
+      ENDDO()
+      code('CASE (2)')#min
+      DO('i2','1','dim')
+      IF('reductionResult(i2) > sharedInt4(i2-1)')
+      code('reductionResult(i2) = sharedInt4(i2-1)')
+      ENDIF()
+      ENDDO()
+      code('END SELECT')
+      ENDIF()
+
+      code('CALL syncthreads()')
+      config.depth = config.depth - 2;
+      code('END SUBROUTINE')
+      code('')
 
 
 ##########################################################################

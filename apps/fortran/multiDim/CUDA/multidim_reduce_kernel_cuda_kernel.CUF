@@ -36,15 +36,105 @@ attributes (device) SUBROUTINE ReductionFloat8Mdim(reductionResult,inputValue,re
   DO WHILE (i1 > 0 )
     CALL syncthreads()
     IF (threadID < i1) THEN
+      SELECT CASE(reductionOperation)
+      CASE (0)
       DO i2 = 0, dim-1
         sharedDouble8(threadID*dim + i2) = sharedDouble8(threadID*dim + i2) + sharedDouble8((threadID + i1)*dim + i2)
       END DO
+      CASE (1)
+      DO i2 = 0, dim-1
+        IF (sharedDouble8(threadID*dim + i2) < sharedDouble8((threadID + i1)*dim + i2)) THEN
+          sharedDouble8(threadID*dim + i2) = sharedDouble8((threadID + i1)*dim + i2)
+        ENDIF
+      END DO
+      CASE (2)
+      DO i2 = 0, dim-1
+        IF (sharedDouble8(threadID*dim + i2) < sharedDouble8((threadID + i1)*dim + i2)) THEN
+          sharedDouble8(threadID*dim + i2) = sharedDouble8((threadID + i1)*dim + i2)
+        ENDIF
+      END DO
+      END SELECT
     ENDIF
     i1 = ishft(i1,-1)
   END DO
   CALL syncthreads()
   IF (threadID .EQ. 0) THEN
+    SELECT CASE(reductionOperation)
+    CASE (0)
     reductionResult(1:dim) = reductionResult(1:dim) + sharedDouble8(0:dim-1)
+    CASE (1)
+    DO i2 = 1, dim
+      IF (reductionResult(i2) < sharedDouble8(i2-1)) THEN
+        reductionResult(i2) = sharedDouble8(i2-1)
+      ENDIF
+    END DO
+    CASE (2)
+    DO i2 = 1, dim
+      IF (reductionResult(i2) > sharedDouble8(i2-1)) THEN
+        reductionResult(i2) = sharedDouble8(i2-1)
+      ENDIF
+    END DO
+    END SELECT
+  ENDIF
+  CALL syncthreads()
+END SUBROUTINE
+
+!Multidimensional reduction cuda kernel
+attributes (device) SUBROUTINE ReductionInt4Mdim(reductionResult,inputValue,reductionOperation,dim)
+  INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult
+  INTEGER(kind=4), DIMENSION(:) :: inputValue
+  INTEGER(kind=4), VALUE :: reductionOperation
+  INTEGER(kind=4), VALUE :: dim
+  INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4
+  INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: d
+  INTEGER(kind=4) :: threadID
+  threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+  i1 = ishft(blockDim%x*blockDim%y,-1)
+  CALL syncthreads()
+  sharedInt4(threadID*dim:threadID*dim+dim-1) = inputValue(1:dim)
+  DO WHILE (i1 > 0 )
+    CALL syncthreads()
+    IF (threadID < i1) THEN
+      SELECT CASE(reductionOperation)
+      CASE (0)
+      DO i2 = 0, dim-1
+        sharedInt4(threadID*dim + i2) = sharedInt4(threadID*dim + i2) + sharedInt4((threadID + i1)*dim + i2)
+      END DO
+      CASE (1)
+      DO i2 = 0, dim-1
+        IF (sharedInt4(threadID*dim + i2) < sharedInt4((threadID + i1)*dim + i2)) THEN
+          sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)
+        ENDIF
+      END DO
+      CASE (2)
+      DO i2 = 0, dim-1
+        IF (sharedInt4(threadID*dim + i2) < sharedInt4((threadID + i1)*dim + i2)) THEN
+          sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)
+        ENDIF
+      END DO
+      END SELECT
+    ENDIF
+    i1 = ishft(i1,-1)
+  END DO
+  CALL syncthreads()
+  IF (threadID .EQ. 0) THEN
+    SELECT CASE(reductionOperation)
+    CASE (0)
+    reductionResult(1:dim) = reductionResult(1:dim) + sharedInt4(0:dim-1)
+    CASE (1)
+    DO i2 = 1, dim
+      IF (reductionResult(i2) < sharedInt4(i2-1)) THEN
+        reductionResult(i2) = sharedInt4(i2-1)
+      ENDIF
+    END DO
+    CASE (2)
+    DO i2 = 1, dim
+      IF (reductionResult(i2) > sharedInt4(i2-1)) THEN
+        reductionResult(i2) = sharedInt4(i2-1)
+      ENDIF
+    END DO
+    END SELECT
   ENDIF
   CALL syncthreads()
 END SUBROUTINE
