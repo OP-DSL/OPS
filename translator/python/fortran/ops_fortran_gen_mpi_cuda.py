@@ -761,7 +761,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
           code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
-          code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,1)')
+          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,1)')
       code('')
 
     #NEED TO COPY CONSTANTS TO Symbol
@@ -858,7 +858,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX:
           code('& reductionArrayDevice'+str(n+1)+'_'+name+', &')
-        elif accs[n] == OPS_READ and dims[n].isdigit() and dims[n]==1:
+        elif accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
           code('& opsDat'+str(n+1)+'Host, &')
 
     for n in range (0, nargs):

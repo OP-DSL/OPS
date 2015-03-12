@@ -352,9 +352,9 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
   dat9_base = getDatBaseFromOpsArg1D(opsArg9,start,1)
   call c_f_pointer(opsArg9%data_d,opsDat9Local,(/opsDat9Cardinality/))
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg10,block),opsDat10Host,1)
+  call c_f_pointer(opsArg10%data,opsDat10Host,1)
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg11,block),opsDat11Host,1)
+  call c_f_pointer(opsArg11%data,opsDat11Host,1)
 
   IF ((xdim1 .NE. xdim1_updateRK3_kernel_h) .OR. &
   (xdim2 .NE. xdim2_updateRK3_kernel_h) .OR. &
@@ -403,6 +403,8 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
   & opsDat7Local, &
   & opsDat8Local, &
   & opsDat9Local, &
+  & opsDat10Host, &
+  & opsDat11Host, &
   & dat1_base, &
   & dat2_base, &
   & dat3_base, &

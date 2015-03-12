@@ -428,7 +428,7 @@ module OPS_Fortran_Declarations
   end interface ops_reduction_result
 
   interface ops_arg_gbl
-    module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar
+    module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar, ops_arg_gbl_real_1dim
   end interface ops_arg_gbl
 
 
@@ -670,6 +670,18 @@ module OPS_Fortran_Declarations
 
   end function ops_arg_gbl_int_scalar
 
+  type(ops_arg) function ops_arg_gbl_real_1dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), dimension(*), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_gbl_real_1dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+
+  end function ops_arg_gbl_real_1dim
 
   subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
 

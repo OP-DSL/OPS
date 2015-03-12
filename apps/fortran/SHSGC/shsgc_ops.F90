@@ -74,6 +74,10 @@ program SHSGC
   real(kind=c_double) :: startTime = 0
   real(kind=c_double) :: endTime = 0
 
+  real(8) :: a1(3)
+  real(8) :: a2(3)
+
+
   nxp = 204
   nyp = 5
   xhalo = 2

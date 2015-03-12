@@ -220,7 +220,7 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-  call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Host,1)
+  call c_f_pointer(opsArg2%data,opsDat2Host,1)
 
   IF ((xdim1 .NE. xdim1_test_kernel_h) ) THEN
     xdim1_test_kernel = xdim1
