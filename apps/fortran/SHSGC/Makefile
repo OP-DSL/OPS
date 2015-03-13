@@ -60,7 +60,7 @@ endif
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda
+  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -161,6 +161,26 @@ shsgc_mpi_openmp: shsgc_ops.F90 constants.F90
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
         -o shsgc_mpi_openmp -lops_for_mpi
 
+shsgc_mpi_cuda: shsgc_ops.F90 constants.F90
+ifeq ($(OPS_COMPILER),pgi)
+	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -DOPS_WITH_CUDAFOR -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
+        ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
+        ./CUDA/drhoudx_kernel_cuda_kernel.CUF ./CUDA/save_kernel_cuda_kernel.CUF \
+        ./CUDA/drhoEpudx_kernel_cuda_kernel.CUF ./CUDA/updateRK3_kernel_cuda_kernel.CUF \
+        ./CUDA/Riemann_kernel_cuda_kernel.CUF ./CUDA/limiter_kernel_cuda_kernel.CUF \
+        ./CUDA/tvd_kernel_cuda_kernel.CUF ./CUDA/vars_kernel_cuda_kernel.CUF \
+        ./CUDA/calupwindeff_kernel_cuda_kernel.CUF ./CUDA/fact_kernel_cuda_kernel.CUF \
+        ./CUDA/update_kernel_cuda_kernel.CUF ./CUDA/test_kernel_cuda_kernel.CUF shsgc_ops.F90
+	$(MPIF90) $(OPT) $(FLINK) -DOPS_MPI -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
+        drhouupdx_kernel_cuda_kernel.o zerores_kernel_cuda_kernel.o save_kernel_cuda_kernel.o \
+        drhoudx_kernel_cuda_kernel.o drhoEpudx_kernel_cuda_kernel.o updateRK3_kernel_cuda_kernel.o \
+        Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
+        vars_kernel_cuda_kernel.o calupwindeff_kernel_cuda_kernel.o \
+        fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
+        -o shsgc_mpi_cuda -lops_for_mpi_cuda
+else
+        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+endif
 
 clean:
 	rm -f *.o
@@ -172,3 +192,4 @@ clean:
 	rm -f shsgc_openmp
 	rm -f shsgc_mpi_openmp
 	rm -f shsgc_cuda
+	rm -f shsgc_mpi_cuda

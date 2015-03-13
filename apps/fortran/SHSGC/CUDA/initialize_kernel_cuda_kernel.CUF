@@ -170,6 +170,7 @@ attributes (host) subroutine initialize_kernel_host( userSubroutine, block, dim,
   integer start(1)
   integer end(1)
   integer, DEVICE :: idx(1)
+  integer :: idx_h(1)
   integer(kind=4) :: n
   integer(kind=4) :: i10
   integer(kind=4) :: i20
@@ -199,7 +200,8 @@ attributes (host) subroutine initialize_kernel_host( userSubroutine, block, dim,
 #endif
 
 #ifdef OPS_MPI
-  call getIdx(block,start,idx)
+  call getIdx(block,start,idx_h)
+  idx = idx_h
 #else
   idx(1) = start(1)
 #endif

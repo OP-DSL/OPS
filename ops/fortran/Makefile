@@ -62,7 +62,7 @@ else
   OPT           = -O3
 endif
   CCFLAGS       = $(OPT)
-  NVCC		= nvcc $(CODE_GEN_CUDA) -G
+  NVCC		= nvcc $(CODE_GEN_CUDA)
   NVCCFLAGS	= -Xcompiler="-std=c99 -Wall -fPIC -pedantic -pipe"
   CUDA_ALIGNE_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXX           = pgc++
@@ -74,7 +74,7 @@ endif
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean core f_seq f_mpi f_cuda
+  TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -132,6 +132,19 @@ f_mpi: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	ar -r $(F_OPS_LIB)/libops_for_mpi.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl.o $(F_OPS_OBJ)/ops_mpi_core.o $(F_OPS_OBJ)/ops_mpi_rt_support.o \
 	$(F_OPS_OBJ)/ops_mpi_partition.o $(F_OPS_OBJ)/ops_mpi_rt_support_host.o \
+	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+
+f_mpi_cuda: mkdir core
+	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_decl_cuda.c -o $(F_OPS_OBJ)/ops_mpi_decl_cuda.o
+	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_partition.c -o $(F_OPS_OBJ)/ops_mpi_partition.o
+	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_core.c -o $(F_OPS_OBJ)/ops_mpi_core.o
+	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support.c -o $(F_OPS_OBJ)/ops_mpi_rt_support.o
+	$(NVCC)  $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
+	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
+	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
+	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+	ar -r $(F_OPS_LIB)/libops_for_mpi_cuda.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_cuda.o  $(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o \
 	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 clean:
