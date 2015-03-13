@@ -590,14 +590,14 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
         if 'real' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+'((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
         elif 'integer' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+'((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+'((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
     code('')
     ENDIF()
 

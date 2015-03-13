@@ -152,7 +152,7 @@ attributes (global) subroutine test_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 
-    call ReductionFloat8(reductionArrayDevice2((blockIdx%x - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat2Device,0)
+    call ReductionFloat8(reductionArrayDevice2((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat2Device,0)
 
   ENDIF
 end subroutine

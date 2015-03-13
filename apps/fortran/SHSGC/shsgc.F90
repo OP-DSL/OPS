@@ -339,13 +339,10 @@ program SHSGC
 
 
   call ops_reduction_result(rms, local_rms)
-  write (*,*), "completed ---"
 
   if (ops_is_root() .eq. 1) then
     write (*,*), "RMS = " , sqrt(local_rms)/nxp; !Correct RMS = 0.233689
   end if
-
-  write (*,*), "completed --- 2"
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
