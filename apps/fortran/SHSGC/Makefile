@@ -61,7 +61,7 @@ endif
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp
+  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"

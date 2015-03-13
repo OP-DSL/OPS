@@ -60,7 +60,7 @@ program SHSGC
 
   integer base(1) /1/
 
-  integer size(1) /204/
+  integer size(1) !/204/
 
 
   real(kind=c_double), dimension(:), allocatable :: temp
@@ -85,8 +85,9 @@ program SHSGC
   ymin = 0_8
   xmax = 5.0_8
   ymax = 0.5_8
-  dx = (xmax-xmin)/(nxp-(1.0_8 + 2.0_8*xhalo))
-  dy = (ymax-ymin)/(nyp-1.0_8)
+  !dx = (5.0_8-xmin)/(nxp-(1.0_8 + 2.0_8*xhalo))
+  dx = (5.0_8-(-5.0_8))/(204-(1.0_8 + 2.0_8*2))
+  dy = (0.5_8-(0_8))/(5-1.0_8)
   pl = 10.333_8
   pr = 1.0_8
   rhol = 3.857143_8
@@ -94,14 +95,14 @@ program SHSGC
   ul = 2.6293690_8
   ur = 0.0_8
   gam = 1.4_8
-  gam1=gam - 1.0_8
+  gam1=1.4_8 - 1.0_8
   eps = 0.2_8
   lambda = 5.0_8
   dt=0.0002_8
   del2 = 1e-8_8
   akap2 = 0.40_8
   tvdsmu = 0.25_8
-  con = tvdsmu**2.0_8
+  con = 0.25_8**2.0_8
 
   totaltime = 0.0_8
 
@@ -112,6 +113,7 @@ program SHSGC
   a2(2) = 3.0_8/20.0_8
   a2(3) = 3.0_8/5.0_8
 
+  size(1) = 204
 
   call ops_init(2)
 
@@ -180,7 +182,7 @@ program SHSGC
 
 
 
-  niter = 9005
+  niter = 90!05
   DO iter = 1, niter
 
     call save_kernel_host("save_kernel", shsgc_grid, 1, nxp_range, &
@@ -307,6 +309,7 @@ program SHSGC
                     & ops_arg_dat(rho_new, 1, S1D_0, "real(8)", OPS_READ), &
                     & ops_arg_reduce(rms, 1, "real(8)", OPS_INC))
 
+  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
   call ops_reduction_result(rms, local_rms)
   write (*,*), "completed ---"
 
@@ -320,7 +323,7 @@ program SHSGC
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
   end if
 
-  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+
 
   call ops_exit( )
 
