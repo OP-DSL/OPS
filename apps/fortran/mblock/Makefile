@@ -36,6 +36,7 @@ endif
   FFLAGS	= $(OPT)
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS	= clean mblock_seq mblock_openmp
 else
@@ -55,7 +56,7 @@ endif
   FFLAGS        = $(OPT) $(PGFLAGS)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90
+  MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
   TARGETS       = clean mblock_seq mblock_openmp mblock_cuda
 else
@@ -88,7 +89,7 @@ ifeq ($(OPS_COMPILER),pgi)
 	$(FC) $(FFLAGS) $(FLINK) -DOPS_WITH_CUDAFOR mblock_ops.o constants.o mblock_populate_kernel_cuda_kernel.o \
         -o mblock_cuda -lops_for_cuda
 else
-        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
 mblock_mpi: mblock_ops.F90 constants.F90

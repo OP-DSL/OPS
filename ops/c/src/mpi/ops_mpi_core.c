@@ -161,12 +161,15 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs)
 
 ops_arg ops_arg_dat( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc )
 {
-  return ops_arg_dat_core( dat, stencil, acc );
+  ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->dim = dim;
+  return temp;
 }
 
 ops_arg ops_arg_dat_opt( ops_dat dat, int dim, ops_stencil stencil, char const * type, ops_access acc, int flag )
 {
   ops_arg temp = ops_arg_dat_core( dat, stencil, acc );
+  (&temp)->dim = dim;
   (&temp)->opt = flag;
   return temp;
 }

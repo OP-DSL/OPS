@@ -97,8 +97,8 @@ program MBLOCK
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
 
   !declare dats
-  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "double", "data1")
-  call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "double", "data2")
+  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "real(8)", "data1")
+  call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "real(8)", "data2")
 
   ! straightforward matching orientation halos data1 - data2 in x
   ! last two x lines of data1 and first two of data2
