@@ -11,7 +11,7 @@ USE CUDAFOR
 
 INTEGER(KIND=4), constant :: xdim1_poisson_initialguess_kernel
 INTEGER(KIND=4):: xdim1_poisson_initialguess_kernel_h  = -1
-#define OPS_ACC1(x,y) (x+xdim1_poisson_initialguess_kernel_poisson_initialguess_kernel*(y)+1)
+#define OPS_ACC1(x,y) (x+xdim1_poisson_initialguess_kernel*(y)+1)
 
 
 contains

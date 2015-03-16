@@ -11,13 +11,13 @@ USE CUDAFOR
 
 INTEGER(KIND=4), constant :: xdim4_poisson_populate_kernel
 INTEGER(KIND=4):: xdim4_poisson_populate_kernel_h  = -1
-#define OPS_ACC4(x,y) (x+xdim4_poisson_populate_kernel_poisson_populate_kernel*(y)+1)
+#define OPS_ACC4(x,y) (x+xdim4_poisson_populate_kernel*(y)+1)
 INTEGER(KIND=4), constant :: xdim5_poisson_populate_kernel
 INTEGER(KIND=4):: xdim5_poisson_populate_kernel_h  = -1
-#define OPS_ACC5(x,y) (x+xdim5_poisson_populate_kernel_poisson_populate_kernel*(y)+1)
+#define OPS_ACC5(x,y) (x+xdim5_poisson_populate_kernel*(y)+1)
 INTEGER(KIND=4), constant :: xdim6_poisson_populate_kernel
 INTEGER(KIND=4):: xdim6_poisson_populate_kernel_h  = -1
-#define OPS_ACC6(x,y) (x+xdim6_poisson_populate_kernel_poisson_populate_kernel*(y)+1)
+#define OPS_ACC6(x,y) (x+xdim6_poisson_populate_kernel*(y)+1)
 
 
 contains

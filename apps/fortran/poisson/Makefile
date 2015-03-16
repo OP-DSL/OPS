@@ -55,8 +55,9 @@ endif
   FFLAGS        = $(OPT) $(PGFLAGS)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90        := $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean poisson_seq poisson_openmp
+  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -120,6 +121,22 @@ else
         @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
+poisson_mpi: poisson_ops.F90 constants.F90
+	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_MPI -c constants.F90 \
+        ./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
+        ./MPI/poisson_populate_kernel_seq_kernel.F90 \
+        ./MPI/poisson_stencil_kernel_seq_kernel.F90 \
+        ./MPI/poisson_update_kernel_seq_kernel.F90 \
+        ./MPI/poisson_error_kernel_seq_kernel.F90 \
+        poisson_ops.F90
+	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI poisson_ops.o constants.o \
+        poisson_populate_kernel_seq_kernel.o \
+        poisson_initialguess_kernel_seq_kernel.o \
+        poisson_stencil_kernel_seq_kernel.o \
+        poisson_update_kernel_seq_kernel.o \
+        poisson_error_kernel_seq_kernel.o \
+        -o poisson_mpi -lops_for_mpi
+
 clean:
 	rm -f *.o
 	rm -f *.mod
@@ -128,3 +145,4 @@ clean:
 	rm -f poisson_seq
 	rm -f poisson_openmp
 	rm -f poisson_cuda
+	rm -f poisson_mpi

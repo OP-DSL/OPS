@@ -12,10 +12,10 @@ USE CUDAFOR
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice3_poisson_error_kernel
 INTEGER(KIND=4), constant :: xdim1_poisson_error_kernel
 INTEGER(KIND=4):: xdim1_poisson_error_kernel_h  = -1
-#define OPS_ACC1(x,y) (x+xdim1_poisson_error_kernel_poisson_error_kernel*(y)+1)
+#define OPS_ACC1(x,y) (x+xdim1_poisson_error_kernel*(y)+1)
 INTEGER(KIND=4), constant :: xdim2_poisson_error_kernel
 INTEGER(KIND=4):: xdim2_poisson_error_kernel_h  = -1
-#define OPS_ACC2(x,y) (x+xdim2_poisson_error_kernel_poisson_error_kernel*(y)+1)
+#define OPS_ACC2(x,y) (x+xdim2_poisson_error_kernel*(y)+1)
 
 
 contains
