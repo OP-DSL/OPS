@@ -56,7 +56,7 @@ endif
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean mblock_seq mblock_openmp
+  TARGETS       = clean mblock_seq mblock_openmp mblock_cuda
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -80,7 +80,15 @@ mblock_openmp: mblock_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(FLINK) mblock_ops.o constants.o mblock_populate_kernel_omp_kernel.o \
         -o mblock_openmp -lops_for_seq
 
-
+mblock_cuda: mblock_ops.F90 constants.F90
+ifeq ($(OPS_COMPILER),pgi)
+	$(FC) $(FFLAGS) $(FMODS) constants.F90 -DOPS_WITH_CUDAFOR -c ./CUDA/mblock_populate_kernel_cuda_kernel.CUF \
+        mblock_ops.F90
+	$(FC) $(FFLAGS) $(FLINK) -DOPS_WITH_CUDAFOR mblock_ops.o constants.o mblock_populate_kernel_cuda_kernel.o \
+        -o mblock_cuda -lops_for_cuda
+else
+        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+endif
 clean:
 	rm -f *.o
 	rm -f *.mod

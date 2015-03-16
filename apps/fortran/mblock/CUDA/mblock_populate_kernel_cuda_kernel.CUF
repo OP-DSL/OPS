@@ -9,10 +9,9 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 USE CUDAFOR
 
-!single-dim macros
 INTEGER(KIND=4), constant :: xdim1_mblock_populate_kernel
 INTEGER(KIND=4):: xdim1_mblock_populate_kernel_h  = -1
-#define OPS_ACC1(x,y) (x+xdim1_mblock_populate_kernel_mblock_populate_kernel*(y)+1)
+#define OPS_ACC1(x,y) (x+xdim1_mblock_populate_kernel*(y)+1)
 
 
 contains
@@ -87,6 +86,7 @@ attributes (host) subroutine mblock_populate_kernel_host( userSubroutine, block,
   integer start(2)
   integer end(2)
   integer, DEVICE :: idx(2)
+  integer :: idx_h(2)
   integer(kind=4) :: n
   integer(kind=4) :: i10
   integer(kind=4) :: i20
@@ -112,7 +112,8 @@ attributes (host) subroutine mblock_populate_kernel_host( userSubroutine, block,
 #endif
 
 #ifdef OPS_MPI
-  call getIdx(block,start,idx)
+  call getIdx(block,start,idx_h)
+  idx = idx_h
 #else
   idx(1) = start(1)
   idx(2) = start(2)
