@@ -131,7 +131,7 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 }
 
 
-/************* Functions only use in the s Backend ************/
+/************* Functions only use in the Fortran Backend ************/
 
 void getRange(ops_block block, int* start, int* end, int* range){
 

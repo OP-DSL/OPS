@@ -670,6 +670,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('integer end('+str(NDIM)+')')
     if arg_idx == 1:
       code('integer, DEVICE :: idx('+str(NDIM)+')')
+      code('integer :: idx_h('+str(NDIM)+')')
+
     code('integer(kind=4) :: n')
     code('integer(kind=4) :: i10')
     code('integer(kind=4) :: i20')
@@ -709,7 +711,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       config.depth = config.depth - 2
       code('#ifdef OPS_MPI')
       config.depth = config.depth + 2
-      code('call getIdx(block,start,idx)')
+      code('call getIdx(block,start,idx_h)')
+      code('idx = idx_h')
       config.depth = config.depth - 2
       code('#else')
       config.depth = config.depth + 2
