@@ -102,7 +102,7 @@ program POISSON
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
   call ops_decl_stencil( 2, 5, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
 
-  call ops_decl_reduction_handle(8, red_err, "double", "err")
+  call ops_decl_reduction_handle(8, red_err, "real(8)", "err")
 
   d_p(1) = 1
   d_p(2) = 1
@@ -125,17 +125,17 @@ program POISSON
     end if
 
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
     write(buf,"(A6,I2,A1,I2)") "coordy",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
     write(buf,"(A6,I2,A1,I2)") "u",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
     write(buf,"(A6,I2,A1,I2)") "u2",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u2((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u2((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
     write(buf,"(A6,I2,A1,I2)") "f",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
     write(buf,"(A6,I2,A1,I2)") "ref",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "double", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
 
     sizes(2*((i-1)+ngrid_x*(j-1))+1) = size(1)
     sizes(2*((i-1)+ngrid_x*(j-1))+2) = size(2)

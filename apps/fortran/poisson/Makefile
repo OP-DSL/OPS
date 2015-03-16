@@ -49,7 +49,7 @@ endif
   CXX           = pgc++
   CXXFLAGS      = $(CCFLAGS)
   CUDA_ALIGN_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXXLINK       = -lstdc++ -pgcpplibs
+  CXXLINK       = -lstdc++ -pgcpplibs -lgcc_s
   OMPFLAGS 	= -mp
   FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
   FFLAGS        = $(OPT) $(PGFLAGS)
@@ -100,6 +100,25 @@ poisson_openmp: poisson_ops.F90 constants.F90
 	poisson_error_kernel_omp_kernel.o \
         -o poisson_openmp -lops_for_seq
 
+poisson_cuda: poisson_ops.F90 constants.F90
+ifeq ($(OPS_COMPILER),pgi)
+	$(FC) $(FFLAGS) $(FMODS) -DOPS_WITH_CUDAFOR -c constants.F90 \
+        ./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
+        ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
+        ./CUDA/poisson_stencil_kernel_cuda_kernel.CUF \
+        ./CUDA/poisson_update_kernel_cuda_kernel.CUF \
+        ./CUDA/poisson_error_kernel_cuda_kernel.CUF \
+        poisson_ops.F90
+	$(FC) $(FFLAGS) $(FLINK) -DOPS_WITH_CUDAFOR poisson_ops.o constants.o \
+        poisson_initialguess_kernel_cuda_kernel.o \
+        poisson_populate_kernel_cuda_kernel.o \
+        poisson_stencil_kernel_cuda_kernel.o \
+        poisson_update_kernel_cuda_kernel.o \
+        poisson_error_kernel_cuda_kernel.o \
+        -o poisson_cuda -lops_for_cuda
+else
+        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+endif
 
 clean:
 	rm -f *.o
@@ -107,3 +126,5 @@ clean:
 	rm -f $(EXEC)
 	rm -f *~
 	rm -f poisson_seq
+	rm -f poisson_openmp
+	rm -f poisson_cuda

@@ -32,30 +32,26 @@ end subroutine
 attributes (global) subroutine poisson_initialguess_kernel_wrap( &
 & opsDat1Local, &
 & dat1_base, &
-& size1, size2, &
-& start, &
-& end )
+& size1, size2 )
   IMPLICIT NONE
   real(8), DEVICE :: opsDat1Local(*)
   integer(4) arg1
   integer dat1_base
   integer(4) start(2)
   integer(4) end(2)
-  integer(4) d
   integer n_x, n_y, size1, size2
 
 
+  n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
+  n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
 
-  n_y = blockDim%y * blockIdx%y + threadIdx%y
-  n_x = blockDim%x * blockIdx%x + threadIdx%x
-
-  arg1 = arg1 + (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim1_poisson_initialguess_kernel
-  IF (n_x < size1 .AND. n_y < size2) THEN
+  arg1 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim1_poisson_initialguess_kernel
+  IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
     call poisson_initialguess_kernel( &
-    & opsDat1Local(arg1) )
+    & opsDat1Local(dat1_base+arg1) )
+
+
   ENDIF
-
-
 end subroutine
 
 !host subroutine
@@ -75,12 +71,17 @@ attributes (host) subroutine poisson_initialguess_kernel_host( userSubroutine, b
   INTEGER(KIND=4) :: xdim1
   integer ydim1
 
+
   integer, DEVICE :: x_size, y_size
+  integer :: x_size_h, y_size_h
   integer start(2)
-  integer, DEVICE :: start_d(2)
   integer end(2)
-  integer, DEVICE :: end_d(2)
   integer(kind=4) :: n
+  integer(kind=4) :: i10
+  integer(kind=4) :: i20
+  integer(kind=4) :: blocksPerGrid
+  integer(kind=4) :: nshared
+  integer(kind=4) :: nthread
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -91,22 +92,18 @@ attributes (host) subroutine poisson_initialguess_kernel_host( userSubroutine, b
 
 #ifdef OPS_MPI
   call getRange(block, start, end, range)
-  DO n = 1, 2
-    start_d(n) = start(n)
-    end_d(n) = end(n)
-  END DO
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)
     end(n) = range(2*n)
-    start_d(n) = range(2*n-1)
-    end_d(n) = range(2*n)
   END DO
 #endif
 
 
-  x_size = MAX(0,end(1)-start(1))
-  y_size = MAX(0,end(2)-start(2))
+  x_size = MAX(0,end(1)-start(1)+1)
+  x_size_h = MAX(0,end(1)-start(1)+1)
+  y_size = MAX(0,end(2)-start(2)+1)
+  y_size_h = MAX(0,end(2)-start(2)+1)
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
@@ -123,15 +120,15 @@ attributes (host) subroutine poisson_initialguess_kernel_host( userSubroutine, b
   grid = dim3( (x_size-1)/getOPS_block_size_x()+ 1, (y_size-1)/getOPS_block_size_y() + 1, 1)
   tblock = dim3(getOPS_block_size_x(),getOPS_block_size_y(),1)
 
+
+  !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,1)
   call ops_halo_exchanges(opsArgArray,1,range)
 
   call poisson_initialguess_kernel_wrap <<<grid,tblock>>> (&
   & opsDat1Local, &
   & dat1_base, &
-  & x_size, y_size, &
-  & start_d, &
-  & end_d )
+  & x_size, y_size )
 
   call ops_set_dirtybit_device(opsArgArray, 1)
   call ops_set_halo_dirtybit3(opsArg1,range)
