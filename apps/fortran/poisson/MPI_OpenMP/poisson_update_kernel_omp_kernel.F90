@@ -94,7 +94,9 @@ subroutine poisson_update_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(2) = opsArg2
 
 #ifdef OPS_MPI
-  call getRange(block, start, end, range)
+  IF (getRange(block, start, end, range) < 0) THEN
+    return
+  ENDIF
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)

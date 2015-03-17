@@ -689,6 +689,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
   // double c1,c2,t1,t2;
+  //printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2], range[3]);
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
   MPI_Comm comm = MPI_COMM_NULL;
 

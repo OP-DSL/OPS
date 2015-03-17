@@ -58,7 +58,7 @@ module OPS_Fortran_RT_Support
   end subroutine
 
 
-  subroutine ops_halo_exchanges (args, argsNumber, range) BIND(C,name='ops_halo_exchanges')
+  subroutine ops_halo_exchanges_c (args, argsNumber, range) BIND(C,name='ops_halo_exchanges')
 
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
@@ -241,5 +241,21 @@ module OPS_Fortran_RT_Support
     getReductionPtrFromOpsArg =  getReductionPtrFromOpsArg_c ( arg, block%blockCptr)
 
   end function getReductionPtrFromOpsArg
+
+  subroutine ops_halo_exchanges (args, nargs, range)
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+    integer(4), dimension(*):: range
+    integer(kind=c_int), value  :: nargs
+    type(ops_arg), dimension(nargs)  :: args
+
+    !range(1) = range(1) - 1
+    !range(3) = range(3) - 1
+    call ops_halo_exchanges_c (args,nargs,range)
+    !range(1) = range(1) + 1
+    !range(3) = range(3) + 1
+
+  end subroutine
 
 end module OPS_Fortran_RT_Support

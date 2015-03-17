@@ -144,7 +144,7 @@ shsgc_dev_seq: Makefile shsgc.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 #
 
 shsgc_dev_mpi: Makefile shsgc.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc.cpp -lops_mpi -o shsgc_dev_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc.cpp -lops_mpi -o shsgc_dev_mpi
 
 
 SEQ_KERNELS = shsgc_seq_kernels.cpp
@@ -153,7 +153,7 @@ SEQ_KERNELS = shsgc_seq_kernels.cpp
 ## Sequential vectorised version
 #
 shsgc_seq: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o shsgc_seq
+	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o shsgc_seq
 
 
 #
