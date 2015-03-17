@@ -228,8 +228,8 @@ program MBLOCK
   call ops_halo_transfer(halos4)
   call ops_halo_transfer(halos5)
 
-  call ops_print_dat_to_txtfile(data1, "data1.txt")
-  call ops_print_dat_to_txtfile(data2, "data2.txt")
+  call ops_print_dat_to_txtfile(data1, "data0.txt")
+  call ops_print_dat_to_txtfile(data2, "data1.txt")
 
   call ops_exit( )
 end program MBLOCK

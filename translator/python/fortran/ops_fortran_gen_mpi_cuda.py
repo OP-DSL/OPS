@@ -695,7 +695,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     config.depth = config.depth - 2
     code('#ifdef OPS_MPI')
     config.depth = config.depth + 2
-    code('call getRange(block, start, end, range)')
+    IF('getRange(block, start, end, range) < 0')
+    code('return')
+    ENDIF()
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2

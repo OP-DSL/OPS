@@ -191,6 +191,17 @@ ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_ac
 }
 
 ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name) {
+
+  if( strcmp(type,"double")  == 0 ||
+        strcmp(type,"real(8)") == 0||
+        strcmp(type,"double precision" ) == 0) type = "double";
+  else if( strcmp(type,"float")  == 0 ||
+        strcmp(type,"real") == 0) type = "float";
+  else if( strcmp(type,"int")     == 0 ||
+           strcmp(type,"integer") == 0 ||
+           strcmp(type,"integer(4)") == 0 ||
+           strcmp(type,"int(4)")  == 0) type = "int";
+
   ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
   red->data = (char *)realloc(red->data, red->size*OPS_block_index*sizeof(char));
   return red;

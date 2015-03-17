@@ -133,7 +133,7 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 
 /************* Functions only use in the Fortran Backend ************/
 
-void getRange(ops_block block, int* start, int* end, int* range){
+int getRange(ops_block block, int* start, int* end, int* range){
 
   int block_dim = block->dims;
   /*convert to C indexing*/
@@ -143,7 +143,7 @@ void getRange(ops_block block, int* start, int* end, int* range){
   }
 
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
+  if (!sb->owned) return -1;
   for ( int n=0; n<block_dim; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
     if (start[n] >= range[2*n]) {
@@ -173,6 +173,7 @@ void getRange(ops_block block, int* start, int* end, int* range){
   //for ( int n=0; n<block_dim; n++ ){
   //  printf("start[%d] = %d, end[%d] = %d\n", n,start[n],n,end[n]);
   //}
+  return 1;
 }
 
 void getIdx(ops_block block, int* start, int* idx) {

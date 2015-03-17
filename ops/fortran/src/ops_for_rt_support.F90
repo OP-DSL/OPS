@@ -160,14 +160,14 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
   end function
 
-  subroutine getRange_c (block, start, end, range) BIND(C,name='getRange')
+  integer function getRange_c (block, start, end, range) BIND(C,name='getRange')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     type(c_ptr), value, intent(in)           :: block
     type(c_ptr), value :: start
     type(c_ptr), value :: end
     type(c_ptr), intent(in), value           :: range
-  end subroutine getRange_c
+  end function getRange_c
 
   subroutine getIdx_c (block, start, idx) BIND(C,name='getIdx')
     use, intrinsic :: ISO_C_BINDING
@@ -208,7 +208,7 @@ module OPS_Fortran_RT_Support
     call ops_partition_c (routine//C_NULL_CHAR)
   end subroutine
 
-  subroutine getRange(block, start, end, range )
+  integer function getRange(block, start, end, range )
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     implicit none
@@ -217,8 +217,8 @@ module OPS_Fortran_RT_Support
     integer(4), dimension(*) :: end
     integer(4), dimension(*), intent(in), target :: range
 
-    call getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
-  end subroutine
+    getRange = getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
+  end function
 
   subroutine getIdx(block, start, idx )
     use, intrinsic :: ISO_C_BINDING

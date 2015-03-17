@@ -102,7 +102,7 @@ program POISSON
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
   call ops_decl_stencil( 2, 5, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
 
-  call ops_decl_reduction_handle(8, red_err, "real(8)", "err")
+  call ops_decl_reduction_handle(8, red_err, "double", "err")
 
   d_p(1) = 1
   d_p(2) = 1

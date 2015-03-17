@@ -38,7 +38,7 @@ endif
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	= clean mblock_seq mblock_openmp
+  TARGETS	= clean mblock_seq mblock_openmp mblock_mpi
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
@@ -58,7 +58,7 @@ endif
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean mblock_seq mblock_openmp mblock_cuda
+  TARGETS       = clean mblock_seq mblock_openmp mblock_cuda mblock_mpi
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"

@@ -36,6 +36,7 @@ endif
   FFLAGS	= $(OPT)
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90 	= $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS	= clean poisson_seq poisson_openmp
 else
@@ -55,7 +56,7 @@ endif
   FFLAGS        = $(OPT) $(PGFLAGS)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIF90        := $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
+  MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
   TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi
 else
@@ -118,7 +119,7 @@ ifeq ($(OPS_COMPILER),pgi)
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_cuda -lops_for_cuda
 else
-        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
 poisson_mpi: poisson_ops.F90 constants.F90
