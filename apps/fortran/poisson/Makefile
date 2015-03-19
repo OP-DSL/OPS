@@ -171,7 +171,7 @@ ifeq ($(OPS_COMPILER),pgi)
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_mpi_cuda -lops_for_mpi_cuda
 else
-        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
 
@@ -184,5 +184,5 @@ clean:
 	rm -f poisson_openmp
 	rm -f poisson_cuda
 	rm -f poisson_mpi
-	rm -f poisson_openmp_mpi
-	rm -f poisson_cuda_mpi
+	rm -f poisson_mpi_openmp
+	rm -f poisson_mpi_cuda

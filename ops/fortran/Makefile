@@ -154,8 +154,6 @@ clean:
 	-rm -if $(F_OPS_LIB)/*.a
 	-rm -if $(F_OPS_SRC)/*~
 	-rm -if $(F_OPS_SRC)/*~
-#-rm -if $(F_OPS_SRC)/ops_for_reference.c
-#-rm -if $(F_OPS_SRC)/ops_cpp_reference.F90
 	-rm -if $(F_OPS_MOD)/*.mod
 	-rm -if $(F_INC_MOD)/*.mod
 	-rm -if $(F_OPS)/*~

@@ -140,9 +140,7 @@ int getRange(ops_block block, int* start, int* end, int* range){
   sub_block_list sb = OPS_sub_block_list[block->index];
 
   if (sb->owned) {
-
     owned = 1;
-
     /*convert to C indexing*/
     for ( int n=0; n<block_dim; n++ ){
       range[2*n] -= 1;
