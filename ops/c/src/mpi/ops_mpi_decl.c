@@ -135,45 +135,50 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 
 int getRange(ops_block block, int* start, int* end, int* range){
 
+  int owned = -1;
   int block_dim = block->dims;
-  /*convert to C indexing*/
-  for ( int n=0; n<block_dim; n++ ){
-    range[2*n] -= 1;
-    //range[2*n+1] -= 1; -- c indexing end is exclusive so do not reduce
-  }
-
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return -1;
-  for ( int n=0; n<block_dim; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
 
-  /*revert to Fortran indexing*/
-  for ( int n=0; n<block_dim; n++ ){
-    range[2*n] += 1;
-    start[n] += 1;
-    //end[n] += 1; -- no need as fortran indexing is inclusive
-  }
+  if (sb->owned) {
 
+    owned = 1;
+
+    /*convert to C indexing*/
+    for ( int n=0; n<block_dim; n++ ){
+      range[2*n] -= 1;
+      //range[2*n+1] -= 1; -- c indexing end is exclusive so do not reduce
+    }
+
+    for ( int n=0; n<block_dim; n++ ){
+      start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+      if (start[n] >= range[2*n]) {
+        start[n] = 0;
+      }
+      else {
+        start[n] = range[2*n] - start[n];
+      }
+      if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+      if (end[n] >= range[2*n+1]) {
+        end[n] = range[2*n+1] - sb->decomp_disp[n];
+      }
+      else {
+        end[n] = sb->decomp_size[n];
+      }
+      if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+        end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
+    }
+
+    /*revert to Fortran indexing*/
+    for ( int n=0; n<block_dim; n++ ){
+      range[2*n] += 1;
+      start[n] += 1;
+      //end[n] += 1; -- no need as fortran indexing is inclusive
+    }
+  }
   //for ( int n=0; n<block_dim; n++ ){
   //  printf("start[%d] = %d, end[%d] = %d\n", n,start[n],n,end[n]);
   //}
-  return 1;
+  return owned;
 }
 
 void getIdx(ops_block block, int* start, int* idx) {

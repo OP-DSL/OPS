@@ -495,6 +495,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
   //set up initial pointers
   int i2 = (-d_m[dim]    ) * prod[dim-1];
   //int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
+  //printf("block %s, dat %s, prod[dim-1] %d, prod[dim] %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
 
   if (OPS_diags>5) { //Consistency checking
     int they_send;
