@@ -194,7 +194,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
 
   if( strcmp(type,"double")  == 0 ||
         strcmp(type,"real(8)") == 0||
-        strcmp(type,"double precision" ) == 0) type = "double";
+        strcmp(type,"double precision" ) == 0) type = "double\0";
   else if( strcmp(type,"float")  == 0 ||
         strcmp(type,"real") == 0) type = "float";
   else if( strcmp(type,"int")     == 0 ||

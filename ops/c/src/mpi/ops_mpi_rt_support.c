@@ -855,7 +855,10 @@ void ops_mpi_reduce_int(ops_arg* arg, int* data)
 void ops_execute_reduction(ops_reduction handle) {
   char local[handle->size];
   memcpy(local, handle->data, handle->size);
-  if (strcmp(handle->type,"int")==0) {
+  if (strcmp(handle->type,"int")==0 ||
+      strcmp(handle->type,"int(4)")==0 ||
+      strcmp(handle->type,"integer(4)")==0 ||
+      strcmp(handle->type,"integer")==0) {
     for (int i = 1; i < OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned) continue;
       if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(int); d++)
@@ -873,7 +876,8 @@ void ops_execute_reduction(ops_reduction handle) {
     arg.dim = handle->size/sizeof(int);
     ops_mpi_reduce_int(&arg, (int*)local);
   }
-  if (strcmp(handle->type,"float")==0) {
+  if (strcmp(handle->type,"float")==0 ||
+      strcmp(handle->type,"real")==0 ) {
     for (int i = 1; i < OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned) continue;
       if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(float); d++)
@@ -891,7 +895,9 @@ void ops_execute_reduction(ops_reduction handle) {
     arg.dim = handle->size/sizeof(float);
     ops_mpi_reduce_float(&arg, (float*)local);
   }
-  if (strcmp(handle->type,"double")==0) {
+  if (strcmp(handle->type,"double")== 0 ||
+      strcmp(handle->type,"real(8)")== 0 ||
+      strcmp(handle->type,"double precision")== 0 ) {
     for (int i = 1; i < OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned) continue;
       if (handle->acc == OPS_MAX) for (int d = 0; d < handle->size/sizeof(double); d++)

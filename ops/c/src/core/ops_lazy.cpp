@@ -58,7 +58,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
 void ops_execute() {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-//    printf("Executing %s\n",ops_kernel_list[i]->name);
+    //printf("Executing %s\n",ops_kernel_list[i]->name);
     ops_kernel_list[i]->function(ops_kernel_list[i]);
     free(ops_kernel_list[i]->args);
     free(ops_kernel_list[i]);

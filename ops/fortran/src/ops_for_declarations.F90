@@ -363,7 +363,6 @@ module OPS_Fortran_Declarations
       type(c_ptr), value, intent(in)  :: handle
       !type(c_ptr), intent(in)  :: handle
       type(c_ptr) , value       :: var
-
       integer(kind=c_int), value, intent(in):: type_size
     end subroutine ops_reduction_result_c
 
@@ -563,7 +562,7 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
 
-    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ, name//C_NULL_CHAR )
+    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
     call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
@@ -618,16 +617,16 @@ module OPS_Fortran_Declarations
   end function ops_arg_idx
 
 
-  type(ops_arg) function ops_arg_reduce(handle, dim, type, access)
+  type(ops_arg) function ops_arg_reduce(handle, dim, typ, access)
     use, intrinsic :: ISO_C_BINDING
     implicit none
     type(ops_reduction) :: handle
     integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: type
+    character(kind=c_char,len=*) :: typ
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, type, access-1 )
+    ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, typ//C_NULL_CHAR, access-1 )
 
   end function ops_arg_reduce
 

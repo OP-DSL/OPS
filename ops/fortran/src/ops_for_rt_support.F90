@@ -213,8 +213,8 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
     implicit none
     type(ops_block), intent(in)  :: block
-    integer(4), dimension(*) :: start
-    integer(4), dimension(*) :: end
+    integer(4), dimension(*),target :: start
+    integer(4), dimension(*),target :: end
     integer(4), dimension(*), intent(in), target :: range
 
     getRange = getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
