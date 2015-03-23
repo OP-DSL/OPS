@@ -384,6 +384,7 @@ for nargs in range (1,maxargs+1):
 
     f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
     f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
+    f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')

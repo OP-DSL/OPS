@@ -437,6 +437,7 @@ bool ops_checkpointing_init(const char *file_name, double interval, int options)
     else
       return false;
   }
+  return false;
 }
 
 void ops_checkpointing_initphase_done() {

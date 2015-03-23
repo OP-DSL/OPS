@@ -658,6 +658,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
               code('#endif //OPS_MPI')
     if GBL_READ == True and GBL_READ_MDIM == True:
       comm('Upload large globals')
+      code('#ifdef OPS_GPU')
       code('int consts_bytes = 0;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -675,6 +676,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(consts_bytes);')
+      code('#endif //OPS_GPU')
 
 
     comm('')
@@ -727,6 +729,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#endif')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
+    code('#ifdef OPS_GPU')
+    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
+    code('#else')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('#endif')
 
     IF('OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')

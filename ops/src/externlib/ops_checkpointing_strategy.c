@@ -151,7 +151,7 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id, int *ran
         }
       }
     } else if (args[i].argtype == OPS_ARG_DAT &&
-           ops_strat_dat_status[loop_id][args[i].dat->index] == OPS_UNDECIDED &&
+           OPS_dat_ever_written[args[i].dat->index] &&
            args[i].acc == OPS_WRITE && args[i].opt == 1) {
 
       //if dataset is written, only a part of it (the edges that are not) has to be saved
@@ -182,8 +182,9 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id, int *ran
       for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
         tmp_item = TAILQ_NEXT(item, entries);
         ops_dat dat = item->dat;
-        if (OPS_dat_ever_written[dat->index] && ops_strat_dat_status[loop][dat->index] == OPS_UNDECIDED)
+        if (OPS_dat_ever_written[dat->index] && ops_strat_dat_status[loop][dat->index] == OPS_UNDECIDED) {
           ops_strat_saved_counter[loop] += ops_strat_calc_saved_amount_full(dat);
+        }
       }
       done = 1;
     }
@@ -232,8 +233,15 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id, int *range) 
       int idx = kv[kern].value;
       if (MAX(ops_strat_maxcalled[idx], ops_call_counter-ops_strat_lastcalled[idx]) < ops_call_counter/10) {
         if (OPS_diags>2) ops_printf("Using kernel %d (%s) as backup point, will save ~%d kBytes\n", idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx]/1024);
+        
+        // for (int m = kern; m < OPS_kern_max; m++) {
+        //   idx = kv[m].value;
+        //   if (OPS_diags>2) ops_printf("Other candidates were %d (%s) as backup point, will save ~%d kBytes\n", idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx]/1024);
+        // }
         kern = idx;
         break;
+      } else {
+        if (OPS_diags>2) ops_printf("Discarding candidate %d (%s) as backup point %d kBytes\n", idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx]/1024);
       }
       kern++;
       if (kern == OPS_kern_max) {
@@ -241,7 +249,7 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id, int *range) 
         exit(-1);
       }
     }
-    ops_best_backup_point = kv[kern].value;
+    ops_best_backup_point = kern;
   }
   return (loop_id == ops_best_backup_point);
 }

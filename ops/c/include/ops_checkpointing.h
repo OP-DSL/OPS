@@ -47,6 +47,7 @@ extern "C" {
 #endif
 
 bool ops_checkpointing_init(const char *filename, double interval, int options);
+void ops_checkpointing_initphase_done();
 bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id);
 bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range, const char *s);
 void ops_checkpointing_exit();
