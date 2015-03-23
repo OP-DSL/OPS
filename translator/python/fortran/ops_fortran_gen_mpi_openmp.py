@@ -239,39 +239,39 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
 
     if NDIM==1:
       if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO')
+        code('!$OMP PARALLEL DO PRIVATE(n_x)')
         code('!DIR$ SIMD')
       elif reduction == 1:
-        code('!$OMP PARALLEL DO '+reduction_vars)
+        code('!$OMP PARALLEL DO PRIVATE(n_x) '+reduction_vars)
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==2:
+      if reduction <> 1 and arg_idx <> 1:
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
+      elif reduction == 1:
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO')
-        code('!DIR$ SIMD')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO '+reduction_vars)
+      code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==3:
+      if reduction <> 1 and arg_idx <> 1:
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z)')
+      elif reduction == 1:
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z) '+reduction_vars)
       DO('n_z','1','end(3)-start(3)+1')
       if arg_idx == 1:
         code('id3_local(3) = idx(3) + n_z - 1')
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO')
-        code('!DIR$ SIMD')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO '+reduction_vars)
+      code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')

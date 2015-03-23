@@ -54,8 +54,9 @@ subroutine poisson_error_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
+  !$OMP PARALLEL DO PRIVATE(n_x,n_y) REDUCTION(+:opsDat3Local)
   DO n_y = 1, end(2)-start(2)+1
-    !$OMP PARALLEL DO REDUCTION(+:opsDat3Local)
+    !DIR$ SIMD
     DO n_x = 1, end(1)-start(1)+1
       call poisson_error_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*1 + (n_y-1)*xdim1*1), &
