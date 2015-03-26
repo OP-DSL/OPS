@@ -49,8 +49,8 @@ subroutine multidim_copy_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
+  !$OMP PARALLEL DO PRIVATE(n_x)
   DO n_y = 1, end(2)-start(2)+1
-    !$OMP PARALLEL DO
     !DIR$ SIMD
     DO n_x = 1, end(1)-start(1)+1
       call multidim_copy_kernel( &
@@ -95,7 +95,9 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(2) = opsArg2
 
 #ifdef OPS_MPI
-  call getRange(block, start, end, range)
+  IF (getRange(block, start, end, range) < 0) THEN
+    return
+  ENDIF
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)

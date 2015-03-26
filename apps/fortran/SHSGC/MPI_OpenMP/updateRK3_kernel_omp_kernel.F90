@@ -232,7 +232,9 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(11) = opsArg11
 
 #ifdef OPS_MPI
-  call getRange(block, start, end, range)
+  IF (getRange(block, start, end, range) < 0) THEN
+    return
+  ENDIF
 #else
   DO n = 1, 1
     start(n) = range(2*n-1)

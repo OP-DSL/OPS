@@ -46,6 +46,7 @@ subroutine multidim_kernel_wrap( &
 
   DO n_y = 1, end(2)-start(2)+1
     idx_local(2) = idx(2) + n_y - 1
+    !DIR$ SIMD
     DO n_x = 1, end(1)-start(1)+1
       idx_local(1) = idx(1) + n_x - 1
       call multidim_kernel( &
@@ -86,7 +87,9 @@ subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(2) = opsArg2
 
 #ifdef OPS_MPI
-  call getRange(block, start, end, range)
+  IF (getRange(block, start, end, range) < 0) THEN
+    return
+  ENDIF
 #else
   DO n = 1, 2
     start(n) = range(2*n-1)

@@ -124,7 +124,7 @@ ifeq ($(OPS_COMPILER),pgi)
         fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
         -o shsgc_cuda -lops_for_cuda
 else
-        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
 shsgc_mpi: shsgc_ops.F90 constants.F90
@@ -179,7 +179,7 @@ ifeq ($(OPS_COMPILER),pgi)
         fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
         -o shsgc_mpi_cuda -lops_for_mpi_cuda
 else
-        @echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
+	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
 clean:

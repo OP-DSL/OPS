@@ -12,7 +12,7 @@ grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 echo '============> Running MPI+OpenMP'
-#export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./shsgc_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./shsgc_mpi_openmp > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out

@@ -111,13 +111,12 @@ program MULTIDIM
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 
-  write(*,*) "Reduction result = ", reduct_result
-
   call ops_timers ( endTime )
 
   call ops_print_dat_to_txtfile(dat0, "multidim.dat")
 
   if (ops_is_root() .eq. 1) then
+    write(*,*) "Reduction result = ", reduct_result
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
   end if
 
