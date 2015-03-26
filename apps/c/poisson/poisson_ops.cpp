@@ -54,8 +54,8 @@ int main(int argc, char **argv)
 
   ops_init(argc,argv,6);
 
-  int logical_size_x = 2000;
-  int logical_size_y = 2000;
+  int logical_size_x = 200;
+  int logical_size_y = 200;
   int ngrid_x = 2;
   int ngrid_y = 2;
   int n_iter = 10000;

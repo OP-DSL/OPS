@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ../../../ops/c
-source ../source_intel
+source ../ruby_intel_source
 make
 cd -
 make clean
@@ -72,7 +72,7 @@ rm perf_out
 
 
 cd -
-source source_pgi
+source ../ruby_pgi_source
 make cuda
 make mpi_cuda
 cd -

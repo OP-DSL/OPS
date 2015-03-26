@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
   ops_reduction_result(rms, &local_rms);
   //printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
 
-  ops_printf("\nRMS %lf\n" , sqrt(local_rms)/nxp); //Correct RMS = 0.233689
+  ops_printf("\nRMS = %lf\n" , sqrt(local_rms)/nxp); //Correct RMS = 0.233689
 
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
   ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
