@@ -22,8 +22,7 @@ INTEGER(KIND=4) xdim3
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: limiter_kernel
-subroutine limiter_kernel(al, tht, gt)
+attributes (device) subroutine limiter_kernel(al, tht, gt)
 
   real (kind=8), DIMENSION(3) :: al
   real (kind=8), DIMENSION(3) :: tht
@@ -60,24 +59,25 @@ subroutine limiter_kernel_wrap( &
 & start, &
 & end )
   IMPLICIT NONE
-  real(8), INTENT(IN) :: opsDat1Local(*)
-  real(8)opsDat2Local(*)
-  real(8)opsDat3Local(*)
-  integer dat1_base
-  integer dat2_base
-  integer dat3_base
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
+  real(8), DEVICE :: opsDat2Local(*)
+  real(8), DEVICE :: opsDat3Local(*)
+  integer, DEVICE :: dat1_base
+  integer, DEVICE :: dat2_base
+  integer, DEVICE :: dat3_base
   integer(4) start(1)
   integer(4) end(1)
   integer n_x
 
-  !$OMP PARALLEL DO
-  !DIR$ SIMD
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local)
+  !$acc loop
   DO n_x = 1, end(1)-start(1)+1
     call limiter_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &
     & opsDat2Local(dat2_base+(n_x-1)*3), &
     & opsDat3Local(dat3_base+(n_x-1)*3) )
   END DO
+  !$acc end parallel
 end subroutine
 
 !host subroutine
@@ -92,22 +92,22 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE :: dat1_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4), DEVICE :: dat2_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), POINTER, DIMENSION(:) :: opsDat3Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4) :: dat3_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
+  integer(kind=4), DEVICE :: dat3_base
 
   integer n_x
   integer start(1)
@@ -136,21 +136,21 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   opsDat1Cardinality = opsArg1%dim * xdim1
   multi_d1 = getDatDimFromOpsArg(opsArg1) ! dimension of the dat
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,multi_d1)
-  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+  call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg2%dim * xdim2
   multi_d2 = getDatDimFromOpsArg(opsArg2) ! dimension of the dat
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,multi_d2)
-  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+  call c_f_pointer(opsArg2%data_d,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
   opsDat3Cardinality = opsArg3%dim * xdim3
   multi_d3 = getDatDimFromOpsArg(opsArg3) ! dimension of the dat
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,multi_d3)
-  call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
+  call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
   call ops_H_D_exchanges_host(opsArgArray,3)
   call ops_halo_exchanges(opsArgArray,3,range)

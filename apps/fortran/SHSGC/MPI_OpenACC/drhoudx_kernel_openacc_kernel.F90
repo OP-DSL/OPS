@@ -17,8 +17,7 @@ INTEGER(KIND=4) xdim2
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: drhoudx_kernel
-subroutine drhoudx_kernel(rhou_new, rho_res)
+attributes (device) subroutine drhoudx_kernel(rhou_new, rho_res)
 
   real (kind=8) , INTENT(in), DIMENSION(1) :: rhou_new
   real (kind=8) , DIMENSION(1) :: rho_res
@@ -48,21 +47,22 @@ subroutine drhoudx_kernel_wrap( &
 & start, &
 & end )
   IMPLICIT NONE
-  real(8), INTENT(IN) :: opsDat1Local(*)
-  real(8)opsDat2Local(*)
-  integer dat1_base
-  integer dat2_base
+  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
+  real(8), DEVICE :: opsDat2Local(*)
+  integer, DEVICE :: dat1_base
+  integer, DEVICE :: dat2_base
   integer(4) start(1)
   integer(4) end(1)
   integer n_x
 
-  !$OMP PARALLEL DO
-  !DIR$ SIMD
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)
+  !$acc loop
   DO n_x = 1, end(1)-start(1)+1
     call drhoudx_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local(dat2_base+(n_x-1)*1) )
   END DO
+  !$acc end parallel
 end subroutine
 
 !host subroutine
@@ -76,16 +76,16 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE :: dat1_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4), DEVICE :: dat2_base
 
   integer n_x
   integer start(1)
@@ -112,13 +112,13 @@ subroutine drhoudx_kernel_host( userSubroutine, block, dim, range, &
   xdim1 = dat1_size(1)
   opsDat1Cardinality = opsArg1%dim * xdim1
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
-  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+  call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
-  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+  call c_f_pointer(opsArg2%data_d,opsDat2Local,(/opsDat2Cardinality/))
 
   call ops_H_D_exchanges_host(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)

@@ -25,8 +25,7 @@ INTEGER(KIND=4) xdim6
 contains
 
 !user function
-!DEC$ ATTRIBUTES FORCEINLINE :: save_kernel
-subroutine save_kernel(rho_old, rhou_old, rhoE_old, rho_new, rhou_new, rhoE_new)
+attributes (device) subroutine save_kernel(rho_old, rhou_old, rhoE_old, rho_new, rhou_new, rhoE_new)
 
   real (kind=8) , DIMENSION(1) :: rho_old, rhou_old, rhoE_old
   real (kind=8) , INTENT(IN), DIMENSION(1) :: rho_new, rhou_new, rhoE_new
@@ -62,24 +61,24 @@ subroutine save_kernel_wrap( &
 & start, &
 & end )
   IMPLICIT NONE
-  real(8)opsDat1Local(*)
-  real(8)opsDat2Local(*)
-  real(8)opsDat3Local(*)
-  real(8), INTENT(IN) :: opsDat4Local(*)
-  real(8), INTENT(IN) :: opsDat5Local(*)
-  real(8), INTENT(IN) :: opsDat6Local(*)
-  integer dat1_base
-  integer dat2_base
-  integer dat3_base
-  integer dat4_base
-  integer dat5_base
-  integer dat6_base
+  real(8), DEVICE :: opsDat1Local(*)
+  real(8), DEVICE :: opsDat2Local(*)
+  real(8), DEVICE :: opsDat3Local(*)
+  real(8), DEVICE, INTENT(IN) :: opsDat4Local(*)
+  real(8), DEVICE, INTENT(IN) :: opsDat5Local(*)
+  real(8), DEVICE, INTENT(IN) :: opsDat6Local(*)
+  integer, DEVICE :: dat1_base
+  integer, DEVICE :: dat2_base
+  integer, DEVICE :: dat3_base
+  integer, DEVICE :: dat4_base
+  integer, DEVICE :: dat5_base
+  integer, DEVICE :: dat6_base
   integer(4) start(1)
   integer(4) end(1)
   integer n_x
 
-  !$OMP PARALLEL DO
-  !DIR$ SIMD
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local,opsDat6Local)
+  !$acc loop
   DO n_x = 1, end(1)-start(1)+1
     call save_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -89,6 +88,7 @@ subroutine save_kernel_wrap( &
     & opsDat5Local(dat5_base+(n_x-1)*1), &
     & opsDat6Local(dat6_base+(n_x-1)*1) )
   END DO
+  !$acc end parallel
 end subroutine
 
 !host subroutine
@@ -106,40 +106,40 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), POINTER, DIMENSION(:) :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4) :: dat1_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
+  integer(kind=4), DEVICE :: dat1_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), POINTER, DIMENSION(:) :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4) :: dat2_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
+  integer(kind=4), DEVICE :: dat2_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), POINTER, DIMENSION(:) :: opsDat3Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4) :: dat3_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
+  integer(kind=4), DEVICE :: dat3_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg4
-  real(8), POINTER, DIMENSION(:) :: opsDat4Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat4_size
-  integer(kind=4) :: dat4_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat4_size
+  integer(kind=4), DEVICE :: dat4_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg5
-  real(8), POINTER, DIMENSION(:) :: opsDat5Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat5_size
-  integer(kind=4) :: dat5_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat5_size
+  integer(kind=4), DEVICE :: dat5_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg6
-  real(8), POINTER, DIMENSION(:) :: opsDat6Local
+  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat6Local
   integer(kind=4) :: opsDat6Cardinality
-  integer(kind=4) , POINTER, DIMENSION(:)  :: dat6_size
-  integer(kind=4) :: dat6_base
+  integer(kind=4), POINTER, DIMENSION(:)  :: dat6_size
+  integer(kind=4), DEVICE :: dat6_base
 
   integer n_x
   integer start(1)
@@ -170,37 +170,37 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
   xdim1 = dat1_size(1)
   opsDat1Cardinality = opsArg1%dim * xdim1
   dat1_base = getDatBaseFromOpsArg1D(opsArg1,start,1)
-  call c_f_pointer(opsArg1%data,opsDat1Local,(/opsDat1Cardinality/))
+  call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg2),dat2_size,(/dim/))
   xdim2 = dat2_size(1)
   opsDat2Cardinality = opsArg2%dim * xdim2
   dat2_base = getDatBaseFromOpsArg1D(opsArg2,start,1)
-  call c_f_pointer(opsArg2%data,opsDat2Local,(/opsDat2Cardinality/))
+  call c_f_pointer(opsArg2%data_d,opsDat2Local,(/opsDat2Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg3),dat3_size,(/dim/))
   xdim3 = dat3_size(1)
   opsDat3Cardinality = opsArg3%dim * xdim3
   dat3_base = getDatBaseFromOpsArg1D(opsArg3,start,1)
-  call c_f_pointer(opsArg3%data,opsDat3Local,(/opsDat3Cardinality/))
+  call c_f_pointer(opsArg3%data_d,opsDat3Local,(/opsDat3Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))
   xdim4 = dat4_size(1)
   opsDat4Cardinality = opsArg4%dim * xdim4
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
-  call c_f_pointer(opsArg4%data,opsDat4Local,(/opsDat4Cardinality/))
+  call c_f_pointer(opsArg4%data_d,opsDat4Local,(/opsDat4Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg5),dat5_size,(/dim/))
   xdim5 = dat5_size(1)
   opsDat5Cardinality = opsArg5%dim * xdim5
   dat5_base = getDatBaseFromOpsArg1D(opsArg5,start,1)
-  call c_f_pointer(opsArg5%data,opsDat5Local,(/opsDat5Cardinality/))
+  call c_f_pointer(opsArg5%data_d,opsDat5Local,(/opsDat5Cardinality/))
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg6),dat6_size,(/dim/))
   xdim6 = dat6_size(1)
   opsDat6Cardinality = opsArg6%dim * xdim6
   dat6_base = getDatBaseFromOpsArg1D(opsArg6,start,1)
-  call c_f_pointer(opsArg6%data,opsDat6Local,(/opsDat6Cardinality/))
+  call c_f_pointer(opsArg6%data_d,opsDat6Local,(/opsDat6Cardinality/))
 
   call ops_H_D_exchanges_host(opsArgArray,6)
   call ops_halo_exchanges(opsArgArray,6,range)

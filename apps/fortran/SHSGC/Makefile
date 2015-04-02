@@ -49,6 +49,7 @@ else
   OPT           := -O3 -Kieee -Minline
 endif
   OMPFLAGS      := -mp
+  OpenACCFLAGS	:= -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 ‑Minline
   CCFLAGS       := $(OPT) -Wall -Werror -wd981
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
@@ -60,7 +61,7 @@ endif
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(CXXFLAGS)
-  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda
+  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda shsgc_openacc
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -182,6 +183,24 @@ else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
+
+shsgc_openacc: shsgc_ops.F90 constants.F90
+	$(FC) $(OPT) $(FMODS) $(OpenACCFLAGS) -c -DOPS_WITH_CUDAFOR constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhouupdx_kernel_openacc_kernel.F90 ./MPI_OpenACC/zerores_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhoudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/save_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhoEpudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/updateRK3_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/Riemann_kernel_openacc_kernel.F90 ./MPI_OpenACC/limiter_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/tvd_kernel_openacc_kernel.F90 ./MPI_OpenACC/vars_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/calupwindeff_kernel_openacc_kernel.F90 ./MPI_OpenACC/fact_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/update_kernel_openacc_kernel.F90 ./MPI_OpenACC/test_kernel_openacc_kernel.F90 shsgc_ops.F90
+	$(FC) $(OPT) $(FLINK) $(OpenACCFLAGS) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
+        drhouupdx_kernel_openacc_kernel.o zerores_kernel_openacc_kernel.o save_kernel_openacc_kernel.o \
+        drhoudx_kernel_openacc_kernel.o drhoEpudx_kernel_openacc_kernel.o updateRK3_kernel_openacc_kernel.o \
+        Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
+        vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
+        fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
+        -o shsgc_openacc -lops_for_cuda
+
 clean:
 	rm -f *.o
 	rm -f *.mod
@@ -193,3 +212,4 @@ clean:
 	rm -f shsgc_mpi_openmp
 	rm -f shsgc_cuda
 	rm -f shsgc_mpi_cuda
+	rm -f shsgc_openacc

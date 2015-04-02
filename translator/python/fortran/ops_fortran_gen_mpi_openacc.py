@@ -166,7 +166,6 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
 #  user kernel subroutine
 ##########################################################################
     comm('user function')
-    code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
     fid = open(name2+'_kernel.inc', 'r')
     text = fid.read()
     fid.close()
@@ -182,7 +181,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     # parameter vars are declared inside the subroutine
     # for now no check is done
 
-    code(text)
+    code('attributes (device) '+text)
     code('')
 
     for n in range (0, nargs):
@@ -216,17 +215,18 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     code('IMPLICIT NONE')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
-        code(typs[n]+', INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
+        code(typs[n]+', DEVICE, INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code(typs[n]+'opsDat'+str(n+1)+'Local(*)')
+        code(typs[n]+', DEVICE :: opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code(typs[n]+' opsDat'+str(n+1)+'Local('+str(dims[n])+')')
+        code(typs[n]+', DEVICE :: opsDat'+str(n+1)+'Local('+str(dims[n])+')')
       elif arg_typ[n] == 'ops_arg_idx':
-        code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
+        code('integer(4) idx('+str(NDIM)+')' )
+        code('integer(4), DEVICE :: idx_local('+str(NDIM)+')' )
 
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
-        code('integer dat' + str(n+1)+'_base')
+        code('integer, DEVICE :: dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
     if NDIM==1:
@@ -237,21 +237,47 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       code('integer n_x, n_y, n_z')
     code('')
 
+    #
+    # Create OpenACC pragma line
+    #
+    line = '!$acc parallel deviceptr('
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        line = line + 'opsDat'+str(n+1)+'Local,'
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+          line = line + 'opsDat'+str(n+1)+'Local,'
+    line = line[:-1]+')'
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          line = line + ' reduction(min:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_MAX:
+          line = line + ' reduction(max:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_INC:
+          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_WRITE: #this may not be correct
+          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
+    code(line)
+    line = '!$acc loop'
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          line = line + ' reduction(min:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_MAX:
+          line = line + ' reduction(max:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_INC:
+          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
+        if accs[n] == OPS_WRITE: #this may not be correct
+          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
+    code(line)
+
     if NDIM==1:
-      if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO')
-        code('!DIR$ SIMD')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO '+reduction_vars)
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==2:
-      if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x)')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x) '+reduction_vars)
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
@@ -261,10 +287,6 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==3:
-      if reduction <> 1 and arg_idx <> 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
       DO('n_z','1','end(3)-start(3)+1')
       if arg_idx == 1:
         code('id3_local(3) = idx(3) + n_z - 1')
@@ -311,6 +333,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       ENDDO()
       ENDDO()
       ENDDO()
+    code('!$acc end parallel')
     config.depth = config.depth - 2
     code('end subroutine')
 
@@ -341,10 +364,10 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         code('')
       if arg_typ[n] == 'ops_arg_dat':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
-        code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
-        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
+        code('integer(kind=4), DEVICE :: dat'+str(n+1)+'_base')
         if NDIM==2:
           code('integer ydim'+str(n+1))
         elif NDIM==2:
@@ -352,8 +375,8 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
-        code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        code(typs[n]+', POINTER, DEVICE, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code('integer(kind=4), DEVICE :: dat'+str(n+1)+'_base')
         code('')
 
     if NDIM==1:
@@ -433,7 +456,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
-        code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
+        code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
