@@ -23,7 +23,7 @@ INTEGER(KIND=4) xdim5
 contains
 
 !user function
-subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
+attributes (device) subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
   real (kind=8) , DIMENSION(1) :: x, rho_new, rhou_new, rhoE_new, rhoin
   INTEGER(kind=4), DIMENSION(1), INTENT(IN) :: idx
 
