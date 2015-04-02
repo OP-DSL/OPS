@@ -53,6 +53,7 @@ to produce individual kernel files of the form
 xxx_seq_kernel.F90 -- for single threaded x86 execution (also used for MPI)
 xxx_omp_kernel.F90 -- for OpenMP x86 execution
 xxx_kernel.CUF -- for CUDA execution with CUDA Fortran
+xxx_openacc_kernel.F90 -- for OpenACC execution
 
 """
 
@@ -64,7 +65,7 @@ import datetime
 from ops_fortran_gen_mpi import ops_fortran_gen_mpi
 from ops_fortran_gen_mpi_openmp import ops_fortran_gen_mpi_openmp
 from ops_fortran_gen_mpi_cuda import ops_fortran_gen_mpi_cuda
-
+from ops_fortran_gen_mpi_openacc import ops_fortran_gen_mpi_openacc
 
 """import fortran code generation function"""
 import util_fortran
@@ -605,9 +606,11 @@ def main():
   #
   # finally, generate target-specific kernel files
   #
-  ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  ops_fortran_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  ops_fortran_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+
+  #ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  #ops_fortran_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  #ops_fortran_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
