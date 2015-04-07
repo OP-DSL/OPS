@@ -55,7 +55,7 @@ extern int ops_thread_offload;
 #ifndef defaultTimeout
 #define defaultTimeout 10.0
 #endif
-
+#define ROUND64L(x) ((((x)-1l)/64l+1l)*64l)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -107,14 +107,33 @@ herr_t status;
 FILE *diagf;
 int diagnostics = 0;
 
+#define check_hdf5_error(err)           __check_hdf5_error      (err, __FILE__, __LINE__)
+void __check_hdf5_error(herr_t err, const char *file, const int line) {
+  if (err < 0) {
+    printf("%s(%i) : OPS_HDF5_error() Runtime API error %d.\n", file, line, (int)err);
+      exit(-1);
+  }
+}
+
+bool file_exists(const char * file_name) {
+    if (FILE * file = fopen(file_name, "r")) {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
+
+
+#define OPS_CHK_THREAD
 #ifdef OPS_CHK_THREAD
 #include <pthread.h>
 #include <unistd.h>
 char *ops_ramdisk_buffer = NULL;
-volatile long ops_ramdisk size = 0;
+volatile long ops_ramdisk_size = 0;
 volatile long ops_ramdisk_head = 0;
 volatile long ops_ramdisk_tail = 0;
-struct {
+
+typedef struct {
   ops_dat dat;
   hid_t outfile;
   int size;
@@ -133,29 +152,38 @@ volatile int ops_ramdisk_ctrl_finish = 0;
 int ops_ramdisk_initialised = 0;
 
 pthread_t thread;
+void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data);
+void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data);
+
 void *ops_saver_thread(void *payload)
 {
   while (!ops_ramdisk_ctrl_exit) {
     if (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail) {
-      if (ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].partial) {
-        save_to_hdf5_partial(ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].dat,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].outfile,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].size,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].data);
+      int tail = ops_ramdisk_item_queue_tail;
+      if (ops_ramdisk_item_queue[tail].partial) {
+        if (OPS_diags>5) printf("Thread saving partial %s\n",ops_ramdisk_item_queue[tail].dat->name);
+        save_to_hdf5_partial(ops_ramdisk_item_queue[tail].dat,
+                             ops_ramdisk_item_queue[tail].outfile,
+                             ops_ramdisk_item_queue[tail].size/(ops_ramdisk_item_queue[tail].dat->elem_size/ops_ramdisk_item_queue[tail].dat->dim),
+                             ops_ramdisk_item_queue[tail].saved_range,
+                             ops_ramdisk_item_queue[tail].data);
       } else {
-        save_to_hdf5_partial(ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].dat,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].outfile,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].size,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].saved_range,
-                             ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].data);
+        if (OPS_diags>5) printf("Thread saving full %s\n",ops_ramdisk_item_queue[tail].dat->name);
+        save_to_hdf5_full(   ops_ramdisk_item_queue[tail].dat,
+                             ops_ramdisk_item_queue[tail].outfile,
+                             ops_ramdisk_item_queue[tail].size/(ops_ramdisk_item_queue[tail].dat->elem_size/ops_ramdisk_item_queue[tail].dat->dim),
+                             ops_ramdisk_item_queue[tail].data);
       }
-      if (ops_ramdisk_tail + size < ops_ramdisk_size) {
-        ops_ramdisk_tail += ops_ramdisk_item_queue[ops_ramdisk_item_queue_tail].size;
+      if (ops_ramdisk_tail + ROUND64L(ops_ramdisk_item_queue[tail].size) < ops_ramdisk_size) {
+        if (ops_ramdisk_tail < ops_ramdisk_head && ops_ramdisk_tail + ROUND64L(ops_ramdisk_item_queue[tail].size) > ops_ramdisk_head) {printf("Tail error\n");exit(-1);}
+        ops_ramdisk_tail += ROUND64L(ops_ramdisk_item_queue[tail].size);
       }
-      else
-        ops_ramdisk_tail = size;
+      else {
+        if (ops_ramdisk_head < ROUND64L(ops_ramdisk_item_queue[tail].size)) {printf("Tail error 2\n");exit(-1);}
+        ops_ramdisk_tail = ROUND64L(ops_ramdisk_item_queue[tail].size);
+      }
 
-      ops_ramdisk_item_queue_tail++;
+      ops_ramdisk_item_queue_tail = (ops_ramdisk_item_queue_tail+1)%ops_ramdisk_item_queue_size;
     }
 
     if (ops_ramdisk_item_queue_head == ops_ramdisk_item_queue_tail) {
@@ -172,78 +200,67 @@ void *ops_saver_thread(void *payload)
 
 void ops_reallocate_ramdisk(long size) {
   //Wait for the queue to drain
+  if (OPS_diags>5 && (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk reallocation head %d tail %d\n",ops_ramdisk_item_queue_head,ops_ramdisk_item_queue_tail);
   while(ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail) usleep(20);
-  ops_ramdisk_buffer = (char *)realloc(ops_ramdisk_buffer, size*sizeof(char));
+  ops_ramdisk_size = ROUND64L(size);
+  ops_ramdisk_buffer = (char *)realloc(ops_ramdisk_buffer, ops_ramdisk_size*sizeof(char));
   ops_ramdisk_tail = 0;
   ops_ramdisk_head = 0;
-  ops_ramdisk_size = size;
 }
 
 void ops_ramdisk_init(long size) {
   if (ops_ramdisk_initialised) return;
-  ops_ramdisk_size = size;
-  ops_ramdisk_buffer = (char *)malloc(size*sizeof(char));
+  ops_ramdisk_size = ROUND64L(size);
+  ops_ramdisk_buffer = (char *)malloc(ops_ramdisk_size*sizeof(char));
   ops_ramdisk_tail = 0;
   ops_ramdisk_head = 0;
   ops_ramdisk_item_queue = (ops_ramdisk_item *)malloc(3*OPS_dat_index*sizeof(ops_ramdisk_item));
   ops_ramdisk_item_queue_head = 0;
   ops_ramdisk_item_queue_tail = 0;
+  ops_ramdisk_item_queue_size = 3*OPS_dat_index;
   ops_ramdisk_initialised = 1;
   int rc = pthread_create(&thread, NULL, ops_saver_thread, NULL);
   if (rc) {printf("ERROR; return code from pthread_create() is %d\n", rc); exit(-1);}
 }
 
 void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, char*data, int partial) {
-  if (ops_ramdisk_size < size) ops_reallocate_ramdisk(2l*(long)size);
+  size = size * dat->elem_size/dat->dim;
+  long sizeround64 = ROUND64L(size);
+  if (ops_ramdisk_size < sizeround64) ops_reallocate_ramdisk(ROUND64L(3l*(long)sizeround64 + (long)sizeround64/5l + 64));
   //Copy data to ramdisk
   long tail = ops_ramdisk_tail;
   long head = ops_ramdisk_head;
-  while ((head < tail && head + size >= tail) ||
-    (head + size >= size && size >= tail)) {
+  while ((head < tail && head + sizeround64 >= tail) ||
+    (head + sizeround64 >= ops_ramdisk_size && sizeround64 >= tail)) {
+    if (OPS_diags > 5) printf("Main thread waiting for ramdisk room %ld < %ld && %ld + %d >= %ld or %ld + %d  >= %ld && %d >= %ld\n",head, tail, head, sizeround64, tail,head,sizeround64,ops_ramdisk_size,sizeround64,tail);
     usleep(10);
     tail = ops_ramdisk_tail;
   }
 
-  if (head + size >= size) head = 0;
+  if (head + sizeround64 >= ops_ramdisk_size) head = 0;
 
   memcpy(ops_ramdisk_buffer+head, data, size*sizeof(char));
-  ops_ramdisk_head = head + size;
+  ops_ramdisk_head = head + sizeround64;
 
   //next item index
-  int item_idx = (ops_ramdisk_item_queue_head+1)%ops_ramdisk_item_queue_size;
+  int item_idx = ops_ramdisk_item_queue_head;
+  int item_idx_next = (ops_ramdisk_item_queue_head+1)%ops_ramdisk_item_queue_size;
 
-  //wait
-  while (item_idx >= ops_ramdisk_item_queue_tail) usleep(10);
+  //wait if we are about to bite our tails
+  if ((OPS_diags > 5) && (item_idx_next == ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk item queue room %d == %d\n",item_idx_next,ops_ramdisk_item_queue_tail);
+  while (item_idx_next == ops_ramdisk_item_queue_tail) usleep(10);
 
   //enqueue item
   ops_ramdisk_item_queue[item_idx].dat = dat;
   ops_ramdisk_item_queue[item_idx].outfile = outfile;
   ops_ramdisk_item_queue[item_idx].size = size;
   if (partial) memcpy(ops_ramdisk_item_queue[item_idx].saved_range, saved_range, 2*OPS_MAX_DIM*sizeof(int));
-  ops_ramdisk_item_queue[item_idx].data = data;
+  ops_ramdisk_item_queue[item_idx].data = ops_ramdisk_buffer+head;
   ops_ramdisk_item_queue[item_idx].partial = partial;
-  ops_ramdisk_item_queue_head = item_idx;
-
-
+  ops_ramdisk_item_queue_head = item_idx_next;
 }
 
 #endif
-
-#define check_hdf5_error(err)           __check_hdf5_error      (err, __FILE__, __LINE__)
-void __check_hdf5_error(herr_t err, const char *file, const int line) {
-  if (err < 0) {
-    printf("%s(%i) : OPS_HDF5_error() Runtime API error %d.\n", file, line, (int)err);
-      exit(-1);
-  }
-}
-
-bool file_exists(const char * file_name) {
-    if (FILE * file = fopen(file_name, "r")) {
-        fclose(file);
-        return true;
-    }
-    return false;
-}
 
 void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
   if (size == 0) return;
@@ -295,9 +312,9 @@ void save_dat(ops_dat dat) {
 #ifdef OPS_CHK_THREAD
   if (ops_thread_offload) ops_ramdisk_queue(dat, file, (int)dims[0], NULL, dat->data, 0);
   else
-#else
-  save_to_hdf5_full(dat, file, (int)dims[0], dat->data);
 #endif
+  save_to_hdf5_full(dat, file, (int)dims[0], dat->data);
+
 
   if (ops_duplicate_backup) {
     char *rm_data;
@@ -311,16 +328,15 @@ void save_dat(ops_dat dat) {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
       else
-#else
-      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
 #endif
+      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
+
     } else {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, rm_range, rm_data, 1);
       else
-#else
-      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
 #endif
+      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
     }
   }
   if (OPS_diags>4) printf("Backed up %s\n", dat->name);
@@ -403,9 +419,9 @@ void save_dat_partial(ops_dat dat, int *range) {
 #ifdef OPS_CHK_THREAD
   if (ops_thread_offload) ops_ramdisk_queue(dat, file, (int)dims[0], saved_range, OPS_partial_buffer, 1);
   else
-#else
-  save_to_hdf5_partial(dat, file, (int)dims[0], saved_range, OPS_partial_buffer);
 #endif
+  save_to_hdf5_partial(dat, file, (int)dims[0], saved_range, OPS_partial_buffer);
+
 
 
   if (ops_duplicate_backup) {
@@ -420,16 +436,14 @@ void save_dat_partial(ops_dat dat, int *range) {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
       else
-#else
-      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
 #endif
+      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
     } else {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, rm_range, rm_data, 1);
       else
-#else
-      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
 #endif
+      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
     }
   }
 
@@ -647,7 +661,10 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       ops_backup_point = ops_call_counter;
 #ifdef OPS_CHK_THREAD
       //if spin-off thread, and it is still working, we need to wait for it to finish
-      if (ops_thread_offload) while(ops_ramdisk_ctrl_finish) usleep(10);
+      if (ops_thread_offload) {
+        if (OPS_diags>5 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
+        while(ops_ramdisk_ctrl_finish) usleep(10);
+      }
 #endif
       if (file_exists(filename)) remove(filename);
       if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
@@ -686,10 +703,9 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       if (ops_thread_offload)
         ops_ramdisk_ctrl_finish = 1;
       else {
-#else
+#endif
       check_hdf5_error(H5Fclose(file));
       if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
-#endif
 #ifdef OPS_CHK_THREAD
       }
 #endif
@@ -950,7 +966,10 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     ops_backup_point = ops_call_counter;
 #ifdef OPS_CHK_THREAD
     //if spin-off thread, and it is still working, we need to wait for it to finish
-    if (ops_thread_offload) while(ops_ramdisk_ctrl_finish) usleep(10);
+    if (ops_thread_offload) {
+      if (OPS_diags>5 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
+      while(ops_ramdisk_ctrl_finish) usleep(10);
+    }
 #endif
     if (file_exists(filename)) remove(filename);
     if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
@@ -959,21 +978,36 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (ops_duplicate_backup) file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
-#ifdef OPS_CHK_THREAD
-    if (ops_thread_offload) {
-      if (ops_duplicate_backup)
-        ops_ramdisk_init(2l*ops_best_backup_point_size + (2l*ops_best_backup_point_size)/5l);
-      else
-        ops_ramdisk_init(ops_best_backup_point_size + ops_best_backup_point_size/5l);
-    }
-#endif
-
     //write all control
     ops_checkpointing_save_control(file);
     if (ops_duplicate_backup) {
       ops_checkpointing_save_control(file_dup);
     }
 
+#ifdef OPS_CHK_THREAD
+    if (ops_thread_offload) {
+      if (ops_best_backup_point_size == 0) {
+        ops_dat_entry *item, *tmp_item;
+        int dat_count = 0;
+        for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+          tmp_item = TAILQ_NEXT(item, entries);
+          if (OPS_dat_ever_written[item->dat->index]) {
+            long size = item->dat->elem_size;
+            for (int d = 0; d < item->dat->block->dims; d++) size *= item->dat->size[d];
+            ops_best_backup_point_size += size;
+            dat_count++;
+          }
+        }
+        ops_best_backup_point_size = ops_best_backup_point_size/5l;
+        if (OPS_diags>5) printf("Approximated ramdisk size %ld\n",ops_best_backup_point_size);
+      }
+      if (ops_duplicate_backup)
+        ops_ramdisk_init(2l*ops_best_backup_point_size + (2l*ops_best_backup_point_size)/5l);
+      else
+        ops_ramdisk_init(ops_best_backup_point_size + ops_best_backup_point_size/5l);
+    }
+#endif
+    
     //write datasets
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype == OPS_ARG_DAT &&
@@ -1050,7 +1084,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       }
     }
 
-    if (OPS_diags>4) {
+    if (OPS_diags>6) {
       for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
         tmp_item = TAILQ_NEXT(item, entries);
         ops_printf("Ever written %s %d\n", item->dat->name, OPS_dat_ever_written[item->dat->index]);
@@ -1060,10 +1094,9 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     if (ops_thread_offload)
       ops_ramdisk_ctrl_finish = 1;
     else {
-#else
+#endif
     check_hdf5_error(H5Fclose(file));
     if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
-#endif
 #ifdef OPS_CHK_THREAD
     }
 #endif
@@ -1084,18 +1117,21 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 void ops_checkpointing_exit() {
   if (backup_state != OPS_NONE) {
     ops_statistics_exit();
+
+#ifdef OPS_CHK_THREAD
+    if (ops_thread_offload && ops_ramdisk_initialised) {
+      ops_ramdisk_ctrl_exit = 1;
+      pthread_join(thread, NULL);
+      free(ops_ramdisk_buffer);
+      free(ops_ramdisk_item_queue);
+    }
+#endif
+
     if (backup_state == OPS_BACKUP_IN_PROCESS) {
       check_hdf5_error(H5Fclose(file));
       if (ops_duplicate_backup)
         check_hdf5_error(H5Fclose(file_dup));
     }
-
-#ifdef OPS_CHK_THREAD
-    if (ops_thread_offload) {
-      ops_ramdisk_ctrl_exit = 1;
-      pthread_join(thread, NULL);
-    }
-#endif
 
     remove(filename);
     if (ops_duplicate_backup)

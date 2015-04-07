@@ -167,6 +167,7 @@ void ops_init_core( int argc, char ** argv, int diags )
 
 void ops_exit_core( )
 {
+  ops_checkpointing_exit();
   ops_dat_entry *item;
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
@@ -216,7 +217,6 @@ void ops_exit_core( )
   OPS_dat_index = 0;
   OPS_block_max = 0;
 
-  ops_checkpointing_exit();
 }
 
 ops_block ops_decl_block(int dims, char *name)
