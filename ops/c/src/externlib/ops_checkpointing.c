@@ -49,7 +49,7 @@ ops_checkpoint_types *OPS_dat_status = NULL;
 double OPS_checkpointing_time = 0.0;
 int OPS_ranks_per_node = 0;
 extern int ops_thread_offload;
-
+extern int ops_lock_file;
 #ifdef CHECKPOINTING
 
 #ifndef defaultTimeout
@@ -123,8 +123,28 @@ bool file_exists(const char * file_name) {
     return false;
 }
 
+void ops_create_lock(char *fname) {
+  char buffer[strlen(fname)+5];
+  sprintf(buffer,"%s.lock",fname);
+  if (FILE *lock = fopen(buffer,"w+")) {
+    fclose(lock);
+  } else {
+    if (OPS_diags>2) printf("Warning, lock file already exists\n");
+  }
+}
 
-#define OPS_CHK_THREAD
+void ops_create_lock_done(char *fname) {
+  char buffer[strlen(fname)+5];
+  sprintf(buffer,"%s.done",fname);
+  if (FILE *lock = fopen(buffer,"w+")) {
+    fclose(lock);
+  } else {
+    if (OPS_diags>2) printf("Warning, lock done file already exists\n");
+  }
+}
+
+
+
 #ifdef OPS_CHK_THREAD
 #include <pthread.h>
 #include <unistd.h>
@@ -189,10 +209,13 @@ void *ops_saver_thread(void *payload)
     if (ops_ramdisk_item_queue_head == ops_ramdisk_item_queue_tail) {
       if (ops_ramdisk_ctrl_finish) {
         check_hdf5_error(H5Fclose(file));
+        if (ops_lock_file) ops_create_lock(filename);
         if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
+        if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
         ops_ramdisk_ctrl_finish = 0;
+        usleep((long)(ops_checkpoint_interval * 300000.0));
       }
-      usleep(100);
+      usleep(100000);
     }
   }
   pthread_exit(NULL); //Perhaps return whether everything was properly saved
@@ -200,8 +223,8 @@ void *ops_saver_thread(void *payload)
 
 void ops_reallocate_ramdisk(long size) {
   //Wait for the queue to drain
-  if (OPS_diags>5 && (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk reallocation head %d tail %d\n",ops_ramdisk_item_queue_head,ops_ramdisk_item_queue_tail);
-  while(ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail) usleep(20);
+  if (OPS_diags>2 && (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk reallocation head %d tail %d\n",ops_ramdisk_item_queue_head,ops_ramdisk_item_queue_tail);
+  while(ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail) usleep(20000);
   ops_ramdisk_size = ROUND64L(size);
   ops_ramdisk_buffer = (char *)realloc(ops_ramdisk_buffer, ops_ramdisk_size*sizeof(char));
   ops_ramdisk_tail = 0;
@@ -232,8 +255,8 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, c
   long head = ops_ramdisk_head;
   while ((head < tail && head + sizeround64 >= tail) ||
     (head + sizeround64 >= ops_ramdisk_size && sizeround64 >= tail)) {
-    if (OPS_diags > 5) printf("Main thread waiting for ramdisk room %ld < %ld && %ld + %d >= %ld or %ld + %d  >= %ld && %d >= %ld\n",head, tail, head, sizeround64, tail,head,sizeround64,ops_ramdisk_size,sizeround64,tail);
-    usleep(10);
+    if (OPS_diags > 2) printf("Main thread waiting for ramdisk room %ld < %ld && %ld + %d >= %ld or %ld + %d  >= %ld && %d >= %ld\n",head, tail, head, sizeround64, tail,head,sizeround64,ops_ramdisk_size,sizeround64,tail);
+    usleep(10000);
     tail = ops_ramdisk_tail;
   }
 
@@ -247,8 +270,8 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, c
   int item_idx_next = (ops_ramdisk_item_queue_head+1)%ops_ramdisk_item_queue_size;
 
   //wait if we are about to bite our tails
-  if ((OPS_diags > 5) && (item_idx_next == ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk item queue room %d == %d\n",item_idx_next,ops_ramdisk_item_queue_tail);
-  while (item_idx_next == ops_ramdisk_item_queue_tail) usleep(10);
+  if ((OPS_diags > 2) && (item_idx_next == ops_ramdisk_item_queue_tail)) printf("Main thread waiting for ramdisk item queue room %d == %d\n",item_idx_next,ops_ramdisk_item_queue_tail);
+  while (item_idx_next == ops_ramdisk_item_queue_tail) usleep(10000);
 
   //enqueue item
   ops_ramdisk_item_queue[item_idx].dat = dat;
@@ -577,7 +600,7 @@ bool ops_checkpointing_initstate() {
 bool ops_checkpointing_init(const char *file_name, double interval, int options) {
   if (!OPS_enable_checkpointing) return false;
   ops_checkpoint_interval = interval;
-  if (interval < defaultTimeout*2.0) interval = defaultTimeout*2.0; //WHAT SHOULD THIS BE? - the time it takes to back up everything
+  if (interval < defaultTimeout*2.0) ops_checkpoint_interval = defaultTimeout*2.0; //WHAT SHOULD THIS BE? - the time it takes to back up everything
   double cpu;
   ops_timers_core(&cpu, &ops_last_checkpoint);
   ops_duplicate_backup = ops_checkpointing_filename(file_name, filename, filename_dup);
@@ -662,8 +685,8 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
 #ifdef OPS_CHK_THREAD
       //if spin-off thread, and it is still working, we need to wait for it to finish
       if (ops_thread_offload) {
-        if (OPS_diags>5 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
-        while(ops_ramdisk_ctrl_finish) usleep(10);
+        if (OPS_diags>2 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
+        while(ops_ramdisk_ctrl_finish) usleep(10000);
       }
 #endif
       if (file_exists(filename)) remove(filename);
@@ -705,7 +728,9 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       else {
 #endif
       check_hdf5_error(H5Fclose(file));
+      if (ops_lock_file) ops_create_lock(filename);
       if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
+      if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
 #ifdef OPS_CHK_THREAD
       }
 #endif
@@ -811,8 +836,9 @@ void ops_checkpointing_reduction(ops_reduction red) {
       temp.dim = 2;//*sizeof(double);
       ops_mpi_reduce_double(&temp, timing);
       ops_reduction_avg_time = timing[0];
-      if (ops_reduction_avg_time < 0.1 * ops_checkpoint_interval) ops_sync_frequency=ops_reduction_counter;
-      //if (ops_reduction_avg_time > 0.3 * ops_checkpoint_interval) ops_sync_frequency/=1.5;
+      if (ops_reduction_avg_time < 0.1 * ops_checkpoint_interval) ops_sync_frequency*=2;
+      if (ops_reduction_avg_time > 0.3 * ops_checkpoint_interval) ops_sync_frequency=ops_sync_frequency-ops_sync_frequency/2;
+      ops_sync_frequency = MAX(ops_sync_frequency,1);
       //ops_printf("ops_sync_frequency %d\n", ops_sync_frequency);
       if (timing[1] == 1.0) {
         ops_reduction_counter = 0;
@@ -967,8 +993,8 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 #ifdef OPS_CHK_THREAD
     //if spin-off thread, and it is still working, we need to wait for it to finish
     if (ops_thread_offload) {
-      if (OPS_diags>5 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
-      while(ops_ramdisk_ctrl_finish) usleep(10);
+      if (OPS_diags>2 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
+      while(ops_ramdisk_ctrl_finish) usleep(10000);
     }
 #endif
     if (file_exists(filename)) remove(filename);
@@ -1096,7 +1122,9 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
     else {
 #endif
     check_hdf5_error(H5Fclose(file));
+    if (ops_lock_file) ops_create_lock(filename);
     if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
+    if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
 #ifdef OPS_CHK_THREAD
     }
 #endif
@@ -1137,6 +1165,9 @@ void ops_checkpointing_exit() {
     if (ops_duplicate_backup)
       remove(filename_dup);
 
+    if (ops_lock_file) ops_create_lock_done(filename);
+    if (ops_duplicate_backup && ops_lock_file) ops_create_lock_done(filename_dup);
+    
     if (diagnostics) {
       fprintf(diagf, "FINISHED\n");
       fclose(diagf);

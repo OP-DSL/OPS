@@ -57,6 +57,7 @@ int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
 ops_reduction * OPS_reduction_list = NULL;
 int OPS_enable_checkpointing = 0;
 int ops_thread_offload = 0;
+int ops_lock_file = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -157,6 +158,11 @@ void ops_init_core( int argc, char ** argv, int diags )
     {
       ops_thread_offload = 1;
       ops_printf ( "\n OPS Checkpointing on a separate thread\n");
+    }
+    if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
+    {
+      ops_lock_file = 1;
+      ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
     }
   }
 
