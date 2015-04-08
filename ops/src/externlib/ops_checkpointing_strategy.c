@@ -234,7 +234,7 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id, int *range) 
       int idx = kv[kern].value;
       if (MAX(ops_strat_maxcalled[idx], ops_call_counter-ops_strat_lastcalled[idx]) < ops_call_counter/10) {
         if (OPS_diags>2) ops_printf("Using kernel %d (%s) as backup point, will save ~%d kBytes\n", idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx]/1024);
-        ops_best_backup_point_size = ops_strat_avg_saved[idx];
+        //ops_best_backup_point_size = ops_strat_avg_saved[idx];
         // for (int m = kern; m < OPS_kern_max; m++) {
         //   idx = kv[m].value;
         //   if (OPS_diags>2) ops_printf("Other candidates were %d (%s) as backup point, will save ~%d kBytes\n", idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx]/1024);
