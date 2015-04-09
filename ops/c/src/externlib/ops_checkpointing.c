@@ -1166,7 +1166,6 @@ void ops_checkpointing_exit() {
       remove(filename_dup);
 
     if (ops_lock_file) ops_create_lock_done(filename);
-    if (ops_duplicate_backup && ops_lock_file) ops_create_lock_done(filename_dup);
     
     if (diagnostics) {
       fprintf(diagf, "FINISHED\n");
