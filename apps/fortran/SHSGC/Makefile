@@ -193,7 +193,7 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         ./MPI_OpenACC/tvd_kernel_openacc_kernel.F90 ./MPI_OpenACC/vars_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/calupwindeff_kernel_openacc_kernel.F90 ./MPI_OpenACC/fact_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/update_kernel_openacc_kernel.F90 ./MPI_OpenACC/test_kernel_openacc_kernel.F90 shsgc_ops.F90
-	$(FC) $(OPT) $(FLINK) $(OpenACCFLAGS) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
+	$(FC) $(OPT) $(FLINK)  $(OpenACCFLAGS) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
         drhouupdx_kernel_openacc_kernel.o zerores_kernel_openacc_kernel.o save_kernel_openacc_kernel.o \
         drhoudx_kernel_openacc_kernel.o drhoEpudx_kernel_openacc_kernel.o updateRK3_kernel_openacc_kernel.o \
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \

@@ -34,7 +34,7 @@ INTEGER(KIND=4) xdim7
 contains
 
 !user function
-attributes (device) subroutine calupwindeff_kernel(cmp, gt, cf, al, ep2, r, eff)
+subroutine calupwindeff_kernel(cmp, gt, cf, al, ep2, r, eff)
 
   real (kind=8), INTENT(in), DIMENSION(3) :: cmp, gt, cf, al, r
   real (kind=8), INTENT(in), DIMENSION(9) :: ep2
@@ -80,20 +80,20 @@ subroutine calupwindeff_kernel_wrap( &
 & start, &
 & end )
   IMPLICIT NONE
-  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
-  real(8), DEVICE, INTENT(IN) :: opsDat2Local(*)
-  real(8), DEVICE, INTENT(IN) :: opsDat3Local(*)
-  real(8), DEVICE, INTENT(IN) :: opsDat4Local(*)
-  real(8), DEVICE, INTENT(IN) :: opsDat5Local(*)
-  real(8), DEVICE, INTENT(IN) :: opsDat6Local(*)
-  real(8), DEVICE :: opsDat7Local(*)
-  integer, DEVICE :: dat1_base
-  integer, DEVICE :: dat2_base
-  integer, DEVICE :: dat3_base
-  integer, DEVICE :: dat4_base
-  integer, DEVICE :: dat5_base
-  integer, DEVICE :: dat6_base
-  integer, DEVICE :: dat7_base
+  real(8), INTENT(IN) :: opsDat1Local(*)
+  real(8), INTENT(IN) :: opsDat2Local(*)
+  real(8), INTENT(IN) :: opsDat3Local(*)
+  real(8), INTENT(IN) :: opsDat4Local(*)
+  real(8), INTENT(IN) :: opsDat5Local(*)
+  real(8), INTENT(IN) :: opsDat6Local(*)
+  real(8) :: opsDat7Local(*)
+  integer :: dat1_base
+  integer :: dat2_base
+  integer :: dat3_base
+  integer :: dat4_base
+  integer :: dat5_base
+  integer :: dat6_base
+  integer :: dat7_base
   integer(4) start(1)
   integer(4) end(1)
   integer n_x
@@ -129,46 +129,46 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat1Local
+  real(8), DIMENSION(:), POINTER :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4), DEVICE :: dat1_base
+  integer(kind=4) :: dat1_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat2Local
+  real(8), DIMENSION(:), POINTER :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4), DEVICE :: dat2_base
+  integer(kind=4) :: dat2_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat3Local
+  real(8), DIMENSION(:), POINTER :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4), DEVICE :: dat3_base
+  integer(kind=4) :: dat3_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg4
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat4Local
+  real(8), DIMENSION(:), POINTER :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat4_size
-  integer(kind=4), DEVICE :: dat4_base
+  integer(kind=4) :: dat4_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg5
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat5Local
+  real(8), DIMENSION(:), POINTER :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat5_size
-  integer(kind=4), DEVICE :: dat5_base
+  integer(kind=4) :: dat5_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg6
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat6Local
+  real(8), DIMENSION(:), POINTER :: opsDat6Local
   integer(kind=4) :: opsDat6Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat6_size
-  integer(kind=4), DEVICE :: dat6_base
+  integer(kind=4) :: dat6_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg7
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat7Local
+  real(8), DIMENSION(:), POINTER :: opsDat7Local
   integer(kind=4) :: opsDat7Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat7_size
-  integer(kind=4), DEVICE :: dat7_base
+  integer(kind=4) :: dat7_base
 
   integer n_x
   integer start(1)

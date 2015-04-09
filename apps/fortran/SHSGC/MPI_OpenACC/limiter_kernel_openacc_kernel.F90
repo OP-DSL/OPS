@@ -22,7 +22,7 @@ INTEGER(KIND=4) xdim3
 contains
 
 !user function
-attributes (device) subroutine limiter_kernel(al, tht, gt)
+subroutine limiter_kernel(al, tht, gt)
 
   real (kind=8), DIMENSION(3) :: al
   real (kind=8), DIMENSION(3) :: tht
@@ -59,12 +59,12 @@ subroutine limiter_kernel_wrap( &
 & start, &
 & end )
   IMPLICIT NONE
-  real(8), DEVICE, INTENT(IN) :: opsDat1Local(*)
-  real(8), DEVICE :: opsDat2Local(*)
-  real(8), DEVICE :: opsDat3Local(*)
-  integer, DEVICE :: dat1_base
-  integer, DEVICE :: dat2_base
-  integer, DEVICE :: dat3_base
+  real(8), INTENT(IN) :: opsDat1Local(*)
+  real(8) :: opsDat2Local(*)
+  real(8) :: opsDat3Local(*)
+  integer :: dat1_base
+  integer :: dat2_base
+  integer :: dat3_base
   integer(4) start(1)
   integer(4) end(1)
   integer n_x
@@ -92,22 +92,22 @@ subroutine limiter_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat1Local
+  real(8), DIMENSION(:), POINTER :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4), DEVICE :: dat1_base
+  integer(kind=4) :: dat1_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat2Local
+  real(8), DIMENSION(:), POINTER :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4), DEVICE :: dat2_base
+  integer(kind=4) :: dat2_base
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opsDat3Local
+  real(8), DIMENSION(:), POINTER :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4), DEVICE :: dat3_base
+  integer(kind=4) :: dat3_base
 
   integer n_x
   integer start(1)

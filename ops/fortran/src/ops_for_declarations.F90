@@ -73,7 +73,8 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
     type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
-    type(c_devptr)      :: data_d      ! data on device
+    !type(c_devptr)      :: data_d      ! data on device
+    type(c_ptr)         :: data_d      ! data on device
 #else
     type(c_ptr)         :: data_d      ! data on device
 #endif
@@ -114,7 +115,8 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: dim          ! dimension of data
     type(c_ptr)         :: data         ! data on host
 #ifdef OPS_WITH_CUDAFOR
-    type(c_devptr)      :: data_d       ! data on device (for CUDA)
+    !type(c_devptr)      :: data_d       ! data on device (for CUDA)
+    type(c_ptr)      :: data_d       ! data on device (for CUDA)
 #else
     type(c_ptr)         :: data_d
 #endif
