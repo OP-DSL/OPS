@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void viscosity_kernel( const double *xvel0, const double *yvel0,
+inline void viscosity_kernel( const double *xvel0, const double *yvel0,
                        const double *celldx, const double *celldy,
                        const double *pressure, const double *density0,
                        double *viscosity) {

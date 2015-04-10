@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void field_summary_kernel( const double *volume, const double *density0,
+inline void field_summary_kernel( const double *volume, const double *density0,
                      const double *energy0, const double *pressure,
                      const double *xvel0,
                      const double *yvel0,

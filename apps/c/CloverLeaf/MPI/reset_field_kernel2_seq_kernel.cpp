@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void reset_field_kernel2( double *xvel0, const double *xvel1,
+inline void reset_field_kernel2( double *xvel0, const double *xvel1,
                         double *yvel0, const double *yvel1) {
 
   xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;

@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_mom_kernel1_x_nonvector( const double *node_flux, const double *node_mass_pre,
                         double *mom_flux,
                         const double *celldx, const double *vel1) {

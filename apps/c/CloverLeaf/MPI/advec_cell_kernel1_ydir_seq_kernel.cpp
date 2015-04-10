@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_cell_kernel1_ydir( double *pre_vol, double *post_vol, const double *volume,
                         const double *vol_flux_x, const double *vol_flux_y) {
 

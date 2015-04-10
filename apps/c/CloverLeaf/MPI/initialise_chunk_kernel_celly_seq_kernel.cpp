@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
+inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
   int x_min=field.x_min-2;
   int x_max=field.x_max-2;

@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void revert_kernel( const double *density0, double *density1,
+inline void revert_kernel( const double *density0, double *density1,
                 const double *energy0, double *energy1) {
 
   density1[OPS_ACC1(0,0)] = density0[OPS_ACC0(0,0)];

@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
+inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
 
   int x_min=field.x_min-2;
   int x_max=field.x_max-2;

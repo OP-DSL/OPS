@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void flux_calc_kernely( double *vol_flux_y, const double *yarea,
+inline void flux_calc_kernely( double *vol_flux_y, const double *yarea,
                         const double *yvel0, const double *yvel1) {
 
   vol_flux_y[OPS_ACC0(0,0)] = 0.25 * dt * (yarea[OPS_ACC1(0,0)]) *

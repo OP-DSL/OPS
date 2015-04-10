@@ -41,6 +41,7 @@ plus a master kernel file
 import re
 import datetime
 import os
+import glob
 
 import util
 import config
@@ -151,31 +152,48 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     code('')
     comm('user function')
-    #code('#include "'+name2+'_kernel.h"')
 
-    fid = open(name2+'_kernel.h', 'r')
+    found = 0
+    for files in glob.glob( "*.h" ):
+      f = open( files, 'r' )
+      for line in f:
+        if name in line:
+          file_name = f.name
+          found = 1;
+          break
+      if found == 1:
+        break;
+
+    if found == 0:
+      print "COUND NOT FIND KERNEL", name
+
+    fid = open(file_name, 'r')
     text = fid.read()
+
     fid.close()
     text = comment_remover(text)
     text = remove_trailing_w_space(text)
 
-    i = text.find(name)
+    p = re.compile('void\\s+\\b'+name+'\\b')
+
+    i = p.search(text).start()
+
     if(i < 0):
       print "\n********"
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
 
-    print name
-    i2 = i
-    i = text[0:i].rfind('\n') #reverse find
+    i2 = text[i:].find(name)
+    i2 = i+i2
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
+
     check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
-      code('inline'+text[i:k+2])
+      code('inline '+text[i:k+2])
     else:
       code(text[i:k+2])
     code('')

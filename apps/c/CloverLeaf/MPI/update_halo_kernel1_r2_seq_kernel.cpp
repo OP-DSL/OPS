@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void update_halo_kernel1_r2(double *density0, double *density1,
                           double *energy0, double *energy1,
                           double *pressure, double *viscosity,
