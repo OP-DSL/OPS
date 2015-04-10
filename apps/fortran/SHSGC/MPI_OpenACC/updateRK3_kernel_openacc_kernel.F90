@@ -95,8 +95,8 @@ subroutine updateRK3_kernel_wrap( &
   real(8), INTENT(IN) :: opsDat7Local(*)
   real(8), INTENT(IN) :: opsDat8Local(*)
   real(8), INTENT(IN) :: opsDat9Local(*)
-  real(8) :: opsDat10Local(1)
-  real(8) :: opsDat11Local(1)
+  real(8) :: opsDat10Local
+  real(8) :: opsDat11Local
   integer :: dat1_base
   integer :: dat2_base
   integer :: dat3_base
@@ -125,8 +125,8 @@ subroutine updateRK3_kernel_wrap( &
     & opsDat7Local(dat7_base+(n_x-1)*1), &
     & opsDat8Local(dat8_base+(n_x-1)*1), &
     & opsDat9Local(dat9_base+(n_x-1)*1), &
-    & opsDat10Local(dat10_base), &
-    & opsDat11Local(dat11_base) )
+    & opsDat10Local, &
+    & opsDat11Local )
   END DO
   !$acc end parallel
 end subroutine
@@ -316,8 +316,8 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   & opsDat7Local, &
   & opsDat8Local, &
   & opsDat9Local, &
-  & opsDat10Local, &
-  & opsDat11Local, &
+  & opsDat10Local(1), &
+  & opsDat11Local(1), &
   & dat1_base, &
   & dat2_base, &
   & dat3_base, &

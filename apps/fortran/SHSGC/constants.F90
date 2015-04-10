@@ -1,6 +1,6 @@
 MODULE OPS_CONSTANTS
 !----------shsgc Vars/Consts--------------
-#ifdef OPS_WITH_CUDAFOR_2 !ifdef OPS_WITH_CUDAFOR
+#ifdef OPS_WITH_CUDAFOR
 use cudafor
 integer :: nxp
 integer :: nyp
