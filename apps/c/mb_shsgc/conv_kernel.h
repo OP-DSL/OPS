@@ -71,6 +71,6 @@ void calvar_kernel(const double *rho_new, const double *rhou_new, const double *
   p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * rho_new[OPS_ACC0(0)]* u * u);
   // cal p+rhouu
   workarray2[OPS_ACC3(0)] = p + rhou_new[OPS_ACC1(0)] * u ;
-  workarray3[OPS_ACC3(0)] = (p + rhoE_new[OPS_ACC1(0)]) * u ;
+  workarray3[OPS_ACC4(0)] = (p + rhoE_new[OPS_ACC2(0)]) * u ;
   }
 #endif

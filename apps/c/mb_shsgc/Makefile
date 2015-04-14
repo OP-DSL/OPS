@@ -8,8 +8,11 @@
 #
 # set paths for header files and libraries
 #
-OPS_INC   = -I$(OPS_INSTALL_PATH)/c/include
-OPS_LIB   = -L$(OPS_INSTALL_PATH)/c/lib
+OPS_INSTALL_PATH := $(OPS_INSTALL_PATH)/c
+OPS_INC   = -I$(OPS_INSTALL_PATH)/include
+OPS_LIB   = -L$(OPS_INSTALL_PATH)/lib
+CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
+CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 ifeq ($(OPS_COMPILER),gnu)
   CPP   = g++
 ifdef DEBUG
