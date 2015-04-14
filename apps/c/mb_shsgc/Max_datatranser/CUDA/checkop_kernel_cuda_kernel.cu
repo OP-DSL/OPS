@@ -19,7 +19,7 @@ int ydim2_checkop_kernel_h = -1;
 __device__
 
 void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
-  double *num) {
+  int *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
@@ -68,8 +68,8 @@ int size0 ){
     ops_reduction_cuda<OPS_INC>(&arg3[d+blockIdx.x + blockIdx.y*gridDim.x],arg3_l[d]);
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg4[d+blockIdx.x + blockIdx.y*gridDim.x],arg4_l[d]);
-  for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg5[d+blockIdx.x + blockIdx.y*gridDim.x],arg5_l[d]);
+  //for (int d=0; d<1; d++)
+  //  ops_reduction_cuda<OPS_INC>(&arg5[d+blockIdx.x + blockIdx.y*gridDim.x],arg5_l[d]);
 
 }
 
@@ -256,6 +256,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
     }
   }
   arg3.data = (char *)arg3h;
+  printf("arg3.data = %lf\n",arg3.data);
 
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){

@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void poisson_kernel_stencil(const double *u, const double *f, double *u2) {
+inline void poisson_kernel_stencil(const double *u, const double *f, double *u2) {
   u2[OPS_ACC2(0,0)] = ((u[OPS_ACC0(-1,0)]+u[OPS_ACC0(1,0)])*dx*dx
                      + (u[OPS_ACC0(0,-1)]+u[OPS_ACC0(0,1)])*dy*dy
                      - dx*dx*dy*dy*f[OPS_ACC1(0,0)])

@@ -21,6 +21,7 @@ __device__
 void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx, double *u, double *f, double *ref) {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
+
   u[OPS_ACC3(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
   f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
   ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);

@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void poisson_kernel_initialguess(double *u) {
+inline void poisson_kernel_initialguess(double *u) {
   u[OPS_ACC0(0,0)] = 0.0;
 }
 

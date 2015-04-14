@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void poisson_kernel_error(const double *u, const double *ref, double *err) {
+inline void poisson_kernel_error(const double *u, const double *ref, double *err) {
   *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
 }
 

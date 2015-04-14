@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void poisson_kernel_update(const double *u2, double *u) {
+inline void poisson_kernel_update(const double *u2, double *u) {
   u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
 }
 

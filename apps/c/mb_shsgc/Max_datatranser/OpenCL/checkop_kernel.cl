@@ -46,7 +46,7 @@
 
 //user function
 void checkop_kernel(const __global double * restrict rho_new,const __global double * restrict x,const __global double * restrict rhoin,
- double * restrict pre, double * restrict post, double * restrict num,
+ double * restrict pre, double * restrict post, int * restrict num,
   const double rhol)
 
  {

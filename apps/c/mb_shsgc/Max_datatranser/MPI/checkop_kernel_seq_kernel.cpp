@@ -4,7 +4,7 @@
 
 //user function
 inline void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
-  double *num) {
+  int *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
