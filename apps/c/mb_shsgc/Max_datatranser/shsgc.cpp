@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   ops_dat *rhout    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
   ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
-  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(int), "int", "err2");
+  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(double), "double", "err2");
 
 //   Tvd declaration end
   char buf[50];
@@ -249,31 +249,6 @@ int main(int argc, char **argv) {
   int niter =9000;
   // initialise
 
-  ops_partition("");
-
-//   Generate grid for the 1d domain later change this to read from file
-  for(int i=0; i<nblock; i++){
-    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
-    xt = xmin + dx*i*nxp/nblock;
-    ops_par_loop(gridgen_kernel, "gridgen_kernel", shsgc_grid[i], 1, range,
-               ops_arg_dat(x[i], 1, S1D_0, "double", OPS_WRITE),
-               ops_arg_idx());
-  }
-//   initialize the domain with
-  for(int i=0; i<nblock; i++){
-    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
-    ops_par_loop(init_kernel, "init_kernel", shsgc_grid[i], 1, range,
-                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_READ),
-                 ops_arg_dat(rho_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhou_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoE_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rho_old[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhou_old[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
-  }
-//   wirte the grid and initial data to files based on nblocks
-
 //   Declare halo groups TODO
   ops_halo *rhohalo = (ops_halo *)malloc(2*(nblock-1)*sizeof(ops_halo *));
   ops_halo *rhouhalo = (ops_halo *)malloc(2*(nblock-1)*sizeof(ops_halo *));
@@ -304,13 +279,42 @@ int main(int argc, char **argv) {
   ops_halo_group rhoE_halos = ops_decl_halo_group(offrhoE,rhoEhalo);
   // testing halo implementations
 //   ops_halo_transfer(rho_halos);
+//   end TODO
+
+
+  ops_partition("");
+
   for(int i=0; i<nblock; i++){
     sprintf(buf,"x%d",i+1);
     ops_print_dat_to_txtfile(x[i], buf);
     sprintf(buf,"rhoin%d",i+1);
     ops_print_dat_to_txtfile(rhoin[i], buf);
   }
-//   end TODO
+
+//   Generate grid for the 1d domain later change this to read from file
+  for(int i=0; i<nblock; i++){
+    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
+    xt = xmin + dx*i*nxp/nblock;
+    ops_par_loop(gridgen_kernel, "gridgen_kernel", shsgc_grid[i], 1, range,
+               ops_arg_dat(x[i], 1, S1D_0, "double", OPS_WRITE),
+               ops_arg_idx());
+  }
+//   initialize the domain with
+  for(int i=0; i<nblock; i++){
+    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
+    ops_par_loop(init_kernel, "init_kernel", shsgc_grid[i], 1, range,
+                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_READ),
+                 ops_arg_dat(rho_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhou_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoE_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rho_old[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhou_old[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
+  }
+//   wirte the grid and initial data to files based on nblocks
+
+
 //   main iteration
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
@@ -470,7 +474,7 @@ int main(int argc, char **argv) {
 
   double err = 0.0;
   double err1 = 0.0;
-  int nump = 0;
+  double nump = 0;
 
   for(int i=0; i<nblock; i++){
     int range_all[] = {sizes[(2*i)],sizes[(2*i)+1]};
@@ -480,7 +484,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoin[i], 1, S1D_0, "double",OPS_READ),
                  ops_arg_reduce(pre_err, 1, "double", OPS_INC),
                  ops_arg_reduce(post_err, 1, "double", OPS_INC),
-                 ops_arg_reduce(num_pre, 1, "int", OPS_INC));
+                 ops_arg_reduce(num_pre, 1, "double", OPS_INC));
   }
   // error square before shock
   ops_reduction_result(pre_err,&err);

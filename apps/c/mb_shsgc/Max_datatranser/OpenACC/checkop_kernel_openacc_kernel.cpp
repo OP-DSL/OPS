@@ -21,7 +21,7 @@ void checkop_kernel_c_wrapper(
   double *p_a2,
   double *p_a3,
   double *p_a4,
-  int *p_a5,
+  double *p_a5,
   int x_size);
 
 #ifdef __cplusplus
@@ -107,9 +107,9 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   double *arg4h = (double *)(((ops_reduction)args[4].data)->data);
   #endif //OPS_MPI
   #ifdef OPS_MPI
-  int *arg5h = (int *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
+  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
   #else //OPS_MPI
-  int *arg5h = (int *)(((ops_reduction)args[5].data)->data);
+  double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
   #endif //OPS_MPI
 
   //set up initial pointers
@@ -155,7 +155,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
 
   double *p_a3 = arg3h;
   double *p_a4 = arg4h;
-  int *p_a5 = arg5h;
+  double *p_a5 = arg5h;
 
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 6);

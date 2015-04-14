@@ -185,7 +185,6 @@ int main(int argc, char **argv) {
 
   ops_block *shsgc_grid = (ops_block *)malloc(nblock*sizeof(ops_block*));
 
-
   ops_dat *x            = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *rho_old      = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *rho_new      = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
@@ -218,7 +217,7 @@ int main(int argc, char **argv) {
   ops_dat *rhout    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
   ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
-  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(int), "int", "err2");
+  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(double), "double", "err2");
 
   char buf[50];
   int d_p[1]   = {2};
@@ -338,30 +337,6 @@ int main(int argc, char **argv) {
   int niter =9000;
 
 
-  ops_partition("");
-
-  for(int i=0; i<nblock; i++){
-    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
-    xt = xmin + dx*i*nxp/nblock;
-    ops_par_loop_gridgen_kernel("gridgen_kernel", shsgc_grid[i], 1, range,
-                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_idx());
-  }
-
-  for(int i=0; i<nblock; i++){
-    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
-    ops_par_loop_init_kernel("init_kernel", shsgc_grid[i], 1, range,
-                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_READ),
-                 ops_arg_dat(rho_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhou_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoE_new[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rho_old[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhou_old[i], 1, S1D_0, "double", OPS_WRITE),
-                 ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
-  }
-
-
   ops_halo *rhohalo = (ops_halo *)malloc(2*(nblock-1)*sizeof(ops_halo *));
   ops_halo *rhouhalo = (ops_halo *)malloc(2*(nblock-1)*sizeof(ops_halo *));
   ops_halo *rhoEhalo = (ops_halo *)malloc((2*nblock-1)*sizeof(ops_halo *));
@@ -391,12 +366,37 @@ int main(int argc, char **argv) {
   ops_halo_group rhoE_halos = ops_decl_halo_group(offrhoE,rhoEhalo);
 
 
+
+  ops_partition("");
+
   for(int i=0; i<nblock; i++){
     sprintf(buf,"x%d",i+1);
     ops_print_dat_to_txtfile(x[i], buf);
     sprintf(buf,"rhoin%d",i+1);
     ops_print_dat_to_txtfile(rhoin[i], buf);
   }
+
+  for(int i=0; i<nblock; i++){
+    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
+    xt = xmin + dx*i*nxp/nblock;
+    ops_par_loop_gridgen_kernel("gridgen_kernel", shsgc_grid[i], 1, range,
+                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_idx());
+  }
+
+  for(int i=0; i<nblock; i++){
+    int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
+    ops_par_loop_init_kernel("init_kernel", shsgc_grid[i], 1, range,
+                 ops_arg_dat(x[i], 1, S1D_0, "double", OPS_READ),
+                 ops_arg_dat(rho_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhou_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoE_new[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rho_old[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhou_old[i], 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
+  }
+
 
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
@@ -546,7 +546,7 @@ int main(int argc, char **argv) {
 
   double err = 0.0;
   double err1 = 0.0;
-  int nump = 0;
+  double nump = 0;
 
   for(int i=0; i<nblock; i++){
     int range_all[] = {sizes[(2*i)],sizes[(2*i)+1]};
@@ -556,7 +556,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_READ),
                  ops_arg_reduce(pre_err, 1, "double", OPS_INC),
                  ops_arg_reduce(post_err, 1, "double", OPS_INC),
-                 ops_arg_reduce(num_pre, 1, "int", OPS_INC));
+                 ops_arg_reduce(num_pre, 1, "double", OPS_INC));
   }
 
   ops_reduction_result(pre_err,&err);
