@@ -41,11 +41,11 @@ void checkop_kernel_c_wrapper(
   double *p_a2,
   double *p_a3,
   double *p_a4,
-  double *p_a5,
+  int *p_a5,
   int x_size) {
   double p_a3_l = *p_a3;
   double p_a4_l = *p_a4;
-  double p_a5_l = *p_a5;
+  int p_a5_l = *p_a5;
   #ifdef OPS_GPU
   #pragma acc parallel deviceptr(p_a0,p_a1,p_a2) reduction(+:p_a3_l) reduction(+:p_a4_l) reduction(+:p_a5_l)
   #pragma acc loop reduction(+:p_a3_l) reduction(+:p_a4_l) reduction(+:p_a5_l)

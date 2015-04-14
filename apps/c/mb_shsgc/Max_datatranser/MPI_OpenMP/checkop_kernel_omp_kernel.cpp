@@ -107,9 +107,9 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   double *arg4h = (double *)(((ops_reduction)args[4].data)->data);
   #endif //OPS_MPI
   #ifdef OPS_MPI
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
+  int *arg5h = (int *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
   #else //OPS_MPI
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
+  int *arg5h = (int *)(((ops_reduction)args[5].data)->data);
   #endif //OPS_MPI
 
   #ifdef _OPENMP
@@ -121,7 +121,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   //assumes a max of MAX_REDUCT_THREADS threads with a cacche line size of 64 bytes
   double arg_gbl3[MAX(1 , 64) * MAX_REDUCT_THREADS];
   double arg_gbl4[MAX(1 , 64) * MAX_REDUCT_THREADS];
-  double arg_gbl5[MAX(1 , 64) * MAX_REDUCT_THREADS];
+  int arg_gbl5[MAX(1 , 64) * MAX_REDUCT_THREADS];
   for ( int thr=0; thr<nthreads; thr++ ){
     for ( int d=0; d<1; d++ ){
       arg_gbl3[d+64*thr] = ZERO_double;
@@ -130,7 +130,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
       arg_gbl4[d+64*thr] = ZERO_double;
     }
     for ( int d=0; d<1; d++ ){
-      arg_gbl5[d+64*thr] = ZERO_double;
+      arg_gbl5[d+64*thr] = ZERO_int;
     }
   }
   xdim0 = args[0].dat->size[0];

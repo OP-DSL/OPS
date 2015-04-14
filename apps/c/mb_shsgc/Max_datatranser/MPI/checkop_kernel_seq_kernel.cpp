@@ -157,7 +157,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
     //call kernel function, passing in pointers to data -vectorised
     for ( int i=0; i<SIMD_VEC; i++ ){
       checkop_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
+           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
 
     }
 
@@ -170,7 +170,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
     checkop_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
+           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
 
 
     //shift pointers to data x direction

@@ -168,9 +168,9 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   double *arg4h = (double *)(((ops_reduction)args[4].data)->data);
   #endif //OPS_MPI
   #ifdef OPS_MPI
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
+  int *arg5h = (int *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
   #else //OPS_MPI
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
+  int *arg5h = (int *)(((ops_reduction)args[5].data)->data);
   #endif //OPS_MPI
 
   int nblocks = ((x_size-1)/OPS_block_size_x+ 1);
@@ -179,7 +179,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
 
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(int));
 
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
@@ -198,12 +198,12 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   for (int d=0; d<1; d++) ((double *)arg4.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
-  int r_bytes5 = reduct_bytes/sizeof(double);
+  int r_bytes5 = reduct_bytes/sizeof(int);
   arg5.data = OPS_reduct_h + reduct_bytes;
   arg5.data_d = OPS_reduct_d;// + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg5.data)[d+b*1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  for (int d=0; d<1; d++) ((int *)arg5.data)[d+b*1] = ZERO_int;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(int));
 
 
   mvReductArraysToDevice(reduct_bytes);
@@ -258,7 +258,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 7, nthread*sizeof(double), NULL));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 8, sizeof(cl_int), (void*) &r_bytes4 ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 9, sizeof(cl_mem), (void*) &arg5.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 10, nthread*sizeof(double), NULL));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 10, nthread*sizeof(int), NULL));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 11, sizeof(cl_int), (void*) &r_bytes5 ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 12, sizeof(cl_double), (void*) &rhol ));
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[14], 13, sizeof(cl_int), (void*) &base0 ));

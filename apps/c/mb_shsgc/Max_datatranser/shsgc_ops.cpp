@@ -215,9 +215,7 @@ int main(int argc, char **argv) {
   ops_dat *s    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
 
   ops_dat *rhout    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
-  ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
-  ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
-  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(double), "double", "err2");
+
 
   char buf[50];
   int d_p[1]   = {2};
@@ -366,6 +364,10 @@ int main(int argc, char **argv) {
   ops_halo_group rhoE_halos = ops_decl_halo_group(offrhoE,rhoEhalo);
 
 
+
+  ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
+  ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
+  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(int), "int", "err2");
 
   ops_partition("");
 
@@ -546,7 +548,7 @@ int main(int argc, char **argv) {
 
   double err = 0.0;
   double err1 = 0.0;
-  double nump = 0;
+  int nump = 0;
 
   for(int i=0; i<nblock; i++){
     int range_all[] = {sizes[(2*i)],sizes[(2*i)+1]};
@@ -556,7 +558,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_READ),
                  ops_arg_reduce(pre_err, 1, "double", OPS_INC),
                  ops_arg_reduce(post_err, 1, "double", OPS_INC),
-                 ops_arg_reduce(num_pre, 1, "double", OPS_INC));
+                 ops_arg_reduce(num_pre, 1, "int", OPS_INC));
   }
 
   ops_reduction_result(pre_err,&err);
