@@ -19,7 +19,7 @@ int ydim2_checkop_kernel_h = -1;
 __device__
 
 void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
-  int *num) {
+  double *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
@@ -44,15 +44,15 @@ const double* __restrict arg1,
 const double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
-int* __restrict arg5,
+double* __restrict arg5,
 int size0 ){
 
   double arg3_l[1];
   double arg4_l[1];
-  int arg5_l[1];
+  double arg5_l[1];
   for (int d=0; d<1; d++) arg3_l[d] = ZERO_double;
   for (int d=0; d<1; d++) arg4_l[d] = ZERO_double;
-  for (int d=0; d<1; d++) arg5_l[d] = ZERO_int;
+  for (int d=0; d<1; d++) arg5_l[d] = ZERO_double;
 
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -68,8 +68,8 @@ int size0 ){
     ops_reduction_cuda<OPS_INC>(&arg3[d+blockIdx.x + blockIdx.y*gridDim.x],arg3_l[d]);
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg4[d+blockIdx.x + blockIdx.y*gridDim.x],arg4_l[d]);
-  //for (int d=0; d<1; d++)
-  //  ops_reduction_cuda<OPS_INC>(&arg5[d+blockIdx.x + blockIdx.y*gridDim.x],arg5_l[d]);
+  for (int d=0; d<1; d++)
+    ops_reduction_cuda<OPS_INC>(&arg5[d+blockIdx.x + blockIdx.y*gridDim.x],arg5_l[d]);
 
 }
 
@@ -150,9 +150,9 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   double *arg4h = (double *)(((ops_reduction)args[4].data)->data);
   #endif //OPS_MPI
   #ifdef OPS_MPI
-  int *arg5h = (int *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
+  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
   #else //OPS_MPI
-  int *arg5h = (int *)(((ops_reduction)args[5].data)->data);
+  double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
   #endif //OPS_MPI
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, 1, 1);
@@ -167,8 +167,8 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   reduct_size = MAX(reduct_size,sizeof(double)*1);
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
   reduct_size = MAX(reduct_size,sizeof(double)*1);
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(int));
-  reduct_size = MAX(reduct_size,sizeof(int)*1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
 
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
@@ -188,8 +188,8 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   arg5.data = OPS_reduct_h + reduct_bytes;
   arg5.data_d = OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((int *)arg5.data)[d+b*1] = ZERO_int;
-  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(int));
+  for (int d=0; d<1; d++) ((double *)arg5.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
 
   mvReductArraysToDevice(reduct_bytes);
@@ -240,14 +240,14 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
 
   nshared = MAX(nshared,sizeof(double)*1);
   nshared = MAX(nshared,sizeof(double)*1);
-  nshared = MAX(nshared,sizeof(int)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
 
   nshared = MAX(nshared*nthread,reduct_size*nthread);
 
   //call kernel wrapper function, passing in pointers to data
   ops_checkop_kernel<<<grid, tblock, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
            (double *)p_a[2], (double *)arg3.data_d,
-           (double *)arg4.data_d, (int *)arg5.data_d,x_size);
+           (double *)arg4.data_d, (double *)arg5.data_d,x_size);
 
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
@@ -256,7 +256,6 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
     }
   }
   arg3.data = (char *)arg3h;
-  printf("arg3.data = %lf\n",arg3.data);
 
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){

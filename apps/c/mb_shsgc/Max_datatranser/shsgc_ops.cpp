@@ -306,32 +306,6 @@ int main(int argc, char **argv) {
   int s1D_0M1[]   = {0,-1};
   S1D_0M1         = ops_decl_stencil( 1, 2, s1D_0M1, "0,-1");
 
-  ops_decl_const2( "nxp",1, "int",&nxp);
-  ops_decl_const2( "nyp",1, "int",&nyp);
-  ops_decl_const2( "xhalo",1, "int",&xhalo);
-  ops_decl_const2( "xmin",1, "double",&xmin);
-  ops_decl_const2( "xmax",1, "double",&xmax);
-  ops_decl_const2( "dx",1, "double",&dx);
-  ops_decl_const2( "pl",1, "double",&pl);
-  ops_decl_const2( "pr",1, "double",&pr);
-  ops_decl_const2( "rhol",1, "double",&rhol);
-  ops_decl_const2( "rhor",1, "double",&rhor);
-  ops_decl_const2( "ul",1, "double",&ul);
-  ops_decl_const2( "ur",1, "double",&ur);
-  ops_decl_const2( "gam",1, "double",&gam);
-  ops_decl_const2( "gam1",1, "double",&gam1);
-  ops_decl_const2( "eps",1, "double",&eps);
-  ops_decl_const2( "lambda",1, "double",&lambda);
-  ops_decl_const2( "dt",1, "double",&dt);
-  ops_decl_const2( "del2",1, "double",&del2);
-  ops_decl_const2( "akap2",1, "double",&akap2);
-  ops_decl_const2( "tvdsmu",1, "double",&tvdsmu);
-  ops_decl_const2( "con",1, "double",&con);
-  ops_decl_const2( "Mach",1, "double",&Mach);
-  ops_decl_const2( "xt",1, "double",&xt);
-
-  ops_decl_const2( "scale",1, "int",&scale);
-
   int niter =9000;
 
 
@@ -367,20 +341,41 @@ int main(int argc, char **argv) {
 
   ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
   ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
-  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(int), "int", "err2");
+  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(double), "double", "err2");
 
   ops_partition("");
 
-  for(int i=0; i<nblock; i++){
-    sprintf(buf,"x%d",i+1);
-    ops_print_dat_to_txtfile(x[i], buf);
-    sprintf(buf,"rhoin%d",i+1);
-    ops_print_dat_to_txtfile(rhoin[i], buf);
-  }
+  ops_decl_const2( "nxp",1, "int",&nxp);
+  ops_decl_const2( "nyp",1, "int",&nyp);
+  ops_decl_const2( "xhalo",1, "int",&xhalo);
+  ops_decl_const2( "xmin",1, "double",&xmin);
+  ops_decl_const2( "xmax",1, "double",&xmax);
+  ops_decl_const2( "dx",1, "double",&dx);
+  ops_decl_const2( "pl",1, "double",&pl);
+  ops_decl_const2( "pr",1, "double",&pr);
+  ops_decl_const2( "rhol",1, "double",&rhol);
+  ops_decl_const2( "rhor",1, "double",&rhor);
+  ops_decl_const2( "ul",1, "double",&ul);
+  ops_decl_const2( "ur",1, "double",&ur);
+  ops_decl_const2( "gam",1, "double",&gam);
+  ops_decl_const2( "gam1",1, "double",&gam1);
+  ops_decl_const2( "eps",1, "double",&eps);
+  ops_decl_const2( "lambda",1, "double",&lambda);
+  ops_decl_const2( "dt",1, "double",&dt);
+  ops_decl_const2( "del2",1, "double",&del2);
+  ops_decl_const2( "akap2",1, "double",&akap2);
+  ops_decl_const2( "tvdsmu",1, "double",&tvdsmu);
+  ops_decl_const2( "con",1, "double",&con);
+  ops_decl_const2( "Mach",1, "double",&Mach);
+  ops_decl_const2( "xt",1, "double",&xt);
+
+  ops_decl_const2( "scale",1, "int",&scale);
+
 
   for(int i=0; i<nblock; i++){
     int range[] = {sizes[2*(i)]-xhalo,sizes[2*(i)+1]+xhalo};
     xt = xmin + dx*i*nxp/nblock;
+    ops_update_const( "xt", 1, "double", &xt);
     ops_par_loop_gridgen_kernel("gridgen_kernel", shsgc_grid[i], 1, range,
                  ops_arg_dat(x[i], 1, S1D_0, "double", OPS_WRITE),
                  ops_arg_idx());
@@ -399,6 +394,12 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
   }
 
+  for(int i=0; i<nblock; i++){
+    sprintf(buf,"x%d",i+1);
+    ops_print_dat_to_txtfile(x[i], buf);
+    sprintf(buf,"rhoin%d",i+1);
+    ops_print_dat_to_txtfile(rhoin[i], buf);
+  }
 
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
@@ -548,7 +549,7 @@ int main(int argc, char **argv) {
 
   double err = 0.0;
   double err1 = 0.0;
-  int nump = 0;
+  double nump = 0.0;
 
   for(int i=0; i<nblock; i++){
     int range_all[] = {sizes[(2*i)],sizes[(2*i)+1]};
@@ -558,7 +559,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_READ),
                  ops_arg_reduce(pre_err, 1, "double", OPS_INC),
                  ops_arg_reduce(post_err, 1, "double", OPS_INC),
-                 ops_arg_reduce(num_pre, 1, "int", OPS_INC));
+                 ops_arg_reduce(num_pre, 1, "double", OPS_INC));
   }
 
   ops_reduction_result(pre_err,&err);

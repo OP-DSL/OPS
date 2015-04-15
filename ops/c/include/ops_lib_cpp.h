@@ -89,7 +89,7 @@ template < class T >
 void ops_reduction_result(ops_reduction handle, T *ptr) {
   if ( type_error ( ptr, handle->type ) )
   {
-    printf ( "incorrect type specified for constant in op_decl_const" );
+    printf ( "incorrect type specified for constant in ops_reduction_result" );
     exit ( 1 );
   }
   ops_reduction_result_char(handle, sizeof ( T ), (char *) ptr);
@@ -101,7 +101,7 @@ void ops_update_const ( char const * name, int dim, char const * type, T * data 
   (void)dim;
   if ( type_error ( data, type ) )
   {
-    printf ( "incorrect type specified for constant in op_decl_const" );
+    printf ( "incorrect type specified for constant in ops_update_const" );
     exit ( 1 );
   }
   ops_execute();
