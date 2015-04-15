@@ -16,13 +16,14 @@ int xdim2_checkop_kernel;
 //user function
 inline
 void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
-  double *num) {
+  int *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
   if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
     *post = *post + diff*diff;
     *num = *num + 1;
+
   }
   else
     *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
@@ -41,11 +42,11 @@ void checkop_kernel_c_wrapper(
   double *p_a2,
   double *p_a3,
   double *p_a4,
-  double *p_a5,
+  int *p_a5,
   int x_size) {
   double p_a3_l = *p_a3;
   double p_a4_l = *p_a4;
-  double p_a5_l = *p_a5;
+  int p_a5_l = *p_a5;
   #ifdef OPS_GPU
   #pragma acc parallel deviceptr(p_a0,p_a1,p_a2) reduction(+:p_a3_l) reduction(+:p_a4_l) reduction(+:p_a5_l)
   #pragma acc loop reduction(+:p_a3_l) reduction(+:p_a4_l) reduction(+:p_a5_l)

@@ -724,11 +724,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         FOR('b','0','maxblocks')
         FOR('d','0',str(dims[n]))
         if accs[n] == OPS_INC:
-          code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + ((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+          code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
         elif accs[n] == OPS_MAX:
-          code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
         elif accs[n] == OPS_MIN:
-          code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],((double *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
         ENDFOR()
         ENDFOR()
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')

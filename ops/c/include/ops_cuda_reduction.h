@@ -49,7 +49,10 @@
 template < ops_access reduction, class T >
 __inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
 {
-  extern __shared__ volatile T temp[];
+  extern __shared__ volatile char temp2[];
+  __shared__ volatile T *temp;
+  temp = (T* )temp2;
+
   T   dat_t;
 
   __syncthreads();     /* important to finish all previous activity */

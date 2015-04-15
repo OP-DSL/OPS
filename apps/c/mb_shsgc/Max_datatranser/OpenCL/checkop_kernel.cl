@@ -46,7 +46,7 @@
 
 //user function
 void checkop_kernel(const __global double * restrict rho_new,const __global double * restrict x,const __global double * restrict rhoin,
- double * restrict pre, double * restrict post, double * restrict num,
+ double * restrict pre, double * restrict post, int * restrict num,
   const double rhol)
 
  {
@@ -56,6 +56,7 @@ void checkop_kernel(const __global double * restrict rho_new,const __global doub
   if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
     *post = *post + diff*diff;
     *num = *num + 1;
+
   }
   else
     *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
@@ -79,8 +80,8 @@ int r_bytes3,
 __global double* restrict arg4,
 __local double* scratch4,
 int r_bytes4,
-__global double* restrict arg5,
-__local double* scratch5,
+__global int* restrict arg5,
+__local int* scratch5,
 int r_bytes5,
 const double rhol,
 const int base0,
@@ -93,10 +94,10 @@ const int size0 ){
   arg4 += r_bytes4;
   double arg4_l[1];
   arg5 += r_bytes5;
-  double arg5_l[1];
+  int arg5_l[1];
   for (int d=0; d<1; d++) arg3_l[d] = ZERO_double;
   for (int d=0; d<1; d++) arg4_l[d] = ZERO_double;
-  for (int d=0; d<1; d++) arg5_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg5_l[d] = ZERO_int;
 
   int idx_x = get_global_id(0);
 
@@ -111,6 +112,6 @@ const int size0 ){
   }
   reduce_double(arg3_l[0], scratch3, arg3, OPS_INC);
   reduce_double(arg4_l[0], scratch4, arg4, OPS_INC);
-  reduce_double(arg5_l[0], scratch5, arg5, OPS_INC);
+  reduce_int(arg5_l[0], scratch5, arg5, OPS_INC);
 
 }

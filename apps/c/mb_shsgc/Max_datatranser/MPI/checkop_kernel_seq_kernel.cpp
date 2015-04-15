@@ -4,13 +4,14 @@
 
 //user function
 inline void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
-  double *num) {
+  int *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
   if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
     *post = *post + diff*diff;
     *num = *num + 1;
+
   }
   else
     *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
@@ -157,7 +158,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
     //call kernel function, passing in pointers to data -vectorised
     for ( int i=0; i<SIMD_VEC; i++ ){
       checkop_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
+           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
 
     }
 
@@ -170,7 +171,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
   for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
     //call kernel function, passing in pointers to data - remainder
     checkop_kernel(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5] );
+           (double *)p_a[3], (double *)p_a[4], (int *)p_a[5] );
 
 
     //shift pointers to data x direction

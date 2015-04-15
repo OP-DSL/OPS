@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
 
   ops_reduction post_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
   ops_reduction pre_err = ops_decl_reduction_handle(sizeof(double), "double", "err1");
-  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(double), "double", "err2");
+  ops_reduction num_pre = ops_decl_reduction_handle(sizeof(int), "int", "err2");
 
   ops_partition("");
 
@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
 
   double err = 0.0;
   double err1 = 0.0;
-  double nump = 0.0;
+  int nump = 0;
 
   for(int i=0; i<nblock; i++){
     int range_all[] = {sizes[(2*i)],sizes[(2*i)+1]};
@@ -559,7 +559,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoin[i], 1, S1D_0, "double", OPS_READ),
                  ops_arg_reduce(pre_err, 1, "double", OPS_INC),
                  ops_arg_reduce(post_err, 1, "double", OPS_INC),
-                 ops_arg_reduce(num_pre, 1, "double", OPS_INC));
+                 ops_arg_reduce(num_pre, 1, "int", OPS_INC));
   }
 
   ops_reduction_result(pre_err,&err);
@@ -570,6 +570,7 @@ int main(int argc, char **argv) {
   err1 = sqrt(err1)/nump;
   ops_printf("\nErros are:\n");
   ops_printf("-----------------------------------------\n");
+
   ops_printf("Pre shock error is: %g\n",sqrt(err)/(nxp-nump));
   ops_printf("Post shock error is: %g\n",(err1));
   if(err1 -0.0003206 < 1e-6 && nxp == 200)
