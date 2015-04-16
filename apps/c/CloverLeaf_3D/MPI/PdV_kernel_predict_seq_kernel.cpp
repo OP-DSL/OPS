@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void PdV_kernel_predict(const double *xarea, const double *xvel0,
+inline void PdV_kernel_predict(const double *xarea, const double *xvel0,
                 const double *yarea, const double *yvel0,
                 double *volume_change, const double *volume,
                 const double *pressure,

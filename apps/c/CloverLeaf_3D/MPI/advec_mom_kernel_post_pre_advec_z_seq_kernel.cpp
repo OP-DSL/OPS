@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_mom_kernel_post_pre_advec_z( double *node_mass_post, const double *post_vol,
                                   const double *density1, double *node_mass_pre, const double *node_flux) {
 

@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_mom_kernel2_x(double *vel1, const double *node_mass_post,
                        const  double *node_mass_pre, const double *mom_flux) {
 

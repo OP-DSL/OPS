@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void flux_calc_kernelz( double *vol_flux_z, const double *zarea,
+inline void flux_calc_kernelz( double *vol_flux_z, const double *zarea,
                         const double *zvel0, const double *zvel1) {
 
   vol_flux_z[OPS_ACC0(0,0,0)] = 0.125 * dt * (zarea[OPS_ACC1(0,0,0)]) *

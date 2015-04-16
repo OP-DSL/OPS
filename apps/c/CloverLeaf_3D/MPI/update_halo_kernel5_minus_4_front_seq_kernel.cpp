@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void update_halo_kernel5_minus_4_front(double *vol_flux_z, double *mass_flux_z, const int* fields) {
   if(fields[FIELD_VOL_FLUX_Z] == 1)  vol_flux_z[OPS_ACC0(0,0,0)]  = -vol_flux_z[OPS_ACC0(0,0,-4)];
   if(fields[FIELD_MASS_FLUX_Z] == 1) mass_flux_z[OPS_ACC1(0,0,0)] = -mass_flux_z[OPS_ACC1(0,0,-4)];

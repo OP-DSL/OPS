@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void generate_chunk_kernel( const double *vertexx,
+inline void generate_chunk_kernel( const double *vertexx,
                      const double *vertexy, const double *vertexz,
                      double *energy0, double *density0,
                      double *xvel0,  double *yvel0, double *zvel0,

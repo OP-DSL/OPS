@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void calc_dt_kernel_get(const double* cellx, const double* celly, double* xl_pos, double* yl_pos, const double *cellz, double *zl_pos) {
+inline void calc_dt_kernel_get(const double* cellx, const double* celly, double* xl_pos, double* yl_pos, const double *cellz, double *zl_pos) {
   *xl_pos = cellx[OPS_ACC0(0,0,0)];
   *yl_pos = celly[OPS_ACC1(0,0,0)];
   *zl_pos = cellz[OPS_ACC4(0,0,0)];

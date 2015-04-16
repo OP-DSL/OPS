@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void update_halo_kernel2_yvel_plus_2_right(double *yvel0, double *yvel1, const int* fields)
 {
   if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0,0)] = yvel0[OPS_ACC0(-2,0,0)];

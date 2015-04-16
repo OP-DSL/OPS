@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void update_halo_kernel2_zvel_minus_2_front(double *zvel0, double *zvel1, const int* fields)
 {
   if(fields[FIELD_ZVEL0] == 1) zvel0[OPS_ACC0(0,0,0)] = -zvel0[OPS_ACC0(0,0,-2)];

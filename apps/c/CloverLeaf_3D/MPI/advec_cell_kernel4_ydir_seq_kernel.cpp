@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_cell_kernel4_ydir( double *density1, double *energy1,
                          const double *mass_flux_y, const double *vol_flux_y,
                          const double *pre_vol, const double *post_vol,

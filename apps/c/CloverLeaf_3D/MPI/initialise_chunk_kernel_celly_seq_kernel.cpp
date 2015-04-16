@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_celly(const double *vertexy, double* celly, double *celldy) {
+inline void initialise_chunk_kernel_celly(const double *vertexy, double* celly, double *celldy) {
   double d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
   celly[OPS_ACC1(0,0,0)]  = 0.5*( vertexy[OPS_ACC0(0,0,0)] + vertexy[OPS_ACC0(0,1,0)] );
   celldy[OPS_ACC2(0,0,0)]  = d_y;

@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void update_halo_kernel2_xvel_plus_4_back(double *xvel0, double *xvel1, const int* fields)
 {
   if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0,0)] = xvel0[OPS_ACC0(0,0,4)];

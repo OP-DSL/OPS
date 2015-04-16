@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_cellz(const double *vertexz, double* cellz, double *celldz) {
+inline void initialise_chunk_kernel_cellz(const double *vertexz, double* cellz, double *celldz) {
   double d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;
   cellz[OPS_ACC1(0,0,0)]  = 0.5*( vertexz[OPS_ACC0(0,0,0)] + vertexz[OPS_ACC0(0,0,1)] );
   celldz[OPS_ACC2(0,0,0)]  = d_z;

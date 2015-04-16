@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void reset_field_kernel1( double *density0, const double *density1,
+inline void reset_field_kernel1( double *density0, const double *density1,
                           double *energy0,  const double *energy1) {
 
   density0[OPS_ACC0(0,0,0)]  = density1[OPS_ACC1(0,0,0)] ;

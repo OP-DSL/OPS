@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ../../../ops/fortran
-source ../rubly_intel_source
+source ../ruby_intel_source
 make
 cd -
 make
@@ -39,7 +39,7 @@ rm perf_out
 
 
 cd -
-source ../rubly_pgi_source
+source ../ruby_pgi_source
 make clean
 make
 cd -

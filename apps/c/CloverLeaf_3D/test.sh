@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd ../../../ops/c
+ls ../
 source ../ruby_intel_source
 make
 cd -

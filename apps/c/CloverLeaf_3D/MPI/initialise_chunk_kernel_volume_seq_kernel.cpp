@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
+inline void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
                                          const double *celldx, double *yarea, const double *celldz, double *zarea) {
 
   double d_x, d_y, d_z;

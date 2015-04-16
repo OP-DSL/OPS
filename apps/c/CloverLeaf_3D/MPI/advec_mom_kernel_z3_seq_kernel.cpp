@@ -3,7 +3,6 @@
 //
 
 //user function
-
 inline void advec_mom_kernel_z3( double *pre_vol, double *post_vol,
                           const double *volume,
                           const double *vol_flux_z) {

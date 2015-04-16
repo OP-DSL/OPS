@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
+inline void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
   double d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   cellx[OPS_ACC1(0,0,0)]  = 0.5*( vertexx[OPS_ACC0(0,0,0)] + vertexx[OPS_ACC0(1,0,0)] );
   celldx[OPS_ACC2(0,0,0)]  = d_x;

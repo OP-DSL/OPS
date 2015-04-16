@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void calc_dt_kernel_min(const double* dt_min ,
+inline void calc_dt_kernel_min(const double* dt_min ,
                     double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0,0)]);
 
