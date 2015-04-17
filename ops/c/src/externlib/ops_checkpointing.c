@@ -97,6 +97,11 @@ double ops_reduction_avg_time = 0.0;
 
 int ops_checkpointing_options = 0;
 
+//Timing
+double ops_chk_write = 0.0;
+double ops_chk_dup = 0.0;
+double ops_chk_save = 0.0;
+
 //file managment
 char filename[100];
 char filename_dup[100];
@@ -145,6 +150,7 @@ void ops_create_lock_done(char *fname) {
 
 
 
+#define OPS_CHK_THREAD
 #ifdef OPS_CHK_THREAD
 #include <pthread.h>
 #include <unistd.h>
@@ -152,6 +158,10 @@ char *ops_ramdisk_buffer = NULL;
 volatile long ops_ramdisk_size = 0;
 volatile long ops_ramdisk_head = 0;
 volatile long ops_ramdisk_tail = 0;
+
+//Timing
+double ops_chk_thr_queue = 0.0;
+
 
 typedef struct {
   ops_dat dat;
@@ -247,6 +257,8 @@ void ops_ramdisk_init(long size) {
 }
 
 void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, char*data, int partial) {
+  double c1,t1,t2;
+  ops_timers_core(&c1,&t1);
   size = size * dat->elem_size/dat->dim;
   long sizeround64 = ROUND64L(size);
   if (ops_ramdisk_size < sizeround64) ops_reallocate_ramdisk(ROUND64L(3l*(long)sizeround64 + (long)sizeround64/5l + 64));
@@ -281,12 +293,16 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, c
   ops_ramdisk_item_queue[item_idx].data = ops_ramdisk_buffer+head;
   ops_ramdisk_item_queue[item_idx].partial = partial;
   ops_ramdisk_item_queue_head = item_idx_next;
+  ops_timers_core(&c1,&t2);
+  ops_chk_thr_queue += t2-t1;
 }
 
 #endif
 
 void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
   if (size == 0) return;
+  double t1,t2,c1;
+  ops_timers_core(&c1, &t1);
   hsize_t dims[1];
   dims[0] = size;
   if (strcmp(dat->type,"int")==0) {
@@ -299,10 +315,14 @@ void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
     printf("Unsupported data type in ops_arg_dat() %s\n", dat->name);
     exit(-1);
   }
+  ops_timers_core(&c1, &t2);
+  ops_chk_write += t2-t1;
 }
 
 void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data) {
   if (size == 0) return;
+  double t1,t2,c1;
+  ops_timers_core(&c1, &t1);
   hsize_t dims[1];
   dims[0] = size;
   if (strcmp(dat->type,"int")==0) {
@@ -320,12 +340,16 @@ void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size, int *saved_range
   sprintf(buf, "%s_saved_range", dat->name);
   dims[0] = 2*OPS_MAX_DIM;
   check_hdf5_error(H5LTmake_dataset(outfile, buf, 1, dims, H5T_NATIVE_INT, saved_range));
+  ops_timers_core(&c1, &t2);
+  ops_chk_write += t2-t1;
 }
 
 //
 // Save a dataset to disk. If in a distributed system, send/receive from neighboring node and save duplicate
 //
 void save_dat(ops_dat dat) {
+  double c1,t1,t2;
+  ops_timers_core(&c1,&t1);
   OPS_dat_status[dat->index] = OPS_SAVED;
   hsize_t dims[1];
   if (dat->dirty_hd == 2) ops_download_dat(dat);
@@ -345,8 +369,12 @@ void save_dat(ops_dat dat) {
     int my_nelems = (int)dims[0], rm_nelems;
     int *my_range = dat->size, *rm_range;
 
+    double c1,t1,t2;
+    ops_timers_core(&c1,&t1);
     ops_checkpointing_duplicate_data(dat, my_type, my_nelems, dat->data, my_range,
                                              &rm_type, &rm_nelems, &rm_data, &rm_range);
+    ops_timers_core(&c1, &t2);
+    ops_chk_dup += t2-t1;
     if (rm_type == 0) {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
@@ -363,6 +391,8 @@ void save_dat(ops_dat dat) {
     }
   }
   if (OPS_diags>4) printf("Backed up %s\n", dat->name);
+  ops_timers_core(&c1, &t2);
+  ops_chk_save += t2-t1;
 }
 
 void ops_pack_chk(const char *__restrict src, char *__restrict dest, const int count, const int blocklength, const int stride) {
@@ -382,6 +412,8 @@ void ops_unpack_chk(char *__restrict dest, const char *__restrict src, const int
 }
 
 void save_dat_partial(ops_dat dat, int *range) {
+  double c1,t1,t2;
+  ops_timers_core(&c1,&t1);
   OPS_dat_status[dat->index] = OPS_SAVED;
   if (dat->dirty_hd == 2) ops_download_dat(dat);
   int saved_range[2*OPS_MAX_DIM] = {0};
@@ -453,8 +485,12 @@ void save_dat_partial(ops_dat dat, int *range) {
     int my_nelems = (int)dims[0], rm_nelems;
     int *my_range = saved_range, *rm_range;
 
+    double c1,t1,t2;
+    ops_timers_core(&c1,&t1);
     ops_checkpointing_duplicate_data(dat, my_type, my_nelems, OPS_partial_buffer, my_range,
                                              &rm_type, &rm_nelems, &rm_data, &rm_range);
+    ops_timers_core(&c1, &t2);
+    ops_chk_dup += t2-t1;
     if (rm_type == 0) {
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
@@ -471,6 +507,8 @@ void save_dat_partial(ops_dat dat, int *range) {
   }
 
   if (OPS_diags>4) printf("Backed up %s (partial)\n", dat->name);
+  ops_timers_core(&c1, &t2);
+  ops_chk_save += t2-t1;
 }
 
 void ops_restore_dataset(ops_dat dat) {
@@ -676,7 +714,7 @@ void ops_checkpointing_save_control(hid_t file_out) {
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
   if (backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
-      double cpu,t1,t2;
+      double cpu,t1,t2,t3,t4;
       ops_timers_core(&cpu, &t1);
       //increment call counter (as if we began checkpointing at the next loop) and save the list of datasets + aux info
       ops_call_counter++;
@@ -689,14 +727,21 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
         while(ops_ramdisk_ctrl_finish) usleep(10000);
       }
 #endif
+      ops_timers_core(&cpu, &t3);
       if (file_exists(filename)) remove(filename);
       if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5) printf("Removed previous file %g\n",t4-t3);
 
       //where we start backing up stuff
+      ops_timers_core(&cpu, &t3);
       file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
       if (ops_duplicate_backup) file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5) printf("Opened new file %g\n",t4-t3);
 
       //Save all the control variables
+      ops_timers_core(&cpu, &t3);
       ops_checkpointing_save_control(file);
       if (ops_duplicate_backup) {
         ops_checkpointing_save_control(file_dup);
@@ -721,16 +766,21 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       //write datasets
       for (int i = 0; i < ndats; i++)
           save_dat(datlist[i]);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5) printf("Written new file %g\n",t4-t3);
 
 #ifdef OPS_CHK_THREAD
       if (ops_thread_offload)
         ops_ramdisk_ctrl_finish = 1;
       else {
 #endif
+      ops_timers_core(&cpu, &t3);
       check_hdf5_error(H5Fclose(file));
       if (ops_lock_file) ops_create_lock(filename);
       if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
       if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5) printf("Closed new file %g\n",t4-t3);
 #ifdef OPS_CHK_THREAD
       }
 #endif
@@ -1170,6 +1220,30 @@ void ops_checkpointing_exit() {
     if (diagnostics) {
       fprintf(diagf, "FINISHED\n");
       fclose(diagf);
+    }
+
+    if (OPS_diags>2) {
+      double moments_time[2] = {0.0};
+      ops_compute_moment(ops_chk_save, &moments_time[0], &moments_time[1]);
+      moments_time[1] = sqrt(moments_time[1] - moments_time[0]*moments_time[0]);
+      double moments_time1[2] = {0.0};
+      ops_compute_moment(ops_chk_dup, &moments_time1[0], &moments_time1[1]);
+      moments_time1[1] = sqrt(moments_time1[1] - moments_time1[0]*moments_time1[0]);
+      double moments_time2[2] = {0.0};
+      ops_compute_moment(ops_chk_write, &moments_time2[0], &moments_time2[1]);
+      moments_time2[1] = sqrt(moments_time2[1] - moments_time2[0]*moments_time2[0]);
+      ops_printf("Time spent in save_dat: %g (%g) (dup %g (%g), hdf5 write %g (%g)\n",
+        moments_time[0],moments_time[1],
+        moments_time1[0],moments_time1[1],
+        moments_time2[0],moments_time2[1]);
+#ifdef OPS_CHK_THREAD
+      if (ops_thread_offload && ops_ramdisk_initialised) {
+        double moments_time[2] = {0.0};
+        ops_compute_moment(ops_chk_thr_queue, &moments_time[0], &moments_time[1]);
+        moments_time[1] = sqrt(moments_time[1] - moments_time[0]*moments_time[0]);
+        ops_printf("Time spend in copy to ramdisk %g (%g)\n",moments_time[0],moments_time[1]);
+      }
+#endif
     }
     ops_call_counter = 0;
     ops_backup_point = -1;
