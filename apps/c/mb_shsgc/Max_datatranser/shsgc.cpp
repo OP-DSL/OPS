@@ -27,7 +27,7 @@
 /******************************************************************************
 * Initialize Global constants and variables
 /******************************************************************************/
-int scale = 1;
+int scale = 80;
 int nxp = 2500;
 int nyp = 5;
 int xhalo = 2;
@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
   ops_printf("Time step is %lf\n",dt);
   ops_printf("Number of Blocks are %d\n",nblock);
   ops_printf("-----------------------------------------\n");
+
   // ops_blocks declaration
 
   ops_block *shsgc_grid = (ops_block *)malloc(nblock*sizeof(ops_block*));
@@ -110,7 +111,7 @@ int main(int argc, char **argv) {
   ops_dat *workarray1   = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *workarray2   = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *workarray3   = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
-//   tvd scheme arrays
+  //   tvd scheme arrays
   ops_dat *r    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *al   = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *alam = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
@@ -121,12 +122,12 @@ int main(int argc, char **argv) {
   ops_dat *cf   = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *eff  = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
   ops_dat *s    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
-//   check output array
+  //   check output array
   ops_dat *rhout    = (ops_dat *)malloc(nblock*sizeof(ops_dat*));
 
 
 
-//   Tvd declaration end
+  //   Tvd declaration end
   char buf[50];
   int d_p[1]   = {2}; //max block halo depths for the dat in the possitive
   int d_m[1]   = {-2}; //max block halo depths for the dat in the negative
@@ -160,7 +161,7 @@ int main(int argc, char **argv) {
     sprintf(buf,"rhoE_res[%d]",i);
     rhoE_res[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
 
-//   work array declaration
+    // work array declaration
     sprintf(buf,"workarray1[%d]",i);
     workarray1[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
     sprintf(buf,"workarray2[%d]",i);
@@ -173,13 +174,13 @@ int main(int argc, char **argv) {
     der2[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
     sprintf(buf,"der3[%d]",i);
     der3[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
-//     cross check initialization
+    //  cross check initialization
     sprintf(buf,"rhoin[%d]",i);
     rhoin[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
-//     check the output post shock
+    //  check the output post shock
     sprintf(buf,"rhout[%d]",i);
     rhout[i] = ops_decl_dat(shsgc_grid[i], 1, size, base, d_m, d_p, temp, "double", buf);
-//     TVD scheme arrays
+    //  TVD scheme arrays
     sprintf(buf,"r[%d]",i);
     r[i]     =  ops_decl_dat(shsgc_grid[i], 9, size, base, d_m, d_p, temp, "double", buf);
     sprintf(buf,"al[%d]",i);
@@ -312,7 +313,7 @@ int main(int argc, char **argv) {
                  ops_arg_dat(rhoE_old[i], 1, S1D_0, "double", OPS_WRITE));
   }
 
-  //   wirte the grid and initial data to files based on nblocks
+  // wirte the grid and initial data to files based on nblocks
   for(int i=0; i<nblock; i++){
     sprintf(buf,"x%d",i+1);
     ops_print_dat_to_txtfile(x[i], buf);
@@ -324,7 +325,7 @@ int main(int argc, char **argv) {
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
   for(int iter =0; iter<niter; iter++){
-//     ops_printf("iteration is %d\n",iter);
+    //ops_printf("iteration is %d\n",iter);
     if(nblock>0){
       ops_halo_transfer(rho_halos);
       ops_halo_transfer(rhou_halos);

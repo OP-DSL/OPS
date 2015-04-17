@@ -289,7 +289,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim, int
 
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
-      arg5h[d] = arg5h[d] + ((double *)arg5.data)[d+b*1];
+      arg5h[d] = arg5h[d] + ((int *)arg5.data)[d+b*1];
     }
   }
   arg5.data = (char *)arg5h;

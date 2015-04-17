@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void test_kernel(const double *rho_new, double *rms) {
+inline void test_kernel(const double *rho_new, double *rms) {
 
   rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2.0);
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#cd ../../ops/
-#source ./source_intel
+#cd ../../../ops/c
+#source ./ruby_intel_source
 #make
 #cd -
 #make

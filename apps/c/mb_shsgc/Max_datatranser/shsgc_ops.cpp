@@ -125,7 +125,7 @@ void ops_par_loop_checkop_kernel(char const *, ops_block, int , int*,
 
 
 
-int scale = 1;
+int scale = 80;
 int nxp = 2500;
 int nyp = 5;
 int xhalo = 2;

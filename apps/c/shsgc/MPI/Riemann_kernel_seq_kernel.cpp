@@ -6,8 +6,7 @@
 #define OPS_ACC_MD5(d,x) ((x)*3+(d))
 
 //user function
-inline
-void Riemann_kernel(const double* rho_new, const double *rhou_new, const double* rhoE_new,
+inline void Riemann_kernel(const double* rho_new, const double *rhou_new, const double* rhoE_new,
                     double* alam, double* r, double* al) {
 
   double rl, rr, rho, leftu, rightu, u, hl, hr, h, Vsq, csq, c, g;

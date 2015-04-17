@@ -271,3 +271,8 @@ void ops_halo_transfer(ops_halo_group group)
     halo->to->dirty_hd = 2;
   }
 }
+
+void ops_timers(double * cpu, double * et){
+    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+    ops_timers_core(cpu,et);
+}

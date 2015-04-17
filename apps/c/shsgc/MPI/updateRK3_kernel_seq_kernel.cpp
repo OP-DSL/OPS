@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void updateRK3_kernel(double *rho_new, double* rhou_new, double* rhoE_new,
+inline void updateRK3_kernel(double *rho_new, double* rhou_new, double* rhoE_new,
                       double *rho_old, double* rhou_old, double* rhoE_old,
                       const double *rho_res, const double *rhou_res, const double *rhoE_res,
                       const double* a1, const double* a2) {
