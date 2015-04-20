@@ -78,6 +78,6 @@ const int size1 ){
                            arg1_l);
   }
   for (int d=0; d<2; d++)
-    reduce_double(arg1_l[0], scratch1, &arg1[d], OPS_INC);
+    reduce_double(arg1_l[0], scratch1, &arg1[d+get_group_id(0) + get_group_id(1)*get_num_groups(0)], OPS_INC);
 
 }
