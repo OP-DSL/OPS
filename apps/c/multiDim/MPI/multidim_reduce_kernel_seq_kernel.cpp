@@ -4,9 +4,10 @@
 #define OPS_ACC_MD0(d,x,y) ((x)*2+(d)+(xdim0*(y)*2))
 
 //user function
-inline void multidim_kernel(double *val, int *idx){
-  val[OPS_ACC_MD0(0,0,0)] = (double)(idx[0]);
-  val[OPS_ACC_MD0(1,0,0)] = (double)(idx[1]);
+inline void multidim_reduce_kernel(const double *val, double *redu_dat1) {
+
+  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(1,0,0)];
+  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(2,0,0)];
 }
 
 
@@ -15,7 +16,7 @@ inline void multidim_kernel(double *val, int *idx){
 
 
 // host stub function
-void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
   char *p_a[2];
@@ -25,11 +26,11 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,0)) return;
+  if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  ops_timing_realloc(0,"multidim_kernel");
-  OPS_kernels[0].count++;
+  ops_timing_realloc(2,"multidim_reduce_kernel");
+  OPS_kernels[2].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -62,7 +63,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "multidim_kernel");
+  ops_register_args(args, "multidim_reduce_kernel");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -70,14 +71,6 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
       &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
 
-  int arg_idx[2];
-  #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-  #endif //OPS_MPI
 
   //Timing
   double t1,t2,c1,c2;
@@ -101,7 +94,11 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
     (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
-  p_a[1] = (char *)arg_idx;
+  #ifdef OPS_MPI
+  p_a[1] = ((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index;
+  #else //OPS_MPI
+  p_a[1] = ((ops_reduction)args[1].data)->data;
+  #endif //OPS_MPI
 
 
 
@@ -110,7 +107,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  OPS_kernels[2].mpi_time += t1-t2;
 
   //initialize global variable with the dimension of dats
   xdim0 = args[0].dat->size[0];
@@ -121,9 +118,8 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
     for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
       //call kernel function, passing in pointers to data -vectorised
       for ( int i=0; i<SIMD_VEC; i++ ){
-        multidim_kernel(  (double *)p_a[0]+ i*1*2, (int *)p_a[1] );
+        multidim_reduce_kernel(  (double *)p_a[0]+ i*1*2, (double *)p_a[1] );
 
-        arg_idx[0]++;
       }
 
       //shift pointers to data x direction
@@ -132,28 +128,20 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
     for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      multidim_kernel(  (double *)p_a[0], (int *)p_a[1] );
+      multidim_reduce_kernel(  (double *)p_a[0], (double *)p_a[1] );
 
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_0);
-      arg_idx[0]++;
     }
 
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_1);
-    #ifdef OPS_MPI
-    arg_idx[0] = sb->decomp_disp[0]+start[0];
-    #else //OPS_MPI
-    arg_idx[0] = start[0];
-    #endif //OPS_MPI
-    arg_idx[1]++;
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  OPS_kernels[2].time += t2-t1;
   ops_set_dirtybit_host(args, 2);
-  ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
 }

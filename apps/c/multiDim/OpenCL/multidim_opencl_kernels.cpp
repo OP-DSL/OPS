@@ -37,8 +37,8 @@ void buildOpenCLKernels() {
   if(!isbuilt) {
     //clSafeCall( clUnloadCompiler() );
 
-    OPS_opencl_core.n_kernels = 2;
-    OPS_opencl_core.kernel = (cl_kernel*) malloc(2*sizeof(cl_kernel));
+    OPS_opencl_core.n_kernels = 3;
+    OPS_opencl_core.kernel = (cl_kernel*) malloc(3*sizeof(cl_kernel));
   }
   isbuilt = true;
 }
@@ -46,3 +46,4 @@ void buildOpenCLKernels() {
 //user kernel files
 #include "multidim_kernel_opencl_kernel.cpp"
 #include "multidim_copy_kernel_opencl_kernel.cpp"
+#include "multidim_reduce_kernel_opencl_kernel.cpp"

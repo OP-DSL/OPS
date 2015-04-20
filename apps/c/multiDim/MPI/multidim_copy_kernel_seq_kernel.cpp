@@ -5,8 +5,7 @@
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 //user function
-inline
-void multidim_copy_kernel(const double *src, double *dest){
+inline void multidim_copy_kernel(const double *src, double *dest){
   dest[OPS_ACC_MD1(0,0,0)] = src[OPS_ACC_MD0(0,0,0)];
   dest[OPS_ACC_MD1(1,0,0)] = src[OPS_ACC_MD0(1,0,0)];
 }

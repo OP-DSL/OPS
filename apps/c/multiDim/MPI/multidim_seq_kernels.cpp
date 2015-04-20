@@ -13,3 +13,4 @@
 //user kernel files
 #include "multidim_kernel_seq_kernel.cpp"
 #include "multidim_copy_kernel_seq_kernel.cpp"
+#include "multidim_reduce_kernel_seq_kernel.cpp"

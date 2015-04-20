@@ -1,7 +1,7 @@
 #!/bin/bash
 
-cd ../../ops/
-source ./source_intel
+cd ../../../ops/c
+source ../ruby_intel_source
 make
 cd -
 make
@@ -61,13 +61,19 @@ grep "Total Wall time" perf_out
 rm perf_out
 
 
-#cd -
-#source ./source_pgi
-#make cuda
-#cd -
-#make poisson_openacc
-#echo '============> Running OpenACC'
-#./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#rm perf_out
+cd -
+source ../ruby_pgi_source
+make cuda
+cd -
+make poisson_openacc
+make poisson_mpi_openacc
+echo '============> Running OpenACC'
+./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+rm perf_out
+echo '============> Running MPI+OpenACC'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+rm perf_out

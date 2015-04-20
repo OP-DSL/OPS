@@ -42,3 +42,4 @@ int size, char *dat, char const *name){
 //user kernel files
 #include "multidim_kernel_cuda_kernel.cu"
 #include "multidim_copy_kernel_cuda_kernel.cu"
+#include "multidim_reduce_kernel_cuda_kernel.cu"

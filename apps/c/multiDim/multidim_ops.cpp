@@ -24,11 +24,16 @@ void ops_par_loop_multidim_copy_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_multidim_reduce_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg );
+
 
 
 //#include "multidim_kernel.h"
 //#include "multidim_print_kernel.h"
 //#include "multidim_copy_kernel.h"
+//#include "multidim_reduce_kernel.h"
 
 int main(int argc, char **argv)
 {
@@ -55,6 +60,8 @@ int main(int argc, char **argv)
   ops_dat dat0    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
 
+  double reduct_result[2] = {0.0, 0.0};
+  ops_reduction reduct_dat1 = ops_decl_reduction_handle(2*sizeof(double), "double", "reduct_dat1");
 
   ops_partition("2D_BLOCK_DECOMPSE");
 
@@ -75,6 +82,14 @@ int main(int argc, char **argv)
                ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
 
 
+
+
+  ops_par_loop_multidim_reduce_kernel("multidim_reduce_kernel", grid2D, 2, iter_range,
+               ops_arg_dat(dat1, 2, S2D_00, "double", OPS_READ),
+               ops_arg_reduce(reduct_dat1, 2, "double", OPS_INC));
+
+  ops_reduction_result(reduct_dat1, reduct_result);
+  ops_printf("Reduction result = %lf, %lf", reduct_result[0],reduct_result[1]);
 
   ops_timers(&ct1, &et1);
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
