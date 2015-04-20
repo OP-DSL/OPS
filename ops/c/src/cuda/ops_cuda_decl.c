@@ -204,7 +204,7 @@ void ops_partition(char* routine)
 }
 
 void ops_timers(double * cpu, double * et){
-    cutilSafeCall ( cudaDeviceSynchronize ( ) );
+    //cutilSafeCall ( cudaDeviceSynchronize ( ) );
     ops_timers_core(cpu,et);
 }
 
