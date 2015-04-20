@@ -473,11 +473,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     #reduction accross blocks
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_INC);')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', &arg'+str(n)+'[d], OPS_INC);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_MIN);')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', &arg'+str(n)+'[d], OPS_MIN);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', arg'+str(n)+', OPS_MAX);')
+        code('for (int d=0; d<'+str(dims[n])+'; d++)')
+        code('  reduce_'+(str(typs[n]).replace('"','')).strip()+'(arg'+str(n)+'_l[0], scratch'+str(n)+', &arg'+str(n)+'[d], OPS_MAX);')
 
 
     code('')

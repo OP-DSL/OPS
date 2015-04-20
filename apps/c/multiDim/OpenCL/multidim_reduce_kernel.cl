@@ -47,8 +47,8 @@ void multidim_reduce_kernel(const __global double * restrict val, double * restr
 
  {
 
-  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(1,0,0)];
-  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(2,0,0)];
+  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0,0,0)];
+  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0)];
 }
 
 
@@ -77,6 +77,7 @@ const int size1 ){
     multidim_reduce_kernel(&arg0[base0 + idx_x * 1*2 + idx_y * 1*2 * xdim0_multidim_reduce_kernel],
                            arg1_l);
   }
-  reduce_double(arg1_l[0], scratch1, arg1, OPS_INC);
+  for (int d=0; d<2; d++)
+    reduce_double(arg1_l[0], scratch1, &arg1[d], OPS_INC);
 
 }

@@ -3,8 +3,7 @@
 //
 
 //user function
-inline
-void mblock_populate_kernel(double *val, int *idx) {
+inline void mblock_populate_kernel(double *val, int *idx) {
   val[OPS_ACC0(0,0)] = (double)(idx[0]+20*idx[1]);
 }
 
