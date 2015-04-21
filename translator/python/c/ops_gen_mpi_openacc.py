@@ -273,11 +273,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          if dims[n].isdigit() and int(dims[n]) == 1:
-            code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
-          else:
-            code(typs[n]+' p_a'+str(n)+'_l['+str(dims[n])+'];')
-            code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'_l[d] = p_a'+str(n)+'[d];')
+          #if dims[n].isdigit() and int(dims[n]) == 1:
+          #  code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
+          #else:
+          for d in range(0,int(dims[n])):
+            code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
+
     line = '#pragma acc parallel deviceptr('
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -289,26 +290,34 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_MIN:
-          line = line + ' reduction(min:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_MAX:
-          line = line + ' reduction(max:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_INC:
-          line = line + ' reduction(+:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_WRITE: #this may not be correct
-          line = line + ' reduction(+:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     code('#ifdef OPS_GPU')
     code(line)
     line = '#pragma acc loop'
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_MIN:
-          line = line + ' reduction(min:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_MAX:
-          line = line + ' reduction(max:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_INC:
-          line = line + ' reduction(+:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
         if accs[n] == OPS_WRITE: #this may not be correct
-          line = line + ' reduction(+:p_a'+str(n)+'_l)'
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     code(line)
     code('#endif')
     if NDIM==3:
@@ -335,6 +344,27 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       elif NDIM==3:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
 
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_local['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need +INFINITY_ change to
+        if accs[n] == OPS_MAX:
+          code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_local['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need -INFINITY_ change to
+        if accs[n] == OPS_INC:
+          code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_local['+str(d)+'] = ZERO_'+typs[n]+';')
+        if accs[n] == OPS_WRITE: #this may not be correct
+          code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_local['+str(d)+'] = ZERO_'+typs[n]+';')
+    #code('')
+
+
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -354,9 +384,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
             text = text +' p_a'+str(n)+''
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
-            text = text +' &p_a'+str(n)+'_l'
+            text = text +' &p_a'+str(n)+'_local'
           else:
-            text = text +' p_a'+str(n)+'_l'
+            text = text +' p_a'+str(n)+'_local'
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
@@ -367,6 +397,23 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if n%n_per_line == 0 and n <> nargs-1:
         text = text +'\n          '
     code(text);
+
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_'+str(d)+' = MIN(p_a'+str(n)+'_'+str(d)+',p_a'+str(n)+'_local['+str(d)+']);')
+        if accs[n] == OPS_MAX:
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_'+str(d)+' = MAX(p_a'+str(n)+'_'+str(d)+'p_a'+str(n)+'_local['+str(d)+']);')
+        if accs[n] == OPS_INC:
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
+        if accs[n] == OPS_WRITE: #this may not be correct
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
+
+
     ENDFOR()
     if NDIM==2:
       ENDFOR()
@@ -377,10 +424,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
-          if dims[n].isdigit() and int(dims[n]) == 1:
-            code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
-          else:
-            code('for (int d = 0; d < '+str(dims[n])+'; d++) p_a'+str(n)+'[d] = p_a'+str(n)+'_l[d];')
+          #if dims[n].isdigit() and int(dims[n]) == 1:
+          #  code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
+          #else:
+          for d in range(0,int(dims[n])):
+            code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+
     config.depth = config.depth-2
     code('}')
 

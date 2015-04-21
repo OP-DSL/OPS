@@ -119,7 +119,7 @@ int size2 ){
                    arg4, arg5, arg6, arg7_l);
   }
   for (int d=0; d<28; d++)
-    ops_reduction_cuda<OPS_INC>(&arg7[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg7_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*28],arg7_l[d]);
 
 }
 

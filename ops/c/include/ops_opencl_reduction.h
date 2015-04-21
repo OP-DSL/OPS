@@ -57,8 +57,8 @@ void reduce_float(float value,
 
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
 
-  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -78,7 +78,8 @@ void reduce_float(float value,
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    result[group_index] = scratch[0];
+    //result[group_index] = scratch[0];
+    result[0] = scratch[0];
   }
 }
 
@@ -92,8 +93,8 @@ void reduce_double(double value,
 
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
 
-  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -113,7 +114,8 @@ void reduce_double(double value,
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    result[group_index] = scratch[0];
+    //result[group_index] = scratch[0];
+    result[0] = scratch[0];
   }
 }
 
@@ -127,8 +129,8 @@ void reduce_int(int value,
 
   int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
 
-  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -148,7 +150,8 @@ void reduce_int(int value,
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    result[group_index] = scratch[0];
+    //result[group_index] = scratch[0];
+    result[0] = scratch[0];
   }
 }
 

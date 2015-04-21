@@ -359,11 +359,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     #reduction across blocks
     if NDIM==1:
-      cont = 'blockIdx.x + blockIdx.y*gridDim.x'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'+str(dims[n])
     if NDIM==2:
-      cont = 'blockIdx.x + blockIdx.y*gridDim.x'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'+str(dims[n])
     elif NDIM==3:
-      cont = 'blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'+str(dims[n])
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')

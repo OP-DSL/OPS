@@ -39,7 +39,7 @@ int size1 ){
     multidim_reduce_kernel(arg0, arg1_l);
   }
   for (int d=0; d<2; d++)
-    ops_reduction_cuda<OPS_INC>(&arg1[d+blockIdx.x + blockIdx.y*gridDim.x],arg1_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*2],arg1_l[d]);
 
 }
 

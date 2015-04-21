@@ -62,7 +62,9 @@ rm perf_out
 
 cd -
 source ../ruby_pgi_source
+make clean
 make cuda
+make mpi_cuda
 cd -
 make multidim_openacc
 make multidim_mpi_openacc

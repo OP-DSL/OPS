@@ -79,6 +79,8 @@ const int size2 ){
     calc_dt_kernel_min(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min],
                    arg1_l);
   }
-  reduce_double(arg1_l[0], scratch1, arg1, OPS_MIN);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg1_l[d], scratch1, &arg1[group_index*1+d], OPS_MIN);
 
 }

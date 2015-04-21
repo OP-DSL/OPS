@@ -26,21 +26,29 @@ void multidim_reduce_kernel_c_wrapper(
   double *p_a0,
   double *p_a1,
   int x_size, int y_size) {
-  double p_a1_l[2];
-  for (int d = 0; d < 2; d++) p_a1_l[d] = p_a1[d];
+  double p_a1_0 = 0.0;
+  double p_a1_1 = 0.0;
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0) reduction(+:p_a1_l)
-  #pragma acc loop reduction(+:p_a1_l)
+  #pragma acc parallel deviceptr(p_a0) reduction(+:p_a1_0) reduction(+:p_a1_1)
+  #pragma acc loop reduction(+:p_a1_0) reduction(+:p_a1_1)
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
     #ifdef OPS_GPU
-    #pragma acc loop reduction(+:p_a1_l)
+    #pragma acc loop reduction(+:p_a1_0) reduction(+:p_a1_1)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      multidim_reduce_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_multidim_reduce_kernel*1*2,
-           p_a1_l );
 
+      double p_a1_local[2];
+      p_a1_local[0] = ZERO_double;
+      p_a1_local[1] = ZERO_double;
+
+      multidim_reduce_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_multidim_reduce_kernel*1*2,
+           p_a1_local );
+
+      p_a1_0 +=p_a1_local[0];
+      p_a1_1 +=p_a1_local[1];
     }
   }
-  for (int d = 0; d < 2; d++) p_a1[d] = p_a1_l[d];
+  p_a1[0] = p_a1_0;
+  p_a1[1] = p_a1_1;
 }

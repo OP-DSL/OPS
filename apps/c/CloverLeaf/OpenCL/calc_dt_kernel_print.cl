@@ -114,6 +114,8 @@ const int size1 ){
                    &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel_print],
                    arg6_l);
   }
-  reduce_double(arg6_l[0], scratch6, arg6, OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<12; d++)
+    reduce_double(arg6_l[d], scratch6, &arg6[group_index*12+d], OPS_INC);
 
 }

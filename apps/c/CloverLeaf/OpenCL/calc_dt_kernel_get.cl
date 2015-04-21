@@ -90,7 +90,10 @@ const int size1 ){
                    arg2_l,
                    arg3_l);
   }
-  reduce_double(arg2_l[0], scratch2, arg2, OPS_INC);
-  reduce_double(arg3_l[0], scratch3, arg3, OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg2_l[d], scratch2, &arg2[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg3_l[d], scratch3, &arg3[group_index*1+d], OPS_INC);
 
 }

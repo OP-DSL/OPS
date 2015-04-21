@@ -112,15 +112,15 @@ int size1 ){
                    arg9_l, arg10_l);
   }
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg6[d+blockIdx.x + blockIdx.y*gridDim.x],arg6_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg6_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg7[d+blockIdx.x + blockIdx.y*gridDim.x],arg7_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg7_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg8[d+blockIdx.x + blockIdx.y*gridDim.x],arg8_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg8[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg8_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg9[d+blockIdx.x + blockIdx.y*gridDim.x],arg9_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg9[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg9_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg10[d+blockIdx.x + blockIdx.y*gridDim.x],arg10_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg10[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg10_l[d]);
 
 }
 

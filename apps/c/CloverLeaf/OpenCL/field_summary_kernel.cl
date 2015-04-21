@@ -149,10 +149,16 @@ const int size1 ){
                          arg9_l,
                          arg10_l);
   }
-  reduce_double(arg6_l[0], scratch6, arg6, OPS_INC);
-  reduce_double(arg7_l[0], scratch7, arg7, OPS_INC);
-  reduce_double(arg8_l[0], scratch8, arg8, OPS_INC);
-  reduce_double(arg9_l[0], scratch9, arg9, OPS_INC);
-  reduce_double(arg10_l[0], scratch10, arg10, OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg6_l[d], scratch6, &arg6[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg7_l[d], scratch7, &arg7[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg8_l[d], scratch8, &arg8[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg9_l[d], scratch9, &arg9[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg10_l[d], scratch10, &arg10[group_index*1+d], OPS_INC);
 
 }

@@ -147,15 +147,15 @@ int size2 ){
                    arg9_l, arg10_l, arg11_l);
   }
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg7[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg7_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg7_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg8[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg8_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg8[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg8_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg9[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg9_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg9[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg9_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg10[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg10_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg10[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg10_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg11[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg11_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg11[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg11_l[d]);
 
 }
 

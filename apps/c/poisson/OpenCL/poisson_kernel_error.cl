@@ -80,6 +80,8 @@ const int size1 ){
                    &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_error],
                    arg2_l);
   }
-  reduce_double(arg2_l[0], scratch2, arg2, OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg2_l[d], scratch2, &arg2[group_index*1+d], OPS_INC);
 
 }

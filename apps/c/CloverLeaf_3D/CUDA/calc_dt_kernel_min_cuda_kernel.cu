@@ -42,7 +42,7 @@ int size2 ){
     calc_dt_kernel_min(arg0, arg1_l);
   }
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_MIN>(&arg1[d+blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y],arg1_l[d]);
+    ops_reduction_cuda<OPS_MIN>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg1_l[d]);
 
 }
 

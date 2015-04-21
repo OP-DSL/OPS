@@ -48,9 +48,9 @@ int size1 ){
     calc_dt_kernel_get(arg0, arg1, arg2_l, arg3_l);
   }
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg2[d+blockIdx.x + blockIdx.y*gridDim.x],arg2_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg2_l[d]);
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg3[d+blockIdx.x + blockIdx.y*gridDim.x],arg3_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg3[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg3_l[d]);
 
 }
 

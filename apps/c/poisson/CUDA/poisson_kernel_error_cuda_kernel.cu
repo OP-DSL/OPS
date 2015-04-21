@@ -44,7 +44,7 @@ int size1 ){
     poisson_kernel_error(arg0, arg1, arg2_l);
   }
   for (int d=0; d<1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg2[d+blockIdx.x + blockIdx.y*gridDim.x],arg2_l[d]);
+    ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg2_l[d]);
 
 }
 

@@ -36,6 +36,8 @@ void multidim_kernel_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
+
+
       multidim_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_multidim_kernel*1*2,
           arg_idx );
 

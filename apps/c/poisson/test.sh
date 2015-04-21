@@ -63,7 +63,9 @@ rm perf_out
 
 cd -
 source ../ruby_pgi_source
+make clean
 make cuda
+make mpi_cuda
 cd -
 make poisson_openacc
 make poisson_mpi_openacc
