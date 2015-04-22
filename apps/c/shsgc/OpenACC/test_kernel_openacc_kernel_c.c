@@ -25,15 +25,15 @@ void test_kernel_c_wrapper(
   double *p_a0,
   double *p_a1,
   int x_size) {
-  double p_a1_l = *p_a1;
+  double p_a1_0 = p_a1[0];
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0) reduction(+:p_a1_l)
-  #pragma acc loop reduction(+:p_a1_l)
+  #pragma acc parallel deviceptr(p_a0) reduction(+:p_a1_0)
+  #pragma acc loop reduction(+:p_a1_0)
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
     test_kernel(  p_a0 + n_x*1*1,
-           &p_a1_l );
+           &p_a1_0 );
 
   }
-  *p_a1 = p_a1_l;
+  p_a1[0] = p_a1_0;
 }

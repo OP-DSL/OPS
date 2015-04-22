@@ -74,32 +74,32 @@ void field_summary_kernel_c_wrapper(
   double *p_a9,
   double *p_a10,
   int x_size, int y_size) {
-  double p_a6_l = *p_a6;
-  double p_a7_l = *p_a7;
-  double p_a8_l = *p_a8;
-  double p_a9_l = *p_a9;
-  double p_a10_l = *p_a10;
+  double p_a6_0 = p_a6[0];
+  double p_a7_0 = p_a7[0];
+  double p_a8_0 = p_a8[0];
+  double p_a9_0 = p_a9[0];
+  double p_a10_0 = p_a10[0];
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6_l) reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l)
-  #pragma acc loop reduction(+:p_a6_l) reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6_0) reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0)
+  #pragma acc loop reduction(+:p_a6_0) reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0)
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
     #ifdef OPS_GPU
-    #pragma acc loop reduction(+:p_a6_l) reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l)
+    #pragma acc loop reduction(+:p_a6_0) reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       field_summary_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_field_summary_kernel*1*1,
            p_a1 + n_x*1*1 + n_y*xdim1_field_summary_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_field_summary_kernel*1*1,
            p_a3 + n_x*1*1 + n_y*xdim3_field_summary_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_field_summary_kernel*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1, &p_a6_l,
-           &p_a7_l, &p_a8_l,
-           &p_a9_l, &p_a10_l );
+           p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1, &p_a6_0,
+           &p_a7_0, &p_a8_0,
+           &p_a9_0, &p_a10_0 );
 
     }
   }
-  *p_a6 = p_a6_l;
-  *p_a7 = p_a7_l;
-  *p_a8 = p_a8_l;
-  *p_a9 = p_a9_l;
-  *p_a10 = p_a10_l;
+  p_a6[0] = p_a6_0;
+  p_a7[0] = p_a7_0;
+  p_a8[0] = p_a8_0;
+  p_a9[0] = p_a9_0;
+  p_a10[0] = p_a10_0;
 }

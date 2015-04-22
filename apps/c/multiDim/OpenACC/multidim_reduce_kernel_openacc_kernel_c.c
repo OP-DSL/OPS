@@ -26,8 +26,8 @@ void multidim_reduce_kernel_c_wrapper(
   double *p_a0,
   double *p_a1,
   int x_size, int y_size) {
-  double p_a1_0 = 0.0;
-  double p_a1_1 = 0.0;
+  double p_a1_0 = p_a1[0];
+  double p_a1_1 = p_a1[1];
   #ifdef OPS_GPU
   #pragma acc parallel deviceptr(p_a0) reduction(+:p_a1_0) reduction(+:p_a1_1)
   #pragma acc loop reduction(+:p_a1_0) reduction(+:p_a1_1)
@@ -37,11 +37,9 @@ void multidim_reduce_kernel_c_wrapper(
     #pragma acc loop reduction(+:p_a1_0) reduction(+:p_a1_1)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-
       double p_a1_local[2];
       p_a1_local[0] = ZERO_double;
       p_a1_local[1] = ZERO_double;
-
       multidim_reduce_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_multidim_reduce_kernel*1*2,
            p_a1_local );
 

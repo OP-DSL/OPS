@@ -67,7 +67,7 @@ else
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp
-  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC   = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CPPFLAGS)
 else

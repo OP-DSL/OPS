@@ -298,7 +298,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         if accs[n] == OPS_INC:
           for d in range(0,int(dims[n])):
             line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_WRITE: #this may not be correct
+        if accs[n] == OPS_WRITE: #this may not be correct ..
           for d in range(0,int(dims[n])):
             line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     code('#ifdef OPS_GPU')
@@ -346,19 +346,19 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
+        if accs[n] == OPS_MIN and int(dims[n])>1:
           code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_local['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need +INFINITY_ change to
-        if accs[n] == OPS_MAX:
+        if accs[n] == OPS_MAX and int(dims[n])>1:
           code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_local['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need -INFINITY_ change to
-        if accs[n] == OPS_INC:
+        if accs[n] == OPS_INC and int(dims[n])>1:
           code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_local['+str(d)+'] = ZERO_'+typs[n]+';')
-        if accs[n] == OPS_WRITE: #this may not be correct
+        if accs[n] == OPS_WRITE and int(dims[n])>1: #this may not be correct
           code(typs[n]+' p_a'+str(n)+'_local['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_local['+str(d)+'] = ZERO_'+typs[n]+';')
@@ -384,7 +384,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
             text = text +' p_a'+str(n)+''
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
-            text = text +' &p_a'+str(n)+'_local'
+            text = text +' &p_a'+str(n)+'_0'
           else:
             text = text +' p_a'+str(n)+'_local'
       elif arg_typ[n] == 'ops_arg_idx':
@@ -400,16 +400,16 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
+        if accs[n] == OPS_MIN and int(dims[n])>1:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' = MIN(p_a'+str(n)+'_'+str(d)+',p_a'+str(n)+'_local['+str(d)+']);')
-        if accs[n] == OPS_MAX:
+        if accs[n] == OPS_MAX and int(dims[n])>1:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' = MAX(p_a'+str(n)+'_'+str(d)+'p_a'+str(n)+'_local['+str(d)+']);')
-        if accs[n] == OPS_INC:
+        if accs[n] == OPS_INC and int(dims[n])>1:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
-        if accs[n] == OPS_WRITE: #this may not be correct
+        if accs[n] == OPS_WRITE and int(dims[n])>1: #this may not be correct
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
 

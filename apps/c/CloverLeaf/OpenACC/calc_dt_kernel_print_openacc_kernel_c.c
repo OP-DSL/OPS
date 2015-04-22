@@ -56,23 +56,69 @@ void calc_dt_kernel_print_c_wrapper(
   double *p_a5,
   double *p_a6,
   int x_size, int y_size) {
-  double p_a6_l[12];
-  for (int d = 0; d < 12; d++) p_a6_l[d] = p_a6[d];
+  double p_a6_0 = p_a6[0];
+  double p_a6_1 = p_a6[1];
+  double p_a6_2 = p_a6[2];
+  double p_a6_3 = p_a6[3];
+  double p_a6_4 = p_a6[4];
+  double p_a6_5 = p_a6[5];
+  double p_a6_6 = p_a6[6];
+  double p_a6_7 = p_a6[7];
+  double p_a6_8 = p_a6[8];
+  double p_a6_9 = p_a6[9];
+  double p_a6_10 = p_a6[10];
+  double p_a6_11 = p_a6[11];
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6_l)
-  #pragma acc loop reduction(+:p_a6_l)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5) reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
+  #pragma acc loop reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
     #ifdef OPS_GPU
-    #pragma acc loop reduction(+:p_a6_l)
+    #pragma acc loop reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
+      double p_a6_local[12];
+      p_a6_local[0] = ZERO_double;
+      p_a6_local[1] = ZERO_double;
+      p_a6_local[2] = ZERO_double;
+      p_a6_local[3] = ZERO_double;
+      p_a6_local[4] = ZERO_double;
+      p_a6_local[5] = ZERO_double;
+      p_a6_local[6] = ZERO_double;
+      p_a6_local[7] = ZERO_double;
+      p_a6_local[8] = ZERO_double;
+      p_a6_local[9] = ZERO_double;
+      p_a6_local[10] = ZERO_double;
+      p_a6_local[11] = ZERO_double;
       calc_dt_kernel_print(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1,
            p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1, p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1,
            p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel_print*1*1, p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1, p_a6_l );
+           p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1, p_a6_local );
 
+      p_a6_0 +=p_a6_local[0];
+      p_a6_1 +=p_a6_local[1];
+      p_a6_2 +=p_a6_local[2];
+      p_a6_3 +=p_a6_local[3];
+      p_a6_4 +=p_a6_local[4];
+      p_a6_5 +=p_a6_local[5];
+      p_a6_6 +=p_a6_local[6];
+      p_a6_7 +=p_a6_local[7];
+      p_a6_8 +=p_a6_local[8];
+      p_a6_9 +=p_a6_local[9];
+      p_a6_10 +=p_a6_local[10];
+      p_a6_11 +=p_a6_local[11];
     }
   }
-  for (int d = 0; d < 12; d++) p_a6[d] = p_a6_l[d];
+  p_a6[0] = p_a6_0;
+  p_a6[1] = p_a6_1;
+  p_a6[2] = p_a6_2;
+  p_a6[3] = p_a6_3;
+  p_a6[4] = p_a6_4;
+  p_a6[5] = p_a6_5;
+  p_a6[6] = p_a6_6;
+  p_a6[7] = p_a6_7;
+  p_a6[8] = p_a6_8;
+  p_a6[9] = p_a6_9;
+  p_a6[10] = p_a6_10;
+  p_a6[11] = p_a6_11;
 }

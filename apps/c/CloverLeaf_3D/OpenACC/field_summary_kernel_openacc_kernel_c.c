@@ -102,22 +102,22 @@ void field_summary_kernel_c_wrapper(
   double *p_a10,
   double *p_a11,
   int x_size, int y_size, int z_size) {
-  double p_a7_l = *p_a7;
-  double p_a8_l = *p_a8;
-  double p_a9_l = *p_a9;
-  double p_a10_l = *p_a10;
-  double p_a11_l = *p_a11;
+  double p_a7_0 = p_a7[0];
+  double p_a8_0 = p_a8[0];
+  double p_a9_0 = p_a9[0];
+  double p_a10_0 = p_a10[0];
+  double p_a11_0 = p_a11[0];
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6) reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l) reduction(+:p_a11_l)
-  #pragma acc loop reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l) reduction(+:p_a11_l)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6) reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
+  #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
   #endif
   for ( int n_z=0; n_z<z_size; n_z++ ){
     #ifdef OPS_GPU
-    #pragma acc loop reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l) reduction(+:p_a11_l)
+    #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
     #endif
     for ( int n_y=0; n_y<y_size; n_y++ ){
       #ifdef OPS_GPU
-      #pragma acc loop reduction(+:p_a7_l) reduction(+:p_a8_l) reduction(+:p_a9_l) reduction(+:p_a10_l) reduction(+:p_a11_l)
+      #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
         field_summary_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_field_summary_kernel*1*1 + n_z*xdim0_field_summary_kernel*ydim0_field_summary_kernel*1,
@@ -127,18 +127,18 @@ void field_summary_kernel_c_wrapper(
            p_a4 + n_x*1*1 + n_y*xdim4_field_summary_kernel*1*1 + n_z*xdim4_field_summary_kernel*ydim4_field_summary_kernel*1,
            p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1 + n_z*xdim5_field_summary_kernel*ydim5_field_summary_kernel*1,
            p_a6 + n_x*1*1 + n_y*xdim6_field_summary_kernel*1*1 + n_z*xdim6_field_summary_kernel*ydim6_field_summary_kernel*1,
-           &p_a7_l,
-           &p_a8_l,
-           &p_a9_l,
-           &p_a10_l,
-           &p_a11_l );
+           &p_a7_0,
+           &p_a8_0,
+           &p_a9_0,
+           &p_a10_0,
+           &p_a11_0 );
 
       }
     }
   }
-  *p_a7 = p_a7_l;
-  *p_a8 = p_a8_l;
-  *p_a9 = p_a9_l;
-  *p_a10 = p_a10_l;
-  *p_a11 = p_a11_l;
+  p_a7[0] = p_a7_0;
+  p_a8[0] = p_a8_0;
+  p_a9[0] = p_a9_0;
+  p_a10[0] = p_a10_0;
+  p_a11[0] = p_a11_0;
 }

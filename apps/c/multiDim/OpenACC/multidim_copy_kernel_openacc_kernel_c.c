@@ -37,8 +37,6 @@ void multidim_copy_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-
-
       multidim_copy_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_multidim_copy_kernel*1*2,
            p_a1 + n_x*1*2 + n_y*xdim1_multidim_copy_kernel*1*2 );
 

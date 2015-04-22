@@ -83,21 +83,76 @@ void calc_dt_kernel_print_c_wrapper(
   double *p_a6,
   double *p_a7,
   int x_size, int y_size, int z_size) {
-  double p_a7_l[28];
-  for (int d = 0; d < 28; d++) p_a7_l[d] = p_a7[d];
+  double p_a7_0 = p_a7[0];
+  double p_a7_1 = p_a7[1];
+  double p_a7_2 = p_a7[2];
+  double p_a7_3 = p_a7[3];
+  double p_a7_4 = p_a7[4];
+  double p_a7_5 = p_a7[5];
+  double p_a7_6 = p_a7[6];
+  double p_a7_7 = p_a7[7];
+  double p_a7_8 = p_a7[8];
+  double p_a7_9 = p_a7[9];
+  double p_a7_10 = p_a7[10];
+  double p_a7_11 = p_a7[11];
+  double p_a7_12 = p_a7[12];
+  double p_a7_13 = p_a7[13];
+  double p_a7_14 = p_a7[14];
+  double p_a7_15 = p_a7[15];
+  double p_a7_16 = p_a7[16];
+  double p_a7_17 = p_a7[17];
+  double p_a7_18 = p_a7[18];
+  double p_a7_19 = p_a7[19];
+  double p_a7_20 = p_a7[20];
+  double p_a7_21 = p_a7[21];
+  double p_a7_22 = p_a7[22];
+  double p_a7_23 = p_a7[23];
+  double p_a7_24 = p_a7[24];
+  double p_a7_25 = p_a7[25];
+  double p_a7_26 = p_a7[26];
+  double p_a7_27 = p_a7[27];
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6) reduction(+:p_a7_l)
-  #pragma acc loop reduction(+:p_a7_l)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6) reduction(+:p_a7_0) reduction(+:p_a7_1) reduction(+:p_a7_2) reduction(+:p_a7_3) reduction(+:p_a7_4) reduction(+:p_a7_5) reduction(+:p_a7_6) reduction(+:p_a7_7) reduction(+:p_a7_8) reduction(+:p_a7_9) reduction(+:p_a7_10) reduction(+:p_a7_11) reduction(+:p_a7_12) reduction(+:p_a7_13) reduction(+:p_a7_14) reduction(+:p_a7_15) reduction(+:p_a7_16) reduction(+:p_a7_17) reduction(+:p_a7_18) reduction(+:p_a7_19) reduction(+:p_a7_20) reduction(+:p_a7_21) reduction(+:p_a7_22) reduction(+:p_a7_23) reduction(+:p_a7_24) reduction(+:p_a7_25) reduction(+:p_a7_26) reduction(+:p_a7_27)
+  #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a7_1) reduction(+:p_a7_2) reduction(+:p_a7_3) reduction(+:p_a7_4) reduction(+:p_a7_5) reduction(+:p_a7_6) reduction(+:p_a7_7) reduction(+:p_a7_8) reduction(+:p_a7_9) reduction(+:p_a7_10) reduction(+:p_a7_11) reduction(+:p_a7_12) reduction(+:p_a7_13) reduction(+:p_a7_14) reduction(+:p_a7_15) reduction(+:p_a7_16) reduction(+:p_a7_17) reduction(+:p_a7_18) reduction(+:p_a7_19) reduction(+:p_a7_20) reduction(+:p_a7_21) reduction(+:p_a7_22) reduction(+:p_a7_23) reduction(+:p_a7_24) reduction(+:p_a7_25) reduction(+:p_a7_26) reduction(+:p_a7_27)
   #endif
   for ( int n_z=0; n_z<z_size; n_z++ ){
     #ifdef OPS_GPU
-    #pragma acc loop reduction(+:p_a7_l)
+    #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a7_1) reduction(+:p_a7_2) reduction(+:p_a7_3) reduction(+:p_a7_4) reduction(+:p_a7_5) reduction(+:p_a7_6) reduction(+:p_a7_7) reduction(+:p_a7_8) reduction(+:p_a7_9) reduction(+:p_a7_10) reduction(+:p_a7_11) reduction(+:p_a7_12) reduction(+:p_a7_13) reduction(+:p_a7_14) reduction(+:p_a7_15) reduction(+:p_a7_16) reduction(+:p_a7_17) reduction(+:p_a7_18) reduction(+:p_a7_19) reduction(+:p_a7_20) reduction(+:p_a7_21) reduction(+:p_a7_22) reduction(+:p_a7_23) reduction(+:p_a7_24) reduction(+:p_a7_25) reduction(+:p_a7_26) reduction(+:p_a7_27)
     #endif
     for ( int n_y=0; n_y<y_size; n_y++ ){
       #ifdef OPS_GPU
-      #pragma acc loop reduction(+:p_a7_l)
+      #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a7_1) reduction(+:p_a7_2) reduction(+:p_a7_3) reduction(+:p_a7_4) reduction(+:p_a7_5) reduction(+:p_a7_6) reduction(+:p_a7_7) reduction(+:p_a7_8) reduction(+:p_a7_9) reduction(+:p_a7_10) reduction(+:p_a7_11) reduction(+:p_a7_12) reduction(+:p_a7_13) reduction(+:p_a7_14) reduction(+:p_a7_15) reduction(+:p_a7_16) reduction(+:p_a7_17) reduction(+:p_a7_18) reduction(+:p_a7_19) reduction(+:p_a7_20) reduction(+:p_a7_21) reduction(+:p_a7_22) reduction(+:p_a7_23) reduction(+:p_a7_24) reduction(+:p_a7_25) reduction(+:p_a7_26) reduction(+:p_a7_27)
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
+        double p_a7_local[28];
+        p_a7_local[0] = ZERO_double;
+        p_a7_local[1] = ZERO_double;
+        p_a7_local[2] = ZERO_double;
+        p_a7_local[3] = ZERO_double;
+        p_a7_local[4] = ZERO_double;
+        p_a7_local[5] = ZERO_double;
+        p_a7_local[6] = ZERO_double;
+        p_a7_local[7] = ZERO_double;
+        p_a7_local[8] = ZERO_double;
+        p_a7_local[9] = ZERO_double;
+        p_a7_local[10] = ZERO_double;
+        p_a7_local[11] = ZERO_double;
+        p_a7_local[12] = ZERO_double;
+        p_a7_local[13] = ZERO_double;
+        p_a7_local[14] = ZERO_double;
+        p_a7_local[15] = ZERO_double;
+        p_a7_local[16] = ZERO_double;
+        p_a7_local[17] = ZERO_double;
+        p_a7_local[18] = ZERO_double;
+        p_a7_local[19] = ZERO_double;
+        p_a7_local[20] = ZERO_double;
+        p_a7_local[21] = ZERO_double;
+        p_a7_local[22] = ZERO_double;
+        p_a7_local[23] = ZERO_double;
+        p_a7_local[24] = ZERO_double;
+        p_a7_local[25] = ZERO_double;
+        p_a7_local[26] = ZERO_double;
+        p_a7_local[27] = ZERO_double;
         calc_dt_kernel_print(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1 + n_z*xdim0_calc_dt_kernel_print*ydim0_calc_dt_kernel_print*1,
            p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1 + n_z*xdim1_calc_dt_kernel_print*ydim1_calc_dt_kernel_print*1,
            p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1 + n_z*xdim2_calc_dt_kernel_print*ydim2_calc_dt_kernel_print*1,
@@ -105,10 +160,65 @@ void calc_dt_kernel_print_c_wrapper(
            p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1 + n_z*xdim4_calc_dt_kernel_print*ydim4_calc_dt_kernel_print*1,
            p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1 + n_z*xdim5_calc_dt_kernel_print*ydim5_calc_dt_kernel_print*1,
            p_a6 + n_x*1*1 + n_y*xdim6_calc_dt_kernel_print*1*1 + n_z*xdim6_calc_dt_kernel_print*ydim6_calc_dt_kernel_print*1,
-           p_a7_l );
+           p_a7_local );
 
+        p_a7_0 +=p_a7_local[0];
+        p_a7_1 +=p_a7_local[1];
+        p_a7_2 +=p_a7_local[2];
+        p_a7_3 +=p_a7_local[3];
+        p_a7_4 +=p_a7_local[4];
+        p_a7_5 +=p_a7_local[5];
+        p_a7_6 +=p_a7_local[6];
+        p_a7_7 +=p_a7_local[7];
+        p_a7_8 +=p_a7_local[8];
+        p_a7_9 +=p_a7_local[9];
+        p_a7_10 +=p_a7_local[10];
+        p_a7_11 +=p_a7_local[11];
+        p_a7_12 +=p_a7_local[12];
+        p_a7_13 +=p_a7_local[13];
+        p_a7_14 +=p_a7_local[14];
+        p_a7_15 +=p_a7_local[15];
+        p_a7_16 +=p_a7_local[16];
+        p_a7_17 +=p_a7_local[17];
+        p_a7_18 +=p_a7_local[18];
+        p_a7_19 +=p_a7_local[19];
+        p_a7_20 +=p_a7_local[20];
+        p_a7_21 +=p_a7_local[21];
+        p_a7_22 +=p_a7_local[22];
+        p_a7_23 +=p_a7_local[23];
+        p_a7_24 +=p_a7_local[24];
+        p_a7_25 +=p_a7_local[25];
+        p_a7_26 +=p_a7_local[26];
+        p_a7_27 +=p_a7_local[27];
       }
     }
   }
-  for (int d = 0; d < 28; d++) p_a7[d] = p_a7_l[d];
+  p_a7[0] = p_a7_0;
+  p_a7[1] = p_a7_1;
+  p_a7[2] = p_a7_2;
+  p_a7[3] = p_a7_3;
+  p_a7[4] = p_a7_4;
+  p_a7[5] = p_a7_5;
+  p_a7[6] = p_a7_6;
+  p_a7[7] = p_a7_7;
+  p_a7[8] = p_a7_8;
+  p_a7[9] = p_a7_9;
+  p_a7[10] = p_a7_10;
+  p_a7[11] = p_a7_11;
+  p_a7[12] = p_a7_12;
+  p_a7[13] = p_a7_13;
+  p_a7[14] = p_a7_14;
+  p_a7[15] = p_a7_15;
+  p_a7[16] = p_a7_16;
+  p_a7[17] = p_a7_17;
+  p_a7[18] = p_a7_18;
+  p_a7[19] = p_a7_19;
+  p_a7[20] = p_a7_20;
+  p_a7[21] = p_a7_21;
+  p_a7[22] = p_a7_22;
+  p_a7[23] = p_a7_23;
+  p_a7[24] = p_a7_24;
+  p_a7[25] = p_a7_25;
+  p_a7[26] = p_a7_26;
+  p_a7[27] = p_a7_27;
 }
