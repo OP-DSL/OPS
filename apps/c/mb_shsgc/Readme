@@ -1,0 +1,34 @@
+The applications are three versions of SHSGC solver,
+
+All versions evaluate,
+RK3 routine and TVD scheme only.
+
+The versions differ only in the evaluation of rk3 loop,
+The format used below is
+Operation --> Data transfer -->> storage location
+
+in Max_datatransfer version,
+    1. variables --> conservative -->> workarrays*
+    2. derivatives --> workarrays* -->> der*arrays
+    3. Residues --> der*arrays -->> res*arrays
+    4. Perform RK3 update
+
+The Min_datatransfer versions differ in the implementation in the kernel
+    1. Residue evaluation --> conservative -->> residue
+
+Min_datatransfer_v1 doesnot use temporary variables to perform operations 1 and 2 of MAX_DATATRABSFER version, where as Min_datatransfer_v2 uses temporary variables (small arrays of size 5) to do the same.
+
+Min_datatransfer_v1 is difficult to code, where as Min_datatransfer_v2 is easy to code.
+
+All three versions use the same TVD routine, depending on the speedup the TVD routine will be modified.
+
+Scaling
+  The controlling parameter for grid size is scale, defined in global variables of shsgc.cpp (Line 30), this scales the grid and domain appropriately. If scale is 1 then number of gridpoitns are 2500.
+
+Blocks,
+  For Single or multi-block applications the number of blocks should be set accordingly using the veraibel nblocks, defined in main (Line 92). As of now the number of blocks and gridpoints should be exactly divisible
+
+Output,
+  If the simulation runs succesfully the error post shock is printed to the screen, for scale==1 the results are validated and the error should be the following
+  Pre shock error is: 0.00660572
+  Post shock error is: 9.65023e-06
