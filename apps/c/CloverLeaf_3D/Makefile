@@ -115,6 +115,7 @@ ifdef HDF5_INSTALL_PATH
   OPS_INC += $(HDF5_INC)
 endif
 
+NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 # flags for nvcc
 # set NV_ARCH to select the correct one
 ifndef NV_ARCH
@@ -305,12 +306,12 @@ cloverleaf_mpi_cuda: ./CUDA/cloverleaf_kernels_mpi_cu.o clover_leaf_ops.cpp star
 
 ./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
-				nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. \
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. \
 				-c -o ./CUDA/cloverleaf_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
 ./CUDA/cloverleaf_kernels_mpi_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
-				nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK -I$(MPI_INSTALL_PATH)/include \
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK -I$(MPI_INSTALL_PATH)/include \
 				-c -o ./CUDA/cloverleaf_kernels_mpi_cu.o ./CUDA/clover_leaf_kernels.cu
 
 

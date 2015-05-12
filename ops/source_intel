@@ -1,21 +1,28 @@
 #A rough example of environmental variables for compiling with Intel compilers
 
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
+
 #OPS specifics
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
 
 #CUDA and NVIDIA OpenCL
-export PATH=/usr/local/cuda/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-export CUDA_INSTALL_PATH=/usr/local/cuda/
-export OPENCL_INSTALL_PATH=/usr/local/cuda/
+export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 
 #Intel MPI and Compilers
-export MPI_INSTALL_PATH=/opt/compilers/intel/intelPS-2015/impi_latest/intel64/
-source /opt/compilers/intel/intelPS-2015/composerxe/bin/compilervars.sh intel64
-source /opt/compilers/intel/intelPS-2015/impi_latest/intel64/bin/mpivars.sh intel64
+module load intel-compilers
+module load intel-mpi
+export MPI_INSTALL_PATH=/opt/compilers/intel/intelPS-2015/impi/5.0.3.048/intel64/
+#source /opt/compilers/intel/intelPS-2015/composerxe/bin/compilervars.sh intel64
+#source /opt/compilers/intel/intelPS-2015/impi_latest/intel64/bin/mpivars.sh intel64
 
-export INTEL_PATH=/opt/compilers/intel/intelPS-2015/composerxe/
-export MPICH_CXX=/opt/compilers/intel/intelPS-2015/composerxe/bin/icpc
-export MPICH_CC=/opt/compilers/intel/intelPS-2015/composerxe/bin/icc
-export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
+#export INTEL_PATH=/opt/compilers/intel/intelPS-2015/composerxe/
+#export MPICH_CXX=/opt/compilers/intel/intelPS-2015/composerxe/bin/icpc
+#export MPICH_CC=/opt/compilers/intel/intelPS-2015/composerxe/bin/icc
+#export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort

@@ -81,8 +81,8 @@ void calc_dt(double* local_dt, char* local_control,
 
   int rangexy_getpoint[] = {*jldt-1+2,*jldt+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
-  int rangexy_getpointx[] = {*jldt-1+2,*jldt+2,y_min-2,y_max+2}; // get point value //note +2 added due to boundary
-  int rangexy_getpointy[] = {x_min-2,x_max+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
+  //int rangexy_getpointx[] = {*jldt-1+2,*jldt+2,y_min-2,y_max+2}; // get point value //note +2 added due to boundary
+  //int rangexy_getpointy[] = {x_min-2,x_max+2,*kldt-1+2,*kldt+2}; // get point value //note +2 added due to boundary
 
   ops_par_loop(calc_dt_kernel_get, "calc_dt_kernel_getx", clover_grid, 2, rangexy_getpoint,
     ops_arg_dat(cellx, 1, S2D_00_STRID2D_X, "double", OPS_READ),

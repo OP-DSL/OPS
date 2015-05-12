@@ -67,7 +67,7 @@ const double dtdiv_safe)
 
  {
 
-  double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
+  double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
 
   dsx = celldx[OPS_ACC0(0,0)];
   dsy = celldy[OPS_ACC1(0,0)];

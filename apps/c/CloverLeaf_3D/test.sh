@@ -2,22 +2,22 @@
 
 cd ../../../ops/c
 ls ../
-source ../ruby_intel_source
+source ../source_intel
 make
 cd -
 make clean
 make
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./cloverleaf_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./cloverleaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./cloverleaf_mpi_openmp > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 22 ./cloverleaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_mpi > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
 echo '============> Running CUDA'
@@ -53,8 +53,8 @@ grep "step:   2954" clover.out
 grep "step:   2955" clover.out
 rm perf_out
 echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 24 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 24 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2953" clover.out
 grep "step:   2954" clover.out
@@ -73,7 +73,7 @@ rm perf_out
 
 
 cd -
-source ../ruby_pgi_source
+source ../source_pgi
 make cuda
 make mpi_cuda
 cd -

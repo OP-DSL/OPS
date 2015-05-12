@@ -8,7 +8,7 @@ inline void calc_dt_kernel(const double *celldx, const double *celldy, const dou
                     const double *xarea, const double *volume, const double *yvel0,
                     const double *yarea, double *dt_min ) {
 
-  double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2, jk_control;
+  double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
 
   dsx = celldx[OPS_ACC0(0,0)];
   dsy = celldy[OPS_ACC1(0,0)];

@@ -101,7 +101,7 @@ endif
 endif
 endif
 
-NVCC  := nvcc
+NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 ifndef DEBUG
     NVCCFLAGS := -O3 -arch=sm_35 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
     #NVCCFLAGS := -O3 -arch=sm_21 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
@@ -153,7 +153,8 @@ mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o
 
 mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
-	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
+	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) \
+	-I$(INC) $(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c -o $(OBJ)/ops_mpi_decl_cuda.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o

@@ -64,7 +64,7 @@ __global double * restrict energy1,
  {
 
 
-  double recip_volume, energy_change, min_cell_volume;
+  double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
   left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
@@ -81,9 +81,8 @@ __global double * restrict energy1,
 
   volume_change[OPS_ACC4(0,0)] = (volume[OPS_ACC5(0,0)])/(volume[OPS_ACC5(0,0)] + total_flux);
 
-  min_cell_volume = MIN( volume[OPS_ACC5(0,0)] + right_flux - left_flux + top_flux - bottom_flux ,
-                           MIN(volume[OPS_ACC5(0,0)] + right_flux - left_flux,
-                           volume[OPS_ACC5(0,0)] + top_flux - bottom_flux) );
+
+
 
   recip_volume = 1.0/volume[OPS_ACC5(0,0)];
 

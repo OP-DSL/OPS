@@ -64,7 +64,7 @@ else
 ifeq ($(OPS_COMPILER),pgi)
   CPP 		= pgc++
 ifdef DEBUG
-  CCFLAGS 	= -O0 -g -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS 	= -O0 -g -Minline -Kieee #-Minform=inform -Minfo=all
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
@@ -117,7 +117,7 @@ ifdef HDF5_INSTALL_PATH
   CPP = $(MPICPP)
 endif
 
-
+NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 # flags for nvcc
 # set NV_ARCH to select the correct one
 ifndef NV_ARCH
@@ -308,12 +308,12 @@ cloverleaf_mpi_cuda: Makefile ./CUDA/cloverleaf_kernels_mpi_cu.o clover_leaf_ops
 
 ./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
-				nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
 				-c -o ./CUDA/cloverleaf_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
 ./CUDA/cloverleaf_kernels_mpi_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
-				nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/cloverleaf_kernels_mpi_cu.o ./CUDA/clover_leaf_kernels.cu
 
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")

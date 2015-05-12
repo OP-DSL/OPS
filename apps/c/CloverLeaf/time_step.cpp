@@ -44,7 +44,7 @@ void timestep()
   int jldt, kldt;
   double dtlp;
   double x_pos, y_pos, xl_pos, yl_pos;
-  char dt_control[8];
+  //char dt_control[8];
   char dtl_control[8];
 
   int small = 0;
