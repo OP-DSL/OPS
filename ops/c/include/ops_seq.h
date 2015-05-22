@@ -372,7 +372,7 @@ void ops_par_loop(void (*kernel)(T0*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
@@ -516,14 +516,14 @@ void ops_par_loop(void (*kernel)(T0*, T1*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
@@ -669,21 +669,21 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
@@ -831,28 +831,28 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*),
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
@@ -1006,35 +1006,35 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
@@ -1191,42 +1191,42 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
@@ -1385,49 +1385,49 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
@@ -1588,56 +1588,56 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
@@ -1804,63 +1804,63 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
@@ -2030,70 +2030,70 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
@@ -2265,77 +2265,77 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
@@ -2509,84 +2509,84 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
@@ -2766,91 +2766,91 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
@@ -3033,98 +3033,98 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0];
     multi_d13 = args[13].dat->dim;
     #ifdef OPS_3D
     ydim13 = args[13].dat->size[1];
@@ -3309,105 +3309,105 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0];
     multi_d13 = args[13].dat->dim;
     #ifdef OPS_3D
     ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0];
     multi_d14 = args[14].dat->dim;
     #ifdef OPS_3D
     ydim14 = args[14].dat->size[1];
@@ -3594,112 +3594,112 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0];
     multi_d13 = args[13].dat->dim;
     #ifdef OPS_3D
     ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0];
     multi_d14 = args[14].dat->dim;
     #ifdef OPS_3D
     ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0];
     multi_d15 = args[15].dat->dim;
     #ifdef OPS_3D
     ydim15 = args[15].dat->size[1];
@@ -3892,119 +3892,119 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0];
     multi_d13 = args[13].dat->dim;
     #ifdef OPS_3D
     ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0];
     multi_d14 = args[14].dat->dim;
     #ifdef OPS_3D
     ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0];
     multi_d15 = args[15].dat->dim;
     #ifdef OPS_3D
     ydim15 = args[15].dat->size[1];
     #endif
   }
   if (args[16].argtype == OPS_ARG_DAT) {
-    xdim16 = args[16].dat->size[0]*args[16].dat->dim;
+    xdim16 = args[16].dat->size[0];
     multi_d16 = args[16].dat->dim;
     #ifdef OPS_3D
     ydim16 = args[16].dat->size[1];
@@ -4200,126 +4200,126 @@ void ops_par_loop(void (*kernel)(T0*, T1*, T2*, T3*,
   count[dim-1]++;     // extra in last to ensure correct termination
 
   if (args[0].argtype == OPS_ARG_DAT) {
-    xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+    xdim0 = args[0].dat->size[0];
     multi_d0 = args[0].dat->dim;
     #ifdef OPS_3D
     ydim0 = args[0].dat->size[1];
     #endif
   }
   if (args[1].argtype == OPS_ARG_DAT) {
-    xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+    xdim1 = args[1].dat->size[0];
     multi_d1 = args[1].dat->dim;
     #ifdef OPS_3D
     ydim1 = args[1].dat->size[1];
     #endif
   }
   if (args[2].argtype == OPS_ARG_DAT) {
-    xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+    xdim2 = args[2].dat->size[0];
     multi_d2 = args[2].dat->dim;
     #ifdef OPS_3D
     ydim2 = args[2].dat->size[1];
     #endif
   }
   if (args[3].argtype == OPS_ARG_DAT) {
-    xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+    xdim3 = args[3].dat->size[0];
     multi_d3 = args[3].dat->dim;
     #ifdef OPS_3D
     ydim3 = args[3].dat->size[1];
     #endif
   }
   if (args[4].argtype == OPS_ARG_DAT) {
-    xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+    xdim4 = args[4].dat->size[0];
     multi_d4 = args[4].dat->dim;
     #ifdef OPS_3D
     ydim4 = args[4].dat->size[1];
     #endif
   }
   if (args[5].argtype == OPS_ARG_DAT) {
-    xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+    xdim5 = args[5].dat->size[0];
     multi_d5 = args[5].dat->dim;
     #ifdef OPS_3D
     ydim5 = args[5].dat->size[1];
     #endif
   }
   if (args[6].argtype == OPS_ARG_DAT) {
-    xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+    xdim6 = args[6].dat->size[0];
     multi_d6 = args[6].dat->dim;
     #ifdef OPS_3D
     ydim6 = args[6].dat->size[1];
     #endif
   }
   if (args[7].argtype == OPS_ARG_DAT) {
-    xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+    xdim7 = args[7].dat->size[0];
     multi_d7 = args[7].dat->dim;
     #ifdef OPS_3D
     ydim7 = args[7].dat->size[1];
     #endif
   }
   if (args[8].argtype == OPS_ARG_DAT) {
-    xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+    xdim8 = args[8].dat->size[0];
     multi_d8 = args[8].dat->dim;
     #ifdef OPS_3D
     ydim8 = args[8].dat->size[1];
     #endif
   }
   if (args[9].argtype == OPS_ARG_DAT) {
-    xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+    xdim9 = args[9].dat->size[0];
     multi_d9 = args[9].dat->dim;
     #ifdef OPS_3D
     ydim9 = args[9].dat->size[1];
     #endif
   }
   if (args[10].argtype == OPS_ARG_DAT) {
-    xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+    xdim10 = args[10].dat->size[0];
     multi_d10 = args[10].dat->dim;
     #ifdef OPS_3D
     ydim10 = args[10].dat->size[1];
     #endif
   }
   if (args[11].argtype == OPS_ARG_DAT) {
-    xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+    xdim11 = args[11].dat->size[0];
     multi_d11 = args[11].dat->dim;
     #ifdef OPS_3D
     ydim11 = args[11].dat->size[1];
     #endif
   }
   if (args[12].argtype == OPS_ARG_DAT) {
-    xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+    xdim12 = args[12].dat->size[0];
     multi_d12 = args[12].dat->dim;
     #ifdef OPS_3D
     ydim12 = args[12].dat->size[1];
     #endif
   }
   if (args[13].argtype == OPS_ARG_DAT) {
-    xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+    xdim13 = args[13].dat->size[0];
     multi_d13 = args[13].dat->dim;
     #ifdef OPS_3D
     ydim13 = args[13].dat->size[1];
     #endif
   }
   if (args[14].argtype == OPS_ARG_DAT) {
-    xdim14 = args[14].dat->size[0]*args[14].dat->dim;
+    xdim14 = args[14].dat->size[0];
     multi_d14 = args[14].dat->dim;
     #ifdef OPS_3D
     ydim14 = args[14].dat->size[1];
     #endif
   }
   if (args[15].argtype == OPS_ARG_DAT) {
-    xdim15 = args[15].dat->size[0]*args[15].dat->dim;
+    xdim15 = args[15].dat->size[0];
     multi_d15 = args[15].dat->dim;
     #ifdef OPS_3D
     ydim15 = args[15].dat->size[1];
     #endif
   }
   if (args[16].argtype == OPS_ARG_DAT) {
-    xdim16 = args[16].dat->size[0]*args[16].dat->dim;
+    xdim16 = args[16].dat->size[0];
     multi_d16 = args[16].dat->dim;
     #ifdef OPS_3D
     ydim16 = args[16].dat->size[1];
     #endif
   }
   if (args[17].argtype == OPS_ARG_DAT) {
-    xdim17 = args[17].dat->size[0]*args[17].dat->dim;
+    xdim17 = args[17].dat->size[0];
     multi_d17 = args[17].dat->dim;
     #ifdef OPS_3D
     ydim17 = args[17].dat->size[1];
