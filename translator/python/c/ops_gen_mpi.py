@@ -137,13 +137,20 @@ def ops_gen_mpi(master, date, consts, kernels):
 ##########################################################################
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
+        md=False
+        if dims[n].isdigit():
+          if int(dims[n])>1:
+             md=True
+        else:
+          # we assume that if a variable is in the call, the dat must be multi dim
+          md=True
+        if md:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
+            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+dims[n]+'))')
 
 
 ##########################################################################
@@ -200,7 +207,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
+        if md :
           code('#undef OPS_ACC_MD'+str(n))
     code('')
     code('')
