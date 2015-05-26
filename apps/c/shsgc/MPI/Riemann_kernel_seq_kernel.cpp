@@ -65,6 +65,9 @@ inline void Riemann_kernel(const double* rho_new, const double *rhou_new, const 
 
 
 
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
 #undef OPS_ACC_MD3
 #undef OPS_ACC_MD4
 #undef OPS_ACC_MD5
