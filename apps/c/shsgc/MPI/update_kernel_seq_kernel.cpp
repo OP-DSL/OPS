@@ -12,6 +12,9 @@ inline void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new, c
 
 
 
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
 #undef OPS_ACC_MD3
 
 

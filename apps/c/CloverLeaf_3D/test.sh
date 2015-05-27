@@ -16,6 +16,10 @@ echo '============> Running MPI+OpenMP'
 export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./cloverleaf_mpi_openmp > perf_out
 grep "Total Wall time" clover.out
 grep "step:   2955" clover.out
+echo '============> Running DEV_MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_dev_mpi > perf_out
+grep "Total Wall time" clover.out
+grep "step:   2955" clover.out
 echo '============> Running MPI'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_mpi > perf_out
 grep "Total Wall time" clover.out

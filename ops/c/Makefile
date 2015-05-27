@@ -18,7 +18,19 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 #
 # compiler settings
 #
-
+ifeq ($(OPS_COMPILER),clang)
+  CC 	  	:= clang
+ifdef DEBUG
+  CCFLAGS 	:= -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
+else
+  CCFLAGS 	:= -O3 -std=c99 -fPIC -DUNIX -Wall #-g -ffloat-store
+endif
+  CXX 	  	:= clang++
+  CXXFLAGS	:= -fPIC -DUNIX -Wall # -ffloat-store -std=c99
+  MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc
+  MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+else
 ifeq ($(OPS_COMPILER),gnu)
   CC 	  	:= gcc
 ifdef DEBUG
@@ -94,6 +106,7 @@ ifeq ($(OPS_COMPILER),xl) #for IBM BlueGene Q
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

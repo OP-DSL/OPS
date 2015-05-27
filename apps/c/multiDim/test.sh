@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ../../../ops/c
-source ../ruby_intel_source
+source ../intel_source
 make
 cd -
 make
@@ -16,8 +16,13 @@ export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./multidim_mpi_open
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
+echo '============> Running DEV_MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_dev_mpi > perf_out
+grep "Reduction result" perf_out
+grep "Total Wall time" perf_out
+rm perf_out
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 22 ./multidim_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
@@ -48,8 +53,8 @@ grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 24 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 24 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
