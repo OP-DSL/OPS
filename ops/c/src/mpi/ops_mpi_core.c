@@ -210,7 +210,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
 bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
   sprintf(filename_out2, "%s.%d.dup", file_name, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size );
-  return (OPS_enable_checkpointing>0);
+  return (OPS_enable_checkpointing>1);
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
