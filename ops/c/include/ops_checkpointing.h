@@ -40,7 +40,7 @@
 
 typedef enum {OPS_BACKUP_GATHER, OPS_BACKUP_LEADIN, OPS_BACKUP_RESTORE, OPS_BACKUP_BEGIN, OPS_BACKUP_IN_PROCESS, OPS_BACKUP_END, OPS_NONE} ops_backup_state;
 typedef enum {OPS_NOT_SAVED, OPS_SAVED, OPS_UNDECIDED } ops_checkpoint_types;
-typedef enum {OPS_CHECKPOINT_INITPHASE=1, OPS_CHECKPOINT_MANUAL_DATLIST=2, OPS_CHECKPOINT_FASTFW=4} ops_checkpoint_options;
+typedef enum {OPS_CHECKPOINT_INITPHASE=1, OPS_CHECKPOINT_MANUAL_DATLIST=2, OPS_CHECKPOINT_FASTFW=4, OPS_CHECKPOINT_MANUAL=8} ops_checkpoint_options;
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +55,7 @@ void ops_checkpointing_reduction(ops_reduction red);
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist);
 bool ops_checkpointing_fastfw(int nbytes, char *payload);
 bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nbytes, char *payload);
+bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats, ops_dat *datlist, int nbytes, char *payload);
 
 extern ops_backup_state backup_state;
 extern char *OPS_dat_ever_written;

@@ -53,7 +53,7 @@ extern int ops_lock_file;
 #ifdef CHECKPOINTING
 
 #ifndef defaultTimeout
-#define defaultTimeout 10.0
+#define defaultTimeout 2.0
 #endif
 #define ROUND64L(x) ((((x)-1l)/64l+1l)*64l)
 #ifdef __cplusplus
@@ -637,6 +637,10 @@ bool ops_checkpointing_initstate() {
 */
 bool ops_checkpointing_init(const char *file_name, double interval, int options) {
   if (!OPS_enable_checkpointing) return false;
+  if ((options & OPS_CHECKPOINT_MANUAL) && !(options & (OPS_CHECKPOINT_MANUAL_DATLIST|OPS_CHECKPOINT_FASTFW))) {
+    ops_printf("Error: cannot have manual checkpoint triggering without manual datlist and fast-forward!\n");
+    exit(-1);
+  }
   ops_checkpoint_interval = interval;
   if (interval < defaultTimeout*2.0) ops_checkpoint_interval = defaultTimeout*2.0; //WHAT SHOULD THIS BE? - the time it takes to back up everything
   double cpu;
@@ -841,6 +845,20 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nb
   return false;
 }
 
+bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats, ops_dat *datlist, int nbytes, char *payload) {
+  if (backup_state == OPS_BACKUP_GATHER) {
+      ops_pre_backup_phase = true;
+      OPS_checkpointing_payload_nbytes = nbytes;
+      OPS_checkpointing_payload = payload;
+      ops_checkpointing_manual_datlist(ndats, datlist);
+      ops_pre_backup_phase = false;
+  } else if (backup_state == OPS_BACKUP_LEADIN) {
+    ops_checkpointing_fastfw(nbytes,payload);
+    return true;
+  }
+  return false;
+}
+
 void ops_checkpointing_reduction(ops_reduction red) {
   double t1,t2,cpu;
   ops_timers_core(&cpu, &t1);
@@ -867,7 +885,7 @@ void ops_checkpointing_reduction(ops_reduction red) {
   ops_execute_reduction(red);
 
   ops_timers_core(&cpu, &t1);
-  if (backup_state == OPS_BACKUP_GATHER || backup_state == OPS_BACKUP_IN_PROCESS || backup_state == OPS_BACKUP_BEGIN) {
+  if ((backup_state == OPS_BACKUP_GATHER || backup_state == OPS_BACKUP_IN_PROCESS || backup_state == OPS_BACKUP_BEGIN) && !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL)) {
     if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
       memcpy(&OPS_chk_red_storage[OPS_chk_red_offset], red->data, red->size);
       OPS_chk_red_offset += red->size;
@@ -889,7 +907,7 @@ void ops_checkpointing_reduction(ops_reduction red) {
       if (ops_reduction_avg_time < 0.1 * ops_checkpoint_interval) ops_sync_frequency*=2;
       if (ops_reduction_avg_time > 0.3 * ops_checkpoint_interval) ops_sync_frequency=ops_sync_frequency-ops_sync_frequency/2;
       ops_sync_frequency = MAX(ops_sync_frequency,1);
-      //ops_printf("ops_sync_frequency %d\n", ops_sync_frequency);
+      if (OPS_diags>4) ops_printf("ops_sync_frequency %d\n", ops_sync_frequency);
       if (timing[1] == 1.0) {
         ops_reduction_counter = 0;
         if (backup_state == OPS_BACKUP_GATHER) {
@@ -1083,7 +1101,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
         ops_ramdisk_init(ops_best_backup_point_size + ops_best_backup_point_size/5l);
     }
 #endif
-    
+
     //write datasets
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype == OPS_ARG_DAT &&
@@ -1216,7 +1234,7 @@ void ops_checkpointing_exit() {
       remove(filename_dup);
 
     if (ops_lock_file) ops_create_lock_done(filename);
-    
+
     if (diagnostics) {
       fprintf(diagf, "FINISHED\n");
       fclose(diagf);

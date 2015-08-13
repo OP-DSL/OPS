@@ -43,6 +43,7 @@ extern int advect_x;
 extern int error_condition;
 extern int test_problem;
 extern int profiler_on;
+extern int checkpoint_frequency;
 extern int state_max;
 extern int complete;
 
