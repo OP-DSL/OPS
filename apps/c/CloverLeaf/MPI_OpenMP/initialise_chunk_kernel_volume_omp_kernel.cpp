@@ -43,8 +43,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   if (!ops_checkpointing_before(args,5,range,41)) return;
   #endif
 
-  ops_timing_realloc(41,"initialise_chunk_kernel_volume");
-  OPS_kernels[41].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(41,"initialise_chunk_kernel_volume");
+    OPS_kernels[41].count++;
+  }
 
   //compute locally allocated range for the sub-block
 
@@ -137,8 +139,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   ops_halo_exchanges(args,5,range);
 
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[41].mpi_time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[41].mpi_time += t2-t1;
+  }
 
 
   #pragma omp parallel for
@@ -258,8 +262,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
     }
   }
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[41].time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[41].time += t1-t2;
+  }
 
   ops_set_dirtybit_host(args, 5);
 
@@ -267,12 +273,14 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   ops_set_halo_dirtybit3(&args[2],range);
   ops_set_halo_dirtybit3(&args[4],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[41].mpi_time += t2-t1;
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg4);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[41].mpi_time += t2-t1;
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, range, &arg4);
+  }
 }

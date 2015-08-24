@@ -26,8 +26,10 @@ void ops_par_loop_update_halo_kernel4_plus_4_a(char const *name, ops_block block
   if (!ops_checkpointing_before(args,3,range,79)) return;
   #endif
 
-  ops_timing_realloc(79,"update_halo_kernel4_plus_4_a");
-  OPS_kernels[79].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(79,"update_halo_kernel4_plus_4_a");
+    OPS_kernels[79].count++;
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -118,8 +120,10 @@ void ops_par_loop_update_halo_kernel4_plus_4_a(char const *name, ops_block block
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges_host(args, 3);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[79].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[79].mpi_time += t1-t2;
+  }
 
   //initialize global variable with the dimension of dats
   xdim0 = args[0].dat->size[0];
@@ -155,13 +159,17 @@ void ops_par_loop_update_halo_kernel4_plus_4_a(char const *name, ops_block block
     p_a[0]= p_a[0] + (dat0 * off0_1);
     p_a[1]= p_a[1] + (dat1 * off1_1);
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[79].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[79].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

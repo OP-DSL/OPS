@@ -37,8 +37,10 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   if (!ops_checkpointing_before(args,4,range,32)) return;
   #endif
 
-  ops_timing_realloc(32,"flux_calc_kernelx");
-  OPS_kernels[32].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(32,"flux_calc_kernelx");
+    OPS_kernels[32].count++;
+  }
 
   //compute locally allocated range for the sub-block
 
@@ -123,8 +125,10 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   ops_halo_exchanges(args,4,range);
 
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[32].mpi_time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[32].mpi_time += t2-t1;
+  }
 
 
   #pragma omp parallel for
@@ -229,18 +233,22 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
     }
   }
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[32].time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[32].time += t1-t2;
+  }
 
   ops_set_dirtybit_host(args, 4);
 
   ops_set_halo_dirtybit3(&args[0],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[32].mpi_time += t2-t1;
-  OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[32].mpi_time += t2-t1;
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

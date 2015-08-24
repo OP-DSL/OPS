@@ -245,8 +245,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
+    IF('OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
-    code('')
+    ENDIF()
+
     code('');
     code('int  offs['+str(nargs)+']['+str(NDIM)+'];')
 
@@ -267,8 +269,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
+    IF('OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
+    ENDIF()
     code('')
     comm('compute locally allocated range for the sub-block')
     code('')
@@ -342,12 +346,19 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
             code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
             code('#endif //OPS_MPI')
 
+    comm('Halo Exchanges')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+
     code('')
     code('#ifdef _OPENMP')
     code('int nthreads = omp_get_max_threads( );')
     code('#else')
     code('int nthreads = 1;')
     code('#endif')
+
+
 
     #setup reduction variables
     if reduction == True:
@@ -402,20 +413,18 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #         ENDFOR()
     #         ENDFOR()
 
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
-    comm('Halo Exchanges')
-    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+
+
     #for n in range (0, nargs):
       #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):
         #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
         #code('ops_exchange_halo(&args['+str(n)+'],2);')
-    code('')
-
-
 
     code('')
+    IF('OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
     code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    ENDIF()
     code('')
 
     code('')
@@ -619,8 +628,10 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
 
     code('')
+    IF('OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
     code('OPS_kernels['+str(nk)+'].time += t1-t2;')
+    ENDIF()
     code('')
 
     #generate code for combining the reductions
@@ -662,12 +673,14 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     #     code('ops_dump3(arg'+str(n)+'.dat,"'+name+'");')
     # code('#endif')
     code('')
+    IF('OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    #code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
+    ENDIF()
     config.depth = config.depth - 2
     code('}')
 
