@@ -22,10 +22,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[2];
   int  offs[2][3];
@@ -40,6 +36,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   if (OPS_diags > 1) {
     ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
     OPS_kernels[33].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

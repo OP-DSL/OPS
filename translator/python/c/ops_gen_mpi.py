@@ -235,11 +235,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm('Timing')
     code('double t1,t2,c1,c2;')
 
-    IF('OPS_diags > 1')
-    code('ops_timers_core(&c2,&t2);')
-    ENDIF()
-    code('')
-
     code('');
     code('char *p_a['+str(nargs)+'];')
     code('int  offs['+str(nargs)+']['+dim+'];')
@@ -259,11 +254,15 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
+
     IF('OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
+    code('ops_timers_core(&c2,&t2);')
     ENDIF()
     code('')
+
+
     comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')

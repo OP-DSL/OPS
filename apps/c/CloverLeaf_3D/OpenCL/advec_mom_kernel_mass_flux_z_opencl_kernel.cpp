@@ -95,6 +95,10 @@ void buildOpenCLKernels_advec_mom_kernel_mass_flux_z(int xdim0, int ydim0, int x
 // host stub function
 void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[2] = { arg0, arg1};
 
 
@@ -102,8 +106,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   if (!ops_checkpointing_before(args,2,range,33)) return;
   #endif
 
-  ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
-  OPS_kernels[33].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
+    OPS_kernels[33].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -150,10 +157,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   buildOpenCLKernels_advec_mom_kernel_mass_flux_z(
   xdim0,ydim0,xdim1,ydim1);
 
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
@@ -196,8 +199,10 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_device(args, 2);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[33].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[33].mpi_time += t2-t1;
+  }
 
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[33], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
@@ -214,12 +219,19 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[33].time += t1-t2;
+  }
+
   ops_set_dirtybit_device(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[33].time += t2-t1;
-  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[33].mpi_time += t2-t1;
+    OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[33].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

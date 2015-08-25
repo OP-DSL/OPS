@@ -73,10 +73,6 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[14];
   int  offs[14][3];
@@ -91,6 +87,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     ops_timing_realloc(4,"PdV_kernel_predict");
     OPS_kernels[4].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

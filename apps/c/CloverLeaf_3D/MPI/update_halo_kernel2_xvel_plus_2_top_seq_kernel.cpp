@@ -19,10 +19,6 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_top(char const *name, ops_bloc
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[3];
   int  offs[3][3];
@@ -37,6 +33,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_top(char const *name, ops_bloc
   if (OPS_diags > 1) {
     ops_timing_realloc(72,"update_halo_kernel2_xvel_plus_2_top");
     OPS_kernels[72].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

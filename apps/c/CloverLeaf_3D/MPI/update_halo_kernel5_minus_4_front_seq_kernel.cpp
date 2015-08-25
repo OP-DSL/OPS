@@ -18,10 +18,6 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[3];
   int  offs[3][3];
@@ -36,6 +32,7 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
   if (OPS_diags > 1) {
     ops_timing_realloc(139,"update_halo_kernel5_minus_4_front");
     OPS_kernels[139].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

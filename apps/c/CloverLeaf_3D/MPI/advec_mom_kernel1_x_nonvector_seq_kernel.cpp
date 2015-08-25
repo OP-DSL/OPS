@@ -57,10 +57,6 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[5];
   int  offs[5][3];
@@ -75,6 +71,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block bloc
   if (OPS_diags > 1) {
     ops_timing_realloc(27,"advec_mom_kernel1_x_nonvector");
     OPS_kernels[27].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

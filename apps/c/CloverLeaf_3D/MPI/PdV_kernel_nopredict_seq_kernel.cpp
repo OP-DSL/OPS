@@ -74,10 +74,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[17];
   int  offs[17][3];
@@ -92,6 +88,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     ops_timing_realloc(5,"PdV_kernel_nopredict");
     OPS_kernels[5].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

@@ -96,6 +96,10 @@ void buildOpenCLKernels_calc_dt_kernel_get(int xdim0, int ydim0, int xdim1, int 
 void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
@@ -103,8 +107,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   if (!ops_checkpointing_before(args,6,range,39)) return;
   #endif
 
-  ops_timing_realloc(39,"calc_dt_kernel_get");
-  OPS_kernels[39].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(39,"calc_dt_kernel_get");
+    OPS_kernels[39].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -152,10 +159,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   buildOpenCLKernels_calc_dt_kernel_get(
   xdim0,ydim0,xdim1,ydim1,xdim4,ydim4);
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};
@@ -259,8 +262,10 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges_device(args, 6);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[39].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[39].mpi_time += t2-t1;
+  }
 
   int nthread = OPS_block_size_x*OPS_block_size_y;
 
@@ -290,6 +295,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[39].time += t1-t2;
+  }
+
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
@@ -314,10 +324,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   ops_set_dirtybit_device(args, 6);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[39].time += t2-t1;
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[39].mpi_time += t2-t1;
+    OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
+  }
 }

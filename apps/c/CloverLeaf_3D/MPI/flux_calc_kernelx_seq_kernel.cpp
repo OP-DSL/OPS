@@ -21,10 +21,6 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[4];
   int  offs[4][3];
@@ -39,6 +35,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   if (OPS_diags > 1) {
     ops_timing_realloc(42,"flux_calc_kernelx");
     OPS_kernels[42].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

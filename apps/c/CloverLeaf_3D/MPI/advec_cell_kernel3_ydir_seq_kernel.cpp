@@ -83,10 +83,6 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[8];
   int  offs[8][3];
@@ -101,6 +97,7 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block, int
   if (OPS_diags > 1) {
     ops_timing_realloc(13,"advec_cell_kernel3_ydir");
     OPS_kernels[13].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

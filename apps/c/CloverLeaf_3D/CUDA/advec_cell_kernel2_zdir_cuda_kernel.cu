@@ -71,6 +71,9 @@ int size2 ){
 void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
@@ -78,8 +81,11 @@ void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int
   if (!ops_checkpointing_before(args,4,range,16)) return;
   #endif
 
-  ops_timing_realloc(16,"advec_cell_kernel2_zdir");
-  OPS_kernels[16].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(16,"advec_cell_kernel2_zdir");
+    OPS_kernels[16].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -123,11 +129,6 @@ void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int
   int ydim2 = args[2].dat->size[1];
   int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_advec_cell_kernel2_zdir_h || ydim0 != ydim0_advec_cell_kernel2_zdir_h || xdim1 != xdim1_advec_cell_kernel2_zdir_h || ydim1 != ydim1_advec_cell_kernel2_zdir_h || xdim2 != xdim2_advec_cell_kernel2_zdir_h || ydim2 != ydim2_advec_cell_kernel2_zdir_h || xdim3 != xdim3_advec_cell_kernel2_zdir_h || ydim3 != ydim3_advec_cell_kernel2_zdir_h) {
     cudaMemcpyToSymbol( xdim0_advec_cell_kernel2_zdir, &xdim0, sizeof(int) );
@@ -232,8 +233,10 @@ void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int
   ops_H_D_exchanges_device(args, 4);
   ops_halo_exchanges(args,4,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[16].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[16].mpi_time += t2-t1;
+  }
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -242,16 +245,21 @@ void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[16].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[16].time += t2-t1;
+
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[16].mpi_time += t2-t1;
+    OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

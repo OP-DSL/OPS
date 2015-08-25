@@ -19,10 +19,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[2];
   int  offs[2][3];
@@ -37,6 +33,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     ops_timing_realloc(38,"calc_dt_kernel_min");
     OPS_kernels[38].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

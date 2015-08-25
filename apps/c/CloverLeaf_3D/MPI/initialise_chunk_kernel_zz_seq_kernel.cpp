@@ -17,10 +17,6 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[2];
   int  offs[2][3];
@@ -35,6 +31,7 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
   if (OPS_diags > 1) {
     ops_timing_realloc(48,"initialise_chunk_kernel_zz");
     OPS_kernels[48].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

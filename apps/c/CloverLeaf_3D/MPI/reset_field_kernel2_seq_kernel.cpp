@@ -23,10 +23,6 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[6];
   int  offs[6][3];
@@ -41,6 +37,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   if (OPS_diags > 1) {
     ops_timing_realloc(2,"reset_field_kernel2");
     OPS_kernels[2].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

@@ -90,10 +90,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[12];
   int  offs[12][3];
@@ -108,6 +104,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   if (OPS_diags > 1) {
     ops_timing_realloc(45,"viscosity_kernel");
     OPS_kernels[45].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

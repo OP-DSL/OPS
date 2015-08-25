@@ -29,10 +29,6 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-  }
-
 
   char *p_a[5];
   int  offs[5][3];
@@ -47,6 +43,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   if (OPS_diags > 1) {
     ops_timing_realloc(30,"advec_mom_kernel_post_pre_advec_y");
     OPS_kernels[30].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block

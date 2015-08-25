@@ -104,6 +104,9 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
 
 
@@ -111,8 +114,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   if (!ops_checkpointing_before(args,7,range,55)) return;
   #endif
 
-  ops_timing_realloc(55,"initialise_chunk_kernel_volume");
-  OPS_kernels[55].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(55,"initialise_chunk_kernel_volume");
+    OPS_kernels[55].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -162,11 +168,6 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   int ydim5 = args[5].dat->size[1];
   int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_initialise_chunk_kernel_volume_h || ydim0 != ydim0_initialise_chunk_kernel_volume_h || xdim1 != xdim1_initialise_chunk_kernel_volume_h || ydim1 != ydim1_initialise_chunk_kernel_volume_h || xdim2 != xdim2_initialise_chunk_kernel_volume_h || ydim2 != ydim2_initialise_chunk_kernel_volume_h || xdim3 != xdim3_initialise_chunk_kernel_volume_h || ydim3 != ydim3_initialise_chunk_kernel_volume_h || xdim4 != xdim4_initialise_chunk_kernel_volume_h || ydim4 != ydim4_initialise_chunk_kernel_volume_h || xdim5 != xdim5_initialise_chunk_kernel_volume_h || ydim5 != ydim5_initialise_chunk_kernel_volume_h || xdim6 != xdim6_initialise_chunk_kernel_volume_h || ydim6 != ydim6_initialise_chunk_kernel_volume_h) {
     cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_volume, &xdim0, sizeof(int) );
@@ -334,8 +335,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   ops_H_D_exchanges_device(args, 7);
   ops_halo_exchanges(args,7,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[55].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[55].mpi_time += t2-t1;
+  }
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -346,21 +349,26 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[55].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[55].time += t2-t1;
+
   ops_set_dirtybit_device(args, 7);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[2],range);
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[6],range);
 
-  //Update kernel record
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[55].mpi_time += t2-t1;
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
+  }
 }

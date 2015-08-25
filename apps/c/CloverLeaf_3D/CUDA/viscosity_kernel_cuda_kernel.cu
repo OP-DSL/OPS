@@ -206,6 +206,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10, ops_arg arg11) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[12] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11};
 
 
@@ -213,8 +216,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   if (!ops_checkpointing_before(args,12,range,45)) return;
   #endif
 
-  ops_timing_realloc(45,"viscosity_kernel");
-  OPS_kernels[45].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(45,"viscosity_kernel");
+    OPS_kernels[45].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -274,11 +280,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   int ydim10 = args[10].dat->size[1];
   int xdim11 = args[11].dat->size[0];
   int ydim11 = args[11].dat->size[1];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_viscosity_kernel_h || ydim0 != ydim0_viscosity_kernel_h || xdim1 != xdim1_viscosity_kernel_h || ydim1 != ydim1_viscosity_kernel_h || xdim2 != xdim2_viscosity_kernel_h || ydim2 != ydim2_viscosity_kernel_h || xdim3 != xdim3_viscosity_kernel_h || ydim3 != ydim3_viscosity_kernel_h || xdim4 != xdim4_viscosity_kernel_h || ydim4 != ydim4_viscosity_kernel_h || xdim5 != xdim5_viscosity_kernel_h || ydim5 != ydim5_viscosity_kernel_h || xdim6 != xdim6_viscosity_kernel_h || ydim6 != ydim6_viscosity_kernel_h || xdim7 != xdim7_viscosity_kernel_h || ydim7 != ydim7_viscosity_kernel_h || xdim8 != xdim8_viscosity_kernel_h || ydim8 != ydim8_viscosity_kernel_h || xdim9 != xdim9_viscosity_kernel_h || ydim9 != ydim9_viscosity_kernel_h || xdim10 != xdim10_viscosity_kernel_h || ydim10 != ydim10_viscosity_kernel_h || xdim11 != xdim11_viscosity_kernel_h || ydim11 != ydim11_viscosity_kernel_h) {
     cudaMemcpyToSymbol( xdim0_viscosity_kernel, &xdim0, sizeof(int) );
@@ -551,8 +552,10 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   ops_H_D_exchanges_device(args, 12);
   ops_halo_exchanges(args,12,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[45].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[45].mpi_time += t2-t1;
+  }
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -565,23 +568,28 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[45].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[45].time += t2-t1;
+
   ops_set_dirtybit_device(args, 12);
   ops_set_halo_dirtybit3(&args[6],range);
 
-  //Update kernel record
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg10);
-  OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg11);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[45].mpi_time += t2-t1;
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg6);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg7);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg8);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg9);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg10);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, range, &arg11);
+  }
 }

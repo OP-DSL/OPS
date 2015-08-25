@@ -54,6 +54,8 @@ void calc_dt_kernel_print_c_wrapper(
 void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
@@ -61,10 +63,14 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,8,range,40)) return;
   #endif
 
-  ops_timing_realloc(40,"calc_dt_kernel_print");
-  OPS_kernels[40].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(40,"calc_dt_kernel_print");
+    OPS_kernels[40].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[3];
   int end[3];
   #ifdef OPS_MPI
@@ -113,11 +119,6 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   ydim5 = args[5].dat->size[1];
   xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_calc_dt_kernel_print_h || ydim0 != ydim0_calc_dt_kernel_print_h || xdim1 != xdim1_calc_dt_kernel_print_h || ydim1 != ydim1_calc_dt_kernel_print_h || xdim2 != xdim2_calc_dt_kernel_print_h || ydim2 != ydim2_calc_dt_kernel_print_h || xdim3 != xdim3_calc_dt_kernel_print_h || ydim3 != ydim3_calc_dt_kernel_print_h || xdim4 != xdim4_calc_dt_kernel_print_h || ydim4 != ydim4_calc_dt_kernel_print_h || xdim5 != xdim5_calc_dt_kernel_print_h || ydim5 != ydim5_calc_dt_kernel_print_h || xdim6 != xdim6_calc_dt_kernel_print_h || ydim6 != ydim6_calc_dt_kernel_print_h) {
     xdim0_calc_dt_kernel_print = xdim0;
     xdim0_calc_dt_kernel_print_h = xdim0;
@@ -314,8 +315,10 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   #endif
   ops_halo_exchanges(args,8,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[40].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
+  }
 
   calc_dt_kernel_print_c_wrapper(
     p_a0,
@@ -328,20 +331,26 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
     p_a7,
     x_size, y_size, z_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[40].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[40].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 8);
   #else
   ops_set_dirtybit_host(args, 8);
   #endif
 
-  //Update kernel record
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg6);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg6);
+  }
 }
