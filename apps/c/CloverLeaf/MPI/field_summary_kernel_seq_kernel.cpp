@@ -43,6 +43,9 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[11];
   int  offs[11][2];
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
@@ -56,6 +59,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     ops_timing_realloc(31,"field_summary_kernel");
     OPS_kernels[31].count++;
+    ops_timers_core(&c2,&t2);
   }
 
   //compute locally allocated range for the sub-block
@@ -117,10 +121,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
       &end[0],args[5].dat->size, args[5].stencil->stride) - offs[5][0];
 
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -251,6 +251,15 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
 
 
+  //initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+
+  //Halo Exchanges
   ops_H_D_exchanges_host(args, 11);
   ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges_host(args, 11);
@@ -259,14 +268,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     ops_timers_core(&c1,&t1);
     OPS_kernels[31].mpi_time += t1-t2;
   }
-
-  //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
@@ -321,6 +322,8 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[31].mpi_time += t1-t2;
     OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
     OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
     OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);

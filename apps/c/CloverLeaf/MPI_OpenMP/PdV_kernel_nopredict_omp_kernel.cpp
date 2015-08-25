@@ -58,8 +58,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[14][2];
   ops_arg args[14] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13};
@@ -73,6 +71,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     ops_timing_realloc(5,"PdV_kernel_nopredict");
     OPS_kernels[5].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -211,6 +210,10 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   int off13_1 = offs[13][1];
   int dat13 = args[13].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 14);
+  ops_halo_exchanges(args,14,range);
+  ops_H_D_exchanges_host(args, 14);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -231,11 +234,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   xdim11 = args[11].dat->size[0];
   xdim12 = args[12].dat->size[0];
   xdim13 = args[13].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 14);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,14,range);
 
 
   if (OPS_diags > 1) {

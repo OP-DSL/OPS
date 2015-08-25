@@ -126,6 +126,9 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
@@ -133,8 +136,11 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   if (!ops_checkpointing_before(args,11,range,14)) return;
   #endif
 
-  ops_timing_realloc(14,"advec_cell_kernel4_ydir");
-  OPS_kernels[14].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(14,"advec_cell_kernel4_ydir");
+    OPS_kernels[14].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -180,11 +186,6 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   int xdim8 = args[8].dat->size[0];
   int xdim9 = args[9].dat->size[0];
   int xdim10 = args[10].dat->size[0];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_advec_cell_kernel4_ydir_h || xdim1 != xdim1_advec_cell_kernel4_ydir_h || xdim2 != xdim2_advec_cell_kernel4_ydir_h || xdim3 != xdim3_advec_cell_kernel4_ydir_h || xdim4 != xdim4_advec_cell_kernel4_ydir_h || xdim5 != xdim5_advec_cell_kernel4_ydir_h || xdim6 != xdim6_advec_cell_kernel4_ydir_h || xdim7 != xdim7_advec_cell_kernel4_ydir_h || xdim8 != xdim8_advec_cell_kernel4_ydir_h || xdim9 != xdim9_advec_cell_kernel4_ydir_h || xdim10 != xdim10_advec_cell_kernel4_ydir_h) {
     cudaMemcpyToSymbol( xdim0_advec_cell_kernel4_ydir, &xdim0, sizeof(int) );
@@ -370,8 +371,10 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   ops_H_D_exchanges_device(args, 11);
   ops_halo_exchanges(args,11,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[14].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[14].mpi_time += t2-t1;
+  }
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -384,9 +387,10 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[14].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[14].time += t2-t1;
+
   ops_set_dirtybit_device(args, 11);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
@@ -395,16 +399,20 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   ops_set_halo_dirtybit3(&args[8],range);
   ops_set_halo_dirtybit3(&args[9],range);
 
-  //Update kernel record
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg10);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[14].mpi_time += t2-t1;
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg6);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg7);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg8);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg9);
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg10);
+  }
 }

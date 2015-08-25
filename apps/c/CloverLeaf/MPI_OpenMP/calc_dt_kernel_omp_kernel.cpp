@@ -64,8 +64,6 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[11][2];
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
@@ -79,6 +77,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   if (OPS_diags > 1) {
     ops_timing_realloc(27,"calc_dt_kernel");
     OPS_kernels[27].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -196,6 +195,10 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   int off10_1 = offs[10][1];
   int dat10 = args[10].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 11);
+  ops_halo_exchanges(args,11,range);
+  ops_H_D_exchanges_host(args, 11);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -213,11 +216,6 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   xdim8 = args[8].dat->size[0];
   xdim9 = args[9].dat->size[0];
   xdim10 = args[10].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 11);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,11,range);
 
 
   if (OPS_diags > 1) {

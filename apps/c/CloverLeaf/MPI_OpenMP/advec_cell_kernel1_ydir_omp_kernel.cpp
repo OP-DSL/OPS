@@ -27,8 +27,6 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[5][2];
   ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
@@ -42,6 +40,7 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   if (OPS_diags > 1) {
     ops_timing_realloc(11,"advec_cell_kernel1_ydir");
     OPS_kernels[11].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -117,6 +116,10 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   int off4_1 = offs[4][1];
   int dat4 = args[4].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 5);
+  ops_halo_exchanges(args,5,range);
+  ops_H_D_exchanges_host(args, 5);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -128,11 +131,6 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   xdim2 = args[2].dat->size[0];
   xdim3 = args[3].dat->size[0];
   xdim4 = args[4].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 5);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,5,range);
 
 
   if (OPS_diags > 1) {

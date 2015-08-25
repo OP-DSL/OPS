@@ -32,6 +32,8 @@ void advec_mom_kernel_x2_c_wrapper(
 void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
@@ -39,10 +41,14 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   if (!ops_checkpointing_before(args,4,range,17)) return;
   #endif
 
-  ops_timing_realloc(17,"advec_mom_kernel_x2");
-  OPS_kernels[17].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(17,"advec_mom_kernel_x2");
+    OPS_kernels[17].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -80,11 +86,6 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   xdim1 = args[1].dat->size[0];
   xdim2 = args[2].dat->size[0];
   xdim3 = args[3].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_advec_mom_kernel_x2_h || xdim1 != xdim1_advec_mom_kernel_x2_h || xdim2 != xdim2_advec_mom_kernel_x2_h || xdim3 != xdim3_advec_mom_kernel_x2_h) {
     xdim0_advec_mom_kernel_x2 = xdim0;
     xdim0_advec_mom_kernel_x2_h = xdim0;
@@ -176,8 +177,10 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   #endif
   ops_halo_exchanges(args,4,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[17].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[17].mpi_time += t2-t1;
+  }
 
   advec_mom_kernel_x2_c_wrapper(
     p_a0,
@@ -186,8 +189,10 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
     p_a3,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[17].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[17].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -196,9 +201,13 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[17].mpi_time += t2-t1;
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

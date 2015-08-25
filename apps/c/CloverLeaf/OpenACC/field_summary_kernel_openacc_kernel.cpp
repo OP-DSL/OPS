@@ -43,6 +43,8 @@ void field_summary_kernel_c_wrapper(
 void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
@@ -50,10 +52,14 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,11,range,31)) return;
   #endif
 
-  ops_timing_realloc(31,"field_summary_kernel");
-  OPS_kernels[31].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(31,"field_summary_kernel");
+    OPS_kernels[31].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -93,11 +99,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   xdim3 = args[3].dat->size[0];
   xdim4 = args[4].dat->size[0];
   xdim5 = args[5].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_field_summary_kernel_h || xdim1 != xdim1_field_summary_kernel_h || xdim2 != xdim2_field_summary_kernel_h || xdim3 != xdim3_field_summary_kernel_h || xdim4 != xdim4_field_summary_kernel_h || xdim5 != xdim5_field_summary_kernel_h) {
     xdim0_field_summary_kernel = xdim0;
     xdim0_field_summary_kernel_h = xdim0;
@@ -257,8 +258,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   #endif
   ops_halo_exchanges(args,11,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[31].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[31].mpi_time += t2-t1;
+  }
 
   field_summary_kernel_c_wrapper(
     p_a0,
@@ -274,19 +277,25 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     p_a10,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[31].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[31].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 11);
   #else
   ops_set_dirtybit_host(args, 11);
   #endif
 
-  //Update kernel record
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg5);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[31].mpi_time += t2-t1;
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg5);
+  }
 }

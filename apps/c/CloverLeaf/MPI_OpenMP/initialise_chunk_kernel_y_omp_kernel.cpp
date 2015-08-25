@@ -36,8 +36,6 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[3][2];
   ops_arg args[3] = { arg0, arg1, arg2};
@@ -51,6 +49,7 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   if (OPS_diags > 1) {
     ops_timing_realloc(38,"initialise_chunk_kernel_y");
     OPS_kernels[38].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -112,6 +111,10 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   int off2_1 = offs[2][1];
   int dat2 = args[2].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 3);
+  ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -121,11 +124,6 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   xdim0 = args[0].dat->size[0];
   xdim1 = args[1].dat->size[0];
   xdim2 = args[2].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 3);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,3,range);
 
 
   if (OPS_diags > 1) {

@@ -49,8 +49,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[11][2];
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
@@ -64,6 +62,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     ops_timing_realloc(31,"field_summary_kernel");
     OPS_kernels[31].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -171,6 +170,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   double *arg10h = (double *)(((ops_reduction)args[10].data)->data);
   #endif //OPS_MPI
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 11);
+  ops_halo_exchanges(args,11,range);
+  ops_H_D_exchanges_host(args, 11);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -207,11 +210,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   xdim3 = args[3].dat->size[0];
   xdim4 = args[4].dat->size[0];
   xdim5 = args[5].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 11);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,11,range);
 
 
   if (OPS_diags > 1) {

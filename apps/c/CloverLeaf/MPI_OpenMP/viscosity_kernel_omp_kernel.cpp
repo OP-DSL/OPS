@@ -70,8 +70,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[7][2];
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
@@ -85,6 +83,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   if (OPS_diags > 1) {
     ops_timing_realloc(34,"viscosity_kernel");
     OPS_kernels[34].count++;
+    ops_timers_core(&c1,&t1);
   }
 
   //compute locally allocated range for the sub-block
@@ -174,6 +173,10 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   int off6_1 = offs[6][1];
   int dat6 = args[6].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 7);
+  ops_halo_exchanges(args,7,range);
+  ops_H_D_exchanges_host(args, 7);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -187,11 +190,6 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   xdim4 = args[4].dat->size[0];
   xdim5 = args[5].dat->size[0];
   xdim6 = args[6].dat->size[0];
-
-  ops_H_D_exchanges_host(args, 7);
-
-  //Halo Exchanges
-  ops_halo_exchanges(args,7,range);
 
 
   if (OPS_diags > 1) {

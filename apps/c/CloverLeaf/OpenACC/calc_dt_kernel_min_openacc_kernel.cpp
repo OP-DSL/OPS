@@ -24,6 +24,8 @@ void calc_dt_kernel_min_c_wrapper(
 void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[2] = { arg0, arg1};
 
 
@@ -31,10 +33,14 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (!ops_checkpointing_before(args,2,range,28)) return;
   #endif
 
-  ops_timing_realloc(28,"calc_dt_kernel_min");
-  OPS_kernels[28].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(28,"calc_dt_kernel_min");
+    OPS_kernels[28].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -69,11 +75,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   xdim0 = args[0].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_calc_dt_kernel_min_h) {
     xdim0_calc_dt_kernel_min = xdim0;
     xdim0_calc_dt_kernel_min_h = xdim0;
@@ -114,22 +115,30 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   #endif
   ops_halo_exchanges(args,2,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[28].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[28].mpi_time += t2-t1;
+  }
 
   calc_dt_kernel_min_c_wrapper(
     p_a0,
     p_a1,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[28].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[28].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
   #else
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  //Update kernel record
-  OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[28].mpi_time += t2-t1;
+    OPS_kernels[28].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }
