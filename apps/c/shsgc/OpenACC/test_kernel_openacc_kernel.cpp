@@ -24,6 +24,8 @@ void test_kernel_c_wrapper(
 void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[2] = { arg0, arg1};
 
 
@@ -31,10 +33,14 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   if (!ops_checkpointing_before(args,2,range,14)) return;
   #endif
 
-  ops_timing_realloc(14,"test_kernel");
-  OPS_kernels[14].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(14,"test_kernel");
+    OPS_kernels[14].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[1];
   int end[1];
   #ifdef OPS_MPI
@@ -68,11 +74,6 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
 
 
   xdim0 = args[0].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_test_kernel_h) {
     xdim0_test_kernel = xdim0;
     xdim0_test_kernel_h = xdim0;
@@ -110,22 +111,30 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   #endif
   ops_halo_exchanges(args,2,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[14].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[14].mpi_time += t2-t1;
+  }
 
   test_kernel_c_wrapper(
     p_a0,
     p_a1,
     x_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[14].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[14].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
   #else
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  //Update kernel record
-  OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[14].mpi_time += t2-t1;
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }

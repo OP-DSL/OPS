@@ -27,6 +27,8 @@ void poisson_kernel_error_c_wrapper(
 void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -34,10 +36,14 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
-  ops_timing_realloc(4,"poisson_kernel_error");
-  OPS_kernels[4].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(4,"poisson_kernel_error");
+    OPS_kernels[4].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -73,11 +79,6 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
 
   xdim0 = args[0].dat->size[0];
   xdim1 = args[1].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_poisson_kernel_error_h || xdim1 != xdim1_poisson_kernel_error_h) {
     xdim0_poisson_kernel_error = xdim0;
     xdim0_poisson_kernel_error_h = xdim0;
@@ -137,8 +138,10 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   #endif
   ops_halo_exchanges(args,3,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[4].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[4].mpi_time += t2-t1;
+  }
 
   poisson_kernel_error_c_wrapper(
     p_a0,
@@ -146,15 +149,21 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
     p_a2,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[4].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[4].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
   ops_set_dirtybit_host(args, 3);
   #endif
 
-  //Update kernel record
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[4].mpi_time += t2-t1;
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

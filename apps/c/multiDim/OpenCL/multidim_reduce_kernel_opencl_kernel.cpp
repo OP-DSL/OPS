@@ -95,6 +95,10 @@ void buildOpenCLKernels_multidim_reduce_kernel(int xdim0) {
 // host stub function
 void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[2] = { arg0, arg1};
 
 
@@ -102,8 +106,11 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  ops_timing_realloc(2,"multidim_reduce_kernel");
-  OPS_kernels[2].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(2,"multidim_reduce_kernel");
+    OPS_kernels[2].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -145,10 +152,6 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
 
   buildOpenCLKernels_multidim_reduce_kernel(
   xdim0);
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
@@ -198,8 +201,10 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_device(args, 2);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[2].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+  }
 
   int nthread = OPS_block_size_x*OPS_block_size_y;
 
@@ -218,6 +223,11 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[2].time += t1-t2;
+  }
+
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<2; d++ ){
@@ -228,8 +238,10 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
 
   ops_set_dirtybit_device(args, 2);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[2].time += t2-t1;
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }

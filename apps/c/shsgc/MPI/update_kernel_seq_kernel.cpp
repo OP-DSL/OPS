@@ -22,6 +22,9 @@ inline void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new, c
 void ops_par_loop_update_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[4];
   int  offs[4][1];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
@@ -32,8 +35,11 @@ void ops_par_loop_update_kernel(char const *name, ops_block block, int dim, int*
   if (!ops_checkpointing_before(args,4,range,13)) return;
   #endif
 
-  ops_timing_realloc(13,"update_kernel");
-  OPS_kernels[13].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(13,"update_kernel");
+    OPS_kernels[13].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[1];
@@ -78,10 +84,6 @@ void ops_par_loop_update_kernel(char const *name, ops_block block, int dim, int*
   offs[3][0] = args[3].stencil->stride[0]*1;  //unit step in x dimension
 
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int dat0 = args[0].dat->elem_size;
@@ -131,14 +133,17 @@ void ops_par_loop_update_kernel(char const *name, ops_block block, int dim, int*
   p_a[3] = (char *)args[3].data + base3;
 
 
+  //initialize global variable with the dimension of dats
+
+  //Halo Exchanges
   ops_H_D_exchanges_host(args, 4);
   ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges_host(args, 4);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[13].mpi_time += t1-t2;
-
-  //initialize global variable with the dimension of dats
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[13].mpi_time += t1-t2;
+  }
 
   int n_x;
   #pragma novector
@@ -171,16 +176,22 @@ void ops_par_loop_update_kernel(char const *name, ops_block block, int dim, int*
     p_a[3]= p_a[3] + (dat3 * off3_0);
   }
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[13].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[13].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  //Update kernel record
-  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[13].mpi_time += t1-t2;
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

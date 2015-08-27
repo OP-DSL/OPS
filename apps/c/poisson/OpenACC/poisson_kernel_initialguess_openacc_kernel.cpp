@@ -23,6 +23,8 @@ void poisson_kernel_initialguess_c_wrapper(
 void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[1] = { arg0};
 
 
@@ -30,10 +32,14 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   if (!ops_checkpointing_before(args,1,range,1)) return;
   #endif
 
-  ops_timing_realloc(1,"poisson_kernel_initialguess");
-  OPS_kernels[1].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(1,"poisson_kernel_initialguess");
+    OPS_kernels[1].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -68,11 +74,6 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
 
   xdim0 = args[0].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_poisson_kernel_initialguess_h) {
     xdim0_poisson_kernel_initialguess = xdim0;
     xdim0_poisson_kernel_initialguess_h = xdim0;
@@ -107,15 +108,19 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   #endif
   ops_halo_exchanges(args,1,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[1].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+  }
 
   poisson_kernel_initialguess_c_wrapper(
     p_a0,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[1].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[1].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 1);
   #else
@@ -123,6 +128,10 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  //Update kernel record
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }
