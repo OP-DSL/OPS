@@ -156,7 +156,7 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 1) {
+     if(step == 70) {
 
 
 

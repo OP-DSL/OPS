@@ -121,13 +121,17 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
-
-  //Allocate memory immediately
-  int bytes = size*type_size;
-  for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
-  dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
-  dat->user_managed = 0;
-
+  if(data == NULL) {
+    //Allocate memory immediately
+    int bytes = size*type_size;
+    for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
+    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
+    dat->user_managed = 0;
+  }
+  else {
+    printf("in here\n");
+    dat->user_managed = 1;
+  }
   return dat;
 }
 
