@@ -40,6 +40,8 @@ void reset_field_kernel1_c_wrapper(
 void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
@@ -47,10 +49,14 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
   if (!ops_checkpointing_before(args,4,range,1)) return;
   #endif
 
-  ops_timing_realloc(1,"reset_field_kernel1");
-  OPS_kernels[1].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(1,"reset_field_kernel1");
+    OPS_kernels[1].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[3];
   int end[3];
   #ifdef OPS_MPI
@@ -93,11 +99,6 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
   ydim2 = args[2].dat->size[1];
   xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_reset_field_kernel1_h || ydim0 != ydim0_reset_field_kernel1_h || xdim1 != xdim1_reset_field_kernel1_h || ydim1 != ydim1_reset_field_kernel1_h || xdim2 != xdim2_reset_field_kernel1_h || ydim2 != ydim2_reset_field_kernel1_h || xdim3 != xdim3_reset_field_kernel1_h || ydim3 != ydim3_reset_field_kernel1_h) {
     xdim0_reset_field_kernel1 = xdim0;
     xdim0_reset_field_kernel1_h = xdim0;
@@ -213,8 +214,10 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
   #endif
   ops_halo_exchanges(args,4,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[1].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+  }
 
   reset_field_kernel1_c_wrapper(
     p_a0,
@@ -223,8 +226,10 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
     p_a3,
     x_size, y_size, z_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[1].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[1].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
   #else
@@ -233,9 +238,13 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  //Update kernel record
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

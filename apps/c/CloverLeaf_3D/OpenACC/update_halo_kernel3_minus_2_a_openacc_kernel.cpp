@@ -31,6 +31,8 @@ void update_halo_kernel3_minus_2_a_c_wrapper(
 void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -38,10 +40,14 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   if (!ops_checkpointing_before(args,3,range,110)) return;
   #endif
 
-  ops_timing_realloc(110,"update_halo_kernel3_minus_2_a");
-  OPS_kernels[110].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(110,"update_halo_kernel3_minus_2_a");
+    OPS_kernels[110].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[3];
   int end[3];
   #ifdef OPS_MPI
@@ -80,11 +86,6 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   ydim0 = args[0].dat->size[1];
   xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_update_halo_kernel3_minus_2_a_h || ydim0 != ydim0_update_halo_kernel3_minus_2_a_h || xdim1 != xdim1_update_halo_kernel3_minus_2_a_h || ydim1 != ydim1_update_halo_kernel3_minus_2_a_h) {
     xdim0_update_halo_kernel3_minus_2_a = xdim0;
     xdim0_update_halo_kernel3_minus_2_a_h = xdim0;
@@ -166,8 +167,10 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   #endif
   ops_halo_exchanges(args,3,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[110].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[110].mpi_time += t2-t1;
+  }
 
   update_halo_kernel3_minus_2_a_c_wrapper(
     p_a0,
@@ -175,8 +178,10 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
     p_a2,
     x_size, y_size, z_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[110].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[110].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -185,7 +190,11 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[110].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[110].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[110].mpi_time += t2-t1;
+    OPS_kernels[110].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[110].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

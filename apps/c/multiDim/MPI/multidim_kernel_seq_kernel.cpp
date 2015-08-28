@@ -18,6 +18,9 @@ inline void multidim_kernel(double *val, int *idx){
 void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[2];
   int  offs[2][2];
   ops_arg args[2] = { arg0, arg1};
@@ -28,8 +31,11 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   if (!ops_checkpointing_before(args,2,range,0)) return;
   #endif
 
-  ops_timing_realloc(0,"multidim_kernel");
-  OPS_kernels[0].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(0,"multidim_kernel");
+    OPS_kernels[0].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -79,10 +85,6 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   arg_idx[1] = start[1];
   #endif //OPS_MPI
 
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int dat0 = args[0].dat->elem_size;
@@ -105,15 +107,18 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
 
 
+  //initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+
+  //Halo Exchanges
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_host(args, 2);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
-
-  //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+  }
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
@@ -149,11 +154,17 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
     #endif //OPS_MPI
     arg_idx[1]++;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[0].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
-  //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }

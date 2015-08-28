@@ -205,9 +205,9 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 1) {
-       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
-       //exit(0);
+     if(step == 70) {
+      // ops_print_dat_to_txtfile(viscosity, "cloverdats.dat");
+      // exit(0);
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
       //exit(0);

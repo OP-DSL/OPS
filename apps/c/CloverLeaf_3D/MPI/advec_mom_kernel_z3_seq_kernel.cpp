@@ -20,6 +20,9 @@ inline void advec_mom_kernel_z3( double *pre_vol, double *post_vol,
 void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[4];
   int  offs[4][3];
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
@@ -30,8 +33,11 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   if (!ops_checkpointing_before(args,4,range,24)) return;
   #endif
 
-  ops_timing_realloc(24,"advec_mom_kernel_z3");
-  OPS_kernels[24].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(24,"advec_mom_kernel_z3");
+    OPS_kernels[24].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -92,10 +98,6 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
       &end[0],args[3].dat->size, args[3].stencil->stride) - offs[3][1] - offs[3][0];
 
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -181,13 +183,6 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   p_a[3] = (char *)args[3].data + base3;
 
 
-  ops_H_D_exchanges_host(args, 4);
-  ops_halo_exchanges(args,4,range);
-  ops_H_D_exchanges_host(args, 4);
-
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[24].mpi_time += t1-t2;
-
   //initialize global variable with the dimension of dats
   xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
@@ -197,6 +192,16 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   ydim2 = args[2].dat->size[1];
   xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
+
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 4);
+  ops_halo_exchanges(args,4,range);
+  ops_H_D_exchanges_host(args, 4);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[24].mpi_time += t1-t2;
+  }
 
   int n_x;
   for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
@@ -243,15 +248,21 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
     p_a[2]= p_a[2] + (dat2 * off2_2);
     p_a[3]= p_a[3] + (dat3 * off3_2);
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[24].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[24].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg3);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[24].mpi_time += t1-t2;
+    OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg3);
+  }
 }

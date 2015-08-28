@@ -93,6 +93,9 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[11];
   int  offs[11][3];
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
@@ -103,8 +106,11 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   if (!ops_checkpointing_before(args,11,range,56)) return;
   #endif
 
-  ops_timing_realloc(56,"generate_chunk_kernel");
-  OPS_kernels[56].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(56,"generate_chunk_kernel");
+    OPS_kernels[56].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -207,10 +213,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
       &end[0],args[10].dat->size, args[10].stencil->stride) - offs[10][1] - offs[10][0];
 
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -436,13 +438,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   p_a[10] = (char *)args[10].data + base10;
 
 
-  ops_H_D_exchanges_host(args, 11);
-  ops_halo_exchanges(args,11,range);
-  ops_H_D_exchanges_host(args, 11);
-
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[56].mpi_time += t1-t2;
-
   //initialize global variable with the dimension of dats
   xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
@@ -466,6 +461,16 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ydim9 = args[9].dat->size[1];
   xdim10 = args[10].dat->size[0];
   ydim10 = args[10].dat->size[1];
+
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 11);
+  ops_halo_exchanges(args,11,range);
+  ops_H_D_exchanges_host(args, 11);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[56].mpi_time += t1-t2;
+  }
 
   int n_x;
   for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
@@ -542,8 +547,10 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     p_a[9]= p_a[9] + (dat9 * off9_2);
     p_a[10]= p_a[10] + (dat10 * off10_2);
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[56].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[56].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 11);
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);
@@ -551,16 +558,20 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ops_set_halo_dirtybit3(&args[6],range);
   ops_set_halo_dirtybit3(&args[7],range);
 
-  //Update kernel record
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg10);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[56].mpi_time += t1-t2;
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg6);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg7);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg8);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg9);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, range, &arg10);
+  }
 }

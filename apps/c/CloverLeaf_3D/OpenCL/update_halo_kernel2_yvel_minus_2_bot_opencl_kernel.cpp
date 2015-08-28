@@ -95,6 +95,10 @@ void buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_bot(int xdim0, int ydim
 // host stub function
 void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -102,8 +106,11 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot(char const *name, ops_blo
   if (!ops_checkpointing_before(args,3,range,82)) return;
   #endif
 
-  ops_timing_realloc(82,"update_halo_kernel2_yvel_minus_2_bot");
-  OPS_kernels[82].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(82,"update_halo_kernel2_yvel_minus_2_bot");
+    OPS_kernels[82].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -149,10 +156,6 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot(char const *name, ops_blo
 
   buildOpenCLKernels_update_halo_kernel2_yvel_minus_2_bot(
   xdim0,ydim0,xdim1,ydim1);
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};
@@ -207,8 +210,10 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot(char const *name, ops_blo
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges_device(args, 3);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[82].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[82].mpi_time += t2-t1;
+  }
 
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[82], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
@@ -226,13 +231,20 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot(char const *name, ops_blo
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[82].time += t1-t2;
+  }
+
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[82].time += t2-t1;
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[82].mpi_time += t2-t1;
+    OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[82].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

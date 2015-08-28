@@ -17,6 +17,9 @@ inline void update_halo_kernel2_zvel_minus_4_back(double *zvel0, double *zvel1, 
 void ops_par_loop_update_halo_kernel2_zvel_minus_4_back(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[3];
   int  offs[3][3];
   ops_arg args[3] = { arg0, arg1, arg2};
@@ -27,8 +30,11 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_back(char const *name, ops_bl
   if (!ops_checkpointing_before(args,3,range,101)) return;
   #endif
 
-  ops_timing_realloc(101,"update_halo_kernel2_zvel_minus_4_back");
-  OPS_kernels[101].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(101,"update_halo_kernel2_zvel_minus_4_back");
+    OPS_kernels[101].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -78,10 +84,6 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_back(char const *name, ops_bl
 
 
 
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int off0_2 = offs[0][2];
@@ -129,18 +131,21 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_back(char const *name, ops_bl
 
 
 
-  ops_H_D_exchanges_host(args, 3);
-  ops_halo_exchanges(args,3,range);
-  ops_H_D_exchanges_host(args, 3);
-
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[101].mpi_time += t1-t2;
-
   //initialize global variable with the dimension of dats
   xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
   xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
+
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 3);
+  ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[101].mpi_time += t1-t2;
+  }
 
   int n_x;
   for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
@@ -177,13 +182,19 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_back(char const *name, ops_bl
     p_a[0]= p_a[0] + (dat0 * off0_2);
     p_a[1]= p_a[1] + (dat1 * off1_2);
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[101].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[101].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  //Update kernel record
-  OPS_kernels[101].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[101].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[101].mpi_time += t1-t2;
+    OPS_kernels[101].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[101].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

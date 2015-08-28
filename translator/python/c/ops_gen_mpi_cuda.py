@@ -401,6 +401,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code(text);
     config.depth = 2
 
+    code('')
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
     code('');
 
     text ='ops_arg args['+str(nargs)+'] = {'
@@ -418,8 +421,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
+
+    IF('OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
+    code('ops_timers_core(&c1,&t1);')
+    ENDIF()
+
     code('')
     comm('compute locally allocated range for the sub-block')
 
@@ -478,13 +486,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-    code('')
-
-    #timing structs
-    code('')
-    comm('Timing')
-    code('double t1,t2,c1,c2;')
-    code('ops_timers_core(&c2,&t2);')
     code('')
 
     condition = ''
@@ -658,8 +659,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
-    code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    IF('OPS_diags > 1')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    ENDIF()
     code('')
 
 
@@ -736,9 +739,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     IF('OPS_diags>1')
     code('cutilSafeCall(cudaDeviceSynchronize());')
+    code('ops_timers_core(&c1,&t1);')
+    code('OPS_kernels['+str(nk)+'].time += t1-t2;')
     ENDIF()
-    code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    code('')
 
     # This is not doen any more due to redution_handles treatement under MPI
     # if reduction == 1 :
@@ -754,10 +758,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
+    IF('OPS_diags > 1')
     comm('Update kernel record')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
+    ENDIF()
     config.depth = config.depth - 2
     code('}')
 

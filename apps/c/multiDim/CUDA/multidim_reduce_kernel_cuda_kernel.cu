@@ -47,6 +47,9 @@ int size1 ){
 void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[2] = { arg0, arg1};
 
 
@@ -54,8 +57,11 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  ops_timing_realloc(2,"multidim_reduce_kernel");
-  OPS_kernels[2].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(2,"multidim_reduce_kernel");
+    OPS_kernels[2].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -91,11 +97,6 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   int y_size = MAX(0,end[1]-start[1]);
 
   int xdim0 = args[0].dat->size[0];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_multidim_reduce_kernel_h) {
     cudaMemcpyToSymbol( xdim0_multidim_reduce_kernel, &xdim0, sizeof(int) );
@@ -153,8 +154,10 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[2].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+  }
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -176,11 +179,16 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[2].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[2].time += t2-t1;
+
   ops_set_dirtybit_device(args, 2);
 
-  //Update kernel record
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  }
 }

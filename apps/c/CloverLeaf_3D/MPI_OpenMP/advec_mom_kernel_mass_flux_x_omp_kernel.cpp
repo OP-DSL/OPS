@@ -26,8 +26,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[2][3];
   ops_arg args[2] = { arg0, arg1};
@@ -38,8 +36,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   if (!ops_checkpointing_before(args,2,range,25)) return;
   #endif
 
-  ops_timing_realloc(25,"advec_mom_kernel_mass_flux_x");
-  OPS_kernels[25].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(25,"advec_mom_kernel_mass_flux_x");
+    OPS_kernels[25].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
 
@@ -99,6 +100,10 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   int off1_2 = offs[1][2];
   int dat1 = args[1].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 2);
+  ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_host(args, 2);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -110,14 +115,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
 
-  ops_H_D_exchanges_host(args, 2);
 
-  //Halo Exchanges
-  ops_halo_exchanges(args,2,range);
-
-
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[25].mpi_time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[25].mpi_time += t2-t1;
+  }
 
 
   #pragma omp parallel for
@@ -204,16 +206,20 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
     }
   }
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[25].time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[25].time += t1-t2;
+  }
 
   ops_set_dirtybit_host(args, 2);
 
   ops_set_halo_dirtybit3(&args[0],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[25].mpi_time += t2-t1;
-  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[25].mpi_time += t2-t1;
+    OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[25].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

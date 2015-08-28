@@ -200,7 +200,7 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 ./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
 	@echo "Compiling kernel" $*
 	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-              -I. OpenACC/$*_c.c -c $(HDF5_LIB) -o OpenACC/$*_c.o
+        -I. OpenACC/$*_c.c -c $(HDF5_LIB) -o OpenACC/$*_c.o
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
@@ -213,14 +213,14 @@ mblock_mpi_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h 
     mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_openacc
 
 mblock_opencl: ./OpenCL/mblock_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. -lops_opencl -o mblock_opencl
+	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_opencl_kernels.o -I. -lops_opencl  $(HDF5_LIB) -o mblock_opencl
 
 ./OpenCL/mblock_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/mblock_opencl_kernels.o ./OpenCL/mblock_opencl_kernels.cpp
 
 mblock_mpi_opencl: ./OpenCL/mblock_mpi_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_mpi_opencl_kernels.o -I. -lops_mpi_opencl -o mblock_mpi_opencl
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_mpi_opencl_kernels.o -I. -lops_mpi_opencl  $(HDF5_LIB) -o mblock_mpi_opencl
 
 ./OpenCL/mblock_mpi_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
 	$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \

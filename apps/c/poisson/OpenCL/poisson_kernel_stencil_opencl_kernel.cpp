@@ -95,6 +95,10 @@ void buildOpenCLKernels_poisson_kernel_stencil(int xdim0, int xdim1, int xdim2) 
 // host stub function
 void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -102,8 +106,11 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   if (!ops_checkpointing_before(args,3,range,2)) return;
   #endif
 
-  ops_timing_realloc(2,"poisson_kernel_stencil");
-  OPS_kernels[2].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(2,"poisson_kernel_stencil");
+    OPS_kernels[2].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -147,10 +154,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
   buildOpenCLKernels_poisson_kernel_stencil(
   xdim0,xdim1,xdim2);
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
@@ -201,8 +204,10 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges_device(args, 3);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[2].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+  }
 
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
@@ -222,13 +227,20 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[2].time += t1-t2;
+  }
+
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[2].time += t2-t1;
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[2].mpi_time += t2-t1;
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg2);
+  }
 }

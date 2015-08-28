@@ -30,6 +30,9 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   char *p_a[6];
   int  offs[6][1];
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
@@ -40,8 +43,11 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   if (!ops_checkpointing_before(args,6,range,0)) return;
   #endif
 
-  ops_timing_realloc(0,"initialize_kernel");
-  OPS_kernels[0].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(0,"initialize_kernel");
+    OPS_kernels[0].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[1];
@@ -94,10 +100,6 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   #else //OPS_MPI
   arg_idx[0] = start[0];
   #endif //OPS_MPI
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int dat0 = args[0].dat->elem_size;
@@ -161,14 +163,17 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
 
 
 
+  //initialize global variable with the dimension of dats
+
+  //Halo Exchanges
   ops_H_D_exchanges_host(args, 6);
   ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges_host(args, 6);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
-
-  //initialize global variable with the dimension of dats
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+  }
 
   int n_x;
   #pragma novector
@@ -204,8 +209,10 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     arg_idx[0]++;
   }
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[0].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 6);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
@@ -213,10 +220,14 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);
 
-  //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+  }
 }

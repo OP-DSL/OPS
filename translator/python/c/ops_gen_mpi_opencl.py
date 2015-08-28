@@ -644,6 +644,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code(text);
     config.depth = 2
 
+    #timing structs
+    code('')
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('')
+
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
@@ -659,9 +665,14 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
+
+    IF('OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     code('OPS_kernels['+str(nk)+'].count++;')
+    code('ops_timers_core(&c1,&t1);')
+    ENDIF()
     code('')
+
     comm('compute locally allocated range for the sub-block')
 
     code('int start['+str(NDIM)+'];')
@@ -739,12 +750,6 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
 
     code(arg_text+');')
-
-    #timing structs
-    code('')
-    comm('Timing')
-    code('double t1,t2,c1,c2;')
-    code('ops_timers_core(&c2,&t2);')
     code('')
 
     #set up OpenCL grid and thread blocks
@@ -896,8 +901,10 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('')
-    code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    IF('OPS_diags > 1')
+    code('ops_timers_core(&c2,&t2);')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    ENDIF()
     code('')
 
 
@@ -990,6 +997,12 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     ENDIF()
     code('')
 
+    IF('OPS_diags > 1')
+    code('ops_timers_core(&c1,&t1);')
+    code('OPS_kernels['+str(nk)+'].time += t1-t2;')
+    ENDIF()
+    code('')
+
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToHost(reduct_bytes);')
 
@@ -1014,12 +1027,14 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
+    IF('OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
+    ENDIF()
     config.depth = config.depth - 2
     code('}')
 

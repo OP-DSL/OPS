@@ -71,6 +71,9 @@ int size1 ){
 void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -78,8 +81,11 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   if (!ops_checkpointing_before(args,3,range,40)) return;
   #endif
 
-  ops_timing_realloc(40,"initialise_chunk_kernel_celly");
-  OPS_kernels[40].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(40,"initialise_chunk_kernel_celly");
+    OPS_kernels[40].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -117,11 +123,6 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
   int xdim2 = args[2].dat->size[0];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_initialise_chunk_kernel_celly_h || xdim1 != xdim1_initialise_chunk_kernel_celly_h || xdim2 != xdim2_initialise_chunk_kernel_celly_h) {
     cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_celly, &xdim0, sizeof(int) );
@@ -187,8 +188,10 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   ops_H_D_exchanges_device(args, 3);
   ops_halo_exchanges(args,3,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[40].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
+  }
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -197,15 +200,20 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[40].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[40].time += t2-t1;
+
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  //Update kernel record
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg2);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[40].transfer += ops_compute_transfer(dim, range, &arg2);
+  }
 }

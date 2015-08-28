@@ -97,6 +97,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8,
  ops_arg arg9, ops_arg arg10) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[11] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10};
 
 
@@ -104,8 +108,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,11,range,31)) return;
   #endif
 
-  ops_timing_realloc(31,"field_summary_kernel");
-  OPS_kernels[31].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(31,"field_summary_kernel");
+    OPS_kernels[31].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -152,10 +159,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   buildOpenCLKernels_field_summary_kernel(
   xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
@@ -312,8 +315,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_halo_exchanges(args,11,range);
   ops_H_D_exchanges_device(args, 11);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[31].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[31].mpi_time += t2-t1;
+  }
 
   int nthread = OPS_block_size_x*OPS_block_size_y;
 
@@ -354,6 +359,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[31].time += t1-t2;
+  }
+
   mvReductArraysToHost(reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
@@ -392,13 +402,15 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   ops_set_dirtybit_device(args, 11);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[31].time += t2-t1;
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg5);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[31].mpi_time += t2-t1;
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, range, &arg5);
+  }
 }

@@ -33,8 +33,6 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
   //Timing
   double t1,t2,c1,c2;
-  ops_timers_core(&c1,&t1);
-
 
   int  offs[7][3];
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
@@ -45,8 +43,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   if (!ops_checkpointing_before(args,7,range,55)) return;
   #endif
 
-  ops_timing_realloc(55,"initialise_chunk_kernel_volume");
-  OPS_kernels[55].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(55,"initialise_chunk_kernel_volume");
+    OPS_kernels[55].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
 
@@ -156,6 +157,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   int off6_2 = offs[6][2];
   int dat6 = args[6].dat->elem_size;
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 7);
+  ops_halo_exchanges(args,7,range);
+  ops_H_D_exchanges_host(args, 7);
 
   #ifdef _OPENMP
   int nthreads = omp_get_max_threads( );
@@ -177,14 +182,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
 
-  ops_H_D_exchanges_host(args, 7);
 
-  //Halo Exchanges
-  ops_halo_exchanges(args,7,range);
-
-
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[55].mpi_time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[55].mpi_time += t2-t1;
+  }
 
 
   #pragma omp parallel for
@@ -373,8 +375,10 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
     }
   }
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[55].time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[55].time += t1-t2;
+  }
 
   ops_set_dirtybit_host(args, 7);
 
@@ -383,14 +387,16 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[6],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[55].mpi_time += t2-t1;
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[55].mpi_time += t2-t1;
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
+  }
 }

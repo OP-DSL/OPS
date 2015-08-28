@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ../../../ops/c
-source ../ruby_intel_source
+source ../source_intel
 make
 cd -
 make
@@ -66,7 +66,7 @@ grep "Total Wall time" perf_out
 rm perf_out
 
 cd -
-source ../ruby_pgi_source
+source ../source_pgi
 make clean
 make
 cd -

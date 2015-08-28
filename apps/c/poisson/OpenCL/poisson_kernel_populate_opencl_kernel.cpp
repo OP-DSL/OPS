@@ -96,6 +96,10 @@ void buildOpenCLKernels_poisson_kernel_populate(int xdim3, int xdim4, int xdim5)
 void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
+
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
@@ -103,8 +107,11 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   if (!ops_checkpointing_before(args,6,range,0)) return;
   #endif
 
-  ops_timing_realloc(0,"poisson_kernel_populate");
-  OPS_kernels[0].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(0,"poisson_kernel_populate");
+    OPS_kernels[0].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -157,10 +164,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   buildOpenCLKernels_poisson_kernel_populate(
   xdim3,xdim4,xdim5);
 
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   //set up OpenCL thread blocks
   size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
   size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};
@@ -210,8 +213,10 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges_device(args, 6);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[0].mpi_time += t2-t1;
+  }
 
 
   clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[0], 0, sizeof(cl_int), (void*) arg0.data ));
@@ -235,15 +240,22 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].time += t1-t2;
+  }
+
   ops_set_dirtybit_device(args, 6);
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[5],range);
 
-  //Update kernel record
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[0].mpi_time += t2-t1;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
+  }
 }

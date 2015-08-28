@@ -52,6 +52,9 @@ int size1 ){
 void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
+
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -59,8 +62,11 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
-  ops_timing_realloc(4,"poisson_kernel_error");
-  OPS_kernels[4].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(4,"poisson_kernel_error");
+    OPS_kernels[4].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -97,11 +103,6 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
 
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
-
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   if (xdim0 != xdim0_poisson_kernel_error_h || xdim1 != xdim1_poisson_kernel_error_h) {
     cudaMemcpyToSymbol( xdim0_poisson_kernel_error, &xdim0, sizeof(int) );
@@ -174,8 +175,10 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   ops_H_D_exchanges_device(args, 3);
   ops_halo_exchanges(args,3,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[4].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[4].mpi_time += t2-t1;
+  }
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -198,12 +201,17 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[4].time += t1-t2;
   }
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[4].time += t2-t1;
+
   ops_set_dirtybit_device(args, 3);
 
-  //Update kernel record
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[4].mpi_time += t2-t1;
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  }
 }

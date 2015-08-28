@@ -29,6 +29,8 @@ void initialise_chunk_kernel_y_c_wrapper(
 void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
@@ -36,10 +38,14 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   if (!ops_checkpointing_before(args,3,range,38)) return;
   #endif
 
-  ops_timing_realloc(38,"initialise_chunk_kernel_y");
-  OPS_kernels[38].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(38,"initialise_chunk_kernel_y");
+    OPS_kernels[38].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[2];
   int end[2];
   #ifdef OPS_MPI
@@ -76,11 +82,6 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   xdim0 = args[0].dat->size[0];
   xdim1 = args[1].dat->size[0];
   xdim2 = args[2].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_initialise_chunk_kernel_y_h || xdim1 != xdim1_initialise_chunk_kernel_y_h || xdim2 != xdim2_initialise_chunk_kernel_y_h) {
     xdim0_initialise_chunk_kernel_y = xdim0;
     xdim0_initialise_chunk_kernel_y_h = xdim0;
@@ -153,8 +154,10 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   #endif
   ops_halo_exchanges(args,3,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[38].mpi_time += t1-t2;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[38].mpi_time += t2-t1;
+  }
 
   initialise_chunk_kernel_y_c_wrapper(
     p_a0,
@@ -162,8 +165,10 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
     p_a2,
     x_size, y_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[38].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[38].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
   #else
@@ -172,8 +177,12 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  //Update kernel record
-  OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg2);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[38].mpi_time += t2-t1;
+    OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg2);
+  }
 }
