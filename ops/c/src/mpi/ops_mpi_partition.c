@@ -299,7 +299,7 @@ void ops_decomp_dats(sub_block *sb) {
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
 
-    //Allocate datasets
+    //Allocate datasets -- move this to separate routines (one for none-hdf5 and one for hdf5 ?)
     //TODO: read HDF5, what if it was already allocated - re-distribute
     dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
     ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);

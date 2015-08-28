@@ -200,7 +200,8 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
 
 void ops_partition(char* routine)
 {
-
+  (void)routine;
+  //printf("Partitioning ops_dats\n");
 }
 
 void ops_timers(double * cpu, double * et){
