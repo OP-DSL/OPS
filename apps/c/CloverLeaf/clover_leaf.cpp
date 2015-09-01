@@ -206,6 +206,7 @@ int main(int argc, char **argv)
     }
 
      if(step == 70) {
+      //ops_fetch_data_hdf5_file(viscosity, "cloverdats.dat");
       // ops_print_dat_to_txtfile(viscosity, "cloverdats.dat");
       // exit(0);
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");

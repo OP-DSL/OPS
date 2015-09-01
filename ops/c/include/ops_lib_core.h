@@ -420,5 +420,6 @@ void ops_execute();
 #endif
 
 #include "ops_checkpointing.h"
+#include "ops_hdf5.h"
 
 #endif /* __OP_LIB_CORE_H */
