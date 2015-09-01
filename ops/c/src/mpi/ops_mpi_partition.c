@@ -276,7 +276,8 @@ void ops_decomp_dats(sub_block *sb) {
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding
         dat->base[d] = 0;
-        sd->d_im[d] = dat->d_m[d]; //TODO: compute this properly, or lazy or something
+        //TODO: compute this properly, or lazy or something
+        sd->d_im[d] = dat->d_m[d]; //intra-block (MPI) halos are set to be equal to block halos
         dat->d_m[d] = 0;
       } else {
         sd->decomp_disp[d] += (dat->base[d] + dat->d_m[d]); //move left end to negative for base and left block halo
@@ -286,7 +287,8 @@ void ops_decomp_dats(sub_block *sb) {
 
       if (sb->id_p[d] != MPI_PROC_NULL) {
         //if not positive end
-        sd->d_ip[d] = dat->d_p[d]; //TODO: compute this properly, or lazy or something
+        //TODO: compute this properly, or lazy or something
+        sd->d_ip[d] = dat->d_p[d]; //intra-block (MPI) halos are set to be equal to block halos
         dat->d_p[d] = 0;
       } else {
         sd->decomp_size[d] += dat->d_p[d]; //if last in this dimension, extend with left block halo size

@@ -181,7 +181,4 @@ void ops_mpi_reduce(ops_arg* args, T* data)
 
 
 
-
-
-
 #endif /* __OPS_LIB_CPP_H */

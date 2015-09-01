@@ -206,12 +206,12 @@ int main(int argc, char **argv)
     }
 
      if(step == 70) {
-      //ops_fetch_data_hdf5_file(viscosity, "cloverdats.dat");
-      // ops_print_dat_to_txtfile(viscosity, "cloverdats.dat");
+      ops_fetch_data_hdf5_file(density0, "cloverdats.h5");
+      ops_print_dat_to_txtfile(density0, "cloverdats.dat");
       // exit(0);
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
-      //exit(0);
+      exit(0);
       //break;
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //exit(0);
