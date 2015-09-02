@@ -48,6 +48,7 @@
 
 //hdf5 header
 #include <hdf5.h>
+#include <hdf5_hl.h>
 
 //
 //MPI Communicator for parallel I/O
@@ -63,16 +64,43 @@ sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
                                  // details
 
 /*******************************************************************************
-* Routine to reverse the flattend 1D dat to higher dimensional dat
-* needed for writing to HDF5 files
+* Routine to remove the intra-block halos from the flattend 1D dat
+* before writing to HDF5 files
 *******************************************************************************/
-char *get_dat(ops_dat dat, int* size, int* disp){
+void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
 
-  int t_size = 1;
-  for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
+  int index = 0; int count = 0;
+  //for(int m = disp[4]; m < size[4]; m++) {
+  //  for(int l = disp[3]; l < size[3]; l++) {
+   //   for(int k = disp[2]; k < size[2]; k++) {
+        for(int j = disp[1]; j < size[1]; j++) {
+          for(int i = disp[0]; i < size[0]; i++) {
+              index = i +
+                      j * size[0] ;//+
+                      //k * size[0] * size[1] +
+                     // l * size[0] * size[1] * size[2] +
+                      //m * size[0] * size[1] * size[2] * size[3];
+                      //data_d[count] = *((double *)&(dat->data[index]));
+              memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+              count++;
+              //printf("index %d, count %d\n",index,count);
+          }
+        }
+     //}
+    //}
+  //}
 
-  printf("t_size = %d ",t_size);
-  char *data = (char *)malloc(t_size*dat->elem_size*1);
+
+  printf("index %d, count %d\n",index,count);
+  return ;//data;
+  /*
+  x = disp[0] to size[0]
+  y = disp[1] to size[1]
+  z = disp[2] to size[2]
+  t = disp[3] to size[4]
+  u = disp[4] to size[4]
+  index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 * D4;
+  */
 
 }
 
@@ -86,6 +114,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   //fetch data onto the host ( if needed ) based on the backend
 
+
   //complute the number of elements that this process will write to the final file
   //also compute the correct offsets on the final file that this process should begin from to write
   sub_dat *sd = OPS_sub_dat_list[dat->index];
@@ -95,21 +124,34 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   hsize_t disp[block->dims]; //temp array to hold disps of the dat to write to hdf5 file
   hsize_t size[block->dims]; //temp array to hold size of the dat to write to hdf5 file
   hsize_t g_size[block->dims]; //temp array to hold global size of the dat to write to hdf5 file
-
+  int g_d_m[block->dims]; //temp array to hold global size of the block halo (-) depth to write to hdf5 file
+  int g_d_p[block->dims]; //temp array to hold global size of the block halo (+) depth to write to hdf5 file
   for (int d = 0; d < block->dims; d++){
     // remove left MPI halo to get start disp from begining of dat
     // include left block halo
     disp[d] = sd->decomp_disp[d] - sd->d_im[d] - dat->d_m[d];
     size[d] = sd->decomp_size[d]; //local size to be written to hdf5 file
     g_size[d] = sd->gbl_size[d]; //global size to be written to hdf5 file
+    g_d_m[d] = sd->gbl_d_m[d]; //global halo depth(-) to be written to hdf5 file
+    g_d_p[d] = sd->gbl_d_p[d]; //global halo depth(+) to be written to hdf5 file
     printf("disp[%d] = %d ",d,disp[d]);
     printf("size[%d] = %d ",d,size[d]);
     printf("gbl_size[%d] = %d ",d,g_size[d]);
+    printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
+    printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
   }
   printf("\n");
 
-  //char *data = get_dat(dat,size,disp);
-  //free(data);
+  int t_size = 1;
+  for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
+  printf("t_size = %d ",t_size);
+  char* data = (char *)malloc(t_size*dat->elem_size);
+  double* data_d = (double *) data;
+
+  remove_mpi_halos(dat, size, disp, data);
+  for (int t = 0; t<t_size; t++) printf("%lf \n",data_d[t]);
+  printf("****************************\n\n");
+  //free(data); need to after writing to hdf5 file
 
 
    //create new communicator
@@ -189,6 +231,16 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
     H5Dclose(dset_id);
+
+    //attach attributes to dat
+    H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
+    H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
+    H5LTset_attribute_int(file_id, dat->name, "size", sd->gbl_size, block->dims); //size
+    H5LTset_attribute_int(file_id, dat->name, "d_m", g_d_m, block->dims); //d_m
+    H5LTset_attribute_int(file_id, dat->name, "d_p", g_d_p, block->dims); //d_p
+    H5LTset_attribute_string(file_id, dat->name, "type", dat->type); //type
+
+
   }
 
   //update data existing or created data set
@@ -204,15 +256,15 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   //write data
   if(strcmp(dat->type,"double") == 0)
-    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, dataspace, plist_id, dat->data);
+    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, dataspace, plist_id, data);
   else if(strcmp(dat->type,"float") == 0)
-    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, dataspace, plist_id, dat->data);
+    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, dataspace, plist_id, data);
   else if(strcmp(dat->type,"int") == 0)
-    H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, dataspace, plist_id, dat->data);
+    H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, dataspace, plist_id, data);
   else if(strcmp(dat->type,"long") == 0)
-    H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, dataspace, plist_id, dat->data);
+    H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, dataspace, plist_id, data);
   else if(strcmp(dat->type,"long long") == 0)
-    H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, dataspace, plist_id, dat->data);
+    H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, dataspace, plist_id, data);
   else {
     printf("Unknown type in ops_fetch_data_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
@@ -224,6 +276,6 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   H5Sclose(dataspace);
   H5Fclose(file_id);
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
-
+  free(data);
   return;
 }
