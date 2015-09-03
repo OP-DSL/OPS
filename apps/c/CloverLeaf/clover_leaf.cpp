@@ -205,7 +205,7 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 70) {
+     if(step == 200) {
       ops_fetch_data_hdf5_file(density0, "cloverdats.h5");
       ops_print_dat_to_txtfile(density0, "cloverdats.dat");
       // exit(0);

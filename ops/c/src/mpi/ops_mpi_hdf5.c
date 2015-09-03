@@ -67,31 +67,34 @@ sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
 * Routine to remove the intra-block halos from the flattend 1D dat
 * before writing to HDF5 files
 *******************************************************************************/
-void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
+void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
 
   int index = 0; int count = 0;
+  double* data_d = (double *)data;
   //for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
    //   for(int k = disp[2]; k < size[2]; k++) {
-        for(int j = disp[1]; j < size[1]; j++) {
-          for(int i = disp[0]; i < size[0]; i++) {
+        for(int j = disp[1]; j < disp[1]+size[1]; j++) {
+          for(int i = disp[0]; i < disp[0]+size[0]; i++) {
               index = i +
-                      j * size[0] ;//+
+                      j * dat->size[0];// need to stride in dat->size as data block includes intra-block halos
                       //k * size[0] * size[1] +
                      // l * size[0] * size[1] * size[2] +
                       //m * size[0] * size[1] * size[2] * size[3];
-                      //data_d[count] = *((double *)&(dat->data[index]));
-              memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+                      data_d[count] = ((double *)dat->data)[index];
+              //memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+              //if (my_rank == 1)printf("%lf ",*((double *)&data[count*dat->elem_size]));
               count++;
               //printf("index %d, count %d\n",index,count);
           }
+          //printf("\n");
         }
      //}
     //}
   //}
+ //printf("\n\n\n\n\n");
 
-
-  printf("index %d, count %d\n",index,count);
+  //printf("index %d, count %d\n",index,count);
   return ;//data;
   /*
   x = disp[0] to size[0]
@@ -121,7 +124,8 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   ops_block block = dat->block;
   sub_block *sb = OPS_sub_block_list[dat->block->index];
 
-  hsize_t disp[block->dims]; //temp array to hold disps of the dat to write to hdf5 file
+  hsize_t disp[block->dims]; //temp array to hold global disps of the dat to write to hdf5 file
+  hsize_t l_disp[block->dims]; //temp array to hold local disps of the dat to write to hdf5 file
   hsize_t size[block->dims]; //temp array to hold size of the dat to write to hdf5 file
   hsize_t g_size[block->dims]; //temp array to hold global size of the dat to write to hdf5 file
   int g_d_m[block->dims]; //temp array to hold global size of the block halo (-) depth to write to hdf5 file
@@ -129,28 +133,31 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   for (int d = 0; d < block->dims; d++){
     // remove left MPI halo to get start disp from begining of dat
     // include left block halo
-    disp[d] = sd->decomp_disp[d] - sd->d_im[d] - dat->d_m[d];
+    disp[d] = sd->decomp_disp[d] - sd->d_im[d] - dat->d_m[d]; //global displacements of the data set
+    l_disp[d] = 0 - sd->d_im[d]; //local displacements of the data set (i.e. per MPI proc)
     size[d] = sd->decomp_size[d]; //local size to be written to hdf5 file
     g_size[d] = sd->gbl_size[d]; //global size to be written to hdf5 file
     g_d_m[d] = sd->gbl_d_m[d]; //global halo depth(-) to be written to hdf5 file
     g_d_p[d] = sd->gbl_d_p[d]; //global halo depth(+) to be written to hdf5 file
+    //printf("l_disp[%d] = %d ",d,l_disp[d]);
     printf("disp[%d] = %d ",d,disp[d]);
     printf("size[%d] = %d ",d,size[d]);
-    printf("gbl_size[%d] = %d ",d,g_size[d]);
+    //printf("dat->size[%d] = %d ",d,dat->size[d]);
+    //printf("gbl_size[%d] = %d ",d,g_size[d]);
     printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
     printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
   }
-  printf("\n");
+  //printf("\n");
 
   int t_size = 1;
   for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
   printf("t_size = %d ",t_size);
   char* data = (char *)malloc(t_size*dat->elem_size);
   double* data_d = (double *) data;
-
-  remove_mpi_halos(dat, size, disp, data);
-  for (int t = 0; t<t_size; t++) printf("%lf \n",data_d[t]);
-  printf("****************************\n\n");
+  //ops_print_dat_to_txtfile(dat, "textdats.dat");
+//  remove_mpi_halos(dat, size, l_disp, data);
+  //for (int t = 0; t<t_size; t++) printf("%lf \n",data_d[t]);
+  //printf("****************************\n\n");
   //free(data); need to after writing to hdf5 file
 
 
@@ -160,6 +167,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
+  remove_mpi_halos(dat, size, l_disp, data, my_rank);
   //MPI variables
   MPI_Info info  = MPI_INFO_NULL;
 
