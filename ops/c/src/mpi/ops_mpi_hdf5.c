@@ -65,37 +65,33 @@ sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
 
 /*******************************************************************************
 * Routine to remove the intra-block halos from the flattend 1D dat
-* before writing to HDF5 files
+* before writing to HDF5 files - Maximum dimension of block is 3
 *******************************************************************************/
-void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
+void remove_mpi_halos2D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
 
   int index = 0; int count = 0;
   double* data_d = (double *)data;
   //for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
-   //   for(int k = disp[2]; k < size[2]; k++) {
-        for(int j = disp[1]; j < disp[1]+size[1]; j++) {
-          for(int i = disp[0]; i < disp[0]+size[0]; i++) {
-              index = i +
-                      j * dat->size[0];// need to stride in dat->size as data block includes intra-block halos
-                      //k * size[0] * size[1] +
-                     // l * size[0] * size[1] * size[2] +
-                      //m * size[0] * size[1] * size[2] * size[3];
-                      data_d[count] = ((double *)dat->data)[index];
-              //memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
-              //if (my_rank == 1)printf("%lf ",*((double *)&data[count*dat->elem_size]));
-              count++;
-              //printf("index %d, count %d\n",index,count);
-          }
-          //printf("\n");
-        }
-     //}
-    //}
+  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
+    for(int j = disp[1]; j < disp[1]+size[1]; j++) {
+      for(int i = disp[0]; i < disp[0]+size[0]; i++) {
+          index = i +
+                  j * dat->size[0]; //+ // need to stride in dat->size as data block includes intra-block halos
+                  //k * dat->size[0] * dat->size[1];// +
+                  //l * dat->size[0] * dat->size[1] * dat->size[2] +
+                  //m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
+                  //data_d[count] = ((double *)dat->data)[index];
+          memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+          count++;
+      }
+    }
   //}
- //printf("\n\n\n\n\n");
+  //}
+  //}
 
-  //printf("index %d, count %d\n",index,count);
-  return ;//data;
+
+  return;
   /*
   x = disp[0] to size[0]
   y = disp[1] to size[1]
@@ -103,8 +99,35 @@ void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int
   t = disp[3] to size[4]
   u = disp[4] to size[4]
   index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 * D4;
+
+
+  D1 - dat->size[0]
+  D2 - dat->size[1]
+  D3 - dat->size[2]
+  D4 - dat->size[3]
   */
 
+}
+
+/*******************************************************************************
+* Routine to remove the intra-block halos from the flattend 1D dat
+* before writing to HDF5 files - Maximum dimension of block is 4
+*******************************************************************************/
+void remove_mpi_halos3D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
+}
+
+/*******************************************************************************
+* Routine to remove the intra-block halos from the flattend 1D dat
+* before writing to HDF5 files - Maximum dimension of block is 4
+*******************************************************************************/
+void remove_mpi_halos4D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
+}
+
+/*******************************************************************************
+* Routine to remove the intra-block halos from the flattend 1D dat
+* before writing to HDF5 files - Maximum dimension of block is 5
+*******************************************************************************/
+void remove_mpi_halos5D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int my_rank){
 }
 
 /*******************************************************************************
@@ -115,8 +138,7 @@ void remove_mpi_halos(ops_dat dat, hsize_t* size, hsize_t* disp, char* data, int
 
 void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
-  //fetch data onto the host ( if needed ) based on the backend
-
+  //fetch data onto the host ( if needed ) based on the backend -- TODO for GPUs
 
   //complute the number of elements that this process will write to the final file
   //also compute the correct offsets on the final file that this process should begin from to write
@@ -147,12 +169,12 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     count[d] = 1; stride[d] = 1;
 
     //printf("l_disp[%d] = %d ",d,l_disp[d]);
-    printf("disp[%d] = %d ",d,disp[d]);
-    printf("size[%d] = %d ",d,size[d]);
+    //printf("disp[%d] = %d ",d,disp[d]);
+    //printf("size[%d] = %d ",d,size[d]);
     //printf("dat->size[%d] = %d ",d,dat->size[d]);
-    printf("gbl_size[%d] = %d ",d,g_size[d]);
-    printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
-    printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
+    //printf("gbl_size[%d] = %d ",d,g_size[d]);
+    //printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
+    //printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
   }
 
   int t_size = 1;
@@ -166,7 +188,15 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
-  remove_mpi_halos(dat, size, l_disp, data, my_rank);
+  if(block->dims == 2)
+    remove_mpi_halos2D(dat, size, l_disp, data, my_rank);
+  else if(block->dims == 3)
+    remove_mpi_halos3D(dat, size, l_disp, data, my_rank);
+  else if (block->dims == 4)
+    remove_mpi_halos4D(dat, size, l_disp, data, my_rank);
+  else if (block->dims == 5)
+    remove_mpi_halos5D(dat, size, l_disp, data, my_rank);
+
   //MPI variables
   MPI_Info info  = MPI_INFO_NULL;
 
@@ -193,13 +223,13 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   // Create chunked dataset
   plist_id = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(plist_id, block->dims, g_size);
+  H5Pset_chunk(plist_id, block->dims, g_size); //chunk data set need to be the same size on each proc
 
   //Create the dataset with default properties and close filespace.
   if(strcmp(dat->type,"double") == 0)
     dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
         H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  /*else if(strcmp(dat->type,"float") == 0)
+  else if(strcmp(dat->type,"float") == 0)
     dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_FLOAT, filespace,
         H5P_DEFAULT, plist_id, H5P_DEFAULT);
   else if(strcmp(dat->type,"int") == 0)
@@ -214,22 +244,28 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   else {
     printf("Unknown type in ops_fetch_data_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }*/
+  }
   H5Pclose(plist_id);
   H5Sclose(filespace);
 
   //attach attributes to dat
-  /*H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
+  H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
   H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
   H5LTset_attribute_int(file_id, dat->name, "size", sd->gbl_size, block->dims); //size
   H5LTset_attribute_int(file_id, dat->name, "d_m", g_d_m, block->dims); //d_m
   H5LTset_attribute_int(file_id, dat->name, "d_p", g_d_p, block->dims); //d_p
   H5LTset_attribute_string(file_id, dat->name, "type", dat->type); //type
-  */
 
+  //Need to flip the dimensions
+  hsize_t DISP[block->dims];
+  DISP[0] = disp[1];
+  DISP[1] = disp[0];
+  hsize_t SIZE[block->dims];
+  SIZE[0] = size[1];
+  SIZE[1] = size[0];
   //Select hyperslab
   filespace = H5Dget_space(dset_id);
-  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, disp, stride, count, size);
+  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, DISP, stride, count, SIZE);
 
   //Create property list for collective dataset write.
   plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -253,10 +289,10 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   free(data);
 
-  H5Dclose(dset_id);
   H5Sclose(filespace);
-  H5Sclose(memspace);
   H5Pclose(plist_id);
+  H5Dclose(dset_id);
+  H5Sclose(memspace);
   H5Fclose(file_id);
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
 
