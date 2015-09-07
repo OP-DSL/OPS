@@ -274,8 +274,88 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   //open existing dat
   dset_id = H5Dopen(file_id, dat->name, H5P_DEFAULT);
 
+  //
   //check attributes .. error if not equal
+  //
+  char read_name[30];
+  if (H5LTget_attribute_string(file_id, dat->name, "block", read_name) < 0){
+    ops_printf("Attribute \"block\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp(block->name,read_name) != 0) {
+      ops_printf("BLocks on which data set %s is defined are not equal .. Aborting\n",dat->name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
 
+  int read_dim;
+  if (H5LTget_attribute_int(file_id, dat->name, "dim", &read_dim) < 0) {
+    ops_printf("Attribute \"dim\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    if (dat->dim != read_dim) {
+      ops_printf("Unequal dims of data set %s: dim on file %d, dim to be wirtten %d .. Aborting\n",
+         dat->name,read_dim, dat->dim);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+
+  int read_size[block->dims];
+  if (H5LTget_attribute_int(file_id, dat->name, "size", read_size) < 0) {
+    ops_printf("Attribute \"size\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    for(int d = 0; d<block->dims; d++) {
+      if (sd->gbl_size[d] != read_size[d]) {
+        ops_printf("Unequal sizes of data set %s: size[%d] on file %d, size[%d] to be wirtten %d .. Aborting\n",
+           dat->name, d, read_size[d], d, sd->gbl_size[d]);
+        MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      }
+    }
+  }
+
+  int read_d_m[block->dims];
+  if (H5LTget_attribute_int(file_id, dat->name, "d_m", read_d_m) < 0) {
+    ops_printf("Attribute \"d_m\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    for(int d = 0; d<block->dims; d++) {
+      if (g_d_m[d] != read_d_m[d]) {
+        ops_printf("Unequal d_m of data set %s: g_d_m[%d] on file %d, g_d_m[%d] to be wirtten %d .. Aborting\n",
+           dat->name, d, read_d_m[d], d, g_d_m[d]);
+        MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      }
+    }
+  }
+
+  int read_d_p[block->dims];
+  if (H5LTget_attribute_int(file_id, dat->name, "d_p", read_d_p) < 0) {
+    ops_printf("Attribute \"d_p\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    for(int d = 0; d<block->dims; d++) {
+      if (g_d_p[d] != read_d_p[d]) {
+        ops_printf("Unequal d_p of data set %s: g_d_p[%d] on file %d, g_d_p[%d] to be wirtten %d .. Aborting\n",
+           dat->name, d, read_d_p[d], d, g_d_p[d]);
+        MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      }
+    }
+  }
+
+  char read_type[15];
+  if (H5LTget_attribute_string(file_id, dat->name, "type", read_type) < 0){
+    ops_printf("Attribute \"type\" not found in data set %s .. Aborting\n",dat->type);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp(dat->type,read_type) != 0) {
+      ops_printf("Type of data of data set %s is not equal .. Aborting\n",dat->type);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
 
   //Need to flip the dimensions to accurately write to HDF5 chunk decomposition
   hsize_t DISP[block->dims];
