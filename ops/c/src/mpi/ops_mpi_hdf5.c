@@ -179,7 +179,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   int t_size = 1;
   for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
-  printf("t_size = %d ",t_size);
+  //printf("t_size = %d ",t_size);
   char* data = (char *)malloc(t_size*dat->elem_size);
 
    //create new communicator
@@ -213,56 +213,80 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
 
-  //Create a new file collectively and release property list identifier.
-  file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-  H5Pclose(plist_id);
-
-  //Create the dataspace for the dataset
-  filespace = H5Screate_simple(block->dims, g_size, NULL); //space in file
-  memspace = H5Screate_simple(block->dims, size, NULL); //block of memory to write to file by each proc
-
-  // Create chunked dataset
-  plist_id = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(plist_id, block->dims, g_size); //chunk data set need to be the same size on each proc
-
-  //Create the dataset with default properties and close filespace.
-  if(strcmp(dat->type,"double") == 0)
-    dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
-        H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  else if(strcmp(dat->type,"float") == 0)
-    dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_FLOAT, filespace,
-        H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  else if(strcmp(dat->type,"int") == 0)
-    dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_INT, filespace,
-        H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  else if(strcmp(dat->type,"long") == 0)
-    dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_LONG, filespace,
-        H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  else if(strcmp(dat->type,"long long") == 0)
-    dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_LLONG, filespace,
-        H5P_DEFAULT, plist_id, H5P_DEFAULT);
-  else {
-    printf("Unknown type in ops_fetch_data_hdf5_file()\n");
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... creating file\n", file_name);
+    MPI_Barrier(OPS_MPI_HDF5_WORLD);
+    if (ops_is_root()) {
+      FILE *fp; fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+    //Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    //H5Pclose(plist_id);
+    H5Fclose(file_id);
   }
-  H5Pclose(plist_id);
-  H5Sclose(filespace);
 
-  //attach attributes to dat
-  H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
-  H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
-  H5LTset_attribute_int(file_id, dat->name, "size", sd->gbl_size, block->dims); //size
-  H5LTset_attribute_int(file_id, dat->name, "d_m", g_d_m, block->dims); //d_m
-  H5LTset_attribute_int(file_id, dat->name, "d_p", g_d_p, block->dims); //d_p
-  H5LTset_attribute_string(file_id, dat->name, "type", dat->type); //type
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+  if(H5Lexists(file_id, dat->name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_dat %s does not exists in the file ... creating data\n", dat->name);
 
-  //Need to flip the dimensions
+    //Create the dataspace for the dataset
+    filespace = H5Screate_simple(block->dims, g_size, NULL); //space in file
+
+    // Create chunked dataset
+    plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(plist_id, block->dims, g_size); //chunk data set need to be the same size on each proc
+
+    //Create the dataset with default properties and close filespace.
+    if(strcmp(dat->type,"double") == 0)
+      dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
+          H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else if(strcmp(dat->type,"float") == 0)
+      dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_FLOAT, filespace,
+          H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else if(strcmp(dat->type,"int") == 0)
+      dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_INT, filespace,
+          H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else if(strcmp(dat->type,"long") == 0)
+      dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_LONG, filespace,
+          H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else if(strcmp(dat->type,"long long") == 0)
+      dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_LLONG, filespace,
+          H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else {
+      printf("Unknown type in ops_fetch_data_hdf5_file()\n");
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+    H5Pclose(plist_id);
+    H5Sclose(filespace);
+    H5Dclose(dset_id);
+
+    //attach attributes to dat
+    H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
+    H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
+    H5LTset_attribute_int(file_id, dat->name, "size", sd->gbl_size, block->dims); //size
+    H5LTset_attribute_int(file_id, dat->name, "d_m", g_d_m, block->dims); //d_m
+    H5LTset_attribute_int(file_id, dat->name, "d_p", g_d_p, block->dims); //d_p
+    H5LTset_attribute_string(file_id, dat->name, "type", dat->type); //type
+  }
+
+  //open existing dat
+  dset_id = H5Dopen(file_id, dat->name, H5P_DEFAULT);
+
+  //check attributes .. error if not equal
+
+
+  //Need to flip the dimensions to accurately write to HDF5 chunk decomposition
   hsize_t DISP[block->dims];
   DISP[0] = disp[1];
   DISP[1] = disp[0];
   hsize_t SIZE[block->dims];
   SIZE[0] = size[1];
   SIZE[1] = size[0];
+
+  memspace = H5Screate_simple(block->dims, size, NULL); //block of memory to write to file by each proc
+
   //Select hyperslab
   filespace = H5Dget_space(dset_id);
   H5Sselect_hyperslab(filespace, H5S_SELECT_SET, DISP, stride, count, SIZE);
