@@ -69,9 +69,12 @@ void build_field()
   int base[2] = {0,0};
   double* temp = NULL;
 
-  density0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density0");
+  //density0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density0");
+  density0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "density0", "cloverdata.h5");
   density1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density1");
-  energy0     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy0");
+
+  //energy0     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy0");
+  energy0     = ops_decl_dat_hdf5(clover_grid, 1, "double", "energy0", "cloverdata.h5");
   energy1     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy1");
   pressure    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "pressure");
   viscosity   = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "viscosity");
@@ -79,9 +82,12 @@ void build_field()
   volume      = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "volume");
 
   size[0]++; size[1]++;
-  xvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel0");
+  //xvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel0");
+  xvel0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "xvel0", "cloverdata.h5");
   xvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel1");
-  yvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel0");
+
+  //yvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel0");
+  yvel0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "yvel0", "cloverdata.h5");
   yvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel1");
 
   work_array1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array1");

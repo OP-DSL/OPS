@@ -155,7 +155,6 @@ int size, char *dat, char const *name){
 #include "initialise_chunk_kernel_cellx_cuda_kernel.cu"
 #include "initialise_chunk_kernel_celly_cuda_kernel.cu"
 #include "initialise_chunk_kernel_volume_cuda_kernel.cu"
-#include "generate_chunk_kernel_cuda_kernel.cu"
 #include "update_halo_kernel1_b2_cuda_kernel.cu"
 #include "update_halo_kernel1_b1_cuda_kernel.cu"
 #include "update_halo_kernel1_t2_cuda_kernel.cu"

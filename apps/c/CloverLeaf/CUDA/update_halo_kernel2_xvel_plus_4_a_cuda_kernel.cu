@@ -57,12 +57,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,51)) return;
+  if (!ops_checkpointing_before(args,3,range,50)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(51,"update_halo_kernel2_xvel_plus_4_a");
-    OPS_kernels[51].count++;
+    ops_timing_realloc(50,"update_halo_kernel2_xvel_plus_4_a");
+    OPS_kernels[50].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -164,7 +164,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[51].mpi_time += t2-t1;
+    OPS_kernels[50].mpi_time += t2-t1;
   }
 
 
@@ -175,7 +175,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[51].time += t1-t2;
+    OPS_kernels[50].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 3);
@@ -185,8 +185,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[51].mpi_time += t2-t1;
-    OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[50].mpi_time += t2-t1;
+    OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[50].transfer += ops_compute_transfer(dim, range, &arg1);
   }
 }

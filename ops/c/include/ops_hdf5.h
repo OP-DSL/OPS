@@ -41,6 +41,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
+                      char const *type,
+                      char const *dat_name,
+                      char const *file_name);
 
 void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name);
 void ops_read_dat_hdf5(ops_dat dat);
@@ -48,5 +52,7 @@ void ops_read_dat_hdf5(ops_dat dat);
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif /* __OPS_HDF5_H */

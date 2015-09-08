@@ -464,12 +464,11 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   return;
 }
 
- ops_dat ops_decl_dat_hdf5_char(ops_block block, int dat_size,
-                      int type_size,
+ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
                       char const *type,
-                      char const *file_name,
-                      char const *dat_name) {
-
+                      char const *dat_name,
+                      char const *file_name) {
+  //printf("%s specified type %s\n",dat_name, type);
   //create new communicator
   int my_rank, comm_size;
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
@@ -566,6 +565,23 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     ops_printf("Attribute \"base\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
+
+  //set type size
+  int type_size;
+  //if(strcmp(read_type,"double") == 0)
+    type_size = sizeof(double);
+  /*if(strcmp(read_type,"float") == 0)
+    type_size = sizeof(float);
+  if(strcmp(read_type,"int") == 0)
+    type_size = sizeof(int);
+  if(strcmp(read_type,"long") == 0)
+    type_size = sizeof(long);
+  if(strcmp(read_type,"long long") == 0)
+    type_size = sizeof(long long);
+  else{
+    printf("Unknown type %s in ops_decl_dat_hdf5()\n", read_type);
+    exit(2);
+  }*/
 
   char * data = NULL;
 
@@ -695,9 +711,9 @@ void ops_read_dat_hdf5(ops_dat dat) {
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
   //read data
-  if(strcmp(dat->type,"double") == 0)
+  //if(strcmp(dat->type,"double") == 0)
     H5Dread(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-  else if(strcmp(dat->type,"float") == 0)
+  /*else if(strcmp(dat->type,"float") == 0)
     H5Dread(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
   else if(strcmp(dat->type,"int") == 0)
     H5Dread(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
@@ -708,7 +724,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
   else {
     printf("Unknown type in ops_fetch_data_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }
+  }*/
 
   //add MPI halos
   if(block->dims == 2)
