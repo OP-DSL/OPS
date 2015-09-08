@@ -141,6 +141,8 @@ typedef struct
   char const  *type;       /* datatype */
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
+  int         is_hdf5;     /* indicates whether the data is to read from an hdf5 file*/
+  char const  *hdf5_file;  /* name of hdf5 file from which this dataset was read*/
   int         e_dat;    /* flag to indicate if this is an edge dat*/
 } ops_dat_core;
 

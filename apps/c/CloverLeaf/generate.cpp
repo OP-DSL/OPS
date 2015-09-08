@@ -56,10 +56,13 @@ void generate()
     ops_arg_dat(cellx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
     ops_arg_dat(celly, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
-  /*ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");
-  ops_print_dat_to_txtfile_core(density0, "cloverdats.dat");
+  /*ops_print_dat_to_txtfile_core(energy0, "cloverdats.dat");*/
+  ops_fetch_data_hdf5_file(density0, "cloverdata.h5");
+  ops_fetch_data_hdf5_file(energy0, "cloverdata.h5");
+  ops_fetch_data_hdf5_file(xvel0, "cloverdata.h5");
+  ops_fetch_data_hdf5_file(yvel0, "cloverdata.h5");
 
-  ops_exit();
-  exit(0);*/
+  //ops_exit();
+  //exit(0);*/
 
 }

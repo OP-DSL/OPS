@@ -303,7 +303,21 @@ void ops_decomp_dats(sub_block *sb) {
 
     //Allocate datasets -- move this to separate routines (one for none-hdf5 and one for hdf5 ?)
     //TODO: read HDF5, what if it was already allocated - re-distribute
-    dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+    if(dat->data == NULL)
+      if(dat->is_hdf5 == 0) {
+        dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        dat->hdf5_file = "none";
+      }
+      else {
+        dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        ops_read_dat_hdf5(dat);
+      }
+    else {
+       dat->user_managed = 1;
+       dat->is_hdf5 = 0;
+       dat->hdf5_file = "none";
+    }
+
     ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
 
     //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block

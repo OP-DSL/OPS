@@ -75,7 +75,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
 
-  dat->user_managed = 0;
+  //dat->user_managed = 0;
+  dat->is_hdf5 = 0;
 
   //note that currently we assume replicated dats are read only or initialized just once
   //what to do if not ?? How will the halos be handled

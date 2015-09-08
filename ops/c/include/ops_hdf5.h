@@ -43,6 +43,7 @@ extern "C" {
 #endif
 
 void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name);
+void ops_read_dat_hdf5(ops_dat dat);
 
 #ifdef __cplusplus
 }

@@ -152,6 +152,14 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
 }
 
+template < class T >
+ops_dat ops_decl_dat_hdf5 ( ops_block block, int data_size,
+                      char const * type, char const * file_name ,
+                      char const * dat_name ){
+
+  return ops_decl_dat_hdf5_char(block, data_size, sizeof(T), type, file_name, dat_name );
+
+}
 
 //
 // wrapper functions to handle MPI global reductions
