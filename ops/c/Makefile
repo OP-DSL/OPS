@@ -123,9 +123,12 @@ else
 endif
 
 ifdef HDF5_INSTALL_PATH
-  HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
+  HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB		:= -L$(HDF5_INSTALL_PATH)/lib
   CHKCC			:= $(MPICXX)
+ifdef CHECKPOINTING
+  HDF5_INC 	  	:= $(HDF5_INC) -DCHECKPOINTING
+endif
 else
   CHKCC			:= $(CC)
 endif

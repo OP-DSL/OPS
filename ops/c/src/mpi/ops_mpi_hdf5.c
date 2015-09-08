@@ -176,12 +176,14 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   ops_block block = dat->block;
   sub_block *sb = OPS_sub_block_list[dat->block->index];
 
-  hsize_t disp[block->dims]; //temp array to hold global disps of the dat to write to hdf5 file
-  hsize_t l_disp[block->dims]; //temp array to hold local disps of the dat to write to hdf5 file
-  hsize_t size[block->dims]; //temp array to hold size of the dat to write to hdf5 file
-  hsize_t g_size[block->dims]; //temp array to hold global size of the dat to write to hdf5 file
-  int g_d_m[block->dims]; //temp array to hold global size of the block halo (-) depth to write to hdf5 file
-  int g_d_p[block->dims]; //temp array to hold global size of the block halo (+) depth to write to hdf5 file
+  hsize_t disp[block->dims]; //global disps to compute the chunk data set dimensions
+  hsize_t l_disp[block->dims]; //local disps to remove MPI halos
+  hsize_t size[block->dims]; //local size to compute the chunk data set dimensions
+  hsize_t gbl_size[block->dims]; //global size to compute the chunk data set dimensions
+
+  int g_size[block->dims]; //global size of the dat attribute to write to hdf5 file
+  int g_d_m[block->dims]; //global size of the block halo (-) depth attribute to write to hdf5 file
+  int g_d_p[block->dims]; //global size of the block halo (+) depth attribute to write to hdf5 file
 
   hsize_t count[block->dims]; //parameters for for hdf5 file chuck writing
   hsize_t stride[block->dims]; //parameters for for hdf5 file chuck writing
@@ -191,10 +193,12 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     // include left block halo
     disp[d] = sd->decomp_disp[d] - sd->d_im[d] - dat->d_m[d]; //global displacements of the data set
     l_disp[d] = 0 - sd->d_im[d]; //local displacements of the data set (i.e. per MPI proc)
-    size[d] = sd->decomp_size[d]; //local size to be written to hdf5 file
-    g_size[d] = sd->gbl_size[d]; //global size to be written to hdf5 file
-    g_d_m[d] = sd->gbl_d_m[d]; //global halo depth(-) to be written to hdf5 file
-    g_d_p[d] = sd->gbl_d_p[d]; //global halo depth(+) to be written to hdf5 file
+    size[d] = sd->decomp_size[d]; //local size to compute the chunk data set dimensions
+    gbl_size[d] = sd->gbl_size[d]; //global size to compute the chunk data set dimensions
+
+    g_d_m[d] = sd->gbl_d_m[d]; //global halo depth(-) attribute to be written to hdf5 file
+    g_d_p[d] = sd->gbl_d_p[d]; //global halo depth(+) attribute to be written to hdf5 file
+    g_size[d] = sd->gbl_size[d] + g_d_m[d] - g_d_p[d]; //global size attribute to be written to hdf5 file
 
     count[d] = 1; stride[d] = 1;
 
@@ -202,7 +206,8 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     //printf("disp[%d] = %d ",d,disp[d]);
     //printf("size[%d] = %d ",d,size[d]);
     //printf("dat->size[%d] = %d ",d,dat->size[d]);
-    //printf("gbl_size[%d] = %d ",d,g_size[d]);
+    //printf("gbl_size[%d] = %d ",d,sd->gbl_size[d]);
+    //printf("g_size[%d] = %d ",d,g_size[d]);
     //printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
     //printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
   }
@@ -253,20 +258,20 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     }
     //Create a new file collectively and release property list identifier.
     file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    //H5Pclose(plist_id);
     H5Fclose(file_id);
   }
 
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+  H5Pclose(plist_id);
   if(H5Lexists(file_id, dat->name, H5P_DEFAULT) == 0) {
     ops_printf("ops_dat %s does not exists in the file ... creating data\n", dat->name);
 
     //Create the dataspace for the dataset
-    filespace = H5Screate_simple(block->dims, g_size, NULL); //space in file
+    filespace = H5Screate_simple(block->dims, gbl_size, NULL); //space in file
 
     // Create chunked dataset
     plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(plist_id, block->dims, g_size); //chunk data set need to be the same size on each proc
+    H5Pset_chunk(plist_id, block->dims, gbl_size); //chunk data set need to be the same size on each proc
 
     //Create the dataset with default properties and close filespace.
     if(strcmp(dat->type,"double") == 0)
@@ -296,7 +301,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
     H5LTset_attribute_int(file_id, dat->name, "block_index", &(block->index), 1); //block index
     H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
-    H5LTset_attribute_int(file_id, dat->name, "size", sd->gbl_size, block->dims); //size
+    H5LTset_attribute_int(file_id, dat->name, "size", g_size, block->dims); //size
     H5LTset_attribute_int(file_id, dat->name, "d_m", g_d_m, block->dims); //d_m
     H5LTset_attribute_int(file_id, dat->name, "d_p", g_d_p, block->dims); //d_p
     H5LTset_attribute_int(file_id, dat->name, "base", dat->base, block->dims); //base
@@ -353,9 +358,9 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   }
   else {
     for(int d = 0; d<block->dims; d++) {
-      if (sd->gbl_size[d] != read_size[d]) {
+      if (g_size[d] != read_size[d]) {
         ops_printf("Unequal sizes of data set %s: size[%d] on file %d, size[%d] to be wirtten %d .. Aborting\n",
-           dat->name, d, read_size[d], d, sd->gbl_size[d]);
+           dat->name, d, read_size[d], d, g_size[d]);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
     }
@@ -452,6 +457,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
+  MPI_Barrier(MPI_COMM_WORLD);
   free(data);
 
   H5Sclose(filespace);
@@ -468,7 +474,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
                       char const *type,
                       char const *dat_name,
                       char const *file_name) {
-  //printf("%s specified type %s\n",dat_name, type);
+
   //create new communicator
   int my_rank, comm_size;
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
@@ -528,7 +534,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
-  char read_type[15];
+  char read_type[7];
   if (H5LTget_attribute_string(file_id, dat_name, "type", read_type) < 0){
     ops_printf("Attribute \"type\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
@@ -568,20 +574,20 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   //set type size
   int type_size;
-  //if(strcmp(read_type,"double") == 0)
+  if(strcmp(read_type,"double") == 0)
     type_size = sizeof(double);
-  /*if(strcmp(read_type,"float") == 0)
+  else if(strcmp(read_type,"float") == 0)
     type_size = sizeof(float);
-  if(strcmp(read_type,"int") == 0)
+  else if(strcmp(read_type,"int") == 0)
     type_size = sizeof(int);
-  if(strcmp(read_type,"long") == 0)
+  else if(strcmp(read_type,"long") == 0)
     type_size = sizeof(long);
-  if(strcmp(read_type,"long long") == 0)
+  else if(strcmp(read_type,"long long") == 0)
     type_size = sizeof(long long);
   else{
     printf("Unknown type %s in ops_decl_dat_hdf5()\n", read_type);
     exit(2);
-  }*/
+  }
 
   char * data = NULL;
 
@@ -608,19 +614,19 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
 
 void ops_read_dat_hdf5(ops_dat dat) {
-
   //complute the number of elements that this process will read from file
   //also compute the correct offsets on the file that this process should begin from to read
   sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_block block = dat->block;
   sub_block *sb = OPS_sub_block_list[dat->block->index];
 
-  hsize_t disp[block->dims]; //temp array to hold global disps of the dat to read from hdf5 file
-  hsize_t l_disp[block->dims]; //temp array to hold local disps of the dat to read from hdf5 file
-  hsize_t size[block->dims]; //temp array to hold size of the dat to read from hdf5 file
-  hsize_t g_size[block->dims]; //temp array to hold global size of the dat to read from hdf5 file
-  int g_d_m[block->dims]; //temp array to hold global size of the block halo (-) depth to read from hdf5 file
-  int g_d_p[block->dims]; //temp array to hold global size of the block halo (+) depth to read from hdf5 file
+  hsize_t disp[block->dims]; //global disps to compute the chunk data set dimensions
+  hsize_t l_disp[block->dims]; //local disps to remove MPI halos
+  hsize_t size[block->dims]; //local size to compute the chunk data set dimensions
+  hsize_t gbl_size[block->dims]; //global size to compute the chunk data set dimensions
+
+  int g_d_m[block->dims]; //global size of the block halo (-) depth attribute to read from hdf5 file
+  int g_d_p[block->dims]; //global size of the block halo (+) depth attribute to read from hdf5 file
 
   hsize_t count[block->dims]; //parameters for for hdf5 file chuck reading
   hsize_t stride[block->dims]; //parameters for for hdf5 file chuck reading
@@ -630,8 +636,9 @@ void ops_read_dat_hdf5(ops_dat dat) {
     // include left block halo
     disp[d] = sd->decomp_disp[d] - sd->d_im[d] - dat->d_m[d]; //global displacements of the data set
     l_disp[d] = 0 - sd->d_im[d]; //local displacements of the data set (i.e. per MPI proc)
-    size[d] = sd->decomp_size[d]; //local size to be read from hdf5 file
-    g_size[d] = sd->gbl_size[d]; //global size to be read from hdf5 file
+    size[d] = sd->decomp_size[d]; //local size to compute the chunk data set dimensions
+    gbl_size[d] = sd->gbl_size[d]; //global size to compute the chunk data set dimensions
+
     g_d_m[d] = sd->gbl_d_m[d]; //global halo depth(-) to be read from hdf5 file
     g_d_p[d] = sd->gbl_d_p[d]; //global halo depth(+) to be read from hdf5 file
 
@@ -641,7 +648,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     //printf("disp[%d] = %d ",d,disp[d]);
     //printf("size[%d] = %d ",d,size[d]);
     //printf("dat->size[%d] = %d ",d,dat->size[d]);
-    //printf("gbl_size[%d] = %d ",d,g_size[d]);
+    //printf("gbl_size[%d] = %d ",d,gbl_size[d]);
     //printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
     //printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
   }
@@ -681,6 +688,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
   file_id = H5Fopen(dat->hdf5_file, H5F_ACC_RDWR, plist_id);
+  H5Pclose(plist_id);
 
   //check if ops_dat exists
   if(H5Lexists(file_id, dat->name, H5P_DEFAULT) == 0)
@@ -690,7 +698,8 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
   // Create chunked dataset
   plist_id = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(plist_id, block->dims, g_size); //chunk data set need to be the same size on each proc
+  H5Pset_chunk(plist_id, block->dims, gbl_size); //chunk data set need to be the same size on each proc
+  H5Pclose(plist_id);
 
   //Need to flip the dimensions to accurately read from HDF5 chunk decomposition
   hsize_t DISP[block->dims];
@@ -711,9 +720,9 @@ void ops_read_dat_hdf5(ops_dat dat) {
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
   //read data
-  //if(strcmp(dat->type,"double") == 0)
+  if(strcmp(dat->type,"double") == 0)
     H5Dread(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-  /*else if(strcmp(dat->type,"float") == 0)
+  else if(strcmp(dat->type,"float") == 0)
     H5Dread(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
   else if(strcmp(dat->type,"int") == 0)
     H5Dread(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
@@ -724,7 +733,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
   else {
     printf("Unknown type in ops_fetch_data_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }*/
+  }
 
   //add MPI halos
   if(block->dims == 2)
