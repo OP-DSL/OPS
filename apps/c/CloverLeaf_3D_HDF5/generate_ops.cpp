@@ -24,9 +24,10 @@ void generate()
 {
 
 
-    ops_fetch_data_hdf5_file(density0, "test_cloverdata.h5");
-    ops_fetch_data_hdf5_file(energy0, "test_cloverdata.h5");
-    ops_fetch_data_hdf5_file(xvel0, "test_cloverdata.h5");
-    ops_fetch_data_hdf5_file(yvel0, "test_cloverdata.h5");
-    ops_fetch_data_hdf5_file(zvel0, "test_cloverdata.h5");
+
+
+
+
+
+  ops_fetch_block_hdf5_file(clover_grid, "cloverdata.h5");
 }

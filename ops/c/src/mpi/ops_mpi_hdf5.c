@@ -198,12 +198,68 @@ void add_mpi_halos4D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
 void add_mpi_halos5D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
 
 /*******************************************************************************
+* Routine to write an ops_block to a named hdf5 file,
+* if file does not exist, creates it
+* if the block does not exists in file creates block
+*******************************************************************************/
+
+void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+   //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... creating file\n", file_name);
+    MPI_Barrier(OPS_MPI_HDF5_WORLD);
+    if (ops_is_root()) {
+      FILE *fp; fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+    //Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Fclose(file_id);
+  }
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+  hsize_t rank = 1;
+  /* create and write an string type dataset named "dset" */
+  H5LTmake_dataset(file_id,block->name,rank,&rank,H5T_NATIVE_INT,&(block->index));
+  //attach attributes to block
+  H5LTset_attribute_string(file_id, block->name, "ops_type", "ops_block"); //ops type
+  H5LTset_attribute_int(file_id, block->name, "dims", &(block->dims), 1); //dim
+
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+  MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
+}
+
+
+/*******************************************************************************
 * Routine to write an ops_dat to a named hdf5 file,
 * if file does not exist, creates it
 * if the data set does not exists in file creates data set
 *******************************************************************************/
 
-void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
+void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
   //fetch data onto the host ( if needed ) based on the backend -- TODO for GPUs
 
@@ -327,7 +383,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
       dset_id = H5Dcreate(file_id, dat->name, H5T_NATIVE_LLONG, filespace,
           H5P_DEFAULT, plist_id, H5P_DEFAULT);
     else {
-      printf("Unknown type in ops_fetch_data_hdf5_file()\n");
+      printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
     H5Pclose(plist_id);
@@ -335,6 +391,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     H5Dclose(dset_id);
 
     //attach attributes to dat
+    H5LTset_attribute_string(file_id, dat->name, "ops_type", "ops_dat"); //ops type
     H5LTset_attribute_string(file_id, dat->name, "block", block->name); //block
     H5LTset_attribute_int(file_id, dat->name, "block_index", &(block->index), 1); //block index
     H5LTset_attribute_int(file_id, dat->name, "dim", &(dat->dim), 1); //dim
@@ -351,6 +408,17 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   //
   //check attributes .. error if not equal
   //
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, dat->name, "ops_type", read_ops_type) < 0){
+    ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat->name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp("ops_dat",read_ops_type) != 0) {
+      ops_printf("ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat->name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+
   char read_block_name[30];
   if (H5LTget_attribute_string(file_id, dat->name, "block", read_block_name) < 0){
     ops_printf("Attribute \"block\" not found in data set %s .. Aborting\n",dat->name);
@@ -500,7 +568,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   else if(strcmp(dat->type,"long long") == 0)
     H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
   else {
-    printf("Unknown type in ops_fetch_data_hdf5_file()\n");
+    printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -556,7 +624,17 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
   if(H5Lexists(file_id, dat_name, H5P_DEFAULT) == 0)
     ops_printf("ops_dat %s does not exists in the file ... aborting\n", dat_name);
 
-  //ops_dat exists .. now check block_index, type and dim
+  //ops_dat exists .. now check ops_type, block_index, type and dim
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, dat_name, "ops_type", read_ops_type) < 0){
+    ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp("ops_dat",read_ops_type) != 0) {
+      ops_printf("ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
   int read_block_index;
   if (H5LTget_attribute_int(file_id, dat_name, "block_index", &read_block_index) < 0) {
     ops_printf("Attribute \"block_index\" not found in data set %s .. Aborting\n",dat_name);
@@ -788,7 +866,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
   else if(strcmp(dat->type,"long long") == 0)
     H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
   else {
-    printf("Unknown type in ops_fetch_data_hdf5_file()\n");
+    printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 

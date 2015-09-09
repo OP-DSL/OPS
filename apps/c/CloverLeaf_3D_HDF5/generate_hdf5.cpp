@@ -62,9 +62,9 @@ void generate_hdf5()
     ops_arg_dat(celly,    1, S3D_000_STRID3D_Y, "double", OPS_READ),
     ops_arg_dat(cellz,    1, S3D_000_STRID3D_Z, "double", OPS_READ));
 
-    ops_fetch_data_hdf5_file(density0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(energy0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(xvel0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(yvel0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(zvel0, "cloverdata.h5");
+    ops_fetch_dat_hdf5_file(density0, "cloverdata.h5");
+    ops_fetch_dat_hdf5_file(energy0, "cloverdata.h5");
+    ops_fetch_dat_hdf5_file(xvel0, "cloverdata.h5");
+    ops_fetch_dat_hdf5_file(yvel0, "cloverdata.h5");
+    ops_fetch_dat_hdf5_file(zvel0, "cloverdata.h5");
 }
