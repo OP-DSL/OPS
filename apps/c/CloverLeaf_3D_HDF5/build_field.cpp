@@ -51,7 +51,7 @@ void build_field()
 
   /**----------------------------OPS Declarations----------------------------**/
 
-  clover_grid = ops_decl_block(3, "clover grid");
+  clover_grid = ops_decl_block_hdf5(3, "clover grid", "cloverdata.h5");
 
   //
   //declare data on blocks

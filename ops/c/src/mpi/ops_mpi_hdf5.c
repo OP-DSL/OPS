@@ -585,7 +585,73 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   return;
 }
 
- ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
+ops_block ops_decl_block_hdf5(int dims, char *block_name,
+                      char const *file_name) {
+
+  //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... aborting\n", file_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_block exists
+  if(H5Lexists(file_id, block_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_block %s does not exists in the file ... aborting\n", block_name);
+
+  //ops_block exists .. now check ops_type and dims
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) < 0){
+    ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",block_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp("ops_block",read_ops_type) != 0) {
+      ops_printf("ops_type of dat %s is defined are not equal to ops_block.. Aborting\n",block_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+  int read_dims;
+  if (H5LTget_attribute_int(file_id, block_name, "dims", &read_dims) < 0) {
+    ops_printf("Attribute \"dims\" not found in data set %s .. Aborting\n",block_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    if (dims != read_dims) {
+      ops_printf("Unequal dims of data set %s: dims on file %d, dims specified %d .. Aborting\n",
+         block_name,read_dims, dims);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+  //checks passed ..
+
+  int read_index;
+  H5LTread_dataset_int(file_id,block_name,&read_index);
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+
+  return ops_decl_block(read_dims, block_name );
+
+}
+ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
                       char const *type,
                       char const *dat_name,
                       char const *file_name) {

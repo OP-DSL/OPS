@@ -45,6 +45,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
                       char const *type,
                       char const *dat_name,
                       char const *file_name);
+ops_block ops_decl_block_hdf5(int dims, char *block_name,
+                      char const *file_name);
 
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);

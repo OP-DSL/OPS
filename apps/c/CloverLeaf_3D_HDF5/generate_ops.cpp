@@ -29,5 +29,5 @@ void generate()
 
 
 
-  ops_fetch_block_hdf5_file(clover_grid, "cloverdata.h5");
+
 }
