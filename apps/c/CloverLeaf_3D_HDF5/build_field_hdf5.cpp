@@ -33,7 +33,7 @@
 #include "data.h"
 #include "definitions.h"
 
-void build_field()
+void build_field_hdf5()
 {
   //initialize sizes using global values
   int x_cells = grid.x_cells;
@@ -62,10 +62,10 @@ void build_field()
   int base[3] = {0,0,0};
   double* temp = NULL;
 
-  density0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "density0", "cloverdata.h5");
+  density0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density0");
   density1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "density1");
 
-  energy0     = ops_decl_dat_hdf5(clover_grid, 1, "double", "energy0", "cloverdata.h5");
+  energy0     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy0");
   energy1     = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "energy1");
 
   pressure    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "pressure");
@@ -74,13 +74,14 @@ void build_field()
   volume      = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "volume");
 
   size[0]++; size[1]++;size[2]++;
-  xvel0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "xvel0", "cloverdata.h5");
+
+  xvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel0");
   xvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel1");
 
-  yvel0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "yvel0", "cloverdata.h5");
+  yvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel0");
   yvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel1");
 
-  zvel0    = ops_decl_dat_hdf5(clover_grid, 1, "double", "zvel0", "cloverdata.h5");
+  zvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zvel0");
   zvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zvel1");
 
   work_array1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array1");

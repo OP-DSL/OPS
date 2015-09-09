@@ -23,20 +23,10 @@
 void generate()
 {
 
-  int x_min = field.x_min;
-  int x_max = field.x_max;
-  int y_min = field.y_min;
-  int y_max = field.y_max;
-  int z_min = field.z_min;
-  int z_max = field.z_max;
 
-  int rangexyz[] = {x_min-2,x_max+2,y_min-2,y_max+2,z_min-2,z_max+2};
-
-
-    ops_fetch_data_hdf5_file(density0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(energy0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(xvel0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(yvel0, "cloverdata.h5");
-    ops_fetch_data_hdf5_file(zvel0, "cloverdata.h5");
-
+    ops_fetch_data_hdf5_file(density0, "test_cloverdata.h5");
+    ops_fetch_data_hdf5_file(energy0, "test_cloverdata.h5");
+    ops_fetch_data_hdf5_file(xvel0, "test_cloverdata.h5");
+    ops_fetch_data_hdf5_file(yvel0, "test_cloverdata.h5");
+    ops_fetch_data_hdf5_file(zvel0, "test_cloverdata.h5");
 }
