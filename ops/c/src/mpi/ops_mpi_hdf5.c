@@ -87,8 +87,6 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
   //}
   //}
   //}
-
-
   return;
   /*
   x = disp[0] to size[0]
@@ -109,9 +107,28 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
 
 /*******************************************************************************
 * Routine to remove the intra-block halos from the flattend 1D dat
-* before writing to HDF5 files - Maximum dimension of block is 4
+* before writing to HDF5 files - Maximum dimension of block is 3
 *******************************************************************************/
 void remove_mpi_halos3D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
+  int index = 0; int count = 0;
+  //for(int m = disp[4]; m < size[4]; m++) {
+  //  for(int l = disp[3]; l < size[3]; l++) {
+  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
+    for(int j = disp[1]; j < disp[1]+size[1]; j++) {
+      for(int i = disp[0]; i < disp[0]+size[0]; i++) {
+          index = i +
+                  j * dat->size[0] + // need to stride in dat->size as data block includes intra-block halos
+                  k * dat->size[0] * dat->size[1];// +
+                  //l * dat->size[0] * dat->size[1] * dat->size[2] +
+                  //m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
+          memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+          count++;
+      }
+    }
+  }
+  //}
+  //}
+  return;
 }
 
 /*******************************************************************************
@@ -156,7 +173,27 @@ void add_mpi_halos2D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
   return;
 }
 
-void add_mpi_halos3D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
+void add_mpi_halos3D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
+  int index = 0; int count = 0;
+  //for(int m = disp[4]; m < size[4]; m++) {
+  //  for(int l = disp[3]; l < size[3]; l++) {
+  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
+    for(int j = disp[1]; j < disp[1]+size[1]; j++) {
+      for(int i = disp[0]; i < disp[0]+size[0]; i++) {
+          index = i +
+                  j * dat->size[0] + // need to stride in dat->size as data block includes intra-block halos
+                  k * dat->size[0] * dat->size[1]; // +
+                  //l * dat->size[0] * dat->size[1] * dat->size[2] +
+                  //m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
+          memcpy(&dat->data[index*dat->elem_size],&data[count*dat->elem_size],dat->elem_size);
+          count++;
+      }
+    }
+  }
+  //}
+  //}
+  return;
+};
 void add_mpi_halos4D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
 void add_mpi_halos5D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
 
@@ -206,7 +243,7 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
     //printf("disp[%d] = %d ",d,disp[d]);
     //printf("size[%d] = %d ",d,size[d]);
     //printf("dat->size[%d] = %d ",d,dat->size[d]);
-    //printf("gbl_size[%d] = %d ",d,sd->gbl_size[d]);
+    //printf("gbl_size[%d] = %d \n",d,sd->gbl_size[d]);
     //printf("g_size[%d] = %d ",d,g_size[d]);
     //printf("dat->d_m[%d] = %d ",d,g_d_m[d]);
     //printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
@@ -425,11 +462,21 @@ void ops_fetch_data_hdf5_file(ops_dat dat, char const *file_name) {
 
   //Need to flip the dimensions to accurately write to HDF5 chunk decomposition
   hsize_t DISP[block->dims];
-  DISP[0] = disp[1];
-  DISP[1] = disp[0];
   hsize_t SIZE[block->dims];
-  SIZE[0] = size[1];
-  SIZE[1] = size[0];
+  if(block->dims == 2) {
+    DISP[0] = disp[1];
+    DISP[1] = disp[0];
+    SIZE[0] = size[1];
+    SIZE[1] = size[0];
+  }
+  else if(block->dims == 3){
+    DISP[0] = disp[2];
+    DISP[1] = disp[1]; //note how dimension 1 remains the same !!
+    DISP[2] = disp[0];
+    SIZE[0] = size[2];
+    SIZE[1] = size[1]; //note how dimension 1 remains the same !!
+    SIZE[2] = size[0];
+  }
 
   memspace = H5Screate_simple(block->dims, size, NULL); //block of memory to write to file by each proc
 
@@ -703,11 +750,21 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
   //Need to flip the dimensions to accurately read from HDF5 chunk decomposition
   hsize_t DISP[block->dims];
-  DISP[0] = disp[1];
-  DISP[1] = disp[0];
   hsize_t SIZE[block->dims];
-  SIZE[0] = size[1];
-  SIZE[1] = size[0];
+  if(block->dims == 2) {
+    DISP[0] = disp[1];
+    DISP[1] = disp[0];
+    SIZE[0] = size[1];
+    SIZE[1] = size[0];
+  }
+  else if(block->dims == 3){
+    DISP[0] = disp[2];
+    DISP[1] = disp[1]; //note how dimension 1 remains the same !!
+    DISP[2] = disp[0];
+    SIZE[0] = size[2];
+    SIZE[1] = size[1]; //note how dimension 1 remains the same !!
+    SIZE[2] = size[0];
+  }
 
   memspace = H5Screate_simple(block->dims, size, NULL); //block of memory to read from file by each proc
 

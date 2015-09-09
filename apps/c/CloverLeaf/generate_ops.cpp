@@ -11,6 +11,19 @@
 #define OPS_2D
 #include  "ops_lib_cpp.h"
 
+//
+// ops_par_loop declarations
+//
+
+void ops_par_loop_generate_chunk_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
 
 
 
@@ -29,12 +42,14 @@ void generate()
 
   int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
 
-
-  ops_fetch_data_hdf5_file(density0, "cloverdata.h5");
-  ops_fetch_data_hdf5_file(energy0, "cloverdata.h5");
-  ops_fetch_data_hdf5_file(xvel0, "cloverdata.h5");
-  ops_fetch_data_hdf5_file(yvel0, "cloverdata.h5");
-
-
+  ops_par_loop_generate_chunk_kernel("generate_chunk_kernel", clover_grid, 2, rangexy,
+               ops_arg_dat(vertexx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(vertexy, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
+               ops_arg_dat(energy0, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(density0, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(xvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
+               ops_arg_dat(yvel0, 1, S2D_00_P10_0P1_P1P1, "double", OPS_WRITE),
+               ops_arg_dat(cellx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
+               ops_arg_dat(celly, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
 }

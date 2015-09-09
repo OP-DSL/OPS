@@ -68,6 +68,7 @@ extern double dt;
 #include "initialise_chunk_kernel_cellx_seq_kernel.cpp"
 #include "initialise_chunk_kernel_celly_seq_kernel.cpp"
 #include "initialise_chunk_kernel_volume_seq_kernel.cpp"
+#include "generate_chunk_kernel_seq_kernel.cpp"
 #include "update_halo_kernel1_b2_seq_kernel.cpp"
 #include "update_halo_kernel1_b1_seq_kernel.cpp"
 #include "update_halo_kernel1_t2_seq_kernel.cpp"

@@ -56,12 +56,12 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,80)) return;
+  if (!ops_checkpointing_before(args,3,range,81)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(80,"update_halo_kernel4_plus_4_b");
-    OPS_kernels[80].count++;
+    ops_timing_realloc(81,"update_halo_kernel4_plus_4_b");
+    OPS_kernels[81].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -163,7 +163,7 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[80].mpi_time += t2-t1;
+    OPS_kernels[81].mpi_time += t2-t1;
   }
 
 
@@ -174,7 +174,7 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[80].time += t1-t2;
+    OPS_kernels[81].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 3);
@@ -184,8 +184,8 @@ void ops_par_loop_update_halo_kernel4_plus_4_b(char const *name, ops_block block
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[80].mpi_time += t2-t1;
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[81].mpi_time += t2-t1;
+    OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[81].transfer += ops_compute_transfer(dim, range, &arg1);
   }
 }

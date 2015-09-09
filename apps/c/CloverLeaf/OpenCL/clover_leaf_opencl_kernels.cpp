@@ -206,8 +206,8 @@ void buildOpenCLKernels() {
   if(!isbuilt) {
     //clSafeCall( clUnloadCompiler() );
 
-    OPS_opencl_core.n_kernels = 82;
-    OPS_opencl_core.kernel = (cl_kernel*) malloc(82*sizeof(cl_kernel));
+    OPS_opencl_core.n_kernels = 83;
+    OPS_opencl_core.kernel = (cl_kernel*) malloc(83*sizeof(cl_kernel));
   }
   isbuilt = true;
 }

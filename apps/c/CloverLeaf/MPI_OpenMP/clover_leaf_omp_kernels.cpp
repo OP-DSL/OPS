@@ -73,6 +73,7 @@ extern double dt;
 #include "initialise_chunk_kernel_cellx_omp_kernel.cpp"
 #include "initialise_chunk_kernel_celly_omp_kernel.cpp"
 #include "initialise_chunk_kernel_volume_omp_kernel.cpp"
+#include "generate_chunk_kernel_omp_kernel.cpp"
 #include "update_halo_kernel1_b2_omp_kernel.cpp"
 #include "update_halo_kernel1_b1_omp_kernel.cpp"
 #include "update_halo_kernel1_t2_omp_kernel.cpp"

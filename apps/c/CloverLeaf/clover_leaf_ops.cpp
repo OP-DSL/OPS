@@ -156,7 +156,6 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 200) {
 
 
 
@@ -166,7 +165,7 @@ int main(int argc, char **argv)
 
 
 
-     }
+
 
   }
 
