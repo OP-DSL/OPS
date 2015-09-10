@@ -699,11 +699,11 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
   //ops_block exists .. now check ops_type and dims
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) < 0){
-    ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",block_name);
+    ops_printf("Attribute \"ops_type\" not found in block %s .. Aborting\n",block_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   } else {
     if (strcmp("ops_block",read_ops_type) != 0) {
-      ops_printf("ops_type of dat %s is defined are not equal to ops_block.. Aborting\n",block_name);
+      ops_printf("ops_type of block %s is defined are not equal to ops_block.. Aborting\n",block_name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
@@ -729,6 +729,95 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
   return ops_decl_block(read_dims, block_name );
 
 }
+
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+                      char const *file_name) {
+
+  //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... aborting\n", file_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_stencil exists
+  if(H5Lexists(file_id, stencil_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_stencil %s does not exists in the file ... aborting\n", stencil_name);
+
+  //ops_stencil exists .. now check ops_type and dims
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, stencil_name, "ops_type", read_ops_type) < 0){
+    ops_printf("Attribute \"ops_type\" not found in stencil %s .. Aborting\n",stencil_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp("ops_stencil",read_ops_type) != 0) {
+      ops_printf("ops_type of stencil %s is defined are not equal to ops_stencil.. Aborting\n",stencil_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+  int read_dims;
+  if (H5LTget_attribute_int(file_id, stencil_name, "dims", &read_dims) < 0) {
+    ops_printf("Attribute \"dims\" not found in stencil %s .. Aborting\n",stencil_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    if (dims != read_dims) {
+      ops_printf("Unequal dims of stencil %s: dims on file %d, dims specified %d .. Aborting\n",
+         stencil_name,read_dims, dims);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+  int read_points;
+  if (H5LTget_attribute_int(file_id, stencil_name, "points", &read_points) < 0) {
+    ops_printf("Attribute \"points\" not found in stencil %s .. Aborting\n",stencil_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  else {
+    if (points != read_points) {
+      ops_printf("Unequal points of stencil %s: points on file %d, points specified %d .. Aborting\n",
+         stencil_name,read_points, points);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+  //checks passed ..
+
+  //get the strides
+  int read_stride[read_dims];
+  if (H5LTget_attribute_int(file_id, stencil_name, "stride", read_stride) < 0) {
+    ops_printf("Attribute \"stride\" not found in stencil %s .. Aborting\n",stencil_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  int read_sten[read_dims*read_points];
+  H5LTread_dataset_int(file_id,stencil_name,read_sten);
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+
+  //use decl_strided stencil for both normal and strided stencils
+  return ops_decl_strided_stencil (read_dims, read_points, read_sten, read_stride, stencil_name);
+
+}
+
+
 
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
                       char const *type,

@@ -48,6 +48,12 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
 ops_block ops_decl_block_hdf5(int dims, char *block_name,
                       char const *file_name);
 
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+                      char const *file_name);
+
+ops_stencil ops_decl_strided_stencil_hdf5(int dims, int points, char *stencil_name,
+                      char const *file_name);
+
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);

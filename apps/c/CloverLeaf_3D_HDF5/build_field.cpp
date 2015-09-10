@@ -260,7 +260,9 @@ void build_field()
   S3D_000_0P30     = ops_decl_stencil( 3, 2, s3D_000_0P30, "0,0,0:0,3,0");
   S3D_000_00P3     = ops_decl_stencil( 3, 2, s3D_000_00P3, "0,0,0:0,0,3");
 
-  S3D_000_M300     = ops_decl_stencil( 3, 2, s3D_000_M300, "0,0,0:-3,0,0");
+  //S3D_000_M300     = ops_decl_stencil( 3, 2, s3D_000_M300, "0,0,0:-3,0,0");
+  S3D_000_M300     = ops_decl_stencil_hdf5( 3, 2, "0,0,0:-3,0,0", "cloverdata.h5");
+
   S3D_000_0M30     = ops_decl_stencil( 3, 2, s3D_000_0M30, "0,0,0:0,-3,0");
   S3D_000_00M3     = ops_decl_stencil( 3, 2, s3D_000_00M3, "0,0,0:0,0,-3");
 
@@ -272,7 +274,10 @@ void build_field()
   S3D_000_0M40     = ops_decl_stencil( 3, 2, s3D_000_0M40, "0,0,0:0,-4,0");
   S3D_000_00M4     = ops_decl_stencil( 3, 2, s3D_000_00M4, "0,0,0:0,0,-4");
 
-  S3D_000_P100_P200_M100 = ops_decl_stencil( 3, 4, s3D_000_P100_P200_M100, "0,0,0:1,0,0:2,0,0:-1,0,0");
+  //S3D_000_P100_P200_M100 = ops_decl_stencil( 3, 4, s3D_000_P100_P200_M100, "0,0,0:1,0,0:2,0,0:-1,0,0");
+  S3D_000_P100_P200_M100 = ops_decl_stencil_hdf5( 3, 4, "0,0,0:1,0,0:2,0,0:-1,0,0", "cloverdata.h5");
+
+
   S3D_000_0P10_0P20_0M10 = ops_decl_stencil( 3, 4, s3D_000_0P10_0P20_0M10, "0,0,0:1,0,0:0,2,0:0,-1,0");
   S3D_000_00P1_00P2_00M1 = ops_decl_stencil( 3, 4, s3D_000_00P1_00P2_00M1, "0,0,0:1,0,0:0,0,2:0,0,-1");
 
