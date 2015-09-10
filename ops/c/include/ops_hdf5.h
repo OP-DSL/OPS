@@ -50,6 +50,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
+void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);
 void ops_read_dat_hdf5(ops_dat dat);
 
 #ifdef __cplusplus

@@ -63,6 +63,10 @@ void generate_hdf5()
     ops_arg_dat(cellz,    1, S3D_000_STRID3D_Z, "double", OPS_READ));
 
     ops_fetch_block_hdf5_file(clover_grid, "cloverdata.h5");
+
+    ops_fetch_stencil_hdf5_file(S3D_000_P100_P200_M100, "cloverdata.h5");
+    ops_fetch_stencil_hdf5_file(S3D_000_M300, "cloverdata.h5");
+
     ops_fetch_dat_hdf5_file(density0, "cloverdata.h5");
     ops_fetch_dat_hdf5_file(energy0, "cloverdata.h5");
     ops_fetch_dat_hdf5_file(xvel0, "cloverdata.h5");

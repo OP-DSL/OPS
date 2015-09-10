@@ -241,11 +241,89 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
   hsize_t rank = 1;
-  /* create and write an string type dataset named "dset" */
-  H5LTmake_dataset(file_id,block->name,rank,&rank,H5T_NATIVE_INT,&(block->index));
+  /* create and write the dataset */
+  if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_block %s does not exists in the file ... creating data\n", block->name);
+    H5LTmake_dataset(file_id,block->name,rank,&rank,H5T_NATIVE_INT,&(block->index));
+  }
+  else {
+    dset_id = H5Dopen2(file_id, block->name, H5P_DEFAULT);
+    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(block->index));
+    H5Dclose(dset_id);
+  }
+
   //attach attributes to block
   H5LTset_attribute_string(file_id, block->name, "ops_type", "ops_block"); //ops type
   H5LTset_attribute_int(file_id, block->name, "dims", &(block->dims), 1); //dim
+
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+  MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
+}
+
+/*******************************************************************************
+* Routine to write an ops_block to a named hdf5 file,
+* if file does not exist, creates it
+* if the block does not exists in file creates block
+*******************************************************************************/
+
+void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+   //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... creating file\n", file_name);
+    MPI_Barrier(OPS_MPI_HDF5_WORLD);
+    if (ops_is_root()) {
+      FILE *fp; fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+    //Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Fclose(file_id);
+  }
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+  hsize_t rank = 1;
+  hsize_t elems =  stencil->dims*stencil->points;
+
+  /* create and write the dataset */
+  if(H5Lexists(file_id, stencil->name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_stencil %s does not exists in the file ... creating data\n", stencil->name);
+    H5LTmake_dataset(file_id,stencil->name,rank,&elems,H5T_NATIVE_INT,stencil->stencil);
+  }
+  else {
+    dset_id = H5Dopen2(file_id, stencil->name, H5P_DEFAULT);
+    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, stencil->stencil);
+    H5Dclose(dset_id);
+  }
+
+  //attach attributes to stencil
+  H5LTset_attribute_string(file_id, stencil->name, "ops_type", "ops_stencil"); //ops type
+  H5LTset_attribute_int(file_id, stencil->name, "dims", &(stencil->dims), 1); //dim
+  H5LTset_attribute_int(file_id, stencil->name, "index", &(stencil->index), 1); //index
+  H5LTset_attribute_int(file_id, stencil->name, "points", &(stencil->points), 1); //number of points
+  H5LTset_attribute_int(file_id, stencil->name, "stride", stencil->stride, stencil->dims); //strides
 
   H5Pclose(plist_id);
   H5Fclose (file_id);
@@ -651,6 +729,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
   return ops_decl_block(read_dims, block_name );
 
 }
+
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
                       char const *type,
                       char const *dat_name,
