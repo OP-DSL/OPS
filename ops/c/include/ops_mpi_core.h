@@ -68,9 +68,10 @@ typedef struct {
   // finest level decomposed details
   int decomp_disp[OPS_MAX_DIM];
   int decomp_size[OPS_MAX_DIM];
+  // normal communicator for intra-block
+  MPI_Comm comm1;
   // Cartesian communicator for intra-block
   MPI_Comm comm;
-  MPI_Comm comm1;
   // Group communicator for intra-block
   MPI_Group grp;
   int owned;
