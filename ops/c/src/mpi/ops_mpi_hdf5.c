@@ -351,7 +351,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if(sb->owned == 1) {
 
-    //fetch data onto the host ( if needed ) based on the backend -- TODO for GPUs
+    //fetch data onto the host ( if needed ) based on the backend
+    ops_get_data(dat);
 
     //complute the number of elements that this process will write to the final file
     //also compute the correct offsets on the final file that this process should begin from to write
@@ -449,7 +450,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     H5Pclose(plist_id);
 
     if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      ops_printf("ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
+      ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
     else {
@@ -458,7 +459,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
       if(H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
-        ops_printf("ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
+        ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
           dat->name, block->name);
 
         //Create the dataspace for the dataset
@@ -512,34 +513,34 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       //
       char read_ops_type[10];
       if (H5LTget_attribute_string(group_id, dat->name, "ops_type", read_ops_type) < 0){
-        ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       } else {
         if (strcmp("ops_dat",read_ops_type) != 0) {
-          ops_printf("ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat->name);
+          ops_printf("ops_fetch_dat_hdf5_file: ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat->name);
           MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
         }
       }
 
       char read_block_name[30];
       if (H5LTget_attribute_string(group_id, dat->name, "block", read_block_name) < 0){
-        ops_printf("Attribute \"block\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"block\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       } else {
         if (strcmp(block->name,read_block_name) != 0) {
-          ops_printf("BLocks on which data set %s is defined are not equal .. Aborting\n",dat->name);
+          ops_printf("ops_fetch_dat_hdf5_file: BLocks on which data set %s is defined are not equal .. Aborting\n",dat->name);
           MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
         }
       }
 
       int read_block_index;
       if (H5LTget_attribute_int(group_id, dat->name, "block_index", &read_block_index) < 0) {
-        ops_printf("Attribute \"block_index\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"block_index\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         if (block->index != read_block_index) {
-          ops_printf("Unequal dims of data set %s: block index on file %d, block index to be wirtten %d .. Aborting\n",
+          ops_printf("ops_fetch_dat_hdf5_file: Unequal dims of data set %s: block index on file %d, block index to be wirtten %d .. Aborting\n",
              dat->name,read_block_index, block->index);
           MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
         }
@@ -547,12 +548,12 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       int read_dim;
       if (H5LTget_attribute_int(group_id, dat->name, "dim", &read_dim) < 0) {
-        ops_printf("Attribute \"dim\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"dim\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         if (dat->dim != read_dim) {
-          ops_printf("Unequal dims of data set %s: dim on file %d, dim to be wirtten %d .. Aborting\n",
+          ops_printf("ops_fetch_dat_hdf5_file: Unequal dims of data set %s: dim on file %d, dim to be wirtten %d .. Aborting\n",
              dat->name,read_dim, dat->dim);
           MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
         }
@@ -560,13 +561,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       int read_size[block->dims];
       if (H5LTget_attribute_int(group_id, dat->name, "size", read_size) < 0) {
-        ops_printf("Attribute \"size\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"size\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         for(int d = 0; d<block->dims; d++) {
           if (g_size[d] != read_size[d]) {
-            ops_printf("Unequal sizes of data set %s: size[%d] on file %d, size[%d] to be wirtten %d .. Aborting\n",
+            ops_printf("ops_fetch_dat_hdf5_file: Unequal sizes of data set %s: size[%d] on file %d, size[%d] to be wirtten %d .. Aborting\n",
                dat->name, d, read_size[d], d, g_size[d]);
             MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
           }
@@ -575,13 +576,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       int read_d_m[block->dims];
       if (H5LTget_attribute_int(group_id, dat->name, "d_m", read_d_m) < 0) {
-        ops_printf("Attribute \"d_m\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"d_m\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         for(int d = 0; d<block->dims; d++) {
           if (g_d_m[d] != read_d_m[d]) {
-            ops_printf("Unequal d_m of data set %s: g_d_m[%d] on file %d, g_d_m[%d] to be wirtten %d .. Aborting\n",
+            ops_printf("ops_fetch_dat_hdf5_file: Unequal d_m of data set %s: g_d_m[%d] on file %d, g_d_m[%d] to be wirtten %d .. Aborting\n",
                dat->name, d, read_d_m[d], d, g_d_m[d]);
             MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
           }
@@ -590,13 +591,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       int read_d_p[block->dims];
       if (H5LTget_attribute_int(group_id, dat->name, "d_p", read_d_p) < 0) {
-        ops_printf("Attribute \"d_p\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"d_p\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         for(int d = 0; d<block->dims; d++) {
           if (g_d_p[d] != read_d_p[d]) {
-            ops_printf("Unequal d_p of data set %s: g_d_p[%d] on file %d, g_d_p[%d] to be wirtten %d .. Aborting\n",
+            ops_printf("ops_fetch_dat_hdf5_file: Unequal d_p of data set %s: g_d_p[%d] on file %d, g_d_p[%d] to be wirtten %d .. Aborting\n",
                dat->name, d, read_d_p[d], d, g_d_p[d]);
             MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
           }
@@ -605,13 +606,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       int read_base[block->dims];
       if (H5LTget_attribute_int(group_id, dat->name, "base", read_base) < 0) {
-        ops_printf("Attribute \"base\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"base\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       }
       else {
         for(int d = 0; d<block->dims; d++) {
           if (dat->base[d] != read_base[d]) {
-            ops_printf("Unequal base of data set %s: base[%d] on file %d, base[%d] to be wirtten %d .. Aborting\n",
+            ops_printf("ops_fetch_dat_hdf5_file: Unequal base of data set %s: base[%d] on file %d, base[%d] to be wirtten %d .. Aborting\n",
                dat->name, d, read_base[d], d, dat->base[d]);
             MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
           }
@@ -620,11 +621,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       char read_type[15];
       if (H5LTget_attribute_string(group_id, dat->name, "type", read_type) < 0){
-        ops_printf("Attribute \"type\" not found in data set %s .. Aborting\n",dat->name);
+        ops_printf("ops_fetch_dat_hdf5_file: Attribute \"type\" not found in data set %s .. Aborting\n",dat->name);
         MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
       } else {
         if (strcmp(dat->type,read_type) != 0) {
-          ops_printf("Type of data of data set %s is not equal: type on file %s, type specified %s .. Aborting\n",
+          ops_printf("ops_fetch_dat_hdf5_file: Type of data of data set %s is not equal: type on file %s, type specified %s .. Aborting\n",
             dat->name, read_type, dat->type);
           MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
         }
@@ -709,7 +710,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
   //open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
     MPI_Barrier(MPI_COMM_WORLD);
-    ops_printf("File %s does not exist .... aborting\n", file_name);
+    ops_printf("ops_decl_block_hdf5: File %s does not exist .... aborting\n", file_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -720,34 +721,34 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 
   //check if ops_block exists
   if(H5Lexists(file_id, block_name, H5P_DEFAULT) == 0)
-    ops_printf("ops_block %s does not exists in the file ... aborting\n", block_name);
+    ops_printf("ops_decl_block_hdf5: ops_block %s does not exists in the file ... aborting\n", block_name);
 
   //ops_block exists .. now check ops_type and dims
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) < 0){
-    ops_printf("Attribute \"ops_type\" not found in block %s .. Aborting\n",block_name);
+    ops_printf("ops_decl_block_hdf5: Attribute \"ops_type\" not found in block %s .. Aborting\n",block_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   } else {
     if (strcmp("ops_block",read_ops_type) != 0) {
-      ops_printf("ops_type of block %s is defined are not equal to ops_block.. Aborting\n",block_name);
+      ops_printf("ops_decl_block_hdf5: ops_type of block %s is defined are not equal to ops_block.. Aborting\n",block_name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_dims;
   if (H5LTget_attribute_int(file_id, block_name, "dims", &read_dims) < 0) {
-    ops_printf("Attribute \"dims\" not found in block %s .. Aborting\n",block_name);
+    ops_printf("ops_decl_block_hdf5: Attribute \"dims\" not found in block %s .. Aborting\n",block_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
     if (dims != read_dims) {
-      ops_printf("Unequal dims of block %s: dims on file %d, dims specified %d .. Aborting\n",
+      ops_printf("ops_decl_block_hdf5: Unequal dims of block %s: dims on file %d, dims specified %d .. Aborting\n",
          block_name,read_dims, dims);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_index;
   if (H5LTget_attribute_int(file_id, block_name, "index", &read_index) < 0) {
-    ops_printf("Attribute \"index\" not found in block %s .. Aborting\n",block_name);
+    ops_printf("ops_decl_block_hdf5: Attribute \"index\" not found in block %s .. Aborting\n",block_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -780,7 +781,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
   //open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
     MPI_Barrier(MPI_COMM_WORLD);
-    ops_printf("File %s does not exist .... aborting\n", file_name);
+    ops_printf("ops_decl_stencil_hdf5: File %s does not exist .... aborting\n", file_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -791,39 +792,39 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
 
   //check if ops_stencil exists
   if(H5Lexists(file_id, stencil_name, H5P_DEFAULT) == 0)
-    ops_printf("ops_stencil %s does not exists in the file ... aborting\n", stencil_name);
+    ops_printf("ops_decl_stencil_hdf5: ops_stencil %s does not exists in the file ... aborting\n", stencil_name);
 
   //ops_stencil exists .. now check ops_type and dims
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type", read_ops_type) < 0){
-    ops_printf("Attribute \"ops_type\" not found in stencil %s .. Aborting\n",stencil_name);
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in stencil %s .. Aborting\n",stencil_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   } else {
     if (strcmp("ops_stencil",read_ops_type) != 0) {
-      ops_printf("ops_type of stencil %s is defined are not equal to ops_stencil.. Aborting\n",stencil_name);
+      ops_printf("ops_decl_stencil_hdf5: ops_type of stencil %s is defined are not equal to ops_stencil.. Aborting\n",stencil_name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_dims;
   if (H5LTget_attribute_int(file_id, stencil_name, "dims", &read_dims) < 0) {
-    ops_printf("Attribute \"dims\" not found in stencil %s .. Aborting\n",stencil_name);
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"dims\" not found in stencil %s .. Aborting\n",stencil_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
     if (dims != read_dims) {
-      ops_printf("Unequal dims of stencil %s: dims on file %d, dims specified %d .. Aborting\n",
+      ops_printf("ops_decl_stencil_hdf5: Unequal dims of stencil %s: dims on file %d, dims specified %d .. Aborting\n",
          stencil_name,read_dims, dims);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_points;
   if (H5LTget_attribute_int(file_id, stencil_name, "points", &read_points) < 0) {
-    ops_printf("Attribute \"points\" not found in stencil %s .. Aborting\n",stencil_name);
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"points\" not found in stencil %s .. Aborting\n",stencil_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
     if (points != read_points) {
-      ops_printf("Unequal points of stencil %s: points on file %d, points specified %d .. Aborting\n",
+      ops_printf("ops_decl_stencil_hdf5: Unequal points of stencil %s: points on file %d, points specified %d .. Aborting\n",
          stencil_name,read_points, points);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
@@ -833,7 +834,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
   //get the strides
   int read_stride[read_dims];
   if (H5LTget_attribute_int(file_id, stencil_name, "stride", read_stride) < 0) {
-    ops_printf("Attribute \"stride\" not found in stencil %s .. Aborting\n",stencil_name);
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"stride\" not found in stencil %s .. Aborting\n",stencil_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -876,7 +877,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
   //open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
     MPI_Barrier(MPI_COMM_WORLD);
-    ops_printf("File %s does not exist .... aborting\n", file_name);
+    ops_printf("ops_decl_dat_hdf5: File %s does not exist .... aborting\n", file_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -886,7 +887,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
   if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      ops_printf("ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat_name);
+      ops_printf("ops_decl_dat_hdf5: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat_name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -895,52 +896,52 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
 
   //check if ops_dat exists
   if(H5Lexists(group_id, dat_name, H5P_DEFAULT) == 0) {
-    ops_printf("ops_dat %s does not exists in the block %s ... aborting\n", dat_name, block->name);
+    ops_printf("ops_decl_dat_hdf5: ops_dat %s does not exists in the block %s ... aborting\n", dat_name, block->name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
   //ops_dat exists .. now check ops_type, block_index, type and dim
-  /*char read_ops_type[10];
+  char read_ops_type[10];
   if (H5LTget_attribute_string(group_id, dat_name, "ops_type", read_ops_type) < 0){
-    ops_printf("Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   } else {
     if (strcmp("ops_dat",read_ops_type) != 0) {
-      ops_printf("ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat_name);
+      ops_printf("ops_decl_dat_hdf5: ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat_name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_block_index;
   if (H5LTget_attribute_int(group_id, dat_name, "block_index", &read_block_index) < 0) {
-    ops_printf("Attribute \"block_index\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"block_index\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
     if (block->index != read_block_index) {
-      ops_printf("Unequal dims of data set %s: block index on file %d, block index specified for this dat %d .. Aborting\n",
+      ops_printf("ops_decl_dat_hdf5: Unequal dims of data set %s: block index on file %d, block index specified for this dat %d .. Aborting\n",
          dat_name,read_block_index, block->index);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
   int read_dim;
   if (H5LTget_attribute_int(group_id, dat_name, "dim", &read_dim) < 0) {
-    ops_printf("Attribute \"dim\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"dim\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
     if (dat_size != read_dim) {
-      ops_printf("Unequal dims of data set %s: dim on file %d, dim specified %d .. Aborting\n",
+      ops_printf("ops_decl_dat_hdf5: Unequal dims of data set %s: dim on file %d, dim specified %d .. Aborting\n",
          dat_name,read_dim, dat_size);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
-  }*/
-  char read_type[7];
+  }
+  char read_type[15];
   if (H5LTget_attribute_string(group_id, dat_name, "type", read_type) < 0){
-    ops_printf("Attribute \"type\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"type\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   } else {
     if (strcmp(type,read_type) != 0) {
-      ops_printf("Type of data of data set %s is not equal: type on file %s, type specified %s .. Aborting\n",
+      ops_printf("ops_decl_dat_hdf5: Type of data of data set %s is not equal: type on file %s, type specified %s .. Aborting\n",
         dat_name, read_type, type);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
@@ -950,25 +951,25 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
 
   int read_size[block->dims];
   if (H5LTget_attribute_int(group_id, dat_name, "size", read_size) < 0) {
-    ops_printf("Attribute \"size\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"size\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
   int read_d_m[block->dims];
   if (H5LTget_attribute_int(group_id, dat_name, "d_m", read_d_m) < 0) {
-    ops_printf("Attribute \"d_m\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"d_m\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
   int read_d_p[block->dims];
   if (H5LTget_attribute_int(group_id, dat_name, "d_p", read_d_p) < 0) {
-    ops_printf("Attribute \"d_p\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"d_p\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
   int read_base[block->dims];
   if (H5LTget_attribute_int(group_id, dat_name, "base", read_base) < 0) {
-    ops_printf("Attribute \"base\" not found in data set %s .. Aborting\n",dat_name);
+    ops_printf("ops_decl_dat_hdf5: Attribute \"base\" not found in data set %s .. Aborting\n",dat_name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
 
@@ -1087,7 +1088,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     //open given hdf5 file .. if it exists
     if (file_exist(dat->hdf5_file) == 0) {
       MPI_Barrier(MPI_COMM_WORLD);
-      ops_printf("File %s does not exist .... aborting\n", dat->hdf5_file);
+      ops_printf("ops_read_dat_hdf5: File %s does not exist .... aborting\n", dat->hdf5_file);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
 
@@ -1098,7 +1099,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     H5Pclose(plist_id);
 
     if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      ops_printf("ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
+      ops_printf("ops_read_dat_hdf5: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
 
@@ -1107,7 +1108,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     //check if ops_dat exists
     if(H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0){
-      ops_printf("ops_dat %s does not exists in the ops_block %s... aborting\n",
+      ops_printf("ops_read_dat_hdf5: ops_dat %s does not exists in the ops_block %s... aborting\n",
         dat->name, block->name);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }

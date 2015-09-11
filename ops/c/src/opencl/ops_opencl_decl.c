@@ -176,6 +176,11 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
+// routine to fetch data from device
+void ops_get_data( ops_dat dat ){
+  ops_opencl_get_data( dat );
+}
+
 void ops_partition(char* routine)
 {
   (void)routine;

@@ -72,4 +72,4 @@ void generate_hdf5()
     ops_fetch_dat_hdf5_file(xvel0, "cloverdata.h5");
     ops_fetch_dat_hdf5_file(yvel0, "cloverdata.h5");
     ops_fetch_dat_hdf5_file(zvel0, "cloverdata.h5");
-}
+  }

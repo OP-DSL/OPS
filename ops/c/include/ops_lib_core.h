@@ -364,6 +364,8 @@ void ops_timers( double *cpu, double *et );
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
+void ops_get_data( ops_dat dat );
+
 void ops_timing_realloc ( int, const char * );
 void ops_timers_core( double *cpu, double *et );
 float ops_compute_transfer(int dims, int *range, ops_arg *arg);

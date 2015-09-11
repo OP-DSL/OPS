@@ -132,6 +132,11 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 }
 
 
+void ops_get_data( ops_dat dat ){
+  //data already on the host .. do nothing
+  (void)dat;
+}
+
 /************* Functions only use in the Fortran Backend ************/
 
 int getRange(ops_block block, int* start, int* end, int* range){

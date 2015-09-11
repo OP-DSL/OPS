@@ -209,6 +209,11 @@ void ops_timers(double * cpu, double * et){
     ops_timers_core(cpu,et);
 }
 
+// routine to fetch data from device
+void ops_get_data( ops_dat dat ){
+  ops_cuda_get_data( dat );
+}
+
 void ops_halo_transfer(ops_halo_group group) {
   //printf("In CUDA block halo transfer\n");
 
