@@ -135,7 +135,7 @@ endif
 
 .PHONY: clean mklib
 
-all: clean core seq mpi cuda mpi_cuda opencl mpi_opencl
+all: clean core hdf5_seq seq mpi cuda mpi_cuda opencl mpi_opencl
 
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
@@ -146,10 +146,14 @@ core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.c $(SRC)/externlib/op
 	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.c -o $(OBJ)/ops_util.o
 	$(CHKCC) $(CXXFLAGS) -I$(INC) $(HDF5_INC) -c $(SRC)/externlib/ops_checkpointing.c -o $(OBJ)/ops_checkpointing.o
 
-seq: mklib core $(OBJ)/ops_lib_core.o
+hdf5_seq: mklib core $(OBJ)/ops_lib_core.o
+	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/externlib/ops_hdf5.c -o $(OBJ)/ops_hdf5.o
+
+seq: mklib core hdf5_seq $(OBJ)/ops_lib_core.o
 	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
 	$(CC) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
-	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o
+	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
+	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_hdf5.o
 
 cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
 	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) $(CUDA_INC) -I$(INC) \

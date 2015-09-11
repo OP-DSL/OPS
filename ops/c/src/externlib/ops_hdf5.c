@@ -35,9 +35,7 @@
   * @details Implements the OPS API calls for the HDF5 file I/O functionality
   */
 
-#include <mpi.h>
 #include <math.h>
-#include <ops_util.h>
 
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
@@ -49,6 +47,8 @@
 #include <hdf5.h>
 #include <hdf5_hl.h>
 
+#include <ops_lib_core.h>
+#include <ops_util.h>
 
 /*******************************************************************************
 * Routine to write an ops_block to a named hdf5 file,
@@ -165,4 +165,45 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
+  //fetch data onto the host ( if needed ) based on the backend
+  ops_get_data(dat);
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t group_id;      //group identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+
+  if (file_exist(file_name) == 0) {
+	ops_printf("File %s does not exist .... creating file\n", file_name);
+    FILE *fp; fp = fopen(file_name, "w");
+    fclose(fp);
+
+    //Create a new file
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Fclose(file_id);
+  }
+  if(H5Lexists(file_id, dat->block->name, H5P_DEFAULT) == 0) {
+	ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
+  }
+  else {
+	//open existing group -- an ops_block is a group
+	group_id = H5Gopen2(file_id, dat->block->name, H5P_DEFAULT);
+
+	//free(data);
+
+	H5Sclose(filespace);
+	H5Pclose(plist_id);
+	H5Dclose(dset_id);
+	H5Sclose(memspace);
+	H5Gclose(group_id);
+	H5Fclose(file_id);
+  }
 }
