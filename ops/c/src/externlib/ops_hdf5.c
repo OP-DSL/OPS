@@ -168,6 +168,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   //fetch data onto the host ( if needed ) based on the backend
   ops_get_data(dat);
 
+  ops_block block = dat->block;
+
   //HDF5 APIs definitions
   hid_t file_id;      //file identifier
   hid_t group_id;      //group identifier
@@ -178,6 +180,15 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   hid_t attr;         //attribute identifier
   herr_t err;         //error code
 
+  hsize_t g_size[block->dims];
+  int gbl_size[block->dims];
+  for (int d = 0; d < block->dims; d++) {
+	//pure data size (i.e. without block halos) to be noted as an attribute
+	gbl_size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+	//the number of elements thats actually written
+	g_size[d] = dat->size[d];
+  }
+
   //Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
@@ -187,22 +198,37 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     fclose(fp);
 
     //Create a new file
-    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Fclose(file_id);
+	file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+	H5Fclose(file_id);
   }
-  if(H5Lexists(file_id, dat->block->name, H5P_DEFAULT) == 0) {
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+  H5Pclose(plist_id);
+
+  if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
 	ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
   }
   else {
 	//open existing group -- an ops_block is a group
-	group_id = H5Gopen2(file_id, dat->block->name, H5P_DEFAULT);
+	group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
-	//free(data);
+	if(H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
+      ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
+        dat->name, block->name);
+      H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
 
-	H5Sclose(filespace);
-	H5Pclose(plist_id);
-	H5Dclose(dset_id);
-	H5Sclose(memspace);
+	  //attach attributes to dat
+	  H5LTset_attribute_string(group_id, dat->name, "ops_type", "ops_dat"); //ops type
+	  H5LTset_attribute_string(group_id, dat->name, "block", block->name); //block
+	  H5LTset_attribute_int(group_id, dat->name, "block_index", &(block->index), 1); //block index
+	  H5LTset_attribute_int(group_id, dat->name, "dim", &(dat->dim), 1); //dim
+	  H5LTset_attribute_int(group_id, dat->name, "size", gbl_size, block->dims); //size
+	  H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m, block->dims); //d_m
+	  H5LTset_attribute_int(group_id, dat->name, "d_p", dat->d_p, block->dims); //d_p
+	  H5LTset_attribute_int(group_id, dat->name, "base", dat->base, block->dims); //base
+      H5LTset_attribute_string(group_id, dat->name, "type", dat->type); //type
+    }
+
 	H5Gclose(group_id);
 	H5Fclose(file_id);
   }

@@ -149,7 +149,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS: clean generate_file cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
+TARGETS: clean generate_file generate_file_mpi cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
 #cloverleaf_openacc cloverleaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
@@ -162,8 +162,13 @@ all: clean $(TARGETS)
 
 generate_file: generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp \
                 initialise.cpp generate_hdf5.cpp initialise_chunk_kernel.h generate_chunk_kernel.h
-		$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) generate_file.cpp build_field_hdf5.cpp read_input.cpp \
+		$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) generate_file.cpp build_field_hdf5.cpp read_input.cpp \
                 initialise_chunk.cpp initialise.cpp generate_hdf5.cpp -lops_seq $(HDF5_LIB) -o generate_file
+
+generate_file_mpi: generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp \
+                initialise.cpp generate_hdf5.cpp initialise_chunk_kernel.h generate_chunk_kernel.h
+	        $(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI generate_file.cpp build_field_hdf5.cpp read_input.cpp \
+                initialise_chunk.cpp initialise.cpp generate_hdf5.cpp -lops_mpi $(HDF5_LIB) -o generate_file_mpi
 
 cloverleaf_dev_seq: clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk.cpp \
                 initialise.cpp generate.cpp ideal_gas.cpp \

@@ -244,9 +244,13 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
   handle->initialized = 0;
 }
 
-void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
-{
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_get_data( ops_dat dat ){
+  //data already on the host .. do nothing
+  (void)dat;
 }
 
 void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )
