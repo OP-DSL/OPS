@@ -215,7 +215,21 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 	if(H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
       ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
         dat->name, block->name);
-      H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
+
+	  if(strcmp(dat->type,"double") == 0)
+        H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
+      else if(strcmp(dat->type,"float") == 0)
+        H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_FLOAT,dat->data);
+      else if(strcmp(dat->type,"int") == 0)
+         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_INT,dat->data);
+      else if(strcmp(dat->type,"long") == 0)
+         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LONG,dat->data);
+      else if(strcmp(dat->type,"long long") == 0)
+         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LLONG,dat->data);
+      else {
+		printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
+		exit(-2);
+      }
 
 	  //attach attributes to dat
 	  H5LTset_attribute_string(group_id, dat->name, "ops_type", "ops_dat"); //ops type
