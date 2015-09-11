@@ -247,3 +247,304 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 	H5Fclose(file_id);
   }
 }
+
+ops_block ops_decl_block_hdf5(int dims, char *block_name,
+                      char const *file_name) {
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    ops_printf("ops_decl_block_hdf5: File %s does not exist .... aborting\n", file_name);
+	exit(-2);
+  }
+
+  //Set up file access property list for I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_block exists
+  if(H5Lexists(file_id, block_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_decl_block_hdf5: ops_block %s does not exists in the file ... aborting\n", block_name);
+
+  //ops_block exists .. now check ops_type and dims
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) < 0){
+    ops_printf("ops_decl_block_hdf5: Attribute \"ops_type\" not found in block %s .. Aborting\n",block_name);
+    exit(-2);
+  } else {
+    if (strcmp("ops_block",read_ops_type) != 0) {
+      ops_printf("ops_decl_block_hdf5: ops_type of block %s is defined are not equal to ops_block.. Aborting\n",block_name);
+      exit(-2);
+    }
+  }
+  int read_dims;
+  if (H5LTget_attribute_int(file_id, block_name, "dims", &read_dims) < 0) {
+    ops_printf("ops_decl_block_hdf5: Attribute \"dims\" not found in block %s .. Aborting\n",block_name);
+    exit(-2);
+  }
+  else {
+    if (dims != read_dims) {
+      ops_printf("ops_decl_block_hdf5: Unequal dims of block %s: dims on file %d, dims specified %d .. Aborting\n",
+         block_name,read_dims, dims);
+      exit(-2);
+    }
+  }
+  int read_index;
+  if (H5LTget_attribute_int(file_id, block_name, "index", &read_index) < 0) {
+    ops_printf("ops_decl_block_hdf5: Attribute \"index\" not found in block %s .. Aborting\n",block_name);
+    exit(-2);
+  }
+
+  //checks passed ..
+
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+
+  return ops_decl_block(read_dims, block_name );
+
+}
+
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+                      char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    ops_printf("ops_decl_stencil_hdf5: File %s does not exist .... aborting\n", file_name);
+    exit(-2);
+  }
+
+  //Set up file access property list for I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_stencil exists
+  if(H5Lexists(file_id, stencil_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_decl_stencil_hdf5: ops_stencil %s does not exists in the file ... aborting\n", stencil_name);
+
+  //ops_stencil exists .. now check ops_type and dims
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, stencil_name, "ops_type", read_ops_type) < 0){
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in stencil %s .. Aborting\n",stencil_name);
+    exit(-2);
+  } else {
+    if (strcmp("ops_stencil",read_ops_type) != 0) {
+      ops_printf("ops_decl_stencil_hdf5: ops_type of stencil %s is defined are not equal to ops_stencil.. Aborting\n",stencil_name);
+      exit(-2);
+    }
+  }
+  int read_dims;
+  if (H5LTget_attribute_int(file_id, stencil_name, "dims", &read_dims) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"dims\" not found in stencil %s .. Aborting\n",stencil_name);
+    exit(-2);
+  }
+  else {
+    if (dims != read_dims) {
+      ops_printf("ops_decl_stencil_hdf5: Unequal dims of stencil %s: dims on file %d, dims specified %d .. Aborting\n",
+         stencil_name,read_dims, dims);
+      exit(-2);
+    }
+  }
+  int read_points;
+  if (H5LTget_attribute_int(file_id, stencil_name, "points", &read_points) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"points\" not found in stencil %s .. Aborting\n",stencil_name);
+    exit(-2);
+  }
+  else {
+    if (points != read_points) {
+      ops_printf("ops_decl_stencil_hdf5: Unequal points of stencil %s: points on file %d, points specified %d .. Aborting\n",
+         stencil_name,read_points, points);
+      exit(-2);
+    }
+  }
+  //checks passed ..
+
+  //get the strides
+  int read_stride[read_dims];
+  if (H5LTget_attribute_int(file_id, stencil_name, "stride", read_stride) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"stride\" not found in stencil %s .. Aborting\n",stencil_name);
+    exit(-2);
+  }
+
+  int read_sten[read_dims*read_points];
+  H5LTread_dataset_int(file_id,stencil_name,read_sten);
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+  //use decl_strided stencil for both normal and strided stencils
+  return ops_decl_strided_stencil (read_dims, read_points, read_sten, read_stride, stencil_name);
+
+}
+
+ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
+                      char const *type,
+                      char const *dat_name,
+                      char const *file_name) {
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t group_id;      //group identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    ops_printf("ops_decl_dat_hdf5: File %s does not exist .... aborting\n", file_name);
+    exit(-2);
+  }
+
+  //Set up file access property list for I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
+      ops_printf("ops_decl_dat_hdf5: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat_name);
+      exit(-2);
+  }
+
+  //open existing group -- an ops_block is a group
+  group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
+
+  //check if ops_dat exists
+  if(H5Lexists(group_id, dat_name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_decl_dat_hdf5: ops_dat %s does not exists in the block %s ... aborting\n", dat_name, block->name);
+    exit(-2);
+  }
+
+  //ops_dat exists .. now check ops_type, block_index, type and dim
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(group_id, dat_name, "ops_type", read_ops_type) < 0){
+    ops_printf("ops_decl_dat_hdf5: Attribute \"ops_type\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  } else {
+    if (strcmp("ops_dat",read_ops_type) != 0) {
+      ops_printf("ops_decl_dat_hdf5: ops_type of dat %s is defined are not equal to ops_dat.. Aborting\n",dat_name);
+      exit(-2);
+    }
+  }
+  int read_block_index;
+  if (H5LTget_attribute_int(group_id, dat_name, "block_index", &read_block_index) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"block_index\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+  else {
+    if (block->index != read_block_index) {
+      ops_printf("ops_decl_dat_hdf5: Unequal dims of data set %s: block index on file %d, block index specified for this dat %d .. Aborting\n",
+         dat_name,read_block_index, block->index);
+      exit(-2);
+    }
+  }
+  int read_dim;
+  if (H5LTget_attribute_int(group_id, dat_name, "dim", &read_dim) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"dim\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+  else {
+    if (dat_dim != read_dim) {
+      ops_printf("ops_decl_dat_hdf5: Unequal dims of data set %s: dim on file %d, dim specified %d .. Aborting\n",
+         dat_name,read_dim, dat_dim);
+      exit(-2);
+    }
+  }
+  char read_type[15];
+  if (H5LTget_attribute_string(group_id, dat_name, "type", read_type) < 0){
+    ops_printf("ops_decl_dat_hdf5: Attribute \"type\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  } else {
+    if (strcmp(type,read_type) != 0) {
+      ops_printf("ops_decl_dat_hdf5: Type of data of data set %s is not equal: type on file %s, type specified %s .. Aborting\n",
+        dat_name, read_type, type);
+      exit(-2);
+    }
+  }
+
+  //checks passed .. now read in all other details of ops_dat from file
+
+  int read_size[block->dims];
+  if (H5LTget_attribute_int(group_id, dat_name, "size", read_size) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"size\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+
+  int read_d_m[block->dims];
+  if (H5LTget_attribute_int(group_id, dat_name, "d_m", read_d_m) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"d_m\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+
+  int read_d_p[block->dims];
+  if (H5LTget_attribute_int(group_id, dat_name, "d_p", read_d_p) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"d_p\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+
+  int read_base[block->dims];
+  if (H5LTget_attribute_int(group_id, dat_name, "base", read_base) < 0) {
+    ops_printf("ops_decl_dat_hdf5: Attribute \"base\" not found in data set %s .. Aborting\n",dat_name);
+    exit(-2);
+  }
+
+  //set type size
+  int type_size;
+  if(strcmp(read_type,"double") == 0)
+    type_size = sizeof(double);
+  else if(strcmp(read_type,"float") == 0)
+    type_size = sizeof(float);
+  else if(strcmp(read_type,"int") == 0)
+    type_size = sizeof(int);
+  else if(strcmp(read_type,"long") == 0)
+    type_size = sizeof(long);
+  else if(strcmp(read_type,"long long") == 0)
+    type_size = sizeof(long long);
+  else{
+    printf("Unknown type %s in ops_decl_dat_hdf5()\n", read_type);
+    exit(2);
+  }
+
+  //read in the actual data
+  int t_size = 1;
+  for (int d = 0; d < block->dims; d++)
+	t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
+  char* data = (char *)malloc(t_size*dat_dim*type_size);
+
+  if(strcmp(read_type,"double") == 0)
+	  H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
+    else if(strcmp(read_type,"float") == 0)
+      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_FLOAT, data);
+    else if(strcmp(read_type,"int") == 0)
+      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_INT, data);
+    else if(strcmp(read_type,"long") == 0)
+      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LONG, data);
+    else if(strcmp(read_type,"long long") == 0)
+      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LLONG, data);
+    else {
+      printf("Unknown type in ops_decl_dat_hdf5()\n");
+      exit(-2);
+  }
+
+  ops_dat created_dat = ops_decl_dat_char(block, dat_dim,
+      read_size/*global dat size in each dimension*/,
+      read_base, read_d_m, read_d_p, data,
+      type_size/*size of(type)*/, type, dat_name );
+
+  created_dat->is_hdf5 = 1;
+  created_dat->hdf5_file = file_name;
+  created_dat->user_managed = 0;
+
+  H5Pclose(plist_id);
+  H5Gclose(group_id);
+  H5Fclose(file_id);
+
+  return created_dat;
+
+ }

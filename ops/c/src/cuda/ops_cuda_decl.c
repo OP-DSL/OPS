@@ -140,8 +140,19 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
 
   int bytes = size*type_size;
   for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
-  dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
-  dat->user_managed = 0;
+
+  if(data != NULL) {
+     //printf("Data read in from HDF5 file or is allocated by the user\n");
+     dat->user_managed = 1; // will be reset to 0 if called from ops_decl_dat_hdf5()
+     dat->is_hdf5 = 0;
+     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from ops_decl_dat_hdf5()
+  }
+  else {
+    //Allocate memory immediately
+    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
+    dat->user_managed = 0;
+  }
+
 
   /*for(int i = 0; i < dat->size[1]; i++ ) {
     for(int j = 0; j < dat->size[0]; j++ ) {

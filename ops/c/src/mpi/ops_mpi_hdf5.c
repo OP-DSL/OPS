@@ -850,7 +850,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
 
 
 
-ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
+ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
                       char const *type,
                       char const *dat_name,
                       char const *file_name) {
@@ -929,9 +929,9 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
   }
   else {
-    if (dat_size != read_dim) {
+    if (dat_dim != read_dim) {
       ops_printf("ops_decl_dat_hdf5: Unequal dims of data set %s: dim on file %d, dim specified %d .. Aborting\n",
-         dat_name,read_dim, dat_size);
+         dat_name,read_dim, dat_dim);
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
   }
@@ -992,7 +992,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size,
 
   char * data = NULL;
 
-  ops_dat created_dat = ops_decl_dat_char(block, dat_size,
+  ops_dat created_dat = ops_decl_dat_char(block, dat_dim,
       read_size/*global dat size in each dimension*/,
       read_base, read_d_m, read_d_p, data/*null for now*/,
       type_size/*size of(type)*/, type, dat_name );
@@ -1160,7 +1160,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     else if(strcmp(dat->type,"long long") == 0)
       H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
     else {
-      printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
+      printf("Unknown type in ops_read_dat_hdf5()\n");
       MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
 
