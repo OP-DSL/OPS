@@ -200,9 +200,8 @@ void add_mpi_halos5D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){};
 /*******************************************************************************
 * Routine to write an ops_block to a named hdf5 file,
 * if file does not exist, creates it
-* if the block does not exists in file creates block
+* if the block does not exists in file creates block as a hdf5 group
 *******************************************************************************/
-
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
   sub_block *sb = OPS_sub_block_list[block->index];
@@ -271,11 +270,9 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 }
 
 /*******************************************************************************
-* Routine to write an ops_block to a named hdf5 file,
+* Routine to write an ops_stencil to a named hdf5 file,
 * if file does not exist, creates it
-* if the block does not exists in file creates block
 *******************************************************************************/
-
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   //HDF5 APIs definitions
   hid_t file_id;      //file identifier
@@ -345,7 +342,6 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 * if file does not exist, creates it
 * if the data set does not exists in file creates data set
 *******************************************************************************/
-
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
   sub_block *sb = OPS_sub_block_list[dat->block->index];
@@ -690,6 +686,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   return;
 }
 
+
+/*******************************************************************************
+* Routine to read an ops_block from an hdf5 file
+*******************************************************************************/
 ops_block ops_decl_block_hdf5(int dims, char *block_name,
                       char const *file_name) {
 
@@ -761,6 +761,10 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 
 }
 
+
+/*******************************************************************************
+* Routine to read an ops_stemcil from an hdf5 file
+*******************************************************************************/
 ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
                       char const *file_name) {
 
@@ -850,6 +854,10 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
 
 
 
+/*******************************************************************************
+* Routine to read an ops_dat from an hdf5 file - only reads the meta data of
+* the ops_dat the actual data is read later from within ops_partition()
+*******************************************************************************/
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
                       char const *type,
                       char const *dat_name,
@@ -1012,9 +1020,14 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
   hdf5 file and pad the data with the correct mpi-halo depths
   then attache it to the ops_dat->data of this ops_dat
   **/
- }
+}
 
 
+
+/*******************************************************************************
+* Routine to do delayed read of data within ops_partition() from an hdf5 file
+* only used with the MPI backends
+*******************************************************************************/
 void ops_read_dat_hdf5(ops_dat dat) {
 
   sub_block *sb = OPS_sub_block_list[dat->block->index];
