@@ -54,6 +54,7 @@ int main(int argc, char **argv)
     int base_to[] = {-2,0};
     int dir[] = {1,2};
     ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir);
+
     base_from[0] = 0; base_to[0] = 20;
     ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir);
     ops_halo grp[] = {h0,h1};

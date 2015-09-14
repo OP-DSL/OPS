@@ -411,7 +411,6 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   H5Gclose(group_id);
   H5Pclose(plist_id);
   H5Fclose(file_id);
-
 }
 
 
@@ -839,7 +838,6 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 
 }
 
-
 /*******************************************************************************
 * Routine to read an ops_stemcil from an hdf5 file
 *******************************************************************************/
@@ -930,7 +928,99 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
 
 }
 
+/*******************************************************************************
+* Routine to read an ops_halo from an hdf5 file
+*******************************************************************************/
+ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
+  //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("ops_decl_halo_hdf5: File %s does not exist .... aborting\n", file_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_halo exists
+  char halo_name[100];//strlen(halo->from->name)+strlen(halo->to->name)];
+  sprintf(halo_name, "from_%s_to_%s",from->name,to->name);
+  if(H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_decl_halo_hdf5: ops_halo %s does not exists in the file ... aborting\n", halo_name);
+
+  //ops_stencil exists .. now check ops_type
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, halo_name, "ops_type", read_ops_type) < 0){
+    ops_printf("ops_decl_halo_hdf5: Attribute \"ops_type\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  } else {
+    if (strcmp("ops_halo",read_ops_type) != 0) {
+      ops_printf("ops_decl_halo_hdf5: ops_type of halo %s defined are not equal to ops_halo.. Aborting\n",halo_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+  }
+
+  //check whether dimensions are equal
+  if(from->block->dims != to->block->dims){
+    ops_printf("ops_decl_halo_hdf5: dimensions of ops_dats connected by halo %s are not equal to each other .. Aborting\n",halo_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  int dim = from->block->dims;
+
+  //checks passed ..
+
+  //get the iter_size
+  int read_iter_size[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "iter_size", read_iter_size) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"iter_size\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  //get the from_base
+  int read_from_base[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "from_base", read_from_base) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"from_base\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  //get the to_base
+  int read_to_base[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "to_base", read_to_base) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"to_base\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  //get the from_dir
+  int read_from_dir[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "from_dir", read_from_dir) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"from_dir\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+  //get the to_dir
+  int read_to_dir[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "to_dir", read_to_dir) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"to_dir\" not found in halo %s .. Aborting\n",halo_name);
+    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+
+  return ops_decl_halo(from, to, read_iter_size, read_from_base, read_to_base, read_from_dir, read_to_dir);
+}
 
 /*******************************************************************************
 * Routine to read an ops_dat from an hdf5 file - only reads the meta data of

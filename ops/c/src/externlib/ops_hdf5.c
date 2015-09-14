@@ -157,6 +157,70 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 }
 
 /*******************************************************************************
+* Routine to write an ops_halo to a named hdf5 file,
+* if file does not exist, creates it
+*******************************************************************************/
+void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t group_id;      //group identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+
+  if (file_exist(file_name) == 0) {
+    ops_printf("File %s does not exist .... creating file\n", file_name);
+    FILE *fp; fp = fopen(file_name, "w");
+    fclose(fp);
+
+    //Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Fclose(file_id);
+  }
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  char halo_name[100];//strlen(halo->from->name)+strlen(halo->to->name)];
+  sprintf(halo_name, "from_%s_to_%s",halo->from->name,halo->to->name);
+
+  /* create and write the a group that holds the halo information */
+  if(H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_halo %s does not exists in the file ... creating group to hold halo\n", halo_name);
+    group_id = H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Gclose(group_id);
+  }
+  group_id = H5Gopen2(file_id, halo_name, H5P_DEFAULT);
+
+  //take the maximum dimension of the two blocks connected via this halo
+  int dim = MAX(halo->from->block->dims,halo->to->block->dims);
+
+  //printf("halo name %s, from name %s, to name %s\n",halo_name, halo->from->name, halo->to->name);
+  //attach attributes to halo
+  H5LTset_attribute_string(file_id, halo_name, "ops_type", "ops_halo"); //ops type
+  H5LTset_attribute_string(file_id, halo_name, "from_dat_name", halo->from->name); //from ops_dat (name)
+  H5LTset_attribute_string(file_id, halo_name, "to_dat_name", halo->to->name); //to ops_dat (name)
+  H5LTset_attribute_int(file_id, halo_name, "from_dat_index", &(halo->from->index), 1); //from_dat_index
+  H5LTset_attribute_int(file_id, halo_name, "to_dat_index", &(halo->to->index), 1); //from_dat_index
+
+  H5LTset_attribute_int(file_id, halo_name, "iter_size", halo->iter_size,dim); //iteration size
+  H5LTset_attribute_int(file_id, halo_name, "from_base", halo->from_base,dim); //base from ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "to_base", halo->to_base,dim); //base of to ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "from_dir", halo->from_dir,dim); //copy from direction
+  H5LTset_attribute_int(file_id, halo_name, "to_dir", halo->to_dir,dim); //copy to direction
+  H5LTset_attribute_int(file_id, halo_name, "index", &(halo->index), 1); //index
+
+  H5Gclose(group_id);
+  H5Pclose(plist_id);
+  H5Fclose(file_id);
+}
+
+/*******************************************************************************
 * Routine to write an ops_dat to a named hdf5 file,
 * if file does not exist, creates it
 * if the data set does not exists in file creates data set
@@ -386,6 +450,89 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
   //use decl_strided stencil for both normal and strided stencils
   return ops_decl_strided_stencil (read_dims, read_points, read_sten, read_stride, stencil_name);
 
+}
+
+/*******************************************************************************
+* Routine to read an ops_halo from an hdf5 file
+*******************************************************************************/
+ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t plist_id;     //property list identifier
+  herr_t err;         //error code
+
+  //open given hdf5 file .. if it exists
+  if (file_exist(file_name) == 0) {
+    ops_printf("ops_decl_halo_hdf5: File %s does not exist .... aborting\n", file_name);
+    exit(-2);
+  }
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  //check if ops_halo exists
+  char halo_name[100];//strlen(halo->from->name)+strlen(halo->to->name)];
+  sprintf(halo_name, "from_%s_to_%s",from->name,to->name);
+  if(H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0)
+    ops_printf("ops_decl_halo_hdf5: ops_halo %s does not exists in the file ... aborting\n", halo_name);
+
+  //ops_stencil exists .. now check ops_type
+  char read_ops_type[10];
+  if (H5LTget_attribute_string(file_id, halo_name, "ops_type", read_ops_type) < 0){
+    ops_printf("ops_decl_halo_hdf5: Attribute \"ops_type\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  } else {
+    if (strcmp("ops_halo",read_ops_type) != 0) {
+      ops_printf("ops_decl_halo_hdf5: ops_type of halo %s defined are not equal to ops_halo.. Aborting\n",halo_name);
+      exit(-2);
+    }
+  }
+
+  //check whether dimensions are equal
+  if(from->block->dims != to->block->dims){
+    ops_printf("ops_decl_halo_hdf5: dimensions of ops_dats connected by halo %s are not equal to each other .. Aborting\n",halo_name);
+      exit(-2);
+  }
+  int dim = from->block->dims;
+
+  //checks passed ..
+
+  //get the iter_size
+  int read_iter_size[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "iter_size", read_iter_size) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"iter_size\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  }
+  //get the from_base
+  int read_from_base[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "from_base", read_from_base) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"from_base\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  }
+  //get the to_base
+  int read_to_base[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "to_base", read_to_base) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"to_base\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  }
+  //get the from_dir
+  int read_from_dir[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "from_dir", read_from_dir) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"from_dir\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  }
+  //get the to_dir
+  int read_to_dir[dim];
+  if (H5LTget_attribute_int(file_id, halo_name, "to_dir", read_to_dir) < 0) {
+    ops_printf("ops_decl_stencil_hdf5: Attribute \"to_dir\" not found in halo %s .. Aborting\n",halo_name);
+    exit(-2);
+  }
+
+  H5Pclose(plist_id);
+  H5Fclose (file_id);
+
+  return ops_decl_halo(from, to, read_iter_size, read_from_base, read_to_base, read_from_dir, read_to_dir);
 }
 
 /*******************************************************************************
