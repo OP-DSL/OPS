@@ -336,6 +336,84 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
 }
 
+/*******************************************************************************
+* Routine to write an ops_halo to a named hdf5 file,
+* if file does not exist, creates it
+*******************************************************************************/
+void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
+  //HDF5 APIs definitions
+  hid_t file_id;      //file identifier
+  hid_t group_id;      //group identifier
+  hid_t dset_id;      //dataset identifier
+  hid_t filespace;    //data space identifier
+  hid_t plist_id;     //property list identifier
+  hid_t memspace;     //memory space identifier
+  hid_t attr;         //attribute identifier
+  herr_t err;         //error code
+
+   //create new communicator
+  int my_rank, comm_size;
+  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+  MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+  //MPI variables
+  MPI_Info info  = MPI_INFO_NULL;
+
+  //Set up file access property list with parallel I/O access
+  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+
+  if (file_exist(file_name) == 0) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    ops_printf("File %s does not exist .... creating file\n", file_name);
+    MPI_Barrier(OPS_MPI_HDF5_WORLD);
+    if (ops_is_root()) {
+      FILE *fp; fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+    //Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Fclose(file_id);
+  }
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
+
+  char halo_name[100];//strlen(halo->from->name)+strlen(halo->to->name)];
+  sprintf(halo_name, "from_%s_to_%s",halo->from->name,halo->to->name);
+
+  /* create and write the a group that holds the halo information */
+  if(H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
+    ops_printf("ops_halo %s does not exists in the file ... creating group to hold halo\n", halo_name);
+    group_id = H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Gclose(group_id);
+  }
+  group_id = H5Gopen2(file_id, halo_name, H5P_DEFAULT);
+
+  //take the maximum dimension of the two blocks connected via this halo
+  int dim = MAX(halo->from->block->dims,halo->to->block->dims);
+
+  //printf("halo name %s, from name %s, to name %s\n",halo_name, halo->from->name, halo->to->name);
+  //attach attributes to halo
+  H5LTset_attribute_string(file_id, halo_name, "ops_type", "ops_halo"); //ops type
+  H5LTset_attribute_string(file_id, halo_name, "from_dat_name", halo->from->name); //from ops_dat (name)
+  H5LTset_attribute_string(file_id, halo_name, "to_dat_name", halo->to->name); //to ops_dat (name)
+  H5LTset_attribute_int(file_id, halo_name, "from_dat_index", &(halo->from->index), 1); //from_dat_index
+  H5LTset_attribute_int(file_id, halo_name, "to_dat_index", &(halo->to->index), 1); //from_dat_index
+
+  H5LTset_attribute_int(file_id, halo_name, "iter_size", halo->iter_size,dim); //iteration size
+  H5LTset_attribute_int(file_id, halo_name, "from_base", halo->from_base,dim); //base from ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "to_base", halo->to_base,dim); //base of to ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "from_dir", halo->from_dir,dim); //copy from direction
+  H5LTset_attribute_int(file_id, halo_name, "to_dir", halo->to_dir,dim); //copy to direction
+  H5LTset_attribute_int(file_id, halo_name, "index", &(halo->index), 1); //index
+
+  H5Gclose(group_id);
+  H5Pclose(plist_id);
+  H5Fclose(file_id);
+
+}
+
 
 /*******************************************************************************
 * Routine to write an ops_dat to a named hdf5 file,

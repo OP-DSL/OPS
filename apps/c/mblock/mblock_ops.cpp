@@ -58,7 +58,9 @@ int main(int argc, char **argv)
     ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir);
     ops_halo grp[] = {h0,h1};
     halos0 = ops_decl_halo_group(2,grp);
+
   }
+
 
 
   ops_halo_group halos1;

@@ -206,6 +206,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
   if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
 	ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
+	exit(-2);
   }
   else {
 	//open existing group -- an ops_block is a group
