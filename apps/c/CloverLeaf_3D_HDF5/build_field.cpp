@@ -321,6 +321,7 @@ void build_field()
   red_output = ops_decl_reduction_handle(28*sizeof(double), "double", "output");
 
   ops_partition("3D_BLOCK_DECOMPOSE");
+  ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); // 
   //print ops blocks and dats details
   ops_diagnostic_output();
 

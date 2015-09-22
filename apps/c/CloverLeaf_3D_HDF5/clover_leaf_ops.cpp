@@ -68,7 +68,6 @@ int advect_x;
 int error_condition;
 int test_problem;
 int profiler_on;
-int checkpoint_frequency;
 int state_max;
 int complete;
 
@@ -82,6 +81,7 @@ double end_time;
 int end_step;
 int visit_frequency;
 int summary_frequency;
+int checkpoint_frequency;
 int use_vector_loops;
 
 int jdt, kdt, ldt;

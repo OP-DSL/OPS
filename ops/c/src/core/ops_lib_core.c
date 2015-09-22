@@ -904,7 +904,7 @@ void ops_timing_output(FILE *stream)
   if (stream == NULL)
     stream = stdout;
 
-  if ( OPS_diags > 1 ) {
+  if ( OPS_diags > 1 )
     if (OPS_enable_checkpointing)
       ops_printf("\nTotal time spent in checkpointing: %g seconds\n", OPS_checkpointing_time);
   if ( OPS_diags > 1 ) {

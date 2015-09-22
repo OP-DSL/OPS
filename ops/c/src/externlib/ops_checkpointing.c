@@ -1314,6 +1314,9 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nb
   return false;
 }
 
+bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats, ops_dat *datlist, int nbytes, char *payload) {
+  return false;
+}
 #ifdef __cplusplus
 }
 #endif
