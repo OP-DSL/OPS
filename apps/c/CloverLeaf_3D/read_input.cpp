@@ -167,6 +167,11 @@ void read_input()
                 summary_frequency = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "summary_frequency",summary_frequency);
               }
+              else if(strcmp(token,"checkpoint_frequency") == 0) {
+                 token = strtok(NULL, " =");
+                 checkpoint_frequency = atoi(token);
+                 ops_fprintf(g_out," %20s: %d\n", "checkpoint_frequency",checkpoint_frequency);
+              }
               else if(strcmp(token,"test_problem") == 0) {
                 token = strtok(NULL, " =");
                 test_problem = atoi(token);

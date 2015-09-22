@@ -50,6 +50,7 @@ extern int complete;
 extern double end_time;
 extern int end_step;
 extern int visit_frequency;
+extern int checkpoint_frequency;
 extern int summary_frequency;
 extern int use_vector_loops;
 
