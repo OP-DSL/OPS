@@ -42,6 +42,8 @@
 
 #include <ops_lib_core.h>
 #include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 ops_backup_state backup_state = OPS_NONE;
 char *OPS_dat_ever_written = NULL;
@@ -49,6 +51,7 @@ ops_checkpoint_types *OPS_dat_status = NULL;
 double OPS_checkpointing_time = 0.0;
 int OPS_ranks_per_node = 0;
 extern int ops_thread_offload;
+extern int ops_checkpoint_inmemory;
 extern int ops_lock_file;
 #ifdef CHECKPOINTING
 
@@ -112,10 +115,12 @@ herr_t status;
 FILE *diagf;
 int diagnostics = 0;
 
+char *params;
+
 #define check_hdf5_error(err)           __check_hdf5_error      (err, __FILE__, __LINE__)
 void __check_hdf5_error(herr_t err, const char *file, const int line) {
   if (err < 0) {
-    printf("%s(%i) : OPS_HDF5_error() Runtime API error %d.\n", file, line, (int)err);
+    printf("%s(%i) : OPS_HDF5_error() Runtime API error %d.%s\n", file, line, (int)err,params);
       exit(-1);
   }
 }
@@ -148,7 +153,37 @@ void ops_create_lock_done(char *fname) {
   }
 }
 
+void ops_pack_chk(const char *__restrict src, char *__restrict dest, const int count, const int blocklength, const int stride) {
+  for (unsigned int i = 0; i < count; i ++) {
+    memcpy(dest, src, blocklength);
+    src += stride;
+    dest += blocklength;
+  }
+}
 
+void ops_unpack_chk(char *__restrict dest, const char *__restrict src, const int count, const int blocklength, const int stride) {
+  for (unsigned int i = 0; i < count; i ++) {
+    memcpy(dest, src, blocklength);
+    src += blocklength;
+    dest += stride;
+  }
+}
+
+
+typedef struct {
+  ops_dat dat;
+  hid_t outfile;
+  int size;
+  int saved_range[2*OPS_MAX_DIM];
+  int partial;
+  char *data;
+  int dup;
+} ops_ramdisk_item;
+
+ops_ramdisk_item *ops_ramdisk_item_queue = NULL;
+volatile int ops_ramdisk_item_queue_head = 0;
+volatile int ops_ramdisk_item_queue_tail = 0;
+int ops_ramdisk_item_queue_size = 0;
 
 #define OPS_CHK_THREAD
 #ifdef OPS_CHK_THREAD
@@ -161,21 +196,6 @@ volatile long ops_ramdisk_tail = 0;
 
 //Timing
 double ops_chk_thr_queue = 0.0;
-
-
-typedef struct {
-  ops_dat dat;
-  hid_t outfile;
-  int size;
-  int saved_range[2*OPS_MAX_DIM];
-  int partial;
-  char *data;
-} ops_ramdisk_item;
-
-ops_ramdisk_item *ops_ramdisk_item_queue = NULL;
-volatile int ops_ramdisk_item_queue_head = 0;
-volatile int ops_ramdisk_item_queue_tail = 0;
-int ops_ramdisk_item_queue_size = 0;
 
 volatile int ops_ramdisk_ctrl_exit = 0;
 volatile int ops_ramdisk_ctrl_finish = 0;
@@ -299,6 +319,34 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, c
 
 #endif
 
+void ops_inmemory_save(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data, int partial, int dup) {
+  //Increment head
+  int head = ops_ramdisk_item_queue_head++;
+  
+  //Save all fields and make copy of data in memory
+  ops_ramdisk_item_queue[head].dat = dat;
+  ops_ramdisk_item_queue[head].outfile = outfile;
+  ops_ramdisk_item_queue[head].size = size;
+  if (partial) memcpy(ops_ramdisk_item_queue[head].saved_range, saved_range, 2*OPS_MAX_DIM*sizeof(int));
+  ops_ramdisk_item_queue[head].data = (char*)malloc((dat->elem_size/dat->dim)*size*sizeof(char));
+  memcpy(ops_ramdisk_item_queue[head].data, data, (dat->elem_size/dat->dim)*size*sizeof(char));
+  ops_ramdisk_item_queue[head].partial = partial;
+  ops_ramdisk_item_queue[head].dup = dup;
+}
+
+//Handler for saving a dataset, full or partial, with different mechanisms
+void save_data_handler(ops_dat dat, hid_t outfile, int size, int *saved_range, char* data, int partial, int dup) {
+#ifdef OPS_CHK_THREAD
+  if (ops_thread_offload) ops_ramdisk_queue(dat, outfile, size, saved_range, data, partial);
+#endif
+  if (ops_checkpoint_inmemory) ops_inmemory_save(dat, outfile, size, saved_range, data, partial, dup);
+  else {
+    if (partial) save_to_hdf5_partial(dat,outfile,size,saved_range,data);
+    else save_to_hdf5_full(dat, outfile, size, data);
+  }
+}
+
+
 void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
   if (size == 0) return;
   double t1,t2,c1;
@@ -356,12 +404,7 @@ void save_dat(ops_dat dat) {
   dims[0] = dat->dim;
   for (int d = 0; d < dat->block->dims; d++) dims[0] *= dat->size[d];
 
-#ifdef OPS_CHK_THREAD
-  if (ops_thread_offload) ops_ramdisk_queue(dat, file, (int)dims[0], NULL, dat->data, 0);
-  else
-#endif
-  save_to_hdf5_full(dat, file, (int)dims[0], dat->data);
-
+  save_data_handler(dat, file, (int)dims[0], NULL, dat->data, 0, 0);
 
   if (ops_duplicate_backup) {
     char *rm_data;
@@ -375,41 +418,16 @@ void save_dat(ops_dat dat) {
                                              &rm_type, &rm_nelems, &rm_data, &rm_range);
     ops_timers_core(&c1, &t2);
     ops_chk_dup += t2-t1;
-    if (rm_type == 0) {
-#ifdef OPS_CHK_THREAD
-      if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
-      else
-#endif
-      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
-
-    } else {
-#ifdef OPS_CHK_THREAD
-      if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, rm_range, rm_data, 1);
-      else
-#endif
-      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
-    }
+    if (rm_type == 0)
+      save_data_handler(dat, file_dup, rm_nelems, NULL, rm_data, 0,1);
+    else
+      save_data_handler(dat, file_dup, rm_nelems, rm_range, rm_data, 1,1);
   }
   if (OPS_diags>4) printf("Backed up %s\n", dat->name);
   ops_timers_core(&c1, &t2);
   ops_chk_save += t2-t1;
 }
 
-void ops_pack_chk(const char *__restrict src, char *__restrict dest, const int count, const int blocklength, const int stride) {
-  for (unsigned int i = 0; i < count; i ++) {
-    memcpy(dest, src, blocklength);
-    src += stride;
-    dest += blocklength;
-  }
-}
-
-void ops_unpack_chk(char *__restrict dest, const char *__restrict src, const int count, const int blocklength, const int stride) {
-  for (unsigned int i = 0; i < count; i ++) {
-    memcpy(dest, src, blocklength);
-    src += blocklength;
-    dest += stride;
-  }
-}
 
 void save_dat_partial(ops_dat dat, int *range) {
   double c1,t1,t2;
@@ -471,13 +489,7 @@ void save_dat_partial(ops_dat dat, int *range) {
 
 
   dims[0] = dims[0] / (dat->elem_size/dat->dim);
-#ifdef OPS_CHK_THREAD
-  if (ops_thread_offload) ops_ramdisk_queue(dat, file, (int)dims[0], saved_range, OPS_partial_buffer, 1);
-  else
-#endif
-  save_to_hdf5_partial(dat, file, (int)dims[0], saved_range, OPS_partial_buffer);
-
-
+  save_data_handler(dat, file, (int)dims[0], saved_range, OPS_partial_buffer, 1,0);
 
   if (ops_duplicate_backup) {
     char *rm_data;
@@ -491,19 +503,10 @@ void save_dat_partial(ops_dat dat, int *range) {
                                              &rm_type, &rm_nelems, &rm_data, &rm_range);
     ops_timers_core(&c1, &t2);
     ops_chk_dup += t2-t1;
-    if (rm_type == 0) {
-#ifdef OPS_CHK_THREAD
-      if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, NULL, rm_data, 0);
-      else
-#endif
-      save_to_hdf5_full(dat, file_dup, rm_nelems, rm_data);
-    } else {
-#ifdef OPS_CHK_THREAD
-      if (ops_thread_offload) ops_ramdisk_queue(dat, file_dup, rm_nelems, rm_range, rm_data, 1);
-      else
-#endif
-      save_to_hdf5_partial(dat, file_dup, rm_nelems, rm_range, rm_data);
-    }
+    if (rm_type == 0)
+      save_data_handler(dat, file_dup, rm_nelems, NULL, rm_data, 0,1);
+    else
+      save_data_handler(dat, file_dup, rm_nelems, rm_range, rm_data, 1,1);
   }
 
   if (OPS_diags>4) printf("Backed up %s (partial)\n", dat->name);
@@ -593,6 +596,130 @@ void ops_restore_dataset(ops_dat dat) {
   }
 }
 
+void ops_checkpoint_prepare_files() {
+  if (ops_checkpoint_inmemory) {
+    if (OPS_diags>5) ops_printf("New inmemory checkpoint, purging previous\n");
+    for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head; i++) {
+      free(ops_ramdisk_item_queue[i].data);
+      ops_ramdisk_item_queue[i].data = NULL;
+      ops_ramdisk_item_queue[i].dat = NULL;
+    }
+    ops_ramdisk_item_queue_tail=0;
+    ops_ramdisk_item_queue_head=0;
+  } else {
+    double cpu,t1,t2,t3,t4;
+    ops_timers_core(&cpu, &t3);
+    if (file_exists(filename)) remove(filename);
+    if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
+    ops_timers_core(&cpu, &t4);
+    if (OPS_diags>5) printf("Removed previous file %g\n",t4-t3);
+  
+    //where we start backing up stuff
+    ops_timers_core(&cpu, &t3);
+    file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    if (ops_duplicate_backup) file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    ops_timers_core(&cpu, &t4);
+    if (OPS_diags>5) printf("Opened new file %g\n",t4-t3);
+  }
+}
+
+
+void ops_checkpoint_complete() {
+  if (ops_checkpoint_inmemory) return;
+#ifdef OPS_CHK_THREAD
+  if (ops_thread_offload)
+    ops_ramdisk_ctrl_finish = 1;
+  else {
+#endif
+  check_hdf5_error(H5Fclose(file));
+  if (ops_lock_file) ops_create_lock(filename);
+  if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
+  if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
+#ifdef OPS_CHK_THREAD
+  }
+#endif
+}
+
+typedef struct {
+  int ops_backup_point;
+  int ops_best_backup_point;
+  char *reduction_state;
+  int reduction_state_size;
+  char *OPS_checkpointing_payload;
+  int OPS_checkpointing_payload_nbytes;
+  int OPS_chk_red_offset;
+  char *OPS_chk_red_storage;
+} ops_checkpoint_inmemory_control;
+
+ops_checkpoint_inmemory_control ops_inm_ctrl;
+
+void ops_ctrldump(hid_t file_out) {
+  if (ops_checkpoint_inmemory) return;
+  hsize_t dims[1];
+  dims[0] = 1;
+  check_hdf5_error(H5LTmake_dataset(file_out, "ops_backup_point", 1, dims, H5T_NATIVE_INT, &ops_inm_ctrl.ops_backup_point));
+  check_hdf5_error(H5LTmake_dataset(file_out, "ops_best_backup_point", 1, dims, H5T_NATIVE_INT, &ops_inm_ctrl.ops_best_backup_point));
+  dims[0] = ops_inm_ctrl.reduction_state_size;
+  check_hdf5_error(H5LTmake_dataset(file_out, "reduction_state", 1, dims, H5T_NATIVE_CHAR, ops_inm_ctrl.reduction_state));
+  free(ops_inm_ctrl.reduction_state); ops_inm_ctrl.reduction_state=NULL;
+  if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
+    dims[0] = ops_inm_ctrl.OPS_checkpointing_payload_nbytes;
+    check_hdf5_error(H5LTmake_dataset(file_out, "OPS_checkpointing_payload", 1, dims, H5T_NATIVE_CHAR, ops_inm_ctrl.OPS_checkpointing_payload));
+  }
+  dims[0] = 1;
+  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_offset", 1, dims, H5T_NATIVE_INT, &ops_inm_ctrl.OPS_chk_red_offset));
+  dims[0] = ops_inm_ctrl.OPS_chk_red_offset;
+  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_storage", 1, dims, H5T_NATIVE_CHAR, ops_inm_ctrl.OPS_chk_red_storage));
+}
+
+void ops_chkp_sig_handler(int signo) {
+  if (signo != SIGINT) {
+    printf("OPS received unknown signal %d\n",signo);
+    return;
+  }
+  if (backup_state == OPS_BACKUP_IN_PROCESS) {
+    printf("ERROR: failed in checkpointing region, aborting checkpoint\n");
+    return;
+  }
+  if (OPS_diags>1) printf("Process received SIGINT, dumping checkpoint from memory...\n");
+  
+  //No checkpoint yet
+  if (ops_inm_ctrl.ops_backup_point == -1) {
+    return;
+  }
+  
+  //Things now all do go to disk
+  ops_checkpoint_inmemory=0;
+  
+  //Open files
+  ops_checkpoint_prepare_files();
+  
+  //Save control
+  ops_ctrldump(file);
+  if (ops_duplicate_backup) {
+    ops_ctrldump(file_dup);
+  }
+   
+  //Save datasets
+  for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head; i++) {
+      save_data_handler(
+          ops_ramdisk_item_queue[i].dat,
+          ops_ramdisk_item_queue[i].dup ? file_dup : file,
+          ops_ramdisk_item_queue[i].size,
+          ops_ramdisk_item_queue[i].saved_range,
+          ops_ramdisk_item_queue[i].data,
+          ops_ramdisk_item_queue[i].partial,
+          ops_ramdisk_item_queue[i].dup);
+      free(ops_ramdisk_item_queue[i].data);
+  }
+  free(ops_ramdisk_item_queue);
+  
+  //Close files
+  ops_checkpoint_complete();
+
+  //(we might as well leak the rest of the memory, the process is crashing)
+}
+
 
 bool ops_checkpointing_initstate() {
   for (int i = 0; i < OPS_dat_index; i++) {
@@ -641,6 +768,36 @@ bool ops_checkpointing_init(const char *file_name, double interval, int options)
     ops_printf("Error: cannot have manual checkpoint triggering without manual datlist and fast-forward!\n");
     exit(-1);
   }
+
+  //Control structures initialized
+  ops_inm_ctrl.ops_backup_point=-1;
+  ops_inm_ctrl.ops_best_backup_point=-1;
+  ops_inm_ctrl.reduction_state=NULL;
+  ops_inm_ctrl.reduction_state_size=-1;
+  ops_inm_ctrl.OPS_checkpointing_payload=NULL;
+  ops_inm_ctrl.OPS_checkpointing_payload_nbytes=-1;
+  ops_inm_ctrl.OPS_chk_red_offset=-1;
+  ops_inm_ctrl.OPS_chk_red_storage=NULL;
+
+
+  if (ops_checkpoint_inmemory){
+#ifdef OPS_CHK_THREAD
+    if (ops_thread_offload) {
+      ops_printf("Warning: in-memory checkpointing and thread-offload checkpointing are mutually exclusive. Thread-offload will be switched off\n");
+      ops_thread_offload = 0;
+    }
+#endif
+    if (signal(SIGINT, ops_chkp_sig_handler) == SIG_ERR) {
+      printf("\nError: OPS can't catch SIGINT - disable in-memory checkpointing\n");
+      MPI_Abort(MPI_COMM_WORLD,-1);
+    }
+    ops_ramdisk_item_queue = (ops_ramdisk_item *)malloc(3*OPS_dat_index*sizeof(ops_ramdisk_item));
+    ops_ramdisk_item_queue_head = 0;
+    ops_ramdisk_item_queue_tail = 0;
+    ops_ramdisk_item_queue_size = 3*OPS_dat_index;
+        
+  }
+
   ops_checkpoint_interval = interval;
   if (interval < defaultTimeout*2.0) ops_checkpoint_interval = defaultTimeout*2.0; //WHAT SHOULD THIS BE? - the time it takes to back up everything
   double cpu;
@@ -683,11 +840,11 @@ void ops_checkpointing_initphase_done() {
 
 void ops_checkpointing_save_control(hid_t file_out) {
     //write control variables and all initialized reduction handles
-  hsize_t dims[1];
-  dims[0] = 1;
-  check_hdf5_error(H5LTmake_dataset(file_out, "ops_backup_point", 1, dims, H5T_NATIVE_INT, &ops_backup_point));
-  check_hdf5_error(H5LTmake_dataset(file_out, "ops_best_backup_point", 1, dims, H5T_NATIVE_INT, &ops_best_backup_point));
 
+  ops_inm_ctrl.ops_backup_point = ops_backup_point;
+  ops_inm_ctrl.ops_best_backup_point = ops_best_backup_point;
+  
+  //Save the state of all ongoing reductions
   int total_size = 0;
   for (int i = 0; i < OPS_reduction_index; i++)
     if (OPS_reduction_list[i]->initialized == 1)
@@ -700,19 +857,25 @@ void ops_checkpointing_save_control(hid_t file_out) {
       total_size+=OPS_reduction_list[i]->size;
     }
   }
-  dims[0] = total_size;
-  check_hdf5_error(H5LTmake_dataset(file_out, "reduction_state", 1, dims, H5T_NATIVE_CHAR, reduction_state));
-  free(reduction_state);
+
+  if (ops_inm_ctrl.reduction_state!=NULL) free(ops_inm_ctrl.reduction_state);
+  ops_inm_ctrl.reduction_state=reduction_state;
+  ops_inm_ctrl.reduction_state_size = total_size;
+  
+  //Save payload if specified by user
   if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
-    dims[0] = OPS_checkpointing_payload_nbytes;
-    check_hdf5_error(H5LTmake_dataset(file_out, "OPS_checkpointing_payload", 1, dims, H5T_NATIVE_CHAR, OPS_checkpointing_payload));
+    ops_inm_ctrl.OPS_checkpointing_payload = (char *)realloc(ops_inm_ctrl.OPS_checkpointing_payload,OPS_checkpointing_payload_nbytes*sizeof(char));
+    memcpy(ops_inm_ctrl.OPS_checkpointing_payload,OPS_checkpointing_payload, OPS_checkpointing_payload_nbytes*sizeof(char));
+    ops_inm_ctrl.OPS_checkpointing_payload_nbytes = OPS_checkpointing_payload_nbytes; 
   }
 
-  //write reduction history
-  dims[0] = 1;
-  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_offset", 1, dims, H5T_NATIVE_INT, &OPS_chk_red_offset));
-  dims[0] = OPS_chk_red_offset;
-  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_storage", 1, dims, H5T_NATIVE_CHAR, OPS_chk_red_storage));
+  //save reduction history
+  ops_inm_ctrl.OPS_chk_red_offset = OPS_chk_red_offset;
+  ops_inm_ctrl.OPS_chk_red_storage = (char*)realloc(ops_inm_ctrl.OPS_chk_red_storage,OPS_chk_red_offset*sizeof(char));
+  memcpy(ops_inm_ctrl.OPS_chk_red_storage, OPS_chk_red_storage, OPS_chk_red_offset*sizeof(char));
+
+  //write to file
+  ops_ctrldump(file_out);
 }
 
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
@@ -731,18 +894,8 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
         while(ops_ramdisk_ctrl_finish) usleep(10000);
       }
 #endif
-      ops_timers_core(&cpu, &t3);
-      if (file_exists(filename)) remove(filename);
-      if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
-      ops_timers_core(&cpu, &t4);
-      if (OPS_diags>5) printf("Removed previous file %g\n",t4-t3);
-
-      //where we start backing up stuff
-      ops_timers_core(&cpu, &t3);
-      file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-      if (ops_duplicate_backup) file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-      ops_timers_core(&cpu, &t4);
-      if (OPS_diags>5) printf("Opened new file %g\n",t4-t3);
+      //Remove previous files, open new ones
+      ops_checkpoint_prepare_files();
 
       //Save all the control variables
       ops_timers_core(&cpu, &t3);
@@ -772,22 +925,9 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
           save_dat(datlist[i]);
       ops_timers_core(&cpu, &t4);
       if (OPS_diags>5) printf("Written new file %g\n",t4-t3);
-
-#ifdef OPS_CHK_THREAD
-      if (ops_thread_offload)
-        ops_ramdisk_ctrl_finish = 1;
-      else {
-#endif
-      ops_timers_core(&cpu, &t3);
-      check_hdf5_error(H5Fclose(file));
-      if (ops_lock_file) ops_create_lock(filename);
-      if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
-      if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
-      ops_timers_core(&cpu, &t4);
-      if (OPS_diags>5) printf("Closed new file %g\n",t4-t3);
-#ifdef OPS_CHK_THREAD
-      }
-#endif
+      
+      //Close files
+      ops_checkpoint_complete();
 
       //finished backing up, reset everything, prepare to be backed up at a later point
       backup_state = OPS_BACKUP_GATHER;
@@ -795,7 +935,7 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       ops_call_counter--;
       ops_timers_core(&cpu, &t2);
       OPS_checkpointing_time += t2-t1;
-      if (OPS_diags>1) ops_printf("Checkpoint created (manual datlist) in %g seconds\n", t2-t1);
+      if (OPS_diags>1) ops_printf("\nCheckpoint created (manual datlist) in %g seconds\n", t2-t1);
     }
   } else if (backup_state == OPS_BACKUP_LEADIN) {
     // do nothing, will get triggered anyway
@@ -1065,13 +1205,10 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
       while(ops_ramdisk_ctrl_finish) usleep(10000);
     }
 #endif
-    if (file_exists(filename)) remove(filename);
-    if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
 
-    //where we start backing up stuff
-    file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    if (ops_duplicate_backup) file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
+    //Remove previous files, create new ones
+    ops_checkpoint_prepare_files();
+    
     //write all control
     ops_checkpointing_save_control(file);
     if (ops_duplicate_backup) {
@@ -1184,19 +1321,9 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
         ops_printf("Ever written %s %d\n", item->dat->name, OPS_dat_ever_written[item->dat->index]);
       }
     }
-#ifdef OPS_CHK_THREAD
-    if (ops_thread_offload)
-      ops_ramdisk_ctrl_finish = 1;
-    else {
-#endif
-    check_hdf5_error(H5Fclose(file));
-    if (ops_lock_file) ops_create_lock(filename);
-    if (ops_duplicate_backup) check_hdf5_error(H5Fclose(file_dup));
-    if (ops_duplicate_backup && ops_lock_file) ops_create_lock(filename_dup);
-#ifdef OPS_CHK_THREAD
-    }
-#endif
-
+    
+    ops_checkpoint_complete();
+    
     if (OPS_diags>1) ops_printf("\nCheckpoint created %d bytes reduction data\n", OPS_chk_red_offset);
     //finished backing up, reset everything, prepare to be backed up at a later point
     backup_state = OPS_BACKUP_GATHER;
@@ -1222,6 +1349,12 @@ void ops_checkpointing_exit() {
       free(ops_ramdisk_item_queue);
     }
 #endif
+
+    if (ops_checkpoint_inmemory) {
+      for (int i=ops_ramdisk_item_queue_tail; i< ops_ramdisk_item_queue_head; i++)
+        free(ops_ramdisk_item_queue[i].data);
+      free(ops_ramdisk_item_queue);
+    }
 
     if (backup_state == OPS_BACKUP_IN_PROCESS) {
       check_hdf5_error(H5Fclose(file));
@@ -1275,6 +1408,10 @@ void ops_checkpointing_exit() {
     free(OPS_dat_status); OPS_dat_status = NULL;
     OPS_partial_buffer_size = 0;
     free(OPS_partial_buffer); OPS_partial_buffer = NULL;
+    free(ops_inm_ctrl.reduction_state);
+    free(ops_inm_ctrl.OPS_checkpointing_payload);
+    free(ops_inm_ctrl.OPS_chk_red_storage);
+
     //filename =  "";
   }
 }
