@@ -317,6 +317,7 @@ void build_field()
 
   ops_partition("3D_BLOCK_DECOMPOSE");
   ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); // 
+  //ops_checkpointing_init("check.h5",10.0, OPS_CHECKPOINT_INITPHASE ); // 
   //print ops blocks and dats details
   ops_diagnostic_output();
 
