@@ -879,6 +879,10 @@ void ops_checkpointing_save_control(hid_t file_out) {
 }
 
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
+//  if (!((ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST) && !(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW || ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
+//    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_manual_datlist called, but checkpointing options do not match\n");
+//    return;
+//  }
   if (backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
       double cpu,t1,t2,t3,t4;
@@ -943,6 +947,10 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
 }
 
 bool ops_checkpointing_fastfw(int nbytes, char *payload) {
+//  if (!((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW) && !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST || ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
+//    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_fastfw called, but checkpointing options do not match\n");
+//    return false;
+//  }
   if (backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
       backup_state = OPS_BACKUP_BEGIN;
@@ -972,6 +980,10 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
 }
 
 bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nbytes, char *payload) {
+//  if (!((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW && ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST) && !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
+//    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_manual_datlist_fastfw called, but checkpointing options do not match\n");
+//    return false;
+//  }
   if (backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
       OPS_checkpointing_payload_nbytes = nbytes;
@@ -986,6 +998,10 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist, int nb
 }
 
 bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats, ops_dat *datlist, int nbytes, char *payload) {
+  if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW && ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST && ops_checkpointing_options & OPS_CHECKPOINT_MANUAL)) {
+    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_manual_datlist_fastfw_trigger called, but checkpointing options do not match\n");
+    return false;
+  }
   if (backup_state == OPS_BACKUP_GATHER) {
       ops_pre_backup_phase = true;
       OPS_checkpointing_payload_nbytes = nbytes;
