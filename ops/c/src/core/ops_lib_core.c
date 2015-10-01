@@ -144,32 +144,33 @@ void ops_init_core( int argc, char ** argv, int diags )
       OPS_diags = atoi ( argv[n] + 10 );
       ops_printf ( "\n OPS_diags = %d \n", OPS_diags );
     }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
-    {
-      OPS_enable_checkpointing = 1;
-      ops_printf ( "\n OPS Checkpointing enabled\n");
-    }
     if ( strncmp ( argv[n], "OPS_CHECKPOINT=", 15 ) == 0 )
     {
       OPS_enable_checkpointing = 2;
       OPS_ranks_per_node = atoi ( argv[n] + 15 );
       ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n", OPS_ranks_per_node);
     }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
     {
       ops_thread_offload = 1;
       ops_printf ( "\n OPS Checkpointing on a separate thread\n");
     }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT_INMEMORY", 23 ) == 0 )
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_INMEMORY", 23 ) == 0 )
     {
       ops_checkpoint_inmemory = 1;
       ops_printf ( "\n OPS Checkpointing in memory\n");
     }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
     {
       ops_lock_file = 1;
       ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
     }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
+    {
+      OPS_enable_checkpointing = 1;
+      ops_printf ( "\n OPS Checkpointing enabled\n");
+    }
+
   }
 
   /*Initialize the double linked list to hold ops_dats*/
