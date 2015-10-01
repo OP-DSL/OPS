@@ -718,6 +718,7 @@ void ops_chkp_sig_handler(int signo) {
   ops_checkpoint_complete();
 
   //(we might as well leak the rest of the memory, the process is crashing)
+  exit(-1);
 }
 
 
