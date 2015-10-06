@@ -15,10 +15,13 @@ export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
 export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 
 #PGI based MPI and Compilers
-export MPI_INSTALL_PATH=/opt/pgi/linux86-64/2015/mpi/mpich/ #/opt/openmpi-1.8.4-pgi151
+#export MPI_INSTALL_PATH=/opt/pgi/linux86-64/2015/mpi/mpich/ #/opt/openmpi-1.8.4-pgi151
+export MPI_INSTALL_PATH=/opt/openmpi-1.8.4-pgi151/
 export PATH=/opt/pgi/linux86-64/2015/bin/:$PATH
-export PATH=/opt/pgi/linux86-64/2015/mpi/mpich/bin/:$PATH #/opt/openmpi-1.8.4-pgi151/bin:$PATH
-export LD_LIBRARY_PATH=/opt/pgi/linux86-64/2015/lib/:$LD_LIBRARY_PATH #/usr/lib/x86_64-linux-gnu/
+#export PATH=/opt/pgi/linux86-64/2015/mpi/mpich/bin/:$PATH #/opt/openmpi-1.8.4-pgi151/bin:$PATH
+export PATH=/opt/openmpi-1.8.4-pgi151/bin/:$PATH
+#export LD_LIBRARY_PATH=/opt/pgi/linux86-64/2015/lib/:$LD_LIBRARY_PATH #/usr/lib/x86_64-linux-gnu/
+export LD_LIBRARY_PATH=/opt/openmpi-1.8.4-pgi151/lib/:$LD_LIBRARY_PATH
 
 export MPICH_CXX=/opt/pgi/linux86-64/2015/bin/pgc++
 export MPICH_CC=/opt/pgi/linux86-64/2015/bin/pgcc
@@ -26,4 +29,4 @@ export MPICH_F90=/opt/pgi/linux86-64/2015/bin/pgfortran
 
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-#export HDF5_INSTALL_PATH=/opt/hdf5-pgi/
+export HDF5_INSTALL_PATH=/opt/hdf5-pgi/

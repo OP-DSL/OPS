@@ -68,7 +68,7 @@ endif
   OMPFLAGS 	= -mp
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
-  MPIFLAGS 	= $(CPPFLAGS)
+  MPIFLAGS 	= $(CPPFLAGS) -ldl
 else
 ifeq ($(OPS_COMPILER),cray)
   CPP       = CC

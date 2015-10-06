@@ -15,7 +15,16 @@ CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
 CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL
-#DEBUG = 0
+
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
+endif
+
+
 ifeq ($(OPS_COMPILER),gnu)
   CPP   = g++
 ifdef DEBUG
@@ -137,14 +146,14 @@ all: clean $(TARGETS)
 #
 
 shsgc_dev_seq: Makefile shsgc.cpp     $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB)  shsgc.cpp   -lops_seq -o shsgc_dev_seq
+	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) shsgc.cpp   -lops_seq -o shsgc_dev_seq
 
 #
 ## MPI developer version
 #
 
 shsgc_dev_mpi: Makefile shsgc.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc.cpp -lops_mpi -o shsgc_dev_mpi
+	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) shsgc.cpp -lops_mpi $(HDF5_LIB) -o shsgc_dev_mpi
 
 
 SEQ_KERNELS = shsgc_seq_kernels.cpp
@@ -162,7 +171,7 @@ shsgc_seq: Makefile shsgc_ops.cpp   $(OPS_INSTALL_PATH)/lib/libops_seq.a
 #
 
 shsgc_mpi: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -o shsgc_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o shsgc_mpi
 
 
 #
@@ -171,7 +180,7 @@ shsgc_mpi: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 OMP_KERNELS = shsgc_omp_kernels.cpp
 
 shsgc_mpi_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	    $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -o shsgc_mpi_openmp
+	    $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) shsgc_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o shsgc_mpi_openmp
 
 
 shsgc_openmp: Makefile shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
@@ -185,7 +194,7 @@ shsgc_cuda: Makefile ./CUDA/shsgc_kernels_cu.o shsgc_ops.cpp $(OPS_INSTALL_PATH)
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) shsgc_ops.cpp ./CUDA/shsgc_kernels_cu.o -lcudart -lops_cuda -o shsgc_cuda
 
 shsgc_mpi_cuda: Makefile ./CUDA/shsgc_kernels_mpi_cu.o shsgc_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) shsgc_ops.cpp ./CUDA/shsgc_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o shsgc_mpi_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) shsgc_ops.cpp ./CUDA/shsgc_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o shsgc_mpi_cuda
 
 ./CUDA/shsgc_kernels_cu.o: ./CUDA/shsgc_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/shsgc_kernels_cu.o ./CUDA/shsgc_kernels.cu
@@ -203,7 +212,7 @@ shsgc_opencl: ./OpenCL/shsgc_opencl_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTA
 
 
 shsgc_mpi_opencl: ./OpenCL/shsgc_mpi_opencl_kernels.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) shsgc_ops.cpp ./OpenCL/shsgc_opencl_kernels.o -lops_mpi_opencl -o shsgc_mpi_opencl
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) shsgc_ops.cpp ./OpenCL/shsgc_opencl_kernels.o -lops_mpi_opencl $(HDF5_LIB) -o shsgc_mpi_opencl
 
 ./OpenCL/shsgc_opencl_kernels.o: ./OpenCL/shsgc_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
@@ -252,8 +261,8 @@ shsgc_openacc: $(openacc_obj_list) ./OpenACC/shsgc_kernels.o shsgc_ops.cpp Makef
 
 
 shsgc_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/shsgc_kernels_mpi.o shsgc_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    shsgc_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda -o shsgc_mpi_openacc
+	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
+    shsgc_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o shsgc_mpi_openacc
 
 #
 ##error
