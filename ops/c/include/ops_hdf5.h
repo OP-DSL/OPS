@@ -65,7 +65,5 @@ void ops_read_dat_hdf5(ops_dat dat);
 #ifdef __cplusplus
 }
 #endif
-
-
-
-#endif /* __OPS_HDF5_H */
+#endif
+/* __OPS_HDF5_H */
