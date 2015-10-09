@@ -28,5 +28,6 @@ export MPI_INSTALL_PATH=/opt/compilers/intel/intelPS-2015/impi/5.0.3.048/intel64
 #export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 
 #Intel based HDF5
-unset HDF5_INSTALL_PATH
-#export HDF5_INSTALL_PATH=/opt/hdf5-pgi/
+#unset HDF5_INSTALL_PATH
+#export HDF5_INSTALL_PATH=/opt/hdf5-intel/
+export HDF5_INSTALL_PATH=/opt/hdf5-intel/

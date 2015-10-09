@@ -84,11 +84,15 @@ int main(int argc, char **argv)
     int base_to[] = {-2,0};
     int dir[] = {1,2};
     ops_halo h0 = ops_decl_halo(data0, data1, halo_iter, base_from, base_to, dir, dir);
+    //ops_halo h0 = ops_decl_halo_hdf5(data0, data1,"halo_file.h5");
     base_from[0] = 0; base_to[0] = 20;
     ops_halo h1 = ops_decl_halo(data1, data0, halo_iter, base_from, base_to, dir, dir);
     ops_halo grp[] = {h0,h1};
     halos0 = ops_decl_halo_group(2,grp);
+    //ops_fetch_halo_hdf5_file(h0,"halo_file.h5");
   }
+
+
 
   //straightforward matching orientation halos data0 - data1 in y
   //last two y lines of data0 and first two of data1

@@ -52,5 +52,4 @@ void generate()
                ops_arg_dat(cellx, 1, S2D_00_P10_STRID2D_X, "double", OPS_READ),
                ops_arg_dat(celly, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ));
 
-
 }

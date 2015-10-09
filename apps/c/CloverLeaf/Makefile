@@ -18,8 +18,11 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL
 
 ifdef HDF5_INSTALL_PATH
-  HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
+  HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
 endif
 
 ifeq ($(OPS_COMPILER),gnu)
@@ -73,7 +76,7 @@ endif
   OMPFLAGS 	= -mp
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
-  MPIFLAGS 	= $(CPPFLAGS)
+  MPIFLAGS 	= $(CPPFLAGS) -ldl
 else
 ifeq ($(OPS_COMPILER),cray)
   CPP       = CC

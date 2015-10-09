@@ -152,7 +152,6 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
 }
 
-
 //
 // wrapper functions to handle MPI global reductions
 //
@@ -178,8 +177,6 @@ void ops_mpi_reduce(ops_arg* args, T* data)
 {
   //printf("should not be here\n");
 }
-
-
 
 
 

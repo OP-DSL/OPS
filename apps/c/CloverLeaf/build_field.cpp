@@ -81,6 +81,7 @@ void build_field()
   size[0]++; size[1]++;
   xvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel0");
   xvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xvel1");
+
   yvel0    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel0");
   yvel1    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yvel1");
 

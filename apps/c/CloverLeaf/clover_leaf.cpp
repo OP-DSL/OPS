@@ -205,8 +205,9 @@ int main(int argc, char **argv)
       break;
     }
 
-     if(step == 70) {
-      // ops_print_dat_to_txtfile(viscosity, "cloverdats.dat");
+     //if(step == 200) {
+      //ops_fetch_dat_hdf5_file(density0, "cloverdats.h5");
+      //ops_print_dat_to_txtfile(density0, "cloverdats.dat");
       // exit(0);
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //ops_print_dat_to_txtfile_core(xvel1, "cloverdats.dat");
@@ -214,7 +215,7 @@ int main(int argc, char **argv)
       //break;
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //exit(0);
-     }
+     //}
 
   }
 

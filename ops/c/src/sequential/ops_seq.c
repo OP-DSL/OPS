@@ -121,16 +121,19 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
-  if(data == NULL) {
+
+  if(data != NULL) {
+     //printf("Data read in from HDF5 file or is allocated by the user\n");
+     dat->user_managed = 1; // will be reset to 0 if called from ops_decl_dat_hdf5()
+     dat->is_hdf5 = 0;
+     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from ops_decl_dat_hdf5()
+  }
+  else {
     //Allocate memory immediately
     int bytes = size*type_size;
     for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
     dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
-  }
-  else {
-    printf("in here\n");
-    dat->user_managed = 1;
   }
   return dat;
 }
@@ -244,9 +247,13 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
   handle->initialized = 0;
 }
 
-void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
-{
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_get_data( ops_dat dat ){
+  //data already on the host .. do nothing
+  (void)dat;
 }
 
 void ops_decl_const_char( int dim, char const * type, int typeSize, char * data, char const * name )

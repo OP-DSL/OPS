@@ -161,6 +161,11 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr){
 }
 
 
+// routine to fetch data from device
+void ops_get_data( ops_dat dat ){
+  ops_cuda_get_data( dat );
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir) {
   return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir, to_dir);
 }

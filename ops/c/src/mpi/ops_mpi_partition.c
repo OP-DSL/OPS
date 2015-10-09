@@ -276,7 +276,8 @@ void ops_decomp_dats(sub_block *sb) {
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding
         dat->base[d] = 0;
-        sd->d_im[d] = dat->d_m[d]; //TODO: compute this properly, or lazy or something
+        //TODO: compute this properly, or lazy or something
+        sd->d_im[d] = dat->d_m[d]; //intra-block (MPI) halos are set to be equal to block halos
         dat->d_m[d] = 0;
       } else {
         sd->decomp_disp[d] += (dat->base[d] + dat->d_m[d]); //move left end to negative for base and left block halo
@@ -286,7 +287,8 @@ void ops_decomp_dats(sub_block *sb) {
 
       if (sb->id_p[d] != MPI_PROC_NULL) {
         //if not positive end
-        sd->d_ip[d] = dat->d_p[d]; //TODO: compute this properly, or lazy or something
+        //TODO: compute this properly, or lazy or something
+        sd->d_ip[d] = dat->d_p[d]; //intra-block (MPI) halos are set to be equal to block halos
         dat->d_p[d] = 0;
       } else {
         sd->decomp_size[d] += dat->d_p[d]; //if last in this dimension, extend with left block halo size
@@ -301,7 +303,21 @@ void ops_decomp_dats(sub_block *sb) {
 
     //Allocate datasets -- move this to separate routines (one for none-hdf5 and one for hdf5 ?)
     //TODO: read HDF5, what if it was already allocated - re-distribute
-    dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+    if(dat->data == NULL)
+      if(dat->is_hdf5 == 0) {
+        dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        dat->hdf5_file = "none";
+      }
+      else {
+        dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        ops_read_dat_hdf5(dat);
+      }
+    else {
+       dat->user_managed = 1;
+       dat->is_hdf5 = 0;
+       dat->hdf5_file = "none";
+    }
+
     ops_cpHostToDevice( (void**)&(dat->data_d), (void**)&(dat->data), prod[sb->ndim-1]*dat->elem_size);
 
     //TODO: halo exchanges should not include the block halo part for partitions that are on the edge of a block

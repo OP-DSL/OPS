@@ -141,6 +141,8 @@ typedef struct
   char const  *type;       /* datatype */
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
+  int         is_hdf5;     /* indicates whether the data is to read from an hdf5 file*/
+  char const  *hdf5_file;  /* name of hdf5 file from which this dataset was read*/
   int         e_dat;    /* flag to indicate if this is an edge dat*/
 } ops_dat_core;
 
@@ -362,6 +364,8 @@ void ops_timers( double *cpu, double *et );
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
 
+void ops_get_data( ops_dat dat );
+
 void ops_timing_realloc ( int, const char * );
 void ops_timers_core( double *cpu, double *et );
 float ops_compute_transfer(int dims, int *range, ops_arg *arg);
@@ -420,5 +424,6 @@ void ops_execute();
 #endif
 
 #include "ops_checkpointing.h"
+#include "ops_hdf5.h"
 
 #endif /* __OP_LIB_CORE_H */
