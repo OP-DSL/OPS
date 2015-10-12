@@ -322,7 +322,7 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, c
 void ops_inmemory_save(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data, int partial, int dup) {
   //Increment head
   int head = ops_ramdisk_item_queue_head++;
-  
+
   //Save all fields and make copy of data in memory
   ops_ramdisk_item_queue[head].dat = dat;
   ops_ramdisk_item_queue[head].outfile = outfile;
@@ -338,12 +338,16 @@ void ops_inmemory_save(ops_dat dat, hid_t outfile, int size, int *saved_range, c
 void save_data_handler(ops_dat dat, hid_t outfile, int size, int *saved_range, char* data, int partial, int dup) {
 #ifdef OPS_CHK_THREAD
   if (ops_thread_offload) ops_ramdisk_queue(dat, outfile, size, saved_range, data, partial);
-#endif
-  if (ops_checkpoint_inmemory) ops_inmemory_save(dat, outfile, size, saved_range, data, partial, dup);
   else {
-    if (partial) save_to_hdf5_partial(dat,outfile,size,saved_range,data);
-    else save_to_hdf5_full(dat, outfile, size, data);
+#endif
+    if (ops_checkpoint_inmemory) ops_inmemory_save(dat, outfile, size, saved_range, data, partial, dup);
+    else {
+      if (partial) save_to_hdf5_partial(dat,outfile,size,saved_range,data);
+      else save_to_hdf5_full(dat, outfile, size, data);
+    }
+#ifdef OPS_CHK_THREAD
   }
+#endif
 }
 
 
@@ -613,7 +617,7 @@ void ops_checkpoint_prepare_files() {
     if (ops_duplicate_backup && file_exists(filename_dup)) remove(filename_dup);
     ops_timers_core(&cpu, &t4);
     if (OPS_diags>5) printf("Removed previous file %g\n",t4-t3);
-  
+
     //where we start backing up stuff
     ops_timers_core(&cpu, &t3);
     file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -682,24 +686,24 @@ void ops_chkp_sig_handler(int signo) {
     return;
   }
   if (OPS_diags>1) printf("Process received SIGINT, dumping checkpoint from memory...\n");
-  
+
   //No checkpoint yet
   if (ops_inm_ctrl.ops_backup_point == -1) {
     return;
   }
-  
+
   //Things now all do go to disk
   ops_checkpoint_inmemory=0;
-  
+
   //Open files
   ops_checkpoint_prepare_files();
-  
+
   //Save control
   ops_ctrldump(file);
   if (ops_duplicate_backup) {
     ops_ctrldump(file_dup);
   }
-   
+
   //Save datasets
   for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head; i++) {
       save_data_handler(
@@ -713,7 +717,7 @@ void ops_chkp_sig_handler(int signo) {
       free(ops_ramdisk_item_queue[i].data);
   }
   free(ops_ramdisk_item_queue);
-  
+
   //Close files
   ops_checkpoint_complete();
 
@@ -796,7 +800,7 @@ bool ops_checkpointing_init(const char *file_name, double interval, int options)
     ops_ramdisk_item_queue_head = 0;
     ops_ramdisk_item_queue_tail = 0;
     ops_ramdisk_item_queue_size = 3*OPS_dat_index;
-        
+
   }
 
   ops_checkpoint_interval = interval;
@@ -844,7 +848,7 @@ void ops_checkpointing_save_control(hid_t file_out) {
 
   ops_inm_ctrl.ops_backup_point = ops_backup_point;
   ops_inm_ctrl.ops_best_backup_point = ops_best_backup_point;
-  
+
   //Save the state of all ongoing reductions
   int total_size = 0;
   for (int i = 0; i < OPS_reduction_index; i++)
@@ -862,12 +866,12 @@ void ops_checkpointing_save_control(hid_t file_out) {
   if (ops_inm_ctrl.reduction_state!=NULL) free(ops_inm_ctrl.reduction_state);
   ops_inm_ctrl.reduction_state=reduction_state;
   ops_inm_ctrl.reduction_state_size = total_size;
-  
+
   //Save payload if specified by user
   if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
     ops_inm_ctrl.OPS_checkpointing_payload = (char *)realloc(ops_inm_ctrl.OPS_checkpointing_payload,OPS_checkpointing_payload_nbytes*sizeof(char));
     memcpy(ops_inm_ctrl.OPS_checkpointing_payload,OPS_checkpointing_payload, OPS_checkpointing_payload_nbytes*sizeof(char));
-    ops_inm_ctrl.OPS_checkpointing_payload_nbytes = OPS_checkpointing_payload_nbytes; 
+    ops_inm_ctrl.OPS_checkpointing_payload_nbytes = OPS_checkpointing_payload_nbytes;
   }
 
   //save reduction history
@@ -931,7 +935,7 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
           save_dat(datlist[i]);
       ops_timers_core(&cpu, &t4);
       if (OPS_diags>5) printf("Written new file %g\n",t4-t3);
-      
+
       //Close files
       ops_checkpoint_complete();
 
@@ -1229,7 +1233,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
 
     //Remove previous files, create new ones
     ops_checkpoint_prepare_files();
-    
+
     //write all control
     ops_checkpointing_save_control(file);
     if (ops_duplicate_backup) {
@@ -1342,9 +1346,9 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range, int loop_id)
         ops_printf("Ever written %s %d\n", item->dat->name, OPS_dat_ever_written[item->dat->index]);
       }
     }
-    
+
     ops_checkpoint_complete();
-    
+
     if (OPS_diags>1) ops_printf("\nCheckpoint created %d bytes reduction data\n", OPS_chk_red_offset);
     //finished backing up, reset everything, prepare to be backed up at a later point
     backup_state = OPS_BACKUP_GATHER;
