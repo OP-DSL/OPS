@@ -36,6 +36,7 @@ poisson_openacc
 *.h5
 *.h5.*
 *.mod
+*.lst
 *.dat
 *.txt
 *_seq
