@@ -489,6 +489,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     else if (block->dims == 5)
       remove_mpi_halos5D(dat, size, l_disp, data);
 
+    //make sure we multiply by the number of data values per
+    // element (i.e. dat->dim) to get full size of the data
+    size[0] = size[0]*dat->dim;
+    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
+    disp[0] = disp[0]*dat->dim;
+
+
     //MPI variables
     MPI_Info info  = MPI_INFO_NULL;
 
@@ -1244,6 +1251,12 @@ void ops_read_dat_hdf5(ops_dat dat) {
     for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
     //printf("t_size = %d ",t_size);
     char* data = (char *)malloc(t_size*dat->elem_size);
+
+    //make sure we multiply by the number of
+    //data values per element (i.e. dat->dim) to get full size of the data
+    size[0] = size[0]*dat->dim;
+    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
+    disp[0] = disp[0]*dat->dim;
 
 
     //create new communicator

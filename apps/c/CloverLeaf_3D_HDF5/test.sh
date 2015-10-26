@@ -7,6 +7,11 @@ make
 cd -
 make clean
 make
+#============================ Generate HDF5 file ==========================================================
+echo '============> Generate HDF5 file'
+./generate_file
+#rm cloverdata.h5
+
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out

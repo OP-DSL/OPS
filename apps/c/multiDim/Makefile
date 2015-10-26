@@ -141,7 +141,7 @@ endif
 all: clean $(TARGETS)
 
 multidim_dev_seq: Makefile multidim.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(CPPFLAGS) $(OPS_INC) $(OPS_LIB) multidim.cpp -lops_seq -o multidim_dev_seq
+	$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) multidim.cpp -lops_seq $(HDF5_LIB) -o multidim_dev_seq
 
 
 multidim_dev_mpi: Makefile multidim.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
@@ -166,20 +166,20 @@ multidim_mpi_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_
 
 
 multidim_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o multidim_openmp
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o multidim_openmp
 
 #
 # Sequential version
 #
 multidim_seq: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -o multidim_seq
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o multidim_seq
 
 #
 # CUDA version
 #
 
 multidim_cuda: Makefile ./CUDA/multidim_kernels_cu.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) multidim_ops.cpp ./CUDA/multidim_kernels_cu.o -lcudart -lops_cuda -o multidim_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) multidim_ops.cpp ./CUDA/multidim_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o multidim_cuda
 
 multidim_mpi_cuda: Makefile ./CUDA/multidim_kernels_mpi_cu.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) multidim_ops.cpp ./CUDA/multidim_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o multidim_mpi_cuda
@@ -223,7 +223,7 @@ openacc_mpi_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\_mpi
 
 multidim_openacc: $(openacc_obj_list) ./OpenACC/multidim_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
-    multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -o multidim_openacc
+    multidim_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o multidim_openacc
 
 
 multidim_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/multidim_kernels_mpi.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
@@ -235,7 +235,7 @@ multidim_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/multidim_kernels_mpi.o m
 #OpenCL version
 #
 multidim_opencl: ./OpenCL/multidim_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
-	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o  -lops_opencl -o multidim_opencl
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) multidim_ops.cpp ./OpenCL/multidim_opencl_kernels.o  -lops_opencl $(HDF5_LIB) -o multidim_opencl
 
 
 multidim_mpi_opencl: ./OpenCL/multidim_mpi_opencl_kernels.o multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
