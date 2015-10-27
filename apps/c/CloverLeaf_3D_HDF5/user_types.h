@@ -68,5 +68,4 @@ inline int type_error (const state_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "state_type" ) && strcmp ( type, "state_type:soa" ));
 }
 #endif
-
 #endif
