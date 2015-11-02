@@ -108,13 +108,18 @@ endif
 endif
 
 
+
 ifdef HDF5_INSTALL_PATH
-  HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
-  HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
   CC = $(MPICC)
   CPP = $(MPICPP)
   OPS_INC += $(HDF5_INC)
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
 endif
+endif
+
 
 NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 # flags for nvcc

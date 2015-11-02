@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -e
 cd ../../../ops/c
 ls ../
 source ../source_intel
@@ -9,8 +9,8 @@ make clean
 make
 #============================ Generate HDF5 file ==========================================================
 echo '============> Generate HDF5 file'
+rm cloverdata.h5
 ./generate_file
-#rm cloverdata.h5
 
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
