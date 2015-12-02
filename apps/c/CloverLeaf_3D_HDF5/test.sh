@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -e
 cd ../../../ops/c
 ls ../
 source ../source_intel
@@ -7,6 +7,11 @@ make
 cd -
 make clean
 make
+#============================ Generate HDF5 file ==========================================================
+echo '============> Generate HDF5 file'
+rm cloverdata.h5
+./generate_file
+
 #============================ Test Cloverleaf 3D ==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out

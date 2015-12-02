@@ -204,4 +204,4 @@ extern ops_reduction red_ke;
 extern ops_reduction red_press;
 extern ops_reduction red_output;
 
-#endif /* #ifndef __CLOVER_LEAF_DATA_H*/
+#endif

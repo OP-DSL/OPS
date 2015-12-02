@@ -489,6 +489,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     else if (block->dims == 5)
       remove_mpi_halos5D(dat, size, l_disp, data);
 
+    //make sure we multiply by the number of data values per
+    // element (i.e. dat->dim) to get full size of the data
+    size[0] = size[0]*dat->dim;
+    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
+    disp[0] = disp[0]*dat->dim;
+
+
     //MPI variables
     MPI_Info info  = MPI_INFO_NULL;
 
@@ -1245,6 +1252,12 @@ void ops_read_dat_hdf5(ops_dat dat) {
     //printf("t_size = %d ",t_size);
     char* data = (char *)malloc(t_size*dat->elem_size);
 
+    //make sure we multiply by the number of
+    //data values per element (i.e. dat->dim) to get full size of the data
+    size[0] = size[0]*dat->dim;
+    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
+    disp[0] = disp[0]*dat->dim;
+
 
     //create new communicator
     int my_rank, comm_size;
@@ -1365,4 +1378,37 @@ void ops_read_dat_hdf5(ops_dat dat) {
     MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
   }
   return;
+}
+
+
+/*******************************************************************************
+* Routine to dump all ops_blocks, ops_dats etc to a named
+* HDF5 file
+*******************************************************************************/
+
+void ops_dump_to_hdf5(char const *file_name) {
+
+  ops_dat_entry *item;
+  for ( int n = 0; n < OPS_block_index; n++ ) {
+    printf ( "Dumping block %15s to HDF5 file %s\n", OPS_block_list[n].block->name, file_name);
+    ops_fetch_block_hdf5_file(OPS_block_list[n].block, file_name);
+  }
+
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    printf ( "Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+    if (item->dat->e_dat != 1) //currently cannot write edge dats .. need to fix this
+      ops_fetch_dat_hdf5_file(item->dat, file_name);
+  }
+
+  for ( int i = 0; i < OPS_stencil_index; i++ ) {
+    printf ( "Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name, file_name);
+    ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
+  }
+
+  printf("halo index = %d \n",OPS_halo_index);
+  for (int i = 0; i < OPS_halo_index; i++) {
+    printf ( "Dumping halo %15s--%15s to HDF5 file %s\n",
+    OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
+    ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
+  }
 }

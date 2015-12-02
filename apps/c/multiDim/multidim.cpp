@@ -127,6 +127,10 @@ int main(int argc, char **argv)
 
   ops_timers(&ct1, &et1);
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
+
+  ops_fetch_block_hdf5_file(grid2D, "multidim.h5");
+  ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
+
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
   ops_exit();
