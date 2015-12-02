@@ -1079,3 +1079,36 @@ ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* fr
 
   return temp;
 }
+
+
+/*******************************************************************************
+* Routine to dump all ops_blocks, ops_dats etc to a named
+* HDF5 file
+*******************************************************************************/
+// --- Perhaps this file is not a good location to place this routine in ?
+void ops_dump_to_hdf5(char const *file_name) {
+
+  ops_dat_entry *item;
+  for ( int n = 0; n < OPS_block_index; n++ ) {
+    printf ( "Dumping block %15s to HDF5 file %s\n", OPS_block_list[n].block->name, file_name);
+    ops_fetch_block_hdf5_file(OPS_block_list[n].block, file_name);
+  }
+
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    printf ( "Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+    if (item->dat->e_dat != 1) //currently cannot write edge dats .. need to fix this
+      ops_fetch_dat_hdf5_file(item->dat, file_name);
+  }
+
+  for ( int i = 0; i < OPS_stencil_index; i++ ) {
+    printf ( "Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name, file_name);
+    ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
+  }
+
+  printf("halo index = %d \n",OPS_halo_index);
+  for (int i = 0; i < OPS_halo_index; i++) {
+    printf ( "Dumping halo %15s--%15s to HDF5 file %s\n",
+    OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
+    ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
+  }
+}
