@@ -299,9 +299,12 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     code('int end['+str(NDIM)+'];')
     code('')
 
+    code('#ifdef OPS_MPI')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('#endif')
+
     if not(MULTI_GRID):
       code('#ifdef OPS_MPI')
-      code('sub_block_list sb = OPS_sub_block_list[block->index];')
       code('if (!sb->owned) return;')
       FOR('n','0',str(NDIM))
       code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
@@ -336,6 +339,8 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       code('')
       code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
+      for n in range (0, nargs):
+        code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
       code('#else')
@@ -364,7 +369,6 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       code('#endif //OPS_MPI')
       code('')
 
-
     if MULTI_GRID:
       for n in range (0, nargs):
         if restrict[n]  == 1 :
@@ -376,14 +380,22 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
           ENDFOR()
         elif prolong[n] == 1:
           comm('This arg has a prolong stencil - so create different ranges')
-          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
           code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];int d_size_'+str(n)+'[2];')
+          code('#ifdef OPS_MPI')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
           code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
           code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
           code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
           ENDFOR()
+          code('#else')
+          FOR('n','0',str(NDIM))
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + args['+str(n)+'].dat->size[n] - args['+str(n)+'].dat->d_p[n];')
+          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+          ENDFOR()
+          code('#endif')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
