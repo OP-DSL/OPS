@@ -166,7 +166,7 @@ mgrid_mpi_openmp: Makefile mgrid_ops.cpp mgrid_populate_kernel.h $(OPS_INSTALL_P
 
 
 mgrid_openmp: Makefile mgrid_ops.cpp mgrid_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mgrid_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -o mgrid_openmp
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mgrid_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq  $(HDF5_LIB) -o mgrid_openmp
 
 #
 # Sequential version
