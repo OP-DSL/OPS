@@ -21,7 +21,6 @@ OPS_GENERATED=mgrid_ops.cpp
 
 OTHER_FILES=
 
-
 APP=mgrid
 MAIN_SRC=mgrid
 

@@ -197,6 +197,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 
 /************* Functions only use in the Fortran Backend ************/
 
+<<<<<<< HEAD:ops/c/src/mpi/ops_mpi_decl_cuda.cpp
 int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
@@ -216,3 +217,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo) {
   ops_unpack_cuda_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
 }
+=======
+int getOPS_block_size_x() { return OPS_block_size_x; }
+int getOPS_block_size_y() { return OPS_block_size_y; }
+>>>>>>> ae0514c... tart converting other versions to be compatible with mgrid:ops/c/src/mpi/ops_mpi_decl_cuda.c
