@@ -561,7 +561,7 @@ void update_halo(int* fields, int depth)
                ops_arg_dat_opt(energy0, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_ENERGY0]),
                ops_arg_dat_opt(energy1, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_ENERGY1]),
                ops_arg_dat_opt(pressure, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_PRESSURE]),
-               ops_arg_dat_opt(viscosity, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_DENSITY0]),
+               ops_arg_dat_opt(viscosity, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_VISCOSITY]),
                ops_arg_dat_opt(soundspeed, 1, S3D_000_0M10, "double", OPS_RW, fields[FIELD_SOUNDSPEED]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
@@ -573,7 +573,7 @@ void update_halo(int* fields, int depth)
                ops_arg_dat_opt(energy0, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_ENERGY0]),
                ops_arg_dat_opt(energy1, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_ENERGY1]),
                ops_arg_dat_opt(pressure, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_PRESSURE]),
-               ops_arg_dat_opt(viscosity, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_DENSITY0]),
+               ops_arg_dat_opt(viscosity, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_VISCOSITY]),
                ops_arg_dat_opt(soundspeed, 1, S3D_000_P300, "double", OPS_RW, fields[FIELD_SOUNDSPEED]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
@@ -619,7 +619,7 @@ void update_halo(int* fields, int depth)
                ops_arg_dat_opt(energy0, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_ENERGY0]),
                ops_arg_dat_opt(energy1, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_ENERGY1]),
                ops_arg_dat_opt(pressure, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_PRESSURE]),
-               ops_arg_dat_opt(viscosity, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_DENSITY0]),
+               ops_arg_dat_opt(viscosity, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_VISCOSITY]),
                ops_arg_dat_opt(soundspeed, 1, S3D_000_00P3, "double", OPS_RW, fields[FIELD_SOUNDSPEED]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
