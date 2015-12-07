@@ -248,9 +248,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   for (int d = 0; d < block->dims; d++) {
 	//pure data size (i.e. without block halos) to be noted as an attribute
 	gbl_size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+
 	//the number of elements thats actually written
 	g_size[d] = dat->size[d];
   }
+
+  //make sure we multiply by the number of data values per element (i.e. dat->dim)
+  g_size[1] = g_size[1]*dat->dim;
 
   //Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);

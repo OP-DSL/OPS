@@ -61,5 +61,4 @@ extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dt
 
 extern int jdt, kdt, ldt;
 
-
 #endif /* __CLOVER_LEAF_DEFINITIONS_H */

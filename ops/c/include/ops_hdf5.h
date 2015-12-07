@@ -61,11 +61,10 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);
 void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name);
 void ops_read_dat_hdf5(ops_dat dat);
+void ops_dump_to_hdf5(char const *file_name);
 
 #ifdef __cplusplus
 }
 #endif
-
-
-
-#endif /* __OPS_HDF5_H */
+#endif
+/* __OPS_HDF5_H */

@@ -92,17 +92,17 @@ void build_field_hdf5()
   work_array6    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array6");
   work_array7    = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "work_array7");
 
-  size[0] = x_cells+6; size[1] = y_cells+5; size[2] = z_cells+5;
+  size[0] = x_cells+5; size[1] = y_cells+5; size[2] = z_cells+5;
   vol_flux_x  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_x");
   mass_flux_x = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_x");
   xarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "xarea");
 
-  size[0] = x_cells+5; size[1] = y_cells+6; size[2] = z_cells+5;
+  size[0] = x_cells+5; size[1] = y_cells+5; size[2] = z_cells+5;
   vol_flux_y  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_y");
   mass_flux_y = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_y");
   yarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "yarea");
 
-  size[0] = x_cells+5; size[1] = y_cells+5; size[2] = z_cells+6;
+  size[0] = x_cells+5; size[1] = y_cells+5; size[2] = z_cells+5;
   vol_flux_z  = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "vol_flux_z");
   mass_flux_z = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "mass_flux_z");
   zarea       = ops_decl_dat(clover_grid, 1, size, base, d_m, d_p, temp, "double", "zarea");
