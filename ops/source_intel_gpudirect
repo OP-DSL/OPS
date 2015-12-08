@@ -1,0 +1,23 @@
+#A rough example of environmental variables for compiling with Intel compilers
+
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
+
+#OPS specifics
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+
+#CUDA and NVIDIA OpenCL
+export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+
+#Intel MPI and Compilers
+module load intel-compilers
+module load intel-mpi
+export PATH=/home/mgiles/mudalige/mvapich2/intel-15/bin:$PATH
+export LD_LIBRARY_PATH=/home/mgiles/mudalige/mvapich2/intel-15/lib:$LD_LIBRARY_PATH
+export MPI_INSTALL_PATH=/home/mgiles/mudalige/mvapich2/intel-15/
