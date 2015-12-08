@@ -1,13 +1,32 @@
 #A rough example of environmental variables for compiling with PGI compilers
-export PATH=/opt/pgi/linux86-64/14.7/bin/:$PATH
-export PATH=/opt/mvapich2/2.0-pgi147/bin:$PATH
-export LD_LIBRARY_PATH=/opt/mvapich2/2.0-pgi147/lib/:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/usr/lib64:/opt/pgi/linux86-64/14.7/lib:$LD_LIBRARY_PATH
-export MPI_INSTALL_PATH=/opt/mvapich2/2.0-pgi147/
-export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/home/mudalige/Cloverleaf/OPS_rebase/OPS/ops
-export CUDA_INSTALL_PATH=/usr/local/cuda-6.0
-export MPICH_CXX=/opt/pgi/linux86-64/14.7/bin/pgc++
-export MPICH_CC=/opt/pgi/linux86-64/14.7/bin/pgcc
-export MPICH_F90=/opt/pgi/linux86-64/14.7/bin/pgf90
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
 
+#OPS specifics
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+
+#CUDA and NVIDIA OpenCL
+export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+
+#PGI based MPI and Compilers
+#export MPI_INSTALL_PATH=/opt/pgi/linux86-64/2015/mpi/mpich/ #/opt/openmpi-1.8.4-pgi151
+export MPI_INSTALL_PATH=/opt/openmpi-1.8.4-pgi151/
+export PATH=/opt/pgi/linux86-64/2015/bin/:$PATH
+#export PATH=/opt/pgi/linux86-64/2015/mpi/mpich/bin/:$PATH #/opt/openmpi-1.8.4-pgi151/bin:$PATH
+export PATH=/opt/openmpi-1.8.4-pgi151/bin/:$PATH
+#export LD_LIBRARY_PATH=/opt/pgi/linux86-64/2015/lib/:$LD_LIBRARY_PATH #/usr/lib/x86_64-linux-gnu/
+export LD_LIBRARY_PATH=/opt/openmpi-1.8.4-pgi151/lib/:$LD_LIBRARY_PATH
+
+export MPICH_CXX=/opt/pgi/linux86-64/2015/bin/pgc++
+export MPICH_CC=/opt/pgi/linux86-64/2015/bin/pgcc
+export MPICH_F90=/opt/pgi/linux86-64/2015/bin/pgfortran
+
+#PGI based HDF5
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/opt/hdf5-pgi/
