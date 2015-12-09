@@ -73,15 +73,6 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
 
 
   int arg_idx[2];
-  #ifdef OPS_MPI
-  sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
-  sub_dat *sd1 = OPS_sub_dat_list[args[1].dat->index];
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-  #endif //OPS_MPI
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start[0],
       &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
