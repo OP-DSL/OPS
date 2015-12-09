@@ -87,9 +87,9 @@ void advection(int step)
   fields[FIELD_VOL_FLUX_X] = 0;
   fields[FIELD_VOL_FLUX_Y] = 0;
   fields[FIELD_VOL_FLUX_Z] = 0;
-  fields[FIELD_MASS_FLUX_X] = 1;
-  fields[FIELD_MASS_FLUX_Y] = 1;
-  fields[FIELD_MASS_FLUX_Z] = 1;
+  fields[FIELD_MASS_FLUX_X] = (direction==g_xdir);
+  fields[FIELD_MASS_FLUX_Y] = (direction==g_ydir);
+  fields[FIELD_MASS_FLUX_Z] = (direction==g_zdir);
   update_halo(fields,2);
 
 
@@ -139,9 +139,9 @@ void advection(int step)
   fields[FIELD_VOL_FLUX_X] = 0;
   fields[FIELD_VOL_FLUX_Y] = 0;
   fields[FIELD_VOL_FLUX_Z] = 0;
-  fields[FIELD_MASS_FLUX_X] = 1;
-  fields[FIELD_MASS_FLUX_Y] = 1;
-  fields[FIELD_MASS_FLUX_Z] = 1;
+  fields[FIELD_MASS_FLUX_X] = (direction==g_xdir);
+  fields[FIELD_MASS_FLUX_Y] = (direction==g_ydir);
+  fields[FIELD_MASS_FLUX_Z] = (direction==g_zdir);
   update_halo(fields,2);
 
   advec_mom(xvel, sweep_number, direction);
@@ -170,9 +170,9 @@ void advection(int step)
   fields[FIELD_VOL_FLUX_X] = 0;
   fields[FIELD_VOL_FLUX_Y] = 0;
   fields[FIELD_VOL_FLUX_Z] = 0;
-  fields[FIELD_MASS_FLUX_X] = 1;
-  fields[FIELD_MASS_FLUX_Y] = 1;
-  fields[FIELD_MASS_FLUX_Z] = 1;
+  fields[FIELD_MASS_FLUX_X] = (direction==g_xdir);
+  fields[FIELD_MASS_FLUX_Y] = (direction==g_ydir);
+  fields[FIELD_MASS_FLUX_Z] = (direction==g_zdir);
   update_halo(fields,2);
 
   advec_mom(xvel, sweep_number, direction);

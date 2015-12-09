@@ -56,6 +56,9 @@ int OPS_halo_group_index = 0, OPS_halo_group_max = 0,
     OPS_reduction_index = 0, OPS_reduction_max = 0;
 ops_reduction * OPS_reduction_list = NULL;
 int OPS_enable_checkpointing = 0;
+int ops_thread_offload = 0;
+int ops_checkpoint_inmemory = 0;
+int ops_lock_file = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -69,7 +72,6 @@ Double_linked_list OPS_dat_list; //Head of the double linked list
 
 int OPS_block_size_x = 32;
 int OPS_block_size_y = 4;
-
 
 double ops_gather_time=0.0;
 double ops_scatter_time=0.0;
@@ -123,13 +125,13 @@ void ops_init_core( int argc, char ** argv, int diags )
     if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
     {
       OPS_block_size_x = atoi ( argv[n] + 17 );
-      printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
+      ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
     }
 
     if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_Y=", 17 ) == 0 )
     {
       OPS_block_size_y = atoi ( argv[n] + 17 );
-      printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+      ops_printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
     }
 
     if ( strncmp ( argv[n], "-gpudirect", 10 ) == 0 )
@@ -140,13 +142,35 @@ void ops_init_core( int argc, char ** argv, int diags )
     if ( strncmp ( argv[n], "OPS_DIAGS=", 10 ) == 0 )
     {
       OPS_diags = atoi ( argv[n] + 10 );
-      printf ( "\n OPS_diags = %d \n", OPS_diags );
+      ops_printf ( "\n OPS_diags = %d \n", OPS_diags );
     }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
+    if ( strncmp ( argv[n], "OPS_CHECKPOINT=", 15 ) == 0 )
+    {
+      OPS_enable_checkpointing = 2;
+      OPS_ranks_per_node = atoi ( argv[n] + 15 );
+      ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n", OPS_ranks_per_node);
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
+    {
+      ops_thread_offload = 1;
+      ops_printf ( "\n OPS Checkpointing on a separate thread\n");
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_INMEMORY", 23 ) == 0 )
+    {
+      ops_checkpoint_inmemory = 1;
+      ops_printf ( "\n OPS Checkpointing in memory\n");
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
+    {
+      ops_lock_file = 1;
+      ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
     {
       OPS_enable_checkpointing = 1;
-      printf ( "\n OPS Checkpointing enabled\n");
+      ops_printf ( "\n OPS Checkpointing enabled\n");
     }
+
   }
 
   /*Initialize the double linked list to hold ops_dats*/
@@ -156,6 +180,7 @@ void ops_init_core( int argc, char ** argv, int diags )
 
 void ops_exit_core( )
 {
+  ops_checkpointing_exit();
   ops_dat_entry *item;
   // free storage and pointers for blocks
   for ( int i = 0; i < OPS_block_index; i++ ) {
@@ -205,7 +230,6 @@ void ops_exit_core( )
   OPS_dat_index = 0;
   OPS_block_max = 0;
 
-  ops_checkpointing_exit();
 }
 
 ops_block ops_decl_block(int dims, char *name)
@@ -887,6 +911,9 @@ void ops_timing_output(FILE *stream)
   if (stream == NULL)
     stream = stdout;
 
+  if ( OPS_diags > 1 )
+    if (OPS_enable_checkpointing)
+      ops_printf("\nTotal time spent in checkpointing: %g seconds\n", OPS_checkpointing_time);
   if ( OPS_diags > 1 ) {
     int maxlen = 0;
     for (int i = 0; i < OPS_kern_max; i++) {
@@ -1079,7 +1106,6 @@ ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* fr
 
   return temp;
 }
-
 
 /*******************************************************************************
 * Routine to dump all ops_blocks, ops_dats etc to a named

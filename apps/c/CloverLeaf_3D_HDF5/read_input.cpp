@@ -177,6 +177,11 @@ void read_input()
                 profiler_on = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "profiler_on",profiler_on);
               }
+              else if(strcmp(token,"checkpoint_frequency") == 0) {
+                token = strtok(NULL, " =");
+                checkpoint_frequency = atoi(token);
+                ops_fprintf(g_out," %20s: %d\n", "checkpoint_frequency",checkpoint_frequency);
+              }
               else if(strcmp(token,"state") == 0) {
 
                 ops_fprintf(g_out,"\n");

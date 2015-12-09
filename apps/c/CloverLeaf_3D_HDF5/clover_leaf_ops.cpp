@@ -81,6 +81,7 @@ double end_time;
 int end_step;
 int visit_frequency;
 int summary_frequency;
+int checkpoint_frequency;
 int use_vector_loops;
 
 int jdt, kdt, ldt;
@@ -95,7 +96,7 @@ int main(int argc, char **argv)
 {
 
 
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
   ops_printf(" Clover version %f\n", g_version);
 
 
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
-
+  ops_checkpointing_initphase_done();
   while(1) {
 
     step = step + 1;
@@ -139,6 +140,20 @@ int main(int argc, char **argv)
     flux_calc();
 
     advection(step);
+
+    ops_dat list[5] = {density1, energy1, xvel1, yvel1, zvel1};
+    //ops_checkpointing_manual_datlist(4, list);
+    double tosave[4] = {clover_time, dt, (double)step, (double)advect_x};
+    //if(ops_checkpointing_fastfw(4*sizeof(double), (char*)tosave)) {
+    //if(ops_checkpointing_manual_datlist_fastfw(5, list, 4*sizeof(double), (char*)tosave)) {
+    if (step%checkpoint_frequency==0) {
+      if(ops_checkpointing_manual_datlist_fastfw_trigger(5, list, 4*sizeof(double), (char*)tosave)) {
+        clover_time = tosave[0];
+        dt = tosave[1];
+        step = (int)tosave[2];
+        advect_x = (int)tosave[3];
+      }
+    }
 
     reset_field();
 
