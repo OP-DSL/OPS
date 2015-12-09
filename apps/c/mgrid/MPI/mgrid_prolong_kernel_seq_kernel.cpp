@@ -48,16 +48,6 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
   int arg_idx[2];
   #ifdef OPS_MPI
-  sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
-  sub_dat *sd1 = OPS_sub_dat_list[args[1].dat->index];
-  sub_dat *sd2 = OPS_sub_dat_list[args[2].dat->index];
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-  #endif //OPS_MPI
-  #ifdef OPS_MPI
   if (compute_ranges(args, 3,block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -97,7 +87,6 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
-
 
 
   int off0_0 = offs[0][0];
