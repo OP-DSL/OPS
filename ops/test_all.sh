@@ -2,7 +2,7 @@
 
 #exit script if any error is encountered during the build or
 #application executions.
-#set -e
+set -e
 echo $OPS_INSTALL_PATH
 cd $OPS_INSTALL_PATH
 cd ../apps/c/CloverLeaf/
