@@ -8,6 +8,10 @@ __constant__ int xdim1_update_halo_kernel4_minus_2_b;
 int xdim1_update_halo_kernel4_minus_2_b_h = -1;
 int ydim1_update_halo_kernel4_minus_2_b_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel4_minus_2_b*(y))
 #define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel4_minus_2_b*(y))
 

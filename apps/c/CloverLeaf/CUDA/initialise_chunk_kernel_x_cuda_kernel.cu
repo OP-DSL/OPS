@@ -11,6 +11,11 @@ __constant__ int xdim2_initialise_chunk_kernel_x;
 int xdim2_initialise_chunk_kernel_x_h = -1;
 int ydim2_initialise_chunk_kernel_x_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_x*(y))
 #define OPS_ACC1(x,y) (x+xdim1_initialise_chunk_kernel_x*(y))
 #define OPS_ACC2(x,y) (x+xdim2_initialise_chunk_kernel_x*(y))

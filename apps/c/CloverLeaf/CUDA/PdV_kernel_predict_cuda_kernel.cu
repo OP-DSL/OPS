@@ -38,6 +38,20 @@ __constant__ int xdim11_PdV_kernel_predict;
 int xdim11_PdV_kernel_predict_h = -1;
 int ydim11_PdV_kernel_predict_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+
+
 #define OPS_ACC0(x,y) (x+xdim0_PdV_kernel_predict*(y))
 #define OPS_ACC1(x,y) (x+xdim1_PdV_kernel_predict*(y))
 #define OPS_ACC2(x,y) (x+xdim2_PdV_kernel_predict*(y))

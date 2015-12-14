@@ -40,6 +40,20 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+
+
 #define OPS_ACC0(x,y) (x+xdim0_advec_cell_kernel4_xdir*(y))
 #define OPS_ACC1(x,y) (x+xdim1_advec_cell_kernel4_xdir*(y))
 #define OPS_ACC2(x,y) (x+xdim2_advec_cell_kernel4_xdir*(y))
@@ -68,20 +82,6 @@ __global double * restrict post_mass,__global double * restrict advec_vol,__glob
   energy1[OPS_ACC1(0,0)] = post_ener[OPS_ACC9(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
 
 
 

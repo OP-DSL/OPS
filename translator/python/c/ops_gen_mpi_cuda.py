@@ -159,6 +159,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('int ydim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
+
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -803,9 +814,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
-  for n in range (0,50):
-   code('#undef OPS_ACC'+str(n))
-  code('')
+
   comm(' global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:

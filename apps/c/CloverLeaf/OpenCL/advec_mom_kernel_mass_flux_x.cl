@@ -40,6 +40,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel_mass_flux_x*(y))
 #define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel_mass_flux_x*(y))
 
@@ -53,11 +58,6 @@ inline void advec_mom_kernel_mass_flux_x( __global double * restrict node_flux,c
   node_flux[OPS_ACC0(0,0)] = 0.25 * ( mass_flux_x[OPS_ACC1(0,-1)] + mass_flux_x[OPS_ACC1(0,0)] +
     mass_flux_x[OPS_ACC1(1,-1)] + mass_flux_x[OPS_ACC1(1,0)] );
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

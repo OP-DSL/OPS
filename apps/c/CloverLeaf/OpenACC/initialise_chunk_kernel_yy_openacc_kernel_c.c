@@ -7,6 +7,10 @@
 
 int xdim0_initialise_chunk_kernel_yy;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_yy*(y))
 
 //user function

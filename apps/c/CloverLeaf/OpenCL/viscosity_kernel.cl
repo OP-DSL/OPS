@@ -40,6 +40,16 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y) (x+xdim0_viscosity_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_viscosity_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_viscosity_kernel*(y))
@@ -101,16 +111,6 @@ const __global double * restrict celldy,const __global double * restrict pressur
     viscosity[OPS_ACC6(0,0)] = 2.0 * (density0[OPS_ACC5(0,0)]) * grad2 * limiter * limiter;
   }
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
 
 
 
