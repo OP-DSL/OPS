@@ -98,6 +98,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
     //Allocate memory immediately
     dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
+    dat->mem = bytes;
   }
 
   ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),

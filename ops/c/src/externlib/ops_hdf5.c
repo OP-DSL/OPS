@@ -677,6 +677,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
 	t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
   char* data = (char *)malloc(t_size*dat_dim*type_size);
 
+
   if(strcmp(read_type,"double") == 0)
 	  H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
     else if(strcmp(read_type,"float") == 0)
@@ -700,6 +701,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
   created_dat->is_hdf5 = 1;
   created_dat->hdf5_file = file_name;
   created_dat->user_managed = 0;
+  created_dat->mem = t_size*dat_dim*type_size;
 
   H5Pclose(plist_id);
   H5Gclose(group_id);
