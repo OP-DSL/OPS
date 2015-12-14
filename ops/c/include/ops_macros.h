@@ -61,6 +61,40 @@
       #define OPS_ACC15(x,y,z) (x+xdim15*(y)+ydim15*xdim15*(z))
       #define OPS_ACC16(x,y,z) (x+xdim16*(y)+ydim16*xdim16*(z))
       #define OPS_ACC17(x,y,z) (x+xdim17*(y)+ydim17*xdim17*(z))
+      #define OPS_ACC18(x,y,z) (x+xdim18*(y)+ydim18*xdim18*(z))
+      #define OPS_ACC19(x,y,z) (x+xdim19*(y)+ydim19*xdim19*(z))
+      #define OPS_ACC20(x,y,z) (x+xdim20*(y)+ydim20*xdim20*(z))
+      #define OPS_ACC21(x,y,z) (x+xdim21*(y)+ydim21*xdim21*(z))
+      #define OPS_ACC22(x,y,z) (x+xdim22*(y)+ydim22*xdim22*(z))
+      #define OPS_ACC23(x,y,z) (x+xdim23*(y)+ydim23*xdim23*(z))
+      #define OPS_ACC24(x,y,z) (x+xdim24*(y)+ydim24*xdim24*(z))
+      #define OPS_ACC25(x,y,z) (x+xdim25*(y)+ydim25*xdim25*(z))
+      #define OPS_ACC26(x,y,z) (x+xdim26*(y)+ydim26*xdim26*(z))
+      #define OPS_ACC27(x,y,z) (x+xdim27*(y)+ydim27*xdim27*(z))
+      #define OPS_ACC28(x,y,z) (x+xdim28*(y)+ydim28*xdim28*(z))
+      #define OPS_ACC29(x,y,z) (x+xdim29*(y)+ydim29*xdim29*(z))
+      #define OPS_ACC30(x,y,z) (x+xdim30*(y)+ydim30*xdim30*(z))
+      #define OPS_ACC31(x,y,z) (x+xdim31*(y)+ydim31*xdim31*(z))
+      #define OPS_ACC32(x,y,z) (x+xdim32*(y)+ydim32*xdim32*(z))
+      #define OPS_ACC33(x,y,z) (x+xdim33*(y)+ydim33*xdim33*(z))
+      #define OPS_ACC34(x,y,z) (x+xdim34*(y)+ydim34*xdim34*(z))
+      #define OPS_ACC35(x,y,z) (x+xdim35*(y)+ydim35*xdim35*(z))
+      #define OPS_ACC36(x,y,z) (x+xdim36*(y)+ydim36*xdim36*(z))
+      #define OPS_ACC37(x,y,z) (x+xdim37*(y)+ydim37*xdim37*(z))
+      #define OPS_ACC38(x,y,z) (x+xdim38*(y)+ydim38*xdim38*(z))
+      #define OPS_ACC39(x,y,z) (x+xdim39*(y)+ydim39*xdim39*(z))
+      #define OPS_ACC40(x,y,z) (x+xdim40*(y)+ydim40*xdim40*(z))
+      #define OPS_ACC41(x,y,z) (x+xdim41*(y)+ydim41*xdim41*(z))
+      #define OPS_ACC42(x,y,z) (x+xdim42*(y)+ydim42*xdim42*(z))
+      #define OPS_ACC43(x,y,z) (x+xdim43*(y)+ydim43*xdim43*(z))
+      #define OPS_ACC44(x,y,z) (x+xdim44*(y)+ydim44*xdim44*(z))
+      #define OPS_ACC45(x,y,z) (x+xdim45*(y)+ydim45*xdim45*(z))
+      #define OPS_ACC46(x,y,z) (x+xdim46*(y)+ydim46*xdim46*(z))
+      #define OPS_ACC47(x,y,z) (x+xdim47*(y)+ydim47*xdim47*(z))
+      #define OPS_ACC48(x,y,z) (x+xdim48*(y)+ydim48*xdim48*(z))
+      #define OPS_ACC49(x,y,z) (x+xdim49*(y)+ydim49*xdim49*(z))
+      #define OPS_ACC50(x,y,z) (x+xdim50*(y)+ydim50*xdim50*(z))
+
     #else //do debug checks
       #define OPS_ACC0(x,y,z) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
       #define OPS_ACC1(x,y,z) (ops_stencil_check_3d(1, x, y, z, xdim1, ydim1))
@@ -80,6 +114,39 @@
       #define OPS_ACC15(x,y,z) (ops_stencil_check_3d(15, x, y, z, xdim15, ydim15))
       #define OPS_ACC16(x,y,z) (ops_stencil_check_3d(16, x, y, z, xdim16, ydim16))
       #define OPS_ACC17(x,y,z) (ops_stencil_check_3d(17, x, y, z, xdim17, ydim17))
+      #define OPS_ACC18(x,y,z) (ops_stencil_check_3d(18, x, y, z, xdim18, ydim18))
+      #define OPS_ACC19(x,y,z) (ops_stencil_check_3d(19, x, y, z, xdim19, ydim19))
+      #define OPS_ACC20(x,y,z) (ops_stencil_check_3d(20, x, y, z, xdim20, ydim20))
+      #define OPS_ACC21(x,y,z) (ops_stencil_check_3d(21, x, y, z, xdim21, ydim21))
+      #define OPS_ACC22(x,y,z) (ops_stencil_check_3d(22, x, y, z, xdim22, ydim22))
+      #define OPS_ACC23(x,y,z) (ops_stencil_check_3d(23, x, y, z, xdim23, ydim23))
+      #define OPS_ACC24(x,y,z) (ops_stencil_check_3d(24, x, y, z, xdim24, ydim24))
+      #define OPS_ACC25(x,y,z) (ops_stencil_check_3d(25, x, y, z, xdim25, ydim25))
+      #define OPS_ACC26(x,y,z) (ops_stencil_check_3d(26, x, y, z, xdim26, ydim26))
+      #define OPS_ACC27(x,y,z) (ops_stencil_check_3d(27, x, y, z, xdim27, ydim27))
+      #define OPS_ACC28(x,y,z) (ops_stencil_check_3d(28, x, y, z, xdim28, ydim28))
+      #define OPS_ACC29(x,y,z) (ops_stencil_check_3d(29, x, y, z, xdim29, ydim29))
+      #define OPS_ACC30(x,y,z) (ops_stencil_check_3d(30, x, y, z, xdim30, ydim30))
+      #define OPS_ACC31(x,y,z) (ops_stencil_check_3d(31, x, y, z, xdim31, ydim31))
+      #define OPS_ACC32(x,y,z) (ops_stencil_check_3d(32, x, y, z, xdim32, ydim32))
+      #define OPS_ACC33(x,y,z) (ops_stencil_check_3d(33, x, y, z, xdim33, ydim33))
+      #define OPS_ACC34(x,y,z) (ops_stencil_check_3d(34, x, y, z, xdim34, ydim34))
+      #define OPS_ACC35(x,y,z) (ops_stencil_check_3d(35, x, y, z, xdim35, ydim35))
+      #define OPS_ACC36(x,y,z) (ops_stencil_check_3d(36, x, y, z, xdim36, ydim36))
+      #define OPS_ACC37(x,y,z) (ops_stencil_check_3d(37, x, y, z, xdim37, ydim37))
+      #define OPS_ACC38(x,y,z) (ops_stencil_check_3d(38, x, y, z, xdim38, ydim38))
+      #define OPS_ACC39(x,y,z) (ops_stencil_check_3d(39, x, y, z, xdim39, ydim39))
+      #define OPS_ACC40(x,y,z) (ops_stencil_check_3d(40, x, y, z, xdim40, ydim40))
+      #define OPS_ACC41(x,y,z) (ops_stencil_check_3d(41, x, y, z, xdim41, ydim41))
+      #define OPS_ACC42(x,y,z) (ops_stencil_check_3d(42, x, y, z, xdim42, ydim42))
+      #define OPS_ACC43(x,y,z) (ops_stencil_check_3d(43, x, y, z, xdim43, ydim43))
+      #define OPS_ACC44(x,y,z) (ops_stencil_check_3d(44, x, y, z, xdim44, ydim44))
+      #define OPS_ACC45(x,y,z) (ops_stencil_check_3d(45, x, y, z, xdim45, ydim45))
+      #define OPS_ACC46(x,y,z) (ops_stencil_check_3d(46, x, y, z, xdim46, ydim46))
+      #define OPS_ACC47(x,y,z) (ops_stencil_check_3d(47, x, y, z, xdim47, ydim47))
+      #define OPS_ACC48(x,y,z) (ops_stencil_check_3d(48, x, y, z, xdim48, ydim48))
+      #define OPS_ACC49(x,y,z) (ops_stencil_check_3d(49, x, y, z, xdim49, ydim49))
+      #define OPS_ACC50(x,y,z) (ops_stencil_check_3d(50, x, y, z, xdim50, ydim50))
     #endif //end debug checks
   #elif defined OPS_2D //macros for 2D application
     #ifndef OPS_DEBUG //no debug checks
@@ -101,6 +168,39 @@
       #define OPS_ACC15(x,y) (x+xdim15*(y))
       #define OPS_ACC16(x,y) (x+xdim16*(y))
       #define OPS_ACC17(x,y) (x+xdim17*(y))
+      #define OPS_ACC18(x,y) (x+xdim18*(y))
+      #define OPS_ACC19(x,y) (x+xdim19*(y))
+      #define OPS_ACC20(x,y) (x+xdim20*(y))
+      #define OPS_ACC21(x,y) (x+xdim21*(y))
+      #define OPS_ACC22(x,y) (x+xdim22*(y))
+      #define OPS_ACC23(x,y) (x+xdim23*(y))
+      #define OPS_ACC24(x,y) (x+xdim24*(y))
+      #define OPS_ACC25(x,y) (x+xdim25*(y))
+      #define OPS_ACC26(x,y) (x+xdim26*(y))
+      #define OPS_ACC27(x,y) (x+xdim27*(y))
+      #define OPS_ACC28(x,y) (x+xdim28*(y))
+      #define OPS_ACC29(x,y) (x+xdim29*(y))
+      #define OPS_ACC30(x,y) (x+xdim30*(y))
+      #define OPS_ACC31(x,y) (x+xdim31*(y))
+      #define OPS_ACC32(x,y) (x+xdim32*(y))
+      #define OPS_ACC33(x,y) (x+xdim33*(y))
+      #define OPS_ACC34(x,y) (x+xdim34*(y))
+      #define OPS_ACC35(x,y) (x+xdim35*(y))
+      #define OPS_ACC36(x,y) (x+xdim36*(y))
+      #define OPS_ACC37(x,y) (x+xdim37*(y))
+      #define OPS_ACC38(x,y) (x+xdim38*(y))
+      #define OPS_ACC39(x,y) (x+xdim39*(y))
+      #define OPS_ACC40(x,y) (x+xdim40*(y))
+      #define OPS_ACC41(x,y) (x+xdim41*(y))
+      #define OPS_ACC42(x,y) (x+xdim42*(y))
+      #define OPS_ACC43(x,y) (x+xdim43*(y))
+      #define OPS_ACC44(x,y) (x+xdim44*(y))
+      #define OPS_ACC45(x,y) (x+xdim45*(y))
+      #define OPS_ACC46(x,y) (x+xdim46*(y))
+      #define OPS_ACC47(x,y) (x+xdim47*(y))
+      #define OPS_ACC48(x,y) (x+xdim48*(y))
+      #define OPS_ACC49(x,y) (x+xdim49*(y))
+      #define OPS_ACC50(x,y) (x+xdim50*(y))
     #else //do debug checks
       #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))
       #define OPS_ACC1(x,y) (ops_stencil_check_2d(1, x, y, xdim1, -1))
@@ -120,6 +220,39 @@
       #define OPS_ACC15(x,y) (ops_stencil_check_2d(15, x, y, xdim15, -1))
       #define OPS_ACC16(x,y) (ops_stencil_check_2d(16, x, y, xdim16, -1))
       #define OPS_ACC17(x,y) (ops_stencil_check_2d(17, x, y, xdim17, -1))
+      #define OPS_ACC18(x,y) (ops_stencil_check_2d(18, x, y, xdim18, -1))
+      #define OPS_ACC19(x,y) (ops_stencil_check_2d(19, x, y, xdim19, -1))
+      #define OPS_ACC20(x,y) (ops_stencil_check_2d(20, x, y, xdim20, -1))
+      #define OPS_ACC21(x,y) (ops_stencil_check_2d(21, x, y, xdim21, -1))
+      #define OPS_ACC22(x,y) (ops_stencil_check_2d(22, x, y, xdim22, -1))
+      #define OPS_ACC23(x,y) (ops_stencil_check_2d(23, x, y, xdim23, -1))
+      #define OPS_ACC24(x,y) (ops_stencil_check_2d(24, x, y, xdim24, -1))
+      #define OPS_ACC25(x,y) (ops_stencil_check_2d(25, x, y, xdim25, -1))
+      #define OPS_ACC26(x,y) (ops_stencil_check_2d(26, x, y, xdim26, -1))
+      #define OPS_ACC27(x,y) (ops_stencil_check_2d(27, x, y, xdim27, -1))
+      #define OPS_ACC28(x,y) (ops_stencil_check_2d(28, x, y, xdim28, -1))
+      #define OPS_ACC29(x,y) (ops_stencil_check_2d(29, x, y, xdim29, -1))
+      #define OPS_ACC30(x,y) (ops_stencil_check_2d(30, x, y, xdim30, -1))
+      #define OPS_ACC31(x,y) (ops_stencil_check_2d(31, x, y, xdim31, -1))
+      #define OPS_ACC32(x,y) (ops_stencil_check_2d(32, x, y, xdim32, -1))
+      #define OPS_ACC33(x,y) (ops_stencil_check_2d(33, x, y, xdim33, -1))
+      #define OPS_ACC34(x,y) (ops_stencil_check_2d(34, x, y, xdim34, -1))
+      #define OPS_ACC35(x,y) (ops_stencil_check_2d(35, x, y, xdim35, -1))
+      #define OPS_ACC36(x,y) (ops_stencil_check_2d(36, x, y, xdim36, -1))
+      #define OPS_ACC37(x,y) (ops_stencil_check_2d(37, x, y, xdim37, -1))
+      #define OPS_ACC38(x,y) (ops_stencil_check_2d(38, x, y, xdim38, -1))
+      #define OPS_ACC39(x,y) (ops_stencil_check_2d(39, x, y, xdim39, -1))
+      #define OPS_ACC40(x,y) (ops_stencil_check_2d(40, x, y, xdim40, -1))
+      #define OPS_ACC41(x,y) (ops_stencil_check_2d(41, x, y, xdim41, -1))
+      #define OPS_ACC42(x,y) (ops_stencil_check_2d(42, x, y, xdim42, -1))
+      #define OPS_ACC43(x,y) (ops_stencil_check_2d(43, x, y, xdim43, -1))
+      #define OPS_ACC44(x,y) (ops_stencil_check_2d(44, x, y, xdim44, -1))
+      #define OPS_ACC45(x,y) (ops_stencil_check_2d(45, x, y, xdim45, -1))
+      #define OPS_ACC46(x,y) (ops_stencil_check_2d(46, x, y, xdim46, -1))
+      #define OPS_ACC47(x,y) (ops_stencil_check_2d(47, x, y, xdim47, -1))
+      #define OPS_ACC48(x,y) (ops_stencil_check_2d(48, x, y, xdim48, -1))
+      #define OPS_ACC49(x,y) (ops_stencil_check_2d(49, x, y, xdim49, -1))
+      #define OPS_ACC50(x,y) (ops_stencil_check_2d(50, x, y, xdim50, -1))
     #endif //end debug checks
   #else //macros for 1D application
     #ifndef OPS_DEBUG //no debug checks
@@ -141,6 +274,39 @@
       #define OPS_ACC15(x) (x)
       #define OPS_ACC16(x) (x)
       #define OPS_ACC17(x) (x)
+      #define OPS_ACC18(x) (x)
+      #define OPS_ACC19(x) (x)
+      #define OPS_ACC20(x) (x)
+      #define OPS_ACC21(x) (x)
+      #define OPS_ACC22(x) (x)
+      #define OPS_ACC23(x) (x)
+      #define OPS_ACC24(x) (x)
+      #define OPS_ACC25(x) (x)
+      #define OPS_ACC26(x) (x)
+      #define OPS_ACC27(x) (x)
+      #define OPS_ACC28(x) (x)
+      #define OPS_ACC29(x) (x)
+      #define OPS_ACC30(x) (x)
+      #define OPS_ACC31(x) (x)
+      #define OPS_ACC32(x) (x)
+      #define OPS_ACC33(x) (x)
+      #define OPS_ACC34(x) (x)
+      #define OPS_ACC35(x) (x)
+      #define OPS_ACC36(x) (x)
+      #define OPS_ACC37(x) (x)
+      #define OPS_ACC38(x) (x)
+      #define OPS_ACC39(x) (x)
+      #define OPS_ACC40(x) (x)
+      #define OPS_ACC41(x) (x)
+      #define OPS_ACC42(x) (x)
+      #define OPS_ACC43(x) (x)
+      #define OPS_ACC44(x) (x)
+      #define OPS_ACC45(x) (x)
+      #define OPS_ACC46(x) (x)
+      #define OPS_ACC47(x) (x)
+      #define OPS_ACC48(x) (x)
+      #define OPS_ACC49(x) (x)
+      #define OPS_ACC50(x) (x)
     #else//do debug checks
       #define OPS_ACC0(x) (ops_stencil_check_1d(0, x, xdim0))
       #define OPS_ACC1(x) (ops_stencil_check_1d(1, x, xdim1))
@@ -160,6 +326,39 @@
       #define OPS_ACC15(x) (ops_stencil_check_1d(15, x, xdim15))
       #define OPS_ACC16(x) (ops_stencil_check_1d(16, x, xdim16))
       #define OPS_ACC17(x) (ops_stencil_check_1d(17, x, xdim17))
+      #define OPS_ACC18(x) (ops_stencil_check_1d(18, x, xdim18))
+      #define OPS_ACC19(x) (ops_stencil_check_1d(19, x, xdim19))
+      #define OPS_ACC20(x) (ops_stencil_check_1d(20, x, xdim20))
+      #define OPS_ACC21(x) (ops_stencil_check_1d(21, x, xdim21))
+      #define OPS_ACC22(x) (ops_stencil_check_1d(22, x, xdim22))
+      #define OPS_ACC23(x) (ops_stencil_check_1d(23, x, xdim23))
+      #define OPS_ACC24(x) (ops_stencil_check_1d(24, x, xdim24))
+      #define OPS_ACC25(x) (ops_stencil_check_1d(25, x, xdim25))
+      #define OPS_ACC26(x) (ops_stencil_check_1d(26, x, xdim26))
+      #define OPS_ACC27(x) (ops_stencil_check_1d(27, x, xdim27))
+      #define OPS_ACC28(x) (ops_stencil_check_1d(28, x, xdim28))
+      #define OPS_ACC29(x) (ops_stencil_check_1d(29, x, xdim29))
+      #define OPS_ACC30(x) (ops_stencil_check_1d(30, x, xdim30))
+      #define OPS_ACC31(x) (ops_stencil_check_1d(31, x, xdim31))
+      #define OPS_ACC32(x) (ops_stencil_check_1d(32, x, xdim32))
+      #define OPS_ACC33(x) (ops_stencil_check_1d(33, x, xdim33))
+      #define OPS_ACC34(x) (ops_stencil_check_1d(34, x, xdim34))
+      #define OPS_ACC35(x) (ops_stencil_check_1d(35, x, xdim35))
+      #define OPS_ACC36(x) (ops_stencil_check_1d(36, x, xdim36))
+      #define OPS_ACC37(x) (ops_stencil_check_1d(37, x, xdim37))
+      #define OPS_ACC38(x) (ops_stencil_check_1d(38, x, xdim38))
+      #define OPS_ACC39(x) (ops_stencil_check_1d(39, x, xdim39))
+      #define OPS_ACC40(x) (ops_stencil_check_1d(40, x, xdim40))
+      #define OPS_ACC41(x) (ops_stencil_check_1d(41, x, xdim41))
+      #define OPS_ACC42(x) (ops_stencil_check_1d(42, x, xdim42))
+      #define OPS_ACC43(x) (ops_stencil_check_1d(43, x, xdim43))
+      #define OPS_ACC44(x) (ops_stencil_check_1d(44, x, xdim44))
+      #define OPS_ACC45(x) (ops_stencil_check_1d(45, x, xdim45))
+      #define OPS_ACC46(x) (ops_stencil_check_1d(46, x, xdim46))
+      #define OPS_ACC47(x) (ops_stencil_check_1d(47, x, xdim47))
+      #define OPS_ACC48(x) (ops_stencil_check_1d(48, x, xdim48))
+      #define OPS_ACC49(x) (ops_stencil_check_1d(49, x, xdim49))
+      #define OPS_ACC50(x) (ops_stencil_check_1d(50, x, xdim50))
     #endif//end debug checks
   #endif // end macros for 1D application
 #endif //end OPS_ACC_MACROS
@@ -172,8 +371,58 @@
   #ifdef OPS_3D //macros for 3D application
     #ifndef OPS_DEBUG //no debug checks
       #define OPS_ACC_MD0(d,x,y,z) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0)+(xdim0*ydim0*(z)*multi_d0))
+      #define OPS_ACC_MD1(d,x,y,z) ((x)*multi_d1+(d)+(xdim1*(y)*multi_d1)+(xdim1*ydim1*(z)*multi_d1))
+      #define OPS_ACC_MD2(d,x,y,z) ((x)*multi_d2+(d)+(xdim2*(y)*multi_d2)+(xdim2*ydim2*(z)*multi_d2))
+      #define OPS_ACC_MD3(d,x,y,z) ((x)*multi_d3+(d)+(xdim3*(y)*multi_d3)+(xdim3*ydim3*(z)*multi_d3))
+      #define OPS_ACC_MD4(d,x,y,z) ((x)*multi_d4+(d)+(xdim4*(y)*multi_d4)+(xdim4*ydim4*(z)*multi_d4))
+      #define OPS_ACC_MD5(d,x,y,z) ((x)*multi_d5+(d)+(xdim5*(y)*multi_d5)+(xdim5*ydim5*(z)*multi_d5))
+      #define OPS_ACC_MD6(d,x,y,z) ((x)*multi_d6+(d)+(xdim6*(y)*multi_d6)+(xdim6*ydim6*(z)*multi_d6))
+      #define OPS_ACC_MD7(d,x,y,z) ((x)*multi_d7+(d)+(xdim7*(y)*multi_d7)+(xdim7*ydim7*(z)*multi_d7))
+      #define OPS_ACC_MD8(d,x,y,z) ((x)*multi_d8+(d)+(xdim8*(y)*multi_d8)+(xdim8*ydim8*(z)*multi_d8))
+      #define OPS_ACC_MD9(d,x,y,z) ((x)*multi_d9+(d)+(xdim9*(y)*multi_d9)+(xdim9*ydim9*(z)*multi_d9))
+      #define OPS_ACC_MD10(d,x,y,z) ((x)*multi_d10+(d)+(xdim10*(y)*multi_d10)+(xdim10*ydim10*(z)*multi_d10))
+      #define OPS_ACC_MD11(d,x,y,z) ((x)*multi_d11+(d)+(xdim11*(y)*multi_d11)+(xdim11*ydim11*(z)*multi_d11))
+      #define OPS_ACC_MD12(d,x,y,z) ((x)*multi_d12+(d)+(xdim12*(y)*multi_d12)+(xdim12*ydim12*(z)*multi_d12))
+      #define OPS_ACC_MD13(d,x,y,z) ((x)*multi_d13+(d)+(xdim13*(y)*multi_d13)+(xdim13*ydim13*(z)*multi_d13))
+      #define OPS_ACC_MD14(d,x,y,z) ((x)*multi_d14+(d)+(xdim14*(y)*multi_d14)+(xdim14*ydim14*(z)*multi_d14))
+      #define OPS_ACC_MD15(d,x,y,z) ((x)*multi_d15+(d)+(xdim15*(y)*multi_d15)+(xdim15*ydim15*(z)*multi_d15))
+      #define OPS_ACC_MD16(d,x,y,z) ((x)*multi_d16+(d)+(xdim16*(y)*multi_d16)+(xdim16*ydim16*(z)*multi_d16))
+      #define OPS_ACC_MD17(d,x,y,z) ((x)*multi_d17+(d)+(xdim17*(y)*multi_d17)+(xdim17*ydim17*(z)*multi_d17))
+      #define OPS_ACC_MD18(d,x,y,z) ((x)*multi_d18+(d)+(xdim18*(y)*multi_d18)+(xdim18*ydim18*(z)*multi_d18))
+      #define OPS_ACC_MD19(d,x,y,z) ((x)*multi_d19+(d)+(xdim19*(y)*multi_d19)+(xdim19*ydim19*(z)*multi_d19))
+      #define OPS_ACC_MD20(d,x,y,z) ((x)*multi_d20+(d)+(xdim20*(y)*multi_d20)+(xdim20*ydim20*(z)*multi_d20))
+      #define OPS_ACC_MD21(d,x,y,z) ((x)*multi_d21+(d)+(xdim21*(y)*multi_d21)+(xdim21*ydim21*(z)*multi_d21))
+      #define OPS_ACC_MD22(d,x,y,z) ((x)*multi_d22+(d)+(xdim22*(y)*multi_d22)+(xdim22*ydim22*(z)*multi_d22))
+      #define OPS_ACC_MD23(d,x,y,z) ((x)*multi_d23+(d)+(xdim23*(y)*multi_d23)+(xdim23*ydim23*(z)*multi_d23))
+      #define OPS_ACC_MD24(d,x,y,z) ((x)*multi_d24+(d)+(xdim24*(y)*multi_d24)+(xdim24*ydim24*(z)*multi_d24))
+      #define OPS_ACC_MD25(d,x,y,z) ((x)*multi_d25+(d)+(xdim25*(y)*multi_d25)+(xdim25*ydim25*(z)*multi_d25))
+      #define OPS_ACC_MD26(d,x,y,z) ((x)*multi_d26+(d)+(xdim26*(y)*multi_d26)+(xdim26*ydim26*(z)*multi_d26))
+      #define OPS_ACC_MD27(d,x,y,z) ((x)*multi_d27+(d)+(xdim27*(y)*multi_d27)+(xdim27*ydim27*(z)*multi_d27))
+      #define OPS_ACC_MD28(d,x,y,z) ((x)*multi_d28+(d)+(xdim28*(y)*multi_d28)+(xdim28*ydim28*(z)*multi_d28))
+      #define OPS_ACC_MD29(d,x,y,z) ((x)*multi_d29+(d)+(xdim29*(y)*multi_d29)+(xdim29*ydim29*(z)*multi_d29))
+      #define OPS_ACC_MD30(d,x,y,z) ((x)*multi_d30+(d)+(xdim30*(y)*multi_d30)+(xdim30*ydim30*(z)*multi_d30))
+      #define OPS_ACC_MD31(d,x,y,z) ((x)*multi_d31+(d)+(xdim31*(y)*multi_d31)+(xdim31*ydim31*(z)*multi_d31))
+      #define OPS_ACC_MD32(d,x,y,z) ((x)*multi_d32+(d)+(xdim32*(y)*multi_d32)+(xdim32*ydim32*(z)*multi_d32))
+      #define OPS_ACC_MD33(d,x,y,z) ((x)*multi_d33+(d)+(xdim33*(y)*multi_d33)+(xdim33*ydim33*(z)*multi_d33))
+      #define OPS_ACC_MD34(d,x,y,z) ((x)*multi_d34+(d)+(xdim34*(y)*multi_d34)+(xdim34*ydim34*(z)*multi_d34))
+      #define OPS_ACC_MD35(d,x,y,z) ((x)*multi_d35+(d)+(xdim35*(y)*multi_d35)+(xdim35*ydim35*(z)*multi_d35))
+      #define OPS_ACC_MD36(d,x,y,z) ((x)*multi_d36+(d)+(xdim36*(y)*multi_d36)+(xdim36*ydim36*(z)*multi_d36))
+      #define OPS_ACC_MD37(d,x,y,z) ((x)*multi_d37+(d)+(xdim37*(y)*multi_d37)+(xdim37*ydim37*(z)*multi_d37))
+      #define OPS_ACC_MD38(d,x,y,z) ((x)*multi_d38+(d)+(xdim38*(y)*multi_d38)+(xdim38*ydim38*(z)*multi_d38))
+      #define OPS_ACC_MD39(d,x,y,z) ((x)*multi_d39+(d)+(xdim39*(y)*multi_d39)+(xdim39*ydim39*(z)*multi_d39))
+      #define OPS_ACC_MD40(d,x,y,z) ((x)*multi_d40+(d)+(xdim40*(y)*multi_d40)+(xdim40*ydim40*(z)*multi_d40))
+      #define OPS_ACC_MD41(d,x,y,z) ((x)*multi_d41+(d)+(xdim41*(y)*multi_d41)+(xdim41*ydim41*(z)*multi_d41))
+      #define OPS_ACC_MD42(d,x,y,z) ((x)*multi_d42+(d)+(xdim42*(y)*multi_d42)+(xdim42*ydim42*(z)*multi_d42))
+      #define OPS_ACC_MD43(d,x,y,z) ((x)*multi_d43+(d)+(xdim43*(y)*multi_d43)+(xdim43*ydim43*(z)*multi_d43))
+      #define OPS_ACC_MD44(d,x,y,z) ((x)*multi_d44+(d)+(xdim44*(y)*multi_d44)+(xdim44*ydim44*(z)*multi_d44))
+      #define OPS_ACC_MD45(d,x,y,z) ((x)*multi_d45+(d)+(xdim45*(y)*multi_d45)+(xdim45*ydim45*(z)*multi_d45))
+      #define OPS_ACC_MD46(d,x,y,z) ((x)*multi_d46+(d)+(xdim46*(y)*multi_d46)+(xdim46*ydim46*(z)*multi_d46))
+      #define OPS_ACC_MD47(d,x,y,z) ((x)*multi_d47+(d)+(xdim47*(y)*multi_d47)+(xdim47*ydim47*(z)*multi_d47))
+      #define OPS_ACC_MD48(d,x,y,z) ((x)*multi_d48+(d)+(xdim48*(y)*multi_d48)+(xdim48*ydim48*(z)*multi_d48))
+      #define OPS_ACC_MD49(d,x,y,z) ((x)*multi_d49+(d)+(xdim49*(y)*multi_d49)+(xdim49*ydim49*(z)*multi_d49))
+      #define OPS_ACC_MD50(d,x,y,z) ((x)*multi_d50+(d)+(xdim50*(y)*multi_d50)+(xdim50*ydim50*(z)*multi_d50))
     #else
-      ///TODO #define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d(0, x, y, z, xdim0, ydim0))
+      ///TODO #define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d_md(0, x, y, z, xdim0, ydim0))
       /// --> int ops_stencil_check_3d_md(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1, int mult_d, int d);
     #endif
   #elif defined OPS_2D //macros for 2D application
@@ -196,8 +445,41 @@
       #define OPS_ACC_MD15(d,x,y) ((x)*multi_d15+(d)+(xdim15*(y)*multi_d15))
       #define OPS_ACC_MD16(d,x,y) ((x)*multi_d16+(d)+(xdim16*(y)*multi_d16))
       #define OPS_ACC_MD17(d,x,y) ((x)*multi_d17+(d)+(xdim17*(y)*multi_d17))
+      #define OPS_ACC_MD18(d,x,y) ((x)*multi_d18+(d)+(xdim18*(y)*multi_d18))
+      #define OPS_ACC_MD19(d,x,y) ((x)*multi_d19+(d)+(xdim19*(y)*multi_d19))
+      #define OPS_ACC_MD20(d,x,y) ((x)*multi_d20+(d)+(xdim20*(y)*multi_d20))
+      #define OPS_ACC_MD21(d,x,y) ((x)*multi_d21+(d)+(xdim21*(y)*multi_d21))
+      #define OPS_ACC_MD22(d,x,y) ((x)*multi_d22+(d)+(xdim22*(y)*multi_d22))
+      #define OPS_ACC_MD23(d,x,y) ((x)*multi_d23+(d)+(xdim23*(y)*multi_d23))
+      #define OPS_ACC_MD24(d,x,y) ((x)*multi_d24+(d)+(xdim24*(y)*multi_d24))
+      #define OPS_ACC_MD25(d,x,y) ((x)*multi_d25+(d)+(xdim25*(y)*multi_d25))
+      #define OPS_ACC_MD26(d,x,y) ((x)*multi_d26+(d)+(xdim26*(y)*multi_d26))
+      #define OPS_ACC_MD27(d,x,y) ((x)*multi_d27+(d)+(xdim27*(y)*multi_d27))
+      #define OPS_ACC_MD28(d,x,y) ((x)*multi_d28+(d)+(xdim28*(y)*multi_d28))
+      #define OPS_ACC_MD29(d,x,y) ((x)*multi_d29+(d)+(xdim29*(y)*multi_d29))
+      #define OPS_ACC_MD30(d,x,y) ((x)*multi_d30+(d)+(xdim30*(y)*multi_d30))
+      #define OPS_ACC_MD31(d,x,y) ((x)*multi_d31+(d)+(xdim31*(y)*multi_d31))
+      #define OPS_ACC_MD32(d,x,y) ((x)*multi_d32+(d)+(xdim32*(y)*multi_d32))
+      #define OPS_ACC_MD33(d,x,y) ((x)*multi_d33+(d)+(xdim33*(y)*multi_d33))
+      #define OPS_ACC_MD34(d,x,y) ((x)*multi_d34+(d)+(xdim34*(y)*multi_d34))
+      #define OPS_ACC_MD35(d,x,y) ((x)*multi_d35+(d)+(xdim35*(y)*multi_d35))
+      #define OPS_ACC_MD36(d,x,y) ((x)*multi_d36+(d)+(xdim36*(y)*multi_d36))
+      #define OPS_ACC_MD37(d,x,y) ((x)*multi_d37+(d)+(xdim37*(y)*multi_d37))
+      #define OPS_ACC_MD38(d,x,y) ((x)*multi_d38+(d)+(xdim38*(y)*multi_d38))
+      #define OPS_ACC_MD39(d,x,y) ((x)*multi_d39+(d)+(xdim39*(y)*multi_d39))
+      #define OPS_ACC_MD40(d,x,y) ((x)*multi_d40+(d)+(xdim40*(y)*multi_d40))
+      #define OPS_ACC_MD41(d,x,y) ((x)*multi_d41+(d)+(xdim41*(y)*multi_d41))
+      #define OPS_ACC_MD42(d,x,y) ((x)*multi_d42+(d)+(xdim42*(y)*multi_d42))
+      #define OPS_ACC_MD43(d,x,y) ((x)*multi_d43+(d)+(xdim43*(y)*multi_d43))
+      #define OPS_ACC_MD44(d,x,y) ((x)*multi_d44+(d)+(xdim44*(y)*multi_d44))
+      #define OPS_ACC_MD45(d,x,y) ((x)*multi_d45+(d)+(xdim45*(y)*multi_d45))
+      #define OPS_ACC_MD46(d,x,y) ((x)*multi_d46+(d)+(xdim46*(y)*multi_d46))
+      #define OPS_ACC_MD47(d,x,y) ((x)*multi_d47+(d)+(xdim47*(y)*multi_d47))
+      #define OPS_ACC_MD48(d,x,y) ((x)*multi_d48+(d)+(xdim48*(y)*multi_d48))
+      #define OPS_ACC_MD49(d,x,y) ((x)*multi_d49+(d)+(xdim49*(y)*multi_d49))
+      #define OPS_ACC_MD50(d,x,y) ((x)*multi_d50+(d)+(xdim50*(y)*multi_d50))
     #else
-      ///TODO #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, -1, -1))
+      ///TODO #define OPS_ACC0(x,y) (ops_stencil_check_2d_md(0, x, -1, -1))
       ///--> ops_stencil_check_2d_md(int arg_idx, int idx0, int idx1, int dim0, int dim1, int mult_d, int d);
     #endif
   #else //macros for 1D application
@@ -220,6 +502,39 @@
       #define OPS_ACC_MD15(d,x) ((x)*multi_d15+d)
       #define OPS_ACC_MD16(d,x) ((x)*multi_d16+d)
       #define OPS_ACC_MD17(d,x) ((x)*multi_d17+d)
+      #define OPS_ACC_MD18(d,x) ((x)*multi_d18+d)
+      #define OPS_ACC_MD19(d,x) ((x)*multi_d19+d)
+      #define OPS_ACC_MD20(d,x) ((x)*multi_d20+d)
+      #define OPS_ACC_MD21(d,x) ((x)*multi_d21+d)
+      #define OPS_ACC_MD22(d,x) ((x)*multi_d22+d)
+      #define OPS_ACC_MD23(d,x) ((x)*multi_d23+d)
+      #define OPS_ACC_MD24(d,x) ((x)*multi_d24+d)
+      #define OPS_ACC_MD25(d,x) ((x)*multi_d25+d)
+      #define OPS_ACC_MD26(d,x) ((x)*multi_d26+d)
+      #define OPS_ACC_MD27(d,x) ((x)*multi_d27+d)
+      #define OPS_ACC_MD28(d,x) ((x)*multi_d28+d)
+      #define OPS_ACC_MD29(d,x) ((x)*multi_d29+d)
+      #define OPS_ACC_MD30(d,x) ((x)*multi_d30+d)
+      #define OPS_ACC_MD31(d,x) ((x)*multi_d31+d)
+      #define OPS_ACC_MD32(d,x) ((x)*multi_d32+d)
+      #define OPS_ACC_MD33(d,x) ((x)*multi_d33+d)
+      #define OPS_ACC_MD34(d,x) ((x)*multi_d34+d)
+      #define OPS_ACC_MD35(d,x) ((x)*multi_d35+d)
+      #define OPS_ACC_MD36(d,x) ((x)*multi_d36+d)
+      #define OPS_ACC_MD37(d,x) ((x)*multi_d37+d)
+      #define OPS_ACC_MD38(d,x) ((x)*multi_d38+d)
+      #define OPS_ACC_MD39(d,x) ((x)*multi_d39+d)
+      #define OPS_ACC_MD40(d,x) ((x)*multi_d40+d)
+      #define OPS_ACC_MD41(d,x) ((x)*multi_d41+d)
+      #define OPS_ACC_MD42(d,x) ((x)*multi_d42+d)
+      #define OPS_ACC_MD43(d,x) ((x)*multi_d43+d)
+      #define OPS_ACC_MD44(d,x) ((x)*multi_d44+d)
+      #define OPS_ACC_MD45(d,x) ((x)*multi_d45+d)
+      #define OPS_ACC_MD46(d,x) ((x)*multi_d46+d)
+      #define OPS_ACC_MD47(d,x) ((x)*multi_d47+d)
+      #define OPS_ACC_MD48(d,x) ((x)*multi_d48+d)
+      #define OPS_ACC_MD49(d,x) ((x)*multi_d49+d)
+      #define OPS_ACC_MD50(d,x) ((x)*multi_d50+d)
     #else
       #define OPS_ACC_MD0(d,x) (ops_stencil_check_1d_md(0, x, multi_d0,d))
       #define OPS_ACC_MD1(d,x) (ops_stencil_check_1d_md(1, x, multi_d1,d))
@@ -239,6 +554,39 @@
       #define OPS_ACC_MD15(d,x) (ops_stencil_check_1d_md(15, x, multi_d15,d))
       #define OPS_ACC_MD16(d,x) (ops_stencil_check_1d_md(16, x, multi_d16,d))
       #define OPS_ACC_MD17(d,x) (ops_stencil_check_1d_md(17, x, multi_d17,d))
+      #define OPS_ACC_MD18(d,x) (ops_stencil_check_1d_md(18, x, multi_d18,d))
+      #define OPS_ACC_MD19(d,x) (ops_stencil_check_1d_md(19, x, multi_d19,d))
+      #define OPS_ACC_MD20(d,x) (ops_stencil_check_1d_md(20, x, multi_d20,d))
+      #define OPS_ACC_MD21(d,x) (ops_stencil_check_1d_md(21, x, multi_d21,d))
+      #define OPS_ACC_MD22(d,x) (ops_stencil_check_1d_md(22, x, multi_d22,d))
+      #define OPS_ACC_MD23(d,x) (ops_stencil_check_1d_md(23, x, multi_d23,d))
+      #define OPS_ACC_MD24(d,x) (ops_stencil_check_1d_md(24, x, multi_d24,d))
+      #define OPS_ACC_MD25(d,x) (ops_stencil_check_1d_md(25, x, multi_d25,d))
+      #define OPS_ACC_MD26(d,x) (ops_stencil_check_1d_md(26, x, multi_d26,d))
+      #define OPS_ACC_MD27(d,x) (ops_stencil_check_1d_md(27, x, multi_d27,d))
+      #define OPS_ACC_MD28(d,x) (ops_stencil_check_1d_md(28, x, multi_d28,d))
+      #define OPS_ACC_MD29(d,x) (ops_stencil_check_1d_md(29, x, multi_d29,d))
+      #define OPS_ACC_MD30(d,x) (ops_stencil_check_1d_md(30, x, multi_d30,d))
+      #define OPS_ACC_MD31(d,x) (ops_stencil_check_1d_md(31, x, multi_d31,d))
+      #define OPS_ACC_MD32(d,x) (ops_stencil_check_1d_md(32, x, multi_d32,d))
+      #define OPS_ACC_MD33(d,x) (ops_stencil_check_1d_md(33, x, multi_d33,d))
+      #define OPS_ACC_MD34(d,x) (ops_stencil_check_1d_md(34, x, multi_d34,d))
+      #define OPS_ACC_MD35(d,x) (ops_stencil_check_1d_md(35, x, multi_d35,d))
+      #define OPS_ACC_MD36(d,x) (ops_stencil_check_1d_md(36, x, multi_d36,d))
+      #define OPS_ACC_MD37(d,x) (ops_stencil_check_1d_md(37, x, multi_d37,d))
+      #define OPS_ACC_MD38(d,x) (ops_stencil_check_1d_md(38, x, multi_d38,d))
+      #define OPS_ACC_MD39(d,x) (ops_stencil_check_1d_md(39, x, multi_d39,d))
+      #define OPS_ACC_MD40(d,x) (ops_stencil_check_1d_md(40, x, multi_d40,d))
+      #define OPS_ACC_MD41(d,x) (ops_stencil_check_1d_md(41, x, multi_d41,d))
+      #define OPS_ACC_MD42(d,x) (ops_stencil_check_1d_md(42, x, multi_d42,d))
+      #define OPS_ACC_MD43(d,x) (ops_stencil_check_1d_md(43, x, multi_d43,d))
+      #define OPS_ACC_MD44(d,x) (ops_stencil_check_1d_md(44, x, multi_d44,d))
+      #define OPS_ACC_MD45(d,x) (ops_stencil_check_1d_md(45, x, multi_d45,d))
+      #define OPS_ACC_MD46(d,x) (ops_stencil_check_1d_md(46, x, multi_d46,d))
+      #define OPS_ACC_MD47(d,x) (ops_stencil_check_1d_md(47, x, multi_d47,d))
+      #define OPS_ACC_MD48(d,x) (ops_stencil_check_1d_md(48, x, multi_d48,d))
+      #define OPS_ACC_MD49(d,x) (ops_stencil_check_1d_md(49, x, multi_d49,d))
+      #define OPS_ACC_MD50(d,x) (ops_stencil_check_1d_md(50, x, multi_d50,d))
     #endif
   #endif
 #endif
@@ -254,63 +602,30 @@
 #define ROUND_DOWN(N,step) (((N)/(step))*(step))
 #endif
 
-extern int xdim0;
-extern int xdim1;
-extern int xdim2;
-extern int xdim3;
-extern int xdim4;
-extern int xdim5;
-extern int xdim6;
-extern int xdim7;
-extern int xdim8;
-extern int xdim9;
-extern int xdim10;
-extern int xdim11;
-extern int xdim12;
-extern int xdim13;
-extern int xdim14;
-extern int xdim15;
-extern int xdim16;
-extern int xdim17;
+extern int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8,
+xdim9, xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17,
+xdim18, xdim19, xdim20, xdim21, xdim22, xdim23, xdim24, xdim25, xdim26,
+xdim27, xdim28, xdim29, xdim30, xdim31, xdim32, xdim33, xdim34, xdim35,
+xdim36, xdim37, xdim38, xdim39, xdim40, xdim41, xdim42, xdim43, xdim44,
+xdim45, xdim46, xdim47, xdim48, xdim49, xdim50;
+
 
 #ifdef OPS_3D
-extern int ydim0;
-extern int ydim1;
-extern int ydim2;
-extern int ydim3;
-extern int ydim4;
-extern int ydim5;
-extern int ydim6;
-extern int ydim7;
-extern int ydim8;
-extern int ydim9;
-extern int ydim10;
-extern int ydim11;
-extern int ydim12;
-extern int ydim13;
-extern int ydim14;
-extern int ydim15;
-extern int ydim16;
-extern int ydim17;
+extern int ydim0,ydim1,ydim2,ydim3,ydim4,ydim5,ydim6,ydim7,ydim8,ydim9,
+ydim10,ydim11,ydim12,ydim13,ydim14,ydim15,ydim16,ydim17,ydim18,ydim19,
+ydim20,ydim21,ydim22,ydim23,ydim24,ydim25,ydim26,ydim27,ydim28,ydim29,
+ydim30,ydim31,ydim32,ydim33,ydim34,ydim35,ydim36,ydim37,ydim38,ydim39,
+ydim40,ydim41,ydim42,ydim43,ydim44,ydim45,ydim46,ydim47,ydim48,ydim49,
+ydim50;
+
 #endif
 
-extern int multi_d0;
-extern int multi_d1;
-extern int multi_d2;
-extern int multi_d3;
-extern int multi_d4;
-extern int multi_d5;
-extern int multi_d6;
-extern int multi_d7;
-extern int multi_d8;
-extern int multi_d9;
-extern int multi_d10;
-extern int multi_d11;
-extern int multi_d12;
-extern int multi_d13;
-extern int multi_d14;
-extern int multi_d15;
-extern int multi_d16;
-extern int multi_d17;
-
+extern int multi_d0,multi_d1,multi_d2,multi_d3,multi_d4,multi_d5,multi_d6,
+multi_d7,multi_d8,multi_d9,multi_d10,multi_d11,multi_d12,multi_d13,
+multi_d14,multi_d15,multi_d16,multi_d17,multi_d18,multi_d19,multi_d20,
+multi_d21,multi_d22,multi_d23,multi_d24,multi_d25,multi_d26,multi_d27,
+multi_d28,multi_d29,multi_d30,multi_d31,multi_d32,multi_d33,multi_d34,
+multi_d35,multi_d36,multi_d37,multi_d38,multi_d39,multi_d40,multi_d41,
+multi_d42,multi_d43,multi_d44,multi_d45,multi_d46,multi_d47,multi_d48,
+multi_d49,multi_d50;
 #endif //OPS_MACROS_H

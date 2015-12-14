@@ -803,7 +803,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
-  for n in range (0,18):
+  for n in range (0,50):
    code('#undef OPS_ACC'+str(n))
   code('')
   comm(' global constants')

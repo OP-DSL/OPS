@@ -39,68 +39,6 @@
 char *ops_halo_buffer = NULL;
 int ops_halo_buffer_size = 0;
 
-#ifndef __XDIMS__ //perhaps put this into a separate headder file
-#define __XDIMS__
-  int xdim0;
-  int ydim0;
-  int xdim1;
-  int ydim1;
-  int xdim2;
-  int ydim2;
-  int xdim3;
-  int ydim3;
-  int xdim4;
-  int ydim4;
-  int xdim5;
-  int ydim5;
-  int xdim6;
-  int ydim6;
-  int xdim7;
-  int ydim7;
-  int xdim8;
-  int ydim8;
-  int xdim9;
-  int ydim9;
-  int xdim10;
-  int ydim10;
-  int xdim11;
-  int ydim11;
-  int xdim12;
-  int ydim12;
-  int xdim13;
-  int ydim13;
-  int xdim14;
-  int ydim14;
-  int xdim15;
-  int ydim15;
-  int xdim16;
-  int ydim16;
-  int xdim17;
-  int ydim17;
-#endif /* __XDIMS__ */
-
-#ifndef __MULTIDIMS__
-#define __MULTIDIMS__
-int multi_d0;
-int multi_d1;
-int multi_d2;
-int multi_d3;
-int multi_d4;
-int multi_d5;
-int multi_d6;
-int multi_d7;
-int multi_d8;
-int multi_d9;
-int multi_d10;
-int multi_d11;
-int multi_d12;
-int multi_d13;
-int multi_d14;
-int multi_d15;
-int multi_d16;
-int multi_d17;
-#endif /*__MULTIDIMS__*/
-
 void
 ops_init ( int argc, char ** argv, int diags )
 {
@@ -111,7 +49,6 @@ void ops_exit ()
 {
   ops_exit_core ();
 }
-
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, int* d_m,
                            int* d_p, char* data,
