@@ -40,6 +40,11 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
+
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+
+
 #define OPS_ACC_MD0(d,x) ((x)*3+(d))
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 
@@ -56,11 +61,6 @@ const double dt)
   }
 }
 
-
-
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 __kernel void ops_fact_kernel(

@@ -7,6 +7,10 @@
 
 int xdim0_test_kernel;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x) (x)
 
 //user function

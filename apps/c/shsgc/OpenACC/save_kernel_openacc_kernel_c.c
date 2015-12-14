@@ -12,6 +12,15 @@ int xdim3_save_kernel;
 int xdim4_save_kernel;
 int xdim5_save_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

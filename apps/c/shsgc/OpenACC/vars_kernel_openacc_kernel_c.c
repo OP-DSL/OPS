@@ -12,6 +12,14 @@ int xdim3_vars_kernel;
 int xdim4_vars_kernel;
 
 
+
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
+#undef OPS_ACC_MD3
+#undef OPS_ACC_MD4
+
+
 #define OPS_ACC_MD0(d,x) ((x)*3+(d))
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 #define OPS_ACC_MD2(d,x) ((x)*3+(d))

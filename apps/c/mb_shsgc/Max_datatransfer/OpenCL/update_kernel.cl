@@ -39,6 +39,13 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+#undef OPS_ACC_MD3
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
@@ -55,13 +62,6 @@ const __global double * restrict s)
   rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2,0)];
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD3
 
 
 __kernel void ops_update_kernel(

@@ -39,6 +39,12 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
@@ -52,12 +58,6 @@ void zerores_kernel(__global double * restrict rho_res,__global double * restric
       rhou_res[OPS_ACC1(0)] = 0.0;
       rhoE_res[OPS_ACC2(0)] = 0.0;
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
 
 
 

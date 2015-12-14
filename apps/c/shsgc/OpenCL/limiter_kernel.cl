@@ -40,6 +40,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
+
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
+
+
 #define OPS_ACC_MD0(d,x) ((x)*3+(d))
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 #define OPS_ACC_MD2(d,x) ((x)*3+(d))
@@ -63,12 +69,6 @@ void limiter_kernel(const __global double* restrict  al,__global double * restri
   }
 }
 
-
-
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
 
 
 __kernel void ops_limiter_kernel(

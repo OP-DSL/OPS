@@ -9,6 +9,11 @@ int xdim0_tvd_kernel;
 int xdim1_tvd_kernel;
 
 
+
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+
+
 #define OPS_ACC_MD0(d,x) ((x)*3+(d))
 #define OPS_ACC_MD1(d,x) ((x)*3+(d))
 //user function

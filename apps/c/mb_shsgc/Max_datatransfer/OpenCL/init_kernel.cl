@@ -39,6 +39,17 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
@@ -80,17 +91,6 @@ const double lambda)
   rhoin[OPS_ACC4(0)] = rho_new[OPS_ACC1(0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
 
 
 

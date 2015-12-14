@@ -39,6 +39,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 
@@ -52,11 +57,6 @@ void xder1_kernel(const __global double * restrict inp,__global double * restric
   out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)]  + 8.0 *(
   inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)] )) * dix;
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

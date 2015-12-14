@@ -39,6 +39,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_update*(y))
 #define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_update*(y))
 
@@ -49,11 +54,6 @@ void poisson_kernel_update(const __global double * restrict u2,__global double *
  {
   u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

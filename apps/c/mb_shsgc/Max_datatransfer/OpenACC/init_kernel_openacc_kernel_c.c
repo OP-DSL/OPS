@@ -14,6 +14,17 @@ int xdim5_init_kernel;
 int xdim6_init_kernel;
 int xdim7_init_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

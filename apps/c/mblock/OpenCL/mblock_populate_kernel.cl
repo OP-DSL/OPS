@@ -39,6 +39,10 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_mblock_populate_kernel*(y))
 
 
@@ -48,10 +52,6 @@ void mblock_populate_kernel(__global double * restrict val, int * restrict idx)
  {
   val[OPS_ACC0(0,0)] = (double)(idx[0]+20*idx[1]);
 }
-
-
-
-#undef OPS_ACC0
 
 
 

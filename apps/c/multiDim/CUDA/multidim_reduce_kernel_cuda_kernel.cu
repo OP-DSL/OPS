@@ -6,6 +6,9 @@ int xdim0_multidim_reduce_kernel_h = -1;
 int ydim0_multidim_reduce_kernel_h = -1;
 
 
+#undef OPS_ACC_MD0
+
+
 #define OPS_ACC_MD0(d,x,y) ((x)*2+(d)+(xdim0_multidim_reduce_kernel*(y)*2))
 //user function
 __device__

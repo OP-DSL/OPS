@@ -39,6 +39,12 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_stencil*(y))
 #define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_stencil*(y))
 #define OPS_ACC2(x,y) (x+xdim2_poisson_kernel_stencil*(y))
@@ -56,12 +62,6 @@ const double dy)
                      - dx*dx*dy*dy*f[OPS_ACC1(0,0)])
                      /(2.0*(dx*dx+dy*dy));
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
 
 
 

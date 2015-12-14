@@ -167,7 +167,7 @@ int main(int argc, char **argv)
   ops_halo_group u_halos = ops_decl_halo_group(off,halos);
 
   ops_partition("");
-  ops_checkpointing_init("check.h5", 5.0);
+  ops_checkpointing_init("check.h5", 5.0, 0);
   /**-------------------------- Computations --------------------------**/
 
 

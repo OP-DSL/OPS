@@ -7,6 +7,10 @@
 
 int xdim0_gridgen_kernel;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x) (x)
 
 //user function
