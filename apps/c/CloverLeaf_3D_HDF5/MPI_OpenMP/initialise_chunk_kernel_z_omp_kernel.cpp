@@ -9,7 +9,6 @@
 inline
 void initialise_chunk_kernel_z(double *vertexz, const int *zz, double *vertexdz) {
   int z_min=field.z_min-2;
-  int z_max=field.z_max-2;
 
   double min_z, d_z;
   d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;

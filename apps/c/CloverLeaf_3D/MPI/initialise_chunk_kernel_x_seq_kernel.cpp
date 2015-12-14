@@ -5,7 +5,6 @@
 //user function
 inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
   int x_min=field.x_min-2;
-  int x_max=field.x_max-2;
 
   double min_x, d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;

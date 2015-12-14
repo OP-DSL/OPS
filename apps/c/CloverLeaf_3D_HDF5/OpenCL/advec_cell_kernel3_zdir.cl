@@ -69,7 +69,7 @@ __global double * restrict ener_flux,
 
  {
 
-  double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
+  double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
@@ -99,7 +99,6 @@ __global double * restrict ener_flux,
   sigma3 = (1.0 + sigmat)*(vertexdz[OPS_ACC3(0,0,0)]/vertexdz[OPS_ACC3(0,0,dif)]);
   sigma4 = 2.0 - sigmat;
 
-  sigma = sigmat;
   sigmav = sigmat;
 
   diffuw = density1[OPS_ACC4(0,0,donor)] - density1[OPS_ACC4(0,0,upwind)];

@@ -6,17 +6,10 @@
 inline void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
 
   int x_min=field.x_min-2;
-  int x_max=field.x_max-2;
-  int y_min=field.y_min-2;
-  int y_max=field.y_max-2;
-
-  double min_x, min_y, d_x, d_y;
+  double min_x, d_x;
 
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
-  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
-
   min_x=grid.xmin+d_x*field.left;
-  min_y=grid.ymin+d_y*field.bottom;
 
   vertexx[OPS_ACC0(0,0)] = min_x + d_x * (xx[OPS_ACC1(0,0)] - x_min);
   vertexdx[OPS_ACC2(0,0)] = (double)d_x;

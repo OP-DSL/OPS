@@ -89,8 +89,7 @@ const __global double * restrict zvel0,const __global double * restrict zvel1,
 
  {
 
-
-  double recip_volume, energy_change, min_cell_volume;
+  double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, back_flux, front_flux, total_flux;
 
   left_flux = ( xarea[OPS_ACC0(0,0,0)] * ( xvel0[OPS_ACC1(0,0,0)] + xvel0[OPS_ACC1(0,1,0)] +
@@ -123,14 +122,7 @@ const __global double * restrict zvel0,const __global double * restrict zvel1,
   total_flux = right_flux - left_flux + top_flux - bottom_flux + front_flux - back_flux;
 
   volume_change[OPS_ACC6(0,0,0)] = (volume[OPS_ACC7(0,0,0)])/(volume[OPS_ACC7(0,0,0)] + total_flux);
-
-  min_cell_volume = MIN( volume[OPS_ACC7(0,0,0)] + right_flux - left_flux + top_flux - bottom_flux + front_flux - back_flux,
-                    MIN( volume[OPS_ACC7(0,0,0)] + right_flux - left_flux + top_flux - bottom_flux ,
-                    MIN(volume[OPS_ACC7(0,0,0)] + right_flux - left_flux,
-                        volume[OPS_ACC7(0,0,0)] + top_flux - bottom_flux) ));
-
   recip_volume = 1.0/volume[OPS_ACC7(0,0,0)];
-
   energy_change = ( pressure[OPS_ACC8(0,0,0)]/density0[OPS_ACC9(0,0,0)] +
                     viscosity[OPS_ACC11(0,0,0)]/density0[OPS_ACC9(0,0,0)] ) * total_flux * recip_volume;
   energy1[OPS_ACC13(0,0,0)] = energy0[OPS_ACC12(0,0,0)] - energy_change;

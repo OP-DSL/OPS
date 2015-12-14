@@ -71,7 +71,6 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
          grad,
          ygrad, xgrad, zgrad,
          div,
-         strain2,
          limiter,
          pgrad;
 

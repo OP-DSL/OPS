@@ -83,7 +83,6 @@ const __global double * restrict zarea)
          grad,
          ygrad, xgrad, zgrad,
          div,
-         strain2,
          limiter,
          pgrad;
 

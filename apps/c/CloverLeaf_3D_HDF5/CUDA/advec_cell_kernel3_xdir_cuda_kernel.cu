@@ -61,7 +61,7 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
                               const double *density1, const double *energy1 ,
                               double *mass_flux_x, double *ener_flux) {
 
-  double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
+  double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
@@ -95,7 +95,6 @@ inline void advec_cell_kernel3_xdir( const double *vol_flux_x, const double *pre
   sigma3 = (1.0 + sigmat)*(vertexdx[OPS_ACC3(0,0,0)]/vertexdx[OPS_ACC3(dif,0,0)]);
   sigma4 = 2.0 - sigmat;
 
-  sigma = sigmat;
   sigmav = sigmat;
 
   diffuw = density1[OPS_ACC4(donor,0,0)] - density1[OPS_ACC4(upwind,0,0)];
