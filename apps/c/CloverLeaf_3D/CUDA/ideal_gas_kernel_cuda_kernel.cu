@@ -18,6 +18,12 @@ int xdim3_ideal_gas_kernel_h = -1;
 __constant__ int ydim3_ideal_gas_kernel;
 int ydim3_ideal_gas_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_ideal_gas_kernel*(y)+xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_ideal_gas_kernel*(y)+xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_ideal_gas_kernel*(y)+xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*(z))

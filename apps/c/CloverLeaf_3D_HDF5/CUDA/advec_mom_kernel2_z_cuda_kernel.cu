@@ -18,6 +18,12 @@ int xdim3_advec_mom_kernel2_z_h = -1;
 __constant__ int ydim3_advec_mom_kernel2_z;
 int ydim3_advec_mom_kernel2_z_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel2_z*(y)+xdim0_advec_mom_kernel2_z*ydim0_advec_mom_kernel2_z*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel2_z*(y)+xdim1_advec_mom_kernel2_z*ydim1_advec_mom_kernel2_z*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_advec_mom_kernel2_z*(y)+xdim2_advec_mom_kernel2_z*ydim2_advec_mom_kernel2_z*(z))

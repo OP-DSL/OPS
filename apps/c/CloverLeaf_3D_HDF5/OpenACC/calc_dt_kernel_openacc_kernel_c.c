@@ -34,6 +34,23 @@ int ydim12_calc_dt_kernel;
 int xdim13_calc_dt_kernel;
 int ydim13_calc_dt_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel*(y)+xdim0_calc_dt_kernel*ydim0_calc_dt_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_calc_dt_kernel*(y)+xdim1_calc_dt_kernel*ydim1_calc_dt_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_calc_dt_kernel*(y)+xdim2_calc_dt_kernel*ydim2_calc_dt_kernel*(z))

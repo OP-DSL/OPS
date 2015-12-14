@@ -12,6 +12,12 @@ int ydim1_initialise_chunk_kernel_z;
 int xdim2_initialise_chunk_kernel_z;
 int ydim2_initialise_chunk_kernel_z;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_z*(y)+xdim0_initialise_chunk_kernel_z*ydim0_initialise_chunk_kernel_z*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_initialise_chunk_kernel_z*(y)+xdim1_initialise_chunk_kernel_z*ydim1_initialise_chunk_kernel_z*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_initialise_chunk_kernel_z*(y)+xdim2_initialise_chunk_kernel_z*ydim2_initialise_chunk_kernel_z*(z))

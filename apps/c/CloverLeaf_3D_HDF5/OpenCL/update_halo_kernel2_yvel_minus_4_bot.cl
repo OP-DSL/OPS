@@ -40,6 +40,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_update_halo_kernel2_yvel_minus_4_bot*(y)+xdim0_update_halo_kernel2_yvel_minus_4_bot*ydim0_update_halo_kernel2_yvel_minus_4_bot*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_update_halo_kernel2_yvel_minus_4_bot*(y)+xdim1_update_halo_kernel2_yvel_minus_4_bot*ydim1_update_halo_kernel2_yvel_minus_4_bot*(z))
 
@@ -52,11 +57,6 @@ inline void update_halo_kernel2_yvel_minus_4_bot(__global double * restrict yvel
   if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0,0)] = -yvel0[OPS_ACC0(0,4,0)];
   if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0,0)] = -yvel1[OPS_ACC1(0,4,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

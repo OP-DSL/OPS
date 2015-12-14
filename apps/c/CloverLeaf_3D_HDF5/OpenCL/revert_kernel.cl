@@ -40,6 +40,13 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_revert_kernel*(y)+xdim0_revert_kernel*ydim0_revert_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_revert_kernel*(y)+xdim1_revert_kernel*ydim1_revert_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_revert_kernel*(y)+xdim2_revert_kernel*ydim2_revert_kernel*(z))
@@ -55,13 +62,6 @@ __global double * restrict energy1)
   density1[OPS_ACC1(0,0,0)] = density0[OPS_ACC0(0,0,0)];
   energy1[OPS_ACC3(0,0,0)] = energy0[OPS_ACC2(0,0,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 

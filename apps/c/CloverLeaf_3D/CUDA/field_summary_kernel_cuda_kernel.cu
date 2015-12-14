@@ -30,6 +30,15 @@ int xdim6_field_summary_kernel_h = -1;
 __constant__ int ydim6_field_summary_kernel;
 int ydim6_field_summary_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_field_summary_kernel*(y)+xdim0_field_summary_kernel*ydim0_field_summary_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_field_summary_kernel*(y)+xdim1_field_summary_kernel*ydim1_field_summary_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_field_summary_kernel*(y)+xdim2_field_summary_kernel*ydim2_field_summary_kernel*(z))

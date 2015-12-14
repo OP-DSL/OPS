@@ -40,6 +40,12 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_get*(y)+xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_calc_dt_kernel_get*(y)+xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get*(z))
 #define OPS_ACC4(x,y,z) (x+xdim4_calc_dt_kernel_get*(y)+xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get*(z))
@@ -54,12 +60,6 @@ void calc_dt_kernel_get(const __global double* restrict  cellx,const __global do
   *yl_pos = celly[OPS_ACC1(0,0,0)];
   *zl_pos = cellz[OPS_ACC4(0,0,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC4
 
 
 

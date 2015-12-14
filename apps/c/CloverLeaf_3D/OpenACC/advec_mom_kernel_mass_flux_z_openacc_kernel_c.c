@@ -10,6 +10,11 @@ int ydim0_advec_mom_kernel_mass_flux_z;
 int xdim1_advec_mom_kernel_mass_flux_z;
 int ydim1_advec_mom_kernel_mass_flux_z;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_mass_flux_z*(y)+xdim0_advec_mom_kernel_mass_flux_z*ydim0_advec_mom_kernel_mass_flux_z*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_mass_flux_z*(y)+xdim1_advec_mom_kernel_mass_flux_z*ydim1_advec_mom_kernel_mass_flux_z*(z))
 

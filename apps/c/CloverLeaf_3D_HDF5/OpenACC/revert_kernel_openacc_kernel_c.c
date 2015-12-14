@@ -14,6 +14,13 @@ int ydim2_revert_kernel;
 int xdim3_revert_kernel;
 int ydim3_revert_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_revert_kernel*(y)+xdim0_revert_kernel*ydim0_revert_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_revert_kernel*(y)+xdim1_revert_kernel*ydim1_revert_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_revert_kernel*(y)+xdim2_revert_kernel*ydim2_revert_kernel*(z))

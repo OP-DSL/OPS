@@ -40,6 +40,26 @@ int ydim15_PdV_kernel_nopredict;
 int xdim16_PdV_kernel_nopredict;
 int ydim16_PdV_kernel_nopredict;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+#undef OPS_ACC14
+#undef OPS_ACC15
+#undef OPS_ACC16
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_PdV_kernel_nopredict*(y)+xdim0_PdV_kernel_nopredict*ydim0_PdV_kernel_nopredict*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_PdV_kernel_nopredict*(y)+xdim1_PdV_kernel_nopredict*ydim1_PdV_kernel_nopredict*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_PdV_kernel_nopredict*(y)+xdim2_PdV_kernel_nopredict*ydim2_PdV_kernel_nopredict*(z))

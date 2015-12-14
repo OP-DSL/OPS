@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-//#define OPS_GPU
+#define OPS_GPU
 
 int xdim0_advec_cell_kernel4_zdir;
 int ydim0_advec_cell_kernel4_zdir;
@@ -27,6 +27,20 @@ int xdim9_advec_cell_kernel4_zdir;
 int ydim9_advec_cell_kernel4_zdir;
 int xdim10_advec_cell_kernel4_zdir;
 int ydim10_advec_cell_kernel4_zdir;
+
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+
 
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_cell_kernel4_zdir*(y)+xdim0_advec_cell_kernel4_zdir*ydim0_advec_cell_kernel4_zdir*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_cell_kernel4_zdir*(y)+xdim1_advec_cell_kernel4_zdir*ydim1_advec_cell_kernel4_zdir*(z))

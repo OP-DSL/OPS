@@ -40,6 +40,26 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+#undef OPS_ACC14
+#undef OPS_ACC15
+#undef OPS_ACC16
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_PdV_kernel_nopredict*(y)+xdim0_PdV_kernel_nopredict*ydim0_PdV_kernel_nopredict*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_PdV_kernel_nopredict*(y)+xdim1_PdV_kernel_nopredict*ydim1_PdV_kernel_nopredict*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_PdV_kernel_nopredict*(y)+xdim2_PdV_kernel_nopredict*ydim2_PdV_kernel_nopredict*(z))
@@ -117,26 +137,6 @@ const __global double * restrict zvel0,const __global double * restrict zvel1,
   density1[OPS_ACC10(0,0,0)] = density0[OPS_ACC9(0,0,0)] * volume_change[OPS_ACC6(0,0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
-#undef OPS_ACC14
-#undef OPS_ACC15
-#undef OPS_ACC16
 
 
 

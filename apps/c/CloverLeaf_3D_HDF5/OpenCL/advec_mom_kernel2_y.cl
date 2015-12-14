@@ -40,6 +40,13 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel2_y*(y)+xdim0_advec_mom_kernel2_y*ydim0_advec_mom_kernel2_y*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel2_y*(y)+xdim1_advec_mom_kernel2_y*ydim1_advec_mom_kernel2_y*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_advec_mom_kernel2_y*(y)+xdim2_advec_mom_kernel2_y*ydim2_advec_mom_kernel2_y*(z))
@@ -55,13 +62,6 @@ const __global double * restrict mom_flux)
   vel1[OPS_ACC0(0,0,0)] = ( vel1[OPS_ACC0(0,0,0)] * node_mass_pre[OPS_ACC2(0,0,0)]  +
     mom_flux[OPS_ACC3(0,-1,0)] - mom_flux[OPS_ACC3(0,0,0)] ) / node_mass_post[OPS_ACC1(0,0,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 

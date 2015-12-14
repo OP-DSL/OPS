@@ -40,6 +40,21 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_viscosity_kernel*(y)+xdim0_viscosity_kernel*ydim0_viscosity_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_viscosity_kernel*(y)+xdim1_viscosity_kernel*ydim1_viscosity_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_viscosity_kernel*(y)+xdim2_viscosity_kernel*ydim2_viscosity_kernel*(z))
@@ -131,21 +146,6 @@ const __global double * restrict zarea)
     viscosity[OPS_ACC6(0,0,0)] = 2.0 * (density0[OPS_ACC5(0,0,0)]) * grad2 * limiter * limiter;
   }
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
 
 
 
