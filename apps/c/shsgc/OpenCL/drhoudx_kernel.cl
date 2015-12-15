@@ -39,6 +39,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 
@@ -57,11 +62,6 @@ void drhoudx_kernel(const __global double * restrict rhou_new,__global double * 
         double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
         rho_res[OPS_ACC1(0)] = deriv;
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

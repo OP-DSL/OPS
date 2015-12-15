@@ -5,6 +5,9 @@ __constant__ int xdim0_test_kernel;
 int xdim0_test_kernel_h = -1;
 int ydim0_test_kernel_h = -1;
 
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x) (x)
 
 //user function

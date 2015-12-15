@@ -9,6 +9,12 @@ int xdim0_zerores_kernel;
 int xdim1_zerores_kernel;
 int xdim2_zerores_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

@@ -14,6 +14,12 @@ __constant__ int xdim3_drhoEpudx_kernel;
 int xdim3_drhoEpudx_kernel_h = -1;
 int ydim3_drhoEpudx_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

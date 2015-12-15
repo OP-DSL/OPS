@@ -40,6 +40,10 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_min*(y))
 
 
@@ -50,10 +54,6 @@ void calc_dt_kernel_min(const __global double* restrict  dt_min, double* restric
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
 
 }
-
-
-
-#undef OPS_ACC0
 
 
 

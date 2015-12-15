@@ -14,6 +14,13 @@ int ydim2_reset_field_kernel1;
 int xdim3_reset_field_kernel1;
 int ydim3_reset_field_kernel1;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_reset_field_kernel1*(y)+xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_reset_field_kernel1*(y)+xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_reset_field_kernel1*(y)+xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*(z))

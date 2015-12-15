@@ -5,6 +5,9 @@ __constant__ int xdim0_initialise_chunk_kernel_yy;
 int xdim0_initialise_chunk_kernel_yy_h = -1;
 int ydim0_initialise_chunk_kernel_yy_h = -1;
 
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_yy*(y))
 
 //user function

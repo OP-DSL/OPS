@@ -14,6 +14,13 @@ int ydim2_flux_calc_kernely;
 int xdim3_flux_calc_kernely;
 int ydim3_flux_calc_kernely;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_flux_calc_kernely*(y)+xdim0_flux_calc_kernely*ydim0_flux_calc_kernely*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_flux_calc_kernely*(y)+xdim1_flux_calc_kernely*ydim1_flux_calc_kernely*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_flux_calc_kernely*(y)+xdim2_flux_calc_kernely*ydim2_flux_calc_kernely*(z))

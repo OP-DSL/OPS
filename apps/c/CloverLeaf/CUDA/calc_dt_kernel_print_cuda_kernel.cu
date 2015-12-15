@@ -20,6 +20,14 @@ __constant__ int xdim5_calc_dt_kernel_print;
 int xdim5_calc_dt_kernel_print_h = -1;
 int ydim5_calc_dt_kernel_print_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_print*(y))
 #define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_print*(y))
 #define OPS_ACC2(x,y) (x+xdim2_calc_dt_kernel_print*(y))

@@ -162,6 +162,18 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 #        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
     code('')
 
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
+
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -844,9 +856,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')
-
-  for n in range(0,17):
-    code('#undef OPS_ACC'+str(n))
 
   comm(' global constants')
   for nc in range (0,len(consts)):

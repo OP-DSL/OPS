@@ -40,6 +40,10 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
+
+#undef OPS_ACC_MD0
+
+
 #define OPS_ACC_MD0(d,x,y) ((x)*2+(d)+(xdim0_multidim_reduce_kernel*(y)*2))
 
 //user function
@@ -51,10 +55,6 @@ void multidim_reduce_kernel(const __global double * restrict val, double * restr
   redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0)];
 }
 
-
-
-
-#undef OPS_ACC_MD0
 
 
 __kernel void ops_multidim_reduce_kernel(

@@ -40,6 +40,15 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC0(x,y) (x+xdim0_field_summary_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_field_summary_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_field_summary_kernel*(y))
@@ -74,15 +83,6 @@ const __global double * restrict pressure,const __global double * restrict xvel0
   *press = *press + cell_vol * pressure[OPS_ACC3(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 

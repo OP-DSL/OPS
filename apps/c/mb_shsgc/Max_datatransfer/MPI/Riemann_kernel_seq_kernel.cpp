@@ -62,6 +62,9 @@ inline void Riemann_kernel(const double* rho_new, const double *rhou_new, const 
 
 
 
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+#undef OPS_ACC_MD2
 #undef OPS_ACC_MD3
 #undef OPS_ACC_MD4
 #undef OPS_ACC_MD5
@@ -71,6 +74,9 @@ inline void Riemann_kernel(const double* rho_new, const double *rhou_new, const 
 void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
+
+  //Timing
+  double t1,t2,c1,c2;
 
   char *p_a[6];
   int  offs[6][1];
@@ -82,8 +88,11 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   if (!ops_checkpointing_before(args,6,range,7)) return;
   #endif
 
-  ops_timing_realloc(7,"Riemann_kernel");
-  OPS_kernels[7].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(7,"Riemann_kernel");
+    OPS_kernels[7].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[1];
@@ -132,10 +141,6 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   offs[5][0] = args[5].stencil->stride[0]*1;  //unit step in x dimension
 
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int dat0 = args[0].dat->elem_size;
@@ -207,14 +212,17 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   p_a[5] = (char *)args[5].data + base5;
 
 
+  //initialize global variable with the dimension of dats
+
+  //Halo Exchanges
   ops_H_D_exchanges_host(args, 6);
   ops_halo_exchanges(args,6,range);
   ops_H_D_exchanges_host(args, 6);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[7].mpi_time += t1-t2;
-
-  //initialize global variable with the dimension of dats
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[7].mpi_time += t1-t2;
+  }
 
   int n_x;
   #pragma novector
@@ -251,18 +259,24 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
     p_a[5]= p_a[5] + (dat5 * off5_0);
   }
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[7].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[7].time += t2-t1;
+  }
   ops_set_dirtybit_host(args, 6);
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[5],range);
 
-  //Update kernel record
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg5);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[7].mpi_time += t1-t2;
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, range, &arg5);
+  }
 }

@@ -40,6 +40,13 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_ideal_gas_kernel*(y)+xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_ideal_gas_kernel*(y)+xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_ideal_gas_kernel*(y)+xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*(z))
@@ -62,13 +69,6 @@ __global double * restrict soundspeed)
   sound_speed_squared = v*v*(pressure[OPS_ACC2(0,0,0)] * pressurebyenergy-pressurebyvolume);
   soundspeed[OPS_ACC3(0,0,0)] = sqrt(sound_speed_squared);
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 

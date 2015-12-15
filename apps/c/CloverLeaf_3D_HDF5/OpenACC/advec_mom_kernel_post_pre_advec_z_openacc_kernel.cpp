@@ -246,6 +246,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(char const *name, ops_block 
   #endif
   ops_halo_exchanges(args,5,range);
 
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 5);
+  #else
+  ops_H_D_exchanges_host(args, 5);
+  #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[34].mpi_time += t2-t1;

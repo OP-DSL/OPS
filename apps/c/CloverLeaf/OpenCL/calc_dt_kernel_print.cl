@@ -40,6 +40,15 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_print*(y))
 #define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_print*(y))
 #define OPS_ACC2(x,y) (x+xdim2_calc_dt_kernel_print*(y))
@@ -67,15 +76,6 @@ const __global double * restrict energy0,const __global double * restrict pressu
   output[11]= soundspeed[OPS_ACC5(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 

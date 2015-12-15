@@ -108,6 +108,11 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   #endif
   ops_halo_exchanges(args,1,range);
 
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 1);
+  #else
+  ops_H_D_exchanges_host(args, 1);
+  #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[1].mpi_time += t2-t1;

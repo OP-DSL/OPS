@@ -12,6 +12,15 @@ int xdim3_Riemann_kernel;
 int xdim4_Riemann_kernel;
 int xdim5_Riemann_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+#undef OPS_ACC_MD3
+#undef OPS_ACC_MD4
+#undef OPS_ACC_MD5
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

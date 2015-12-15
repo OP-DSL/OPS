@@ -8,6 +8,11 @@
 int xdim0_poisson_kernel_error;
 int xdim1_poisson_kernel_error;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_error*(y))
 #define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_error*(y))
 

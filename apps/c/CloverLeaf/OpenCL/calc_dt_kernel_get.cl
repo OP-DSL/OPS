@@ -40,6 +40,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_get*(y))
 #define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_get*(y))
 
@@ -52,11 +57,6 @@ void calc_dt_kernel_get(const __global double* restrict  cellx,const __global do
   *xl_pos = cellx[OPS_ACC0(0,0)];
   *yl_pos = celly[OPS_ACC1(0,0)];
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

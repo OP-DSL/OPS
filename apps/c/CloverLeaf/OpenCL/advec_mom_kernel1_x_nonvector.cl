@@ -40,6 +40,14 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel1_x_nonvector*(y))
 #define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel1_x_nonvector*(y))
 #define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel1_x_nonvector*(y))
@@ -95,14 +103,6 @@ const __global double * restrict celldx,const __global double * restrict vel1)
   mom_flux[OPS_ACC2(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
 
 
 

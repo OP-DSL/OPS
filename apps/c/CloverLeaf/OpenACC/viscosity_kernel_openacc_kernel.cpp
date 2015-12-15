@@ -246,6 +246,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   #endif
   ops_halo_exchanges(args,7,range);
 
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 7);
+  #else
+  ops_H_D_exchanges_host(args, 7);
+  #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[34].mpi_time += t2-t1;

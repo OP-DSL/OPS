@@ -39,6 +39,10 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x) (x)
 
 
@@ -49,10 +53,6 @@ void test_kernel(const __global double * restrict rho_new, double * restrict rms
 
   rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2.0);
 }
-
-
-
-#undef OPS_ACC0
 
 
 

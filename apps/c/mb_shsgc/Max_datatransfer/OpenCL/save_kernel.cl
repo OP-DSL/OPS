@@ -39,6 +39,15 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
@@ -56,15 +65,6 @@ const __global double * restrict rho_new,const __global double * restrict rhou_n
   rhou_old[OPS_ACC1(0)]=rhou_new[OPS_ACC4(0)];
   rhoE_old[OPS_ACC2(0)]=rhoE_new[OPS_ACC5(0)];
   }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 

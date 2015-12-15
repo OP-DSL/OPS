@@ -17,6 +17,20 @@ int xdim8_accelerate_kernel;
 int xdim9_accelerate_kernel;
 int xdim10_accelerate_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+
+
 #define OPS_ACC0(x,y) (x+xdim0_accelerate_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_accelerate_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_accelerate_kernel*(y))

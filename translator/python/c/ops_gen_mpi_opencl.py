@@ -199,6 +199,17 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     code('#define INFINITY_ull INFINITY;')
     code('#define ZERO_bool 0;')
 
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -312,23 +323,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
 
 
     code(text)
-
-
     config.depth =config.depth-2
     code(body)
     code('')
     code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-    code('')
-    code('')
+
 
 
 ##########################################################################

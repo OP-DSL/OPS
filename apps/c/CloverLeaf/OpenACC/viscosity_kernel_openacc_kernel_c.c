@@ -13,6 +13,16 @@ int xdim4_viscosity_kernel;
 int xdim5_viscosity_kernel;
 int xdim6_viscosity_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y) (x+xdim0_viscosity_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_viscosity_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_viscosity_kernel*(y))

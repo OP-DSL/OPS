@@ -11,6 +11,11 @@ __constant__ int xdim2_zerores_kernel;
 int xdim2_zerores_kernel_h = -1;
 int ydim2_zerores_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

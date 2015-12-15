@@ -14,6 +14,12 @@ __constant__ int xdim3_advec_cell_kernel2_xdir;
 int xdim3_advec_cell_kernel2_xdir_h = -1;
 int ydim3_advec_cell_kernel2_xdir_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y) (x+xdim0_advec_cell_kernel2_xdir*(y))
 #define OPS_ACC1(x,y) (x+xdim1_advec_cell_kernel2_xdir*(y))
 #define OPS_ACC2(x,y) (x+xdim2_advec_cell_kernel2_xdir*(y))

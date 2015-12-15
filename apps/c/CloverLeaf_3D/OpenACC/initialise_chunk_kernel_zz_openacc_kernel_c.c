@@ -8,6 +8,10 @@
 int xdim0_initialise_chunk_kernel_zz;
 int ydim0_initialise_chunk_kernel_zz;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_zz*(y)+xdim0_initialise_chunk_kernel_zz*ydim0_initialise_chunk_kernel_zz*(z))
 
 //user function

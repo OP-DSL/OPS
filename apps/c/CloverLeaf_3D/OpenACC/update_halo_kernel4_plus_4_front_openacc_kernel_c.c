@@ -10,6 +10,11 @@ int ydim0_update_halo_kernel4_plus_4_front;
 int xdim1_update_halo_kernel4_plus_4_front;
 int ydim1_update_halo_kernel4_plus_4_front;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_update_halo_kernel4_plus_4_front*(y)+xdim0_update_halo_kernel4_plus_4_front*ydim0_update_halo_kernel4_plus_4_front*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_update_halo_kernel4_plus_4_front*(y)+xdim1_update_halo_kernel4_plus_4_front*ydim1_update_halo_kernel4_plus_4_front*(z))
 

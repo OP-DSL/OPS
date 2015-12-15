@@ -20,6 +20,16 @@ int ydim5_initialise_chunk_kernel_volume;
 int xdim6_initialise_chunk_kernel_volume;
 int ydim6_initialise_chunk_kernel_volume;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_volume*(y)+xdim0_initialise_chunk_kernel_volume*ydim0_initialise_chunk_kernel_volume*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_initialise_chunk_kernel_volume*(y)+xdim1_initialise_chunk_kernel_volume*ydim1_initialise_chunk_kernel_volume*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_initialise_chunk_kernel_volume*(y)+xdim2_initialise_chunk_kernel_volume*ydim2_initialise_chunk_kernel_volume*(z))

@@ -653,9 +653,13 @@ void ops_diagnostic_output ( )
       printf("\n");
     }
 
-    printf ( "\n dats item/point [block_size] [base][d_m][d_p]  block\n" );
-    printf ( " ------------------------------\n" );
+    //printf ("\n dats item/point [block_size] [base] [d_m] [d_p] memory(MBytes) block\n" );
+    printf ("\n %15s %15s %15s %10s %10s %10s %15s %15s\n","data","item/point","[block_size]",
+           "[base]","[d_m]","[d_p]","memory(MBytes)","block");
+
+    printf (" -------------------------------------------------------------------------\n" );
     ops_dat_entry *item;
+    double tot_memory = 0.0;
     TAILQ_FOREACH(item, &OPS_dat_list, entries) {
       printf ( " %15s %15d ", (item->dat)->name, (item->dat)->dim );
       for (int i=0; i<(item->dat)->block->dims; i++)
@@ -663,13 +667,20 @@ void ops_diagnostic_output ( )
       printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->base[i] );
+      printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->d_m[i] );
+      printf ( " " );
       for (int i=0; i<(item->dat)->block->dims; i++)
         printf ( "[%d]",(item->dat)->d_p[i] );
+      printf ( " " );
 
+      printf ( " %15.3lf ",(item->dat)->mem/(1024.0*1024.0) );
+      tot_memory += (item->dat)->mem;
       printf ( " %15s\n", (item->dat)->block->name );
     }
+    printf ( "\n" );
+    printf ( "Total Memory Allocated for ops_dats (GBytes) : %.3lf\n",tot_memory/(1024.0*1024.0*1024.0) );
     printf ( "\n" );
   }
 }

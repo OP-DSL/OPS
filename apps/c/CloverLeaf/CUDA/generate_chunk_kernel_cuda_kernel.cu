@@ -26,6 +26,16 @@ __constant__ int xdim7_generate_chunk_kernel;
 int xdim7_generate_chunk_kernel_h = -1;
 int ydim7_generate_chunk_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+
+
 #define OPS_ACC0(x,y) (x+xdim0_generate_chunk_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_generate_chunk_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_generate_chunk_kernel*(y))

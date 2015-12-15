@@ -23,6 +23,15 @@ __constant__ int xdim6_viscosity_kernel;
 int xdim6_viscosity_kernel_h = -1;
 int ydim6_viscosity_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y) (x+xdim0_viscosity_kernel*(y))
 #define OPS_ACC1(x,y) (x+xdim1_viscosity_kernel*(y))
 #define OPS_ACC2(x,y) (x+xdim2_viscosity_kernel*(y))

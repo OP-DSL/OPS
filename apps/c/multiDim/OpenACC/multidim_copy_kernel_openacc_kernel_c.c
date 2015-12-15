@@ -9,6 +9,11 @@ int xdim0_multidim_copy_kernel;
 int xdim1_multidim_copy_kernel;
 
 
+
+#undef OPS_ACC_MD0
+#undef OPS_ACC_MD1
+
+
 #define OPS_ACC_MD0(d,x,y) ((x)*2+(d)+(xdim0_multidim_copy_kernel*(y)*2))
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1_multidim_copy_kernel*(y)*2))
 //user function

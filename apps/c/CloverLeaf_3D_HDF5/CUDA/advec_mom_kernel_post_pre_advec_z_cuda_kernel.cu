@@ -22,6 +22,13 @@ int xdim4_advec_mom_kernel_post_pre_advec_z_h = -1;
 __constant__ int ydim4_advec_mom_kernel_post_pre_advec_z;
 int ydim4_advec_mom_kernel_post_pre_advec_z_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_post_pre_advec_z*(y)+xdim0_advec_mom_kernel_post_pre_advec_z*ydim0_advec_mom_kernel_post_pre_advec_z*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_post_pre_advec_z*(y)+xdim1_advec_mom_kernel_post_pre_advec_z*ydim1_advec_mom_kernel_post_pre_advec_z*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_advec_mom_kernel_post_pre_advec_z*(y)+xdim2_advec_mom_kernel_post_pre_advec_z*ydim2_advec_mom_kernel_post_pre_advec_z*(z))

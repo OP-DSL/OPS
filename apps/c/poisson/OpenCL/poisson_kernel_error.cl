@@ -39,6 +39,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_error*(y))
 #define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_error*(y))
 
@@ -49,11 +54,6 @@ void poisson_kernel_error(const __global double * restrict u,const __global doub
  {
   *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

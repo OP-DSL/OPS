@@ -39,6 +39,15 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+#undef OPS_ACC_MD3
+#undef OPS_ACC_MD4
+#undef OPS_ACC_MD5
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
@@ -105,15 +114,6 @@ __global double* restrict  alam,__global double* restrict  r,__global double* re
     al[OPS_ACC_MD5(m,0)] = al[OPS_ACC_MD5(m,0)] * csq;
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
 
 
 __kernel void ops_Riemann_kernel(
