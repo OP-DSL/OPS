@@ -67,6 +67,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
   #ifdef OPS_MPI
   for ( int n=0; n<2; n++ ){
+    sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
     stride_0[n] = args[0].stencil->mgrid_stride[n];
     d_size_0[n] = args[0].dat->d_m[n] + sd0->decomp_size[n] - args[0].dat->d_p[n];
     start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
@@ -87,6 +88,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
+
 
 
   int off0_0 = offs[0][0];
