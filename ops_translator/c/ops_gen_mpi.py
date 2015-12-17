@@ -383,6 +383,7 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
           code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];int d_size_'+str(n)+'[2];')
           code('#ifdef OPS_MPI')
           FOR('n','0',str(NDIM))
+          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
           code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
           code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
