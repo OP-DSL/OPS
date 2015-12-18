@@ -70,7 +70,8 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
     stride_0[n] = args[0].stencil->mgrid_stride[n];
     d_size_0[n] = args[0].dat->d_m[n] + sd0->decomp_size[n] - args[0].dat->d_p[n];
-    start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
+    //start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
+    start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n];//+ args[0].dat->d_m[n];
     end_0[n] = start_0[n] + d_size_0[n];
   }
   #else
