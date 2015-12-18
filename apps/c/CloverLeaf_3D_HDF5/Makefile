@@ -64,7 +64,7 @@ ifdef DEBUG
 else
   CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
-  CPPFLAGS 	= $(CCFLAGS)
+  CPPFLAGS 	= $(CCFLAGS) -ldl
   OMPFLAGS 	= -mp
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc

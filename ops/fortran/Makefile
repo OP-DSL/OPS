@@ -35,6 +35,8 @@ ifeq ($(NV_ARCH),Kepler)
 endif
 endif
 
+MPI_INC = $(MPI_INSTALL_PATH)/include
+MPI_LIB = $(MPI_INSTALL_PATH)/lib
 
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
@@ -82,10 +84,14 @@ endif
 endif
 
 ifdef HDF5_INSTALL_PATH
-  HDF5_INC 	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
-  CHKCC		:= $(MPICXX)
+  HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB		:= -L$(HDF5_INSTALL_PATH)/lib
+  CHKCC			:= $(MPICXX)
+ifdef CHECKPOINTING
+  HDF5_INC 	  	:= $(HDF5_INC) -DCHECKPOINTING
+endif
 else
-  CHKCC		:= $(CC)
+  CHKCC			:= $(CC)
 endif
 
 .PHONY: clean mkdir
@@ -99,9 +105,16 @@ core:	mkdir $(C_OPS_INC)/ops_lib_core.h $(C_OPS_SRC)/core/ops_lib_core.c $(C_OPS
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lazy.cpp -o $(F_OPS_OBJ)/ops_lazy.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/externlib/ops_util.c -o $(F_OPS_OBJ)/ops_util.o
-	$(CHKCC) $(CXXFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -c $(C_OPS_SRC)/externlib/ops_checkpointing.c -o $(F_OPS_OBJ)/ops_checkpointing.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 
-f_seq: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
+hdf5:	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
+	$(CHKCC) $(CXXFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -c $(C_OPS_SRC)/externlib/ops_checkpointing.c -o $(F_OPS_OBJ)/ops_checkpointing.o
+	$(CC) $(CFLAGS) $(HDF5_INC) -I$(MPI_INC) -I$(C_OPS_INC) -c $(C_OPS_SRC)/externlib/ops_hdf5.c -o $(F_OPS_OBJ)/ops_hdf5.o
+	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_hdf5_declarations.F90 -o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
+	ar -r $(F_OPS_LIB)/libops_hdf5.a $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
+
+
+f_seq: 	mkdir core hdf5 $(F_OPS_OBJ)/ops_lib_core.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/sequential/ops_seq.c -o $(F_OPS_OBJ)/ops_seq.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_dummy_singlenode.c -o $(F_OPS_OBJ)/ops_dummy_singlenode.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
@@ -127,18 +140,20 @@ f_mpi: 	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
 	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_partition.c -o $(F_OPS_OBJ)/ops_mpi_partition.o
 	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support.c -o $(F_OPS_OBJ)/ops_mpi_rt_support.o
 	$(MPICC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_host.c -o $(F_OPS_OBJ)/ops_mpi_rt_support_host.o
+	$(MPICC) $(CXXFLAGS) -I$(MPI_INC) $(HDF5_INC) -I$(C_OPS_INC)  -I$(CUDA_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_hdf5.c -o $(F_OPS_OBJ)/ops_mpi_hdf5.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	ar -r $(F_OPS_LIB)/libops_for_mpi.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl.o $(F_OPS_OBJ)/ops_mpi_core.o $(F_OPS_OBJ)/ops_mpi_rt_support.o \
 	$(F_OPS_OBJ)/ops_mpi_partition.o $(F_OPS_OBJ)/ops_mpi_rt_support_host.o \
-	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_mpi_hdf5.o
 
 f_mpi_cuda: mkdir core
 	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_decl_cuda.c -o $(F_OPS_OBJ)/ops_mpi_decl_cuda.o
 	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_partition.c -o $(F_OPS_OBJ)/ops_mpi_partition.o
 	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_core.c -o $(F_OPS_OBJ)/ops_mpi_core.o
 	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support.c -o $(F_OPS_OBJ)/ops_mpi_rt_support.o
+	$(MPICC) $(CXXFLAGS) -I$(MPI_INC) $(HDF5_INC) -I$(C_OPS_INC)  -I$(CUDA_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_hdf5.c -o $(F_OPS_OBJ)/ops_mpi_hdf5.o
 	$(NVCC)  $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
 	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
 	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
@@ -147,7 +162,7 @@ f_mpi_cuda: mkdir core
 	ar -r $(F_OPS_LIB)/libops_for_mpi_cuda.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_core.o $(F_OPS_OBJ)/ops_mpi_partition.o $(F_OPS_OBJ)/ops_mpi_decl_cuda.o \
 	$(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o $(F_OPS_OBJ)/ops_mpi_rt_support.o \
-	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_mpi_hdf5.o
 
 f_openacc: mkdir core
 	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o

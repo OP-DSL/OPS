@@ -20,6 +20,15 @@ ifeq ($(NV_ARCH),Kepler)
 endif
 endif
 
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
+endif
+
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -53,7 +62,7 @@ endif
   CXXLINK       = -lstdc++ -pgcpplibs -lgcc_s
   OMPFLAGS 	= -mp
   FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
-  FFLAGS        = $(OPT) $(PGFLAGS)
+  FFLAGS        = $(OPT) $(PGFLAGS) -ldl
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
@@ -71,14 +80,14 @@ FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 all: $(TARGETS)
 
 poisson_seq: poisson_ops.F90 constants.F90
-	$(FC) $(FFLAGS) $(FMODS) -c constants.F90 \
+	$(MPIF90) $(FFLAGS) $(FMODS) -c constants.F90 \
 	./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
 	./MPI/poisson_populate_kernel_seq_kernel.F90 \
 	./MPI/poisson_stencil_kernel_seq_kernel.F90 \
 	./MPI/poisson_update_kernel_seq_kernel.F90 \
 	./MPI/poisson_error_kernel_seq_kernel.F90 \
 	poisson_ops.F90
-	$(FC) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
+	$(MPIF90) $(FFLAGS) $(FLINK) poisson_ops.o constants.o \
 	poisson_populate_kernel_seq_kernel.o \
 	poisson_initialguess_kernel_seq_kernel.o \
 	poisson_stencil_kernel_seq_kernel.o \
@@ -136,7 +145,7 @@ poisson_mpi: poisson_ops.F90 constants.F90
         poisson_stencil_kernel_seq_kernel.o \
         poisson_update_kernel_seq_kernel.o \
         poisson_error_kernel_seq_kernel.o \
-        -o poisson_mpi -lops_for_mpi
+	-o poisson_mpi -lops_for_mpi $(HDF5_LIB)
 
 poisson_mpi_openmp: poisson_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FMODS) -DOPS_MPI -c constants.F90 \
@@ -152,7 +161,7 @@ poisson_mpi_openmp: poisson_ops.F90 constants.F90
 	poisson_stencil_kernel_omp_kernel.o \
 	poisson_update_kernel_omp_kernel.o \
 	poisson_error_kernel_omp_kernel.o \
-        -o poisson_mpi_openmp -lops_for_mpi
+        -o poisson_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
 poisson_mpi_cuda: poisson_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
@@ -169,7 +178,7 @@ ifeq ($(OPS_COMPILER),pgi)
         poisson_stencil_kernel_cuda_kernel.o \
         poisson_update_kernel_cuda_kernel.o \
         poisson_error_kernel_cuda_kernel.o \
-        -o poisson_mpi_cuda -lops_for_mpi_cuda
+        -o poisson_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
 else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
