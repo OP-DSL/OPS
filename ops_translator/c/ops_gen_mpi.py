@@ -368,6 +368,15 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
       code('')
+    elif arg_idx:
+      code('int arg_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
 
     if MULTI_GRID:
       for n in range (0, nargs):
