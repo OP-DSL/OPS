@@ -3,8 +3,8 @@
 //
 
 //user function
-inline void mgrid_populate_kernel_2(double *val, int *idx) {
-  val[OPS_ACC0(0,0)] = (double)(idx[0]+4*idx[1]);
+inline void mgrid_populate_kernel_1(double *val, int *idx) {
+  val[OPS_ACC0(0,0)] = (double)(idx[0]+6*idx[1]);
 }
 
 
@@ -12,7 +12,7 @@ inline void mgrid_populate_kernel_2(double *val, int *idx) {
 
 
 // host stub function
-void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 
   //Timing
@@ -29,7 +29,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(0,"mgrid_populate_kernel_2");
+    ops_timing_realloc(0,"mgrid_populate_kernel_1");
     OPS_kernels[0].count++;
     ops_timers_core(&c2,&t2);
   }
@@ -68,7 +68,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   #endif //OPS_MPI
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "mgrid_populate_kernel_2");
+  ops_register_args(args, "mgrid_populate_kernel_1");
   #endif
 
 
@@ -127,7 +127,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
     for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
       //call kernel function, passing in pointers to data -vectorised
       for ( int i=0; i<SIMD_VEC; i++ ){
-        mgrid_populate_kernel_2(  (double *)p_a[0]+ i*1*1, (int *)p_a[1] );
+        mgrid_populate_kernel_1(  (double *)p_a[0]+ i*1*1, (int *)p_a[1] );
 
         arg_idx[0]++;
       }
@@ -138,7 +138,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
 
     for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      mgrid_populate_kernel_2(  (double *)p_a[0], (int *)p_a[1] );
+      mgrid_populate_kernel_1(  (double *)p_a[0], (int *)p_a[1] );
 
 
       //shift pointers to data x direction
