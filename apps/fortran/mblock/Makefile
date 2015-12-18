@@ -20,6 +20,15 @@ ifeq ($(NV_ARCH),Kepler)
 endif
 endif
 
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
+endif
+
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -53,7 +62,7 @@ endif
   CXXLINK       = -lstdc++ -pgcpplibs
   OMPFLAGS 	= -mp
   FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
-  FFLAGS        = $(OPT) $(PGFLAGS)
+  FFLAGS        = $(OPT) $(PGFLAGS) -ldl
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
@@ -96,20 +105,20 @@ mblock_mpi: mblock_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) -c -DOPS_MPI constants.F90 ./MPI/mblock_populate_kernel_seq_kernel.F90 \
         mblock_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI mblock_ops.o constants.o mblock_populate_kernel_seq_kernel.o \
-        -o mblock_mpi -lops_for_mpi
+        -o mblock_mpi -lops_for_mpi $(HDF5_LIB)
 
 mblock_mpi_openmp: mblock_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OMPFLAGS) -c -DOPS_MPI constants.F90 ./MPI_OpenMP/mblock_populate_kernel_omp_kernel.F90 \
         mblock_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) $(OMPFLAGS) -DOPS_MPI mblock_ops.o constants.o mblock_populate_kernel_omp_kernel.o \
-        -o mblock_mpi_openmp -lops_for_mpi
+        -o mblock_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
 mblock_mpi_cuda: mblock_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
 	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_WITH_CUDAFOR -DOPS_MPI -c constants.F90 ./CUDA/mblock_populate_kernel_cuda_kernel.CUF \
         mblock_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_WITH_CUDAFOR -DOPS_MPI mblock_ops.o constants.o mblock_populate_kernel_cuda_kernel.o \
-        -o mblock_mpi_cuda -lops_for_mpi_cuda
+        -o mblock_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
 else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif

@@ -20,6 +20,14 @@ ifeq ($(NV_ARCH),Kepler)
 endif
 endif
 
+ifdef HDF5_INSTALL_PATH
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+ifdef CHECKPOINTING
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
+endif
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -53,7 +61,7 @@ endif
   CXXLINK       = -lstdc++ -pgcpplibs
   OMPFLAGS 	= -mp
   FC            = pgfortran $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
-  FFLAGS        = $(OPT) $(PGFLAGS)
+  FFLAGS        = $(OPT) $(PGFLAGS) -ldl
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
@@ -97,13 +105,13 @@ multidim_mpi: multidim_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_MPI -c constants.F90 ./MPI/multidim_print_kernel_seq_kernel.F90 \
         ./MPI/multidim_copy_kernel_seq_kernel.F90 ./MPI/multidim_kernel_seq_kernel.F90 ./MPI/multidim_reduce_kernel_seq_kernel.F90 multidim_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI multidim_ops.o constants.o multidim_kernel_seq_kernel.o multidim_copy_kernel_seq_kernel.o \
-        multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_mpi -lops_for_mpi
+        multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_mpi -lops_for_mpi $(HDF5_LIB)
 
 multidim_mpi_openmp: multidim_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OMPFLAGS) -DOPS_MPI -c constants.F90 ./MPI/multidim_print_kernel_seq_kernel.F90 \
         ./MPI/multidim_copy_kernel_seq_kernel.F90 ./MPI/multidim_kernel_seq_kernel.F90 ./MPI/multidim_reduce_kernel_seq_kernel.F90 multidim_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) $(OMPFLAGS) -DOPS_MPI multidim_ops.o constants.o multidim_kernel_seq_kernel.o multidim_copy_kernel_seq_kernel.o \
-        multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_mpi_openmp -lops_for_mpi
+        multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
 
 multidim_mpi_cuda: multidim_ops.F90 constants.F90
@@ -112,7 +120,7 @@ ifeq ($(OPS_COMPILER),pgi)
 	./CUDA/multidim_copy_kernel_cuda_kernel.CUF ./CUDA/multidim_kernel_cuda_kernel.CUF ./CUDA/multidim_reduce_kernel_cuda_kernel.CUF multidim_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) $(CUDA_ALIGN_FLAG) -DOPS_WITH_CUDAFOR -DOPS_MPI multidim_ops.o constants.o multidim_kernel_cuda_kernel.o \
         multidim_copy_kernel_cuda_kernel.o multidim_print_kernel_cuda_kernel.o \
-        multidim_reduce_kernel_cuda_kernel.o -o multidim_mpi_cuda -lops_for_mpi_cuda
+        multidim_reduce_kernel_cuda_kernel.o -o multidim_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
 else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
