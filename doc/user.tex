@@ -69,6 +69,7 @@ connectivity between the faces of different blocks can be quite complex, and in 
 the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and 
 hard to handle simply.
 
+\begin{comment}
 \noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
 application:
 \begin{itemize}
@@ -96,6 +97,7 @@ correspond to the $j,k$ face of another block.  This is awkward and hard to hand
 \end{itemize}
 
 \noindent The latest proposal is to handle all of these different requirements through stencil definitions.
+\end{comment}
 
 \section{Key concepts and structure}
 
@@ -134,9 +136,7 @@ Reductions in loops are done using the ops\_arg\_reduce argument, which takes a 
 
 OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will re-organise data as well as execution (potentially across different loops), and therefore any data accesses or manipulation may only be done through the OPS API.
 
-\clearpage
-
-\newpage
+% \newpage
 \section{OPS C++ API}
 
 \subsection{Initialisation and termination routines}
@@ -707,6 +707,9 @@ time these macros will be expanded to give the correct array index
 \caption{\small example \texttt{ops\_par\_loop}}
 \normalsize\vspace{-0pt}\label{fig:parloop}
 \end{figure}
+
+
+
 
 
 \begin{thebibliography}{1}
