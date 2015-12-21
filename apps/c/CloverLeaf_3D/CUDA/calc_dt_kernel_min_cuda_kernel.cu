@@ -6,6 +6,9 @@ int xdim0_calc_dt_kernel_min_h = -1;
 __constant__ int ydim0_calc_dt_kernel_min;
 int ydim0_calc_dt_kernel_min_h = -1;
 
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_min*(y)+xdim0_calc_dt_kernel_min*ydim0_calc_dt_kernel_min*(z))
 
 //user function

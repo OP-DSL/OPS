@@ -9,6 +9,12 @@ int xdim0_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil;
 int xdim2_poisson_kernel_stencil;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_stencil*(y))
 #define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_stencil*(y))
 #define OPS_ACC2(x,y) (x+xdim2_poisson_kernel_stencil*(y))

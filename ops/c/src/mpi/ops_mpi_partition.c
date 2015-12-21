@@ -50,7 +50,7 @@ extern int ops_buffer_recv_1_size;
 extern int ops_buffer_send_2_size;
 extern int ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
-
+extern char *OPS_checkpoiting_dup_buffer;
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
@@ -301,15 +301,16 @@ void ops_decomp_dats(sub_block *sb) {
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
 
-    //Allocate datasets -- move this to separate routines (one for none-hdf5 and one for hdf5 ?)
-    //TODO: read HDF5, what if it was already allocated - re-distribute
+    //Allocate datasets
     if(dat->data == NULL)
       if(dat->is_hdf5 == 0) {
         dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
         dat->hdf5_file = "none";
+        dat->mem = prod[sb->ndim-1]*dat->elem_size; //this includes the halo sizes
       }
       else {
         dat->data = (char *)calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        dat->mem = prod[sb->ndim-1]*dat->elem_size; //this includes the halo sizes
         ops_read_dat_hdf5(dat);
       }
     else {
@@ -737,4 +738,5 @@ void ops_mpi_exit()
   }
   free(OPS_mpi_halo_group_list);
   free(mpi_neigh_size);
+  if (OPS_enable_checkpointing) free(OPS_checkpoiting_dup_buffer);
 }

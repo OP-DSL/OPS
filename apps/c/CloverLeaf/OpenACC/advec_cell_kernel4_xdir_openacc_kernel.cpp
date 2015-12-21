@@ -338,6 +338,11 @@ void ops_par_loop_advec_cell_kernel4_xdir(char const *name, ops_block block, int
   #endif
   ops_halo_exchanges(args,11,range);
 
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 11);
+  #else
+  ops_H_D_exchanges_host(args, 11);
+  #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[10].mpi_time += t2-t1;

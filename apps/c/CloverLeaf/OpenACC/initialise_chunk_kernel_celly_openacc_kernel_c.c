@@ -9,6 +9,12 @@ int xdim0_initialise_chunk_kernel_celly;
 int xdim1_initialise_chunk_kernel_celly;
 int xdim2_initialise_chunk_kernel_celly;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_celly*(y))
 #define OPS_ACC1(x,y) (x+xdim1_initialise_chunk_kernel_celly*(y))
 #define OPS_ACC2(x,y) (x+xdim2_initialise_chunk_kernel_celly*(y))
@@ -17,18 +23,8 @@ int xdim2_initialise_chunk_kernel_celly;
 inline
 void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
-  int x_min=field.x_min-2;
-  int x_max=field.x_max-2;
-  int y_min=field.y_min-2;
-  int y_max=field.y_max-2;
-
-  double min_x, min_y, d_x, d_y;
-
-  d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
+  double d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
-
-  min_x=grid.xmin+d_x;
-  min_y=grid.ymin+d_y;
 
   celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
   celldy[OPS_ACC2(0,0)] = d_y;

@@ -14,6 +14,11 @@ int xdim4_calc_dt_kernel_get_h = -1;
 __constant__ int ydim4_calc_dt_kernel_get;
 int ydim4_calc_dt_kernel_get_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_get*(y)+xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_calc_dt_kernel_get*(y)+xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get*(z))
 #define OPS_ACC4(x,y,z) (x+xdim4_calc_dt_kernel_get*(y)+xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get*(z))

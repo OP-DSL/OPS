@@ -44,6 +44,8 @@ void init_kernel_c_wrapper(
 void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
 
+  //Timing
+  double t1,t2,c1,c2;
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
@@ -51,10 +53,14 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* r
   if (!ops_checkpointing_before(args,8,range,1)) return;
   #endif
 
-  ops_timing_realloc(1,"init_kernel");
-  OPS_kernels[1].count++;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(1,"init_kernel");
+    OPS_kernels[1].count++;
+    ops_timers_core(&c1,&t1);
+  }
 
   //compute localy allocated range for the sub-block
+
   int start[1];
   int end[1];
   #ifdef OPS_MPI
@@ -95,11 +101,6 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* r
   xdim5 = args[5].dat->size[0];
   xdim6 = args[6].dat->size[0];
   xdim7 = args[7].dat->size[0];
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
   if (xdim0 != xdim0_init_kernel_h || xdim1 != xdim1_init_kernel_h || xdim2 != xdim2_init_kernel_h || xdim3 != xdim3_init_kernel_h || xdim4 != xdim4_init_kernel_h || xdim5 != xdim5_init_kernel_h || xdim6 != xdim6_init_kernel_h || xdim7 != xdim7_init_kernel_h) {
     xdim0_init_kernel = xdim0;
     xdim0_init_kernel_h = xdim0;
@@ -243,8 +244,15 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* r
   #endif
   ops_halo_exchanges(args,8,range);
 
-  ops_timers_core(&c1,&t1);
-  OPS_kernels[1].mpi_time += t1-t2;
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 8);
+  #else
+  ops_H_D_exchanges_host(args, 8);
+  #endif
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+  }
 
   init_kernel_c_wrapper(
     p_a0,
@@ -257,8 +265,10 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* r
     p_a7,
     x_size);
 
-  ops_timers_core(&c2,&t2);
-  OPS_kernels[1].time += t2-t1;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[1].time += t1-t2;
+  }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 8);
   #else
@@ -272,13 +282,17 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim, int* r
   ops_set_halo_dirtybit3(&args[6],range);
   ops_set_halo_dirtybit3(&args[7],range);
 
-  //Update kernel record
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg7);
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg2);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg4);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg6);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg7);
+  }
 }

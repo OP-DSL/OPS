@@ -1,0 +1,31 @@
+#A rough example of environmental variables for compiling with Intel compilers
+
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
+
+#OPS specifics
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+
+#CUDA and NVIDIA OpenCL
+export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+
+
+#Intel MPI and Compilers
+export MPI_INSTALL_PATH=/opt/intel/impi/5.1.1.109/intel64
+source /opt/intel/compilers_and_libraries/linux/bin/compilervars.sh intel64
+source /opt/intel/compilers_and_libraries/linux/mpi/bin64/mpivars.sh intel64
+
+export INTEL_PATH=/opt/intel/compilers_and_libraries/linux/
+export MPICH_CXX=/opt/intel/compilers_and_libraries/linux/bin/intel64/icpc
+export MPICH_CC=/opt/intel/compilers_and_libraries/linux/bin/intel64/icc
+export MPICH_F90=/opt/intel/compilers_and_libraries/linux/bin/intel64/ifort
+
+#Intel based HDF5
+#unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/opt/hdf5-intel/

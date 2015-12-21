@@ -5,6 +5,9 @@ __constant__ int xdim0_mblock_populate_kernel;
 int xdim0_mblock_populate_kernel_h = -1;
 int ydim0_mblock_populate_kernel_h = -1;
 
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_mblock_populate_kernel*(y))
 
 //user function

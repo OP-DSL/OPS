@@ -14,6 +14,11 @@ int xdim2_initialise_chunk_kernel_y_h = -1;
 __constant__ int ydim2_initialise_chunk_kernel_y;
 int ydim2_initialise_chunk_kernel_y_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_y*(y)+xdim0_initialise_chunk_kernel_y*ydim0_initialise_chunk_kernel_y*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_initialise_chunk_kernel_y*(y)+xdim1_initialise_chunk_kernel_y*ydim1_initialise_chunk_kernel_y*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_initialise_chunk_kernel_y*(y)+xdim2_initialise_chunk_kernel_y*ydim2_initialise_chunk_kernel_y*(z))
@@ -23,7 +28,6 @@ __device__
 
 void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
   int y_min=field.y_min-2;
-  int y_max=field.y_max-2;
 
   double min_y, d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;

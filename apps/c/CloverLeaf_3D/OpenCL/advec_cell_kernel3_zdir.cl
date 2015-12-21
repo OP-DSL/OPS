@@ -40,6 +40,17 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_cell_kernel3_zdir*(y)+xdim0_advec_cell_kernel3_zdir*ydim0_advec_cell_kernel3_zdir*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_cell_kernel3_zdir*(y)+xdim1_advec_cell_kernel3_zdir*ydim1_advec_cell_kernel3_zdir*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_advec_cell_kernel3_zdir*(y)+xdim2_advec_cell_kernel3_zdir*ydim2_advec_cell_kernel3_zdir*(z))
@@ -58,7 +69,7 @@ __global double * restrict ener_flux,
 
  {
 
-  double sigma, sigmat, sigmav, sigmam, sigma3, sigma4;
+  double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
   double one_by_six = 1.0/6.0;
 
@@ -88,7 +99,6 @@ __global double * restrict ener_flux,
   sigma3 = (1.0 + sigmat)*(vertexdz[OPS_ACC3(0,0,0)]/vertexdz[OPS_ACC3(0,0,dif)]);
   sigma4 = 2.0 - sigmat;
 
-  sigma = sigmat;
   sigmav = sigmat;
 
   diffuw = density1[OPS_ACC4(0,0,donor)] - density1[OPS_ACC4(0,0,upwind)];
@@ -116,17 +126,6 @@ __global double * restrict ener_flux,
 
   ener_flux[OPS_ACC7(0,0,0)] = mass_flux_z[OPS_ACC6(0,0,0)] * ( energy1[OPS_ACC5(0,0,donor)] + limiter );
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
 
 
 

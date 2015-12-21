@@ -144,6 +144,7 @@ typedef struct
   int         is_hdf5;     /* indicates whether the data is to read from an hdf5 file*/
   char const  *hdf5_file;  /* name of hdf5 file from which this dataset was read*/
   int         e_dat;    /* flag to indicate if this is an edge dat*/
+  long        mem;  /*memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)*/
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
@@ -301,6 +302,7 @@ extern ops_halo_group * OPS_halo_group_list;
 extern Double_linked_list OPS_dat_list; //Head of the double linked list
 extern ops_arg *OPS_curr_args;
 extern int OPS_enable_checkpointing;
+extern double OPS_checkpointing_time;
 
 /*******************************************************************************
 * Core lib function prototypes

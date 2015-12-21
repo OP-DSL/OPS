@@ -50,6 +50,20 @@ int xdim11_viscosity_kernel_h = -1;
 __constant__ int ydim11_viscosity_kernel;
 int ydim11_viscosity_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_viscosity_kernel*(y)+xdim0_viscosity_kernel*ydim0_viscosity_kernel*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_viscosity_kernel*(y)+xdim1_viscosity_kernel*ydim1_viscosity_kernel*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_viscosity_kernel*(y)+xdim2_viscosity_kernel*ydim2_viscosity_kernel*(z))
@@ -77,7 +91,6 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
          grad,
          ygrad, xgrad, zgrad,
          div,
-         strain2,
          limiter,
          pgrad;
 

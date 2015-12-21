@@ -40,6 +40,23 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+
+
 #define OPS_ACC0(x,y) (x+xdim0_PdV_kernel_nopredict*(y))
 #define OPS_ACC1(x,y) (x+xdim1_PdV_kernel_nopredict*(y))
 #define OPS_ACC2(x,y) (x+xdim2_PdV_kernel_nopredict*(y))
@@ -94,23 +111,6 @@ const __global double * restrict viscosity,const __global double * restrict ener
   density1[OPS_ACC10(0,0)] = density0[OPS_ACC9(0,0)] * volume_change[OPS_ACC6(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
 
 
 

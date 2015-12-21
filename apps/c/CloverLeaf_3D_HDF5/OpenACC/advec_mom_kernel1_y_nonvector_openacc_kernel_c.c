@@ -16,6 +16,14 @@ int ydim3_advec_mom_kernel1_y_nonvector;
 int xdim4_advec_mom_kernel1_y_nonvector;
 int ydim4_advec_mom_kernel1_y_nonvector;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel1_y_nonvector*(y)+xdim0_advec_mom_kernel1_y_nonvector*ydim0_advec_mom_kernel1_y_nonvector*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel1_y_nonvector*(y)+xdim1_advec_mom_kernel1_y_nonvector*ydim1_advec_mom_kernel1_y_nonvector*(z))
 #define OPS_ACC2(x,y,z) (x+xdim2_advec_mom_kernel1_y_nonvector*(y)+xdim2_advec_mom_kernel1_y_nonvector*ydim2_advec_mom_kernel1_y_nonvector*(z))

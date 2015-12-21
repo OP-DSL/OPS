@@ -11,6 +11,14 @@ int xdim2_initialise_chunk_kernel_volume;
 int xdim3_initialise_chunk_kernel_volume;
 int xdim4_initialise_chunk_kernel_volume;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+
+
 #define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_volume*(y))
 #define OPS_ACC1(x,y) (x+xdim1_initialise_chunk_kernel_volume*(y))
 #define OPS_ACC2(x,y) (x+xdim2_initialise_chunk_kernel_volume*(y))

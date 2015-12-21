@@ -10,6 +10,10 @@ int xdim1_advec_mom_kernel_mass_flux_y_h = -1;
 __constant__ int ydim1_advec_mom_kernel_mass_flux_y;
 int ydim1_advec_mom_kernel_mass_flux_y_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_mass_flux_y*(y)+xdim0_advec_mom_kernel_mass_flux_y*ydim0_advec_mom_kernel_mass_flux_y*(z))
 #define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_mass_flux_y*(y)+xdim1_advec_mom_kernel_mass_flux_y*ydim1_advec_mom_kernel_mass_flux_y*(z))
 

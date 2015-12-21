@@ -9,6 +9,12 @@ int xdim3_poisson_kernel_populate;
 int xdim4_poisson_kernel_populate;
 int xdim5_poisson_kernel_populate;
 
+
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+
+
 #define OPS_ACC3(x,y) (x+xdim3_poisson_kernel_populate*(y))
 #define OPS_ACC4(x,y) (x+xdim4_poisson_kernel_populate*(y))
 #define OPS_ACC5(x,y) (x+xdim5_poisson_kernel_populate*(y))

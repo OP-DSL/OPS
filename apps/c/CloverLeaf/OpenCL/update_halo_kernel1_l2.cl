@@ -40,6 +40,16 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+
+
 #define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel1_l2*(y))
 #define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel1_l2*(y))
 #define OPS_ACC2(x,y) (x+xdim2_update_halo_kernel1_l2*(y))
@@ -64,16 +74,6 @@ const __global int* restrict  fields)
   if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(3,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
 
 
 

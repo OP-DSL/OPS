@@ -36,8 +36,40 @@
   * cpu backend (OpenMP and Sequential)
   */
 
-
 #include "ops_lib_core.h"
+
+#ifndef __XDIMS__ //perhaps put this into a separate headder file
+#define __XDIMS__
+int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8,
+xdim9, xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17,
+xdim18, xdim19, xdim20, xdim21, xdim22, xdim23, xdim24, xdim25, xdim26,
+xdim27, xdim28, xdim29, xdim30, xdim31, xdim32, xdim33, xdim34, xdim35,
+xdim36, xdim37, xdim38, xdim39, xdim40, xdim41, xdim42, xdim43, xdim44,
+xdim45, xdim46, xdim47, xdim48, xdim49, xdim50;
+#endif /* __XDIMS__ */
+
+#ifndef __YDIMS__
+#define __YDIMS__
+int ydim0,ydim1,ydim2,ydim3,ydim4,ydim5,ydim6,ydim7,ydim8,ydim9,
+ydim10,ydim11,ydim12,ydim13,ydim14,ydim15,ydim16,ydim17,ydim18,ydim19,
+ydim20,ydim21,ydim22,ydim23,ydim24,ydim25,ydim26,ydim27,ydim28,ydim29,
+ydim30,ydim31,ydim32,ydim33,ydim34,ydim35,ydim36,ydim37,ydim38,ydim39,
+ydim40,ydim41,ydim42,ydim43,ydim44,ydim45,ydim46,ydim47,ydim48,ydim49,
+ydim50;
+#endif /* __YDIMS__ */
+
+#ifndef __MULTIDIMS__
+#define __MULTIDIMS__
+int multi_d0,multi_d1,multi_d2,multi_d3,multi_d4,multi_d5,multi_d6,
+multi_d7,multi_d8,multi_d9,multi_d10,multi_d11,multi_d12,multi_d13,
+multi_d14,multi_d15,multi_d16,multi_d17,multi_d18,multi_d19,multi_d20,
+multi_d21,multi_d22,multi_d23,multi_d24,multi_d25,multi_d26,multi_d27,
+multi_d28,multi_d29,multi_d30,multi_d31,multi_d32,multi_d33,multi_d34,
+multi_d35,multi_d36,multi_d37,multi_d38,multi_d39,multi_d40,multi_d41,
+multi_d42,multi_d43,multi_d44,multi_d45,multi_d46,multi_d47,multi_d48,
+multi_d49,multi_d50;
+#endif /*__MULTIDIMS__*/
+
 
 void ops_set_dirtybit_host(ops_arg *args, int nargs)
 {
@@ -151,8 +183,20 @@ void ops_fprintf(FILE *stream, const char *format, ...)
   va_end(argptr);
 }
 
-void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2) {
   strcpy(filename_out, file_name);
+  filename_out2 = "";
+  return false;
+}
+
+void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, char *my_data, int *my_range,
+                                               int *rm_type, int *rm_elems, char **rm_data, int **rm_range) {
+  *rm_type = 0;
+  *rm_elems = 0;
+}
+
+void ops_get_dat_full_range(ops_dat dat, int **full_range) {
+  *full_range = dat->size;
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {

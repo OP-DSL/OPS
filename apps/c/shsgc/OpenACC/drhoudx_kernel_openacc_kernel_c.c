@@ -8,6 +8,11 @@
 int xdim0_drhoudx_kernel;
 int xdim1_drhoudx_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 

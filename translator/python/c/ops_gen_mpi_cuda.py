@@ -159,6 +159,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
         code('int ydim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) == 1:
+          code('#undef OPS_ACC'+str(n))
+    code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if int(dims[n]) > 1:
+          code('#undef OPS_ACC_MD'+str(n))
+    code('')
+
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -359,21 +370,21 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
     #reduction across blocks
     if NDIM==1:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'+str(dims[n])
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     if NDIM==2:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'+str(dims[n])
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     elif NDIM==3:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'+str(dims[n])
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_INC>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_INC>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MIN>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_MIN>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MAX>(&arg'+str(n)+'[d+'+cont+'],arg'+str(n)+'_l[d]);')
+        code('  ops_reduction_cuda<OPS_MAX>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
 
 
     code('')
@@ -803,9 +814,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
-  for n in range (0,18):
-   code('#undef OPS_ACC'+str(n))
-  code('')
+
   comm(' global constants')
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:

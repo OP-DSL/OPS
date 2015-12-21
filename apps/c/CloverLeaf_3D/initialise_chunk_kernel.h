@@ -6,7 +6,6 @@
 
 void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
   int x_min=field.x_min-2;
-  int x_max=field.x_max-2;
 
   double min_x, d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
@@ -23,7 +22,6 @@ void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx)
 
 void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
   int y_min=field.y_min-2;
-  int y_max=field.y_max-2;
 
   double min_y, d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
@@ -36,7 +34,6 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
 
 void initialise_chunk_kernel_z(double *vertexz, const int *zz, double *vertexdz) {
   int z_min=field.z_min-2;
-  int z_max=field.z_max-2;
 
   double min_z, d_z;
   d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;

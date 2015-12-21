@@ -43,12 +43,14 @@ extern int advect_x;
 extern int error_condition;
 extern int test_problem;
 extern int profiler_on;
+extern int checkpoint_frequency;
 extern int state_max;
 extern int complete;
 
 extern double end_time;
 extern int end_step;
 extern int visit_frequency;
+extern int checkpoint_frequency;
 extern int summary_frequency;
 extern int use_vector_loops;
 
@@ -59,4 +61,4 @@ extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dt
 
 extern int jdt, kdt, ldt;
 
-#endif
+#endif /* __CLOVER_LEAF_DEFINITIONS_H */

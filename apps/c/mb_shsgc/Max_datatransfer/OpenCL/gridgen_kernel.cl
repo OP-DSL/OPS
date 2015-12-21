@@ -39,6 +39,10 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x) (x)
 
 
@@ -52,10 +56,6 @@ const double xt)
   x[OPS_ACC0(0)] = xt +  id[0] *dx;
 
 }
-
-
-
-#undef OPS_ACC0
 
 
 

@@ -8,6 +8,10 @@ __constant__ int xdim1_drhoudx_kernel;
 int xdim1_drhoudx_kernel_h = -1;
 int ydim1_drhoudx_kernel_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 

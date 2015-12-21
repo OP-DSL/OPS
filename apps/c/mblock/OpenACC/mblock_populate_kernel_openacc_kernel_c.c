@@ -7,6 +7,10 @@
 
 int xdim0_mblock_populate_kernel;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_mblock_populate_kernel*(y))
 
 //user function

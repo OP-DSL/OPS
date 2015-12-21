@@ -8,6 +8,10 @@
 int xdim0_multidim_kernel;
 
 
+
+#undef OPS_ACC_MD0
+
+
 #define OPS_ACC_MD0(d,x,y) ((x)*2+(d)+(xdim0_multidim_kernel*(y)*2))
 //user function
 inline

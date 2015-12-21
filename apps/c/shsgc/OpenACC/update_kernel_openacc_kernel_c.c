@@ -10,6 +10,13 @@ int xdim1_update_kernel;
 int xdim2_update_kernel;
 int xdim3_update_kernel;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+
+#undef OPS_ACC_MD3
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)

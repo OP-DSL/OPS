@@ -8,6 +8,11 @@
 int xdim0_update_halo_kernel2_xvel_plus_4_a;
 int xdim1_update_halo_kernel2_xvel_plus_4_a;
 
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel2_xvel_plus_4_a*(y))
 #define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel2_xvel_plus_4_a*(y))
 

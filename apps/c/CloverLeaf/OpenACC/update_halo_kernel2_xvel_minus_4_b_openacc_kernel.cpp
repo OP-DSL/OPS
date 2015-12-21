@@ -91,6 +91,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_b(char const *name, ops_block
 
   int *arg2h = (int *)arg2.data;
   //Upload large globals
+  #ifdef OPS_GPU
   int consts_bytes = 0;
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   reallocConstArrays(consts_bytes);
@@ -100,6 +101,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_b(char const *name, ops_block
   for (int d=0; d<NUM_FIELDS; d++) ((int *)args[2].data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
+  #endif //OPS_GPU
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -148,6 +150,11 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_b(char const *name, ops_block
   #endif
   ops_halo_exchanges(args,3,range);
 
+  #ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 3);
+  #else
+  ops_H_D_exchanges_host(args, 3);
+  #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[57].mpi_time += t2-t1;

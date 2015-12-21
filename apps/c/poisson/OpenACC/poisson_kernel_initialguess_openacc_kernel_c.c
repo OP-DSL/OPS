@@ -7,6 +7,10 @@
 
 int xdim0_poisson_kernel_initialguess;
 
+
+#undef OPS_ACC0
+
+
 #define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_initialguess*(y))
 
 //user function

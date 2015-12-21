@@ -68,8 +68,8 @@ source ../source_pgi
 make clean
 make
 cd -
-make cloverleaf_openacc
-make cloverleaf_mpi_openacc
+make cloverleaf_openacc -j20
+make cloverleaf_mpi_openacc -j20
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" clover.out

@@ -1251,6 +1251,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
     //printf("t_size = %d ",t_size);
     char* data = (char *)malloc(t_size*dat->elem_size);
+    dat->mem = t_size*dat->elem_size;
 
     //make sure we multiply by the number of
     //data values per element (i.e. dat->dim) to get full size of the data

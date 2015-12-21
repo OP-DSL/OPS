@@ -40,6 +40,13 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel_y2*(y))
 #define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel_y2*(y))
 #define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel_y2*(y))
@@ -56,13 +63,6 @@ const __global double * restrict vol_flux_x)
   pre_vol[OPS_ACC0(0,0)]   = post_vol[OPS_ACC1(0,0)]  + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
 
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 

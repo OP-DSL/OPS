@@ -14,6 +14,12 @@ __constant__ int xdim3_flux_calc_kernely;
 int xdim3_flux_calc_kernely_h = -1;
 int ydim3_flux_calc_kernely_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+
+
 #define OPS_ACC0(x,y) (x+xdim0_flux_calc_kernely*(y))
 #define OPS_ACC1(x,y) (x+xdim1_flux_calc_kernely*(y))
 #define OPS_ACC2(x,y) (x+xdim2_flux_calc_kernely*(y))

@@ -8,6 +8,10 @@ __constant__ int xdim1_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get_h = -1;
 int ydim1_calc_dt_kernel_get_h = -1;
 
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_get*(y))
 #define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_get*(y))
 

@@ -40,6 +40,11 @@
 #define ZERO_ull 0;
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
+
+#undef OPS_ACC0
+#undef OPS_ACC1
+
+
 #define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel3_minus_4_b*(y))
 #define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel3_minus_4_b*(y))
 
@@ -51,11 +56,6 @@ inline void update_halo_kernel3_minus_4_b(__global double * restrict vol_flux_x,
   if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = -(vol_flux_x[OPS_ACC0(-4,0)]);
   if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = -(mass_flux_x[OPS_ACC1(-4,0)]);
 }
-
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 

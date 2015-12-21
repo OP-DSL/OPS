@@ -30,11 +30,10 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi run-time support routines
+/** @brief ops mpi core routines
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the runtime support routines for the OPS mpi backend
+  * @details Implements the core mpi decl routines for the OPS mpi backend
   */
-
 
 #include <ops_lib_core.h>
 
@@ -43,64 +42,34 @@
 
 #ifndef __XDIMS__ //perhaps put this into a separate headder file
 #define __XDIMS__
-  int xdim0;
-  int ydim0;
-  int xdim1;
-  int ydim1;
-  int xdim2;
-  int ydim2;
-  int xdim3;
-  int ydim3;
-  int xdim4;
-  int ydim4;
-  int xdim5;
-  int ydim5;
-  int xdim6;
-  int ydim6;
-  int xdim7;
-  int ydim7;
-  int xdim8;
-  int ydim8;
-  int xdim9;
-  int ydim9;
-  int xdim10;
-  int ydim10;
-  int xdim11;
-  int ydim11;
-  int xdim12;
-  int ydim12;
-  int xdim13;
-  int ydim13;
-  int xdim14;
-  int ydim14;
-  int xdim15;
-  int ydim15;
-  int xdim16;
-  int ydim16;
-  int xdim17;
-  int ydim17;
+int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8,
+xdim9, xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17,
+xdim18, xdim19, xdim20, xdim21, xdim22, xdim23, xdim24, xdim25, xdim26,
+xdim27, xdim28, xdim29, xdim30, xdim31, xdim32, xdim33, xdim34, xdim35,
+xdim36, xdim37, xdim38, xdim39, xdim40, xdim41, xdim42, xdim43, xdim44,
+xdim45, xdim46, xdim47, xdim48, xdim49, xdim50;
 #endif /* __XDIMS__ */
+
+#ifndef __YDIMS__
+#define __YDIMS__
+int ydim0,ydim1,ydim2,ydim3,ydim4,ydim5,ydim6,ydim7,ydim8,ydim9,
+ydim10,ydim11,ydim12,ydim13,ydim14,ydim15,ydim16,ydim17,ydim18,ydim19,
+ydim20,ydim21,ydim22,ydim23,ydim24,ydim25,ydim26,ydim27,ydim28,ydim29,
+ydim30,ydim31,ydim32,ydim33,ydim34,ydim35,ydim36,ydim37,ydim38,ydim39,
+ydim40,ydim41,ydim42,ydim43,ydim44,ydim45,ydim46,ydim47,ydim48,ydim49,
+ydim50;
+#endif /* __YDIMS__ */
 
 #ifndef __MULTIDIMS__
 #define __MULTIDIMS__
-int multi_d0;
-int multi_d1;
-int multi_d2;
-int multi_d3;
-int multi_d4;
-int multi_d5;
-int multi_d6;
-int multi_d7;
-int multi_d8;
-int multi_d9;
-int multi_d10;
-int multi_d11;
-int multi_d12;
-int multi_d13;
-int multi_d14;
-int multi_d15;
-int multi_d16;
-int multi_d17;
+int multi_d0,multi_d1,multi_d2,multi_d3,multi_d4,multi_d5,multi_d6,
+multi_d7,multi_d8,multi_d9,multi_d10,multi_d11,multi_d12,multi_d13,
+multi_d14,multi_d15,multi_d16,multi_d17,multi_d18,multi_d19,multi_d20,
+multi_d21,multi_d22,multi_d23,multi_d24,multi_d25,multi_d26,multi_d27,
+multi_d28,multi_d29,multi_d30,multi_d31,multi_d32,multi_d33,multi_d34,
+multi_d35,multi_d36,multi_d37,multi_d38,multi_d39,multi_d40,multi_d41,
+multi_d42,multi_d43,multi_d44,multi_d45,multi_d46,multi_d47,multi_d48,
+multi_d49,multi_d50;
 #endif /*__MULTIDIMS__*/
 
 void ops_timers(double * cpu, double * et)
@@ -207,8 +176,10 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
   return red;
 }
 
-void ops_checkpointing_filename(const char *file_name, char *filename_out) {
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
+  sprintf(filename_out2, "%s.%d.dup", file_name, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size );
+  return (OPS_enable_checkpointing>1);
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_range) {
@@ -233,3 +204,39 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range, int *discarded_
     //   discarded_range[2*d+1] = (range[2*d+1] - (sd->decomp_disp[d] - sd->d_im[d]));
   }
 }
+
+char *OPS_checkpoiting_dup_buffer = NULL;
+int OPS_checkpoiting_dup_buffer_size = 0;
+int recv_stats[2+2*OPS_MAX_DIM];
+
+void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, char *my_data, int *my_range,
+                                               int *rm_type, int *rm_elems, char **rm_data, int **rm_range) {
+
+  MPI_Status statuses[2];
+  MPI_Request requests[2];
+  int send_stats[2+2*OPS_MAX_DIM];
+  send_stats[0] = my_type;
+  send_stats[1] = my_nelems;
+  memcpy(&send_stats[2], my_range, 2*OPS_MAX_DIM*sizeof(int));
+  MPI_Isend(send_stats, 2+2*OPS_MAX_DIM, MPI_INT, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size, 1000+OPS_dat_index+dat->index, OPS_MPI_GLOBAL, &requests[0]);
+  int bytesize = dat->elem_size/dat->dim;
+  MPI_Isend(my_data, my_nelems*bytesize, MPI_CHAR, (ops_my_global_rank + OPS_ranks_per_node)%ops_comm_global_size, 1000+dat->index, OPS_MPI_GLOBAL, &requests[1]);
+
+
+  MPI_Recv(recv_stats, 2+2*OPS_MAX_DIM, MPI_INT, (ops_comm_global_size + ops_my_global_rank - OPS_ranks_per_node)%ops_comm_global_size, 1000+OPS_dat_index+dat->index, OPS_MPI_GLOBAL, &statuses[0]);
+  if (recv_stats[1]*bytesize > OPS_checkpoiting_dup_buffer_size) {
+    OPS_checkpoiting_dup_buffer = (char *)realloc(OPS_checkpoiting_dup_buffer, recv_stats[1]*bytesize*2*sizeof(char));
+    OPS_checkpoiting_dup_buffer_size = recv_stats[1]*bytesize*2;
+  }
+  *rm_data = OPS_checkpoiting_dup_buffer;
+  MPI_Recv(*rm_data, recv_stats[1]*bytesize, MPI_CHAR, (ops_comm_global_size + ops_my_global_rank - OPS_ranks_per_node)%ops_comm_global_size, 1000+dat->index, OPS_MPI_GLOBAL, &statuses[1]);
+  *rm_type = recv_stats[0];
+  *rm_elems = recv_stats[1];
+  *rm_range = &recv_stats[2];
+  MPI_Waitall(2, requests, statuses);
+}
+
+void ops_get_dat_full_range(ops_dat dat, int **full_range) {
+  *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
+}
+
