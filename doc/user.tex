@@ -436,10 +436,6 @@ used to generate initial geometry. }
 \item \vspace{-0.3in}
 \end{routine}
 
-
-
-
-
 \newpage
 
 \subsection{Stencils}
@@ -504,15 +500,15 @@ after a crash, the same number of MPI processes have to be used. To enable check
 runtime argument has to be used.\\
 
 \addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
-\begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing 
-system, has to be called after {\tt ops\_partition}} 
-\item[filename]        name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
-\item[interval]    average time between checkpoints
+\begin{routine} {bool ops\_checkpointing\_init(const char *filename, double interval, int options)}{Initialises the 
+checkpointing system, has to be called after {\tt ops\_partition}. Returns true if the application launches in restore 
+mode, false otherwise.} 
+\item[filename] name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
+\item[interval] average time between checkpoints
+\item[options] a combinations of flags, listed in \texttt{ops\_checkpointing.h}: \\OPS\_CHECKPOINT\_INITPHASE, \\
+OPS\_CHECKPOINT\_MANUAL\_DATLIST, \\OPS\_CHECKPOINT\_FASTFW, \\OPS\_CHECKPOINT\_MANUAL.
 \end{routine}
 
-
-% OPS_ACC2(0, 0): that’s the one that took me a moment to figure out. 2 denotes the third function argument, 
-% (0, 0) denotes stencil
 
 
 
