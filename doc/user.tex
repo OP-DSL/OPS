@@ -3,7 +3,10 @@
 % \usepackage[footnotesize]{subfigure}
 \usepackage{graphicx}
 \usepackage{verbatim}
-\usepackage{verbments}
+\usepackage{listings}
+\usepackage{fontspec}
+\usepackage{minted}
+
 \setlength{\oddsidemargin}{-0.01in}
 \setlength{\topmargin}{-0.4in}
 \setlength{\textheight}{9.0in}
@@ -66,45 +69,38 @@ connectivity between the faces of different blocks can be quite complex, and in 
 the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and 
 hard to handle simply.
 
-\begin{comment}
 \noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
 application:
 \begin{itemize}
 \item
-When looping over the interior with loop indices $i,j,k$, often 
-there are 1D arrays which are referenced using just one of the 
-indices.
+When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one 
+of the indices.
 
 \item
-To implement boundary conditions, we often loop over a 2D face,
-accessing both the 3D dataset and data from a 2D dataset.
+To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D 
+dataset.
 
 \item
-To implement periodic boundary conditions using dummy ``halo'' 
-points, we sometimes have to copy one plane of boundary data to
-another.  e.g.~if the first dimension has size $I$ then we might 
-copy the plane $i=I\!-\!2$ to plane $i=0$, and plane $i=1$ to 
-plane $i=I\!-\!1$.
+To implement periodic boundary conditions using dummy ``halo'' points, we sometimes have to copy one plane of boundary 
+data to another.  e.g.~if the first dimension has size $I$ then we might copy the plane $i=I\!-\!2$ to plane $i=0$, and 
+plane $i=1$ to plane $i=I\!-\!1$.
 
 \item
-In multigrid, we are working with two grids with one having twice
-as many points as the other in each direction.  To handle this we 
-require a stencil with a non-unit stride.
+In multigrid, we are working with two grids with one having twice as many points as the other in each direction.  To 
+handle this we require a stencil with a non-unit stride.
 
 \item
-In multi-block grids, we have several structured blocks.  The 
-connectivity between the faces of different blocks can be quite 
-complex, and in particular they may not be oriented in the same 
-way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ 
-face of another block.  This is awkward and hard to handle simply.
+In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can 
+be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may 
+correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
 \end{itemize}
 
 \noindent The latest proposal is to handle all of these different requirements through stencil definitions.
-\end{comment}
 
-% \clearpage
 
-% \newpage
+\clearpage
+
+\newpage
 \section{OPS C++ API}
 
 \subsection{Initialisation and termination routines}
@@ -323,21 +319,11 @@ a simple text editor }
 \end{routine}
 
 
-
-
-    
-    
-    
-
-% //ops_timing_output(stdout); // print output to STDOUT
-% //ops_timing_output(g_out);
-    
-% ops_arg_idx(): I’m still figuring out what it does; something to do with stencils
-
-% ops_decl_stencil_hdf5( 3, 2, "0,0,0:-3,0,0", "cloverdata.h5");
-
-% OPS_ACC2(0, 0): that’s the one that took me a moment to figure out. 2 denotes the third function argument, 
-% (0, 0) denotes stencil
+\addcontentsline{toc}{subsubsection}{ops\_timing\_output}
+\begin{routine} {void ops\_timing\_output(FILE *os)}
+{Print OPS performance performance details to output stream}
+\item[os]    output stream, use stdout to print to standard out
+\end{routine}
 
 
 \addcontentsline{toc}{subsubsection}{ops\_exit}
@@ -378,7 +364,7 @@ a simple text editor }
 % \end{routine}
 
 
-
+\newpage
 \subsection{Halo exchange}
 \addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
 \begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
@@ -431,7 +417,7 @@ for OPS datasets.
 \item[type]       string representing the type of data held in data
 \item[acc]        access type
 \end{routine}
-\newpage
+
 
 \addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
@@ -442,9 +428,21 @@ for OPS datasets.
 \item[acc]        access type
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_arg\_idx}
+\begin{routine} {ops\_arg ops\_arg\_idx()}{Give you an array of integers (in the user kernel) that have the index of 
+the current grid point, i.e. idx[0] is the index in x, idx[1] is the index in y, etc. This is a globally consistent 
+index, so even if the block is  distributed across different MPI partitions, it gives you the same indexes. Generally 
+used to generate initial geometry. }
+\item \vspace{-0.3in}
+\end{routine}
+
+
+
 
 
 \newpage
+
+\subsection{Stencils}
 
 \noindent The final ingredient is the stencil specification, for which we have two versions: simple and strided.\\
 
@@ -467,6 +465,16 @@ for OPS datasets.
 \item[name] string representing the name of the stencil
 \end{routine}
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
+\begin{routine} {ops\_stencil ops\_decl\_stencil\_hdf5(int dims,
+                 int points, char *name, char* file)}{}
+\item[dims]     dimension of loop iteration
+\item[points]   number of points in the stencil
+\item[name]     string representing the name of the stencil
+\item[file]     hdf5 file to write to
+\end{routine}
+
+
 \vspace{0.2in}
 
 \noindent In the strided case, the indices for referencing the data used by point {\tt p} are defined as:\\
@@ -483,12 +491,10 @@ these dimensions are to be omitted and so the dataset has
 dimension equal to the number of remaining dimensions.
 \end{itemize}
 
-\noindent These two stencil definitions probably take care of all of the cases in the Introduction except for multiblock
-applications with interfaces with different orientations -- this will need a third, even more general, stencil
-specification.
-
-\noindent The strided stencil will handle both multigrid (with a stride of 2) and the boundary condition and reduced
-dimension applications (with a stride of 0 for the relevant dimensions).
+\noindent These two stencil definitions probably take care of all of the cases in the Introduction except for 
+multiblock applications with interfaces with different orientations -- this will need a third, even more general, 
+stencil specification. \noindent The strided stencil will handle both multigrid (with a stride of 2 for example) and 
+the boundary condition and reduced dimension applications (with a stride of 0 for the relevant dimensions).
 
 \subsection{Checkpointing}
 OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the 
@@ -504,54 +510,93 @@ system, has to be called after {\tt ops\_partition}}
 \item[interval]    average time between checkpoints
 \end{routine}
 
+
+% OPS_ACC2(0, 0): that’s the one that took me a moment to figure out. 2 denotes the third function argument, 
+% (0, 0) denotes stencil
+
+
+
 \newpage
 \section{OPS User Kernels}
 
 \noindent In OPS, the elemental operation carried out per mesh/grid point is specified as an outlined function called
-a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.
-\begin{figure}[h]\small
-\vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
-\begin{pyglist}[language=c]
-void accelerate_kernel_stepbymass( double *density0, double *volume,
-                                   double *stepbymass) {
-  double nodal_mass;
+a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.\\
+\begin{figure}[!h]\small
+\begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=1mm]{cpp}
+   void accelerate_kernel( const double *density0, const double *volume,
+                double *stepbymass, const double *xvel0, double *xvel1,
+                const double *xarea, const double *pressure,
+                const double *yvel0, double *yvel1,
+                const double *yarea, const double *viscosity) {
 
-  //uses the four point stencil {0,0, -1,0, 0,-1, -1,-1};
-  nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
-    + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
-    + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
-    + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+   double nodal_mass;
+   //{0,0, -1,0, 0,-1, -1,-1};
+   nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
+   + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
+   + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
+   + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt / nodal_mass;
-}
-\end{pyglist}
-\vspace{-10pt}\noindent\line(1,0){8}\vspace{-10pt}
+   stepbymass[OPS_ACC2(0,0)] = 0.5*dt/ nodal_mass;
+
+   //{0,0, -1,0, 0,-1, -1,-1};
+   //{0,0, 0,-1};
+   xvel1[OPS_ACC4(0,0)] = xvel0[OPS_ACC3(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+   ( xarea[OPS_ACC5(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(-1,0)] ) +
+   xarea[OPS_ACC5(0,-1)] * ( pressure[OPS_ACC6(0,-1)] - pressure[OPS_ACC6(-1,-1)] ) );
+
+   //{0,0, -1,0, 0,-1, -1,-1};
+   //{0,0, -1,0};
+   yvel1[OPS_ACC8(0,0)] = yvel0[OPS_ACC7(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+   ( yarea[OPS_ACC9(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(0,-1)] ) +
+   yarea[OPS_ACC9(-1,0)] * ( pressure[OPS_ACC6(-1,0)] - pressure[OPS_ACC6(-1,-1)] ) );
+
+   //{0,0, -1,0, 0,-1, -1,-1};
+   //{0,0, 0,-1};
+   xvel1[OPS_ACC4(0,0)] = xvel1[OPS_ACC4(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+   ( xarea[OPS_ACC5(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(-1,0)] ) +
+   xarea[OPS_ACC5(0,-1)] * ( viscosity[OPS_ACC10(0,-1)] - viscosity[OPS_ACC10(-1,-1)] ) );
+
+   //{0,0, -1,0, 0,-1, -1,-1};
+   //{0,0, -1,0};
+   yvel1[OPS_ACC8(0,0)] = yvel1[OPS_ACC8(0,0)] - stepbymass[OPS_ACC2(0,0)] *
+   ( yarea[OPS_ACC9(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(0,-1)] ) +
+   yarea[OPS_ACC9(-1,0)] * ( viscosity[OPS_ACC10(-1,0)] - viscosity[OPS_ACC10(-1,-1)] ) );
+   }
+\end{minted}
 \caption{\small example user kernel}
 \normalsize\vspace{-0pt}\label{fig:example}
-\end{figure}
-\begin{figure}[h]\small
-\vspace{-0pt}\noindent\line(1,0){8}\vspace{-20pt}
-\begin{pyglist}[language=c]
-int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; //x-y range
+\end{figure}\\\\\\\\
 
-ops_par_loop(accelerate_kernel_stepbymass, "accelerate_kernel_stepbymass",
-             clover_grid, 2, rangexy_inner_plus1,
-             ops_arg_dat(density0, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
-             ops_arg_dat(volume,   S2D_00_M10_0M1_M1M1, "double", OPS_READ),
-             ops_arg_dat(work_array1, S2D_00, "double", OPS_WRITE));
-\end{pyglist}
-\vspace{-10pt}\noindent\line(1,0){8}\vspace{-10pt}
+
+\noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
+to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the macros \texttt{OPS\_ACC0, OPS\_ACC1, 
+OPS\_ACC2} etc. These specifies the stencil in accessing the elements of the respective data arrays. For example in 
+OPS\_ACC2, 2 denotes the third function argument (argument number starts from 0) and (0, 0) denotes stencil. At compile 
+time these macros will be expanded to give the correct array index 
+
+% (in this case accessing a 1D array with 2D indexing related to the stencil specified) to access the relevant element.
+
+
+\begin{figure}[!h]\small
+\begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=2mm]{cpp}
+    int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; 
+
+    ops_par_loop(accelerate_kernel, "accelerate_kernel", clover_grid, 2, rangexy_inner_plus1,
+     ops_arg_dat(density0, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(volume, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE),
+     ops_arg_dat(xvel0, 1, S2D_00, "double", OPS_READ),
+     ops_arg_dat(xvel1, 1, S2D_00, "double", OPS_INC),
+     ops_arg_dat(xarea, 1, S2D_00_0M1, "double", OPS_READ),
+     ops_arg_dat(pressure, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(yvel0, 1, S2D_00, "double", OPS_READ),
+     ops_arg_dat(yvel1, 1, S2D_00, "double", OPS_INC),
+     ops_arg_dat(yarea, 1, S2D_00_M10, "double", OPS_READ),
+     ops_arg_dat(viscosity, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
+\end{minted}
 \caption{\small example \texttt{ops\_par\_loop}}
 \normalsize\vspace{-0pt}\label{fig:parloop}
 \end{figure}
-
-\noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
-to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the macros \texttt{OPS\_ACC0, OPS\_ACC1} and
-\texttt{OPS\_ACC2}. These specifies the stencil in accessing the elements of the respective data arrays. At compile
-time these macros will be expanded to give the correct array index (in this case accessing a 1D array with 2D indexing
-related to the stencil specified) to access the relevant element.
-
-
 
 
 \begin{thebibliography}{1}
