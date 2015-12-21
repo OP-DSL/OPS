@@ -1,19 +1,24 @@
 \documentclass[11pt]{article}
 \usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
-\usepackage{graphicx}
 % \usepackage[footnotesize]{subfigure}
-\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{verbatim}
 \usepackage{verbments}
+\setlength{\oddsidemargin}{-0.01in}
+\setlength{\topmargin}{-0.4in}
+\setlength{\textheight}{9.0in}
+\setlength{\textwidth}{6.5 in}
 
-\date{Nov 2014}
+\date{December 2015}
 
- \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
- \oddsidemargin 0.1in
- \textheight 9.25in  \textwidth 6.00in
- \parskip 5pt plus 1pt minus 1pt
- \def \baselinestretch {1.25}   % one-and-a-half spaced
- \setlength {\unitlength} {0.75in}
-
+%  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
+%  \oddsidemargin 0.1in
+%  \textheight 9.25in  \textwidth 6.00in
+%  \parskip 5pt plus 1pt minus 1pt
+%  \def \baselinestretch {1.25}   % one-and-a-half spaced
+%  \setlength {\unitlength} {0.75in}
+%
+%
 \newenvironment{routine}[2]
 {\vspace{.0in}{\noindent\bf\hspace{-5pt}  #1}{\\ \noindent #2}
 \begin{list}{}{
@@ -28,6 +33,7 @@
 }{\end{list}}
 %
 
+
 \begin{document}
 
 \title{OPS C++ User's Manual}
@@ -40,22 +46,27 @@
 \tableofcontents
 
 
+
+
 \newpage
 \section{Introduction}
 
 
 OPS is a high-level framework with associated libraries and preprocessors to generate parallel executables for
 applications on \textbf{multi-block structured grids}. Multi-block structured grids consists of an unstructured
-collection of structured meshes/grids. This document describes the current OPS C++ API, which supports the development
-of single-block structured mesh applications. Initial proposals for extending to multi-block structured meshes are also
-detailed. 
+collection of structured meshes/grids. This document describes the OPS C++ API, which supports the development
+of single-block and multi-block structured meshes.
 
 Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
 applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
 due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
 meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
-points using one or more ``stencils'' to access data.\\
+points using one or more ``stencils'' to access data. In multi-block grids, we have several structured blocks.  The 
+connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in 
+the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and 
+hard to handle simply.
 
+\begin{comment}
 \noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
 application:
 \begin{itemize}
@@ -89,11 +100,11 @@ face of another block.  This is awkward and hard to handle simply.
 \end{itemize}
 
 \noindent The latest proposal is to handle all of these different requirements through stencil definitions.
+\end{comment}
 
+% \clearpage
 
-\clearpage
-
-\newpage
+% \newpage
 \section{OPS C++ API}
 
 \subsection{Initialisation and termination routines}
@@ -108,16 +119,31 @@ face of another block.  This is awkward and hard to handle simply.
 Currently, higher \texttt{diags\_level}s does the following checks\\
 \noindent \texttt{diags\_level} $=$ 1 : no diagnostics, default to achieve best runtime performance.\\
 \noindent \texttt{diags\_level} $>$ 1 : print block decomposition and \texttt{ops\_par\_loop} timing breakdown.\\
-\noindent \texttt{diags\_level} $>$ 4 : print intra-block halo buffer allocation feedback\\
-\noindent \texttt{diags\_level} $>$ 5 : check if intra-block halo MPI sends depth match MPI receives depth\\
+\noindent \texttt{diags\_level} $>$ 4 : print intra-block halo buffer allocation feedback (for OPS internal 
+development only)\\
+\noindent \texttt{diags\_level} $>$ 5 : check if intra-block halo MPI sends depth match MPI receives depth (for OPS 
+internal development only)\\
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_block}
 \begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
 {This routine defines a structured grid block.}
 
-\item[dims]          dimension of the set
+\item[dims]          dimension of the block
 \item[name]          a name used for output diagnostics
 \end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_decl\_block\_hdf5}
+\begin{routine} {ops\_block ops\_decl\_block\_hdf5(int dims, char *name, char *file)} %int *size,
+{This routine reads the details of a structured grid block from a named HDF5 file}
+
+\item[dims]      dimension of the block
+\item[name]      a name used for output diagnostics
+\item[file]      hdf5 file to read and obtain the block information from
+\end{routine}
+
+\noindent Although this routine does not read in any extra information about the block from the named HDF5 file than 
+what is already specified in the arguments, it is included here for error checking (e.g. check if blocks defined in 
+an HDF5 file is matching with the declared arguments in an application) and completeness.\\
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_dat}
 \begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
@@ -141,21 +167,40 @@ Currently, higher \texttt{diags\_level}s does the following checks\\
 the negative and positive directions of each dimension). \\\\
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_dat\_hdf5}
-\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, int *size, int *base, int *d\_m, int *d\_p, 
-char *file, char *type, char *name)}
+\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, char *type, char *name, char *file)}
 {This routine defines a dataset to be read in from a named hdf5 file}
 
-\item[block]         structured block
-\item[dim]           dimension of dataset (number of items per grid element)
-\item[size]      size in each dimension of the block
-\item[base]      base indices in each dimension of the block
-\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
-\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
+\item[block]     structured block
+\item[dim]       dimension of dataset (number of items per grid element)
+\item[type]      the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]      name of the dat used for output diagnostics
 \item[file]      hdf5 file to read and obtain the data from
-\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
-\item[name]          name of the dat used for output diagnostics
 \end{routine}
 
+
+\addcontentsline{toc}{subsubsection}{ops\_decl\_const}
+\begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
+{This routine defines a global constant. Global constants needs to be declared upfront so that they can be correctly 
+handled for different parallelisations. For e.g CUDA on GPUs. Once defined they remain unchanged throughout the 
+program, unless changed by a call to ops\_update\_const(..) }
+
+\item[name]          a name used to identify the constant
+\item[dim]           dimension of dataset (number of items per element)
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[data]          pointer to input data of type {\tt T}
+
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_update\_const}
+\begin{routine} {void ops\_update\_const(char const * name, int dim, char const * type, T * data)}
+{This routine updates/changes the value of a constant}
+
+\item[name]          a name used to identify the constant
+\item[dim]           dimension of dataset (number of items per element)
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[data]          pointer to new values for constant of type {\tt T}
+
+\end{routine}
 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_halo}
 \begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
@@ -176,6 +221,16 @@ from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], fro
 from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers between blocks with different 
 orientations.)\\
 
+\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_hdf5}
+\begin{routine} {ops\_halo ops\_decl\_halo\_hdf5(ops\_dat from, ops\_dat to, char* file)}
+{This routine reads in a halo relationship between two datasets defined on two different blocks from a named HDF5 file}
+
+\item[from]      origin dataset
+\item[to]        destination dataset
+\item[file]      hdf5 file to read and obtain the data from
+\end{routine}
+
+ 
 \addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
 \begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
 {This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
@@ -213,9 +268,77 @@ is simply a place-holder to indicate different partitioning methods in the futur
 
 \addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
-{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets}
+{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
+after an ops\_partition() call to print out the details of the decomposition}
 \item \vspace{-0.3in}
 \end{routine}
+
+
+\addcontentsline{toc}{subsubsection}{ops\_printf}
+\begin{routine} {void ops\_printf(const char * format, ...)}
+{This routine simply prints a variable number of arguments; it is created is in place of the standard C
+printf function which would print the same on each MPI process}
+\item \vspace{-0.3in}
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_timers}
+\begin{routine} {void ops\_timers(double *cpu, double *et)}
+{gettimeofday() based timer to start/end timing blocks of code }
+\item[cpu] 	variable to hold the CPU time at the time of invocation 
+\item[et]	variable to hold the elapsed time at the time of invocation
+\item \vspace{-0.3in}
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_fetch\_block\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_block\_hdf5\_file(ops\_block block, chat *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[block] 	ops\_block to to be written 
+\item[file]     hdf5 file to write to
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_fetch\_stencil\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_stencil\_hdf5\_file(ops\_stencil stencil, chat *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[stencil] 	ops\_stencil to to be written 
+\item[file]     hdf5 file to write to
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, chat *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[dat] 	ops\_dat to to be written 
+\item[file]     hdf5 file to write to
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
+\begin{routine} {void ops\_print\_dat\_to\_txtfile(ops\_dat dat, chat *file)}
+{Write the details of an ops\_block to a named text file. When used under an MPI parallelisation each MPI process 
+will write its own data set separately to the text file. As such it does not use MPI I/O. The data can be viewed using 
+a simple text editor }
+\item[dat] 	ops\_dat to to be written 
+\item[file]     text file to write to
+\end{routine}
+
+
+
+
+    
+    
+    
+
+% //ops_timing_output(stdout); // print output to STDOUT
+% //ops_timing_output(g_out);
+    
+% ops_arg_idx(): I’m still figuring out what it does; something to do with stencils
+
+% ops_decl_stencil_hdf5( 3, 2, "0,0,0:-3,0,0", "cloverdata.h5");
+
+% OPS_ACC2(0, 0): that’s the one that took me a moment to figure out. 2 denotes the third function argument, 
+% (0, 0) denotes stencil
+
 
 \addcontentsline{toc}{subsubsection}{ops\_exit}
 \begin{routine} {void ops\_exit()}
@@ -223,33 +346,44 @@ is simply a place-holder to indicate different partitioning methods in the futur
 \item \vspace{-0.3in}
 \end{routine}
 
-\subsection{Convenience functions}
 
-%Since in many cases blocks and their datasets are perfectly aligned, it is convenient to define the relationship between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
+
+% \subsection{Convenience functions}
+
+%Since in many cases blocks and their datasets are perfectly aligned, it is  convenient to define the relationship 
+% between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
 %
 %\begin{routine} {ops\_halo\_group ops\_decl\_halos(ops\_block from, ops\_block to, int *from\_face, int depth)}
-%{This routine defines a connection between two blocks that are oriented the same way and share a face, and all their datasets have the same dimensions on that face. It will return an {\tt ops\_halo\_group} with {\tt ops\_halo}s defined between matching datasets. \textbf{Should this be symmetric?}}
+%{This routine defines a connection between two blocks that are oriented the same  way and share a face, and all their 
+% datasets have the same dimensions on that face. It will return an {\tt ops\_halo\_group} with {\tt ops\_halo}s defined 
+% between matching datasets. \textbf{Should this be symmetric?}}
 %
 %\item[from]         origin block
 %\item[to]           target block
-%\item[from\_face]           an array specifying the invariant dimension and a side - it may contain a single non-zero value, either -1 or +1 (beginning and end of iteration range)
+%\item[from\_face]           an array specifying the invariant dimension and a side - it may contain a single non-zero 
+% value, either -1 or +1 (beginning and end of iteration range)
 %\item[depth]         number of halo layers
 %\end{routine}
 %
-%(For example in 2D if (0,0) is the bottom left corner of blocks, then {\tt from\_face}=[1,0] would define a connection between the right face of the origin block and the left face of the destination block.)
+%(For example in 2D if (0,0) is the bottom left corner of blocks,  then {\tt from\_face}=[1,0] would define a connection 
+% between the right face of the origin block and the left face of the destination block.)
 
-\addcontentsline{toc}{subsubsection}{ops\_halo\_group\_add}
-\begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
-{Adds an {ops\_halo} to a halo group}
 
-\item[group]         the halo group to add to
-\item[halo]           the halo to add
-\end{routine}
+% \addcontentsline{toc}{subsubsection}{ops\_halo\_group\_add}
+% \begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
+% {Adds an {ops\_halo} to a halo group}
+
+% \item[group]         the halo group to add to
+% \item[halo]          the halo to add
+% \end{routine}
+
+
 
 \subsection{Halo exchange}
 \addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
 \begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
-{This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on the exchanged data.}
+{This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on 
+the exchanged data.}
 
 \item[group]         the halo group
 \end{routine}
@@ -273,9 +407,6 @@ A parallel loop with N arguments has the following syntax:
 \item[range]      iteration range array
 \item[args]       arguments
 \end{routine}
-
-
-
 
 \vspace{0.2in}
 \noindent
@@ -360,10 +491,15 @@ specification.
 dimension applications (with a stride of 0 for the relevant dimensions).
 
 \subsection{Checkpointing}
-OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} runtime argument has to be used.
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the 
+checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information 
+periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching 
+after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} 
+runtime argument has to be used.\\
 
 \addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
-\begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing system, has to be called after {\tt ops\_partition}}
+\begin{routine} {void ops\_checkpointing\_init(const char *filename, double interval)}{Initialises the checkpointing 
+system, has to be called after {\tt ops\_partition}} 
 \item[filename]        name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
 \item[interval]    average time between checkpoints
 \end{routine}
@@ -414,6 +550,9 @@ to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the 
 \texttt{OPS\_ACC2}. These specifies the stencil in accessing the elements of the respective data arrays. At compile
 time these macros will be expanded to give the correct array index (in this case accessing a 1D array with 2D indexing
 related to the stencil specified) to access the relevant element.
+
+
+
 
 \begin{thebibliography}{1}
 \bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
