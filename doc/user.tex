@@ -4,7 +4,6 @@
 \usepackage{graphicx}
 \usepackage{verbatim}
 \usepackage{listings}
-% \usepackage{fontspec}
 \usepackage{minted}
 
 \setlength{\oddsidemargin}{-0.01in}
@@ -69,7 +68,6 @@ connectivity between the faces of different blocks can be quite complex, and in 
 the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and 
 hard to handle simply.
 
-\begin{comment}
 \noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
 application:
 \begin{itemize}
@@ -97,8 +95,8 @@ correspond to the $j,k$ face of another block.  This is awkward and hard to hand
 \end{itemize}
 
 \noindent The latest proposal is to handle all of these different requirements through stencil definitions.
-\end{comment}
 
+<<<<<<< HEAD
 \section{Key concepts and structure}
 
 An OPS applicaiton can generally be divided into two key parts: initialisation and parallel exeution. During the 
@@ -135,8 +133,12 @@ Other than datasets, one can pass in read-only scalars or small arrays that are 
 Reductions in loops are done using the ops\_arg\_reduce argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to ops\_reduction\_result. The semantics are the following: a reduction handle after it was declared is in an ``uninitialised'' state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately (0,$\inf$,$-\inf$), and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using ops\_reduction\_result, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively. 
 
 OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will re-organise data as well as execution (potentially across different loops), and therefore any data accesses or manipulation may only be done through the OPS API.
+=======
+>>>>>>> 8fe59ac... Updating the final section on the user kernels
 
-% \newpage
+\clearpage
+
+\newpage
 \section{OPS C++ API}
 
 \subsection{Initialisation and termination routines}
@@ -707,9 +709,6 @@ time these macros will be expanded to give the correct array index
 \caption{\small example \texttt{ops\_par\_loop}}
 \normalsize\vspace{-0pt}\label{fig:parloop}
 \end{figure}
-
-
-
 
 
 \begin{thebibliography}{1}
