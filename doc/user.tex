@@ -177,7 +177,7 @@ the negative and positive directions of each dimension). \\\\
 \addcontentsline{toc}{subsubsection}{ops\_decl\_const}
 \begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
 {This routine defines a global constant. Global constants needs to be declared upfront so that they can be correctly 
-handled for different parallelisations. For e.g CUDA on GPUs. Once defined they remain unchanged throughout the 
+handled for different parallelizations. For e.g CUDA on GPUs. Once defined they remain unchanged throughout the 
 program, unless changed by a call to ops\_update\_const(..) }
 
 \item[name]          a name used to identify the constant
@@ -255,7 +255,7 @@ there is no order defined in which they are carried out.}
 \addcontentsline{toc}{subsubsection}{ops\_partition}
 \begin{routine} {ops\_partition(char *method)}
 {Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
-function for single node parallelisations). This routine should only be called after all the ops\_halo ops\_decl\_block 
+function for single node parallelizations). This routine should only be called after all the ops\_halo ops\_decl\_block 
 and ops\_halo ops\_decl\_dat statements have been declared}
 
 \item[method]        string describing the partitioning method. Currently this string is not used internally, but 
@@ -311,7 +311,7 @@ HDF5 file using MPI I/O)}
 
 \addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
 \begin{routine} {void ops\_print\_dat\_to\_txtfile(ops\_dat dat, chat *file)}
-{Write the details of an ops\_block to a named text file. When used under an MPI parallelisation each MPI process 
+{Write the details of an ops\_block to a named text file. When used under an MPI parallelization each MPI process 
 will write its own data set separately to the text file. As such it does not use MPI I/O. The data can be viewed using 
 a simple text editor }
 \item[dat] 	ops\_dat to to be written 
@@ -493,7 +493,7 @@ stencil specification. \noindent The strided stencil will handle both multigrid 
 the boundary condition and reduced dimension applications (with a stride of 0 for the relevant dimensions).
 
 \subsection{Checkpointing}
-OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the filename for the 
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the 
 checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information 
 periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching 
 after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} 
@@ -504,11 +504,82 @@ runtime argument has to be used.\\
 checkpointing system, has to be called after {\tt ops\_partition}. Returns true if the application launches in restore 
 mode, false otherwise.} 
 \item[filename] name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
-\item[interval] average time between checkpoints
-\item[options] a combinations of flags, listed in \texttt{ops\_checkpointing.h}: \\OPS\_CHECKPOINT\_INITPHASE, \\
-OPS\_CHECKPOINT\_MANUAL\_DATLIST, \\OPS\_CHECKPOINT\_FASTFW, \\OPS\_CHECKPOINT\_MANUAL.
+\item[interval] average time (seconds) between checkpoints
+\item[options] a combinations of flags, listed in \texttt{ops\_checkpointing.h}: \\
+OPS\_CHECKPOINT\_INITPHASE - indicates that there are a number of parallel
+loops at the very beginning of the simulations which should be excluded from the checkpointing
+process; mainly because they initialise datasets that do not change during the main body of the
+execution. During backup mode, and datasets written during this initial phase will be regarded
+“never modified” by the first step of the algorithm in Section 3, during restore mode these
+loops are executed as usual. An example would be the computation of the mesh geometry,
+which can be excluded from the checkpoint if it is re-computed when recovering and restoring
+a checkpoint. The API call void \texttt{ops\_checkpointing\_initphase\_done()} indicates the end of
+this initial phase, beyond which the normal checkpointing algorithms apply.
+
+OPS\_CHECKPOINT\_MANUAL\_DATLIST - Indicates that the user manually control the location of the checkpoint 
+specifying the \texttt{ops\_dat}s to be saved. It also enables fast-forwarding, by skipping the execution of the 
+application (even though none of the parallel loops would actually execute, there may be significant work outside of 
+those) up to the checkpoint
+
+OPS\_CHECKPOINT\_FASTFW - Combines the above two options but also defines the list of datasets to be saved and a 
+payload, and enables fast-forwarding. 
+
+OPS\_CHECKPOINT\_MANUAL -
 \end{routine}
 
+
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist}
+\begin{routine} {void ops\_checkpointing\_manual\_datlist(int ndats, ops\_dat *datlist)}{A use can call this 
+routine at a point in the code to mark the location of a checkpoint.  At this point, the list of datasets specified 
+will be saved. The validity of what is saved is not checked by the checkpointing algorithm assuming that the user knows 
+what data sets to be saved for full recovery. This routine should be called frequently (compared to check-pointing 
+frequency) and it will trigger the creation of the checkpoint the first time it is called after the timeout occurs.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_fastfw}
+\begin{routine} {bool ops\_checkpointing\_fastfw(int nbytes, char *payload)}{
+A use can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the 
+specified payload (e.g. iteration count, simulation time, etc.) along with the necessary datasets, as determined by the 
+checkpointing algorithm will be saved. This routine should be called frequently (compared to checkpointing frequency), 
+will trigger the creation of the checkpoint the first time it is called after the timeout occurs. In restore mode,
+will restore all datasets the first time it is called, and returns true indicating that the saved payload is returned 
+in payload. Does not save reduction data.
+} 
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+ 
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw(int ndats, op\_dat *datlist, int nbytes, char 
+*payload)}{
+Combines the manual datlist and fastfw calls.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw\_trigger}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw\_trigger(int ndats, opa\_dat *datlist, int
+nbytes, char *payload)}{
+With this routine it is possible to manually trigger checkpointing, instead of relying on the timeout process. as such 
+it combines the manual datlist and fastfw calls, and triggers the creation of a checkpoint when called.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}\\
+
+
+\noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
+is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported 
+in a tech-report on checkpointing, to be published later. 
 
 
 
@@ -569,9 +640,6 @@ to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the 
 OPS\_ACC2} etc. These specifies the stencil in accessing the elements of the respective data arrays. For example in 
 OPS\_ACC2, 2 denotes the third function argument (argument number starts from 0) and (0, 0) denotes stencil. At compile 
 time these macros will be expanded to give the correct array index 
-
-% (in this case accessing a 1D array with 2D indexing related to the stencil specified) to access the relevant element.
-
 
 \begin{figure}[!h]\small
 \begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=2mm]{cpp}
