@@ -507,24 +507,19 @@ mode, false otherwise.}
 \item[interval] average time (seconds) between checkpoints
 \item[options] a combinations of flags, listed in \texttt{ops\_checkpointing.h}: \\
 OPS\_CHECKPOINT\_INITPHASE - indicates that there are a number of parallel
-loops at the very beginning of the simulations which should be excluded from the checkpointing
-process; mainly because they initialise datasets that do not change during the main body of the
-execution. During backup mode, and datasets written during this initial phase will be regarded
-“never modified” by the first step of the algorithm in Section 3, during restore mode these
-loops are executed as usual. An example would be the computation of the mesh geometry,
+loops at the very beginning of the simulations which should be excluded from any checkpoint; mainly because they initialise datasets that do not change during the main body of the
+execution. During restore mode these loops are executed as usual. An example would be the computation of the mesh geometry,
 which can be excluded from the checkpoint if it is re-computed when recovering and restoring
 a checkpoint. The API call void \texttt{ops\_checkpointing\_initphase\_done()} indicates the end of
-this initial phase, beyond which the normal checkpointing algorithms apply.
+this initial phase.
 
-OPS\_CHECKPOINT\_MANUAL\_DATLIST - Indicates that the user manually control the location of the checkpoint 
-specifying the \texttt{ops\_dat}s to be saved. It also enables fast-forwarding, by skipping the execution of the 
-application (even though none of the parallel loops would actually execute, there may be significant work outside of 
-those) up to the checkpoint
+OPS\_CHECKPOINT\_MANUAL\_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of \texttt{ops\_dat}s to be saved.
 
-OPS\_CHECKPOINT\_FASTFW - Combines the above two options but also defines the list of datasets to be saved and a 
-payload, and enables fast-forwarding. 
+OPS\_CHECKPOINT\_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the 
+application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint.
 
-OPS\_CHECKPOINT\_MANUAL -
+OPS\_CHECKPOINT\_MANUAL - Indicates that when the corresponding API function is called, the checkpoint should be created. Assumes the presence of the above two options as well.
+
 \end{routine}
 
 
@@ -574,7 +569,7 @@ it combines the manual datlist and fastfw calls, and triggers the creation of a 
 \item[datlist] arrays of \texttt{ops\_dat} handles to be saved
 \item[nbytes] size of the payload in bytes
 \item[payload] pointer to memory into which the payload is packed
-\end{routine}\\
+\end{routine}
 
 
 \noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
