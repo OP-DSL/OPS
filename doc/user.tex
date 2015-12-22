@@ -564,6 +564,34 @@ OPS\_CHECKPOINT\_MANUAL - Indicates that when the corresponding API function is 
 
 \end{routine}
 
+ 
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw(int ndats, op\_dat *datlist, int nbytes, char 
+*payload)}{
+Combines the manual datlist and fastfw calls.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw\_trigger}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw\_trigger(int ndats, opa\_dat *datlist, int
+nbytes, char *payload)}{
+With this routine it is possible to manually trigger checkpointing, instead of relying on the timeout process. as such 
+it combines the manual datlist and fastfw calls, and triggers the creation of a checkpoint when called.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}\\
+
+
+\noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
+is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported 
+in a tech-report on checkpointing, to be published later. 
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist}
 \begin{routine} {void ops\_checkpointing\_manual\_datlist(int ndats, ops\_dat *datlist)}{A use can call this 
