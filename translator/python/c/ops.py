@@ -66,6 +66,7 @@ from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_mpi_inline import ops_gen_mpi_inline
 
 import util
 
@@ -671,6 +672,7 @@ def main():
   ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
   ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi_inline(str(sys.argv[1]), date, consts, kernels)
 
 
 
