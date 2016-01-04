@@ -54,7 +54,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   OPT           := -O0 -g -Minline -Kieee #-Minform=inform -Minfo=all
 else
-  OPT           := -O3 -Kieee -Minline -Minform=inform -Minfo=all
+  OPT           := -O3 -Kieee -Minline #-Minform=inform -Minfo=all
 endif
   OMPFLAGS      := -mp
   OpenACCFLAGS	:= -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 #-Minline
@@ -209,6 +209,23 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
         -o shsgc_openacc -lops_for_openacc
+
+shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
+	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhouupdx_kernel_openacc_kernel.F90 ./MPI_OpenACC/zerores_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhoudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/save_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/drhoEpudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/updateRK3_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/Riemann_kernel_openacc_kernel.F90 ./MPI_OpenACC/limiter_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/tvd_kernel_openacc_kernel.F90 ./MPI_OpenACC/vars_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/calupwindeff_kernel_openacc_kernel.F90 ./MPI_OpenACC/fact_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/update_kernel_openacc_kernel.F90 ./MPI_OpenACC/test_kernel_openacc_kernel.F90 shsgc_ops.F90
+	$(MPIF90) $(OPT) $(FLINK) $(OpenACCFLAGS) shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
+        drhouupdx_kernel_openacc_kernel.o zerores_kernel_openacc_kernel.o save_kernel_openacc_kernel.o \
+        drhoudx_kernel_openacc_kernel.o drhoEpudx_kernel_openacc_kernel.o updateRK3_kernel_openacc_kernel.o \
+        Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
+        vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
+        fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
+        -o shsgc_mpi_openacc -lops_for_openacc
 
 clean:
 	rm -f *.o

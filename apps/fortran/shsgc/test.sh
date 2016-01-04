@@ -27,10 +27,9 @@ rm perf_out
 
 cd $OPS_INSTALL_PATH/fortran
 source ../source_pgi
-export LM_LICENSE_FILE=/opt/pgi/license.dat
 make
-make f_openacc
 cd -
+make clean
 make
 echo '============> Running CUDA'
 ./shsgc_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -48,14 +47,14 @@ grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 make shsgc_openacc
-#make shsgc_mpi_openacc #need to build this in the makefile
+make shsgc_mpi_openacc
 echo '============> Running OpenACC'
 ./shsgc_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 echo '============> Running MPI+OpenACC'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out

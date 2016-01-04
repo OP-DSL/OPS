@@ -76,6 +76,7 @@ endif
 
 FLINK = -L$(F_OPS_LIB) $(CXXLINK)
 FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
+FMODS_OPENACC = -I$(F_OPS_MOD)/openacc -I$(F_OPS_INC)
 
 all: $(TARGETS)
 
@@ -183,6 +184,22 @@ else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
+poisson_openacc: poisson_ops.F90 constants.F90
+	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 \
+        ./MPI_OpenACC/poisson_initialguess_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_populate_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_stencil_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_update_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_error_kernel_openacc_kernel.F90 \
+        poisson_ops.F90
+	$(MPIF90) $(FFLAGS) $(FLINK) $(OpenACCFLAGS) poisson_ops.o constants.o \
+        poisson_initialguess_kernel_openacc_kernel.o \
+        poisson_populate_kernel_openacc_kernel.o \
+        poisson_stencil_kernel_openacc_kernel.o \
+        poisson_update_kernel_openacc_kernel.o \
+        poisson_error_kernel_openacc_kernel.o \
+        -o poisson_openacc -lops_for_openacc $(HDF5_LIB)
+
 
 clean:
 	rm -f *.o
@@ -195,3 +212,5 @@ clean:
 	rm -f poisson_mpi
 	rm -f poisson_mpi_openmp
 	rm -f poisson_mpi_cuda
+	rm -f poisson_openacc
+	rm -f poisson_mpi_openacc
