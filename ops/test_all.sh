@@ -25,5 +25,7 @@ cd ../mb_shsgc/Max_datatransfer
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
-cd ../apps/c/shsgc
+cd ../apps/fortran/shsgc
+./test.sh
+cd ../poisson
 ./test.sh
