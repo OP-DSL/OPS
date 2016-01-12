@@ -790,15 +790,19 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
     int id_m=-1,id_p=-1;
     int other_dims=1;
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
+
+    printf("range[0] %d, range[1] %d\n",range[0],range[1]);
+
+
     for (int i = 0; i < nargs; i++) {
       int range_new[4];
       range_new[0] = range[0];
-      range_new[1] = range[1]/args[i].dat->stride[0];
+      range_new[1] = range[1]/2;///args[i].dat->stride[0];
       range_new[2] = range[2];
-      range_new[3] = range[3]/args[i].dat->stride[1];
+      range_new[3] = range[3]/2;///args[i].dat->stride[1];
 
       int stride[2], d_size[2], start[2], end[2];
-      for ( int n=0; n<dat_ndim; n++ ){
+      for ( int n=0; n<2; n++ ){
         stride[n] = args[0].stencil->mgrid_stride[n];
         d_size[n] = args[0].dat->d_m[n] + args[0].dat->size[n] - args[0].dat->d_p[n];
         start[n] = global_idx[n]/stride[n];
@@ -862,16 +866,20 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
     //  ops_timers_core(&c1,&t1);
     //  ops_sendrecv_time += t1-t2;
 
+
+
     for (int i = 0; i < 4; i++) send_recv_offsets[i]=0;
     for (int i = 0; i < nargs; i++) {
       int range_new[4];
       range_new[0] = range[0];
-      range_new[1] = range[1]/args[i].dat->stride[0];
+      range_new[1] = range[1]/2;///args[i].dat->stride[0];
       range_new[2] = range[2];
-      range_new[3] = range[3]/args[i].dat->stride[1];
+      range_new[3] = range[3]/2;///args[i].dat->stride[1];
+
+
 
       int stride[2], d_size[2], start[2], end[2];
-      for ( int n=0; n<dat_ndim; n++ ){
+      for ( int n=0; n<2; n++ ){
         stride[n] = args[0].stencil->mgrid_stride[n];
         d_size[n] = args[0].dat->d_m[n] + args[0].dat->size[n] - args[0].dat->d_p[n];
         start[n] = global_idx[n]/stride[n];
