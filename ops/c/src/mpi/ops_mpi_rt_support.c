@@ -797,9 +797,9 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
     for (int i = 0; i < nargs; i++) {
       int range_new[4];
       range_new[0] = range[0];
-      range_new[1] = range[1]/2;///args[i].dat->stride[0];
+      range_new[1] = range[1]/args[i].stencil->mgrid_stride[0];
       range_new[2] = range[2];
-      range_new[3] = range[3]/2;///args[i].dat->stride[1];
+      range_new[3] = range[3]/args[i].stencil->mgrid_stride[1];
 
       int stride[2], d_size[2], start[2], end[2];
       for ( int n=0; n<2; n++ ){
@@ -819,8 +819,8 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
       //in *other* dimensions (i.e. any other dimension d2 ,but the current one dim)
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
-          other_dims = other_dims && (dat->size[d2]==1 || intersection( range[2*d2]-MAX_DEPTH,
-                                         range[2*d2+1]+MAX_DEPTH,
+          other_dims = other_dims && (dat->size[d2]==1 || intersection( range_new[2*d2]-MAX_DEPTH,
+                                         range_new[2*d2+1]+MAX_DEPTH,
                                          OPS_sub_dat_list[dat->index]->decomp_disp[d2],
                                          OPS_sub_dat_list[dat->index]->decomp_disp[d2]+
                                          OPS_sub_dat_list[dat->index]->decomp_size[d2])); //i.e. the intersection of the dependency range with my full range
@@ -832,7 +832,7 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
       for (int p = 0; p < args[i].stencil->points; p++) {
         if(args[i].dat->stride[dim] > 1 && start[dim]%stride[dim] != 0){
           d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
-          d_neg -= 1;
+          d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]-1);
         }
         else {
           d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
@@ -872,9 +872,9 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
     for (int i = 0; i < nargs; i++) {
       int range_new[4];
       range_new[0] = range[0];
-      range_new[1] = range[1]/2;///args[i].dat->stride[0];
+      range_new[1] = range[1]/args[i].stencil->mgrid_stride[0];
       range_new[2] = range[2];
-      range_new[3] = range[3]/2;///args[i].dat->stride[1];
+      range_new[3] = range[3]/args[i].stencil->mgrid_stride[1];
 
 
 
@@ -895,7 +895,7 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
       for (int p = 0; p < args[i].stencil->points; p++) {
         if(args[i].dat->stride[dim] > 1 && end[dim]%stride[dim] != 0)
         {
-          d_pos += 1;
+          d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]+1);
           d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]);
         }
         else {
