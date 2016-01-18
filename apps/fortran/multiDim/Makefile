@@ -28,6 +28,7 @@ ifdef CHECKPOINTING
 endif
 endif
 
+
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -79,7 +80,7 @@ FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 all: $(TARGETS)
 
 multidim_seq: multidim_ops.F90 constants.F90
-	$(FC) $(FFLAGS) $(FMODS) constants.F90 -c ./MPI/multidim_print_kernel_seq_kernel.F90 \
+	$(MPIF90) $(FFLAGS) $(FMODS) constants.F90 -c ./MPI/multidim_print_kernel_seq_kernel.F90 \
 	./MPI/multidim_copy_kernel_seq_kernel.F90 ./MPI/multidim_kernel_seq_kernel.F90 ./MPI/multidim_reduce_kernel_seq_kernel.F90 multidim_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) multidim_ops.o constants.o multidim_kernel_seq_kernel.o multidim_copy_kernel_seq_kernel.o \
 	multidim_print_kernel_seq_kernel.o multidim_reduce_kernel_seq_kernel.o -o multidim_seq -lops_for_seq

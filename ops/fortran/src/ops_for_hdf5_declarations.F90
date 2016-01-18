@@ -44,14 +44,131 @@ module OPS_Fortran_hdf5_Declarations
   use cudafor
 #endif
 
+  interface
+
+	type(c_ptr) function ops_decl_block_hdf5_c (dim, blockName, fileName) BIND(C,name='ops_decl_block_hdf5')
+
+      use, intrinsic :: ISO_C_BINDING
+      integer(kind=c_int), value :: dim
+      character(kind=c_char,len=1), intent(in) :: blockName
+      character(kind=c_char,len=1), intent(in) :: fileName
+
+    end function ops_decl_block_hdf5_c
+
+	type(c_ptr) function ops_decl_dat_hdf5_c (blockName, dim, type, datName, fileName) BIND(C,name='ops_decl_dat_hdf5')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: blockName
+      integer(kind=c_int), value :: dim
+      character(kind=c_char,len=1), intent(in) :: type
+      character(kind=c_char,len=1), intent(in) :: datName
+      character(kind=c_char,len=1), intent(in) :: fileName
+
+    end function ops_decl_dat_hdf5_c
+
+	type(c_ptr) function ops_decl_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_stencil_hdf5')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value :: dims
+      integer(kind=c_int), value :: points
+      character(kind=c_char,len=1), intent(in) :: fileName
+      character(kind=c_char,len=1), intent(in) :: stencilName
+
+    end function ops_decl_stencil_hdf5_c
+
+    type(c_ptr) function ops_decl_strided_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_strided_stencil_hdf5_c')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value :: dims
+      integer(kind=c_int), value :: points
+      character(kind=c_char,len=1), intent(in) :: fileName
+      character(kind=c_char,len=1), intent(in) :: stencilName
+
+    end function ops_decl_strided_stencil_hdf5_c
+
+	subroutine ops_fetch_dat_hdf5_file_c (dat, fileName) BIND(C,name='ops_fetch_dat_hdf5_file')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      character(len=1,kind=c_char) :: fileName(*)
+    end subroutine ops_fetch_dat_hdf5_file_c
+
+	subroutine ops_fetch_block_hdf5_file_c (block, fileName) BIND(C,name='ops_fetch_block_hdf5_file')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: block
+      character(len=1,kind=c_char) :: fileName(*)
+    end subroutine ops_fetch_block_hdf5_file_c
+
+    subroutine ops_fetch_stencil_hdf5_file_c (stencil, fileName) BIND(C,name='ops_fetch_stencil_hdf5_file')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: stencil
+      character(len=1,kind=c_char) :: fileName(*)
+    end subroutine ops_fetch_stencil_hdf5_file_c
+
+    subroutine ops_fetch_halo_hdf5_file_c (halo, fileName) BIND(C,name='ops_fetch_halo_hdf5_file')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: halo
+      character(len=1,kind=c_char) :: fileName(*)
+    end subroutine ops_fetch_halo_hdf5_file_c
+
+  end interface
 
 contains
-subroutine ops_read_dat_hdf5 ( dat )
+
+  subroutine ops_decl_block_hdf5 (block, dim, blockName, fileName)
+
+    type(ops_block) :: block
+    character(kind=c_char,len=*) :: blockName
+    integer, intent(in) :: dim
+    character(kind=c_char,len=*) :: fileName
+
+    ! assume names are /0 terminated
+	block%blockCptr = ops_decl_block_hdf5_c (dim, blockName//C_NULL_CHAR, fileName//C_NULL_CHAR)
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_set variable
+    call c_f_pointer ( block%blockCPtr, block%blockPtr )
+
+  end subroutine ops_decl_block_hdf5
+
+
+  subroutine ops_decl_dat_hdf5 ( dat, block, dat_size, type, datName, fileName, status )
     implicit none
 
     type(ops_dat) :: dat
+    type(ops_block), intent(in) :: block
+    integer, intent(in) :: dat_size
+    character(kind=c_char,len=*) :: type
+    character(kind=c_char,len=*) :: datName
+    character(kind=c_char,len=*) :: fileName
+    integer (kind=c_int) :: status
 
-end subroutine ops_read_dat_hdf5
+    status = -1
+    dat%dataPtr => null()
+
+    ! assume names are /0 terminated
+    dat%dataCPtr = ops_decl_dat_hdf5_c ( block%blockCPtr, dat_size, type//C_NULL_CHAR, datName//C_NULL_CHAR, fileName//C_NULL_CHAR)
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_dat variable
+    call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
+    if (associated(dat%dataPtr)) then
+      status = 1 !dat%dataPtr%size
+    end if
+    ! debugging
+
+  end subroutine ops_decl_dat_hdf5
+
+!subroutine ops_read_dat_hdf5 ( dat )
+!    implicit none
+
+    !type(ops_dat) :: dat
+
+!end subroutine ops_read_dat_hdf5
 
 
 end module OPS_Fortran_hdf5_Declarations

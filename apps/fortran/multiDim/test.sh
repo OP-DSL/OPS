@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ../../../ops/c
+cd ../../../ops/fortran
 source ../source_intel
 make
 cd -
@@ -25,7 +25,6 @@ rm perf_out
 
 cd $OPS_INSTALL_PATH/fortran
 source ../source_pgi_15.1
-export LM_LICENSE_FILE=/opt/pgi/license.dat
 make
 cd -
 make
