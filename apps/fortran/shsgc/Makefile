@@ -97,7 +97,7 @@ shsgc_seq: shsgc_ops.F90 constants.F90
 	Riemann_kernel_seq_kernel.o limiter_kernel_seq_kernel.o tvd_kernel_seq_kernel.o \
 	vars_kernel_seq_kernel.o calupwindeff_kernel_seq_kernel.o \
 	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
-	-o shsgc_seq -lops_for_seq
+	-o shsgc_seq -lops_for_seq -lops_hdf5 $(HDF5_LIB)
 
 shsgc_openmp: shsgc_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) $(OMPFLAGS) -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
@@ -108,13 +108,13 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
         ./MPI_OpenMP/tvd_kernel_omp_kernel.F90 ./MPI_OpenMP/vars_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/calupwindeff_kernel_omp_kernel.F90 ./MPI_OpenMP/fact_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/update_kernel_omp_kernel.F90 ./MPI_OpenMP/test_kernel_omp_kernel.F90 shsgc_ops.F90
-	$(FC) $(OPT) $(FLINK) $(OMPFLAGS) shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(OMPFLAGS) shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
         drhouupdx_kernel_omp_kernel.o zerores_kernel_omp_kernel.o save_kernel_omp_kernel.o \
         drhoudx_kernel_omp_kernel.o drhoEpudx_kernel_omp_kernel.o updateRK3_kernel_omp_kernel.o \
         Riemann_kernel_omp_kernel.o limiter_kernel_omp_kernel.o tvd_kernel_omp_kernel.o \
         vars_kernel_omp_kernel.o calupwindeff_kernel_omp_kernel.o \
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
-        -o shsgc_openmp -lops_for_seq
+        -o shsgc_openmp -lops_for_seq -lops_hdf5 $(HDF5_LIB)
 
 shsgc_cuda: shsgc_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
