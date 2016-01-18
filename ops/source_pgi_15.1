@@ -1,0 +1,36 @@
+#A rough example of environmental variables for compiling with PGI compilers
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
+
+#OPS specifics
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+
+#CUDA and NVIDIA OpenCL
+export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+
+#PGI based MPI and Compilers
+#export MPI_INSTALL_PATH=/opt/openmpi-1.8.4-pgi151/
+export MPI_INSTALL_PATH=/opt/pgi/linux86-64/15.1/mpi/mpich/
+export PATH=/opt/pgi/linux86-64/15.1/bin/:$PATH
+
+#export PATH=/opt/openmpi-1.8.4-pgi151/bin/:$PATH
+export PATH=/opt/pgi/linux86-64/15.1/mpi/mpich/bin/:$PATH
+
+#export LD_LIBRARY_PATH=/opt/openmpi-1.8.4-pgi151/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/pgi/linux86-64/15.1/mpi/mpich/lib/:$LD_LIBRARY_PATH
+
+export MPICH_CXX=/opt/pgi/linux86-64/15.1/bin/pgc++
+export MPICH_CC=/opt/pgi/linux86-64/15.1/bin/pgcc
+export MPICH_F90=/opt/pgi/linux86-64/15.1/bin/pgfortran
+export MPIF90_F90=/opt/pgi/linux86-64/15.1/bin/pgfortran
+export MPICH_FC=/opt/pgi/linux86-64/15.1/bin/pgfortran
+#PGI based HDF5
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/
+export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH
