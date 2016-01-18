@@ -163,6 +163,105 @@ contains
 
   end subroutine ops_decl_dat_hdf5
 
+
+  subroutine ops_decl_stencil_hdf5 ( stencil, dims, points, stencilName, fileName, status )
+
+    type(ops_stencil) :: stencil
+    integer, intent(in) :: dims
+    integer, intent(in) :: points
+	character(kind=c_char,len=*) :: stencilName
+    character(kind=c_char,len=*) :: fileName
+    integer (kind=c_int) :: status
+
+    status = -1
+    stencil%stencilPtr => null()
+
+    ! assume names are /0 terminated - will fix this if needed later
+    stencil%stencilCPtr = ops_decl_stencil_hdf5_c ( mapdims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_map variable
+    call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )
+    if (associated(stencil%stencilPtr)) then
+      status = 1
+    end if
+  end subroutine ops_decl_stencil_hdf5
+
+  subroutine ops_decl_strided_stencil_hdf5 ( stencil, dims, points, stencilName, fileName, status )
+
+    type(ops_stencil) :: stencil
+    integer, intent(in) :: dims
+    integer, intent(in) :: points
+	character(kind=c_char,len=*) :: stencilName
+    character(kind=c_char,len=*) :: fileName
+    integer (kind=c_int) :: status
+
+    status = -1
+    stencil%stencilPtr => null()
+
+    ! assume names are /0 terminated - will fix this if needed later
+    stencil%stencilCPtr = ops_decl_strided_stencil_hdf5_c ( mapdims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the op_map variable
+    call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )
+    if (associated(stencil%stencilPtr)) then
+      status = 1
+    end if
+  end subroutine ops_decl_strided_stencil_hdf5
+
+
+  subroutine ops_fetch_dat_hdf5_file (dat, file_name)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_dat), intent(in) :: dat
+    character(kind=c_char,len=*) :: file_name
+
+    call ops_fetch_dat_hdf5_file_c (dat%dataCPtr, file_name//C_NULL_CHAR)
+
+  end subroutine ops_fetch_dat_hdf5_file
+
+  subroutine ops_fetch_block_hdf5_file (block, file_name)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_block), intent(in) :: block
+    character(kind=c_char,len=*) :: file_name
+
+    call ops_fetch_block_hdf5_file_c (block%blockCPtr, file_name//C_NULL_CHAR)
+
+  end subroutine ops_fetch_block_hdf5_file
+
+  subroutine ops_fetch_stencil_hdf5_file (stencil, file_name)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_stencil), intent(in) :: stencil
+    character(kind=c_char,len=*) :: file_name
+
+    call ops_fetch_stencil_hdf5_file_c (stencil%stencilCPtr, file_name//C_NULL_CHAR)
+
+  end subroutine ops_fetch_stencil_hdf5_file
+
+  subroutine ops_fetch_halo_hdf5_file (halo, file_name)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    type(ops_halo), intent(in) :: halo
+    character(kind=c_char,len=*) :: file_name
+
+    call ops_fetch_halo_hdf5_file_c (halo%haloCPtr, file_name//C_NULL_CHAR)
+
+  end subroutine ops_fetch_halo_hdf5_file
+
+
 !subroutine ops_read_dat_hdf5 ( dat )
 !    implicit none
 
