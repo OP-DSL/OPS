@@ -218,7 +218,6 @@ contains
 
     type(ops_dat), intent(in) :: dat
     character(kind=c_char,len=*) :: file_name
-
     call ops_fetch_dat_hdf5_file_c (dat%dataCPtr, file_name//C_NULL_CHAR)
 
   end subroutine ops_fetch_dat_hdf5_file

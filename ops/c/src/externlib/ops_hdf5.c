@@ -284,11 +284,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
         dat->name, block->name);
 
-	  if(strcmp(dat->type,"double") == 0)
+	  if(strcmp(dat->type,"double") == 0 || strcmp(dat->type,"real(8)") == 0)
         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
-      else if(strcmp(dat->type,"float") == 0)
+      else if(strcmp(dat->type,"float") == 0 || strcmp(dat->type,"real(4)") || strcmp(dat->type,"real") == 0)
         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_FLOAT,dat->data);
-      else if(strcmp(dat->type,"int") == 0)
+      else if(strcmp(dat->type,"int") == 0 || strcmp(dat->type,"int(4)")  || strcmp(dat->type,"integer(4)") == 0)
          H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_INT,dat->data);
       else if(strcmp(dat->type,"long") == 0)
          H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LONG,dat->data);

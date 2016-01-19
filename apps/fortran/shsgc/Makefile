@@ -35,10 +35,10 @@ ifdef DEBUG
   #OPT	 	:= -O3 -g -xAVX -vec-report2 #-xAVX
   OPT	 	:= -O0 -g
 else
-  OPT	 	:= -O3 -xAVX -vec-report2 #-xAVX
+  OPT	 	:= -O3 -xAVX -qopt-report #-xAVX
 endif
   OMPFLAGS  	= -openmp -openmp-report2
-  CCFLAGS       := $(OPT) -Wall -Werror -wd981
+  CCFLAGS       := $(OPT) #-Wall -Werror -wd981
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
   CXXLINK	:= -lstdc++
@@ -58,7 +58,7 @@ else
 endif
   OMPFLAGS      := -mp
   OpenACCFLAGS	:= -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 #-Minline
-  CCFLAGS       := $(OPT) -Wall -Werror -wd981
+  CCFLAGS       := $(OPT) #-Wall -Werror -wd981
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
@@ -91,7 +91,7 @@ shsgc_seq: shsgc_ops.F90 constants.F90
 	./MPI/tvd_kernel_seq_kernel.F90 ./MPI/vars_kernel_seq_kernel.F90 \
 	./MPI/calupwindeff_kernel_seq_kernel.F90 ./MPI/fact_kernel_seq_kernel.F90 \
 	./MPI/update_kernel_seq_kernel.F90 ./MPI/test_kernel_seq_kernel.F90 shsgc_ops.F90
-	$(FC) $(OPT) $(FLINK) shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
 	drhouupdx_kernel_seq_kernel.o zerores_kernel_seq_kernel.o save_kernel_seq_kernel.o \
 	drhoudx_kernel_seq_kernel.o drhoEpudx_kernel_seq_kernel.o updateRK3_kernel_seq_kernel.o \
 	Riemann_kernel_seq_kernel.o limiter_kernel_seq_kernel.o tvd_kernel_seq_kernel.o \

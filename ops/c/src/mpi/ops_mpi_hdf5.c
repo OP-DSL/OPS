@@ -65,6 +65,48 @@ sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
 
 /*******************************************************************************
 * Routine to remove the intra-block halos from the flattend 1D dat
+* before writing to HDF5 files - Maximum dimension of block is 1
+*******************************************************************************/
+void remove_mpi_halos1D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
+
+  int index = 0; int count = 0;
+  //for(int m = disp[4]; m < size[4]; m++) {
+  //  for(int l = disp[3]; l < size[3]; l++) {
+  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
+    //for(int j = disp[1]; j < disp[1]+size[1]; j++) {
+      for(int i = disp[0]; i < disp[0]+size[0]; i++) {
+          index = i ;//+
+                  //j * dat->size[0]; //+ // need to stride in dat->size as data block includes intra-block halos
+                  //k * dat->size[0] * dat->size[1];// +
+                  //l * dat->size[0] * dat->size[1] * dat->size[2] +
+                  //m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
+          memcpy(&data[count*dat->elem_size],&dat->data[index*dat->elem_size],dat->elem_size);
+          count++;
+      }
+   // }
+  //}
+  //}
+  //}
+  return;
+  /*
+  x = disp[0] to size[0]
+  y = disp[1] to size[1]
+  z = disp[2] to size[2]
+  t = disp[3] to size[4]
+  u = disp[4] to size[4]
+  index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 * D4;
+
+
+  D1 - dat->size[0]
+  D2 - dat->size[1]
+  D3 - dat->size[2]
+  D4 - dat->size[3]
+  */
+
+}
+
+/*******************************************************************************
+* Routine to remove the intra-block halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 2
 *******************************************************************************/
 void remove_mpi_halos2D(ops_dat dat, hsize_t* size, hsize_t* disp, char* data){
@@ -480,7 +522,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
     MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
-    if(block->dims == 2)
+    if(block->dims == 1)
+      remove_mpi_halos1D(dat, size, l_disp, data);
+    else if(block->dims == 2)
       remove_mpi_halos2D(dat, size, l_disp, data);
     else if(block->dims == 3)
       remove_mpi_halos3D(dat, size, l_disp, data);
@@ -550,13 +594,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         H5Pset_chunk(plist_id, block->dims, gbl_size); //chunk data set need to be the same size on each proc
 
         //Create the dataset with default properties and close filespace.
-        if(strcmp(dat->type,"double") == 0)
+        if(strcmp(dat->type,"double") == 0 || strcmp(dat->type,"real(8)") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if(strcmp(dat->type,"float") == 0)
+        else if(strcmp(dat->type,"float") == 0 || strcmp(dat->type,"real(4)") || strcmp(dat->type,"real") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_FLOAT, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if(strcmp(dat->type,"int") == 0)
+        else if(strcmp(dat->type,"int") == 0 || strcmp(dat->type,"int(4)")  || strcmp(dat->type,"integer(4)") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_INT, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
         else if(strcmp(dat->type,"long") == 0)
@@ -714,7 +758,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       //Need to flip the dimensions to accurately write to HDF5 chunk decomposition
       hsize_t DISP[block->dims];
       hsize_t SIZE[block->dims];
-      if(block->dims == 2) {
+      if(block->dims == 1) {
+        DISP[0] = disp[0];
+        SIZE[0] = size[0];
+      }
+      else if(block->dims == 2) {
         DISP[0] = disp[1];
         DISP[1] = disp[0];
         SIZE[0] = size[1];
@@ -740,11 +788,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
       //write data
-      if(strcmp(dat->type,"double") == 0)
+      if(strcmp(dat->type,"double") == 0 || strcmp(dat->type,"real(8)") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-      else if(strcmp(dat->type,"float") == 0)
+      else if(strcmp(dat->type,"float") == 0 || strcmp(dat->type,"real(4)") || strcmp(dat->type,"real") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
-      else if(strcmp(dat->type,"int") == 0)
+      else if(strcmp(dat->type,"int") == 0 || strcmp(dat->type,"int(4)")  || strcmp(dat->type,"integer(4)") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
       else if(strcmp(dat->type,"long") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
