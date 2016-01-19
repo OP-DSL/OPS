@@ -607,9 +607,9 @@ def main():
   # finally, generate target-specific kernel files
   #
 
-  #ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  #ops_fortran_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  #ops_fortran_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  ops_fortran_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
   ops_fortran_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
 
 if __name__ == '__main__':

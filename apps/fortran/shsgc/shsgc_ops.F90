@@ -6,7 +6,6 @@
 
 
 program SHSGC
-  use OPS_FORTRAN_HDF5_DECLARATIONS
   use OPS_Fortran_Declarations
   use OPS_Fortran_RT_Support
   use INITIALIZE_KERNEL_MODULE
@@ -24,6 +23,7 @@ program SHSGC
   use FACT_KERNEL_MODULE
   use UPDATE_KERNEL_MODULE
   use TEST_KERNEL_MODULE
+  use OPS_FORTRAN_HDF5_DECLARATIONS
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -295,9 +295,9 @@ program SHSGC
                       & ops_arg_dat(s, 3, S1D_0, "real(8)", OPS_READ))
 
     totaltime = totaltime + dt
-    if (ops_is_root() .eq. 1) then
-      write (*,*) iter, totaltime
-    endif
+    !if (ops_is_root() .eq. 1) then
+    !  write (*,*) iter, totaltime
+    !endif
 
   ENDDO
 
@@ -319,8 +319,8 @@ program SHSGC
   end if
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-  call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5");
-  call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5");
+  call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
+  call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
 
   call ops_exit( )
 

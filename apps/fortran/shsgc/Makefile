@@ -132,7 +132,7 @@ ifeq ($(OPS_COMPILER),pgi)
         Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
         vars_kernel_cuda_kernel.o calupwindeff_kernel_cuda_kernel.o \
         fact_kernel_cuda_kernel.o update_kernel_cuda_kernel.o test_kernel_cuda_kernel.o \
-        -o shsgc_cuda -lops_for_cuda
+        -o shsgc_cuda -lops_for_cuda -lops_hdf5 $(HDF5_LIB)
 else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
@@ -208,7 +208,7 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
         vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
-        -o shsgc_openacc -lops_for_openacc
+        -o shsgc_openacc -lops_for_openacc -lops_hdf5 $(HDF5_LIB)
 
 shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
@@ -225,7 +225,7 @@ shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
         vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
-        -o shsgc_mpi_openacc -lops_for_openacc
+        -o shsgc_mpi_openacc -lops_for_openacc $(HDF5_LIB)
 
 clean:
 	rm -f *.o
