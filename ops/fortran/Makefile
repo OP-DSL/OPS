@@ -174,6 +174,7 @@ f_openacc: mkdir core
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_dummy_singlenode.c -o $(F_OPS_OBJ)/ops_dummy_singlenode.o
 	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_hdf5_declarations.F90 -o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 	ar -r $(F_OPS_LIB)/libops_for_openacc.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
         $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
         $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o

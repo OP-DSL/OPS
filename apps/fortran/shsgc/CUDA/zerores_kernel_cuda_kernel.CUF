@@ -55,12 +55,13 @@ attributes (global) subroutine zerores_kernel_wrap( &
   integer(4) arg2
   real(8), DEVICE :: opsDat3Local(*)
   integer(4) arg3
-  integer dat1_base
-  integer dat2_base
-  integer dat3_base
+  integer(4), value :: dat1_base
+  integer(4), value :: dat2_base
+  integer(4), value :: dat3_base
   integer(4) start(1)
   integer(4) end(1)
-  integer n_x, size1
+  integer, value :: size1
+  integer n_x
 
 
   n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
@@ -93,26 +94,25 @@ attributes (host) subroutine zerores_kernel_host( userSubroutine, block, dim, ra
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4), DEVICE  :: dat1_base
+  integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4), DEVICE  :: dat2_base
+  integer(kind=4) :: dat2_base
   INTEGER(KIND=4) :: xdim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
-  integer(kind=4), DEVICE  :: dat3_base
+  integer(kind=4) :: dat3_base
   INTEGER(KIND=4) :: xdim3
 
 
-  integer, DEVICE :: x_size
-  integer :: x_size_h
+  integer x_size
   integer start(1)
   integer end(1)
   integer(kind=4) :: n
@@ -144,7 +144,6 @@ attributes (host) subroutine zerores_kernel_host( userSubroutine, block, dim, ra
 
 
   x_size = MAX(0,end(1)-start(1)+1)
-  x_size_h = MAX(0,end(1)-start(1)+1)
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
