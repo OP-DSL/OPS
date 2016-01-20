@@ -113,7 +113,7 @@ program SHSGC
   !-------------------------- Initialisation --------------------------
 
   ! OPS initialisation
-  call ops_init(2)
+  call ops_init(1)
 
   !----------------------------OPS Declarations------------------------
 

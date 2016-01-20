@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
   a2[2] = 3.0/5.0;
 
 
-  ops_init(argc,argv,7);
+  ops_init(argc,argv,1);
 
 
 

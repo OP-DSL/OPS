@@ -114,7 +114,7 @@ program SHSGC
   a2(3) = 3.0_8/5.0_8
 
 
-  call ops_init(2)
+  call ops_init(1)
 
 
   call ops_decl_block(1, shsgc_grid, "shsgc grid")
@@ -295,9 +295,9 @@ program SHSGC
                       & ops_arg_dat(s, 3, S1D_0, "real(8)", OPS_READ))
 
     totaltime = totaltime + dt
-    !if (ops_is_root() .eq. 1) then
-    !  write (*,*) iter, totaltime
-    !endif
+    if (ops_is_root() .eq. 1) then
+      write (*,*) iter, totaltime
+    endif
 
   ENDDO
 
