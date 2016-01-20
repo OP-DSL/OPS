@@ -506,16 +506,19 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     #vars for arg_idx
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('integer dat' + str(n+1)+'_base')
+        code('integer(4), value :: dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
 
     if NDIM==1:
-      code('integer n_x, size1')
+      code('integer, value :: size1')
+      code('integer n_x')
     elif NDIM==2:
-      code('integer n_x, n_y, size1, size2')
+      code('integer, value :: size1,size2')
+      code('integer n_x, n_y')
     elif NDIM==3:
-      code('integer n_x, n_y, n_z, size1, size2, size3')
+      code('integer, value :: size1,size2,size3')
+      code('integer n_x, n_y, n_z')
     code('')
 
 
@@ -633,7 +636,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
-        code('integer(kind=4), DEVICE  :: dat'+str(n+1)+'_base')
+        code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('INTEGER(KIND=4) :: xdim'+str(n+1))
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) :: multi_d'+str(n+1))
@@ -658,14 +661,11 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
 
     if NDIM==1:
-      code('integer, DEVICE :: x_size')
-      code('integer :: x_size_h')
+      code('integer x_size')
     elif NDIM==2:
-      code('integer, DEVICE :: x_size, y_size')
-      code('integer :: x_size_h, y_size_h')
+      code('integer x_size, y_size')
     elif NDIM==2:
-      code('integer, DEVICE :: x_size, y_size, z_size')
-      code('integer :: x_size_h, y_size_h, z_size_h')
+      code('integer x_size, y_size, z_size')
     code('integer start('+str(NDIM)+')')
     code('integer end('+str(NDIM)+')')
     if arg_idx == 1:
@@ -728,15 +728,11 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     code('')
     code('x_size = MAX(0,end(1)-start(1)+1)')
-    code('x_size_h = MAX(0,end(1)-start(1)+1)')
     if NDIM==2:
       code('y_size = MAX(0,end(2)-start(2)+1)')
-      code('y_size_h = MAX(0,end(2)-start(2)+1)')
     if NDIM==3:
       code('y_size = MAX(0,end(2)-start(2)+1)')
-      code('y_size_h = MAX(0,end(2)-start(2)+1)')
       code('z_size = MAX(0,end(3)-start(3)+1)')
-      code('z_size_h = MAX(0,end(3)-start(3)+1)')
     code('')
 
     for n in range (0, nargs):
@@ -811,13 +807,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('nshared = 0')
       if NDIM==1:
          code('nthread = getOPS_block_size_x()')
-         code('blocksPerGrid = ((x_size_h-1)/getOPS_block_size_x()+ 1)* 1* 1')
+         code('blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1)* 1* 1')
       elif NDIM==2:
          code('nthread = getOPS_block_size_x()*getOPS_block_size_y()')
-         code('blocksPerGrid = ((x_size_h-1)/getOPS_block_size_x()+ 1)*((y_size_h-1)/getOPS_block_size_y() + 1)* 1')
+         code('blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1)*((y_size-1)/getOPS_block_size_y() + 1)* 1')
       elif NDIM==3:
          code('nthread = getOPS_block_size_x()*getOPS_block_size_y()')
-         code('blocksPerGrid = ((x_size_h-1)/getOPS_block_size_x()+ 1)*((y_size_h-1)/getOPS_block_size_y() + 1)* z_size_h')
+         code('blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1)*((y_size-1)/getOPS_block_size_y() + 1)* z_size')
       code('')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
