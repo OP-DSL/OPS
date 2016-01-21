@@ -5,6 +5,8 @@
 set -e
 echo $OPS_INSTALL_PATH
 cd $OPS_INSTALL_PATH
+
+echo "************Testing C Applications *****************"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
 ./test.sh
@@ -19,4 +21,11 @@ cd ../multiDim/
 cd ../shsgc/
 ./test.sh
 cd ../mb_shsgc/Max_datatransfer
+./test.sh
+
+echo "************Testing Fortran Applications *****************"
+cd $OPS_INSTALL_PATH
+cd ../apps/fortran/shsgc
+./test.sh
+cd ../poisson
 ./test.sh

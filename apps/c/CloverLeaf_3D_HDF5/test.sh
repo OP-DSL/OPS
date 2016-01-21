@@ -82,7 +82,7 @@ rm perf_out
 
 
 cd -
-source ../source_pgi
+source ../source_pgi_15.1
 make cuda
 make mpi_cuda
 cd -

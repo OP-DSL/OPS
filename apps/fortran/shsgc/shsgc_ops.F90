@@ -23,6 +23,7 @@ program SHSGC
   use FACT_KERNEL_MODULE
   use UPDATE_KERNEL_MODULE
   use TEST_KERNEL_MODULE
+  use OPS_FORTRAN_HDF5_DECLARATIONS
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -113,7 +114,7 @@ program SHSGC
   a2(3) = 3.0_8/5.0_8
 
 
-  call ops_init(2)
+  call ops_init(1)
 
 
   call ops_decl_block(1, shsgc_grid, "shsgc grid")
@@ -318,6 +319,8 @@ program SHSGC
   end if
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+  call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
+  call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
 
   call ops_exit( )
 

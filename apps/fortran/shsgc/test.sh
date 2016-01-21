@@ -1,23 +1,49 @@
 #!/bin/bash
 
 cd ../../../ops/fortran
-source ../ruby_intel_source
+source ../source_intel
 make
 cd -
 make
-#============================ Test SHSGC ==========================================================
+
+
+#============================ Test SHSGC Intel Compilers ==========================================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./shsgc_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=10 ./shsgc_openmp > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./shsgc_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./shsgc_mpi_openmp > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 22 ./shsgc_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi > perf_out
+grep "RMS =" perf_out
+grep "Total Wall time" perf_out
+rm perf_out
+
+
+cd $OPS_INSTALL_PATH/fortran
+source ../source_pgi_15.1
+make
+cd -
+make clean
+make
+#============================ Test SHSGC PGI Compilers ==========================================================
+echo '============> Running OpenMP'
+KMP_AFFINITY=compact OMP_NUM_THREADS=10 ./shsgc_openmp > perf_out
+grep "RMS =" perf_out
+grep "Total Wall time" perf_out
+rm perf_out
+echo '============> Running MPI+OpenMP'
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./shsgc_mpi_openmp > perf_out
+grep "RMS =" perf_out
+grep "Total Wall time" perf_out
+rm perf_out
+echo '============> Running MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi > perf_out
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
@@ -36,13 +62,6 @@ MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_cuda -gpudirect OP
 grep "RMS =" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
-
-
-cd -
-source ../ruby_pgi_source
-make clean
-make
-cd -
 make shsgc_openacc
 make shsgc_mpi_openacc
 echo '============> Running OpenACC'

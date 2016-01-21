@@ -284,11 +284,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
         dat->name, block->name);
 
-	  if(strcmp(dat->type,"double") == 0)
+	  if(strcmp(dat->type,"double") == 0 || strcmp(dat->type,"real(8)") == 0)
         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
-      else if(strcmp(dat->type,"float") == 0)
+      else if(strcmp(dat->type,"float") == 0 || strcmp(dat->type,"real(4)") || strcmp(dat->type,"real") == 0)
         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_FLOAT,dat->data);
-      else if(strcmp(dat->type,"int") == 0)
+      else if(strcmp(dat->type,"int") == 0 || strcmp(dat->type,"int(4)")  || strcmp(dat->type,"integer(4)") == 0)
          H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_INT,dat->data);
       else if(strcmp(dat->type,"long") == 0)
          H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LONG,dat->data);
@@ -710,3 +710,35 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
   return created_dat;
 
  }
+
+/*******************************************************************************
+* Routine to dump all ops_blocks, ops_dats etc to a named
+* HDF5 file
+*******************************************************************************/
+// --- This routine is identical to the sequential routine in ops_hdf5.c
+void ops_dump_to_hdf5(char const *file_name) {
+
+  ops_dat_entry *item;
+  for ( int n = 0; n < OPS_block_index; n++ ) {
+    printf ( "Dumping block %15s to HDF5 file %s\n", OPS_block_list[n].block->name, file_name);
+    ops_fetch_block_hdf5_file(OPS_block_list[n].block, file_name);
+  }
+
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    printf ( "Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+    if (item->dat->e_dat != 1) //currently cannot write edge dats .. need to fix this
+      ops_fetch_dat_hdf5_file(item->dat, file_name);
+  }
+
+  for ( int i = 0; i < OPS_stencil_index; i++ ) {
+    printf ( "Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name, file_name);
+    ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
+  }
+
+  printf("halo index = %d \n",OPS_halo_index);
+  for (int i = 0; i < OPS_halo_index; i++) {
+    printf ( "Dumping halo %15s--%15s to HDF5 file %s\n",
+    OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
+    ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
+  }
+}
