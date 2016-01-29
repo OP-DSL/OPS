@@ -94,7 +94,9 @@ void cutilDeviceInit( int argc, char ** argv )
   }
 
   // Test we have access to a device
-  float *test;
+
+  //This commented out test does not work with CUDA versions above 6.5
+  /*float *test;
   cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
   if (err != cudaSuccess) {
     OPS_hybrid_gpu = 0;
@@ -113,6 +115,32 @@ void cutilDeviceInit( int argc, char ** argv )
     printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
   } else {
     //printf ( "\n Using CPU\n" );
+  }*/
+
+  float *test;
+  OPS_hybrid_gpu = 0;
+  for (int i = 0; i < deviceCount; i++) {
+    cudaError_t err = cudaSetDevice(i);
+    if (err == cudaSuccess) {
+      cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
+      if (err == cudaSuccess) {
+        OPS_hybrid_gpu = 1;
+        break;
+      }
+    }
+  }
+  if (OPS_hybrid_gpu) {
+    cudaFree(test);
+
+    cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+
+    int deviceId = -1;
+    cudaGetDevice(&deviceId);
+    cudaDeviceProp_t deviceProp;
+    cutilSafeCall ( cudaGetDeviceProperties ( &deviceProp, deviceId ) );
+    printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
+  } else {
+    //printf ( "\n Using CPU on rank %d\n",rank );
   }
 }
 

@@ -29,3 +29,5 @@ cd ../apps/fortran/shsgc
 ./test.sh
 cd ../poisson
 ./test.sh
+cd ../multiDim
+./test.sh
