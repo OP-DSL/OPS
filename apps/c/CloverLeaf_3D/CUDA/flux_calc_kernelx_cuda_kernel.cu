@@ -262,9 +262,9 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[42].mpi_time += t2-t1;
-    OPS_kernels[42].transfer += ops_compute_transfer2(dim, start, end, &arg0);
-    OPS_kernels[42].transfer += ops_compute_transfer2(dim, start, end, &arg1);
-    OPS_kernels[42].transfer += ops_compute_transfer2(dim, start, end, &arg2);
-    OPS_kernels[42].transfer += ops_compute_transfer2(dim, start, end, &arg3);
+    OPS_kernels[42].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[42].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[42].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[42].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }

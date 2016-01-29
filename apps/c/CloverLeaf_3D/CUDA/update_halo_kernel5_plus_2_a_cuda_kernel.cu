@@ -208,7 +208,7 @@ void ops_par_loop_update_halo_kernel5_plus_2_a(char const *name, ops_block block
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[130].mpi_time += t2-t1;
-    OPS_kernels[130].transfer += ops_compute_transfer2(dim, start, end, &arg0);
-    OPS_kernels[130].transfer += ops_compute_transfer2(dim, start, end, &arg1);
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

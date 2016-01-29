@@ -450,13 +450,13 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block, int
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[17].mpi_time += t2-t1;
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg0);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg1);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg2);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg3);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg4);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg5);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg6);
-    OPS_kernels[17].transfer += ops_compute_transfer2(dim, start, end, &arg7);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg7);
   }
 }

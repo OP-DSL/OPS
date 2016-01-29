@@ -163,6 +163,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[38].mpi_time += t1-t2;
-    OPS_kernels[38].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
