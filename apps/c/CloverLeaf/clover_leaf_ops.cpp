@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 {
 
 
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
   ops_printf(" Clover version %f\n", g_version);
 
 
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
   ops_timers(&ct1, &et1);
 
   if(profiler_on == 1) {
-
+    ops_timing_output(stdout);
 
     process_profile();
   }
