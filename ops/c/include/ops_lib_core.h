@@ -372,7 +372,7 @@ void ops_get_data( ops_dat dat );
 
 void ops_timing_realloc ( int, const char * );
 void ops_timers_core( double *cpu, double *et );
-float ops_compute_transfer(int dims, int *range, ops_arg *arg);
+float ops_compute_transfer(int dims, int* start, int* end, ops_arg *arg);
 
 void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_1d(int arg_idx, int idx0, int dim0);

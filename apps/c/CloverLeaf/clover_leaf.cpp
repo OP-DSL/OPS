@@ -222,7 +222,7 @@ int main(int argc, char **argv)
   ops_timers(&ct1, &et1);
 
   if(profiler_on == 1) {
-    //ops_timing_output(stdout); // print output to STDOUT
+    ops_timing_output(stdout); // print output to STDOUT
     //ops_timing_output(g_out);
     process_profile();
   }

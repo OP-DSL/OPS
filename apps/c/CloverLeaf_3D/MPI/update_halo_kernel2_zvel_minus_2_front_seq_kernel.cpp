@@ -194,7 +194,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[104].mpi_time += t1-t2;
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

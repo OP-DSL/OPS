@@ -224,8 +224,8 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[0].mpi_time += t2-t1;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg3);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg4);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }

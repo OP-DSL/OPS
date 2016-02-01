@@ -244,9 +244,9 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block, int dim
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[22].mpi_time += t2-t1;
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg1);
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg2);
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg3);
+    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }

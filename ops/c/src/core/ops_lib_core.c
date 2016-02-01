@@ -937,7 +937,7 @@ void ops_timing_output(FILE *stream)
     char buf2[180];
     sprintf(buf,"Name");
     for (int i = 4; i < maxlen;i++) strcat(buf," ");
-    ops_fprintf(stream,"\n\n%s  Count Time     MPI-time Bandwidth (GB/s)\n",buf);
+    ops_fprintf(stream,"\n\n%s  Count Time     MPI-time     Bandwidth(GB/s)\n",buf);
 
     sprintf(buf,"");
     for (int i = 0; i < maxlen+31;i++) strcat(buf,"-");
@@ -956,7 +956,7 @@ void ops_timing_output(FILE *stream)
       sprintf(buf2,"%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count, moments_time[0],
         sqrt(moments_time[1] - moments_time[0]*moments_time[0]),
         moments_mpi_time[0], sqrt(moments_mpi_time[1] - moments_mpi_time[0]*moments_mpi_time[0]),
-        OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+        OPS_kernels[k].transfer/(OPS_kernels[k].time*1000*1000*1000));
 
       //sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
       //  OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
@@ -1011,11 +1011,21 @@ ops_timing_realloc ( int kernel, const char *name )
   }
 }
 
-float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
+/*float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
   float size = 1.0f;
   for (int i = 0; i < dims; i++) {
     if (arg->stencil->stride[i] != 0)
       size *= (range[2*i+1]-range[2*i]);
+  }
+  size *= arg->dat->elem_size*((arg->argtype==OPS_READ || arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
+  return size;
+}*/
+
+float ops_compute_transfer(int dims, int* start, int* end, ops_arg *arg) {
+  float size = 1.0f;
+  for (int i = 0; i < dims; i++) {
+    if (arg->stencil->stride[i] != 0 && (end[i]-start[i]) > 0)
+        size *= end[i]-start[i];
   }
   size *= arg->dat->elem_size*((arg->argtype==OPS_READ || arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
   return size;
