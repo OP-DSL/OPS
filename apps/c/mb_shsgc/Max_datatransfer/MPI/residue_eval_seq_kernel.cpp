@@ -216,11 +216,11 @@ void ops_par_loop_residue_eval(char const *name, ops_block block, int dim, int* 
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[5].mpi_time += t1-t2;
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg2);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg3);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg4);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg5);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }

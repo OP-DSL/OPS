@@ -212,7 +212,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[4].mpi_time += t2-t1;
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
