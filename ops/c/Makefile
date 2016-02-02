@@ -226,7 +226,8 @@ mpi: mklib core $(OBJ)/ops_lib_core.o
 
 hdf5_mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_hdf5.c -o $(OBJ)/ops_mpi_hdf5.o
-	ar -r $(LIB)/libops_hdf5_mpi.a $(OBJ)/ops_mpi_hdf5.o
+	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_checkpoint.c -o $(OBJ)/ops_mpi_checkpoint.o
+	ar -r $(LIB)/libops_hdf5_mpi.a $(OBJ)/ops_mpi_hdf5.o $(OBJ)/ops_mpi_checkpoint.o
 
 mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) \

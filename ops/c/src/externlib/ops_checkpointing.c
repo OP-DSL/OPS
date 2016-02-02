@@ -36,6 +36,10 @@
   */
 
 #ifdef CHECKPOINTING
+#define H5Dopen_vers 2
+#define H5Acreate_vers 2
+#define H5Dcreate_vers 2
+
 #include <hdf5.h>
 #include <hdf5_hl.h>
 #endif
@@ -68,6 +72,7 @@ extern "C" {
 // Internal function definitions
 void ops_download_dat(ops_dat dat);
 void ops_upload_dat(ops_dat dat);
+<<<<<<< HEAD
 bool ops_checkpointing_filename(const char *file_name, char *filename_out,
                                 char *filename_out2);
 void ops_checkpointing_calc_range(ops_dat dat, const int *range,
@@ -77,7 +82,14 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
                                       int *rm_type, int *rm_elems,
                                       char **rm_data, int **rm_range);
 
-// checkpoint and execution progress information
+extern int ops_checkpoint_mpi;
+void ops_checkpoint_mpi_open(const char *file_name);
+void ops_checkpoint_mpi_close();
+void ops_checkpoint_mpi_ctrldump(hid_t file_out);
+void ops_checkpoint_mpi_save_partial(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data);
+void ops_checkpoint_mpi_save_full(ops_dat dat, hid_t outfile, int size, char *data);
+
+//checkpoint and execution progress information
 int ops_call_counter = 0;
 int ops_backup_point = -1;
 int ops_best_backup_point = -1;
@@ -417,20 +429,24 @@ void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
     return;
   double t1, t2, c1;
   ops_timers_core(&c1, &t1);
-  hsize_t dims[1];
-  dims[0] = size;
-  if (strcmp(dat->type, "int") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_INT, data));
-  } else if (strcmp(dat->type, "float") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_FLOAT, data));
-  } else if (strcmp(dat->type, "double") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
+  if (ops_checkpoint_mpi) {
+    ops_checkpoint_mpi_save_full(dat, outfile, size, data);
   } else {
-    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-    exit(-1);
+    hsize_t dims[1];
+    dims[0] = size;
+    if (strcmp(dat->type,"int")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_INT, data));
+    } else if (strcmp(dat->type,"float")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_FLOAT, data));
+    } else if (strcmp(dat->type,"double")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
+    } else {
+      printf("Unsupported data type in ops_arg_dat() %s\n", dat->name);
+      exit(-1);
+    }
   }
   ops_timers_core(&c1, &t2);
   ops_chk_write += t2 - t1;
@@ -442,27 +458,31 @@ void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size,
     return;
   double t1, t2, c1;
   ops_timers_core(&c1, &t1);
-  hsize_t dims[1];
-  dims[0] = size;
-  if (strcmp(dat->type, "int") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_INT, data));
-  } else if (strcmp(dat->type, "float") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_FLOAT, data));
-  } else if (strcmp(dat->type, "double") == 0) {
-    check_hdf5_error(
-        H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
+  if (ops_checkpoint_mpi) {
+    ops_checkpoint_mpi_save_partial(dat, outfile, size, saved_range, data);
   } else {
-    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-    exit(-1);
-  }
+    hsize_t dims[1];
+    dims[0] = size;
+    if (strcmp(dat->type,"int")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_INT, data));
+    } else if (strcmp(dat->type,"float")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_FLOAT, data));
+    } else if (strcmp(dat->type,"double")==0) {
+      check_hdf5_error(
+          H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
+    } else {
+      printf("Unsupported data type in ops_arg_dat() %s\n", dat->name);
+      exit(-1);
+    }
 
-  char buf[50];
-  sprintf(buf, "%s_saved_range", dat->name);
-  dims[0] = 2 * OPS_MAX_DIM;
-  check_hdf5_error(
-      H5LTmake_dataset(outfile, buf, 1, dims, H5T_NATIVE_INT, saved_range));
+    char buf[50];
+    sprintf(buf, "%s_saved_range", dat->name);
+    dims[0] = 2*OPS_MAX_DIM;
+    check_hdf5_error(
+        H5LTmake_dataset(outfile, buf, 1, dims, H5T_NATIVE_INT, saved_range));
+  }
   ops_timers_core(&c1, &t2);
   ops_chk_write += t2 - t1;
 }
@@ -715,25 +735,31 @@ void ops_checkpoint_prepare_files() {
     ops_ramdisk_item_queue_tail = 0;
     ops_ramdisk_item_queue_head = 0;
   } else {
-    double cpu, t1, t2, t3, t4;
-    ops_timers_core(&cpu, &t3);
-    if (file_exists(filename))
-      remove(filename);
-    if (ops_duplicate_backup && file_exists(filename_dup))
-      remove(filename_dup);
-    ops_timers_core(&cpu, &t4);
-    if (OPS_diags > 5)
-      printf("Removed previous file %g\n", t4 - t3);
+    if (ops_checkpoint_mpi) {
+      double cpu,t1,t2,t3,t4;
+      ops_timers_core(&cpu, &t3);
+      ops_checkpoint_mpi_open(filename);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5) printf("Opened new file %g\n",t4-t3);
+    } else {
+      double cpu,t1,t2,t3,t4;
+      ops_timers_core(&cpu, &t3);
+      if (file_exists(filename)) remove(filename);
+      if (ops_duplicate_backup && file_exists(filename_dup))
+        remove(filename_dup);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5)
+        printf("Removed previous file %g\n",t4-t3);
 
-    // where we start backing up stuff
-    ops_timers_core(&cpu, &t3);
-    file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    if (ops_duplicate_backup)
-      file_dup =
-          H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    ops_timers_core(&cpu, &t4);
-    if (OPS_diags > 5)
-      printf("Opened new file %g\n", t4 - t3);
+      //where we start backing up stuff
+      ops_timers_core(&cpu, &t3);
+      file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      if (ops_duplicate_backup)
+        file_dup = H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      ops_timers_core(&cpu, &t4);
+      if (OPS_diags>5)
+        printf("Opened new file %g\n",t4-t3);
+    }
   }
 }
 
@@ -745,6 +771,9 @@ void ops_checkpoint_complete() {
     ops_ramdisk_ctrl_finish = 1;
   else {
 #endif
+  if (ops_checkpoint_mpi) {
+    ops_checkpoint_mpi_close();
+  } else {
     check_hdf5_error(H5Fclose(file));
     if (ops_lock_file)
       ops_create_lock(filename);
@@ -752,6 +781,7 @@ void ops_checkpoint_complete() {
       check_hdf5_error(H5Fclose(file_dup));
     if (ops_duplicate_backup && ops_lock_file)
       ops_create_lock(filename_dup);
+  }
 #ifdef OPS_CHK_THREAD
   }
 #endif
@@ -771,36 +801,41 @@ typedef struct {
 ops_checkpoint_inmemory_control ops_inm_ctrl;
 
 void ops_ctrldump(hid_t file_out) {
+<<<<<<< HEAD
   if (ops_checkpoint_inmemory)
     return;
-  hsize_t dims[1];
-  dims[0] = 1;
-  check_hdf5_error(H5LTmake_dataset(file_out, "ops_backup_point", 1, dims,
-                                    H5T_NATIVE_INT,
-                                    &ops_inm_ctrl.ops_backup_point));
-  check_hdf5_error(H5LTmake_dataset(file_out, "ops_best_backup_point", 1, dims,
-                                    H5T_NATIVE_INT,
-                                    &ops_inm_ctrl.ops_best_backup_point));
-  dims[0] = ops_inm_ctrl.reduction_state_size;
-  check_hdf5_error(H5LTmake_dataset(file_out, "reduction_state", 1, dims,
-                                    H5T_NATIVE_CHAR,
-                                    ops_inm_ctrl.reduction_state));
-  free(ops_inm_ctrl.reduction_state);
-  ops_inm_ctrl.reduction_state = NULL;
-  if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
-    dims[0] = ops_inm_ctrl.OPS_checkpointing_payload_nbytes;
-    check_hdf5_error(H5LTmake_dataset(file_out, "OPS_checkpointing_payload", 1,
-                                      dims, H5T_NATIVE_CHAR,
-                                      ops_inm_ctrl.OPS_checkpointing_payload));
+  if (ops_checkpoint_mpi)
+    ops_checkpoint_mpi_ctrldump(file_out);
+  else {
+    hsize_t dims[1];
+    dims[0] = 1;
+    check_hdf5_error(H5LTmake_dataset(file_out, "ops_backup_point", 1, dims,
+          H5T_NATIVE_INT,
+          &ops_inm_ctrl.ops_backup_point));
+    check_hdf5_error(H5LTmake_dataset(file_out, "ops_best_backup_point", 1, dims,
+          H5T_NATIVE_INT,
+          &ops_inm_ctrl.ops_best_backup_point));
+    dims[0] = ops_inm_ctrl.reduction_state_size;
+    check_hdf5_error(H5LTmake_dataset(file_out, "reduction_state", 1, dims,
+          H5T_NATIVE_CHAR,
+          ops_inm_ctrl.reduction_state));
+    free(ops_inm_ctrl.reduction_state);
+    ops_inm_ctrl.reduction_state = NULL;
+    if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
+      dims[0] = ops_inm_ctrl.OPS_checkpointing_payload_nbytes;
+      check_hdf5_error(H5LTmake_dataset(file_out, "OPS_checkpointing_payload", 1,
+            dims, H5T_NATIVE_CHAR,
+            ops_inm_ctrl.OPS_checkpointing_payload));
+    }
+    dims[0] = 1;
+    check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_offset", 1, dims,
+          H5T_NATIVE_INT,
+          &ops_inm_ctrl.OPS_chk_red_offset));
+    dims[0] = ops_inm_ctrl.OPS_chk_red_offset;
+    check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_storage", 1, dims,
+          H5T_NATIVE_CHAR,
+          ops_inm_ctrl.OPS_chk_red_storage));
   }
-  dims[0] = 1;
-  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_offset", 1, dims,
-                                    H5T_NATIVE_INT,
-                                    &ops_inm_ctrl.OPS_chk_red_offset));
-  dims[0] = ops_inm_ctrl.OPS_chk_red_offset;
-  check_hdf5_error(H5LTmake_dataset(file_out, "OPS_chk_red_storage", 1, dims,
-                                    H5T_NATIVE_CHAR,
-                                    ops_inm_ctrl.OPS_chk_red_storage));
 }
 
 void ops_chkp_sig_handler(int signo) {
@@ -948,8 +983,15 @@ bool ops_checkpointing_init(const char *file_name, double interval,
         2.0; // WHAT SHOULD THIS BE? - the time it takes to back up everything
   double cpu;
   ops_timers_core(&cpu, &ops_last_checkpoint);
-  ops_duplicate_backup =
+  if (ops_checkpoint_mpi) {
+    ops_duplicate_backup=false;
+    sprintf(filename,"%s",file_name);
+  }
+  else {
+    ops_duplicate_backup =
       ops_checkpointing_filename(file_name, filename, filename_dup);
+  }
+
 
   OPS_dat_ever_written = (char *)malloc(OPS_dat_index * sizeof(char));
   OPS_dat_status = (ops_checkpoint_types *)malloc(OPS_dat_index *
@@ -1621,6 +1663,11 @@ void ops_checkpointing_exit() {
     ops_statistics_exit();
 
 #ifdef OPS_CHK_THREAD
+    //if spin-off thread, and it is still working, we need to wait for it to finish
+    if (ops_thread_offload) {
+      if (OPS_diags>2 && ops_ramdisk_ctrl_finish) printf("Main thread waiting for previous checkpoint completion\n");
+      while(ops_ramdisk_ctrl_finish) usleep(10000);
+    }
     if (ops_thread_offload && ops_ramdisk_initialised) {
       ops_ramdisk_ctrl_exit = 1;
       pthread_join(thread, NULL);

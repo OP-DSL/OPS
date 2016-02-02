@@ -58,6 +58,7 @@ ops_reduction *OPS_reduction_list = NULL;
 int OPS_enable_checkpointing = 0;
 int ops_thread_offload = 0;
 int ops_checkpoint_inmemory = 0;
+int ops_checkpoint_mpi = 0;
 int ops_lock_file = 0;
 int ops_enable_tiling = 0;
 int ops_cache_size = 0;
@@ -246,6 +247,11 @@ void ops_init_core(int argc, char **argv, int diags) {
       OPS_ranks_per_node = atoi ( argv[n] + 15 );
       ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n",
     OPS_ranks_per_node);
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_MPI", 18 ) == 0 )
+    {
+      ops_checkpoint_mpi = 1;
+      ops_printf ( "\n OPS Checkpointing using MPI I/O\n");
     }
     else if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
     {
