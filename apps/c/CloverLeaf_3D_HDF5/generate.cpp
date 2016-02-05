@@ -51,5 +51,4 @@ void generate()
     ops_fetch_dat_hdf5_file(xvel0, "test_cloverdata.h5");
     ops_fetch_dat_hdf5_file(yvel0, "test_cloverdata.h5");
     ops_fetch_dat_hdf5_file(zvel0, "test_cloverdata.h5");
-
 }
