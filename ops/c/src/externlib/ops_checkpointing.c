@@ -1684,14 +1684,20 @@ void ops_checkpointing_exit() {
     }
 
     if (backup_state == OPS_BACKUP_IN_PROCESS) {
-      check_hdf5_error(H5Fclose(file));
-      if (ops_duplicate_backup)
-        check_hdf5_error(H5Fclose(file_dup));
+      if (ops_checkpoint_mpi)
+        ops_checkpoint_mpi_close();
+      else {
+        check_hdf5_error(H5Fclose(file));
+        if (ops_duplicate_backup)
+          check_hdf5_error(H5Fclose(file_dup));
+      }
     }
 
-    remove(filename);
-    if (ops_duplicate_backup)
-      remove(filename_dup);
+    if (!ops_checkpoint_mpi || ops_is_root()) {
+      remove(filename);
+      if (ops_duplicate_backup)
+        remove(filename_dup);
+    }
 
     if (ops_lock_file)
       ops_create_lock_done(filename);

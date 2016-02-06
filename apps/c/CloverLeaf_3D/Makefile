@@ -77,7 +77,7 @@ ifeq ($(OPS_COMPILER),cray)
   CPP       = CC
     CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS   = -O2
+  CCFLAGS   = -O0
 else
   CCFLAGS   = -O3
 endif

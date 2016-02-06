@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     if (step == 70) {
     }
   }
-
+  ops_checkpointing_exit();
   ops_timers(&ct1, &et1);
   if (profiler_on == 1) {
     ops_timing_output(stdout);
@@ -167,5 +167,6 @@ int main(int argc, char **argv) {
   ops_fprintf(g_out, "\nTotal Wall time %lf\n", et1 - et0);
 
   fclose(g_out);
+
   ops_exit();
 }
