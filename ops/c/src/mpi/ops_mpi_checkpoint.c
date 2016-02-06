@@ -51,11 +51,11 @@ void ops_checkpoint_mpi_open(const char *file_name) {
     }
     //Create a new file collectively and release property list identifier.
     file_id_in = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Fclose(file_id_in);
-  }
+    //H5Fclose(file_id_in);
+  } else {
 
   file_id_in = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
-
+  }
 }
 
 void ops_checkpoint_mpi_close() {
