@@ -18,7 +18,7 @@ void buildOpenCLKernels_calc_dt_kernel(int xdim0, int xdim1, int xdim2, int xdim
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/calc_dt_kernel.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/calc_dt_kernel.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_calc_dt_kernel(int xdim0, int xdim1, int xdim2, int xdim
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d  -Dxdim1_calc_dt_kernel=%d  -Dxdim2_calc_dt_kernel=%d  -Dxdim3_calc_dt_kernel=%d  -Dxdim4_calc_dt_kernel=%d  -Dxdim5_calc_dt_kernel=%d  -Dxdim6_calc_dt_kernel=%d  -Dxdim7_calc_dt_kernel=%d  -Dxdim8_calc_dt_kernel=%d  -Dxdim9_calc_dt_kernel=%d  -Dxdim10_calc_dt_kernel=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6,xdim7,xdim8,xdim9,xdim10);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -173,17 +173,6 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
-  int dat7 = args[7].dat->elem_size;
-  int dat8 = args[8].dat->elem_size;
-  int dat9 = args[9].dat->elem_size;
-  int dat10 = args[10].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

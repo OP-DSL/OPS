@@ -18,7 +18,7 @@ void buildOpenCLKernels_test_kernel(int xdim0) {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/test_kernel.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/test_kernel.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_test_kernel(int xdim0) {
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_test_kernel=%d ", pPath, 32,xdim0);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -181,7 +181,6 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
 
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = args[0].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

@@ -18,7 +18,7 @@ void buildOpenCLKernels_poisson_kernel_populate(int xdim3, int xdim4, int xdim5)
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/poisson_kernel_populate.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/poisson_kernel_populate.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_poisson_kernel_populate(int xdim3, int xdim4, int xdim5)
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim3_poisson_kernel_populate=%d  -Dxdim4_poisson_kernel_populate=%d  -Dxdim5_poisson_kernel_populate=%d ", pPath, 32,xdim3,xdim4,xdim5);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -172,9 +172,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
 
 
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

@@ -18,7 +18,7 @@ void buildOpenCLKernels_advec_mom_kernel2_y(int xdim0, int ydim0, int xdim1, int
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/advec_mom_kernel2_y.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/advec_mom_kernel2_y.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_advec_mom_kernel2_y(int xdim0, int ydim0, int xdim1, int
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_advec_mom_kernel2_y=%d  -Dydim0_advec_mom_kernel2_y=%d  -Dxdim1_advec_mom_kernel2_y=%d  -Dydim1_advec_mom_kernel2_y=%d  -Dxdim2_advec_mom_kernel2_y=%d  -Dydim2_advec_mom_kernel2_y=%d  -Dxdim3_advec_mom_kernel2_y=%d  -Dydim3_advec_mom_kernel2_y=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -169,10 +169,6 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

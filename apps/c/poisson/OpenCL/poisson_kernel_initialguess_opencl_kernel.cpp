@@ -18,7 +18,7 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/poisson_kernel_initialguess.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/poisson_kernel_initialguess.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_initialguess=%d ", pPath, 32,xdim0);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -161,7 +161,6 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
 
 
-  int dat0 = args[0].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

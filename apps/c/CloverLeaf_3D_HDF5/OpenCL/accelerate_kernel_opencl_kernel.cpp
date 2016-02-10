@@ -18,7 +18,7 @@ void buildOpenCLKernels_accelerate_kernel(int xdim0, int ydim0, int xdim1, int y
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/accelerate_kernel.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/accelerate_kernel.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_accelerate_kernel(int xdim0, int ydim0, int xdim1, int y
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_accelerate_kernel=%d  -Dydim0_accelerate_kernel=%d  -Dxdim1_accelerate_kernel=%d  -Dydim1_accelerate_kernel=%d  -Dxdim2_accelerate_kernel=%d  -Dydim2_accelerate_kernel=%d  -Dxdim3_accelerate_kernel=%d  -Dydim3_accelerate_kernel=%d  -Dxdim4_accelerate_kernel=%d  -Dydim4_accelerate_kernel=%d  -Dxdim5_accelerate_kernel=%d  -Dydim5_accelerate_kernel=%d  -Dxdim6_accelerate_kernel=%d  -Dydim6_accelerate_kernel=%d  -Dxdim7_accelerate_kernel=%d  -Dydim7_accelerate_kernel=%d  -Dxdim8_accelerate_kernel=%d  -Dydim8_accelerate_kernel=%d  -Dxdim9_accelerate_kernel=%d  -Dydim9_accelerate_kernel=%d  -Dxdim10_accelerate_kernel=%d  -Dydim10_accelerate_kernel=%d  -Dxdim11_accelerate_kernel=%d  -Dydim11_accelerate_kernel=%d  -Dxdim12_accelerate_kernel=%d  -Dydim12_accelerate_kernel=%d  -Dxdim13_accelerate_kernel=%d  -Dydim13_accelerate_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -191,20 +191,6 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
-  int dat7 = args[7].dat->elem_size;
-  int dat8 = args[8].dat->elem_size;
-  int dat9 = args[9].dat->elem_size;
-  int dat10 = args[10].dat->elem_size;
-  int dat11 = args[11].dat->elem_size;
-  int dat12 = args[12].dat->elem_size;
-  int dat13 = args[13].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

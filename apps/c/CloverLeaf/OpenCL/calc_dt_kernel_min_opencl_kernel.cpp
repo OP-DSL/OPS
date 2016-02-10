@@ -18,7 +18,7 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0) {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/calc_dt_kernel_min.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/calc_dt_kernel_min.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0) {
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_min=%d ", pPath, 32,xdim0);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -182,7 +182,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = args[0].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

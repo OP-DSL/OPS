@@ -18,7 +18,7 @@ void buildOpenCLKernels_tvd_kernel(int xdim0, int xdim1) {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/tvd_kernel.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/tvd_kernel.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_tvd_kernel(int xdim0, int xdim1) {
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_tvd_kernel=%d  -Dxdim1_tvd_kernel=%d ", pPath, 32,xdim0,xdim1);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -161,8 +161,6 @@ void ops_par_loop_tvd_kernel(char const *name, ops_block block, int dim, int* ra
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
