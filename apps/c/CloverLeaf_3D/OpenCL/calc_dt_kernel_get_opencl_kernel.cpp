@@ -18,7 +18,7 @@ void buildOpenCLKernels_calc_dt_kernel_get(int xdim0, int ydim0, int xdim1, int 
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/calc_dt_kernel_get.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/calc_dt_kernel_get.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_calc_dt_kernel_get(int xdim0, int ydim0, int xdim1, int 
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_get=%d  -Dydim0_calc_dt_kernel_get=%d  -Dxdim1_calc_dt_kernel_get=%d  -Dydim1_calc_dt_kernel_get=%d  -Dxdim4_calc_dt_kernel_get=%d  -Dydim4_calc_dt_kernel_get=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim4,ydim4);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -215,9 +215,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

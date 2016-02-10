@@ -26,7 +26,7 @@ rm perf_out
 
 
 cd $OPS_INSTALL_PATH/fortran
-source ../source_pgi_15.1
+source ../source_pgi_15.10
 make
 cd -
 make clean

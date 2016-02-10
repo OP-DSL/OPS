@@ -138,8 +138,7 @@ void ops_par_loop_advec_mom_kernel2_z(char const *, ops_block, int , int*,
 void advec_mom(int which_vel, int sweep_number, int dir)
 {
 
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
+
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;
@@ -148,8 +147,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
   int z_max = field.z_max;
 
   int rangexyz[] = {x_min-2,x_max+2,y_min-2,y_max+2,z_min-2,z_max+2};
-
-  int mom_sweep;
   ops_dat vel1;
 
   if( which_vel == 1) {
@@ -210,11 +207,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
                  ops_arg_dat(volume, 1, S3D_000, "double", OPS_READ),
                  ops_arg_dat(vol_flux_z, 1, S3D_000_00P1, "double", OPS_READ));
   }
-
-  int range_partx_party_1[] = {x_min-1,x_max+2,y_min,y_max+1};
-
-  int range_fully_party_1[] = {x_min,x_max+1,y_min-2,y_max+2};
-  int range_partx_party_2[] = {x_min,x_max+1,y_min-1,y_max+2};
 
   if (dir == 1) {
     if (which_vel == 1) {

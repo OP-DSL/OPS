@@ -544,7 +544,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"""+kernel_list_text+"""};
+    char* source_filename[1] = {(char*)"""+kernel_list_text+"""};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -588,7 +588,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -868,9 +868,9 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
 
 
     #set up initial pointers
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
+    #for n in range (0, nargs):
+    #  if arg_typ[n] == 'ops_arg_dat':
+    #    code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
 
     comm('')
