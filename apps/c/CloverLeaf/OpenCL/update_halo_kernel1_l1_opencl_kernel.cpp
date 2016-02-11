@@ -18,7 +18,7 @@ void buildOpenCLKernels_update_halo_kernel1_l1(int xdim0, int xdim1, int xdim2, 
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/update_halo_kernel1_l1.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/update_halo_kernel1_l1.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_update_halo_kernel1_l1(int xdim0, int xdim1, int xdim2, 
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel1_l1=%d  -Dxdim1_update_halo_kernel1_l1=%d  -Dxdim2_update_halo_kernel1_l1=%d  -Dxdim3_update_halo_kernel1_l1=%d  -Dxdim4_update_halo_kernel1_l1=%d  -Dxdim5_update_halo_kernel1_l1=%d  -Dxdim6_update_halo_kernel1_l1=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5,xdim6);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -179,13 +179,6 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block, int 
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg7.data)[d] = arg7h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

@@ -18,7 +18,7 @@ void buildOpenCLKernels_PdV_kernel_nopredict(int xdim0, int ydim0, int xdim1, in
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/PdV_kernel_nopredict.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/PdV_kernel_nopredict.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_PdV_kernel_nopredict(int xdim0, int ydim0, int xdim1, in
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_PdV_kernel_nopredict=%d  -Dydim0_PdV_kernel_nopredict=%d  -Dxdim1_PdV_kernel_nopredict=%d  -Dydim1_PdV_kernel_nopredict=%d  -Dxdim2_PdV_kernel_nopredict=%d  -Dydim2_PdV_kernel_nopredict=%d  -Dxdim3_PdV_kernel_nopredict=%d  -Dydim3_PdV_kernel_nopredict=%d  -Dxdim4_PdV_kernel_nopredict=%d  -Dydim4_PdV_kernel_nopredict=%d  -Dxdim5_PdV_kernel_nopredict=%d  -Dydim5_PdV_kernel_nopredict=%d  -Dxdim6_PdV_kernel_nopredict=%d  -Dydim6_PdV_kernel_nopredict=%d  -Dxdim7_PdV_kernel_nopredict=%d  -Dydim7_PdV_kernel_nopredict=%d  -Dxdim8_PdV_kernel_nopredict=%d  -Dydim8_PdV_kernel_nopredict=%d  -Dxdim9_PdV_kernel_nopredict=%d  -Dydim9_PdV_kernel_nopredict=%d  -Dxdim10_PdV_kernel_nopredict=%d  -Dydim10_PdV_kernel_nopredict=%d  -Dxdim11_PdV_kernel_nopredict=%d  -Dydim11_PdV_kernel_nopredict=%d  -Dxdim12_PdV_kernel_nopredict=%d  -Dydim12_PdV_kernel_nopredict=%d  -Dxdim13_PdV_kernel_nopredict=%d  -Dydim13_PdV_kernel_nopredict=%d  -Dxdim14_PdV_kernel_nopredict=%d  -Dydim14_PdV_kernel_nopredict=%d  -Dxdim15_PdV_kernel_nopredict=%d  -Dydim15_PdV_kernel_nopredict=%d  -Dxdim16_PdV_kernel_nopredict=%d  -Dydim16_PdV_kernel_nopredict=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13,xdim14,ydim14,xdim15,ydim15,xdim16,ydim16);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -198,23 +198,6 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
-  int dat7 = args[7].dat->elem_size;
-  int dat8 = args[8].dat->elem_size;
-  int dat9 = args[9].dat->elem_size;
-  int dat10 = args[10].dat->elem_size;
-  int dat11 = args[11].dat->elem_size;
-  int dat12 = args[12].dat->elem_size;
-  int dat13 = args[13].dat->elem_size;
-  int dat14 = args[14].dat->elem_size;
-  int dat15 = args[15].dat->elem_size;
-  int dat16 = args[16].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

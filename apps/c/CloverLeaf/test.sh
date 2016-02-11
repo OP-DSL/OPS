@@ -65,7 +65,7 @@ rm perf_out
 
 
 cd -
-source ../source_pgi_15.1
+source ../source_pgi_15.10
 make clean
 make
 cd -
@@ -132,7 +132,7 @@ grep "step:   2955" clover.out
 rm perf_out
 
 cd -
-source ../source_pgi_15.1
+source ../source_pgi_15.10
 make clean
 make
 cd -

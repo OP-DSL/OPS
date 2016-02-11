@@ -18,7 +18,7 @@ void buildOpenCLKernels_reset_field_kernel1(int xdim0, int xdim1, int xdim2, int
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/reset_field_kernel1.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/reset_field_kernel1.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_reset_field_kernel1(int xdim0, int xdim1, int xdim2, int
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_reset_field_kernel1=%d  -Dxdim1_reset_field_kernel1=%d  -Dxdim2_reset_field_kernel1=%d  -Dxdim3_reset_field_kernel1=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -164,10 +164,6 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

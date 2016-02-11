@@ -18,7 +18,7 @@ void buildOpenCLKernels_reset_field_kernel2(int xdim0, int ydim0, int xdim1, int
     buildOpenCLKernels();
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {"./OpenCL/reset_field_kernel2.cl"};
+    char* source_filename[1] = {(char*)"./OpenCL/reset_field_kernel2.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
@@ -62,7 +62,7 @@ void buildOpenCLKernels_reset_field_kernel2(int xdim0, int ydim0, int xdim1, int
         else
           sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_reset_field_kernel2=%d  -Dydim0_reset_field_kernel2=%d  -Dxdim1_reset_field_kernel2=%d  -Dydim1_reset_field_kernel2=%d  -Dxdim2_reset_field_kernel2=%d  -Dydim2_reset_field_kernel2=%d  -Dxdim3_reset_field_kernel2=%d  -Dydim3_reset_field_kernel2=%d  -Dxdim4_reset_field_kernel2=%d  -Dydim4_reset_field_kernel2=%d  -Dxdim5_reset_field_kernel2=%d  -Dydim5_reset_field_kernel2=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5);
       else {
-        sprintf("Incorrect OPS_INSTALL_PATH %s\n",pPath);
+        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
         exit(EXIT_FAILURE);
       }
 
@@ -174,12 +174,6 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];

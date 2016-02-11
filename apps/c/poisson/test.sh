@@ -66,7 +66,7 @@ grep "Total Wall time" perf_out
 rm perf_out
 
 cd -
-source ../source_pgi_15.1
+source ../source_pgi_15.10
 make clean
 make
 cd -
@@ -133,7 +133,7 @@ grep "Total Wall time" perf_out
 rm perf_out
 
 cd -
-source ../source_pgi_15.1
+source ../source_pgi_15.10
 make clean
 make cuda
 make mpi_cuda

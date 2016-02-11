@@ -256,6 +256,20 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   //make sure we multiply by the number of data values per element (i.e. dat->dim)
   g_size[1] = g_size[1]*dat->dim;
 
+  hsize_t G_SIZE[block->dims];
+  if(block->dims == 1) {
+    G_SIZE[0] = g_size[0];
+  }
+  else if(block->dims == 2) {
+    G_SIZE[0] = g_size[1];
+    G_SIZE[1] = g_size[0];
+  }
+  else if(block->dims == 3){
+    G_SIZE[0] = g_size[2];
+    G_SIZE[1] = g_size[1];
+    G_SIZE[2] = g_size[0];
+  }
+
   //Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
@@ -285,19 +299,19 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         dat->name, block->name);
 
 	  if(strcmp(dat->type,"double") == 0 || strcmp(dat->type,"real(8)") == 0)
-        H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_DOUBLE,dat->data);
+        H5LTmake_dataset(group_id,dat->name,block->dims,G_SIZE,H5T_NATIVE_DOUBLE,dat->data);
       else if(strcmp(dat->type,"float") == 0 || strcmp(dat->type,"real(4)") || strcmp(dat->type,"real") == 0)
-        H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_FLOAT,dat->data);
+        H5LTmake_dataset(group_id,dat->name,block->dims,G_SIZE,H5T_NATIVE_FLOAT,dat->data);
       else if(strcmp(dat->type,"int") == 0 || strcmp(dat->type,"int(4)")  || strcmp(dat->type,"integer(4)") == 0)
-         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_INT,dat->data);
+         H5LTmake_dataset(group_id,dat->name,block->dims,G_SIZE,H5T_NATIVE_INT,dat->data);
       else if(strcmp(dat->type,"long") == 0)
-         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LONG,dat->data);
+         H5LTmake_dataset(group_id,dat->name,block->dims,G_SIZE,H5T_NATIVE_LONG,dat->data);
       else if(strcmp(dat->type,"long long") == 0)
-         H5LTmake_dataset(group_id,dat->name,block->dims,g_size,H5T_NATIVE_LLONG,dat->data);
-      else {
-		printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
-		exit(-2);
-      }
+         H5LTmake_dataset(group_id,dat->name,block->dims,G_SIZE,H5T_NATIVE_LLONG,dat->data);
+    else {
+		  printf("Unknown type in ops_fetch_dat_hdf5_file()\n");
+		  exit(-2);
+    }
 
 	  //attach attributes to dat
 	  H5LTset_attribute_string(group_id, dat->name, "ops_type", "ops_dat"); //ops type
@@ -308,8 +322,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 	  H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m, block->dims); //d_m
 	  H5LTset_attribute_int(group_id, dat->name, "d_p", dat->d_p, block->dims); //d_p
 	  H5LTset_attribute_int(group_id, dat->name, "base", dat->base, block->dims); //base
-      H5LTset_attribute_string(group_id, dat->name, "type", dat->type); //type
-    }
+    H5LTset_attribute_string(group_id, dat->name, "type", dat->type); //type
+  }
 
 	H5Gclose(group_id);
 	H5Fclose(file_id);

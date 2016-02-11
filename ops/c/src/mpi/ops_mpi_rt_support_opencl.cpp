@@ -211,7 +211,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
     printf("in packer4 build\n");
   }
 
-  const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
+  //const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
 
   if (halo_buffer_size < halo->count*halo->blocklength) {
     if (halo_buffer_d != NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
@@ -353,7 +353,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, 
 			isbuilt_unpacker4_kernel = true;
 		}
 
-  char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
+  //char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
 
   if (halo_buffer_size < halo->count*halo->blocklength) {
     if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));

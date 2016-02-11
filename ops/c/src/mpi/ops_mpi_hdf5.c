@@ -586,12 +586,27 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the ops_block %s ... creating ops_dat\n",
           dat->name, block->name);
 
+        //transpose global size as on hdf5 file the dims are written transposed
+        hsize_t GBL_SIZE[block->dims];
+        if(block->dims == 1) {
+          GBL_SIZE[0] = gbl_size[0];
+        }
+        else if(block->dims == 2) {
+          GBL_SIZE[0] = gbl_size[1];
+          GBL_SIZE[1] = gbl_size[0];
+        }
+        else if(block->dims == 3){
+          GBL_SIZE[0] = gbl_size[2];
+          GBL_SIZE[1] = gbl_size[1];
+          GBL_SIZE[2] = gbl_size[0];
+        }
+
         //Create the dataspace for the dataset
-        filespace = H5Screate_simple(block->dims, gbl_size, NULL); //space in file
+        filespace = H5Screate_simple(block->dims, GBL_SIZE, NULL); //space in file
 
         // Create chunked dataset
         plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_chunk(plist_id, block->dims, gbl_size); //chunk data set need to be the same size on each proc
+        H5Pset_chunk(plist_id, block->dims, GBL_SIZE); //chunk data set need to be the same size on each proc
 
         //Create the dataset with default properties and close filespace.
         if(strcmp(dat->type,"double") == 0 ||
@@ -1372,9 +1387,23 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
 
+    hsize_t GBL_SIZE[block->dims];
+    if(block->dims == 1) {
+      GBL_SIZE[0] = gbl_size[0];
+    }
+    else if(block->dims == 2) {
+      GBL_SIZE[0] = gbl_size[1];
+      GBL_SIZE[1] = gbl_size[0];
+    }
+    else if(block->dims == 3){
+      GBL_SIZE[0] = gbl_size[2];
+      GBL_SIZE[1] = gbl_size[1];
+      GBL_SIZE[2] = gbl_size[0];
+    }
+
     // Create chunked dataset
     plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(plist_id, block->dims, gbl_size); //chunk data set need to be the same size on each proc
+    H5Pset_chunk(plist_id, block->dims, GBL_SIZE); //chunk data set need to be the same size on each proc
     H5Pclose(plist_id);
 
     //Need to flip the dimensions to accurately read from HDF5 chunk decomposition
