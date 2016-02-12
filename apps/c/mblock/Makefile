@@ -63,7 +63,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS   = -O2 -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS   = -O3 -Kieee -Minline -Minform=severe -Minfo=all
+  CCFLAGS   = -O3 -Kieee -Minline #-Minform=severe -Minfo=all
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp

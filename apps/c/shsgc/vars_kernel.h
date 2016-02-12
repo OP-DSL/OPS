@@ -18,5 +18,4 @@ void vars_kernel(const double* alam, const double* al, const double *gt, double*
 			cf[OPS_ACC_MD4(m,0)] = qf;
 		}
 }
-
 #endif

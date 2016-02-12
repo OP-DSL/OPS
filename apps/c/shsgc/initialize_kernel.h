@@ -21,5 +21,4 @@ void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE
 	rhoin[OPS_ACC4(0)] = gam1 * (rhoE_new[OPS_ACC3(0)] - 0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] / rho_new[OPS_ACC1(0)]);
 
 }
-
 #endif

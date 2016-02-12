@@ -25,5 +25,4 @@ void drhouupdx_kernel(const double *rhou_new, const double* rho_new, const doubl
 			double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
 			rhou_res[OPS_ACC3(0)] = deriv;
 }
-
 #endif

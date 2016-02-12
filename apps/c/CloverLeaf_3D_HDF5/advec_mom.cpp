@@ -40,8 +40,6 @@
 void advec_mom(int which_vel, int sweep_number, int dir)
 {
   //initialize sizes using global values
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;
@@ -51,7 +49,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
 
   int rangexyz[] = {x_min-2,x_max+2,y_min-2,y_max+2,z_min-2,z_max+2}; // full range over grid
 
-  int mom_sweep;
   ops_dat vel1;
 
   if( which_vel == 1) {
@@ -112,12 +109,6 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(volume, 1, S3D_000, "double", OPS_READ),
         ops_arg_dat(vol_flux_z, 1, S3D_000_00P1, "double", OPS_READ));
   }
-
-
-  int range_partx_party_1[] = {x_min-1,x_max+2,y_min,y_max+1}; // partial x range partial y range
-
-  int range_fully_party_1[] = {x_min,x_max+1,y_min-2,y_max+2}; // full y range partial x range
-  int range_partx_party_2[] = {x_min,x_max+1,y_min-1,y_max+2}; // partial x range partial y range
 
   if (dir == 1) {
     if (which_vel == 1) {
@@ -217,6 +208,5 @@ void advec_mom(int which_vel, int sweep_number, int dir)
         ops_arg_dat(work_array2/*node_mass_post*/, 1, S3D_000, "double", OPS_READ),
         ops_arg_dat(work_array3/*node_mass_pre*/, 1, S3D_000, "double", OPS_READ),
         ops_arg_dat(work_array5/*mom_flux*/, 1, S3D_000_00M1, "double", OPS_READ));
-
   }
 }

@@ -18,5 +18,4 @@ void reset_field_kernel2( double *xvel0, const double *xvel1,
   yvel0[OPS_ACC2(0,0,0)]  = yvel1[OPS_ACC3(0,0,0)] ;
   zvel0[OPS_ACC4(0,0,0)]  = zvel1[OPS_ACC5(0,0,0)] ;
 }
-
 #endif

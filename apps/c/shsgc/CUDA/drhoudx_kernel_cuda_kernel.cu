@@ -19,7 +19,7 @@ int ydim1_drhoudx_kernel_h = -1;
 __device__
 
 void drhoudx_kernel(const double *rhou_new, double *rho_res) {
-        double fni = rhou_new[OPS_ACC0(0)];
+
         double fnim1 = rhou_new[OPS_ACC0(-1)];
         double fnim2 = rhou_new[OPS_ACC0(-2)];
         double fnip1 = rhou_new[OPS_ACC0(1)];

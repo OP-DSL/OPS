@@ -10,5 +10,4 @@ void save_kernel(double *rho_old, double *rhou_old, double *rhoE_old,
       rhou_old[OPS_ACC1(0)]=rhou_new[OPS_ACC4(0)];
       rhoE_old[OPS_ACC2(0)]=rhoE_new[OPS_ACC5(0)];
 }
-
 #endif

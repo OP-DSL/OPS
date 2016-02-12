@@ -59,5 +59,4 @@ void field_summary_kernel( const double *volume, const double *density0,
   *press = *press + cell_vol * pressure[OPS_ACC3(0,0,0)];
 
 }
-
 #endif

@@ -11,5 +11,4 @@ void fact_kernel(const double* eff, double *s) {
     s[OPS_ACC_MD1(m,0)] = -fact * (eff[OPS_ACC_MD0(m,0)] - eff[OPS_ACC_MD0(m,-1)]);
   }
 }
-
 #endif
