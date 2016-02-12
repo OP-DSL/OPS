@@ -315,5 +315,4 @@ inline void advec_cell_kernel4_zdir( double *density1, double *energy1,
   energy1[OPS_ACC1(0,0,0)] = post_ener[OPS_ACC9(0,0,0)];
 
 }
-
 #endif

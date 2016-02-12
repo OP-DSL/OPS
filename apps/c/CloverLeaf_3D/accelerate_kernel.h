@@ -64,5 +64,4 @@ void accelerate_kernel( const double *density0, const double *volume,
 
 
 }
-
 #endif

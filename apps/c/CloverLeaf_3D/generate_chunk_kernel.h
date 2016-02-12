@@ -86,6 +86,4 @@ void generate_chunk_kernel( const double *vertexx,
     }
   }
 }
-
-
 #endif

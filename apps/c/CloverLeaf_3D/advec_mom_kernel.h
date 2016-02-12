@@ -279,6 +279,4 @@ inline void advec_mom_kernel2_z( double *vel1, const double *node_mass_post,
   vel1[OPS_ACC0(0,0,0)] = ( vel1[OPS_ACC0(0,0,0)] * node_mass_pre[OPS_ACC2(0,0,0)]  +
     mom_flux[OPS_ACC3(0,0,-1)] - mom_flux[OPS_ACC3(0,0,0)] ) / node_mass_post[OPS_ACC1(0,0,0)];
 }
-
-
 #endif

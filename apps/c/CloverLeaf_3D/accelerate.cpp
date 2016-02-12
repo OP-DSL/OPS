@@ -40,8 +40,6 @@ void accelerate()
   error_condition = 0; // Not used yet due to issue with OpenA reduction
 
   //initialize sizes using global values
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;

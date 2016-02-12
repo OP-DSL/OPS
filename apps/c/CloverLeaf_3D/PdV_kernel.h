@@ -101,5 +101,4 @@ void PdV_kernel_nopredict(const double *xarea, const double *xvel0, const double
   density1[OPS_ACC10(0,0,0)] = density0[OPS_ACC9(0,0,0)] * volume_change[OPS_ACC6(0,0,0)];
 
 }
-
 #endif

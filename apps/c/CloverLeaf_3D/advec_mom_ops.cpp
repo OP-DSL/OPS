@@ -304,5 +304,4 @@ void advec_mom(int which_vel, int sweep_number, int dir)
                  ops_arg_dat(work_array5, 1, S3D_000_00M1, "double", OPS_READ));
 
   }
-
 }

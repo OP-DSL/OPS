@@ -44,26 +44,16 @@ void timestep()
 {
   int jldt, kldt, lldt;
   double dtlp;
-  double x_pos, y_pos, z_pos, xl_pos, yl_pos, zl_pos;
-  char dt_control[8];
+  double x_pos, y_pos, xl_pos, yl_pos, zl_pos;
   char dtl_control[8];
 
   int small = 0;
 
   x_pos  = 0.0;
   y_pos  = 0.0;
-  z_pos  = 0.0;
   xl_pos = 0.0;
   yl_pos = 0.0;
   zl_pos = 0.0;
-
-  //initialize sizes using global values
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
-  int x_min = field.x_min;
-  int x_max = field.x_max;
-  int y_min = field.y_min;
-  int y_max = field.y_max;
 
   ideal_gas(FALSE);
 
@@ -120,7 +110,6 @@ void timestep()
   double dt_temp = g_big;
   if (dtlp <= dt_temp) {
       dt_temp = dtlp;
-      //memcpy(dt_control, dtl_control, sizeof(char)*8);
       x_pos = xl_pos;
       y_pos = yl_pos;
       jdt = jldt;
@@ -145,5 +134,4 @@ void timestep()
   }
 
   dtold = dt;
-
 }

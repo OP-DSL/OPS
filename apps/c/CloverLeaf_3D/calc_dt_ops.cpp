@@ -163,5 +163,4 @@ void calc_dt(double* local_dt, char* local_control,
   if(dtl_control == 2) sprintf(local_control, "xvel");
   if(dtl_control == 3) sprintf(local_control, "yvel");
   if(dtl_control == 4) sprintf(local_control, "div");
-
 }
