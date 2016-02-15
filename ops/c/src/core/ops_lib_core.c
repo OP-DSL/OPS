@@ -232,7 +232,7 @@ void ops_exit_core( )
 
 }
 
-ops_block ops_decl_block(int dims, char *name)
+ops_block ops_decl_block(int dims, const char *name)
 {
   if ( dims < 0 ) {
     printf ( " ops_decl_block error -- negative/zero dimension size for block: %s\n", name );

@@ -203,7 +203,7 @@ void ops_decl_const_char( int dim, char const * type, int typeSize, char * data,
   (void)name;
 }
 
-void ops_partition(char* routine)
+void ops_partition(const char* routine)
 {
   (void)routine;
   //printf("Partitioning ops_dats\n");

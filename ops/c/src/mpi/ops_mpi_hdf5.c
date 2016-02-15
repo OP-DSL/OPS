@@ -851,7 +851,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 /*******************************************************************************
 * Routine to read an ops_block from an hdf5 file
 *******************************************************************************/
-ops_block ops_decl_block_hdf5(int dims, char *block_name,
+ops_block ops_decl_block_hdf5(int dims, const char *block_name,
                       char const *file_name) {
 
   //create new communicator
@@ -925,7 +925,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 /*******************************************************************************
 * Routine to read an ops_stemcil from an hdf5 file
 *******************************************************************************/
-ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, const char *stencil_name,
                       char const *file_name) {
 
   //create new communicator
