@@ -198,6 +198,7 @@ typedef struct {
   int *stencil;     /* elements in the stencil */
   int *stride;      /* stride of the stencil */
   int *mgrid_stride;/* stride of the stencil under multi_grid*/
+  int type;         /* 0 for regular, 1 for prolongate, 2 for restrict */
 } ops_stencil_core;
 
 typedef ops_stencil_core *ops_stencil;
@@ -447,6 +448,8 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
 void ops_H_D_exchanges_device(ops_arg *args, int nargs);
 void ops_cpHostToDevice(void **data_d, void **data_h, int size);
+
+void ops_init_arg_idx(int *arg_idx, int ndims, ops_arg *args, int nargs);
 
 int ops_is_root();
 

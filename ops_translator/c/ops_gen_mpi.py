@@ -304,33 +304,6 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     code('#endif')
 
-    if not(MULTI_GRID):
-      code('#ifdef OPS_MPI')
-      code('if (!sb->owned) return;')
-      FOR('n','0',str(NDIM))
-      code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
-      IF('start[n] >= range[2*n]')
-      code('start[n] = 0;')
-      ENDIF()
-      ELSE()
-      code('start[n] = range[2*n] - start[n];')
-      ENDIF()
-      code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
-      IF('end[n] >= range[2*n+1]')
-      code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
-      ENDIF()
-      ELSE()
-      code('end[n] = sb->decomp_size[n];')
-      ENDIF()
-      code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
-      code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
-      ENDFOR()
-      code('#else')
-      FOR('n','0',str(NDIM))
-      code('start[n] = range[2*n];end[n] = range[2*n+1];')
-      ENDFOR()
-      code('#endif')
-
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
     code('#endif')
@@ -350,14 +323,22 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       code('#endif')
     code('')
 
-    if(MULTI_GRID):
-      code('#ifdef OPS_MPI')
-      code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
-      code('#else //OPS_MPI')
-      FOR('n','0',str(NDIM))
-      code('start[n] = range[2*n];end[n] = range[2*n+1];')
-      ENDFOR()
-      code('#endif //OPS_MPI')
+    code('')
+    code('int arg_idx['+str(NDIM)+'];')
+    code('int arg_idx_base['+str(NDIM)+'];')
+
+
+    code('#ifdef OPS_MPI')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+    code('#else //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    ENDFOR()
+    code('#endif //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('arg_idx_base[n] = arg_idx[n];')
+    ENDFOR()
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
@@ -369,14 +350,14 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
       code('')
-    elif arg_idx:
-      code('#ifdef OPS_MPI')
-      for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-      code('#else //OPS_MPI')
-      for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
+    # elif arg_idx:
+    #   code('#ifdef OPS_MPI')
+    #   for n in range (0,NDIM):
+    #     code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+    #   code('#else //OPS_MPI')
+    #   for n in range (0,NDIM):
+    #     code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+    #   code('#endif //OPS_MPI')
 
     if MULTI_GRID:
       for n in range (0, nargs):
@@ -582,13 +563,8 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
           if arg_typ[n] == 'ops_arg_dat':
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
         if arg_idx:
-          code('#ifdef OPS_MPI')
           for n in range (0,1):
-            code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-          code('#else //OPS_MPI')
-          for n in range (0,1):
-            code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-          code('#endif //OPS_MPI')
+            code('arg_idx['+str(n)+'] = arg_idx_base['+str(n)+'];')
           code('arg_idx[1]++;')
         ENDFOR()
 
@@ -599,38 +575,61 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
 
         if arg_idx:
-          code('#ifdef OPS_MPI')
           for n in range (0,2):
-            code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-          code('#else //OPS_MPI')
-          for n in range (0,2):
-            code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-          code('#endif //OPS_MPI')
+            code('arg_idx['+str(n)+'] = arg_idx_base['+str(n)+'];')
           code('arg_idx[2]++;')
         ENDFOR()
 
     else:
     ######################### MULTIGRID LOOP EXECUTION #########################
       if NDIM==3:
-        FOR('n_z','start[2]','end[2]')
+        FOR('n_z','0','end[2]-start[2]')
 
       if NDIM>1:
-        FOR('n_y','start[1]','end[1]')
+        FOR('n_y','0','end[1]-start[1]')
 
-      code('#pragma novector')
-      FOR('n_x','start[0]','end[0]')
+      FOR('n_x','0','end[0]-start[0]')
       comm('call kernel function, passing in pointers to data')
+
+      if arg_idx:
+        if NDIM==1:
+          code('int arg_idx_l[] = {arg_idx[0]+n_x};')
+        elif NDIM==2:
+          code('int arg_idx_l[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
+        elif NDIM==3:
+          code('int arg_idx_l[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+
       text = name+'( '
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_dat':
+          if restrict[n] == 1:
+            n_x = 'n_x*stride_'+str(n)+'[0]'
+            n_y = 'n_y*stride_'+str(n)+'[1]'
+            n_z = 'n_z*stride_'+str(n)+'[2]'
+          elif prolong[n] == 1:
+            n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
+            n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
+            n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'
+          else:
+            n_x = 'n_x'
+            n_y = 'n_y'
+            n_z = 'n_z'
+
+          text = text +' ('+typs[n]+' *)p_a['+str(n)+'] + '+n_x+'*'+str(stride[NDIM*n])+'*'+str(dims[n])
+          if NDIM >= 2:
+            text = text + ' + '+n_y+'*xdim'+str(n)+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          if NDIM >= 3:
+            text = text + ' + '+n_z+'*xdim'+str(n)+'*ydim'+str(n)+'*'+str(stride[NDIM*n+2])
+        elif arg_typ[n] == 'ops_arg_gbl':
           text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
-        else:
-          text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
+        elif arg_typ[n] == 'ops_arg_idx':
+          text = text +'arg_idx_l'
+
         if nargs <> 1 and n != nargs-1:
           text = text + ','
         else:
           text = text +' );\n'
-        if n%n_per_line == 2 and n <> nargs-1:
+        if n%n_per_line == 0 and n <> nargs-1:
           text = text +'\n          '
       code(text);
       code('')
@@ -658,64 +657,91 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         code('global_idx[0]++;')
 
       ENDFOR()
-      code('')
-
-      if NDIM > 1:
-        comm('shift pointers to data y direction')
-        for n in range (0, nargs):
-          if arg_typ[n] == 'ops_arg_dat':
-            if restrict[n] == 1:
-              code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1) * stride_'+str(n)+'[1];')
-            elif prolong[n] == 1:
-              IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == 0')
-              code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
-              ENDIF()
-              ELSE()
-              code('p_a['+str(n)+']= p_a['+str(n)+'] - (dat'+str(n)+' * off'+str(n)+'_0) * (end_'+str(n)+'[0]-start_'+str(n)+'[0]);')
-              ENDIF()
-            else:
-              code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
-
-        if arg_idx:
-          code('')
-          code('#ifdef OPS_MPI')
-          for n in range (0,1):
-            code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-          code('#else //OPS_MPI')
-          for n in range (0,1):
-            code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-          code('#endif //OPS_MPI')
-          code('arg_idx[1]++;')
-
-        if MULTI_GRID:
-          code('')
-          code('#ifdef OPS_MPI')
-          for n in range (0,1):
-            code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
-          code('#else //OPS_MPI')
-          for n in range (0,1):
-            code('global_idx['+str(n)+'] = start['+str(n)+'];')
-          code('#endif //OPS_MPI')
-          code('global_idx[1]++;')
-
+      if NDIM==2:
         ENDFOR()
-
       if NDIM==3:
-        comm('shift pointers to data z direction')
-        for n in range (0, nargs):
-          if arg_typ[n] == 'ops_arg_dat':
-            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
-
-        if arg_idx:
-          code('#ifdef OPS_MPI')
-          for n in range (0,2):
-            code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-          code('#else //OPS_MPI')
-          for n in range (0,2):
-            code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-          code('#endif //OPS_MPI')
-          code('arg_idx[2]++;')
         ENDFOR()
+        ENDFOR()
+
+      # text = name+'( '
+      # for n in range (0, nargs):
+      #   if arg_typ[n] == 'ops_arg_dat':
+      #     text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
+      #   else:
+      #     text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
+      #   if nargs <> 1 and n != nargs-1:
+      #     text = text + ','
+      #   else:
+      #     text = text +' );\n'
+      #   if n%n_per_line == 2 and n <> nargs-1:
+      #     text = text +'\n          '
+      # code(text);
+      # code('')
+
+      # comm('shift pointers to data x direction')
+      # for n in range (0, nargs):
+      #   if arg_typ[n] == 'ops_arg_dat':
+      #     if restrict[n] == 1:
+      #       code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * stride_'+str(n)+'[0];')
+      #     elif prolong[n] == 1:
+      #       code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == 0)?1:0);')
+      #     else:
+      #       code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')
+
+      # if arg_idx:
+      #   code('arg_idx[0]++;')
+      # if MULTI_GRID:
+      #   code('global_idx[0]++;')
+
+      # ENDFOR()
+      # code('')
+
+      # if NDIM > 1:
+      #   comm('shift pointers to data y direction')
+      #   for n in range (0, nargs):
+      #     if arg_typ[n] == 'ops_arg_dat':
+      #       if restrict[n] == 1:
+      #         code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1) * stride_'+str(n)+'[1];')
+      #       elif prolong[n] == 1:
+      #         IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == 0')
+      #         code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+      #         ENDIF()
+      #         ELSE()
+      #         code('p_a['+str(n)+']= p_a['+str(n)+'] - (dat'+str(n)+' * off'+str(n)+'_0) * (end_'+str(n)+'[0]-start_'+str(n)+'[0]);')
+      #         ENDIF()
+      #       else:
+      #         code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
+
+      #   if arg_idx:
+      #     code('')
+      #     for n in range (0,1):
+      #       code('arg_idx['+str(n)+'] = arg_idx_base['+str(n)+'];')
+      #     code('arg_idx[1]++;')
+
+      #   if MULTI_GRID:
+      #     code('')
+      #     code('#ifdef OPS_MPI')
+      #     for n in range (0,1):
+      #       code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
+      #     code('#else //OPS_MPI')
+      #     for n in range (0,1):
+      #       code('global_idx['+str(n)+'] = start['+str(n)+'];')
+      #     code('#endif //OPS_MPI')
+      #     code('global_idx[1]++;')
+
+      #   ENDFOR()
+
+      # if NDIM==3:
+      #   comm('shift pointers to data z direction')
+      #   for n in range (0, nargs):
+      #     if arg_typ[n] == 'ops_arg_dat':
+      #       code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_2);')
+
+      #   if arg_idx:
+      #     for n in range (0,2):
+      #       code('arg_idx['+str(n)+'] = arg_idx_base['+str(n)+'];')
+      #     code('arg_idx[2]++;')
+      #   ENDFOR()
 
 
     IF('OPS_diags > 1')
