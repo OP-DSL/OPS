@@ -332,11 +332,13 @@ void ops_decomp_dats(sub_block *sb) {
       int zerobase_gbl_size =
           dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
 
-      sd->decomp_disp[d] = sb->decomp_disp[d];
-      sd->decomp_size[d] = MAX(
-          0, MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
-      if (sb->id_m[d] != MPI_PROC_NULL) { // if not negative end, then there is
-        // no block-halo, only intra-block (i.e. MPI) halo
+      sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d] + (sb->decomp_disp[d]%dat->stride[d] == 0 ? 0:1);
+      int next_block = (sb->decomp_disp[d]+sb->decomp_size[d]);
+      sd->decomp_size[d] = MAX(0,MIN(next_block/dat->stride[d] + (next_block%dat->stride[d] == 0 ? 0:1) - sd->decomp_disp[d],
+                                      zerobase_gbl_size - sd->decomp_disp[d]));
+      if (sb->id_m[d] != MPI_PROC_NULL) {
+        // if not negative end, then there is no block-level left padding, but
+        // intra-block halo padding
         dat->base[d] = 0;
         // TODO: compute this properly, or lazy or something
         sd->d_im[d] = dat->d_m[d]; // intra-block (MPI) halos are set to be
@@ -1010,25 +1012,24 @@ void ops_mpi_exit() {
 }
 
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
-  //determine the corect range to iterate over, based on the dats that are written to
+  //determine the correct range to iterate over, based on the dats that are written to
   int fine_grid_dat_idx = -1;
   ops_dat dat;
   for(int i = 0; i<nargs; i++){
-    if(args[i].acc == OPS_READ || args[i].acc == OPS_RW)
-      fine_grid_dat_idx = args[i].dat->index;
-    else if(args[i].acc == OPS_WRITE){
+    if (args[i].argtype == OPS_ARG_DAT) {
       fine_grid_dat_idx = args[i].dat->index;
       dat = args[i].dat;
-      break;
+      if(args[i].acc != OPS_READ)
+        break;
     }
   }
 
   sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
   sub_block_list sb = OPS_sub_block_list[block->index];
-  int d_size[2];
+  int d_size[OPS_MAX_DIM];
 
   if (!sb->owned) -1;
-  for ( int n=0; n<2; n++ ){
+  for ( int n=0; n < block->dims; n++ ){
     d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
     start[n] = sd->decomp_disp[n] - dat->d_m[n];
     end[n] = start[n] + d_size[n];
@@ -1049,7 +1050,7 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
     }
     if (sb->id_p[n]==MPI_PROC_NULL &&
        (range[2*n+1] > (sd->decomp_disp[n] + d_size[n] - dat->d_m[n] )))
-      end[n] += (range[2*n+1] - sd->decomp_disp[n] - d_size[n]);
+      end[n] += (range[2*n+1] - sd->decomp_disp[n] - dat->d_m[n] - d_size[n]);
 
     arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->d_m[n];
   }

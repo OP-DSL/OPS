@@ -620,6 +620,8 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
   for (int i = 0; i < dims; i++)
     stencil->stride[i] = 1;
 
+  stencil->type = 0;
+
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
   return stencil;
@@ -656,6 +658,8 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
+  stencil->type = 0;
+
   return stencil;
 }
 
@@ -686,6 +690,8 @@ ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *st
 
   stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
   memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
+
+  stencil->type = 2;
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
@@ -719,6 +725,8 @@ ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *str
 
   stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
   memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
+
+  stencil->type = 1;
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
   return stencil;
