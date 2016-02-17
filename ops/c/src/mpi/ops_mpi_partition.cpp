@@ -1005,17 +1005,16 @@ static inline int intersection2(int range1_beg, int range1_end, int range2_beg,
 }
 
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
-  //determine the corect range to iterate over, based on the dats that are written to
+  //determine the correct range to iterate over, based on the dats that are written to
   int fine_grid_dat_idx = -1;
   ops_dat dat;
   for(int i = 0; i<nargs; i++){
     if (args[i].argtype == OPS_ARG_DAT) {
-      if(args[i].acc == OPS_READ || args[i].acc == OPS_RW)
+      if(args[i].acc == OPS_READ)
         fine_grid_dat_idx = args[i].dat->index;
-      else if(args[i].acc == OPS_WRITE){
+      if(args[i].acc != OPS_READ){
         fine_grid_dat_idx = args[i].dat->index;
-        if(args[i].acc != OPS_READ)
-          break;
+        break;
       }
     }
   }
