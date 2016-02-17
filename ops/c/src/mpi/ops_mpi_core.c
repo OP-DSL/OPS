@@ -515,3 +515,4 @@ char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
 }
 
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
+
