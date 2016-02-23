@@ -52,8 +52,8 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
-    arg_idx[1] = start[1];
     start[n] = range[2*n];end[n] = range[2*n+1];
+    arg_idx[n] = start[n];
   }
   #endif //OPS_MPI
   for ( int n=0; n<2; n++ ){
