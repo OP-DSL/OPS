@@ -29,6 +29,20 @@ void ops_par_loop_mgrid_prolong_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_mgrid_populate_kernel_3(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg );
+
+void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
+void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 //#include "mgrid_populate_kernel.h"
@@ -43,6 +57,7 @@ int main(int argc, char **argv)
 
 
   int s2D_00[]         = {0,0};
+  int s2D_00_M10_P10[]         = {0,0,-1,0,1,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   int d_p[2] = {2,2};
@@ -63,6 +78,8 @@ int main(int argc, char **argv)
   ops_stencil S2D_RESTRICT_00 = ops_decl_restrict_stencil( 2, 1, s2D_00, stride1, "RESTRICT_00");
 
   ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride1, "PROLONG_00");
+  ops_stencil S2D_PROLONG_00_M10_P10 = ops_decl_prolong_stencil( 2, 3, s2D_00_M10_P10, stride1, "PROLONG_00_M10_P10");
+  ops_stencil S2D_RESTRICT_00_M10_P10 = ops_decl_restrict_stencil( 2, 3, s2D_00_M10_P10, stride1, "RESTRICT_00_M10_P10");
 
   int base[2] = {0,0};
   double* temp = NULL;
@@ -71,7 +88,9 @@ int main(int argc, char **argv)
   ops_dat data1 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3 , temp, "double", "data1");
 
   ops_dat data5 = ops_decl_dat(grid0, 1, size4, base, d_m, d_p, stride0, temp, "double", "data3");
+  ops_dat data6 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride1 , temp, "double", "data0");
 
+  ops_dat data3 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3 , temp, "double", "data3");
 
 
   ops_partition("");
@@ -92,12 +111,12 @@ int main(int argc, char **argv)
 
 
   ops_par_loop_mgrid_prolong_kernel("mgrid_prolong_kernel", grid0, 2, iter_range,
-               ops_arg_dat(data1, 1, S2D_PROLONG_00, "double", OPS_READ),
+               ops_arg_dat(data1, 1, S2D_PROLONG_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
   ops_par_loop_mgrid_prolong_kernel("mgrid_prolong_kernel", grid0, 2, iter_range_large,
-               ops_arg_dat(data0, 1, S2D_PROLONG_00, "double", OPS_READ),
+               ops_arg_dat(data0, 1, S2D_PROLONG_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
@@ -106,9 +125,24 @@ int main(int argc, char **argv)
   ops_print_dat_to_txtfile(data0, "data.txt");
   ops_print_dat_to_txtfile(data5, "data.txt");
 
+  ops_par_loop_mgrid_populate_kernel_3("mgrid_populate_kernel_1", grid0, 2, iter_range_large,
+               ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
+printf("First restrict begin\n");
+  ops_par_loop_mgrid_restrict_kernel("mgrid_restrict_kernel", grid0, 2, iter_range,
+               ops_arg_dat(data5, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
+               ops_arg_dat(data6, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
+printf("First restrict end\n");
+  ops_par_loop_mgrid_restrict_kernel("mgrid_restrict_kernel", grid0, 2, iter_range_small,
+               ops_arg_dat(data6, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
+               ops_arg_dat(data3, 1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
 
 
-
+  ops_print_dat_to_txtfile(data5, "data.txt");
+  ops_print_dat_to_txtfile(data6, "data.txt");
+  ops_print_dat_to_txtfile(data3, "data.txt");
 
 
   ops_timers_core(&ct1, &et1);
