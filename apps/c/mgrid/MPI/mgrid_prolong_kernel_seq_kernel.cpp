@@ -25,12 +25,12 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,1)) return;
+  if (!ops_checkpointing_before(args,3,range,2)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(1,"mgrid_prolong_kernel");
-    OPS_kernels[1].count++;
+    ops_timing_realloc(2,"mgrid_prolong_kernel");
+    OPS_kernels[2].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -52,8 +52,8 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   if (compute_ranges(args, 3,block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
-    arg_idx[2] = start[2];
     start[n] = range[2*n];end[n] = range[2*n+1];
+    arg_idx[n] = start[n];
   }
   #endif //OPS_MPI
   for ( int n=0; n<2; n++ ){
@@ -144,7 +144,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].mpi_time += t1-t2;
+    OPS_kernels[2].mpi_time += t1-t2;
   }
 
   int n_x;
@@ -159,7 +159,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].time += t2-t1;
+    OPS_kernels[2].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
@@ -167,8 +167,8 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].mpi_time += t1-t2;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[2].mpi_time += t1-t2;
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
   }
 }
