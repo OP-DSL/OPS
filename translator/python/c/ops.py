@@ -260,7 +260,10 @@ def ops_par_loop_parse(text):
   print '\n\n'
   return (loop_args)
 
-def main():
+def main(source_files):
+
+  if not source_files:
+    raise ValueError("No source files specified.")
 
   # declare constants
 
@@ -288,12 +291,12 @@ def main():
   # loop over all input source files
   #
 
-  kernels_in_files = [[] for _ in range(len(sys.argv) - 1)]
-  for a in range(1, len(sys.argv)):
-      print 'processing file ' + str(a) + ' of ' + str(len(sys.argv) - 1) + \
-            ' ' + str(sys.argv[a])
+  kernels_in_files = [[] for _ in range(len(source_files))]
+  for a in range(0, len(source_files)):
+      print 'processing file ' + str(a) + ' of ' + str(len(source_files)) + \
+            ' ' + str(source_files[a])
 
-      src_file = str(sys.argv[a])
+      src_file = str(source_files[a])
       f = open(src_file, 'r')
       text = f.read()
 
@@ -661,22 +664,22 @@ def main():
   #
 
 
-  #ops_gen_seq_macro(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi
-  #ops_gen_openmp_macro(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
-  #ops_gen_cuda(str(sys.argv[1]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
+  #ops_gen_seq_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi
+  #ops_gen_openmp_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
+  #ops_gen_cuda(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
 
-  ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
+  ops_gen_mpi(str(source_files[0]), date, consts, kernels)
+  ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
+  ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
+  ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
+  ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels)
 
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        main()
+        main(source_files=sys.argv[1:]) # [1:] ignores the ops.py file itself.
     # Print usage message if no arguments given
     else:
         print __doc__
