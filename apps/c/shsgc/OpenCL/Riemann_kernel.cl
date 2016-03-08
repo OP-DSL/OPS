@@ -63,9 +63,8 @@ __global double* restrict  alam,__global double* restrict  r,__global double* re
 
  {
 
-  double rl, rr, rho, leftu, rightu, u, hl, hr, h, Vsq, csq, c, g;
+  double rl, rr, rho, u, hl, hr, h, Vsq, csq, c;
   double dw1, dw2, dw3, delpc2, rdeluc;
-  double ri[3][3];
 
   rl = sqrt(rho_new[OPS_ACC0(0)]);
   rr = sqrt(rho_new[OPS_ACC0(1)]);
@@ -80,7 +79,6 @@ __global double* restrict  alam,__global double* restrict  r,__global double* re
   h = (hl + hr)/rho;
   Vsq = u*u;
   csq = gam1 * (h - 0.5 * Vsq);
-  g = gam1 / csq;
   c = sqrt(csq);
 
   alam[OPS_ACC_MD3(0,0)] = u - c;

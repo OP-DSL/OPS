@@ -14,5 +14,4 @@ void tvd_kernel(const double *tht, double* ep2) {
 			ep2[OPS_ACC_MD1(m,0)] = akap2 * maxim;
 		}
 }
-
 #endif

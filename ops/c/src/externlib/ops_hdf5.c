@@ -333,7 +333,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 /*******************************************************************************
 * Routine to read an ops_block from an hdf5 file
 *******************************************************************************/
-ops_block ops_decl_block_hdf5(int dims, char *block_name,
+ops_block ops_decl_block_hdf5(int dims, const char *block_name,
                       char const *file_name) {
 
   //HDF5 APIs definitions
@@ -396,7 +396,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 /*******************************************************************************
 * Routine to read an ops_stencil from an hdf5 file
 *******************************************************************************/
-ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, const char *stencil_name,
                       char const *file_name) {
   //HDF5 APIs definitions
   hid_t file_id;      //file identifier
@@ -755,4 +755,18 @@ void ops_dump_to_hdf5(char const *file_name) {
     OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
     ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
   }
+}
+
+/*******************************************************************************
+* Routine to copy over an ops_dat to a user specified memory pointer
+*******************************************************************************/
+char* ops_fetch_dat_char(ops_dat dat, char* u_dat) {
+
+  //fetch data onto the host ( if needed ) based on the backend
+  ops_get_data(dat);
+  int t_size = 1;
+  for (int d = 0; d < dat->block->dims; d++) t_size *= dat->size[d];
+  u_dat = (char *)malloc(t_size*dat->elem_size);
+  memcpy(u_dat, dat->data, t_size*dat->elem_size);
+  return (u_dat);
 }

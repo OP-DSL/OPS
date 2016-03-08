@@ -851,7 +851,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 /*******************************************************************************
 * Routine to read an ops_block from an hdf5 file
 *******************************************************************************/
-ops_block ops_decl_block_hdf5(int dims, char *block_name,
+ops_block ops_decl_block_hdf5(int dims, const char *block_name,
                       char const *file_name) {
 
   //create new communicator
@@ -925,7 +925,7 @@ ops_block ops_decl_block_hdf5(int dims, char *block_name,
 /*******************************************************************************
 * Routine to read an ops_stemcil from an hdf5 file
 *******************************************************************************/
-ops_stencil ops_decl_stencil_hdf5(int dims, int points, char *stencil_name,
+ops_stencil ops_decl_stencil_hdf5(int dims, int points, const char *stencil_name,
                       char const *file_name) {
 
   //create new communicator
@@ -1502,4 +1502,54 @@ void ops_dump_to_hdf5(char const *file_name) {
     OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
     ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
   }
+}
+
+
+
+/*******************************************************************************
+* Routine to copy over an ops_dat to a user specified memory pointer
+*******************************************************************************/
+char* ops_fetch_dat_char(ops_dat dat, char* u_dat) {
+
+  sub_block *sb = OPS_sub_block_list[dat->block->index];
+  if(sb->owned == 1) {
+
+    //fetch data onto the host ( if needed ) based on the backend
+    ops_get_data(dat);
+
+    //complute the number of elements that this process will copy over to the user space
+    sub_dat *sd = OPS_sub_dat_list[dat->index];
+    ops_block block = dat->block;
+
+    hsize_t l_disp[block->dims]; //local disps to remove MPI halos
+    hsize_t size[block->dims]; //local size to compute the chunk data set dimensions
+
+    for (int d = 0; d < block->dims; d++){
+      l_disp[d] = 0 - sd->d_im[d]; //local displacements of the data set (i.e. per MPI proc)
+      size[d] = sd->decomp_size[d]; //local size to compute the chunk data set dimensions
+    }
+
+    int t_size = 1;
+    for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
+    u_dat = (char *)malloc(t_size*dat->elem_size);
+
+     //create new communicator
+    int my_rank, comm_size;
+    //use the communicator for MPI procs holding this block
+    MPI_Comm_dup(sb->comm1, &OPS_MPI_HDF5_WORLD);
+    MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
+    MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+
+    if(block->dims == 1)
+      remove_mpi_halos1D(dat, size, l_disp, u_dat);
+    else if(block->dims == 2)
+      remove_mpi_halos2D(dat, size, l_disp, u_dat);
+    else if(block->dims == 3)
+      remove_mpi_halos3D(dat, size, l_disp, u_dat);
+    else if (block->dims == 4)
+      remove_mpi_halos4D(dat, size, l_disp, u_dat);
+    else if (block->dims == 5)
+      remove_mpi_halos5D(dat, size, l_disp, u_dat);
+  }
+  return u_dat;
 }

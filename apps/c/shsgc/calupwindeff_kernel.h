@@ -15,5 +15,4 @@ void calupwindeff_kernel(const double* cmp, const double *gt, const double* cf,
 		eff[OPS_ACC_MD6(1,0)]=e1 * r[OPS_ACC_MD5(3,0)] + e2 * r[OPS_ACC_MD5(4,0)] + e3 * r[OPS_ACC_MD5(5,0)];
 		eff[OPS_ACC_MD6(2,0)]=e1 * r[OPS_ACC_MD5(6,0)] + e2 * r[OPS_ACC_MD5(7,0)] + e3 * r[OPS_ACC_MD5(8,0)];
 }
-
 #endif

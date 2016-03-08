@@ -100,6 +100,4 @@ void initialise_chunk_kernel_volume(double *volume, const double *celldy, double
   yarea[OPS_ACC4(0,0,0)] = celldx[OPS_ACC3(0,0,0)]*celldz[OPS_ACC5(0,0,0)];
   zarea[OPS_ACC6(0,0,0)] = celldx[OPS_ACC3(0,0,0)]*celldy[OPS_ACC1(0,0,0)];
 }
-
-
 #endif

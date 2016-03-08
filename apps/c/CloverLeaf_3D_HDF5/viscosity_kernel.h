@@ -77,6 +77,4 @@ void viscosity_kernel( const double *xvel0, const double *yvel0,
     viscosity[OPS_ACC6(0,0,0)] = 2.0 * (density0[OPS_ACC5(0,0,0)]) * grad2 * limiter * limiter;
   }
 }
-
-
 #endif

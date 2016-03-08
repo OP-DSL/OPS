@@ -166,7 +166,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name)
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
-void ops_partition(char* routine)
+void ops_partition(const char* routine)
 {
   (void)routine;
   //printf("Partitioning ops_dats\n");

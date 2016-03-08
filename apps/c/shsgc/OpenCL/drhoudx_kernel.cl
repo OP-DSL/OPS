@@ -53,7 +53,7 @@ void drhoudx_kernel(const __global double * restrict rhou_new,__global double * 
   const double dx)
 
  {
-        double fni = rhou_new[OPS_ACC0(0)];
+
         double fnim1 = rhou_new[OPS_ACC0(-1)];
         double fnim2 = rhou_new[OPS_ACC0(-2)];
         double fnip1 = rhou_new[OPS_ACC0(1)];

@@ -147,7 +147,7 @@ void ops_get_data( ops_dat dat ){
   ops_opencl_get_data( dat );
 }
 
-void ops_partition(char* routine)
+void ops_partition(const char* routine)
 {
   (void)routine;
 }

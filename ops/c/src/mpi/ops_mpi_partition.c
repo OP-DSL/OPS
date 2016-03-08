@@ -623,7 +623,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps, int
   mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
 }
 
-void ops_partition(char* routine)
+void ops_partition(const char* routine)
 {
   //create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list = (sub_block_list *)xmalloc(OPS_block_index*sizeof(sub_block_list));

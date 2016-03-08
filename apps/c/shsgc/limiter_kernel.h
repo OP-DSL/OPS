@@ -17,5 +17,4 @@ void limiter_kernel(const double* al, double *tht, double* gt) {
     gt[OPS_ACC_MD2(m,0)]= gtt / (ar * ar + all * all + 2.00 * del2);
   }
 }
-
 #endif

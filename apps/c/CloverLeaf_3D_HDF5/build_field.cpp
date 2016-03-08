@@ -208,7 +208,7 @@ void build_field()
   int s3D_000_P300[]     = {0,0,0, 3,0,0};
   int s3D_000_0P30[]     = {0,0,0, 0,3,0};
   int s3D_000_00P3[]     = {0,0,0, 0,0,3};
-  int s3D_000_M300[]     = {0,0,0, -3,0,0};
+
   int s3D_000_0M30[]     = {0,0,0, 0,-3,0};
   int s3D_000_00M3[]     = {0,0,0, 0,0,-3};
   int s3D_000_P400[]     = {0,0,0, 4,0,0};
@@ -321,8 +321,7 @@ void build_field()
   red_output = ops_decl_reduction_handle(28*sizeof(double), "double", "output");
 
   ops_partition("3D_BLOCK_DECOMPOSE");
-  ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); // 
+  ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); //
   //print ops blocks and dats details
   ops_diagnostic_output();
-
 }

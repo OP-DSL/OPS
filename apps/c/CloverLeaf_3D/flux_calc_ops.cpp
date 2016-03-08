@@ -74,5 +74,4 @@ void flux_calc()
                ops_arg_dat(zarea, 1, S3D_000, "double", OPS_READ),
                ops_arg_dat(zvel0, 1, S3D_000_fP1P10, "double", OPS_READ),
                ops_arg_dat(zvel1, 1, S3D_000_fP1P10, "double", OPS_READ));
-
 }

@@ -17,5 +17,4 @@ void updateRK3_kernel(double *rho_new, double* rhou_new, double* rhoE_new,
 			rhou_old[OPS_ACC4(0)] = rhou_old[OPS_ACC4(0)] + dt * a2[0] * (-rhou_res[OPS_ACC7(0)]);
 			rhoE_old[OPS_ACC5(0)] = rhoE_old[OPS_ACC5(0)] + dt * a2[0] * (-rhoE_res[OPS_ACC8(0)]);
 }
-
 #endif

@@ -44,8 +44,6 @@ void flux_calc()
 {
   error_condition = 0;
 
-  int x_cells = grid.x_cells;
-  int y_cells = grid.y_cells;
   int x_min = field.x_min;
   int x_max = field.x_max;
   int y_min = field.y_min;
@@ -76,5 +74,4 @@ void flux_calc()
                ops_arg_dat(zarea, 1, S3D_000, "double", OPS_READ),
                ops_arg_dat(zvel0, 1, S3D_000_fP1P10, "double", OPS_READ),
                ops_arg_dat(zvel1, 1, S3D_000_fP1P10, "double", OPS_READ));
-
 }

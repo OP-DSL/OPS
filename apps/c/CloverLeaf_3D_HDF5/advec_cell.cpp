@@ -187,5 +187,4 @@ void advec_cell(int sweep_number, int dir)
       ops_arg_dat(work_array7, 1, S3D_000_00P1, "double", OPS_READ));
 
   }
-
 }

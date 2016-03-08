@@ -334,7 +334,7 @@ void ops_init_core( int argc, char **argv, int diags_level );
 
 void ops_exit_core( void );
 
-ops_block ops_decl_block(int dims, char *name);
+ops_block ops_decl_block(int dims, const char* name);
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
                       int *block_size, int* base, int* d_m, int* d_p, char *data, int type_size,
@@ -399,7 +399,7 @@ void ops_cpHostToDevice(void ** data_d, void ** data_h, int size );
 
 int ops_is_root();
 
-void ops_partition(char* routine);
+void ops_partition(const char* routine);
 
 void ops_mpi_reduce_float(ops_arg *args, float* data);
 void ops_mpi_reduce_double(ops_arg *args, double* data);
