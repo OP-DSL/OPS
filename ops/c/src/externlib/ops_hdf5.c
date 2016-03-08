@@ -756,3 +756,17 @@ void ops_dump_to_hdf5(char const *file_name) {
     ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
   }
 }
+
+/*******************************************************************************
+* Routine to copy over an ops_dat to a user specified memory pointer
+*******************************************************************************/
+char* ops_fetch_dat_char(ops_dat dat, char* u_dat) {
+
+  //fetch data onto the host ( if needed ) based on the backend
+  ops_get_data(dat);
+  int t_size = 1;
+  for (int d = 0; d < dat->block->dims; d++) t_size *= dat->size[d];
+  u_dat = (char *)malloc(t_size*dat->elem_size);
+  memcpy(u_dat, dat->data, t_size*dat->elem_size);
+  return (u_dat);
+}

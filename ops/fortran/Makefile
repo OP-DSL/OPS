@@ -179,7 +179,6 @@ f_openacc: mkdir core
         $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
         $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
-
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o
 	-rm -if $(F_OPS_LIB)/*.a

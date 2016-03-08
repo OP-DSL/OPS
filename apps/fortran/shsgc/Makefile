@@ -62,14 +62,14 @@ endif
   CXX           := pgc++
   CXXFLAGS      := $(CCFLAGS)
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXXLINK       := -lstdc++ -lgcc_s #-pgcpplibs
+  CXXLINK       := -lstdc++ -lgcc_s -pgcpplibs
   FC            := pgfortran $(PGI_CUDA_FORT_FLAGS)
   FFLAGS        := $(OPT) -ldl
   MPICC         := $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(FFLAGS)
-  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda shsgc_openacc
+  TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda shsgc_openacc shsgc_mpi_openacc
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
@@ -91,7 +91,7 @@ shsgc_seq: shsgc_ops.F90 constants.F90
 	./MPI/tvd_kernel_seq_kernel.F90 ./MPI/vars_kernel_seq_kernel.F90 \
 	./MPI/calupwindeff_kernel_seq_kernel.F90 ./MPI/fact_kernel_seq_kernel.F90 \
 	./MPI/update_kernel_seq_kernel.F90 ./MPI/test_kernel_seq_kernel.F90 shsgc_ops.F90
-	$(MPIF90) $(OPT) $(FLINK) shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
+	$(MPIF90) $(OPT) $(FFLAGS) $(FLINK) shsgc_ops.o constants.o initialize_kernel_seq_kernel.o \
 	drhouupdx_kernel_seq_kernel.o zerores_kernel_seq_kernel.o save_kernel_seq_kernel.o \
 	drhoudx_kernel_seq_kernel.o drhoEpudx_kernel_seq_kernel.o updateRK3_kernel_seq_kernel.o \
 	Riemann_kernel_seq_kernel.o limiter_kernel_seq_kernel.o tvd_kernel_seq_kernel.o \
@@ -108,7 +108,7 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
         ./MPI_OpenMP/tvd_kernel_omp_kernel.F90 ./MPI_OpenMP/vars_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/calupwindeff_kernel_omp_kernel.F90 ./MPI_OpenMP/fact_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/update_kernel_omp_kernel.F90 ./MPI_OpenMP/test_kernel_omp_kernel.F90 shsgc_ops.F90
-	$(MPIF90) $(OPT) $(FLINK) $(OMPFLAGS) shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(FFLAGS) $(OMPFLAGS) shsgc_ops.o constants.o initialize_kernel_omp_kernel.o \
         drhouupdx_kernel_omp_kernel.o zerores_kernel_omp_kernel.o save_kernel_omp_kernel.o \
         drhoudx_kernel_omp_kernel.o drhoEpudx_kernel_omp_kernel.o updateRK3_kernel_omp_kernel.o \
         Riemann_kernel_omp_kernel.o limiter_kernel_omp_kernel.o tvd_kernel_omp_kernel.o \
@@ -126,7 +126,7 @@ ifeq ($(OPS_COMPILER),pgi)
         ./CUDA/tvd_kernel_cuda_kernel.CUF ./CUDA/vars_kernel_cuda_kernel.CUF \
         ./CUDA/calupwindeff_kernel_cuda_kernel.CUF ./CUDA/fact_kernel_cuda_kernel.CUF \
         ./CUDA/update_kernel_cuda_kernel.CUF ./CUDA/test_kernel_cuda_kernel.CUF shsgc_ops.F90
-	$(FC) $(OPT) $(FLINK) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(FFLAGS) -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
         drhouupdx_kernel_cuda_kernel.o zerores_kernel_cuda_kernel.o save_kernel_cuda_kernel.o \
         drhoudx_kernel_cuda_kernel.o drhoEpudx_kernel_cuda_kernel.o updateRK3_kernel_cuda_kernel.o \
         Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
@@ -202,13 +202,13 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         ./MPI_OpenACC/tvd_kernel_openacc_kernel.F90 ./MPI_OpenACC/vars_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/calupwindeff_kernel_openacc_kernel.F90 ./MPI_OpenACC/fact_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/update_kernel_openacc_kernel.F90 ./MPI_OpenACC/test_kernel_openacc_kernel.F90 shsgc_ops.F90
-	$(FC) $(OPT) $(FLINK) $(OpenACCFLAGS) shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(OpenACCFLAGS) shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
         drhouupdx_kernel_openacc_kernel.o zerores_kernel_openacc_kernel.o save_kernel_openacc_kernel.o \
         drhoudx_kernel_openacc_kernel.o drhoEpudx_kernel_openacc_kernel.o updateRK3_kernel_openacc_kernel.o \
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
         vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
-        -o shsgc_openacc -lops_for_openacc -lops_hdf5 $(HDF5_LIB)
+        -o shsgc_openacc -lops_for_cuda -lops_hdf5 $(HDF5_LIB)
 
 shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
@@ -225,7 +225,7 @@ shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \
         vars_kernel_openacc_kernel.o calupwindeff_kernel_openacc_kernel.o \
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
-        -o shsgc_mpi_openacc -lops_for_openacc $(HDF5_LIB)
+        -o shsgc_mpi_openacc -lops_for_mpi_cuda $(HDF5_LIB)
 
 clean:
 	rm -f *.o
@@ -239,3 +239,4 @@ clean:
 	rm -f shsgc_cuda
 	rm -f shsgc_mpi_cuda
 	rm -f shsgc_openacc
+	rm -f shsgc_mpi_openacc

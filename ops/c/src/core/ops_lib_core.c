@@ -309,6 +309,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   for(int n=0;n<block->dims;n++) dat->d_m[n] = d_m[n];
   for(int n=0;n<block->dims;n++) dat->d_p[n] = d_p[n];
 
+  //set the size of higher dimensions to 1
   for(int n=block->dims; n < OPS_MAX_DIM;n++) {
     dat->size[n] = 1;
     dat->base[n] = 0;

@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -e
+set -e
 cd ../../../ops/c
 source ../source_intel
 make
@@ -36,11 +36,11 @@ $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BL
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
-echo '============> Running MPI+CUDA with GPU-Direct'
-MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-rm perf_out
+#echo '============> Running MPI+CUDA with GPU-Direct'
+#MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#rm perf_out
 echo '============> Running OpenCL on CPU'
 ./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total error:" perf_out
@@ -103,11 +103,11 @@ $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BL
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
-echo '============> Running MPI+CUDA with GPU-Direct'
-MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-rm perf_out
+#echo '============> Running MPI+CUDA with GPU-Direct'
+#MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#rm perf_out
 #echo '============> Running OpenCL on CPU'
 #./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 #grep "Total error:" perf_out
