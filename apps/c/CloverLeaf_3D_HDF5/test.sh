@@ -1,10 +1,11 @@
 #!/bin/bash
-set -e
+#set -e
 cd ../../../ops/c
 ls ../
 source ../source_intel
 make
 cd -
+./generate.sh
 make clean
 make
 #============================ Generate HDF5 file ==========================================================

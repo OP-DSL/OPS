@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+#set -e
 cd ../../../ops/c
 ls ../
 source ../source_intel
