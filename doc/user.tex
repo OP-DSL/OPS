@@ -286,27 +286,36 @@ printf function which would print the same on each MPI process}
 \end{routine}
 
 \addcontentsline{toc}{subsubsection}{ops\_fetch\_block\_hdf5\_file}
-\begin{routine} {void ops\_fetch\_block\_hdf5\_file(ops\_block block, chat *file)}
+\begin{routine} {void ops\_fetch\_block\_hdf5\_file(ops\_block block, char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
-\item[block] 	ops\_block to to be written 
+\item[block] 	ops\_block to be written
 \item[file]     hdf5 file to write to
 \end{routine}
 
 \addcontentsline{toc}{subsubsection}{ops\_fetch\_stencil\_hdf5\_file}
-\begin{routine} {void ops\_fetch\_stencil\_hdf5\_file(ops\_stencil stencil, chat *file)}
+\begin{routine} {void ops\_fetch\_stencil\_hdf5\_file(ops\_stencil stencil, char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
-\item[stencil] 	ops\_stencil to to be written 
+\item[stencil] 	ops\_stencil to be written
 \item[file]     hdf5 file to write to
 \end{routine}
 
 \addcontentsline{toc}{subsubsection}{ops\_fetch\_dat\_hdf5\_file}
-\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, chat *file)}
+\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, const char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
-\item[dat] 	ops\_dat to to be written 
+\item[dat] 	ops\_dat to be written
 \item[file]     hdf5 file to write to
+\end{routine}
+
+\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat}
+\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, T *data)}
+{Makes a copy of the data held internally by an ops\_dat and returns a pointer to that block of data. The memory block
+will be a flat 1D block of memory (similar to how any multi-dimensional data is held internally by OPS. Over MPI the
+pointer will point to a block of memory that holds the data held only within that MPI proc.}
+\item[dat]      ops\_dat to fetch data from
+\item[data]     pointer of type T pointing to memory block holding data
 \end{routine}
 
 \addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
