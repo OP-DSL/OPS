@@ -4,7 +4,7 @@
 \usepackage{graphicx}
 \usepackage{verbatim}
 \usepackage{listings}
-\usepackage{fontspec}
+% \usepackage{fontspec}
 \usepackage{minted}
 
 \setlength{\oddsidemargin}{-0.01in}
@@ -105,7 +105,7 @@ correspond to the $j,k$ face of another block.  This is awkward and hard to hand
 
 \subsection{Initialisation and termination routines}
 
-\addcontentsline{toc}{subsubsection}{ops\_init}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_init}
 \begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
 {This routine must be called before all other OPS routines.}
 \item[argc, argv]   the usual command line arguments
@@ -120,7 +120,7 @@ development only)\\
 \noindent \texttt{diags\_level} $>$ 5 : check if intra-block halo MPI sends depth match MPI receives depth (for OPS 
 internal development only)\\
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_block}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_block}
 \begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
 {This routine defines a structured grid block.}
 
@@ -128,7 +128,7 @@ internal development only)\\
 \item[name]          a name used for output diagnostics
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_block\_hdf5}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_block\_hdf5}
 \begin{routine} {ops\_block ops\_decl\_block\_hdf5(int dims, char *name, char *file)} %int *size,
 {This routine reads the details of a structured grid block from a named HDF5 file}
 
@@ -141,7 +141,7 @@ internal development only)\\
 what is already specified in the arguments, it is included here for error checking (e.g. check if blocks defined in 
 an HDF5 file is matching with the declared arguments in an application) and completeness.\\
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_dat}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_dat}
 \begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
 *data, char
 *type, char *name)}
@@ -162,7 +162,7 @@ an HDF5 file is matching with the declared arguments in an application) and comp
 \texttt{d\_p} are depth of the ``block halos'' that are used to indicate the offset from the edge of a block (in both 
 the negative and positive directions of each dimension). \\\\
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_dat\_hdf5}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_dat\_hdf5}
 \begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, char *type, char *name, char *file)}
 {This routine defines a dataset to be read in from a named hdf5 file}
 
@@ -174,7 +174,7 @@ the negative and positive directions of each dimension). \\\\
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_const}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_const}
 \begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
 {This routine defines a global constant. Global constants needs to be declared upfront so that they can be correctly 
 handled for different parallelizations. For e.g CUDA on GPUs. Once defined they remain unchanged throughout the 
@@ -187,7 +187,7 @@ program, unless changed by a call to ops\_update\_const(..) }
 
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_update\_const}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_update\_const}
 \begin{routine} {void ops\_update\_const(char const * name, int dim, char const * type, T * data)}
 {This routine updates/changes the value of a constant}
 
@@ -198,7 +198,7 @@ program, unless changed by a call to ops\_update\_const(..) }
 
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_halo}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo}
 \begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
 int *from\_dir, int *to\_dir)}
 {This routine defines a halo relationship between two datasets defined on two different blocks.}
@@ -217,7 +217,7 @@ from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], fro
 from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers between blocks with different 
 orientations.)\\
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_hdf5}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_hdf5}
 \begin{routine} {ops\_halo ops\_decl\_halo\_hdf5(ops\_dat from, ops\_dat to, char* file)}
 {This routine reads in a halo relationship between two datasets defined on two different blocks from a named HDF5 file}
 
@@ -227,7 +227,7 @@ orientations.)\\
 \end{routine}
 
  
-\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
 \begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
 {This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
 there is no order defined in which they are carried out.}
@@ -236,7 +236,7 @@ there is no order defined in which they are carried out.}
 \item[halos]           array of halos
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_reduction\_handle}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_reduction\_handle}
 \begin{routine} {ops\_reduction ops\_decl\_reduction\_handle(int size, char *type, char *name)}
 {This routine defines a reduction handle to be used in a parallel loop}
 
@@ -252,7 +252,7 @@ there is no order defined in which they are carried out.}
 \item[result]          a pointer to write the results to, memory size has to match the declared
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_partition}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_partition}
 \begin{routine} {ops\_partition(char *method)}
 {Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
 function for single node parallelizations). This routine should only be called after all the ops\_halo ops\_decl\_block 
@@ -262,7 +262,7 @@ and ops\_halo ops\_decl\_dat statements have been declared}
 is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
 after an ops\_partition() call to print out the details of the decomposition}
@@ -270,14 +270,14 @@ after an ops\_partition() call to print out the details of the decomposition}
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_printf}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_printf}
 \begin{routine} {void ops\_printf(const char * format, ...)}
 {This routine simply prints a variable number of arguments; it is created is in place of the standard C
 printf function which would print the same on each MPI process}
 \item \vspace{-0.3in}
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_timers}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_timers}
 \begin{routine} {void ops\_timers(double *cpu, double *et)}
 {gettimeofday() based timer to start/end timing blocks of code }
 \item[cpu] 	variable to hold the CPU time at the time of invocation 
@@ -285,7 +285,7 @@ printf function which would print the same on each MPI process}
 \item \vspace{-0.3in}
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_fetch\_block\_hdf5\_file}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_block\_hdf5\_file}
 \begin{routine} {void ops\_fetch\_block\_hdf5\_file(ops\_block block, char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
@@ -293,7 +293,7 @@ HDF5 file using MPI I/O)}
 \item[file]     hdf5 file to write to
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_fetch\_stencil\_hdf5\_file}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_stencil\_hdf5\_file}
 \begin{routine} {void ops\_fetch\_stencil\_hdf5\_file(ops\_stencil stencil, char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
@@ -301,7 +301,7 @@ HDF5 file using MPI I/O)}
 \item[file]     hdf5 file to write to
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat\_hdf5\_file}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat\_hdf5\_file}
 \begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, const char *file)}
 {Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
 HDF5 file using MPI I/O)}
@@ -309,8 +309,8 @@ HDF5 file using MPI I/O)}
 \item[file]     hdf5 file to write to
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat}
-\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, T *data)}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat}
+\begin{routine} {void ops\_fetch\_dat(ops\_dat dat, T *data)}
 {Makes a copy of the data held internally by an ops\_dat and returns a pointer to that block of data. The memory block
 will be a flat 1D block of memory (similar to how any multi-dimensional data is held internally by OPS. Over MPI the
 pointer will point to a block of memory that holds the data held only within that MPI proc.}
@@ -318,7 +318,7 @@ pointer will point to a block of memory that holds the data held only within tha
 \item[data]     pointer of type T pointing to memory block holding data
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
 \begin{routine} {void ops\_print\_dat\_to\_txtfile(ops\_dat dat, chat *file)}
 {Write the details of an ops\_block to a named text file. When used under an MPI parallelization each MPI process 
 will write its own data set separately to the text file. As such it does not use MPI I/O. The data can be viewed using 
@@ -328,14 +328,14 @@ a simple text editor }
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_timing\_output}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_timing\_output}
 \begin{routine} {void ops\_timing\_output(FILE *os)}
 {Print OPS performance performance details to output stream}
 \item[os]    output stream, use stdout to print to standard out
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_exit}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
 \begin{routine} {void ops\_exit()}
 {This routine must be called last to cleanly terminate the OPS computation.}
 \item \vspace{-0.3in}
@@ -375,7 +375,7 @@ a simple text editor }
 
 \newpage
 \subsection{Halo exchange}
-\addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
 \begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
 {This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on 
 the exchanged data.}
@@ -390,7 +390,7 @@ the exchanged data.}
 
 A parallel loop with N arguments has the following syntax:
 
-\addcontentsline{toc}{subsubsection}{ops\_par\_loop}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_par\_loop}
 \begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), \\
                  \hspace*{1.4in} char *name, ops\_blck block, int dims, int *range,\\
 \hspace*{1.4in}  ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
@@ -411,7 +411,7 @@ for OPS datasets.
 
 \vspace{0.1in}
 
-\addcontentsline{toc}{subsubsection}{ops\_arg\_gbl}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_gbl}
 \begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
 \item[data]       data array
 \item[dim]        array dimension
@@ -419,7 +419,7 @@ for OPS datasets.
 \item[acc]        access type
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_arg\_reduce}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_reduce}
 \begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{}
 \item[handle]       an {\tt ops\_reduction} handle
 \item[dim]        array dimension (according to {\tt type})
@@ -428,7 +428,7 @@ for OPS datasets.
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
                  ops\_access acc)}{}
 \item[dat]        dataset
@@ -437,7 +437,7 @@ for OPS datasets.
 \item[acc]        access type
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_arg\_idx}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_idx}
 \begin{routine} {ops\_arg ops\_arg\_idx()}{Give you an array of integers (in the user kernel) that have the index of 
 the current grid point, i.e. idx[0] is the index in x, idx[1] is the index in y, etc. This is a globally consistent 
 index, so even if the block is  distributed across different MPI partitions, it gives you the same indexes. Generally 
@@ -451,7 +451,7 @@ used to generate initial geometry. }
 
 \noindent The final ingredient is the stencil specification, for which we have two versions: simple and strided.\\
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil}
 \begin{routine} {ops\_stencil ops\_decl\_stencil(int dims,
                  int points, int *stencil, char *name)}{}
 \item[dims]     dimension of loop iteration
@@ -460,7 +460,7 @@ used to generate initial geometry. }
 \item[name] string representing the name of the stencil
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_strided\_stencil}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_strided\_stencil}
 \begin{routine} {ops\_stencil ops\_decl\_strided\_stencil(int dims, int points,\\
 \hspace*{2.65in} int *stencil, int *stride, char *name)}{}
 \item[dims]       dimension of loop iteration
@@ -470,7 +470,7 @@ used to generate initial geometry. }
 \item[name] string representing the name of the stencil
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
 \begin{routine} {ops\_stencil ops\_decl\_stencil\_hdf5(int dims,
                  int points, char *name, char* file)}{}
 \item[dims]     dimension of loop iteration
@@ -508,7 +508,7 @@ periodically that is required to fast-forward to the last checkpoint if a crash 
 after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} 
 runtime argument has to be used.\\
 
-\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
 \begin{routine} {bool ops\_checkpointing\_init(const char *filename, double interval, int options)}{Initialises the 
 checkpointing system, has to be called after {\tt ops\_partition}. Returns true if the application launches in restore 
 mode, false otherwise.} 
@@ -532,7 +532,7 @@ OPS\_CHECKPOINT\_MANUAL - Indicates that when the corresponding API function is 
 \end{routine}
 
 
-\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist}
 \begin{routine} {void ops\_checkpointing\_manual\_datlist(int ndats, ops\_dat *datlist)}{A use can call this 
 routine at a point in the code to mark the location of a checkpoint.  At this point, the list of datasets specified 
 will be saved. The validity of what is saved is not checked by the checkpointing algorithm assuming that the user knows 
@@ -543,7 +543,7 @@ frequency) and it will trigger the creation of the checkpoint the first time it 
 \item[datlist] arrays of \texttt{ops\_dat} handles to be saved
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_fastfw}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_fastfw}
 \begin{routine} {bool ops\_checkpointing\_fastfw(int nbytes, char *payload)}{
 A use can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the 
 specified payload (e.g. iteration count, simulation time, etc.) along with the necessary datasets, as determined by the 
@@ -557,7 +557,7 @@ in payload. Does not save reduction data.
 \end{routine}
 
  
-\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw}
 \begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw(int ndats, op\_dat *datlist, int nbytes, char 
 *payload)}{
 Combines the manual datlist and fastfw calls.
@@ -568,7 +568,7 @@ Combines the manual datlist and fastfw calls.
 \item[payload] pointer to memory into which the payload is packed
 \end{routine}
 
-\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw\_trigger}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw\_trigger}
 \begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw\_trigger(int ndats, opa\_dat *datlist, int
 nbytes, char *payload)}{
 With this routine it is possible to manually trigger checkpointing, instead of relying on the timeout process. as such 
