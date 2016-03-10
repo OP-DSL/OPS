@@ -63,8 +63,9 @@ program SHSGC
 
   integer size(1) /204/
 
-
   real(kind=c_double), dimension(:), allocatable :: temp
+
+  real(kind=c_double), dimension(:), allocatable :: u_rho_new
 
 
 
@@ -77,6 +78,8 @@ program SHSGC
 
   real(8) :: a1(3)
   real(8) :: a2(3)
+
+  integer(4) :: status
 
   nxp = 204
   nyp = 5
@@ -321,6 +324,11 @@ program SHSGC
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
   call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
   call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
+
+  call ops_fetch_dat(rho_new, u_rho_new, status);
+  if (status .lt. 0)then
+    write (*,*) 'ops_fetch_dat falied with status:', status
+  end if
 
   call ops_exit( )
 
