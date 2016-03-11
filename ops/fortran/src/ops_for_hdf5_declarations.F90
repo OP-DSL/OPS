@@ -118,7 +118,21 @@ module OPS_Fortran_hdf5_Declarations
       character(len=1,kind=c_char) :: fileName(*)
     end subroutine ops_fetch_halo_hdf5_file_c
 
+    type(c_ptr) function ops_fetch_dat_c ( opsdat, data ) BIND(C,name='ops_fetch_dat_char')
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_dat_core
+
+      type(ops_dat_core) :: opsdat
+      type(c_ptr), value :: data
+
+    end function ops_fetch_dat_c
+
   end interface
+
+  interface ops_fetch_dat
+    module procedure ops_fetch_dat_real_8, ops_fetch_dat_real_4, &
+    ops_fetch_dat_integer_4
+  end interface ops_fetch_dat
 
 contains
 
@@ -130,7 +144,7 @@ contains
     character(kind=c_char,len=*) :: fileName
 
     ! assume names are /0 terminated
-	block%blockCptr = ops_decl_block_hdf5_c (dim, blockName//C_NULL_CHAR, fileName//C_NULL_CHAR)
+    block%blockCptr = ops_decl_block_hdf5_c (dim, blockName//C_NULL_CHAR, fileName//C_NULL_CHAR)
 
     ! convert the generated C pointer to Fortran pointer and store it inside the op_set variable
     call c_f_pointer ( block%blockCPtr, block%blockPtr )
@@ -155,7 +169,7 @@ contains
     ! assume names are /0 terminated
     dat%dataCPtr = ops_decl_dat_hdf5_c ( block%blockCPtr, dat_size, type//C_NULL_CHAR, datName//C_NULL_CHAR, fileName//C_NULL_CHAR)
 
-    ! convert the generated C pointer to Fortran pointer and store it inside the op_dat variable
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
     call c_f_pointer ( dat%dataCPtr, dat%dataPtr )
     if (associated(dat%dataPtr)) then
       status = 1 !dat%dataPtr%size
@@ -170,7 +184,7 @@ contains
     type(ops_stencil) :: stencil
     integer, intent(in) :: dims
     integer, intent(in) :: points
-	character(kind=c_char,len=*) :: stencilName
+    character(kind=c_char,len=*) :: stencilName
     character(kind=c_char,len=*) :: fileName
     integer (kind=c_int) :: status
 
@@ -192,7 +206,7 @@ contains
     type(ops_stencil) :: stencil
     integer, intent(in) :: dims
     integer, intent(in) :: points
-	character(kind=c_char,len=*) :: stencilName
+    character(kind=c_char,len=*) :: stencilName
     character(kind=c_char,len=*) :: fileName
     integer (kind=c_int) :: status
 
@@ -261,6 +275,56 @@ contains
 
   end subroutine ops_fetch_halo_hdf5_file
 
+  subroutine ops_fetch_dat_real_8 ( dat, data, status )
+
+    real(8), dimension(*), target :: data
+    type(ops_dat) :: dat
+    integer (kind=c_int) :: status
+    real(8), pointer :: FPtr => null()
+    type(c_ptr) :: Cptr
+
+    status = -1
+    Cptr = ops_fetch_dat_c ( dat%dataPtr, c_loc (data))
+    call c_f_pointer (CPtr, FPtr )
+    if (associated(FPtr)) then
+      status = 1 ! set success as value greater than 0
+    end if
+
+  end subroutine ops_fetch_dat_real_8
+
+  subroutine ops_fetch_dat_real_4 ( dat, data )
+
+    real, dimension(*), target :: data
+    type(ops_dat) :: dat
+    integer (kind=c_int) :: status
+    real, pointer :: FPtr => null()
+    type(c_ptr) :: Cptr
+
+    status = -1
+    Cptr = ops_fetch_dat_c ( dat%dataPtr, c_loc (data))
+    call c_f_pointer (CPtr, FPtr )
+    if (associated(FPtr)) then
+      status = 1 ! set success as value greater than 0
+    end if
+
+  end subroutine ops_fetch_dat_real_4
+
+  subroutine ops_fetch_dat_integer_4 ( dat, data )
+
+    integer(4), dimension(*), target :: data
+    type(ops_dat) :: dat
+    integer (kind=c_int) :: status
+    integer(4), pointer :: FPtr => null()
+    type(c_ptr) :: Cptr
+
+    status = -1
+    Cptr = ops_fetch_dat_c ( dat%dataPtr, c_loc (data))
+    call c_f_pointer (CPtr, FPtr )
+    if (associated(FPtr)) then
+      status = 1 ! set success as value greater than 0
+    end if
+
+  end subroutine ops_fetch_dat_integer_4
 
 !subroutine ops_read_dat_hdf5 ( dat )
 !    implicit none

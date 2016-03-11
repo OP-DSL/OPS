@@ -56,8 +56,9 @@ program SHSGC
   integer size(1) /204/ !size of the dat -- should be identical to the block on which its define on
 
   !null array
-  !real(kind=c_double) temp[allocatable](:)
   real(kind=c_double), dimension(:), allocatable :: temp
+  ! pointer for ops_fetch_dat()
+  real(kind=c_double), dimension(:), allocatable :: u_rho_new
 
   !iteration range
   !iterange needs to be fortran indexed here
@@ -73,6 +74,9 @@ program SHSGC
   !rk3 constants
   real(8) :: a1(3)
   real(8) :: a2(3)
+
+  !status variable to check success of ops_fetch_dat()
+  integer(4) :: status
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -352,6 +356,11 @@ program SHSGC
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
   call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
   call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
+
+  call ops_fetch_dat(rho_new, u_rho_new, status);
+  if (status .lt. 0)then
+    write (*,*) 'ops_fetch_dat falied with status:', status
+  end if
 
   call ops_exit( )
 
