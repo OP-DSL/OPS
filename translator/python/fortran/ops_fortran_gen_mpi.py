@@ -127,8 +127,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
             code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'*(y)+1)')
+            code('INTEGER(KIND=4) ydim'+str(n+1))
           if NDIM==3:
             code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'*(y)+xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)+1)')
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('INTEGER(KIND=4) zdim'+str(n+1))
     code('')
 
     for n in range (0, nargs):
@@ -140,8 +143,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
+            code('INTEGER(KIND=4) ydim'+str(n+1))
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('INTEGER(KIND=4) zdim'+str(n+1))
 
     code('')
     code('contains')
@@ -320,10 +326,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
-        if NDIM==2:
-          code('integer ydim'+str(n+1))
-        elif NDIM==2:
-          code('integer ydim'+str(n+1)+', zdim'+str(n+1))
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
