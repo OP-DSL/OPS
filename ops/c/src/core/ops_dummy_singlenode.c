@@ -267,7 +267,32 @@ int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
 
 // this routine needs the correct body !!!!
 int getDatBaseFromOpsArg3D (ops_arg * arg, int* start, int dim){
-  return 1;
+  /*convert to C indexing*/
+  start[0] -= 1;
+  start[1] -= 1;
+  start[2] -= 1;
+
+  int dat = arg->dat->elem_size;
+  int block_dim = arg->dat->block->dims;
+
+  //set up initial pointers
+  int d_m[OPS_MAX_DIM];
+  for (int d = 0; d < block_dim; d++) d_m[d] = arg->dat->d_m[d];
+  int base = dat * 1 *
+   (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
+  base = base + dat *
+    arg->dat->size[0] *
+    (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
+  base = base + dat *
+    arg->dat->size[0] *
+    arg->dat->size[1] *
+    (start[2] * arg->stencil->stride[2] - arg->dat->base[2] - d_m[2]);
+
+  /*revert to Fortran indexing*/
+  start[0] += 1;
+  start[1] += 1;
+  start[2] += 1;
+  return base/(dat/dim)+1;
 }
 
 char* getReductionPtrFromOpsArg(ops_arg* arg, ops_block block) {

@@ -58,11 +58,12 @@ endif
 else
 ifeq ($(OPS_COMPILER),pgi)
   CPP 		= pgc++
-	CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
   CCFLAGS 	= -O2 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
+  #CCFLAGS 	= -O2 -Kieee -fastsse -gopt -Mipa=fast -Mlist -Minline #-Minform=severe -Minfo=all
+  CCFLAGS 	= -fastsse -gopt -Mipa=fast -Mlist -mp=nonuma -Kieee
 endif
   CPPFLAGS 	= $(CCFLAGS) -ldl
   OMPFLAGS 	= -mp
