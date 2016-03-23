@@ -11,14 +11,13 @@ USE CUDAFOR
 
 
 INTEGER(KIND=4), constant :: xdim1_multidim_copy_kernel
-INTEGER(KIND=4), constant :: ydim1_multidim_copy_kernel
 INTEGER(KIND=4):: xdim1_multidim_copy_kernel_h  = -1
+INTEGER(KIND=4), constant :: ydim1_multidim_copy_kernel
 INTEGER(KIND=4):: ydim1_multidim_copy_kernel_h  = -1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1_multidim_copy_kernel*(y)*3)+(xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*(z)*3))
-
 INTEGER(KIND=4), constant :: xdim2_multidim_copy_kernel
-INTEGER(KIND=4), constant :: ydim2_multidim_copy_kernel
 INTEGER(KIND=4):: xdim2_multidim_copy_kernel_h  = -1
+INTEGER(KIND=4), constant :: ydim2_multidim_copy_kernel
 INTEGER(KIND=4):: ydim2_multidim_copy_kernel_h  = -1
 #define OPS_ACC_MD2(d,x,y,z) ((x)*3+(d)+(xdim2_multidim_copy_kernel*(y)*3)+(xdim2_multidim_copy_kernel*ydim2_multidim_copy_kernel*(z)*3))
 
@@ -90,18 +89,21 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  INTEGER(KIND=4) :: xdim1, ydim1, zdim1
+  INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
+  INTEGER(KIND=4) :: ydim1, zdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
-  INTEGER(KIND=4) :: xdim2, ydim2, zdim2
+  INTEGER(KIND=4) :: xdim2
   INTEGER(KIND=4) :: multi_d2
+  INTEGER(KIND=4) :: ydim2, zdim2
 
 
+  integer x_size, y_size, z_size
   integer start(3)
   integer end(3)
   integer(kind=4) :: n
@@ -110,7 +112,6 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: blocksPerGrid
   integer(kind=4) :: nshared
   integer(kind=4) :: nthread
-  integer(kind=4) :: x_size,y_size,z_size
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -156,7 +157,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
 
   IF ((xdim1 .NE. xdim1_multidim_copy_kernel_h) .OR. &
   (ydim1 .NE. ydim1_multidim_copy_kernel_h) .OR. &
-   (xdim2 .NE. xdim2_multidim_copy_kernel_h) .OR. &
+  (xdim2 .NE. xdim2_multidim_copy_kernel_h) .OR. &
   (ydim2 .NE. ydim2_multidim_copy_kernel_h) ) THEN
     xdim1_multidim_copy_kernel = xdim1
     xdim1_multidim_copy_kernel_h = xdim1

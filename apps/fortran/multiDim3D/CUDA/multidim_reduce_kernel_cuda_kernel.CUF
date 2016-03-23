@@ -12,8 +12,8 @@ USE CUDAFOR
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice2_multidim_reduce_kernel
 
 INTEGER(KIND=4), constant :: xdim1_multidim_reduce_kernel
-INTEGER(KIND=4), constant :: ydim1_multidim_reduce_kernel
 INTEGER(KIND=4):: xdim1_multidim_reduce_kernel_h  = -1
+INTEGER(KIND=4), constant :: ydim1_multidim_reduce_kernel
 INTEGER(KIND=4):: ydim1_multidim_reduce_kernel_h  = -1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1_multidim_reduce_kernel*(y)*3)+(xdim1_multidim_reduce_kernel*ydim1_multidim_reduce_kernel*(z)*3))
 
@@ -202,8 +202,9 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  INTEGER(KIND=4) :: xdim1,ydim1,zdim1
+  INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
+  INTEGER(KIND=4) :: ydim1, zdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   integer(kind=4) :: opsDat2Cardinality
@@ -211,6 +212,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   real(8), DIMENSION(:), ALLOCATABLE :: reductionArrayHost2
   INTEGER(kind=4) :: reductionCardinality2
 
+  integer x_size, y_size, z_size
   integer start(3)
   integer end(3)
   integer(kind=4) :: n
@@ -219,7 +221,6 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   integer(kind=4) :: blocksPerGrid
   integer(kind=4) :: nshared
   integer(kind=4) :: nthread
-  integer(kind=4) :: x_size,y_size,z_size
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
