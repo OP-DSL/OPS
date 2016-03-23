@@ -105,7 +105,7 @@ program MULTIDIM
                     & ops_arg_dat(dat0, 3, S3D_00, "real(8)", OPS_READ), &
                     & ops_arg_dat(dat1, 3, S3D_00, "real(8)", OPS_WRITE))
 
-  call multidim_print_kernel_host("multidim_print_kernel", grid3D, 3, iter_range2, &
+  call multidim_print_kernel_host("multidim_print_kernel", grid3D, 3, iter_range, &
                     & ops_arg_dat(dat0, 3, S3D_00, "real(8)", OPS_READ))
 
   call multidim_reduce_kernel_host("multidim_reduce_kernel", grid3D, 3, iter_range, &

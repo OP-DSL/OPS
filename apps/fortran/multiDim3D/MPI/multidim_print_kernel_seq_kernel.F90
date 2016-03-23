@@ -23,7 +23,8 @@ subroutine multidim_print_kernel(val)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(3) :: val
 
-  print *,val(OPS_ACC_MD1(1,0,0,0)),val(OPS_ACC_MD1(2,0,0,0)),val(OPS_ACC_MD1(3,0,0,0))
+  print *,val(OPS_ACC_MD1(1,0,0,0)), &
+  val(OPS_ACC_MD1(2,0,0,0)),val(OPS_ACC_MD1(3,0,0,0))
 end subroutine
 
 
@@ -42,11 +43,11 @@ subroutine multidim_print_kernel_wrap( &
   integer(4) start(3)
   integer(4) end(3)
   integer n_x, n_y, n_z
-  print *,"Base ",dat1_base
+
   DO n_z = 1, end(3)-start(3)+1
     DO n_y = 1, end(2)-start(2)+1
+      !DIR$ SIMD
       DO n_x = 1, end(1)-start(1)+1
-        print *,n_x,n_y,n_z
         call multidim_print_kernel( &
         & opsDat1Local(dat1_base+(n_x-1)*3 + (n_y-1)*xdim1*3 + (n_z-1)*ydim1*xdim1*3) )
       END DO

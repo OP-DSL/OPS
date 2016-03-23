@@ -241,7 +241,6 @@ int getDatBaseFromOpsArg1D (ops_arg * arg, int* start, int dim){
 }
 
 int getDatBaseFromOpsArg2D (ops_arg * arg, int* start, int dim){
-
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;

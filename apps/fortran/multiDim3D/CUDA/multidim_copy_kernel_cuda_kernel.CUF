@@ -11,11 +11,16 @@ USE CUDAFOR
 
 
 INTEGER(KIND=4), constant :: xdim1_multidim_copy_kernel
+INTEGER(KIND=4), constant :: ydim1_multidim_copy_kernel
 INTEGER(KIND=4):: xdim1_multidim_copy_kernel_h  = -1
-#define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1_multidim_copy_kernel*(y)*3)+(xdim1_multidim_copy_kernel*ydim1*(z)*3))
+INTEGER(KIND=4):: ydim1_multidim_copy_kernel_h  = -1
+#define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1_multidim_copy_kernel*(y)*3)+(xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*(z)*3))
+
 INTEGER(KIND=4), constant :: xdim2_multidim_copy_kernel
+INTEGER(KIND=4), constant :: ydim2_multidim_copy_kernel
 INTEGER(KIND=4):: xdim2_multidim_copy_kernel_h  = -1
-#define OPS_ACC_MD2(d,x,y,z) ((x)*3+(d)+(xdim2_multidim_copy_kernel*(y)*3)+(xdim2_multidim_copy_kernel*ydim2*(z)*3))
+INTEGER(KIND=4):: ydim2_multidim_copy_kernel_h  = -1
+#define OPS_ACC_MD2(d,x,y,z) ((x)*3+(d)+(xdim2_multidim_copy_kernel*(y)*3)+(xdim2_multidim_copy_kernel*ydim2_multidim_copy_kernel*(z)*3))
 
 contains
 
@@ -59,8 +64,8 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
   n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x
 
-  arg1 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim1_multidim_copy_kernel + (n_z-1) * 1*3 * xdim0_multidim_copy_kernel * ydim0
-  arg2 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim2_multidim_copy_kernel + (n_z-1) * 1*3 * xdim1_multidim_copy_kernel * ydim1
+  arg1 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim1_multidim_copy_kernel + (n_z-1) * 1*3 * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel
+  arg2 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim2_multidim_copy_kernel + (n_z-1) * 1*3 * xdim2_multidim_copy_kernel * ydim2_multidim_copy_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2 .AND. (n_z-1) < size3) THEN
     call multidim_copy_kernel( &
     & opsDat1Local(dat1_base+arg1), &
@@ -85,7 +90,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  INTEGER(KIND=4) :: xdim1
+  INTEGER(KIND=4) :: xdim1, ydim1, zdim1
   INTEGER(KIND=4) :: multi_d1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
@@ -93,7 +98,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
-  INTEGER(KIND=4) :: xdim2
+  INTEGER(KIND=4) :: xdim2, ydim2, zdim2
   INTEGER(KIND=4) :: multi_d2
 
 
@@ -105,6 +110,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: blocksPerGrid
   integer(kind=4) :: nshared
   integer(kind=4) :: nthread
+  integer(kind=4) :: x_size,y_size,z_size
 
   !cuda grid and thread block sizes
   type(dim3) :: grid, tblock
@@ -151,7 +157,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   IF ((xdim1 .NE. xdim1_multidim_copy_kernel_h) .OR. &
   (ydim1 .NE. ydim1_multidim_copy_kernel_h) .OR. &
    (xdim2 .NE. xdim2_multidim_copy_kernel_h) .OR. &
-  (ydim2 .NE. ydim2_multidim_copy_kernel_h) .) THEN
+  (ydim2 .NE. ydim2_multidim_copy_kernel_h) ) THEN
     xdim1_multidim_copy_kernel = xdim1
     xdim1_multidim_copy_kernel_h = xdim1
     ydim1_multidim_copy_kernel = ydim1
