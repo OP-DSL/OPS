@@ -2,7 +2,7 @@ A hydrodynamics mini-app to solve the compressible Euler equations in 2D,
 using an explicit, second-order method. See http://uk-mac.github.io/CloverLeaf/
 for the original version and more details.
 
-This version utilizes the OPS library and preprocessor. With OPS a single
+This version utilizes the OPS library and pre-processor. With OPS a single
 application code is transformed to enable it to be run with a number of
 parallelisations: OpenMP, CUDA, OpenCL, OpenACC and MPI and their
 combinations with MPI.
@@ -40,8 +40,8 @@ include platform specific optimisations such as verctorization
    cd ~/OPS/ops/
    make
 ```
-   For systems that does not have CUDA installed comment out the builing of the GPU backend library.
-   i.e. change the folloing line
+   For systems that does not have CUDA installed comment out the building of the GPU backend library.
+   i.e. change the following line
 ```
    all: clean core seq openmp mpi cuda
 ```
