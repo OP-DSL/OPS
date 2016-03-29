@@ -33,6 +33,7 @@ include platform specific optimisations such as verctorization
    export CUDA_INSTALL_PATH=/usr/local/cuda-5.5
    export MPI_INSTALL_PATH=/opt/openmpi-intel/
    export OPENCL_INSTALL_PATH=/usr/local/cuda-6.0
+   export HDF5_INSTALL_PATH=/opt/hdf5-intel/
 ```
 2. Build the OPS backend libraries:
 ```

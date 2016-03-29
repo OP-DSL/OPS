@@ -227,3 +227,4 @@ clean:
 	-rm -if $(SRC)/*~
 	-rm -if $(INC)/*~
 	-rm -if *~
+	-rm -if *.lst
