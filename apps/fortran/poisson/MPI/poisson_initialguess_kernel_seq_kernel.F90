@@ -10,6 +10,7 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim1
 #define OPS_ACC1(x,y) (x+xdim1*(y)+1)
+INTEGER(KIND=4) ydim1
 
 
 contains
@@ -62,7 +63,6 @@ subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, 
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  integer ydim1
 
   integer n_x, n_y
   integer start(2)

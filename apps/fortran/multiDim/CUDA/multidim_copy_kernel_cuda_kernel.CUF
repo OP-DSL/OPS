@@ -45,11 +45,12 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   integer(4) arg1
   real(8), DEVICE :: opsDat2Local(*)
   integer(4) arg2
-  integer dat1_base
-  integer dat2_base
+  integer(4), value :: dat1_base
+  integer(4), value :: dat2_base
   integer(4) start(2)
   integer(4) end(2)
-  integer n_x, n_y, size1, size2
+  integer, value :: size1,size2
+  integer n_x, n_y
 
 
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
@@ -80,23 +81,22 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4), DEVICE  :: dat1_base
+  integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
-  integer ydim1
+  INTEGER(KIND=4) :: ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
-  integer(kind=4), DEVICE  :: dat2_base
+  integer(kind=4) :: dat2_base
   INTEGER(KIND=4) :: xdim2
   INTEGER(KIND=4) :: multi_d2
-  integer ydim2
+  INTEGER(KIND=4) :: ydim2
 
 
-  integer, DEVICE :: x_size, y_size
-  integer :: x_size_h, y_size_h
+  integer x_size, y_size
   integer start(2)
   integer end(2)
   integer(kind=4) :: n
@@ -127,9 +127,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
 
 
   x_size = MAX(0,end(1)-start(1)+1)
-  x_size_h = MAX(0,end(1)-start(1)+1)
   y_size = MAX(0,end(2)-start(2)+1)
-  y_size_h = MAX(0,end(2)-start(2)+1)
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)

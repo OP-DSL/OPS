@@ -12,9 +12,11 @@ USE ISO_C_BINDING
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
+INTEGER(KIND=4) ydim1
 INTEGER(KIND=4) multi_d2
 INTEGER(KIND=4) xdim2
 #define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2*(y)*2))
+INTEGER(KIND=4) ydim2
 
 contains
 
@@ -74,14 +76,12 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  integer ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), POINTER, DIMENSION(:) :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
-  integer ydim2
 
   integer n_x, n_y
   integer start(2)

@@ -70,7 +70,7 @@ attributes (host) subroutine poisson_initialguess_kernel_host( userSubroutine, b
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
-  integer ydim1
+  INTEGER(KIND=4) :: ydim1
 
 
   integer x_size, y_size

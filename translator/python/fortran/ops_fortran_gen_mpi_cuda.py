@@ -163,7 +163,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
+            code('INTEGER(KIND=4), constant :: ydim'+str(n+1)+'_'+name)
+            code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
+            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)*'+str(dims[n])+'))')
 
     code('')
     code('contains')
@@ -535,7 +537,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if NDIM==2:
         code('idx_local(2) = idx(2)+ n_y-1')
       if NDIM==3:
-        code('idx_local(2) = idx(2}+ n_y-1')
+        code('idx_local(2) = idx(2)+ n_y-1')
         code('idx_local(3) = idx(3)+ n_z-1')
 
     for n in range (0, nargs):
@@ -545,7 +547,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         elif NDIM == 2:
           code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
         elif NDIM==3:
-          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n))
+          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name)
 
     #initialize local reduction variables depending on the operation
     for n in range (0, nargs):
@@ -593,14 +595,18 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
         if 'real' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+'((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+ '(' +
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
         elif 'integer' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+'((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
           else:
-            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+'(((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+ '(' +
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
     code('')
     ENDIF()
 
@@ -641,9 +647,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) :: multi_d'+str(n+1))
         if NDIM==2:
-          code('integer ydim'+str(n+1))
-        elif NDIM==2:
-          code('integer ydim'+str(n+1)+', zdim'+str(n+1))
+          code('INTEGER(KIND=4) :: ydim'+str(n+1))
+        elif NDIM==3:
+          code('INTEGER(KIND=4) :: ydim'+str(n+1)+', zdim'+str(n+1))
         code('')
 
     for n in range(0,nargs):
@@ -664,7 +670,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('integer x_size')
     elif NDIM==2:
       code('integer x_size, y_size')
-    elif NDIM==2:
+    elif NDIM==3:
       code('integer x_size, y_size, z_size')
     code('integer start('+str(NDIM)+')')
     code('integer end('+str(NDIM)+')')
@@ -772,7 +778,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
         if NDIM==3:
-          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n   '
+          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
     condition = condition[:-9]
 
     IF(condition)

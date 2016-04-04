@@ -33,8 +33,14 @@ cd ../mb_shsgc/Max_datatransfer
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 cd ../apps/fortran/shsgc
+../../../translator/python/fortran/ops_fortran.py shsgc.F90
 ./test.sh
 cd ../poisson
+../../../translator/python/fortran/ops_fortran.py poisson.F90
 ./test.sh
 cd ../multiDim
+../../../translator/python/fortran/ops_fortran.py multidim.F90
+./test.sh
+cd ../multiDim3D
+../../../translator/python/fortran/ops_fortran.py multidim.F90
 ./test.sh
