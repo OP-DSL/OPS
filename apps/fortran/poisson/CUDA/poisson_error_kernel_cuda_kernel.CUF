@@ -167,7 +167,7 @@ attributes (global) subroutine poisson_error_kernel_wrap( &
     & opsDat2Local(dat2_base+arg2), &
     & opsGblDat3Device )
 
-    call ReductionFloat8(reductionArrayDevice3((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat3Device,0)
+    call ReductionFloat8(reductionArrayDevice3((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat3Device,0)
 
   ENDIF
 end subroutine
@@ -189,7 +189,7 @@ attributes (host) subroutine poisson_error_kernel_host( userSubroutine, block, d
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
-  integer ydim1
+  INTEGER(KIND=4) :: ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
@@ -197,7 +197,7 @@ attributes (host) subroutine poisson_error_kernel_host( userSubroutine, block, d
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
   INTEGER(KIND=4) :: xdim2
-  integer ydim2
+  INTEGER(KIND=4) :: ydim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
   integer(kind=4) :: opsDat3Cardinality

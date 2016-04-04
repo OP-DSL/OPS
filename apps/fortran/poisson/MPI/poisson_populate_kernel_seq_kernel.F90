@@ -10,10 +10,13 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim4
 #define OPS_ACC4(x,y) (x+xdim4*(y)+1)
+INTEGER(KIND=4) ydim4
 INTEGER(KIND=4) xdim5
 #define OPS_ACC5(x,y) (x+xdim5*(y)+1)
+INTEGER(KIND=4) ydim5
 INTEGER(KIND=4) xdim6
 #define OPS_ACC6(x,y) (x+xdim6*(y)+1)
+INTEGER(KIND=4) ydim6
 
 
 contains
@@ -116,21 +119,18 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat4Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat4_size
   integer(kind=4) :: dat4_base
-  integer ydim4
 
   type ( ops_arg )  , INTENT(IN) :: opsArg5
   real(8), POINTER, DIMENSION(:) :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat5_size
   integer(kind=4) :: dat5_base
-  integer ydim5
 
   type ( ops_arg )  , INTENT(IN) :: opsArg6
   real(8), POINTER, DIMENSION(:) :: opsDat6Local
   integer(kind=4) :: opsDat6Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat6_size
   integer(kind=4) :: dat6_base
-  integer ydim6
 
   integer n_x, n_y
   integer start(2)

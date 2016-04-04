@@ -132,7 +132,7 @@ program MULTIDIM
   call ops_par_loop(multidim_kernel, "multidim_kernel", grid3D, 3, iter_range, &
                & ops_arg_dat(dat0, 3, S3D_00, "real(8)", OPS_WRITE), &
                & ops_arg_idx())
-  
+
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid3D, 3, iter_range, &
                & ops_arg_dat(dat0, 3, S3D_00, "real(8)", OPS_READ), &
                & ops_arg_dat(dat1, 3, S3D_00, "real(8)", OPS_WRITE))
