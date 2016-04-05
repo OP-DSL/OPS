@@ -162,10 +162,11 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
   integer(4) arg1
   real(8), DIMENSION(:), DEVICE :: reductionArrayDevice2
   real(8), DIMENSION(0:2-1) :: opsGblDat2Device
-  integer dat1_base
+  integer(4), value :: dat1_base
   integer(4) start(2)
   integer(4) end(2)
-  integer n_x, n_y, size1, size2
+  integer, value :: size1,size2
+  integer n_x, n_y
 
 
   n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
@@ -178,7 +179,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 
-    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
+    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
 
   ENDIF
 end subroutine
@@ -197,10 +198,10 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
-  integer(kind=4), DEVICE  :: dat1_base
+  integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
   INTEGER(KIND=4) :: multi_d1
-  integer ydim1
+  INTEGER(KIND=4) :: ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   integer(kind=4) :: opsDat2Cardinality
@@ -208,8 +209,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   real(8), DIMENSION(:), ALLOCATABLE :: reductionArrayHost2
   INTEGER(kind=4) :: reductionCardinality2
 
-  integer, DEVICE :: x_size, y_size
-  integer :: x_size_h, y_size_h
+  integer x_size, y_size
   integer start(2)
   integer end(2)
   integer(kind=4) :: n
@@ -240,9 +240,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
 
 
   x_size = MAX(0,end(1)-start(1)+1)
-  x_size_h = MAX(0,end(1)-start(1)+1)
   y_size = MAX(0,end(2)-start(2)+1)
-  y_size_h = MAX(0,end(2)-start(2)+1)
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg1),dat1_size,(/dim/))
   xdim1 = dat1_size(1)
@@ -266,7 +264,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   !Reduction vars and shared memory for reductions
   nshared = 0
   nthread = getOPS_block_size_x()*getOPS_block_size_y()
-  blocksPerGrid = ((x_size_h-1)/getOPS_block_size_x()+ 1)*((y_size_h-1)/getOPS_block_size_y() + 1)* 1
+  blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1)*((y_size-1)/getOPS_block_size_y() + 1)* 1
 
   nshared = MAX(nshared,8*2*nthread)
 

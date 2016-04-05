@@ -10,8 +10,10 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim1
 #define OPS_ACC1(x,y) (x+xdim1*(y)+1)
+INTEGER(KIND=4) ydim1
 INTEGER(KIND=4) xdim2
 #define OPS_ACC2(x,y) (x+xdim2*(y)+1)
+INTEGER(KIND=4) ydim2
 
 
 contains
@@ -80,14 +82,12 @@ subroutine poisson_error_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
-  integer ydim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), POINTER, DIMENSION(:) :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
-  integer ydim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
   real(8), POINTER, DIMENSION(:) :: opsDat3Local
