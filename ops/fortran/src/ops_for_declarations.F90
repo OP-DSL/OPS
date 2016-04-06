@@ -704,7 +704,7 @@ module OPS_Fortran_Declarations
     use, intrinsic :: ISO_C_BINDING
     implicit none
     integer(kind=c_int), value                        :: nhalos
-    type(ops_halo), dimension(nhalos)                 :: halos
+    type(ops_halo), dimension(nhalos),target          :: halos
     type(ops_halo_group)                              :: group
     integer i
     type(c_ptr) :: temp = c_null_ptr
@@ -792,7 +792,7 @@ module OPS_Fortran_Declarations
  subroutine ops_reduction_result_real_8 (reduction_handle, var)
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
-    real(8), dimension(:) :: var
+    real(8), dimension(:),target :: var
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8

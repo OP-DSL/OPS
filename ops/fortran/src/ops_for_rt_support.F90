@@ -250,7 +250,7 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
     implicit none
     type(ops_block), intent(in)  :: block
-    integer(4), dimension(*), intent(in):: start
+    integer(4), dimension(*), intent(in), target :: start
     integer(4), dimension(*), target :: idx
 
     call getIdx_c ( block%blockCptr, c_loc(start), c_loc(idx))
