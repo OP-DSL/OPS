@@ -76,7 +76,7 @@ ifeq ($(OPS_COMPILER),xl)
 ifdef DEBUG
   OPT           = -O0 -g
 else
-  OPT           = -O2 -qhot -qarch=pwr8 -qtune=pwr8 
+  OPT           = -O3 -qarch=pwr8 -qtune=pwr8
 endif
   CCFLAGS       = $(OPT)
   CXX           = xlc++_r
