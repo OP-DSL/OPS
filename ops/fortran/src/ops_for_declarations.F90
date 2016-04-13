@@ -465,9 +465,9 @@ module OPS_Fortran_Declarations
 
 
 
-    subroutine ops_exit ( )
-      call ops_exit_c (  )
-    end subroutine ops_exit
+  subroutine ops_exit ( )
+    call ops_exit_c (  )
+  end subroutine ops_exit
 
   subroutine ops_decl_block ( dims, block, name )
 

@@ -123,27 +123,50 @@ void ops_set_args(int argc, char *argv) {
   char* pch;
   pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if(pch != NULL) {
-    strncpy (temp,pch,63);
+    strncpy (temp,pch,20);
     OPS_block_size_x = atoi ( temp + 17 );
     ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
   }
   pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
   if(pch != NULL) {
-    strncpy (temp,pch,63);
+    strncpy (temp,pch,20);
     OPS_block_size_y = atoi ( temp + 17 );
     ops_printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
   }
   pch = strstr(argv, "-gpudirect");
   if(pch != NULL) {
-    strncpy (temp,pch,63);
     OPS_gpu_direct = 1;
     ops_printf ( "\n GPU Direct enabled\n" );
   }
   pch = strstr(argv, "-OPS_DIAGS=");
   if(pch != NULL) {
-    strncpy (temp,pch,63);
-    OPS_diags = atoi ( temp + 10 );
+    strncpy (temp,pch,12);
+    OPS_diags = atoi ( temp + 11 );
     ops_printf ( "\n OPS_diags = %d \n", OPS_diags  );
+  }
+
+  if(strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
+    ops_checkpoint_inmemory = 1;
+    ops_printf ( "\n OPS Checkpointing in memory\n");
+  }
+  else if(strstr(argv, "OPS_CHECKPOINT_LOCKFILE") != NULL) {
+    ops_lock_file = 1;
+    ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
+  }
+  else if(strstr(argv, "OPS_CHECKPOINT_THREAD") != NULL) {
+    ops_thread_offload = 1;
+    ops_printf ( "\n OPS Checkpointing on a separate thread\n");
+  }
+  else if(strstr(argv, "OPS_CHECKPOINT=") != NULL) {
+    pch = strstr(argv, "OPS_CHECKPOINT=");
+    OPS_enable_checkpointing = 2;
+    strncpy (temp,pch,20);
+    OPS_ranks_per_node = atoi ( temp+ 15 );
+    ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n", OPS_ranks_per_node);
+  }
+  else if (strstr(argv, "OPS_CHECKPOINT") != NULL) {
+      OPS_enable_checkpointing = 1;
+      ops_printf ( "\n OPS Checkpointing enabled\n");
   }
 }
 
@@ -156,7 +179,9 @@ void ops_init_core( int argc, char ** argv, int diags )
 
   for ( int n = 1; n < argc; n++ ) {
 
-    if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
+    ops_set_args(argc, argv[n]);
+
+    /*if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
     {
       OPS_block_size_x = atoi ( argv[n] + 17 );
       ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
@@ -203,7 +228,7 @@ void ops_init_core( int argc, char ** argv, int diags )
     {
       OPS_enable_checkpointing = 1;
       ops_printf ( "\n OPS Checkpointing enabled\n");
-    }
+    }*/
 
   }
 
