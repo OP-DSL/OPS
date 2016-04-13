@@ -117,7 +117,7 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int* offset,
 commandline arguments as argv is not easy to pass through from
 frotran to C
 */
-void ops_set_args( int argc, char * argv) {
+void ops_set_args(int argc, char *argv) {
 
   char temp[64];
   char* pch;
@@ -136,13 +136,13 @@ void ops_set_args( int argc, char * argv) {
   pch = strstr(argv, "-gpudirect");
   if(pch != NULL) {
     strncpy (temp,pch,63);
-    OPS_block_size_y = atoi ( temp + 10 );
+    OPS_gpu_direct = 1;
     ops_printf ( "\n GPU Direct enabled\n" );
   }
   pch = strstr(argv, "-OPS_DIAGS=");
   if(pch != NULL) {
     strncpy (temp,pch,63);
-    OPS_block_size_y = atoi ( temp + 10 );
+    OPS_diags = atoi ( temp + 10 );
     ops_printf ( "\n OPS_diags = %d \n", OPS_diags  );
   }
 }
