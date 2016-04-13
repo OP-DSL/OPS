@@ -185,6 +185,13 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), intent(in), value :: diags
     end subroutine ops_init_c
 
+
+    subroutine ops_set_args_c ( argc, argv ) BIND(C,name='ops_set_args')
+      use, intrinsic :: ISO_C_BINDING
+      integer(kind=c_int), intent(in), value :: argc
+      character(kind=c_char,len=64) :: argv
+    end subroutine ops_set_args_c
+
     subroutine ops_exit_c (  ) BIND(C,name='ops_exit')
       use, intrinsic :: ISO_C_BINDING
     end subroutine ops_exit_c
@@ -442,14 +449,29 @@ module OPS_Fortran_Declarations
     subroutine ops_init ( diags )
       integer(4) :: diags
       integer(4) :: argc = 0
+      integer :: i
+      character(kind=c_char,len=64)           :: temp
+
 !#ifdef OPS_WITH_CUDAFOR
 !    integer(4) :: setDevReturnVal = -1
 !    integer(4) :: devPropRetVal = -1
 !    type(cudadeviceprop) :: deviceProperties
 !#endif
 
-      call ops_init_c ( argc, C_NULL_PTR, diags )
+      !Get the command line arguments - needs to be handled using Fortrn
+      argc = command_argument_count()
+
+      do i = 1, argc
+        call get_command_argument(i, temp)
+        call ops_set_args_c (argc, temp) !special function to set args
+      end do
+
+      call ops_init_c (0, C_NULL_PTR, diags)
+
+
     end subroutine ops_init
+
+
 
     subroutine ops_exit ( )
       call ops_exit_c (  )

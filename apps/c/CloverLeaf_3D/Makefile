@@ -63,7 +63,7 @@ ifdef DEBUG
   CCFLAGS 	= -O2 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
   #CCFLAGS 	= -O2 -Kieee -fastsse -gopt -Mipa=fast -Mlist -Minline #-Minform=severe -Minfo=all
-  CCFLAGS 	= -fastsse -gopt -Mipa=fast -Mlist -mp=nonuma -Kieee
+  CCFLAGS 	= -fastsse -gopt -Mipa=fast -mp=nonuma -Kieee
 endif
   CPPFLAGS 	= $(CCFLAGS) -ldl
   OMPFLAGS 	= -mp

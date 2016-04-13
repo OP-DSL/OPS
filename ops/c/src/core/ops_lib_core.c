@@ -113,6 +113,40 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int* offset,
   return NULL;
 }
 
+/* Special function only called by fortran backend to get
+commandline arguments as argv is not easy to pass through from
+frotran to C
+*/
+void ops_set_args( int argc, char * argv) {
+
+  char temp[64];
+  char* pch;
+  pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
+  if(pch != NULL) {
+    strncpy (temp,pch,63);
+    OPS_block_size_x = atoi ( temp + 17 );
+    ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
+  }
+  pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
+  if(pch != NULL) {
+    strncpy (temp,pch,63);
+    OPS_block_size_y = atoi ( temp + 17 );
+    ops_printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+  }
+  pch = strstr(argv, "-gpudirect");
+  if(pch != NULL) {
+    strncpy (temp,pch,63);
+    OPS_block_size_y = atoi ( temp + 10 );
+    ops_printf ( "\n GPU Direct enabled\n" );
+  }
+  pch = strstr(argv, "-OPS_DIAGS=");
+  if(pch != NULL) {
+    strncpy (temp,pch,63);
+    OPS_block_size_y = atoi ( temp + 10 );
+    ops_printf ( "\n OPS_diags = %d \n", OPS_diags  );
+  }
+}
+
 /*
 * OPS core functions
 */
@@ -120,8 +154,8 @@ void ops_init_core( int argc, char ** argv, int diags )
 {
   OPS_diags = diags;
 
-  for ( int n = 1; n < argc; n++ )
-  {
+  for ( int n = 1; n < argc; n++ ) {
+
     if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
     {
       OPS_block_size_x = atoi ( argv[n] + 17 );
