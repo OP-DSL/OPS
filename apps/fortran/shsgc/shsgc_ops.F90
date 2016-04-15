@@ -184,7 +184,7 @@ program SHSGC
 
 
 
-  niter = 1!9005
+  niter = 9005
   DO iter = 1, niter
 
     call save_kernel_host("save_kernel", shsgc_grid, 1, nxp_range, &
