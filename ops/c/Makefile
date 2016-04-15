@@ -76,7 +76,7 @@ ifdef DEBUG
   CCFLAGS 	:= -O0 -g
 else
 #  CCFLAGS 	:= -O3
-  CCFLAGS 	:= -fastsse -gopt -Mipa=fast -Mlist #-mp=nonuma -Kieee
+  CCFLAGS 	:= -fastsse -gopt -Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
   CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXX 		:= pgc++
