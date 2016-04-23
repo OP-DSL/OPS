@@ -93,7 +93,7 @@ endif
   CXX           = xlc++_r
   CXXFLAGS      = $(CCFLAGS)
   F_INC_MOD     = $(F_OPS_MOD)/xl
-  FC            = xlf_r
+  FC            = xlf_r -qcuda -WF,-DOPS_WITH_CUDAFOR
   FFLAGS        = $(OPT) #-module $(F_INC_MOD)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx

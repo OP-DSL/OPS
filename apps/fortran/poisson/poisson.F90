@@ -37,9 +37,9 @@
 ! sizes
 #define logical_size_x 200
 #define logical_size_y 200
-#define ngrid_x 2
-#define ngrid_y 2
-#define n_iter  10000
+#define ngrid_x 1
+#define ngrid_y 1
+#define n_iter  1
 
 program POISSON
   use OPS_Fortran_Reference

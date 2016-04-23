@@ -178,6 +178,7 @@ attributes (host) subroutine poisson_error_kernel_host( userSubroutine, block, d
 & opsArg1, &
 & opsArg2, &
 & opsArg3)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

@@ -743,6 +743,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('& opsArg'+str(n+1)+', &')
 
     config.depth = config.depth + 2
+    code('use cudafor')
     code('IMPLICIT NONE')
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
