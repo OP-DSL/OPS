@@ -93,13 +93,8 @@ endif
   CXX           = xlc++_r
   CXXFLAGS      = $(CCFLAGS)
   F_INC_MOD     = $(F_OPS_MOD)/xl
-<<<<<<< HEAD
   FC            = xlf_r #-qcuda -WF,-DOPS_WITH_CUDAFOR
   FFLAGS        = $(OPT) -qmoddir=$(F_INC_MOD)
-=======
-  FC            = xlf_r
-  FFLAGS        = $(OPT) #-module $(F_INC_MOD)
->>>>>>> e59dba3... Adding some target decorations for c_loc and a bindig bugfix
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS      = $(CXXFLAGS)
