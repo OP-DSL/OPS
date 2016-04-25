@@ -7,7 +7,7 @@ cd -
 make
 #============================ Test Poisson with Intel Compilers==========================================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./poisson_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 rm perf_out
@@ -74,7 +74,7 @@ make
 
 #============================ Test Poisson with PGI Compilers==========================================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=24 ./poisson_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 rm perf_out

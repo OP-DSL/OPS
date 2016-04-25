@@ -512,12 +512,12 @@ ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, o
       if (acc == OPS_MAX) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = -1.0*DBL_MAX;
     }
     else if (strcmp(type,"float")==0) {
-      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = FLT_MAX;
-      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1.0f*FLT_MAX;
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((float*)handle->data)[i] = FLT_MAX;
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((float*)handle->data)[i] = -1.0f*FLT_MAX;
     }
     else if (strcmp(type,"int")==0) {
-      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = INT_MAX;
-      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((double*)handle->data)[i] = -1*INT_MAX;
+      if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((int*)handle->data)[i] = INT_MAX;
+      if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((int*)handle->data)[i] = -1*INT_MAX;
     }
   } else if (handle->acc != acc) {
     printf("ops_reduction handle %s was aleady used with a different access type\n",handle->name);
