@@ -796,7 +796,6 @@ def main(source_files):
   #
 
 
-
   ops_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
