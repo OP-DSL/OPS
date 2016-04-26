@@ -246,15 +246,21 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   hsize_t g_size[block->dims];
   int gbl_size[block->dims];
   for (int d = 0; d < block->dims; d++) {
-	//pure data size (i.e. without block halos) to be noted as an attribute
-	gbl_size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
-
-	//the number of elements thats actually written
-	g_size[d] = dat->size[d];
+    //pure data size (i.e. without block halos) to be noted as an attribute
+    gbl_size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+    //the number of elements thats actually written
+    g_size[d] = dat->size[d];
   }
 
   //make sure we multiply by the number of data values per element (i.e. dat->dim)
-  g_size[1] = g_size[1]*dat->dim;
+  //g_size[1] = g_size[1]*dat->dim;
+  if(block->dims == 1)
+    g_size[0] = g_size[0]*dat->dim; // -- this needs to be tested for 1D
+  else if(block->dims == 2)
+    g_size[1] = g_size[1]*dat->dim; //**note we are using [1] instead of [0] here !!
+  else if(block->dims == 3){
+    g_size[0] = g_size[0]*dat->dim; //**note that for 3D we are using [0] here !!
+  }
 
   hsize_t G_SIZE[block->dims];
   if(block->dims == 1) {
