@@ -797,9 +797,6 @@ def main(source_files):
   #
 
 
-  #ops_gen_seq_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi
-  #ops_gen_openmp_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
-  #ops_gen_cuda(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
   ops_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
