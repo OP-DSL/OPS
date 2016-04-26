@@ -152,6 +152,21 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         MULTI_GRID = 1
         any_prolong = 1
 
+    ### Determine if this is a MULTI_GRID LOOP with
+    ### either restrict or prolong
+    MULTI_GRID = 0
+    any_prolong = 0
+    for n in range (0, nargs):
+      restrict[n] = 0
+      prolong[n] = 0
+      if str(stens[n]).find('RESTRICT') > 0:
+        restrict[n] = 1
+        MULTI_GRID = 1
+      if str(stens[n]).find('PROLONG') > 0 :
+        prolong[n] = 1
+        MULTI_GRID = 1
+        any_prolong = 1
+
     reduct = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
@@ -523,6 +538,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
+    FOR('n','0',str(NDIM))
+    code('arg_idx_base[n] = arg_idx[n];')
+    ENDFOR()
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
