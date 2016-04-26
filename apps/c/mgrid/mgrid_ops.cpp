@@ -128,12 +128,11 @@ int main(int argc, char **argv)
   ops_par_loop_mgrid_populate_kernel_3("mgrid_populate_kernel_1", grid0, 2, iter_range_large,
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-printf("First restrict begin\n");
+
   ops_par_loop_mgrid_restrict_kernel("mgrid_restrict_kernel", grid0, 2, iter_range,
                ops_arg_dat(data5, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data6, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-printf("First restrict end\n");
   ops_par_loop_mgrid_restrict_kernel("mgrid_restrict_kernel", grid0, 2, iter_range_small,
                ops_arg_dat(data6, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data3, 1, S2D_00, "double", OPS_WRITE),
