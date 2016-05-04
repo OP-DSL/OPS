@@ -10,13 +10,13 @@ echo "************Testing C Applications *****************"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
 ./generate.sh
-#./test.sh
+./test.sh
 cd ../CloverLeaf_3D/
 ./generate.sh
-#./test.sh
+./test.sh
 cd ../CloverLeaf_3D_HDF5/
 ./generate.sh
-#./test.sh
+./test.sh
 cd ../poisson/
 ../../../translator/python/c/ops.py poisson.cpp
 ./test.sh
