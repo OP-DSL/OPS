@@ -47,29 +47,48 @@ xdim9, xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17,
 xdim18, xdim19, xdim20, xdim21, xdim22, xdim23, xdim24, xdim25, xdim26,
 xdim27, xdim28, xdim29, xdim30, xdim31, xdim32, xdim33, xdim34, xdim35,
 xdim36, xdim37, xdim38, xdim39, xdim40, xdim41, xdim42, xdim43, xdim44,
-xdim45, xdim46, xdim47, xdim48, xdim49, xdim50;
+xdim45, xdim46, xdim47, xdim48, xdim49, xdim50, xdim51, xdim52, xdim53,
+xdim54, xdim55, xdim56, xdim57, xdim58, xdim59, xdim60, xdim61, xdim62,
+xdim63, xdim64, xdim65, xdim66, xdim67, xdim68, xdim69, xdim70, xdim71,
+xdim72, xdim73, xdim74, xdim75, xdim76, xdim77, xdim78, xdim79, xdim80,
+xdim81, xdim82, xdim83, xdim84, xdim85, xdim86, xdim87, xdim88, xdim89,
+xdim90, xdim91, xdim92, xdim93, xdim94, xdim95, xdim96, xdim97, xdim98,
+xdim99;
 #endif /* __XDIMS__ */
 
 #ifndef __YDIMS__
 #define __YDIMS__
-int ydim0,ydim1,ydim2,ydim3,ydim4,ydim5,ydim6,ydim7,ydim8,ydim9,
-ydim10,ydim11,ydim12,ydim13,ydim14,ydim15,ydim16,ydim17,ydim18,ydim19,
-ydim20,ydim21,ydim22,ydim23,ydim24,ydim25,ydim26,ydim27,ydim28,ydim29,
-ydim30,ydim31,ydim32,ydim33,ydim34,ydim35,ydim36,ydim37,ydim38,ydim39,
-ydim40,ydim41,ydim42,ydim43,ydim44,ydim45,ydim46,ydim47,ydim48,ydim49,
-ydim50;
+int ydim0, ydim1, ydim2, ydim3, ydim4, ydim5, ydim6, ydim7, ydim8,
+ydim9, ydim10, ydim11, ydim12, ydim13, ydim14, ydim15, ydim16, ydim17,
+ydim18, ydim19, ydim20, ydim21, ydim22, ydim23, ydim24, ydim25, ydim26,
+ydim27, ydim28, ydim29, ydim30, ydim31, ydim32, ydim33, ydim34, ydim35,
+ydim36, ydim37, ydim38, ydim39, ydim40, ydim41, ydim42, ydim43, ydim44,
+ydim45, ydim46, ydim47, ydim48, ydim49, ydim50, ydim51, ydim52, ydim53,
+ydim54, ydim55, ydim56, ydim57, ydim58, ydim59, ydim60, ydim61, ydim62,
+ydim63, ydim64, ydim65, ydim66, ydim67, ydim68, ydim69, ydim70, ydim71,
+ydim72, ydim73, ydim74, ydim75, ydim76, ydim77, ydim78, ydim79, ydim80,
+ydim81, ydim82, ydim83, ydim84, ydim85, ydim86, ydim87, ydim88, ydim89,
+ydim90, ydim91, ydim92, ydim93, ydim94, ydim95, ydim96, ydim97, ydim98,
+ydim99;
 #endif /* __YDIMS__ */
 
 #ifndef __MULTIDIMS__
 #define __MULTIDIMS__
-int multi_d0,multi_d1,multi_d2,multi_d3,multi_d4,multi_d5,multi_d6,
-multi_d7,multi_d8,multi_d9,multi_d10,multi_d11,multi_d12,multi_d13,
-multi_d14,multi_d15,multi_d16,multi_d17,multi_d18,multi_d19,multi_d20,
-multi_d21,multi_d22,multi_d23,multi_d24,multi_d25,multi_d26,multi_d27,
-multi_d28,multi_d29,multi_d30,multi_d31,multi_d32,multi_d33,multi_d34,
-multi_d35,multi_d36,multi_d37,multi_d38,multi_d39,multi_d40,multi_d41,
-multi_d42,multi_d43,multi_d44,multi_d45,multi_d46,multi_d47,multi_d48,
-multi_d49,multi_d50;
+int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
+multi_d7, multi_d8, multi_d9, multi_d10, multi_d11, multi_d12, multi_d13,
+multi_d14, multi_d15, multi_d16, multi_d17, multi_d18, multi_d19, multi_d20,
+multi_d21, multi_d22, multi_d23, multi_d24, multi_d25, multi_d26, multi_d27,
+multi_d28, multi_d29, multi_d30, multi_d31, multi_d32, multi_d33, multi_d34,
+multi_d35, multi_d36, multi_d37, multi_d38, multi_d39, multi_d40, multi_d41,
+multi_d42, multi_d43, multi_d44, multi_d45, multi_d46, multi_d47, multi_d48,
+multi_d49, multi_d50, multi_d51, multi_d52, multi_d53, multi_d54, multi_d55,
+multi_d56, multi_d57, multi_d58, multi_d59, multi_d60, multi_d61, multi_d62,
+multi_d63, multi_d64, multi_d65, multi_d66, multi_d67, multi_d68, multi_d69,
+multi_d70, multi_d71, multi_d72, multi_d73, multi_d74, multi_d75, multi_d76,
+multi_d77, multi_d78, multi_d79, multi_d80, multi_d81, multi_d82, multi_d83,
+multi_d84, multi_d85, multi_d86, multi_d87, multi_d88, multi_d89, multi_d90,
+multi_d91, multi_d92, multi_d93, multi_d94, multi_d95, multi_d96, multi_d97,
+multi_d98, multi_d99;
 #endif /*__MULTIDIMS__*/
 
 void ops_timers(double * cpu, double * et)
