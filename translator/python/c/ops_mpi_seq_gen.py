@@ -39,7 +39,7 @@
 #
 # this sets the max number of arguments in ops_par_loop
 #
-maxargs = 51
+maxargs = 100
 
 #open/create file
 f = open('./ops_mpi_seq.h','w')
