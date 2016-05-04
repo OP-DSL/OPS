@@ -66,6 +66,7 @@ int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
+int ops_keepfile = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -267,6 +268,11 @@ void ops_init_core(int argc, char **argv, int diags) {
     {
       ops_lock_file = 1;
       ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
+    }
+    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_KEEPFILE", 23 ) == 0 )
+    {
+      ops_keepfile = 1;
+      ops_printf ( "\n OPS Checkpointing not deleting files upon exit\n");
     }
     else if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
     {

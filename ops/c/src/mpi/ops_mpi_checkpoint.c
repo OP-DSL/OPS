@@ -17,7 +17,7 @@ extern sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
                                  // geometries
 extern sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
                                // details
-extern ops_checkpointing_options;
+extern int ops_checkpointing_options;
 void ops_fetch_dat_hdf5_file_internal(ops_dat dat, char const *file_name, int created);
 
 hid_t plist_id;     //property list identifier
@@ -81,7 +81,7 @@ void ops_checkpoint_mpi_ctrldump(hid_t file_out) {
 
   hid_t group_id;      //group identifier
   if(H5Lexists(file_id_in, "ctrlvars", H5P_DEFAULT) == 0) {
-      if (OPS_diags>5) ops_printf("ctrlvars do not exist in file... creating ops_block\n");
+      if (OPS_diags>5) ops_printf("ctrlvars do not exist in file... creating it\n");
       //create group - ops_block
       group_id = H5Gcreate(file_id_in, "ctrlvars", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
       H5Gclose(group_id);
@@ -93,13 +93,14 @@ void ops_checkpoint_mpi_ctrldump(hid_t file_out) {
   //attach attributes to block
   H5LTset_attribute_int(file_id_in, "ctrlvars", "ops_backup_point", &ops_inm_ctrl.ops_backup_point, 1);
   H5LTset_attribute_int(file_id_in, "ctrlvars", "ops_best_backup_point", &ops_inm_ctrl.ops_best_backup_point, 1);
+  H5LTset_attribute_int(file_id_in, "ctrlvars", "reduction_state_size", &ops_inm_ctrl.reduction_state_size, 1);
   H5LTset_attribute_char(file_id_in, "ctrlvars", "reduction_state", ops_inm_ctrl.reduction_state, ops_inm_ctrl.reduction_state_size);
   free(ops_inm_ctrl.reduction_state); ops_inm_ctrl.reduction_state=NULL;
   if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
     H5LTset_attribute_char(file_id_in, "ctrlvars", "OPS_checkpointing_payload", ops_inm_ctrl.OPS_checkpointing_payload, ops_inm_ctrl.OPS_checkpointing_payload_nbytes);
   }
   H5LTset_attribute_int(file_id_in, "ctrlvars", "OPS_chk_red_offset", &ops_inm_ctrl.OPS_chk_red_offset, 1);
-  H5LTset_attribute_char(file_id_in, "ctrlvars", "OPS_chk_red_storage", &ops_inm_ctrl.OPS_chk_red_storage, ops_inm_ctrl.OPS_chk_red_offset);
+  H5LTset_attribute_char(file_id_in, "ctrlvars", "OPS_chk_red_storage", ops_inm_ctrl.OPS_chk_red_storage, ops_inm_ctrl.OPS_chk_red_offset);
 
   H5Gclose(group_id);
 }
@@ -114,6 +115,34 @@ void ops_checkpoint_mpi_save_full(ops_dat dat, hid_t outfile, int size, char *da
   ops_dat dat_cpy = &dat_cpy_core;
   dat_cpy->data = data;
   ops_fetch_dat_hdf5_file_internal(dat_cpy, "", 1);
+}
+
+ops_checkpoint_mpi_restore_ctrl(int *ops_backup_point, int *ops_best_backup_point, char **OPS_chk_red_storage) {
+
+  hid_t group_id;      //group identifier
+  if(H5Lexists(file_id_in, "ctrlvars", H5P_DEFAULT) == 0) {
+      ops_printf("Error: ctrlvars do not exist in file...\n");
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+  }
+
+  //open existing group -- an ops_block is a group
+  group_id = H5Gopen2(file_id_in, "ctrlvars", H5P_DEFAULT);
+
+  H5LTget_attribute_int(file_id_in, "ctrlvars", "ops_backup_point", ops_backup_point);
+  H5LTget_attribute_int(file_id_in, "ctrlvars", "ops_best_backup_point", ops_best_backup_point);
+  H5LTget_attribute_int(file_id_in, "ctrlvars", "reduction_state_size", &ops_inm_ctrl.reduction_state_size);
+  ops_inm_ctrl.reduction_state = (char*)malloc(ops_inm_ctrl.reduction_state_size);
+  H5LTget_attribute_char(file_id_in, "ctrlvars", "reduction_state", ops_inm_ctrl.reduction_state);
+
+  if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
+    H5LTget_attribute_char(file_id_in, "ctrlvars", "OPS_checkpointing_payload", ops_inm_ctrl.OPS_checkpointing_payload);
+  }
+  int OPS_chk_red_offset;
+  H5LTget_attribute_int(file_id_in, "ctrlvars", "OPS_chk_red_offset", &OPS_chk_red_offset);
+  *OPS_chk_red_storage =  (char*)malloc(OPS_chk_red_offset);
+  H5LTget_attribute_char(file_id_in, "ctrlvars", "OPS_chk_red_storage", *OPS_chk_red_storage);
+
+  H5Gclose(group_id);
 }
 
 #endif

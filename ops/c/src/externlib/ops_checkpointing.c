@@ -57,6 +57,7 @@ int OPS_ranks_per_node = 0;
 extern int ops_thread_offload;
 extern int ops_checkpoint_inmemory;
 extern int ops_lock_file;
+extern int ops_keepfile;
 #ifdef CHECKPOINTING
 
 #ifndef defaultTimeout
@@ -88,6 +89,8 @@ void ops_checkpoint_mpi_close();
 void ops_checkpoint_mpi_ctrldump(hid_t file_out);
 void ops_checkpoint_mpi_save_partial(ops_dat dat, hid_t outfile, int size, int *saved_range, char *data);
 void ops_checkpoint_mpi_save_full(ops_dat dat, hid_t outfile, int size, char *data);
+void ops_read_dat_hdf5_internal(ops_dat dat, int created);
+void ops_checkpoint_mpi_restore_ctrl(int *ops_backup_point, int *ops_best_backup_point, char **OPS_chk_red_storage);
 
 //checkpoint and execution progress information
 int ops_call_counter = 0;
@@ -120,6 +123,7 @@ int ops_checkpointing_options = 0;
 double ops_chk_write = 0.0;
 double ops_chk_dup = 0.0;
 double ops_chk_save = 0.0;
+double restore_begin_time;
 
 // file managment
 char filename[100];
@@ -188,6 +192,16 @@ void ops_unpack_chk(char *__restrict dest, const char *__restrict src,
     src += blocklength;
     dest += stride;
   }
+}
+
+double ops_max_time(double timing) {
+  ops_arg temp;
+  temp.argtype = OPS_ARG_GBL;
+  temp.acc = OPS_MAX;
+  temp.data = (char*)&timing;
+  temp.dim = 1;
+  ops_mpi_reduce_double(&temp, &timing);
+  return timing;
 }
 
 typedef struct {
@@ -624,8 +638,12 @@ void save_dat_partial(ops_dat dat, int *range) {
 }
 
 void ops_restore_dataset(ops_dat dat) {
-  if (!H5LTfind_dataset(file, dat->name))
+  if (ops_checkpoint_mpi) {
+    dat->hdf5_file = filename;
+    ops_read_dat_hdf5_internal(dat,1);
     return;
+  }
+  if (!H5LTfind_dataset(file, dat->name)) return;
   char buf[50];
   sprintf(buf, "%s_saved_range", dat->name);
   hsize_t dims[1] = {0};
@@ -897,7 +915,14 @@ bool ops_checkpointing_initstate() {
     ops_printf("//\n// OPS Checkpointing -- Backup mode\n//\n");
     return false;
   } else {
-    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    double cpu1;
+    ops_timers_core(&cpu1,&restore_begin_time);
+    if (!ops_checkpoint_mpi)
+      file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    else {
+      ops_checkpoint_mpi_open(filename);
+    }
+
     backup_state = OPS_BACKUP_LEADIN;
     ops_printf("//\n// OPS Checkpointing -- Restore mode\n//\n");
 
@@ -907,27 +932,31 @@ bool ops_checkpointing_initstate() {
     } else {
       double cpu, t1, t2;
       ops_timers_core(&cpu, &t1);
-      // read backup point
-      check_hdf5_error(H5LTread_dataset(file, "ops_backup_point",
-                                        H5T_NATIVE_INT, &ops_backup_point));
-      check_hdf5_error(H5LTread_dataset(file, "ops_best_backup_point",
-                                        H5T_NATIVE_INT,
-                                        &ops_best_backup_point));
+      if (ops_checkpoint_mpi) {
+        ops_checkpoint_mpi_restore_ctrl(&ops_backup_point, &ops_best_backup_point, &OPS_chk_red_storage);
+        OPS_chk_red_offset = 0;
+      } else {
+        // read backup point
+        check_hdf5_error(H5LTread_dataset(file, "ops_backup_point",
+              H5T_NATIVE_INT, &ops_backup_point));
+        check_hdf5_error(H5LTread_dataset(file, "ops_best_backup_point",
+              H5T_NATIVE_INT,
+              &ops_best_backup_point));
 
-      // loading of datasets is postponed until we reach the restore point
+        // loading of datasets is postponed until we reach the restore point
 
-      // restore reduction storage
-      check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_offset",
-                                        H5T_NATIVE_INT, &OPS_chk_red_offset));
-      OPS_chk_red_storage = (char *)malloc(OPS_chk_red_offset * sizeof(char));
-      OPS_chk_red_size = OPS_chk_red_offset;
-      OPS_chk_red_offset = 0;
-      check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_storage",
-                                        H5T_NATIVE_CHAR, OPS_chk_red_storage));
-      ops_timers_core(&cpu, &t2);
-      OPS_checkpointing_time += t2 - t1;
-    }
-    return true;
+        // restore reduction storage
+        check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_offset",
+              H5T_NATIVE_INT, &OPS_chk_red_offset));
+        OPS_chk_red_storage = (char *)malloc(OPS_chk_red_offset * sizeof(char));
+        OPS_chk_red_size = OPS_chk_red_offset;
+        OPS_chk_red_offset = 0;
+        check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_storage",
+              H5T_NATIVE_CHAR, OPS_chk_red_storage));
+        ops_timers_core(&cpu, &t2);
+        OPS_checkpointing_time += t2 - t1;
+      }
+      return true;
   }
 }
 
@@ -1186,9 +1215,12 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
       ops_restore_dataset(item->dat);
       OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
     }
-    check_hdf5_error(H5LTread_dataset(file, "OPS_checkpointing_payload",
-                                      H5T_NATIVE_CHAR, payload));
-    check_hdf5_error(H5Fclose(file));
+    if (!ops_checkpoint_mpi) {
+      check_hdf5_error(H5LTread_dataset(file, "OPS_checkpointing_payload",
+            H5T_NATIVE_CHAR, payload));
+      check_hdf5_error(H5Fclose(file));
+    } else
+      ops_checkpoint_mpi_close();
     ops_timers_core(&cpu, &t2);
     OPS_checkpointing_time += t2 - now;
     if (OPS_diags > 1)
@@ -1479,24 +1511,33 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
     int total_size = 0;
     for (int i = 0; i < OPS_reduction_index; i++)
       if (OPS_reduction_list[i]->initialized == 1)
-        total_size += OPS_reduction_list[i]->size;
-    char *reduction_state = (char *)malloc(total_size * sizeof(char));
-    check_hdf5_error(H5LTread_dataset(file, "reduction_state", H5T_NATIVE_CHAR,
-                                      reduction_state));
+        total_size+=OPS_reduction_list[i]->size;
+    if (!ops_checkpoint_mpi) {
+      ops_inm_ctrl.reduction_state = (char*)malloc(total_size*sizeof(char));
+      check_hdf5_error(H5LTread_dataset (file,  "reduction_state", H5T_NATIVE_CHAR, ops_inm_ctrl.reduction_state));
+    }
     total_size = 0;
     for (int i = 0; i < OPS_reduction_index; i++) {
       if (OPS_reduction_list[i]->initialized == 1) {
-        memcpy(OPS_reduction_list[i]->data, &reduction_state[total_size],
-               OPS_reduction_list[i]->size);
-        total_size += OPS_reduction_list[i]->size;
+        memcpy(OPS_reduction_list[i]->data, &ops_inm_ctrl.reduction_state[total_size], OPS_reduction_list[i]->size);
+        total_size+=OPS_reduction_list[i]->size;
       }
     }
-    free(reduction_state);
-    check_hdf5_error(H5Fclose(file));
+    free(ops_inm_ctrl.reduction_state);
+    ops_inm_ctrl.reduction_state = NULL;
+    if (!ops_checkpoint_mpi)
+      check_hdf5_error(H5Fclose(file));
+    else
+      ops_checkpoint_mpi_close();
+
     ops_timers_core(&cpu, &t2);
-    if (OPS_diags > 1)
-      ops_printf("\nRestored in %g seconds, continuing normal execution...\n",
-                 t2 - t1);
+    OPS_checkpointing_time += t2-now;
+
+    //Reduce max time over MPI
+    double timing = t2-restore_begin_time;
+    timing = ops_max_time(timing);
+
+    if (OPS_diags>1) ops_printf("\nRestored in %g seconds, continuing normal execution...\n", timing);
   }
 
   if (backup_state == OPS_BACKUP_BEGIN) {
@@ -1693,7 +1734,7 @@ void ops_checkpointing_exit() {
       }
     }
 
-    if (!ops_checkpoint_mpi || ops_is_root()) {
+    if (!ops_keepfile && (!ops_checkpoint_mpi || ops_is_root())) {
       remove(filename);
       if (ops_duplicate_backup)
         remove(filename_dup);
