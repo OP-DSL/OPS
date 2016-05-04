@@ -172,7 +172,12 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
            strcmp(type,"int(4)")  == 0) type = "int";
 
   ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
-  red->data = (char *)realloc(red->data, red->size*OPS_block_index*sizeof(char));
+  if (OPS_block_index < 1) {
+    printf("ops_decl_reduction_handle() should only be called after \
+      declaring at least one ops_block\n -- Aborting\n");
+    MPI_Abort(OPS_MPI_GLOBAL, 2);
+  }
+  red->data = (char *)realloc(red->data, red->size*(OPS_block_index)*sizeof(char));
   return red;
 }
 

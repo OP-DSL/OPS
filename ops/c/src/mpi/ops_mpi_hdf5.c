@@ -536,9 +536,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     //make sure we multiply by the number of data values per
     // element (i.e. dat->dim) to get full size of the data
     size[0] = size[0]*dat->dim;
-    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
     disp[0] = disp[0]*dat->dim;
 
+    if(block->dims == 1)
+      gbl_size[0] = gbl_size[0]*dat->dim; //-- this needs to be tested for 1D
+    else if(block->dims == 2)
+      gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !!
+    else if(block->dims == 3)
+      gbl_size[0] = gbl_size[0]*dat->dim; //**note that for 3D we are using [0] here !!
 
     //MPI variables
     MPI_Info info  = MPI_INFO_NULL;
@@ -1333,8 +1338,15 @@ void ops_read_dat_hdf5(ops_dat dat) {
     //make sure we multiply by the number of
     //data values per element (i.e. dat->dim) to get full size of the data
     size[0] = size[0]*dat->dim;
-    gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !! -- need to test for 3D
     disp[0] = disp[0]*dat->dim;
+
+    if(block->dims == 1)
+      gbl_size[0] = gbl_size[0]*dat->dim; //-- this needs to be tested for 1D
+    else if(block->dims == 2)
+      gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !!
+    else if(block->dims == 3)
+      gbl_size[0] = gbl_size[0]*dat->dim; //**note that for 3D we are using [0] here !!
+
 
 
     //create new communicator

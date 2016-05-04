@@ -47,6 +47,8 @@
 #include <stdarg.h>
 #include <sys/queue.h> //contains double linked list implementation
 #include <stdbool.h>
+#include <float.h>
+#include <limits.h>
 
 #include "ops_macros.h"
 #include "ops_util.h"
@@ -79,21 +81,30 @@
  * */
 
 #define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
+#define INFINITY_double DBL_MAX;
+
 #define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
+#define INFINITY_float FLT_MAX;
+
 #define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
+#define INFINITY_int INT_MAX;
+
+#define ZERO_long 0;
+#define INFINITY_long LONG_MAX;
+
 #define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
+#define INFINITY_ll LLONG_MAX;
+
+#define ZERO_uint 0;
+#define INFINITY_uint UINT_MAX;
+
+#define ZERO_ulong 0;
+#define INFINITY_ulong ULONG_MAX;
+
 #define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
+#define INFINITY_ull ULLONG_MAX;
+
 #define ZERO_bool 0;
-
-
-
 
 #ifdef __cplusplus
 extern "C" {
