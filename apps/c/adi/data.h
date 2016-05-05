@@ -6,4 +6,5 @@ extern int ny;
 extern int nz;
 extern int iter;
 
+extern double lambda;
 #endif

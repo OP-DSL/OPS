@@ -20,6 +20,20 @@ void ops_par_loop_init_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_preproc_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 #include "data.h"
@@ -32,6 +46,8 @@ int ny;
 int nz;
 int iter;
 
+double lambda;
+
  int main(int argc, char **argv)
 {
 
@@ -39,6 +55,8 @@ int iter;
   ny = 256;
   nz = 256;
   iter = 10;
+
+  lambda=1.0f;
 
 
   ops_init(argc,argv,1);
@@ -68,9 +86,12 @@ int iter;
   int s3D_000[]         = {0,0,0};
   ops_stencil S3D_000 = ops_decl_stencil( 3, 1, s3D_000, "000");
 
+  int s3D_7pt[] = { 0,0,0, -1,0,0, 1,0,0, 0,-1,0, 0,1,0, 0,0,-1, 0,0,1ops_stencil S3D_7PT = ops_decl_stencil( 3, 7, s3D_7pt, "3d7Point");
+
   ops_decl_const2( "nx",1, "int",&nx);
   ops_decl_const2( "ny",1, "int",&ny);
   ops_decl_const2( "nz",1, "int",&nz);
+  ops_decl_const2( "lambda",1, "double",&lambda);
 
   ops_partition("2D_BLOCK_DECOMPSE");
 
@@ -78,7 +99,7 @@ int iter;
 
   printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
 
-  int iter_range[] = {0,nx,0,ny, 0, nz};
+  int iter_range[] = {0,nx, 0,ny, 0,nz};
   ops_par_loop_init_kernel("init_kernel", heat3D, 3, iter_range,
                ops_arg_dat(h_u, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
@@ -87,12 +108,26 @@ int iter;
 
   for(int it = 0; it<iter; it++) {
 
+  int iter_range[] = {0,nx, 0,ny, 0,nz};
+  ops_par_loop_preproc_kernel("preproc_kernel", heat3D, 3, iter_range,
+               ops_arg_dat(h_u, 1, S3D_7PT, "double", OPS_READ),
+               ops_arg_dat(h_du, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_ax, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_bx, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_cx, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_ay, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_by, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_cy, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_az, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_bz, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
+               ops_arg_idx());
 
   }
   ops_timers(&ct1, &et1);
 
 
-  ops_print_dat_to_txtfile(h_u, "h_u.dat");
+  ops_print_dat_to_txtfile(h_ax, "h_ax.dat");
 
 
   for(int k=0; k<2; k++) {

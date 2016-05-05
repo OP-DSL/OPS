@@ -140,7 +140,7 @@ endif
 
 all: clean $(TARGETS)
 
-adi_dev_seq: Makefile adi.cpp init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+adi_dev_seq: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp -lops_seq $(HDF5_LIB) -o adi_dev_seq
 
 
@@ -171,7 +171,7 @@ adi_openmp: Makefile adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel
 #
 # Sequential version
 #
-adi_seq: Makefile adi_ops.cpp init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+adi_seq: Makefile adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o adi_seq
 
 #
