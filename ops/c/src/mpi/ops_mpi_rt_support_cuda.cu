@@ -231,7 +231,7 @@ char* ops_realloc_fast(char *ptr, size_t olds, size_t news) {
     }
   } else {
     char *ptr2;
-    cutilSafeCall(cudaMallocHost((void**)&ptr2,news));
+    cutilSafeCall(cudaMallocHost((void**)&ptr2,news)); //TODO: is this aligned??
     if (olds > 0)
   	  memcpy(ptr2, ptr, olds);
     if (ptr != NULL) cutilSafeCall(cudaFreeHost(ptr));

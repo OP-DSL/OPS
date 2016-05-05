@@ -106,6 +106,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   } else {
     // Allocate memory immediately
     dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char*) ops_calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
   }
