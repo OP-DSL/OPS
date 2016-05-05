@@ -87,10 +87,11 @@ double ops_sendrecv_time = 0.0;
 /*
 * Utility functions
 */
-static char *copy_str(char const *src) {
-  const size_t len = strlen(src) + 1;
-  char *dest = (char *)calloc(len+16, sizeof(char));
-  return strncpy(dest, src, len);
+static char * copy_str( char const * src )
+{
+  const size_t len = strlen( src ) + 1;
+  char * dest = (char *) ops_calloc ( len, sizeof ( char ) );
+  return strncpy ( dest, src, len );
 }
 
 int compare_blocks(ops_block block1, ops_block block2) {
@@ -357,7 +358,7 @@ ops_block ops_decl_block(int dims, const char *name) {
     }
   }
 
-  ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
+  ops_block block = (ops_block)ops_malloc(sizeof(ops_block_core));
   block->index = OPS_block_index;
   block->dims = dims;
   block->name = copy_str(name);
@@ -393,7 +394,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     exit(-1);
   }
 
-  ops_dat dat = (ops_dat)xmalloc(sizeof(ops_dat_core));
+  ops_dat dat = ( ops_dat ) ops_malloc ( sizeof ( ops_dat_core ) );
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
@@ -443,8 +444,8 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry *item;
 
-  // add the newly created ops_dat to list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  //add the newly created ops_dat to list
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -456,8 +457,8 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
   OPS_dat_index++;
 
-  // Another entry for a different list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  //Another entry for a different list
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -501,18 +502,17 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
     }
   }
 
-  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
-  memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
+  stencil->stencil = (int *)ops_malloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
-  for (int i = 0; i < dims; i++)
-    stencil->stride[i] = 1;
+  stencil->stride = (int *)ops_malloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
@@ -533,17 +533,17 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
     }
   }
 
-  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
-  memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
+  stencil->stencil = (int *)ops_malloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
-  memcpy(stencil->stride, stride, sizeof(int) * dims);
+  stencil->stride = (int *)ops_malloc(dims*sizeof(int));
+  memcpy(stencil->stride,stride,sizeof(int)*dims);
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
   return stencil;
@@ -611,12 +611,12 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
     }
   }
 
-  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  ops_halo_group grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
-  // make a copy
-  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo));
-  memcpy(halos_temp, &halos[0], nhalos * sizeof(ops_halo));
+  //make a copy
+  ops_halo* halos_temp = (ops_halo *)ops_malloc(nhalos*sizeof(ops_halo));
+  memcpy(halos_temp, &halos[0], nhalos*sizeof(ops_halo));
   grp->halos = halos_temp;
 
   grp->index = OPS_halo_group_index;
@@ -652,13 +652,13 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
     printf("halo->to_dir[%d] %d \n", i, halo->to_dir[i]);
   }*/
 
-  if (grp == NULL) {
-    grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  if(grp == NULL){
+    grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
     grp->nhalos = 0;
     // printf("null grp, grp->nhalos = %d\n",grp->nhalos);
     if (nhalos != 0) {
-      ops_halo *halos_temp = (ops_halo *)xmalloc(1 * sizeof(ops_halo_core));
-      memcpy(halos_temp, halos, 1 * sizeof(ops_halo_core));
+     ops_halo* halos_temp = (ops_halo *)ops_malloc(1*sizeof(ops_halo_core));
+      memcpy(halos_temp, halos, 1*sizeof(ops_halo_core));
       grp->halos = halos_temp;
       grp->nhalos++;
     }
@@ -667,7 +667,7 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
   }
   else{
     //printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
-    grp->halos = (ops_halo *) ops_realloc(grp->halos,(grp->nhalos+1)*sizeof(ops_halo_core));
+    grp->halos = (ops_halo *)ops_realloc(grp->halos,(grp->nhalos+1)*sizeof(ops_halo_core));
     memcpy(&grp->halos[grp->nhalos], &halos[0], 1*sizeof(ops_halo_core));
     grp->nhalos++;
   }
@@ -687,7 +687,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
     }
   }
 
-  ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
+  ops_halo halo = (ops_halo)ops_malloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index;
   halo->from = from;
   halo->to = to;
@@ -768,10 +768,10 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
     }
   }
 
-  ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
+  ops_reduction red = (ops_reduction)ops_malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;
-  red->data = (char *)malloc(size * sizeof(char));
+  red->data = (char *)ops_malloc(size*sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
   OPS_reduction_list[OPS_reduction_index] = red;
@@ -1009,7 +1009,7 @@ void ops_timing_output(FILE *stream) {
         printf("Too long\n");
       }
     }
-    char *buf = (char *)malloc((maxlen + 180) * sizeof(char));
+    char *buf = (char*)ops_malloc((maxlen+180)*sizeof(char));
     char buf2[180];
     sprintf(buf, "Name");
     for (int i = 4; i < maxlen; i++)
@@ -1098,9 +1098,8 @@ void ops_timing_realloc(int kernel, const char *name) {
   }
 
   if (OPS_kernels[kernel].count == -1) {
-    OPS_kernels[kernel].name =
-        (char *)malloc((strlen(name) + 1) * sizeof(char));
-    strcpy(OPS_kernels[kernel].name, name);
+    OPS_kernels[kernel].name = (char *)ops_malloc((strlen(name)+1)*sizeof(char));
+    strcpy(OPS_kernels[kernel].name,name);
     OPS_kernels[kernel].count = 0;
   }
 }

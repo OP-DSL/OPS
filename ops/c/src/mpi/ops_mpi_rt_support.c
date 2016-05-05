@@ -239,7 +239,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_buffer_recv_1 = (char *)ops_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
-  }
+ }
 
   // Pack data
   if (actual_depth_send > 0)
@@ -312,7 +312,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_buffer_recv_2 = (char *)ops_realloc_fast(ops_buffer_recv_2,  send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
-  }
+ }
 
   // pack data
   if (actual_depth_send > 0)

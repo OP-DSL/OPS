@@ -226,7 +226,7 @@ void reallocConstArrays(int consts_bytes) {
     OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
     cudaMallocHost((void **)&OPS_gbl_prev, OPS_consts_bytes);
     memset(OPS_gbl_prev, 0 , OPS_consts_bytes);
-    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    OPS_consts_h = (char *)ops_malloc(OPS_consts_bytes);
     memset(OPS_consts_h, 0 , OPS_consts_bytes);
     cutilSafeCall(cudaMalloc((void **)&OPS_consts_d, OPS_consts_bytes));
   }
@@ -239,8 +239,9 @@ void reallocReductArrays(int reduct_bytes) {
       cutilSafeCall(cudaFree(OPS_reduct_d));
     }
     OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_reduct_h = (char *)malloc(OPS_reduct_bytes);
-    cutilSafeCall(cudaMalloc((void **)&OPS_reduct_d, OPS_reduct_bytes));
+    OPS_reduct_h = ( char * ) ops_malloc ( OPS_reduct_bytes );
+    cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_reduct_d,
+                                 OPS_reduct_bytes ) );
   }
 }
 
