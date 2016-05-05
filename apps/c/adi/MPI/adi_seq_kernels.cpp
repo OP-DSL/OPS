@@ -13,5 +13,7 @@
 extern int nx;
 extern int ny;
 extern int nz;
+extern double lambda;
 //user kernel files
 #include "init_kernel_seq_kernel.cpp"
+#include "preproc_kernel_seq_kernel.cpp"
