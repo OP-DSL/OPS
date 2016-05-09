@@ -316,11 +316,9 @@ void ops_decomp_dats(sub_block *sb) {
           dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
 
       sd->decomp_disp[d] = sb->decomp_disp[d];
-      sd->decomp_size[d] = MAX(
-          0, MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
-      if (sb->id_m[d] != MPI_PROC_NULL) {
-        // if not negative end, then there is no block-level left padding, but
-        // intra-block halo padding
+      sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
+      if(sb->id_m[d] != MPI_PROC_NULL) { //if not negative end, then there is
+                                         //no block-halo, only intra-block (i.e. MPI) halo
         dat->base[d] = 0;
         // TODO: compute this properly, or lazy or something
         sd->d_im[d] = dat->d_m[d]; // intra-block (MPI) halos are set to be
@@ -347,12 +345,24 @@ void ops_decomp_dats(sub_block *sb) {
 					sd->d_ip[d] = ops_tiling_mpidepth;
 
         dat->d_p[d] = 0;
-      } else {
-        sd->decomp_size[d] += dat->d_p[d]; // if last in this dimension, extend
-                                           // with left block halo size
-        sd->d_ip[d] = 0;                   // no intra-block halo
-      }
 
+        /*if (d == 0) { // Compute x-dim padding for vecotrization
+          int temp_size = sd->decomp_size[0] - sd->d_im[0] + sd->d_ip[0];
+          int x_pad = (1+((temp_size-1)/32))*32 - temp_size;
+          sd->d_ip[0] = x_pad;
+        }*/
+
+      } else {
+        sd->decomp_size[d] += dat->d_p[d]; //if last in this dimension, extend with left block halo size
+        sd->d_ip[d] = 0; //no intra-block halo
+
+        /*if (d == 0) { // Compute x-dim padding for vecotrization
+          int x_pad = (1+((sd->decomp_size[0]-1)/32))*32 - sd->decomp_size[0] ;
+          sd->decomp_size[0] += x_pad;
+          dat->d_p[0] += x_pad;
+        }*/
+
+      }
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d - 1] * dat->size[d];
     }

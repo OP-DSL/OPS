@@ -54,7 +54,7 @@
 #include "ops_util.h"
 
 #ifndef OPS_ALIGNMENT
-#define OPS_ALIGNMENT 64
+#define OPS_ALIGNMENT 32
 #endif
 
 /*
@@ -491,5 +491,6 @@ void* ops_calloc (size_t num, size_t size);
 
 #include "ops_checkpointing.h"
 #include "ops_hdf5.h"
+#include "ops_tridiag.h"
 
 #endif /* __OP_LIB_CORE_H */

@@ -69,7 +69,7 @@ sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 1
 *******************************************************************************/
 void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -113,7 +113,7 @@ void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 2
 *******************************************************************************/
 void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -156,7 +156,7 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 3
 *******************************************************************************/
 void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -184,21 +184,21 @@ void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 4
 *******************************************************************************/
 void remove_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 5
 *******************************************************************************/
 void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to add the intra-block halos from the flattend 1D data
+* Routine to add the intra-block halos (i.e. MPI) from the flattend 1D data
 * after reading from an HDF5 file - Maximum dimension of block is 2
 *******************************************************************************/
 void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {

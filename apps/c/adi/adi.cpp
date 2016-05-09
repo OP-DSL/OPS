@@ -52,6 +52,8 @@
 #include "init_kernel.h"
 #include "print_kernel.h"
 
+
+
 // declare defaults options
 int nx;
 int ny;
@@ -106,7 +108,8 @@ double lambda;
   int s3D_000[]         = {0,0,0};
   ops_stencil S3D_000 = ops_decl_stencil( 3, 1, s3D_000, "000");
 
-  int s3D_7pt[] = { 0,0,0, -1,0,0, 1,0,0, 0,-1,0, 0,1,0, 0,0,-1, 0,0,1ops_stencil S3D_7PT = ops_decl_stencil( 3, 7, s3D_7pt, "3d7Point");
+  int s3D_7pt[] = { 0,0,0, -1,0,0, 1,0,0, 0,-1,0, 0,1,0, 0,0,-1, 0,0,1 };
+  ops_stencil S3D_7PT = ops_decl_stencil( 3, 7, s3D_7pt, "3d7Point");
 
   //declare constants
   ops_decl_const( "nx", 1, "int", &nx );
@@ -146,6 +149,9 @@ double lambda;
                ops_arg_dat(h_bz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
+
+  /**----------------- perform tri-diagonal solves in x-direction ---------------**/
+  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du );
 
 
   } // End main iteration loop
