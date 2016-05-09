@@ -86,7 +86,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
 #endif
    dat->user_managed = 0;
-    dat->mem = bytes;
+   dat->mem = bytes;
   }
 
   // Compute offset in bytes to the base index

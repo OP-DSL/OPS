@@ -25,6 +25,10 @@ ifdef CHECKPOINTING
 endif
 endif
 
+TRID_INSTALL_PATH := /home/mgiles/mudalige/TriDiagonal/laszloendre-tridsolver-93670b204e2c/scalar/build
+TRID_INC := -I$(TRID_INSTALL_PATH)/include
+TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
+
 ifeq ($(OPS_COMPILER),gnu)
   CPP   = g++
 ifdef DEBUG
@@ -42,7 +46,7 @@ ifdef DEBUG
   CCFLAGS = -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  CCFLAGS = -O3 -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -openmp -openmp-report2
@@ -172,7 +176,7 @@ adi_openmp: Makefile adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel
 # Sequential version
 #
 adi_seq: Makefile adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o adi_seq
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(TRID_LIB) -ltridcpu  $(HDF5_LIB) -o adi_seq
 
 #
 # CUDA version

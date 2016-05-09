@@ -41,6 +41,7 @@ void ops_par_loop_preproc_kernel(char const *, ops_block, int , int*,
 //#include "init_kernel.h"
 //#include "print_kernel.h"
 
+
 int nx;
 int ny;
 int nz;
@@ -86,7 +87,8 @@ double lambda;
   int s3D_000[]         = {0,0,0};
   ops_stencil S3D_000 = ops_decl_stencil( 3, 1, s3D_000, "000");
 
-  int s3D_7pt[] = { 0,0,0, -1,0,0, 1,0,0, 0,-1,0, 0,1,0, 0,0,-1, 0,0,1ops_stencil S3D_7PT = ops_decl_stencil( 3, 7, s3D_7pt, "3d7Point");
+  int s3D_7pt[] = { 0,0,0, -1,0,0, 1,0,0, 0,-1,0, 0,1,0, 0,0,-1, 0,0,1 };
+  ops_stencil S3D_7PT = ops_decl_stencil( 3, 7, s3D_7pt, "3d7Point");
 
   ops_decl_const2( "nx",1, "int",&nx);
   ops_decl_const2( "ny",1, "int",&ny);
@@ -122,6 +124,8 @@ double lambda;
                ops_arg_dat(h_bz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
+
+  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du );
 
   }
   ops_timers(&ct1, &et1);
