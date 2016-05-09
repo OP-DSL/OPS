@@ -555,9 +555,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         if accs[n] == OPS_INC:
           code('opsGblDat'+str(n+1)+'Device = 0.0_8')
         if accs[n] == OPS_MIN:
-          code('opsGblDat'+str(n+1)+'Device = 0.0d')
+          code('opsGblDat'+str(n+1)+'Device = HUGE(opsGblDat'+str(n+1)+'Device)')
         if accs[n] == OPS_MAX:
-          code('opsGblDat'+str(n+1)+'Device = 0.0d')
+          code('opsGblDat'+str(n+1)+'Device = -1.0_8*HUGE(opsGblDat'+str(n+1)+'Device)')
 
     if NDIM==1:
       IF('(n_x-1) < size1')

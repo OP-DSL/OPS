@@ -507,17 +507,20 @@ ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, o
     handle->initialized = 1;
     handle->acc = acc;
     if (acc == OPS_INC) memset(handle->data, 0, handle->size);
-    if (strcmp(type,"double")==0) { //TODO: handle other types
+    if (strcmp(type,"double")==0 || strcmp(type,"real(8)")==0) { //TODO: handle other types
       if (acc == OPS_MIN) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = DBL_MAX;
       if (acc == OPS_MAX) for (int i = 0; i < handle->size/8; i++) ((double*)handle->data)[i] = -1.0*DBL_MAX;
     }
-    else if (strcmp(type,"float")==0) {
+    else if (strcmp(type,"float")==0 || strcmp(type,"real(4)")==0) {
       if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((float*)handle->data)[i] = FLT_MAX;
       if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((float*)handle->data)[i] = -1.0f*FLT_MAX;
     }
-    else if (strcmp(type,"int")==0) {
+    else if (strcmp(type,"int")==0 || strcmp(type,"integer")==0) {
       if (acc == OPS_MIN) for (int i = 0; i < handle->size/4; i++) ((int*)handle->data)[i] = INT_MAX;
       if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((int*)handle->data)[i] = -1*INT_MAX;
+    }
+    else {
+      printf("Warning, reduction type not recognised, please add in ops_lib_core.c!\n");
     }
   } else if (handle->acc != acc) {
     printf("ops_reduction handle %s was aleady used with a different access type\n",handle->name);
