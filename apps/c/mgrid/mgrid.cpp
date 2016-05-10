@@ -65,8 +65,10 @@ int main(int argc, char **argv)
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   //declare datasets
-  int d_p[2] = {2,2};
-  int d_m[2] = {-2,-2};
+  //int d_p[2] = {2,2};
+  int d_p[2] = {0,0};
+  //int d_m[2] = {-2,-2};
+  int d_m[2] = {0,0};
   int size4[2] = {24, 24};
   int size0[2] = {12, 12};
   int size1[2] = {6, 6};
@@ -106,15 +108,16 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {0,12,0,12};
-  int iter_range_large[] = {0,24,0,24};
-  int iter_range_small[] = {0,6,0,6};
-  int iter_range_tiny[] = {0,4,0,4};
+  int iter_range[] = {1,12,1,12};
+  int iter_range_large[] = {1,24,1,24};
+  int iter_range_small[] = {1,6,1,6};
+  int iter_range_tiny[] = {1,4,1,4};
 
   ops_par_loop(mgrid_populate_kernel_1, "mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
+  ops_print_dat_to_txtfile(data1, "data.txt");
   /*ops_par_loop(mgrid_populate_kernel_2, "mgrid_populate_kernel_2", grid0, 2, iter_range_tiny,
                ops_arg_dat(data2, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());*/
@@ -131,7 +134,6 @@ int main(int argc, char **argv)
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
-  ops_print_dat_to_txtfile(data1, "data.txt");
   //ops_print_dat_to_txtfile(data2, "data.txt");
   ops_print_dat_to_txtfile(data0, "data.txt");
   ops_print_dat_to_txtfile(data5, "data.txt");
