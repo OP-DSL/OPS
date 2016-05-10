@@ -337,9 +337,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
             code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
       if restrict[n] or prolong[n]:
         code('int stride_'+str(n)+'0 = stride_'+str(n)+'[0];')
-        if NDIM == 2:
+        if NDIM >= 2:
           code('int stride_'+str(n)+'1 = stride_'+str(n)+'[1];')
-        if NDIM == 3:
+        if NDIM >= 3:
           code('int stride_'+str(n)+'2 = stride_'+str(n)+'[2];')
 
     line = '#pragma acc parallel deviceptr('
@@ -775,7 +775,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     if MULTI_GRID:
       for n in range (0, nargs):
         if restrict[n]  == 1 :
-          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
+          code('int start_'+str(n)+'['+str(NDIM)+']; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
           code('start_'+str(n)+'[n]  = start[n]*stride_'+str(n)+'[n];')
@@ -783,7 +783,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
           ENDFOR()
         elif prolong[n] == 1:
           comm('This arg has a prolong stencil - so create different ranges')
-          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];int d_size_'+str(n)+'[2];')
+          code('int start_'+str(n)+'[2]; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];int d_size_'+str(n)+'['+str(NDIM)+'];')
           code('#ifdef OPS_MPI')
           FOR('n','0',str(NDIM))
           code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
