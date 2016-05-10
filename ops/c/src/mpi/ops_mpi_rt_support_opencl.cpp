@@ -583,6 +583,11 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
   }
   cl_mem gpu_ptr = halo_buffer_d2;
 
+  if (src->dirty_hd == 1) {
+    ops_upload_dat(src);
+    src->dirty_hd = 0;
+  }
+
   size_t globalWorkSize[3] = {blk_x*thr_x, blk_y*thr_y, blk_z*thr_z};
   size_t localWorkSize[3] =  {thr_x, thr_y, thr_z};
 
@@ -692,6 +697,11 @@ void ops_halo_copy_frombuf(ops_dat dest,
     halo_buffer_size2 = size;
   }
   gpu_ptr = halo_buffer_d2;
+
+  if (dest->dirty_hd == 1) {
+    ops_upload_dat(dest);
+    dest->dirty_hd = 0;
+  }
 
   size_t globalWorkSize[3] = {blk_x*thr_x, blk_y*thr_y, blk_z*thr_z};
   size_t localWorkSize[3] =  {thr_x, thr_y, thr_z};

@@ -1101,5 +1101,4 @@ void ops_halo_transfer(ops_halo_group group) {
     }
   }
   MPI_Waitall(mpi_group->num_neighbors_send,&mpi_group->requests[0],&mpi_group->statuses[0]);
-  //TODO: host/device dirtybits???
 }
