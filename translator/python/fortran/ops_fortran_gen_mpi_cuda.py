@@ -56,8 +56,104 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
+const_list = []
+def replace_consts(text):
+  global const_list
+  fi2 = open("constants_list.txt","r")
+  for line in fi2:
+    fstr = '\\b'+line[:-1]+'\\b'
+    rstr = line[:-1]+'_OPSCONSTANT'
+    j = re.search(fstr,text)
+    if not (j is None) and not (line[:-1] in const_list):
+      const_list = const_list + [line[:-1]]
+    text = re.sub(fstr,rstr,text)
+  return text
+
+funlist = []
+def find_function_calls(text):
+  global funlist
+  search_offset = 0
+  res=re.search('\\bcall\\b',text.lower())
+  my_subs = ''
+  children_subs=''
+  while (not (res is None)):
+    i = search_offset + res.start() + 4
+    #find name: whatever is in front of opening bracket
+    openbracket = i+text[i:].find('(')
+    fun_name = text[i:openbracket].strip()
+    print fun_name
+    # #if hyd_dump, comment it out
+    # if fun_name == hyd_dump:
+    #   text = text[0:search_offset + res.start()]+'!'+text[search_offset + res.start():]
+    #   search_offset = i
+    #   res=re.search('\\bcall\\b',text[search_offset:])
+    #   continue
+
+    if fun_name.lower() in funlist:
+      search_offset = i
+      res=re.search('\\bcall\\b',text[search_offset:].lower())
+      continue
+
+    funlist = funlist + [fun_name.lower()]
+    #find signature
+    line = text[openbracket:openbracket+text[openbracket:].find('\n')].strip()
+    curr_pos = openbracket+text[openbracket:].find('\n')+1
+    while (line[len(line)-1] == '&'):
+      line = text[curr_pos:curr_pos+text[curr_pos:].find('\n')].strip()
+      curr_pos = curr_pos+text[curr_pos:].find('\n')+1
+    curr_pos = curr_pos-1
+    arglist = text[openbracket:curr_pos]
+    #find the file containing the implementation
+    subr_file =  os.popen('grep -Rilw --include "*.F9*" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
+    if (len(subr_file) == 0) or (not os.path.exists(subr_file)):
+      print 'Error, subroutine '+fun_name+' implementation not found in files, check parser!'
+      exit(1)
+    #read the file and find the implementation
+    subr_fileh = open(subr_file,'r')
+    subr_fileh_text = subr_fileh.read()
+    subr_fileh_text = re.sub('\n*!.*\n','\n',subr_fileh_text)
+    subr_fileh_text = re.sub('!.*\n','\n',subr_fileh_text)
+    subr_begin = subr_fileh_text.lower().find('subroutine '+fun_name.lower())
+    #function name as spelled int he file
+    fun_name = subr_fileh_text[subr_begin+11:subr_begin+11+len(fun_name)]
+    subr_end = subr_fileh_text[subr_begin:].lower().find('end subroutine')
+    if subr_end<0:
+      print 'Error, could not find string "end subroutine" for implemenatation of '+fun_name+' in '+subr_file
+      exit(-1)
+    subr_end= subr_begin+subr_end
+    subr_text =  subr_fileh_text[subr_begin:subr_end+14]
+    if subr_text[10:len(subr_text)-20].lower().find('subroutine')>=0:
+      print 'Error, could not properly parse subroutine, more than one encompassed '+fun_name+' in '+subr_file
+      #print subr_text
+      exit(-1)
+
+
+    writes = re.search('\\bwrite\\b',subr_text.lower())
+    writes_offset = 0
+    while not (writes is None):
+      writes_offset = writes_offset + writes.start()
+      subr_text = subr_text[0:writes_offset]+'!'+subr_text[writes_offset:]
+      writes_offset = writes_offset + subr_text[writes_offset:].find('\n')+1
+      while (subr_text[writes_offset:].strip()[0] == '&'):
+        subr_text = subr_text[0:writes_offset]+'!'+subr_text[writes_offset:]
+        writes_offset = writes_offset + subr_text[writes_offset:].find('\n')+1
+      writes = re.search('\\bwrite\\b',subr_text[writes_offset:].lower())
+
+#    subr_text = replace_npdes(subr_text)
+    subr_text = replace_consts(subr_text)
+    subr_text = 'attributes(device) ' + subr_text
+    subr_text = subr_text.replace(fun_name, fun_name+'_gpu',1)
+    my_subs = my_subs + '\n' + subr_text
+    subr_text = re.sub('!.*\n','\n',subr_text)
+    children_subs = children_subs + '\n' + find_function_calls(subr_text)
+    search_offset = i
+    res=re.search('\\bcall\\b',text[search_offset:])
+  return my_subs+children_subs
+
+
+def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
+  global funlist, const_list
   OPS_GBL   = 2;
 
   OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
@@ -110,6 +206,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     i = name.find('kernel')
     name2 = name[0:i-1]
+
+    const_list = []
 
 ##########################################################################
 #  generate HEADER
@@ -435,6 +533,16 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     # parameter vars are declared inside the subroutine
     # for now no check is done
 
+    text = replace_consts(text)
+    
+    #find subroutine calls
+    funlist = [name.lower()]
+    plus_kernels = find_function_calls(text)
+    text = text + '\n' + plus_kernels
+    for fun in funlist:
+        regex = re.compile('\\b'+fun+'\\b',re.I)
+        text = regex.sub(fun+'_gpu',text)
+
     code('attributes (device) '+text)
     code('')
 
@@ -566,7 +674,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     elif NDIM==3:
       IF('(n_x-1) < size1 .AND. (n_y-1) < size2 .AND. (n_z-1) < size3')
 
-    code('call '+name + '( &')
+    code('call '+name + '_gpu( &')
     indent = config.depth *' '
     line = ''
     for n in range (0, nargs):
