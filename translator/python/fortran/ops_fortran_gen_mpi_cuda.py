@@ -701,20 +701,26 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     #reduction across blocks
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
+        if (accs[n]==OPS_INC):
+          operation = '0'
+        if (accs[n]==OPS_MIN):
+          operation = '1'
+        if (accs[n]==OPS_MAX):
+          operation = '2'
         if 'real' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
             code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+
-                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,'+operation+')')
           else:
             code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+ '(' +
-                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,'+operation+','+dims[n]+')')
         elif 'integer' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
             code('call ReductionInt4(reductionArrayDevice'+str(n+1)+
-                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,0)')
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,'+operation+')')
           else:
             code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+ '(' +
-                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,0,'+dims[n]+')')
+                 '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,'+operation+','+dims[n]+')')
     code('')
     ENDIF()
 
@@ -945,9 +951,19 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('')
         DO('i10','0','reductionCardinality'+str(n+1)+'-1')
         if dims[n].isdigit() and int(dims[n]) == 1:
-          code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
+          if accs[n] == OPS_INC:
+            code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
+          if accs[n] == OPS_MIN:
+            code('reductionArrayHost'+str(n+1)+'(i10+1) = HUGE(reductionArrayHost'+str(n+1)+'(1))')
+          if accs[n] == OPS_INC:
+            code('reductionArrayHost'+str(n+1)+'(i10+1) = -1.0*HUGE(reductionArrayHost'+str(n+1)+'(1))')
         else:
-          code('reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+')) = 0.0')
+          if accs[n] == OPS_INC:
+            code('reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+')) = 0.0')
+          if accs[n] == OPS_MIN:
+            code('reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+')) = HUGE(reductionArrayHost'+str(n+1)+'(1))')
+          if accs[n] == OPS_MAX:
+            code('reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+')) = -1.0*HUGE(reductionArrayHost'+str(n+1)+'(1))')
         ENDDO()
         code('')
         code('reductionArrayDevice'+str(n+1)+'_'+name+' = reductionArrayHost'+str(n+1)+'')
@@ -1002,14 +1018,29 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     if reduction:
       #reductions
       for n in range(0,nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
           code('reductionArrayHost'+str(n+1)+' = reductionArrayDevice'+str(n+1)+'_'+name+'')
           code('')
           DO('i10','0','reductionCardinality'+str(n+1)+'-1')
           if dims[n].isdigit() and int(dims[n]) == 1:
-            code('opsDat'+str(n+1)+'Host = opsDat'+str(n+1)+'Host + reductionArrayHost'+str(n+1)+'(i10+1)')
+            if accs[n] == OPS_INC:
+              code('opsDat'+str(n+1)+'Host = opsDat'+str(n+1)+'Host + reductionArrayHost'+str(n+1)+'(i10+1)')
+            if accs[n] == OPS_MIN:
+              code('opsDat'+str(n+1)+'Host = min(opsDat'+str(n+1)+'Host, reductionArrayHost'+str(n+1)+'(i10+1))')
+            if accs[n] == OPS_MAX:
+              code('opsDat'+str(n+1)+'Host = min(opsDat'+str(n+1)+'Host, reductionArrayHost'+str(n+1)+'(i10+1))')
           else:
-            code('opsDat'+str(n+1)+'Host(1:'+dims[n]+') = opsDat'+str(n+1)+'Host(1:'+dims[n]+') + reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+'))')
+            if accs[n] == OPS_INC:
+              code('opsDat'+str(n+1)+'Host(1:'+dims[n]+') = opsDat'+str(n+1)+'Host(1:'+dims[n]+') + reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + 1 : i10 * ('+dims[n]+') + ('+dims[n]+'))')
+            else:
+              DO('i20','1',dims[n])
+              if accs[n] == OPS_MIN:
+                code('opsDat'+str(n+1)+'Host(i20) = min(opsDat'+str(n+1)+'Host(i20), reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + i20))')
+              if accs[n] == OPS_MAX:
+                code('opsDat'+str(n+1)+'Host(i20) = max(opsDat'+str(n+1)+'Host(i20), reductionArrayHost'+str(n+1)+'(i10 * ('+dims[n]+') + i20))')
+              ENDDO()
+
+
           ENDDO()
           code('')
           code('deallocate( reductionArrayHost'+str(n+1)+' )')
