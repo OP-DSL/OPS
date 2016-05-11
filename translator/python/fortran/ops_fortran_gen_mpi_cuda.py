@@ -60,6 +60,8 @@ ENDIF = util_fortran.ENDIF
 const_list = []
 def replace_consts(text):
   global const_list
+  if not os.path.isfile("constants_list.txt"):
+    return text
   fi2 = open("constants_list.txt","r")
   for line in fi2:
     fstr = '\\b'+line[:-1]+'\\b'
