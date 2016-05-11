@@ -9,6 +9,8 @@ inline void generate_chunk_kernel( const double *vertexx, const double *vertexy,
                      const double *cellx, const double *celly) {
 
   double radius, x_cent, y_cent;
+  int is_in = 0;
+  int is_in2 = 0;
 
 
   energy0[OPS_ACC2(0,0)]= states[0].energy;
@@ -20,59 +22,74 @@ inline void generate_chunk_kernel( const double *vertexx, const double *vertexy,
 
     x_cent=states[i].xmin;
     y_cent=states[i].ymin;
+    is_in = 0;
+    is_in2 = 0;
 
     if (states[i].geometry == g_rect) {
-      if(vertexx[OPS_ACC0(1,0)] >= states[i].xmin  && vertexx[OPS_ACC0(0,0)] < states[i].xmax) {
-        if(vertexy[OPS_ACC1(0,1)] >= states[i].ymin && vertexy[OPS_ACC1(0,0)] < states[i].ymax) {
-
-          energy0[OPS_ACC2(0,0)] = states[i].energy;
-          density0[OPS_ACC3(0,0)] = states[i].density;
-
-          xvel0[OPS_ACC4(0,0)] = states[i].xvel;
-          xvel0[OPS_ACC4(1,0)] = states[i].xvel;
-          xvel0[OPS_ACC4(0,1)] = states[i].xvel;
-          xvel0[OPS_ACC4(1,1)] = states[i].xvel;
-
-          yvel0[OPS_ACC5(0,0)] = states[i].yvel;
-          yvel0[OPS_ACC5(1,0)] = states[i].yvel;
-          yvel0[OPS_ACC5(0,1)] = states[i].yvel;
-          yvel0[OPS_ACC5(1,1)] = states[i].yvel;
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          if(vertexx[OPS_ACC0(1+i1,0)] >= states[i].xmin  && vertexx[OPS_ACC0(0+i1,0)] < states[i].xmax) {
+            if(vertexy[OPS_ACC1(0,1+j1)] >= states[i].ymin && vertexy[OPS_ACC1(0,0+j1)] < states[i].ymax) {
+              is_in = 1;
+            }
+          }
         }
       }
-
-    }
-    else if(states[i].geometry == g_circ) {
-      radius = sqrt ((cellx[OPS_ACC6(0,0)] - x_cent) * (cellx[OPS_ACC6(0,0)] - x_cent) +
-                     (celly[OPS_ACC7(0,0)] - y_cent) * (celly[OPS_ACC7(0,0)] - y_cent));
-      if(radius <= states[i].radius) {
+      if(vertexx[OPS_ACC0(1,0)] >= states[i].xmin  && vertexx[OPS_ACC0(0,0)] < states[i].xmax) {
+        if(vertexy[OPS_ACC1(0,1)] >= states[i].ymin && vertexy[OPS_ACC1(0,0)] < states[i].ymax) {
+          is_in2 = 1;
+        }
+      }
+      if (is_in2) {
         energy0[OPS_ACC2(0,0)] = states[i].energy;
         density0[OPS_ACC3(0,0)] = states[i].density;
-
+      }
+      if (is_in) {
         xvel0[OPS_ACC4(0,0)] = states[i].xvel;
-        xvel0[OPS_ACC4(1,0)] = states[i].xvel;
-        xvel0[OPS_ACC4(0,1)] = states[i].xvel;
-        xvel0[OPS_ACC4(1,1)] = states[i].xvel;
-
         yvel0[OPS_ACC5(0,0)] = states[i].yvel;
-        yvel0[OPS_ACC5(1,0)] = states[i].yvel;
-        yvel0[OPS_ACC5(0,1)] = states[i].yvel;
-        yvel0[OPS_ACC5(1,1)] = states[i].yvel;
+      }
+    }
+    else if(states[i].geometry == g_circ) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          radius = sqrt ((cellx[OPS_ACC6(i1,0)] - x_cent) * (cellx[OPS_ACC6(i1,0)] - x_cent) +
+                     (celly[OPS_ACC7(0,j1)] - y_cent) * (celly[OPS_ACC7(0,j1)] - y_cent));
+          if (radius <= states[i].radius) {
+            is_in = 1;
+          }
+        }
+      }
+      if (radius <= states[i].radius) is_in2 = 1;
+
+      if (is_in2) {
+        energy0[OPS_ACC2(0,0)] = states[i].energy;
+        density0[OPS_ACC3(0,0)] = states[i].density;
+      }
+
+      if (is_in) {
+        xvel0[OPS_ACC4(0,0)] = states[i].xvel;
+        yvel0[OPS_ACC5(0,0)] = states[i].yvel;
       }
     }
     else if(states[i].geometry == g_point) {
-      if(vertexx[OPS_ACC0(0,0)] == x_cent && vertexy[OPS_ACC1(0,0)] == y_cent) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          if(vertexx[OPS_ACC0(i1,0)] == x_cent && vertexy[OPS_ACC1(0,j1)] == y_cent) {
+            is_in = 1;
+          }
+        }
+      }
+      if(vertexx[OPS_ACC0(0,0)] == x_cent && vertexy[OPS_ACC1(0,0)] == y_cent)
+        is_in2 = 1;
+
+      if (is_in2) {
         energy0[OPS_ACC2(0,0)] = states[i].energy;
         density0[OPS_ACC3(0,0)] = states[i].density;
+      }
 
+      if (is_in) {
         xvel0[OPS_ACC4(0,0)] = states[i].xvel;
-        xvel0[OPS_ACC4(1,0)] = states[i].xvel;
-        xvel0[OPS_ACC4(0,1)] = states[i].xvel;
-        xvel0[OPS_ACC4(1,1)] = states[i].xvel;
-
         yvel0[OPS_ACC5(0,0)] = states[i].yvel;
-        yvel0[OPS_ACC5(1,0)] = states[i].yvel;
-        yvel0[OPS_ACC5(0,1)] = states[i].yvel;
-        yvel0[OPS_ACC5(1,1)] = states[i].yvel;
       }
     }
   }

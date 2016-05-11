@@ -645,8 +645,8 @@ ops_arg ops_arg_dat_core ( ops_dat dat, ops_stencil stencil, ops_access acc ) {
   arg.argtype = OPS_ARG_DAT;
   arg.dat = dat;
   arg.stencil = stencil;
-  if (acc != OPS_READ && stencil->points != 1) {
-    printf("Error: OPS does not support OPS_WRITE/OPS_RW/OPS_INC arguments with a non (0,0,0) stencil due to potential race conditions\n");
+  if (acc == OPS_WRITE && stencil->points != 1) {
+    printf("Error: OPS does not support OPS_WRITE arguments with a non (0,0,0) stencil due to potential race conditions\n");
     exit(-1);
   }
   if ( dat != NULL ) {
