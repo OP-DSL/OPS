@@ -89,7 +89,7 @@ void cutilDeviceInit( int argc, char ** argv )
   int deviceCount;
   cutilSafeCall( cudaGetDeviceCount ( &deviceCount ) );
   if ( deviceCount == 0 ) {
-    printf ( "cutil error: no devices supporting CUDA\n" );
+    printf ( "Error: cutil error: no devices supporting CUDA\n" );
     exit ( -1 );
   }
 

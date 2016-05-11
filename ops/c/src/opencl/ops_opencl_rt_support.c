@@ -143,7 +143,7 @@ char *clGetErrorString(cl_int err) {
 
 void __clSafeCall(cl_int ret, const char * file, const int line) {
   if ( CL_SUCCESS != ret ) {
-    ops_fprintf ( stderr, "%s(%i) : clSafeCall() Runtime API error : %s.\n",
+    ops_fprintf ( stderr, "Error: %s(%i) : clSafeCall() Runtime API error : %s.\n",
         file, line, clGetErrorString ( ret ) );
     exit ( -1 );
   }

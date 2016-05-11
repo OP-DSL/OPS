@@ -294,7 +294,7 @@ void ops_exit_core( )
 ops_block ops_decl_block(int dims, const char *name)
 {
   if ( dims < 0 ) {
-    printf ( " ops_decl_block error -- negative/zero dimension size for block: %s\n", name );
+    printf ( "Error: ops_decl_block -- negative/zero dimension size for block: %s\n", name );
     exit ( -1 );
   }
 
@@ -303,7 +303,7 @@ ops_block ops_decl_block(int dims, const char *name)
     OPS_block_list = (ops_block_descriptor *) realloc(OPS_block_list,OPS_block_max * sizeof(ops_block_descriptor));
 
     if ( OPS_block_list == NULL ) {
-      printf ( " ops_decl_block error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_block -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -335,12 +335,12 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
                       char const * name )
 {
   if ( block == NULL ) {
-    printf ( "ops_decl_dat error -- invalid block for data: %s\n", name );
+    printf ( "Error: ops_decl_dat -- invalid block for data: %s\n", name );
     exit ( -1 );
   }
 
   if ( dim <= 0 ) {
-    printf ( "ops_decl_dat error -- negative/zero number of items per grid point in data: %s\n", name );
+    printf ( "Error: ops_decl_dat -- negative/zero number of items per grid point in data: %s\n", name );
     exit ( -1 );
   }
 
@@ -391,7 +391,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   //add the newly created ops_dat to list
   item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
-    printf ( " op_decl_dat error -- error allocating memory to double linked list entry\n" );
+    printf ( "Error: op_decl_dat -- error allocating memory to double linked list entry\n" );
     exit ( -1 );
   }
   item->dat = dat;
@@ -403,7 +403,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
   //Another entry for a different list
   item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
-    printf ( " op_decl_dat error -- error allocating memory to double linked list entry\n" );
+    printf ( "Error: op_decl_dat -- error allocating memory to double linked list entry\n" );
     exit ( -1 );
   }
   item->dat = dat;
@@ -420,7 +420,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, dim, dataset_size, base, type, name);
   if ( found_dat != NULL) {
-    printf("ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
+    printf("Error: ops_dat with name %s already exists, cannot create temporary ops_dat\n ", name);
     exit(2);
   }
   //if not found ...
@@ -436,7 +436,7 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
     OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
 
     if ( OPS_stencil_list == NULL ) {
-      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_stencil -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -449,10 +449,6 @@ ops_stencil ops_decl_stencil ( int dims, int points, int *sten, char const * nam
 
   stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
   memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
-
-  //for (int i = 0; i < dims*points; i++)
-  //  printf("%d ",stencil->stencil[i]);
-  //printf("\n");
 
   stencil->stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
@@ -472,7 +468,7 @@ ops_stencil ops_decl_strided_stencil ( int dims, int points, int *sten, int *str
     OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
 
     if ( OPS_stencil_list == NULL ) {
-      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_stencil -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -520,10 +516,10 @@ ops_arg ops_arg_reduce_core ( ops_reduction handle, int dim, const char *type, o
       if (acc == OPS_MAX) for (int i = 0; i < handle->size/4; i++) ((int*)handle->data)[i] = -1*INT_MAX;
     }
     else {
-      printf("Warning, reduction type not recognised, please add in ops_lib_core.c!\n");
+      printf("Warning: reduction type not recognised, please add in ops_lib_core.c !\n");
     }
   } else if (handle->acc != acc) {
-    printf("ops_reduction handle %s was aleady used with a different access type\n",handle->name);
+    printf("Error: ops_reduction handle %s was aleady used with a different access type\n",handle->name);
     exit(-1);
   }
   return arg;
@@ -535,7 +531,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
     OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
 
     if ( OPS_halo_group_list == NULL ) {
-      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_halo_group -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -564,7 +560,7 @@ if ( OPS_halo_group_index == OPS_halo_group_max ) {
     OPS_halo_group_list = (ops_halo_group *) realloc(OPS_halo_group_list,OPS_halo_group_max * sizeof(ops_halo_group));
 
     if ( OPS_halo_group_list == NULL ) {
-      printf ( " ops_decl_halo_group error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_halo_group -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -612,7 +608,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_
     OPS_halo_list = (ops_halo *) realloc(OPS_halo_list,OPS_halo_max * sizeof(ops_halo));
 
     if ( OPS_halo_list == NULL ) {
-      printf ( " ops_decl_halo_core error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_halo_core -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -691,7 +687,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type, const c
     OPS_reduction_list = (ops_reduction *) realloc(OPS_reduction_list,OPS_reduction_max * sizeof(ops_reduction));
 
     if ( OPS_reduction_list == NULL ) {
-      printf ( " ops_decl_reduction_handle error -- error reallocating memory\n" );
+      printf ( "Error: ops_decl_reduction_handle -- error reallocating memory\n" );
       exit ( -1 );
     }
   }
@@ -789,12 +785,12 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
   //TODO: this has to be backend-specific
   FILE *fp;
   if ( (fp = fopen(file_name,"a")) == NULL) {
-    printf("can't open file %s\n",file_name);
+    printf("Error: can't open file %s\n",file_name);
     exit(2);
   }
 
   if (fprintf(fp,"ops_dat:  %s \n", dat->name)<0) {
-    printf("error writing to %s\n",file_name);
+    printf("Error: error writing to %s\n",file_name);
     exit(2);
   }
   if (fprintf(fp,"ops_dat dim:  %d \n", dat->dim)<0) {
@@ -809,7 +805,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
   for(int i = 0; i < dat->block->dims; i++) {
     if (fprintf(fp,"[%d]", dat->size[i])<0) {
-      printf("error writing to %s\n",file_name);
+      printf("Error: error writing to %s\n",file_name);
       exit(2);
     }
   }
@@ -817,7 +813,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
 
   if (fprintf(fp,"elem size %d \n", dat->elem_size)<0) {
-    printf("error writing to %s\n",file_name);
+    printf("Error: error writing to %s\n",file_name);
     exit(2);
   }
 
@@ -831,7 +827,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
             if (fprintf(fp, " %3.10lf",
               ((double *)dat->data)[i*dat->size[1]*dat->size[0]+
                                     j*dat->size[0]+k])<0) {
-              printf("error writing to %s\n",file_name);
+              printf("Error: error writing to %s\n",file_name);
               exit(2);
               }
           }
@@ -847,7 +843,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
           for(int k = 0; k < dat->size[0]; k++ ) {
             if (fprintf(fp, "%e ", ((float *)dat->data)[i*dat->size[1]*dat->size[0]+
                                       j*dat->size[0]+k])<0) {
-              printf("error writing to %s\n",file_name);
+              printf("Error: error writing to %s\n",file_name);
               exit(2);
               }
           }
@@ -865,7 +861,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
           for(int k = 0; k < dat->size[0]; k++ ) {
             if (fprintf(fp, "%d ", ((int *)dat->data)[i*dat->size[1]*dat->size[0]+
                                       j*dat->size[0]+k])<0) {
-              printf("error writing to %s\n",file_name);
+              printf("Error: error writing to %s\n",file_name);
               exit(2);
             }
           }
@@ -875,7 +871,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else {
-      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      printf("Error: Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
       exit(2);
     }
     fprintf(fp,"\n");
@@ -888,7 +884,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
             if (fprintf(fp, " %3.10lf",((double *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
-              printf("error writing to %s\n",file_name);
+              printf("Error: error writing to %s\n",file_name);
               exit(2);
             }
           }
@@ -902,7 +898,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
             if (fprintf(fp, " %e",((float *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
-            printf("error writing to %s\n",file_name);
+            printf("Error: error writing to %s\n",file_name);
             exit(2);
             }
           }
@@ -918,7 +914,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
         for(int j = 0; j < dat->size[0]; j++ ) {
           for(int d = 0; d < dat->dim; d++ ) {
             if (fprintf(fp, "%d ", ((int *)dat->data)[(i*dat->size[0]+j)*dat->dim+d])<0) {
-              printf("error writing to %s\n",file_name);
+              printf("Error: error writing to %s\n",file_name);
               exit(2);
             }
           }
@@ -927,7 +923,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       }
     }
     else {
-      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      printf("Error: Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
       exit(2);
     }
     fprintf(fp,"\n");
@@ -940,7 +936,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%3.10lf", ((double *)dat->data)[j*dat->dim+d])<0) {
-            printf("error writing to %s\n",file_name);
+            printf("Error: error writing to %s\n",file_name);
             exit(2);
           }
           if(d<dat->dim-1)fprintf(fp," ");
@@ -953,7 +949,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%e\n", ((float *)dat->data)[j*dat->dim+d])<0) {
-            printf("error writing to %s\n",file_name);
+            printf("Error: error writing to %s\n",file_name);
             exit(2);
           }
         }
@@ -967,7 +963,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       for(int j = 0; j < dat->size[0]; j++ ) {
         for(int d = 0; d < dat->dim; d++ ) {
           if (fprintf(fp, "%d\n", ((int *)dat->data)[j*dat->dim+d])<0) {
-            printf("error writing to %s\n",file_name);
+            printf("Error: error writing to %s\n",file_name);
             exit(2);
           }
         }
@@ -975,7 +971,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
       fprintf(fp,"\n");
     }
     else {
-      printf("Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
+      printf("Error: Unknown type %s, cannot be written to file %s\n",dat->type,file_name);
       exit(2);
     }
     fprintf(fp,"\n");
@@ -1057,7 +1053,7 @@ ops_timing_realloc ( int kernel, const char *name )
     OPS_kernels = ( ops_kernel * ) realloc ( OPS_kernels, OPS_kern_max_new * sizeof ( ops_kernel ) );
     if ( OPS_kernels == NULL )
     {
-      printf ( " ops_timing_realloc error \n" );
+      printf ( "Error: ops_timing_realloc error \n" );
       exit ( -1 );
     }
 

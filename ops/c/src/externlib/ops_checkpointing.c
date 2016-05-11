@@ -120,7 +120,7 @@ char *params;
 #define check_hdf5_error(err)           __check_hdf5_error      (err, __FILE__, __LINE__)
 void __check_hdf5_error(herr_t err, const char *file, const int line) {
   if (err < 0) {
-    printf("%s(%i) : OPS_HDF5_error() Runtime API error %d.%s\n", file, line, (int)err,params);
+    printf("Error: %s(%i) : OPS_HDF5_error() Runtime API error %d.%s\n", file, line, (int)err,params);
       exit(-1);
   }
 }
@@ -139,7 +139,7 @@ void ops_create_lock(char *fname) {
   if (FILE *lock = fopen(buffer,"w+")) {
     fclose(lock);
   } else {
-    if (OPS_diags>2) printf("Warning, lock file already exists\n");
+    if (OPS_diags>2) printf("Warning: lock file already exists\n");
   }
 }
 
@@ -149,7 +149,7 @@ void ops_create_lock_done(char *fname) {
   if (FILE *lock = fopen(buffer,"w+")) {
     fclose(lock);
   } else {
-    if (OPS_diags>2) printf("Warning, lock done file already exists\n");
+    if (OPS_diags>2) printf("Warning: lock done file already exists\n");
   }
 }
 
@@ -273,7 +273,7 @@ void ops_ramdisk_init(long size) {
   ops_ramdisk_item_queue_size = 3*OPS_dat_index;
   ops_ramdisk_initialised = 1;
   int rc = pthread_create(&thread, NULL, ops_saver_thread, NULL);
-  if (rc) {printf("ERROR; return code from pthread_create() is %d\n", rc); exit(-1);}
+  if (rc) {printf("Error: return code from pthread_create() is %d\n", rc); exit(-1);}
 }
 
 void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range, char*data, int partial) {
@@ -364,7 +364,7 @@ void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
   } else if (strcmp(dat->type,"double")==0) {
     check_hdf5_error(H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
   } else {
-    printf("Unsupported data type in ops_arg_dat() %s\n", dat->name);
+    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
     exit(-1);
   }
   ops_timers_core(&c1, &t2);
@@ -384,7 +384,7 @@ void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size, int *saved_range
   } else if (strcmp(dat->type,"double")==0) {
     check_hdf5_error(H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
   } else {
-    printf("Unsupported data type in ops_arg_dat() %s\n", dat->name);
+    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
     exit(-1);
   }
 
@@ -535,7 +535,7 @@ void ops_restore_dataset(ops_dat dat) {
     } else if (strcmp(dat->type,"double")==0) {
       check_hdf5_error(H5LTread_dataset (file,  dat->name, H5T_NATIVE_DOUBLE, dat->data));
     } else {
-      printf("Unsupported data type in ops_arg_dat() %s\n",  dat->name);
+      printf("Error: Unsupported data type in ops_arg_dat() %s\n",  dat->name);
       exit(-1);
     }
     dat->dirty_hd = 1;
@@ -577,7 +577,7 @@ void ops_restore_dataset(ops_dat dat) {
     } else if (strcmp(dat->type,"double")==0) {
       check_hdf5_error(H5LTread_dataset (file,  dat->name, H5T_NATIVE_DOUBLE, OPS_partial_buffer));
     } else {
-      printf("Unsupported data type in ops_arg_dat() %s\n",  dat->name);
+      printf("Error: Unsupported data type in ops_arg_dat() %s\n",  dat->name);
       exit(-1);
     }
 
@@ -678,11 +678,11 @@ void ops_ctrldump(hid_t file_out) {
 
 void ops_chkp_sig_handler(int signo) {
   if (signo != SIGINT) {
-    printf("OPS received unknown signal %d\n",signo);
+    printf("Error: OPS received unknown signal %d\n",signo);
     return;
   }
   if (backup_state == OPS_BACKUP_IN_PROCESS) {
-    printf("ERROR: failed in checkpointing region, aborting checkpoint\n");
+    printf("Error: failed in checkpointing region, aborting checkpoint\n");
     return;
   }
   if (OPS_diags>1) printf("Process received SIGINT, dumping checkpoint from memory...\n");

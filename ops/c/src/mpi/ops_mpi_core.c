@@ -192,7 +192,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *
 
   ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
   if (OPS_block_index < 1) {
-    printf("ops_decl_reduction_handle() should only be called after \
+    printf("Error: ops_decl_reduction_handle() should only be called after \
       declaring at least one ops_block\n -- Aborting\n");
     MPI_Abort(OPS_MPI_GLOBAL, 2);
   }
