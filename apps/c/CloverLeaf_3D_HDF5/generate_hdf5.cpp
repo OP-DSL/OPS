@@ -50,17 +50,17 @@ void generate_hdf5()
   int rangexyz[] = {x_min-2,x_max+2,y_min-2,y_max+2,z_min-2,z_max+2};
 
   ops_par_loop(generate_chunk_kernel, "generate_chunk_kernel", clover_grid, 3, rangexyz,
-    ops_arg_dat(vertexx,  1, S3D_000_P100_STRID3D_X, "double", OPS_READ),
-    ops_arg_dat(vertexy,  1, S3D_000_0P10_STRID3D_Y, "double", OPS_READ),
-    ops_arg_dat(vertexz,  1, S3D_000_00P1_STRID3D_Z, "double", OPS_READ),
+    ops_arg_dat(vertexx,  1, S3D_000_P100_M100_STRID3D_X, "double", OPS_READ),
+    ops_arg_dat(vertexy,  1, S3D_000_0P10_0M10_STRID3D_Y, "double", OPS_READ),
+    ops_arg_dat(vertexz,  1, S3D_000_00P1_00M1_STRID3D_Z, "double", OPS_READ),
     ops_arg_dat(energy0,  1, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(density0, 1, S3D_000, "double", OPS_WRITE),
-    ops_arg_dat(xvel0,    1, S3D_000_fP1P1P1, "double", OPS_WRITE),
-    ops_arg_dat(yvel0,    1, S3D_000_fP1P1P1, "double", OPS_WRITE),
-    ops_arg_dat(zvel0,    1, S3D_000_fP1P1P1, "double", OPS_WRITE),
-    ops_arg_dat(cellx,    1, S3D_000_STRID3D_X, "double", OPS_READ),
-    ops_arg_dat(celly,    1, S3D_000_STRID3D_Y, "double", OPS_READ),
-    ops_arg_dat(cellz,    1, S3D_000_STRID3D_Z, "double", OPS_READ));
+    ops_arg_dat(xvel0,    1, S3D_000, "double", OPS_WRITE),
+    ops_arg_dat(yvel0,    1, S3D_000, "double", OPS_WRITE),
+    ops_arg_dat(zvel0,    1, S3D_000, "double", OPS_WRITE),
+    ops_arg_dat(cellx,    1, S3D_000_P100_M100_STRID3D_X, "double", OPS_READ),
+    ops_arg_dat(celly,    1, S3D_000_0P10_0M10_STRID3D_Y, "double", OPS_READ),
+    ops_arg_dat(cellz,    1, S3D_000_00P1_00M1_STRID3D_Z, "double", OPS_READ));
 
     ops_fetch_block_hdf5_file(clover_grid, "cloverdata.h5");
 
