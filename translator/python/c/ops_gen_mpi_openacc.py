@@ -150,7 +150,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
-    if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
+    if not (('calc_dt_kernel_print' in name)):
       if not (NDIM==3 and 'field_summary' in name):
         code('#define OPS_GPU')
         code('')
@@ -462,7 +462,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
     code('')
-    if not (('generate_chunk' in name) or ('calc_dt_kernel_print' in name)):
+    if not (('calc_dt_kernel_print' in name)):
       if not (NDIM==3 and 'field_summary' in name):
         code('#define OPS_GPU')
         code('')
