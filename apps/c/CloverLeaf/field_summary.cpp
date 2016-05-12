@@ -87,24 +87,24 @@ void field_summary()
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
   if(complete == TRUE) {
-    if(test_problem == 1) {
-      qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
-      ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      if(qa_diff < 0.001) {
-        ops_printf("This test is considered PASSED\n");
-        ops_fprintf(g_out,"This test is considered PASSED\n");
-      }
-      else
-      {
-        ops_printf("This test is considered NOT PASSED\n");
-        ops_fprintf(g_out,"This test is considered NOT PASSED\n");
-      }
+
+    if(test_problem == 1) qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
+    if(test_problem == 2) qa_diff=fabs((100.0*(ke/1.19316898756307))-100.0);
+    if(test_problem == 3) qa_diff=fabs((100.0*(ke/2.58984003503994))-100.0);
+    if(test_problem == 4) qa_diff=fabs((100.0*(ke/0.307475452287895))-100.0);
+    if(test_problem == 5) qa_diff=fabs((100.0*(ke/4.85350315783719))-100.0);
+
+    ops_printf("\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
+    ops_fprintf(g_out,"\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
+
+    if(qa_diff < 0.001) {
+      ops_printf("This test is considered PASSED\n");
+      ops_fprintf(g_out,"This test is considered PASSED\n");
+    }
+    else {
+      ops_printf("This test is considered FAILED\n");
+      ops_fprintf(g_out,"This test is considered FAILED\n");
     }
   }
-  fflush(g_out);
-
-  //ops_exit();//exit for now
-  //exit(0);
 
 }
