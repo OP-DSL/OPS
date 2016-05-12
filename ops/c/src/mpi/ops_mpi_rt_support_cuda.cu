@@ -256,6 +256,11 @@ void ops_halo_copy_tobuf(char * dest, int dest_offset,
     gpu_ptr = halo_buffer_d;
   }
 
+  if (src->dirty_hd == 1) {
+    ops_upload_dat(src);
+    src->dirty_hd = 0;
+  }
+
   dim3 grid(blk_x,blk_y,blk_z);
   dim3 tblock(thr_x,thr_y,thr_z);
   copy_kernel_tobuf<<<grid, tblock>>>(gpu_ptr, src->data_d,
@@ -309,6 +314,11 @@ void ops_halo_copy_frombuf(ops_dat dest,
     }
     gpu_ptr = halo_buffer_d;
     cutilSafeCall(cudaMemcpy(halo_buffer_d, src, size*sizeof(char), cudaMemcpyHostToDevice));
+  }
+  
+  if (dest->dirty_hd == 1) {
+    ops_upload_dat(dest);
+    dest->dirty_hd = 0;
   }
 
   dim3 grid(blk_x,blk_y,blk_z);

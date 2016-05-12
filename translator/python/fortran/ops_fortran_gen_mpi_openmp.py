@@ -137,12 +137,17 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
-          code('INTEGER(KIND=4) xdim'+str(n+1))
           if NDIM==1:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
+            code('INTEGER(KIND=4) ydim'+str(n+1))
             code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'*(y)+1)')
           if NDIM==3:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('INTEGER(KIND=4) zdim'+str(n+1))
             code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'*(y)+xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)+1)')
     code('')
 
@@ -150,12 +155,17 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) multi_d'+str(n+1))
-          code('INTEGER(KIND=4) xdim'+str(n+1))
           if NDIM==1:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
+            code('INTEGER(KIND=4) ydim'+str(n+1))
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
+            code('INTEGER(KIND=4) xdim'+str(n+1))
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('INTEGER(KIND=4) zdim'+str(n+1))
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
 
     code('')
@@ -240,7 +250,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     if NDIM==1:
       if reduction <> 1 and arg_idx <> 1:
         code('!$OMP PARALLEL DO')
-        code('!DIR$ SIMD')
+        code('!DIR$ IVDEP')
       elif reduction == 1:
         code('!$OMP PARALLEL DO '+reduction_vars)
       DO('n_x','1','end(1)-start(1)+1')
@@ -255,7 +265,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ SIMD')
+      code('!DIR$ IVDEP')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
@@ -271,7 +281,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ SIMD')
+      code('!DIR$ IVDEP')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')

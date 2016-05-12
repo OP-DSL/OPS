@@ -485,9 +485,9 @@ int main(int argc, char **argv) {
                    ops_arg_dat(rho_new[i], 1, S1D_01, "double", OPS_READ),
                    ops_arg_dat(rhou_new[i], 1, S1D_01, "double", OPS_READ),
                    ops_arg_dat(rhoE_new[i], 1, S1D_01, "double", OPS_READ),
-                   ops_arg_dat(alam[i], 3, S1D_01, "double", OPS_WRITE),
-                   ops_arg_dat(r[i], 9, S1D_01, "double", OPS_WRITE),
-                   ops_arg_dat(al[i], 3, S1D_01, "double", OPS_WRITE));
+                   ops_arg_dat(alam[i], 3, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(r[i], 9, S1D_0, "double", OPS_WRITE),
+                   ops_arg_dat(al[i], 3, S1D_0, "double", OPS_WRITE));
 
       int tvd_limiter_range[] = {sizes[(2*i)]+1-xhalo,sizes[(2*i)+1]+xhalo-1};
       ops_par_loop_limiter_kernel("limiter_kernel", shsgc_grid[i], 1, tvd_limiter_range,

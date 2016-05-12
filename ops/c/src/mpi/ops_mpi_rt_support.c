@@ -185,7 +185,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         MPI_Sendrecv(&actual_depth,1,MPI_INT,sb->id_p[n],666,
           &they_send,1,MPI_INT,sb->id_m[n],666,sb->comm, &status);
         if (sb->id_m[n]>=0 && actual_depth != they_send) {
-          printf("Left recv mismatch\n");
+          printf("Error: Left recv mismatch\n");
           MPI_Abort(sb->comm,-1);
         }
       }
@@ -222,7 +222,7 @@ void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/)
         MPI_Sendrecv(&actual_depth,1,MPI_INT,sb->id_m[n],665,
           &they_send,1,MPI_INT,sb->id_p[n],665,sb->comm, &status);
         if (sb->id_p[n]>=0 && actual_depth != they_send) {
-          printf("Right recv mismatch\n");
+          printf("Error: Right recv mismatch\n");
           MPI_Abort(sb->comm,-1);
         }
       }
@@ -347,7 +347,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_m[dim],665,
         &they_send,1,MPI_INT,sb->id_p[dim],665,sb->comm, &status);
       if (sb->id_p[dim]>=0 && actual_depth_recv != they_send) {
-        printf("\nRight recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
+        printf("\nError: Right recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
         MPI_Abort(sb->comm,-1);
       }
     }
@@ -393,7 +393,7 @@ void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *ite
       MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_p[dim],666,
         &they_send,1,MPI_INT,sb->id_m[dim],666,sb->comm, &status);
       if (sb->id_m[dim]>=0 && actual_depth_recv != they_send) {
-        printf("\nLeft recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
+        printf("\nError: Left recv mismatch: expecting %d receiving %d\n",actual_depth_recv, they_send);
         MPI_Abort(sb->comm,-1);
       }
     }
@@ -503,7 +503,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
     MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_m[dim],665,
       &they_send,1,MPI_INT,sb->id_p[dim],665,sb->comm, &status);
     if (sb->id_p[dim]>=0 && actual_depth_recv != they_send) {
-      printf("Right recv mismatch\n");
+      printf("Error: Right recv mismatch\n");
       MPI_Abort(sb->comm,-1);
     }
   }
@@ -560,7 +560,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg, int *iter_range
     MPI_Sendrecv(&actual_depth_send,1,MPI_INT,sb->id_p[dim],666,
       &they_send,1,MPI_INT,sb->id_m[dim],666,sb->comm, &status);
     if (sb->id_m[dim]>=0 && actual_depth_recv != they_send) {
-      printf("Left recv mismatch\n");
+      printf("Error: Left recv mismatch\n");
       MPI_Abort(sb->comm,-1);
     }
   }
@@ -1101,5 +1101,4 @@ void ops_halo_transfer(ops_halo_group group) {
     }
   }
   MPI_Waitall(mpi_group->num_neighbors_send,&mpi_group->requests[0],&mpi_group->statuses[0]);
-  //TODO: host/device dirtybits???
 }

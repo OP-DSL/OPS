@@ -77,9 +77,9 @@ ops_arg ops_arg_gbl ( T * data, int dim, char const * type, ops_access acc )
 template < class T >
 void ops_decl_const2 ( char const * name, int dim, char const *type, T * data )
 {
-  if ( type_error ( data, type ) )
-  {
-    printf ( "incorrect type specified for constant \"%s\" \n", name ); exit ( 1 );
+  if ( type_error ( data, type ) ) {
+    printf ( "Error: incorrect type specified for constant \"%s\" \n", name );
+    exit ( 1 );
   }
 
   ops_decl_const_char ( dim, type, sizeof ( T ), (char *) data, name );
@@ -89,7 +89,7 @@ template < class T >
 void ops_reduction_result(ops_reduction handle, T *ptr) {
   if ( type_error ( ptr, handle->type ) )
   {
-    printf ( "incorrect type specified for constant in ops_reduction_result" );
+    printf ( "Error: incorrect type specified for constant in ops_reduction_result" );
     exit ( 1 );
   }
   ops_reduction_result_char(handle, sizeof ( T ), (char *) ptr);
@@ -101,7 +101,7 @@ void ops_update_const ( char const * name, int dim, char const * type, T * data 
   (void)dim;
   if ( type_error ( data, type ) )
   {
-    printf ( "incorrect type specified for constant in ops_update_const" );
+    printf ( "Error: incorrect type specified for constant in ops_update_const" );
     exit ( 1 );
   }
   ops_execute();
@@ -114,7 +114,7 @@ void ops_decl_const ( char const * name, int dim, char const * type, T * data )
   (void)dim;
   if ( type_error ( data, type ) )
   {
-    printf ( "incorrect type specified for constant in op_decl_const" );
+    printf ( "Error: incorrect type specified for constant in op_decl_const" );
     exit ( 1 );
   }
 }
@@ -144,7 +144,7 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 {
 
   if ( type_error ( data, type ) ) {
-    printf ( "incorrect type specified for dataset \"%s\" \n", name );
+    printf ( "Error: incorrect type specified for dataset \"%s\" \n", name );
     exit ( 1 );
   }
 

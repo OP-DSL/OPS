@@ -278,9 +278,9 @@ program SHSGC
             & ops_arg_dat(rho_new,  1, S1D_01, "real(8)",OPS_READ), &
             & ops_arg_dat(rhou_new,  1, S1D_01, "real(8)",OPS_READ), &
             & ops_arg_dat(rhoE_new,  1, S1D_01, "real(8)",OPS_READ), &
-            & ops_arg_dat(alam,  3, S1D_01, "real(8)",OPS_WRITE), &
-            & ops_arg_dat(r,  9, S1D_01, "real(8)",OPS_WRITE), &
-            & ops_arg_dat(al, 3, S1D_01, "real(8)",OPS_WRITE))
+            & ops_arg_dat(alam,  3, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(r,  9, S1D_0, "real(8)",OPS_WRITE), &
+            & ops_arg_dat(al, 3, S1D_0, "real(8)",OPS_WRITE))
 
     ! limiter function
     nxp_range_4(1) = 2

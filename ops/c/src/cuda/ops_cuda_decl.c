@@ -51,7 +51,7 @@ void ops_init ( int argc, char ** argv, int diags )
   ops_init_core ( argc, argv, diags );
 
   if ((OPS_block_size_x*OPS_block_size_y) > 1024) {
-    printf ( " OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
+    printf ( "Error: OPS_block_size_x*OPS_block_size_y should be less than 1024 -- error OPS_block_size_*\n" );
     exit ( -1 );
   }
 
@@ -222,7 +222,10 @@ void ops_halo_transfer(ops_halo_group group) {
         }
       }
     }*/
-
+    if (halo->from->dirty_hd == 1) {
+      ops_upload_dat(halo->from);
+      halo->from->dirty_hd = 0;
+    }
     ops_halo_copy_tobuf(ops_halo_buffer_d, 0, halo->from,
                        ranges[0], ranges[1],
                        ranges[2], ranges[3],
@@ -256,6 +259,10 @@ void ops_halo_transfer(ops_halo_group group) {
       }
     }*/
 
+    if (halo->to->dirty_hd == 1) {
+      ops_upload_dat(halo->to);
+      halo->to->dirty_hd = 0;
+    }
     ops_halo_copy_frombuf(halo->to, ops_halo_buffer_d, 0,
                    ranges[0], ranges[1],
                    ranges[2], ranges[3],
