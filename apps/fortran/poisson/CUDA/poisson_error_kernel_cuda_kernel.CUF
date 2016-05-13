@@ -289,7 +289,6 @@ attributes (host) subroutine poisson_error_kernel_host( userSubroutine, block, d
 
   DO i10 = 0, reductionCardinality3-1
     reductionArrayHost3(i10+1) = 0.0
-    reductionArrayHost3(i10+1) = -1.0*HUGE(reductionArrayHost3(1))
   END DO
 
   reductionArrayDevice3_poisson_error_kernel = reductionArrayHost3

@@ -963,7 +963,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
             code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
           if accs[n] == OPS_MIN:
             code('reductionArrayHost'+str(n+1)+'(i10+1) = HUGE(reductionArrayHost'+str(n+1)+'(1))')
-          if accs[n] == OPS_INC:
+          if accs[n] == OPS_MAX:
             code('reductionArrayHost'+str(n+1)+'(i10+1) = -1.0*HUGE(reductionArrayHost'+str(n+1)+'(1))')
         else:
           if accs[n] == OPS_INC:
