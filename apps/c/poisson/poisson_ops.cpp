@@ -223,12 +223,22 @@ int main(int argc, char **argv)
   }
 
   ops_reduction_result(red_err,&err);
-  ops_printf("Total error: %g\n",err);
 
   ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
-
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+
+  double err_diff=fabs((100.0*(err/0.150875331209075))-100.0);
+  ops_printf("Total error: %3.15g\n",err);
+  ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+
+  if(err_diff < 0.001) {
+    ops_printf("This run is considered PASSED\n");
+  }
+  else {
+    ops_printf("This test is considered FAILED\n");
+  }
+
 
   ops_exit();
 }

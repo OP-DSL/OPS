@@ -21,7 +21,6 @@ cd ../multiDim/
 ../../../translator/python/c/ops.py multidim.cpp
 ./test.sh
 cd ../shsgc/
-../../../translator/python/c/ops.py shsgc.cpp
 ./test.sh
 cd ../mb_shsgc/Max_datatransfer
 ./test.sh
