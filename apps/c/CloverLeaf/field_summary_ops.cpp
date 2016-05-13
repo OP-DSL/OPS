@@ -78,8 +78,8 @@ void field_summary()
   ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-.3E",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
-  if(complete == TRUE) {
-
+  if(complete == TRUE && test_problem) {
+    qa_diff = DBL_MAX;
     if(test_problem == 1) qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
     if(test_problem == 2) qa_diff=fabs((100.0*(ke/1.19316898756307))-100.0);
     if(test_problem == 3) qa_diff=fabs((100.0*(ke/2.58984003503994))-100.0);
@@ -94,8 +94,8 @@ void field_summary()
       ops_fprintf(g_out,"This test is considered PASSED\n");
     }
     else {
-      ops_printf("This test is considered NOT PASSED\n");
-      ops_fprintf(g_out,"This test is considered NOT PASSED\n");
+      ops_printf("This test is considered FAILED\n");
+      ops_fprintf(g_out,"This test is considered FAILED\n");
     }
   }
 

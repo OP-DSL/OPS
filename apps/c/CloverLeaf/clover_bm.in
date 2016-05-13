@@ -17,5 +17,6 @@
  end_time=15.5
  end_step=2955
  profiler_on=1
+ test_problem 3
 
 *endclover

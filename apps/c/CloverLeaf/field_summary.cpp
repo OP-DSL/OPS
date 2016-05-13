@@ -86,14 +86,14 @@ void field_summary()
   ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-.3E",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
-  if(complete == TRUE) {
-
-    if(test_problem == 1) qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);
-    if(test_problem == 2) qa_diff=fabs((100.0*(ke/1.19316898756307))-100.0);
-    if(test_problem == 3) qa_diff=fabs((100.0*(ke/2.58984003503994))-100.0);
-    if(test_problem == 4) qa_diff=fabs((100.0*(ke/0.307475452287895))-100.0);
-    if(test_problem == 5) qa_diff=fabs((100.0*(ke/4.85350315783719))-100.0);
-
+  if(complete == TRUE && test_problem) {
+    qa_diff = DBL_MAX;
+    if(test_problem == 1) qa_diff=fabs((100.0*(ke/1.82280367310258))-100.0);//clover.in_default
+    if(test_problem == 2) qa_diff=fabs((100.0*(ke/1.19316898756307))-100.0);//clover_bm_short.in
+    if(test_problem == 3) qa_diff=fabs((100.0*(ke/2.58984003503994))-100.0);//clover_bm.in
+    if(test_problem == 4) qa_diff=fabs((100.0*(ke/0.307475452287895))-100.0);//clover_bm16_short.in
+    if(test_problem == 5) qa_diff=fabs((100.0*(ke/4.85350315783719))-100.0);//clover_bm16.in
+    //ops_printf("\nke = %-3.15g, qa_diff = %-3.15g\n", ke,qa_diff);
     ops_printf("\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
     ops_fprintf(g_out,"\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
 
