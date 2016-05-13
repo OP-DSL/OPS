@@ -344,6 +344,8 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
     code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('real(kind=8) t1,t2,t3')
+    code('real(kind=4) transfer_total, transfer')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -384,6 +386,9 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+    code('')
+    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call ops_timers_core(t1)')
     code('')
 
     config.depth = config.depth - 2
@@ -459,6 +464,8 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
     code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
     code('')
+    code('call ops_timers_core(t2)')
+    code('')
 
     #Call user kernel wrapper
     code('call '+name+'_wrap( &')
@@ -473,13 +480,21 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     code('& start, &')
     code('& end )')
     code('')
-
+    code('call ops_timers_core(t3)')
+    code('')
     code('call ops_set_dirtybit_host(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
     code('')
-
+    comm('Timing and data movement')
+    code('transfer_total = 0.0_4')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
+        code('transfer_total = transfer_total + transfer')
+    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
+    
     config.depth = config.depth - 2
     code('end subroutine')
     code('END MODULE')

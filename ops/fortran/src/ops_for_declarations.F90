@@ -383,9 +383,8 @@ module OPS_Fortran_Declarations
       real(kind=c_double) :: cpu, et
     end subroutine ops_timers_f
 
-    subroutine ops_timing_output (file) BIND(C,name='ops_timing_output')
+    subroutine ops_timing_output () BIND(C,name='ops_timing_output_stdout')
       use, intrinsic             :: ISO_C_BINDING
-      integer(kind=c_int), value :: file
     end subroutine ops_timing_output
 
     subroutine ops_diagnostic_output ( ) BIND(C,name='ops_diagnostic_output')
