@@ -68,6 +68,9 @@ program MULTIDIM
   real(8), dimension(3) :: reduct_result
   type(ops_reduction) :: reduct_dat1
 
+  !for validation
+  real(8):: qa_diff
+
   ! vars for halo_depths
   integer d_p(3) /1,1,1/   !max halo depths for the dat in the possitive direction
   integer d_m(3) /-1,-1,-1/ !max halo depths for the dat in the negative direction
@@ -142,7 +145,7 @@ program MULTIDIM
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid3D, 3, iter_range, &
                & ops_arg_dat(dat1, 3, S3D_00, "real(8)", OPS_READ), &
-               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
+               & ops_arg_reduce(reduct_dat1, 3, "real(8)", OPS_INC))
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 
@@ -152,8 +155,17 @@ program MULTIDIM
 
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then
-    write(*,*) "Reduction result = ", reduct_result
-    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+    write (*,'(a,f,a)') 'Max total runtime =', endTime - startTime,' seconds'
+
+    qa_diff=ABS((100.0_8*((reduct_result(1)+reduct_result(2)+reduct_result(3))/(3*160.00000_8)))-100.0_8)
+    write(*,'(a,f,f,f)') "Reduction result = ", reduct_result
+    write(*,'(a,e16.7,a)') "Reduction result is within ",qa_diff,"% of the expected result"
+
+    IF(qa_diff.LT.0.0000000000001) THEN
+      write(*,'(a)')"This test is considered PASSED"
+    ELSE
+      write(*,'(a)')"This test is considered FAILED"
+    ENDIF
   end if
 
   call ops_exit( )

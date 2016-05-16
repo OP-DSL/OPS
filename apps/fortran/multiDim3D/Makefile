@@ -34,7 +34,7 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   OPT	 	= -O0 -g
 else
-  OPT	 	= -O3 -xAVX -vec-report2
+  OPT	 	= -O2 -xAVX
 endif
   CCFLAGS       = $(OPT) -Wall -Werror -wd981
   CXX 		= icpc
