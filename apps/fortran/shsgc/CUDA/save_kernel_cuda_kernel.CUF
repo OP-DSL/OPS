@@ -32,7 +32,7 @@ INTEGER(KIND=4):: xdim6_save_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine save_kernel(rho_old, rhou_old, rhoE_old, rho_new, rhou_new, rhoE_new)
+attributes (device) subroutine save_kernel_gpu(rho_old, rhou_old, rhoE_old, rho_new, rhou_new, rhoE_new)
 
   real (kind=8) , DIMENSION(1) :: rho_old, rhou_old, rhoE_old
   real (kind=8) , INTENT(IN), DIMENSION(1) :: rho_new, rhou_new, rhoE_new
@@ -42,6 +42,7 @@ attributes (device) subroutine save_kernel(rho_old, rhou_old, rhoE_old, rho_new,
       rhoE_old(OPS_ACC3(0))=rhoE_new(OPS_ACC6(0))
 
 end subroutine
+
 
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -101,7 +102,7 @@ attributes (global) subroutine save_kernel_wrap( &
   arg5 = (n_x-1) * 1*1
   arg6 = (n_x-1) * 1*1
   IF ((n_x-1) < size1) THEN
-    call save_kernel( &
+    call save_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
     & opsDat3Local(dat3_base+arg3), &

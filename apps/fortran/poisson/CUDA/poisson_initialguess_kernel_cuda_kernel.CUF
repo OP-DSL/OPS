@@ -17,12 +17,13 @@ INTEGER(KIND=4):: xdim1_poisson_initialguess_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine poisson_initialguess_kernel(u)
+attributes (device) subroutine poisson_initialguess_kernel_gpu(u)
 
   real (kind=8), DIMENSION(1) :: u
   u(OPS_ACC1(0,0)) = 0.0_8
 
 end subroutine
+
 
 #undef OPS_ACC1
 
@@ -48,7 +49,7 @@ attributes (global) subroutine poisson_initialguess_kernel_wrap( &
 
   arg1 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim1_poisson_initialguess_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call poisson_initialguess_kernel( &
+    call poisson_initialguess_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1) )
 
 

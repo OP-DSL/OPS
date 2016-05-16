@@ -61,7 +61,7 @@ subroutine tvd_kernel_wrap( &
   integer n_x
 
   !$OMP PARALLEL DO
-  !DIR$ SIMD
+  !DIR$ IVDEP
   DO n_x = 1, end(1)-start(1)+1
     call tvd_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &

@@ -85,7 +85,8 @@ program POISSON
 
   !ops_reduction
   type(ops_reduction) :: red_err
-  real(8) :: err
+  real(8) :: err, err_diff
+
 
   !ops_dats
   type(ops_dat) :: coordx(ngrid_x*ngrid_y), coordy(ngrid_x*ngrid_y)
@@ -333,11 +334,17 @@ program POISSON
   call ops_timers(endTime)
 
   if (ops_is_root() .eq. 1) then
-    write (*,*) 'Total error: ', err
-  end if
-
-  if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+    err_diff=ABS((100.0_8*(err/0.150875331209075_8))-100.0_8)
+    write(*,'(a,f)') "Total error: ", err
+    write(*,'(a,e16.7,a)') "Total error is within",err_diff,"% of the expected error"
+
+    IF(err_diff.LT.0.001) THEN
+      write(*,'(a)')"This test is considered PASSED"
+    ELSE
+      write(*,'(a)')"This test is considered FAILED"
+    ENDIF
+
   end if
 
   call ops_exit( )

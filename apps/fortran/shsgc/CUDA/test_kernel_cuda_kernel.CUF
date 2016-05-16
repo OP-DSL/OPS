@@ -113,7 +113,7 @@ attributes (device) SUBROUTINE ReductionFloat8(reductionResult,inputValue,reduct
 END SUBROUTINE
 
 !user function
-attributes (device) subroutine test_kernel(rho_new, rms)
+attributes (device) subroutine test_kernel_gpu(rho_new, rms)
 
   real (kind=8), INTENT(in), DIMENSION(1) :: rho_new
   real (kind=8) :: rms
@@ -121,6 +121,7 @@ attributes (device) subroutine test_kernel(rho_new, rms)
   rms = rms + rho_new(OPS_ACC1(0))**2.0_8
 
 end subroutine
+
 
 #undef OPS_ACC1
 
@@ -149,7 +150,7 @@ attributes (global) subroutine test_kernel_wrap( &
   arg1 = (n_x-1) * 1*1
   opsGblDat2Device = 0.0_8
   IF ((n_x-1) < size1) THEN
-    call test_kernel( &
+    call test_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 
@@ -245,6 +246,7 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
 
   DO i10 = 0, reductionCardinality2-1
     reductionArrayHost2(i10+1) = 0.0
+    reductionArrayHost2(i10+1) = -1.0*HUGE(reductionArrayHost2(1))
   END DO
 
   reductionArrayDevice2_test_kernel = reductionArrayHost2

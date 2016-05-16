@@ -29,7 +29,7 @@ INTEGER(KIND=4):: xdim5_vars_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine vars_kernel(alam, al, gt, cmp, cf)
+attributes (device) subroutine vars_kernel_gpu(alam, al, gt, cmp, cf)
 
   real (kind=8), INTENT(in), DIMENSION(3) :: alam, al, gt
   real (kind=8), DIMENSION(3) :: cmp, cf
@@ -49,6 +49,7 @@ attributes (device) subroutine vars_kernel(alam, al, gt, cmp, cf)
   END DO
 
 end subroutine
+
 
 
 #undef OPS_ACC_MD1
@@ -101,7 +102,7 @@ attributes (global) subroutine vars_kernel_wrap( &
   arg4 = (n_x-1) * 1*3
   arg5 = (n_x-1) * 1*3
   IF ((n_x-1) < size1) THEN
-    call vars_kernel( &
+    call vars_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
     & opsDat3Local(dat3_base+arg3), &

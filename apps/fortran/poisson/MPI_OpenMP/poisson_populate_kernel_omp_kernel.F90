@@ -9,10 +9,13 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim4
+INTEGER(KIND=4) ydim4
 #define OPS_ACC4(x,y) (x+xdim4*(y)+1)
 INTEGER(KIND=4) xdim5
+INTEGER(KIND=4) ydim5
 #define OPS_ACC5(x,y) (x+xdim5*(y)+1)
 INTEGER(KIND=4) xdim6
+INTEGER(KIND=4) ydim6
 #define OPS_ACC6(x,y) (x+xdim6*(y)+1)
 
 
@@ -73,7 +76,7 @@ subroutine poisson_populate_kernel_wrap( &
 
   DO n_y = 1, end(2)-start(2)+1
     idx_local(2) = idx(2) + n_y - 1
-    !DIR$ SIMD
+    !DIR$ IVDEP
     DO n_x = 1, end(1)-start(1)+1
       idx_local(1) = idx(1) + n_x - 1
       call poisson_populate_kernel( &
