@@ -20,7 +20,7 @@ INTEGER(KIND=4):: xdim2_poisson_update_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine poisson_update_kernel(u2, u)
+attributes (device) subroutine poisson_update_kernel_gpu(u2, u)
 
   real (kind=8), DIMENSION(1), intent(in):: u2
   real (kind=8),  DIMENSION(1) :: u
@@ -28,6 +28,7 @@ attributes (device) subroutine poisson_update_kernel(u2, u)
   u(OPS_ACC2(0,0)) = u2(OPS_ACC1(0,0))
 
 end subroutine
+
 
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -60,7 +61,7 @@ attributes (global) subroutine poisson_update_kernel_wrap( &
   arg1 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim1_poisson_update_kernel
   arg2 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim2_poisson_update_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call poisson_update_kernel( &
+    call poisson_update_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2) )
 

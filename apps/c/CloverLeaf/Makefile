@@ -69,11 +69,11 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS 	= -O0 -g -Minline -Kieee #-Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
+  CCFLAGS 	= -O2 -Kieee -Minline #-fastsse -gopt -Mipa=fast -Mlist -Kieee #-Minline #-Minform=severe -Minfo=all
 endif
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CPPFLAGS 	= $(CCFLAGS)
-  OMPFLAGS 	= -mp
+  OMPFLAGS 	= -mp=nonuma
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS) -ldl
@@ -139,7 +139,7 @@ endif
 ifdef DEBUG
   NVCC_FLAGS = -O0 -g -G
 else
-  NVCC_FLAGS = -O3 -restrict #--fmad false
+  NVCC_FLAGS = -O3 -restrict --fmad false
 endif
 
 #switch on FMA instructions in OpenCL
@@ -420,4 +420,4 @@ openacc_error:
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.o
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.o *.lst

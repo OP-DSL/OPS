@@ -24,7 +24,7 @@ INTEGER(KIND=4):: ydim2_multidim_copy_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine multidim_copy_kernel(val1, val2)
+attributes (device) subroutine multidim_copy_kernel_gpu(val1, val2)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(3) :: val1
   REAL   (kind=8), DIMENSION(3) :: val2
@@ -32,6 +32,7 @@ attributes (device) subroutine multidim_copy_kernel(val1, val2)
   val2(OPS_ACC_MD2(2,0,0,0)) = val1(OPS_ACC_MD1(2,0,0,0))
   val2(OPS_ACC_MD2(3,0,0,0)) = val1(OPS_ACC_MD1(3,0,0,0))
 end subroutine
+
 
 
 
@@ -66,7 +67,7 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
   arg1 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim1_multidim_copy_kernel + (n_z-1) * 1*3 * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel
   arg2 = (n_x-1) * 1*3 + (n_y-1) * 1*3 * xdim2_multidim_copy_kernel + (n_z-1) * 1*3 * xdim2_multidim_copy_kernel * ydim2_multidim_copy_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2 .AND. (n_z-1) < size3) THEN
-    call multidim_copy_kernel( &
+    call multidim_copy_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2) )
 

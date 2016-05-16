@@ -409,11 +409,20 @@ int main(int argc, char **argv) {
 
   ops_reduction_result(rms, &local_rms);
   //printf("\nthe RMS between C and Fortran is %lf\n" , sqrt(local_rms)/nxp);
+  double validate_rms = sqrt(local_rms)/nxp;
+  double rms_diff=fabs((100.0*(validate_rms/0.233688543536201))-100.0);
 
-  ops_printf("\nRMS = %lf\n" , sqrt(local_rms)/nxp); //Correct RMS = 0.233689
+  ops_printf("\nRMS = %3.15lf\n" ,validate_rms); //Correct RMS = 0.233688543536201
+  ops_printf("\n\nSolution RMS is within %3.15E %% of the expected solution\n",rms_diff);
+  if(rms_diff < 0.001) {
+    ops_printf("This run is considered PASSED\n");
+  }
+  else {
+    ops_printf("This test is considered FAILED\n");
+  }
 
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
-  ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
+  //ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
   //ops_print_dat_to_txtfile(al, "shsgc.dat");
   ops_exit();
 

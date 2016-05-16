@@ -81,6 +81,8 @@ program SHSGC
 
   integer(4) :: status
 
+  real(8) :: validate_rms, rms_diff
+
   nxp = 204
   nyp = 5
   xhalo = 2
@@ -314,11 +316,19 @@ program SHSGC
   call ops_reduction_result(rms, local_rms)
 
   if (ops_is_root() .eq. 1) then
-    write (*,*), "RMS = " , sqrt(local_rms)/nxp;
-  end if
-
-  if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+
+    validate_rms = sqrt(local_rms)/nxp
+    rms_diff=ABS((100.0_8*(validate_rms/0.233688543536201_8))-100.0_8)
+    write (*,'(a,f)'), "RMS = " , validate_rms;
+    write(*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
+
+    IF(rms_diff.LT.0.001) THEN
+      write(*,'(a)')"This test is considered PASSED"
+    ELSE
+      write(*,'(a)')"This test is considered FAILED"
+    ENDIF
+
   end if
 
   call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")

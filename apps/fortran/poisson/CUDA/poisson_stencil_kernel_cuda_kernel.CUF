@@ -23,7 +23,7 @@ INTEGER(KIND=4):: xdim3_poisson_stencil_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine poisson_stencil_kernel(u,f,u2)
+attributes (device) subroutine poisson_stencil_kernel_gpu(u,f,u2)
 
   real (kind=8), DIMENSION(1), INTENT(IN) :: u,f
   real (kind=8), DIMENSION(1) :: u2
@@ -34,6 +34,7 @@ attributes (device) subroutine poisson_stencil_kernel(u,f,u2)
                      & /(2.0_8*(dx*dx+dy*dy))
 
 end subroutine
+
 
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -73,7 +74,7 @@ attributes (global) subroutine poisson_stencil_kernel_wrap( &
   arg2 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim2_poisson_stencil_kernel
   arg3 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim3_poisson_stencil_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call poisson_stencil_kernel( &
+    call poisson_stencil_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
     & opsDat3Local(dat3_base+arg3) )

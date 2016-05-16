@@ -88,20 +88,6 @@ int main(int argc, char **argv)
   //decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
 
-  //temp = (double*)malloc(sizeof(double)*2*dat0->size[1]*dat0->size[0]);
-  /*int count=0;
-  for(int j = 0; j<dat0->size[1]; j++)
-    for(int i = 0; i<dat0->size[0]; i++)
-    {
-        ((double *)(dat0->data))[2*count] = 1.44;
-        ((double *)(dat0->data))[2*count+1] = 6.99;
-        count++;
-    }*/
-
-  //ops_upload_dat(dat0);
-  //ops_print_dat_to_txtfile(dat0, "multidim.dat");
-  //exit(0);
-
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
 
@@ -122,8 +108,6 @@ int main(int argc, char **argv)
                ops_arg_reduce(reduct_dat1, 2, "double", OPS_INC));
 
   ops_reduction_result(reduct_dat1, reduct_result);
-  ops_printf("Reduction result = %lf, %lf", reduct_result[0],reduct_result[1]);
-
 
   ops_timers(&ct1, &et1);
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
@@ -132,6 +116,17 @@ int main(int argc, char **argv)
   ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+  double result_diff=fabs((100.0*((reduct_result[0]+reduct_result[0])/(2*24.000000)))-100.0);
+  ops_printf("Reduction result = %lf, %lf\n", reduct_result[0],reduct_result[1]);
+  ops_printf("Result is within %3.15E %% of the expected result\n",result_diff);
+
+  if(result_diff < 0.0000000000001) {
+    ops_printf("This run is considered PASSED\n");
+  }
+  else {
+    ops_printf("This test is considered FAILED\n");
+  }
+
 
   ops_exit();
 }

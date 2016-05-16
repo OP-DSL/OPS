@@ -11,6 +11,7 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 contains
@@ -41,7 +42,7 @@ subroutine multidim_print_kernel_wrap( &
 
   !$OMP PARALLEL DO PRIVATE(n_x)
   DO n_y = 1, end(2)-start(2)+1
-    !DIR$ SIMD
+    !DIR$ IVDEP
     DO n_x = 1, end(1)-start(1)+1
       call multidim_print_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2) )

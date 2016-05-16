@@ -11,6 +11,7 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 contains
@@ -46,7 +47,7 @@ subroutine multidim_kernel_wrap( &
 
   DO n_y = 1, end(2)-start(2)+1
     idx_local(2) = idx(2) + n_y - 1
-    !DIR$ SIMD
+    !DIR$ IVDEP
     DO n_x = 1, end(1)-start(1)+1
       idx_local(1) = idx(1) + n_x - 1
       call multidim_kernel( &

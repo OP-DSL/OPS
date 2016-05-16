@@ -89,20 +89,24 @@ void field_summary()
   ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-10.3E  %-10.3E  %-15.3E  %-15.3E  %-.3E\n",
           step, vol, mass, mass/vol, press/vol, ie, ke, ie+ke);
 
-  if(complete == TRUE) {
-    if(test_problem == 1) {
-      qa_diff=fabs((100.0*(ke/3.64560737191257))-100.0);
-      ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      if(qa_diff < 0.001) {
-        ops_printf("This test is considered PASSED\n");
-        ops_fprintf(g_out,"This test is considered PASSED\n");
-      }
-      else
-      {
-        ops_printf("This test is considered NOT PASSED\n");
-        ops_fprintf(g_out,"This test is considered NOT PASSED\n");
-      }
+if(complete == TRUE && test_problem) {
+    qa_diff = DBL_MAX;
+    if(test_problem == 1) qa_diff=fabs((100.0*(ke/3.64560737191257))-100.0); //clover.in_default
+    if(test_problem == 2) qa_diff=fabs((100.0*(ke/20.0546870878964))-100.0);//clover_bm_short.in
+    if(test_problem == 3) qa_diff=fabs((100.0*(ke/0.37517221925665))-100.0);//clover_bm.in
+    if(test_problem == 4) qa_diff=fabs((100.0*(ke/17.9845165368889))-100.0);//clover_bm1s_short.in
+    if(test_problem == 5) qa_diff=fabs((100.0*(ke/2.05018938455107))-100.0);//clover_bm1s.in
+    //ops_printf("\nke = %-3.15g, qa_diff = %-3.15g\n", ke,qa_diff);
+    ops_printf("\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
+    ops_fprintf(g_out,"\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
+
+    if(qa_diff < 0.001) {
+      ops_printf("This test is considered PASSED\n");
+      ops_fprintf(g_out,"This test is considered PASSED\n");
+    }
+    else {
+      ops_printf("This test is considered FAILED\n");
+      ops_fprintf(g_out,"This test is considered FAILED\n");
     }
   }
   fflush(g_out);

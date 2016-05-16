@@ -116,7 +116,7 @@ attributes (device) SUBROUTINE ReductionFloat8(reductionResult,inputValue,reduct
 END SUBROUTINE
 
 !user function
-attributes (device) subroutine poisson_error_kernel(u, ref, err)
+attributes (device) subroutine poisson_error_kernel_gpu(u, ref, err)
 
   real (kind=8), DIMENSION(1), intent(in):: u, ref
   real (kind=8) :: err
@@ -125,6 +125,7 @@ attributes (device) subroutine poisson_error_kernel(u, ref, err)
         & (u(OPS_ACC1(0,0))-ref(OPS_ACC2(0,0)))
 
 end subroutine
+
 
 
 #undef OPS_ACC1
@@ -162,7 +163,7 @@ attributes (global) subroutine poisson_error_kernel_wrap( &
   arg2 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim2_poisson_error_kernel
   opsGblDat3Device = 0.0_8
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call poisson_error_kernel( &
+    call poisson_error_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2), &
     & opsGblDat3Device )
@@ -282,6 +283,7 @@ attributes (host) subroutine poisson_error_kernel_host( userSubroutine, block, d
 
   DO i10 = 0, reductionCardinality3-1
     reductionArrayHost3(i10+1) = 0.0
+    reductionArrayHost3(i10+1) = -1.0*HUGE(reductionArrayHost3(1))
   END DO
 
   reductionArrayDevice3_poisson_error_kernel = reductionArrayHost3

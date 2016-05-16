@@ -92,6 +92,8 @@ program MULTIDIM
   !.. but internally will convert to c index
   integer iter_range(4) /1,4,1,4/
 
+  !for validation
+  REAL(KIND=8) :: qa_diff
 
   !-------------------------- Initialisation --------------------------
 
@@ -149,8 +151,19 @@ program MULTIDIM
 
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then
-    write(*,*) "Reduction result = ", reduct_result
-    write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
+
+    write (*,'(a,f,a)') 'Max total runtime =', endTime - startTime,' seconds'
+
+    qa_diff=ABS((100.0_8*((reduct_result(1)+reduct_result(2))/(2*40.00000_8)))-100.0_8)
+    write(*,'(a,f,f)') "Reduction result = ", reduct_result
+    write(*,'(a,e16.7,a)') "Reduction result is within ",qa_diff,"% of the expected result"
+
+    IF(qa_diff.LT.0.0000000000001) THEN
+      write(*,'(a)')"This test is considered PASSED"
+    ELSE
+      write(*,'(a)')"This test is considered FAILED"
+    ENDIF
+
   end if
 
   call ops_exit( )

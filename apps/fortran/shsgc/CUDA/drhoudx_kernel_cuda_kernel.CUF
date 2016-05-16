@@ -20,7 +20,7 @@ INTEGER(KIND=4):: xdim2_drhoudx_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine drhoudx_kernel(rhou_new, rho_res)
+attributes (device) subroutine drhoudx_kernel_gpu(rhou_new, rho_res)
 
   real (kind=8) , INTENT(in), DIMENSION(1) :: rhou_new
   real (kind=8) , DIMENSION(1) :: rho_res
@@ -36,6 +36,7 @@ attributes (device) subroutine drhoudx_kernel(rhou_new, rho_res)
         rho_res(OPS_ACC2(0))= deriv;
 
 end subroutine
+
 
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -67,7 +68,7 @@ attributes (global) subroutine drhoudx_kernel_wrap( &
   arg1 = (n_x-1) * 1*1
   arg2 = (n_x-1) * 1*1
   IF ((n_x-1) < size1) THEN
-    call drhoudx_kernel( &
+    call drhoudx_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2) )
 
