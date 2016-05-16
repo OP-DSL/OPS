@@ -95,7 +95,7 @@ if(complete == TRUE && test_problem) {
     if(test_problem == 2) qa_diff=fabs((100.0*(ke/20.0546870878964))-100.0);//clover_bm_short.in
     if(test_problem == 3) qa_diff=fabs((100.0*(ke/0.37517221925665))-100.0);//clover_bm.in
     if(test_problem == 4) qa_diff=fabs((100.0*(ke/17.9845165368889))-100.0);//clover_bm1s_short.in
-    if(test_problem == 5) qa_diff=fabs((100.0*(ke/1))-100.0);//clover_bm1s.in
+    if(test_problem == 5) qa_diff=fabs((100.0*(ke/2.05018938455107))-100.0);//clover_bm1s.in
     //ops_printf("\nke = %-3.15g, qa_diff = %-3.15g\n", ke,qa_diff);
     ops_printf("\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);
     ops_fprintf(g_out,"\n\nTest problem %d is within %3.15E %% of the expected solution\n",test_problem, qa_diff);

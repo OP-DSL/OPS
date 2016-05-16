@@ -15,7 +15,6 @@ cd ../CloverLeaf_3D/
 cd ../CloverLeaf_3D_HDF5/
 ./test.sh
 cd ../poisson/
-../../../translator/python/c/ops.py poisson.cpp
 ./test.sh
 cd ../multiDim/
 ../../../translator/python/c/ops.py multidim.cpp
