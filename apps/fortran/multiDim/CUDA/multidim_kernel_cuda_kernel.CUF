@@ -17,7 +17,7 @@ INTEGER(KIND=4):: xdim1_multidim_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine multidim_kernel(val, idx)
+attributes (device) subroutine multidim_kernel_gpu(val, idx)
   IMPLICIT NONE
   REAL(kind=8)   , DIMENSION(2) :: val
   INTEGER(kind=4), DIMENSION(2), INTENT(IN) :: idx
@@ -25,6 +25,7 @@ attributes (device) subroutine multidim_kernel(val, idx)
   val(OPS_ACC_MD1(1,0,0)) = idx(1)
   val(OPS_ACC_MD1(2,0,0)) = idx(2)
 end subroutine
+
 
 
 #undef OPS_ACC_MD1
@@ -54,7 +55,7 @@ attributes (global) subroutine multidim_kernel_wrap( &
   idx_local(2) = idx(2)+ n_y-1
   arg1 = (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call multidim_kernel( &
+    call multidim_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & idx_local )
 

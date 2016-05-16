@@ -11,6 +11,8 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
+INTEGER(KIND=4) zdim1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1*(y)*3)+(xdim1*ydim1*(z)*3))
 
 contains
@@ -49,7 +51,7 @@ subroutine multidim_reduce_kernel_wrap( &
   !$OMP PARALLEL DO PRIVATE(n_x,n_y) REDUCTION(+:opsDat2Local)
   DO n_z = 1, end(3)-start(3)+1
     DO n_y = 1, end(2)-start(2)+1
-      !DIR$ SIMD
+      !DIR$ IVDEP
       DO n_x = 1, end(1)-start(1)+1
         call multidim_reduce_kernel( &
         & opsDat1Local(dat1_base+(n_x-1)*3 + (n_y-1)*xdim1*3  + (n_z-1)*ydim1*xdim1*3), &

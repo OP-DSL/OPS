@@ -138,13 +138,14 @@ attributes (device) SUBROUTINE ReductionInt4Mdim(reductionResult,inputValue,redu
 END SUBROUTINE
 
 !user function
-attributes (device) subroutine multidim_reduce_kernel(val, redu_dat1)
+attributes (device) subroutine multidim_reduce_kernel_gpu(val, redu_dat1)
   IMPLICIT NONE
   REAL   (kind=8), DIMENSION(2), INTENT(IN) :: val
   REAL(kind=8), DIMENSION(2) :: redu_dat1
   redu_dat1(1) = redu_dat1(1) + val(OPS_ACC_MD1(1,0,0))
   redu_dat1(2) = redu_dat1(2) + val(OPS_ACC_MD1(2,0,0))
 end subroutine
+
 
 
 
@@ -175,7 +176,7 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
   arg1 = (n_x-1) * 1*2 + (n_y-1) * 1*2 * xdim1_multidim_reduce_kernel
   opsGblDat2Device = 0.0_8
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call multidim_reduce_kernel( &
+    call multidim_reduce_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 

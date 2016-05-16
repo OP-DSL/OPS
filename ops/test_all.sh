@@ -17,7 +17,6 @@ cd ../CloverLeaf_3D_HDF5/
 cd ../poisson/
 ./test.sh
 cd ../multiDim/
-../../../translator/python/c/ops.py multidim.cpp
 ./test.sh
 cd ../shsgc/
 ./test.sh
@@ -33,8 +32,6 @@ cd ../poisson
 ../../../translator/python/fortran/ops_fortran.py poisson.F90
 ./test.sh
 cd ../multiDim
-../../../translator/python/fortran/ops_fortran.py multidim.F90
 ./test.sh
 cd ../multiDim3D
-../../../translator/python/fortran/ops_fortran.py multidim.F90
 ./test.sh
