@@ -40,6 +40,7 @@ attributes (device) subroutine poisson_populate_kernel_gpu(dispx, dispy, idx, u,
 end subroutine
 
 
+
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6

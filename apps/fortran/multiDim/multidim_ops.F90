@@ -132,7 +132,6 @@ program MULTIDIM
 
   end if
 
-  call ops_timing_output () ! where is this printing to ? .. problem in what stdout is in fortran
   call ops_exit( )
 
 end program MULTIDIM
