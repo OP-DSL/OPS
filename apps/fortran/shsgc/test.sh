@@ -82,13 +82,13 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo '============> Running MPI+CUDA with GPU-Direct'
-MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "RMS =" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running MPI+CUDA with GPU-Direct'
+#MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "RMS =" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
 make shsgc_openacc
 make shsgc_mpi_openacc

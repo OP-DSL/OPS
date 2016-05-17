@@ -980,6 +980,10 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
 
 }
 
+void ops_timing_output_stdout() {
+  ops_timing_output(stdout);
+}
+
 void ops_timing_output(FILE *stream)
 {
   if (stream == NULL)
@@ -1094,6 +1098,10 @@ float ops_compute_transfer(int dims, int* start, int* end, ops_arg *arg) {
   return size;
 }
 
+void ops_compute_transfer_f(int dims, int *start, int *end, ops_arg *arg, float *value) {
+  *value = ops_compute_transfer(dims,start,end,arg);
+}
+
 void ops_register_args(ops_arg *args, const char *name) {
   OPS_curr_args = args;
   OPS_curr_name = name;
@@ -1190,3 +1198,14 @@ ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size, int* fr
 
   return temp;
 }
+
+void setKernelTime (int id, char name[], double kernelTime, double mpiTime, float transfer, int count) {
+  ops_timing_realloc(id,name);
+
+  OPS_kernels[id].count += count;
+  OPS_kernels[id].time += (float)kernelTime;
+  OPS_kernels[id].mpi_time += (float)mpiTime;
+  OPS_kernels[id].transfer += transfer;
+
+}
+

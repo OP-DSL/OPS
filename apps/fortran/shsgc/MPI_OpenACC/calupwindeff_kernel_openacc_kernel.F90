@@ -127,6 +127,8 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  real(kind=8) t1,t2,t3
+  real(kind=4) transfer_total, transfer
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), DIMENSION(:), POINTER :: opsDat1Local
@@ -184,6 +186,9 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(5) = opsArg5
   opsArgArray(6) = opsArg6
   opsArgArray(7) = opsArg7
+
+  call setKernelTime(11,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call ops_timers_core(t1)
 
 #ifdef OPS_MPI
   IF (getRange(block, start, end, range) < 0) THEN
@@ -249,6 +254,8 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   call ops_halo_exchanges(opsArgArray,7,range)
   call ops_H_D_exchanges_host(opsArgArray,7)
 
+  call ops_timers_core(t2)
+
   call calupwindeff_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -267,8 +274,26 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   & start, &
   & end )
 
+  call ops_timers_core(t3)
   call ops_set_dirtybit_host(opsArgArray, 7)
   call ops_set_halo_dirtybit3(opsArg7,range)
 
+  !Timing and data movement
+  transfer_total = 0.0_4
+  call ops_compute_transfer(1, start, end, opsArg1,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg2,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg3,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg4,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg5,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg6,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg7,transfer)
+  transfer_total = transfer_total + transfer
+  call setKernelTime(11,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
 END MODULE

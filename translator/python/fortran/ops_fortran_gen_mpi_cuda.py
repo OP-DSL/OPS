@@ -748,6 +748,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
     code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('real(kind=8) t1,t2,t3')
+    code('real(kind=4) transfer_total, transfer')
+    code('integer(kind=4) :: istat')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -812,6 +815,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+    code('')
+    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call ops_timers_core(t1)')
     code('')
 
     config.depth = config.depth - 2
@@ -957,7 +963,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
             code('reductionArrayHost'+str(n+1)+'(i10+1) = 0.0')
           if accs[n] == OPS_MIN:
             code('reductionArrayHost'+str(n+1)+'(i10+1) = HUGE(reductionArrayHost'+str(n+1)+'(1))')
-          if accs[n] == OPS_INC:
+          if accs[n] == OPS_MAX:
             code('reductionArrayHost'+str(n+1)+'(i10+1) = -1.0*HUGE(reductionArrayHost'+str(n+1)+'(1))')
         else:
           if accs[n] == OPS_INC:
@@ -977,6 +983,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
     code('')
+    code('call ops_timers_core(t2)')
 
     #Call cuda kernel  - i.e. the wrapper calling the user kernel
     if reduction:
@@ -1048,12 +1055,23 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('deallocate( reductionArrayHost'+str(n+1)+' )')
 
 
+    code('istat = cudaDeviceSynchronize()')
+    code('call ops_timers_core(t3)')
 
     code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
     code('')
+
+    comm('Timing and data movement')
+    code('transfer_total = 0.0_4')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
+        code('transfer_total = transfer_total + transfer')
+    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
+
 
 
     config.depth = config.depth - 2

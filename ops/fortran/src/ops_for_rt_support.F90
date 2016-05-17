@@ -189,6 +189,31 @@ module OPS_Fortran_RT_Support
   end function
 #endif
 
+  subroutine ops_compute_transfer(ndims, starti, endi, arg, amount) BIND(C,name='ops_compute_transfer_f')
+    
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      
+      integer(kind=c_int), value :: ndims
+      integer(4), dimension(*), intent(in), target :: starti
+      integer(4), dimension(*), intent(in), target :: endi
+      type(ops_arg) :: arg
+      real(kind=c_float) :: amount
+  end subroutine ops_compute_transfer
+
+  subroutine setKernelTime (id, name, kernelTime, mpiTime, transfer, count) BIND(C,name='setKernelTime')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value :: id
+      character(kind=c_char) :: name(*)
+      real(kind=c_double), value :: kernelTime
+      real(kind=c_double), value :: mpiTime
+      real(kind=c_float), value :: transfer
+      integer(kind=c_int), value :: count
+
+  end subroutine setKernelTime
+
   end interface
 
 
