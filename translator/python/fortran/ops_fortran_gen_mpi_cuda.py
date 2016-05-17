@@ -891,7 +891,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
           code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
-          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,1)')
+          code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,(/1/))')
       code('')
 
     #NEED TO COPY CONSTANTS TO Symbol
