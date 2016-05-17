@@ -149,6 +149,8 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  real(kind=8) t1,t2,t3
+  real(kind=4) transfer_total, transfer
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
@@ -231,6 +233,9 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(10) = opsArg10
   opsArgArray(11) = opsArg11
 
+  call setKernelTime(6,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call ops_timers_core(t1)
+
 #ifdef OPS_MPI
   IF (getRange(block, start, end, range) < 0) THEN
     return
@@ -306,6 +311,8 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   call ops_halo_exchanges(opsArgArray,11,range)
   call ops_H_D_exchanges_host(opsArgArray,11)
 
+  call ops_timers_core(t2)
+
   call updateRK3_kernel_wrap( &
   & opsDat1Local, &
   & opsDat2Local, &
@@ -332,6 +339,8 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   & start, &
   & end )
 
+  call ops_timers_core(t3)
+
   call ops_set_dirtybit_host(opsArgArray, 11)
   call ops_set_halo_dirtybit3(opsArg1,range)
   call ops_set_halo_dirtybit3(opsArg2,range)
@@ -340,5 +349,26 @@ subroutine updateRK3_kernel_host( userSubroutine, block, dim, range, &
   call ops_set_halo_dirtybit3(opsArg5,range)
   call ops_set_halo_dirtybit3(opsArg6,range)
 
+  !Timing and data movement
+  transfer_total = 0.0_4
+  call ops_compute_transfer(1, start, end, opsArg1,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg2,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg3,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg4,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg5,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg6,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg7,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg8,transfer)
+  transfer_total = transfer_total + transfer
+  call ops_compute_transfer(1, start, end, opsArg9,transfer)
+  transfer_total = transfer_total + transfer
+  call setKernelTime(6,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
 END MODULE

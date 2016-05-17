@@ -168,6 +168,9 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  real(kind=8) t1,t2,t3
+  real(kind=4) transfer_total, transfer
+  integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
@@ -199,6 +202,9 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
 
   opsArgArray(1) = opsArg1
   opsArgArray(2) = opsArg2
+
+  call setKernelTime(14,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call ops_timers_core(t1)
 
 #ifdef OPS_MPI
   IF (getRange(block, start, end, range) < 0) THEN
@@ -246,7 +252,6 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
 
   DO i10 = 0, reductionCardinality2-1
     reductionArrayHost2(i10+1) = 0.0
-    reductionArrayHost2(i10+1) = -1.0*HUGE(reductionArrayHost2(1))
   END DO
 
   reductionArrayDevice2_test_kernel = reductionArrayHost2
@@ -255,6 +260,7 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
 
+  call ops_timers_core(t2)
   call test_kernel_wrap <<<grid,tblock,nshared>>> (&
   & opsDat1Local, &
   & reductionArrayDevice2_test_kernel, &
@@ -268,7 +274,14 @@ attributes (host) subroutine test_kernel_host( userSubroutine, block, dim, range
   END DO
 
   deallocate( reductionArrayHost2 )
+  istat = cudaDeviceSynchronize()
+  call ops_timers_core(t3)
   call ops_set_dirtybit_device(opsArgArray, 2)
 
+  !Timing and data movement
+  transfer_total = 0.0_4
+  call ops_compute_transfer(1, start, end, opsArg1,transfer)
+  transfer_total = transfer_total + transfer
+  call setKernelTime(14,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
 END MODULE

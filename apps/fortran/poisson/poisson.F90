@@ -332,7 +332,7 @@ program POISSON
   call ops_reduction_result(red_err, err)
 
   call ops_timers(endTime)
-  call ops_timing_output()
+  !call ops_timing_output()
 
   if (ops_is_root() .eq. 1) then
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
