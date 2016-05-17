@@ -12,7 +12,7 @@ ifndef NV_ARCH
 endif
 ifeq ($(NV_ARCH),Fermi)
   CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.5,cc20
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc20
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
