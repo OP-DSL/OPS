@@ -179,7 +179,7 @@ double lambda;
 
   /**---------------------------- Print solution with OPS------------------------**/
 
-  ops_print_dat_to_txtfile(h_ax, "h_ax.dat");
+  //ops_print_dat_to_txtfile(h_ax, "h_ax.dat");
 
   /**-------------------------- Check solution without OPS-----------------------**/
 
