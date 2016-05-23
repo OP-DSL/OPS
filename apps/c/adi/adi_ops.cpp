@@ -150,7 +150,6 @@ double lambda;
   ops_timers(&ct1, &et1);
 
 
-  ops_print_dat_to_txtfile(h_ax, "h_ax.dat");
 
 
   for(int k=0; k<2; k++) {
