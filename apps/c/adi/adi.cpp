@@ -77,7 +77,7 @@ double lambda;
   /**------------------------------ Initialisation ------------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
 
   /**------------------------------OPS Declarations------------------------------**/
 
@@ -123,6 +123,7 @@ double lambda;
   double ct0, ct1, et0, et1;
 
   printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  ops_diagnostic_output();
 
   /**--------------------------------- Initialize -------------------------------**/
   int iter_range[] = {0,nx, 0,ny, 0,nz};
@@ -151,10 +152,16 @@ double lambda;
                ops_arg_idx());
 
   /**----------------- perform tri-diagonal solves in x-direction ---------------**/
-  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du );
+  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u );
 
+  /**----------------- perform tri-diagonal solves in y-direction ---------------**/
+  ops_tridMultiDimBatch( 3, 1 , size, h_ay, h_by, h_cy, h_du, h_u );
+
+  /**----------------- perform tri-diagonal solves in z-direction ---------------**/
+  ops_tridMultiDimBatch( 3, 2 , size, h_az, h_bz, h_cz, h_du, h_u );
 
   } // End main iteration loop
+
   ops_timers(&ct1, &et1);
 
   /**---------------------------- Print solution with OPS------------------------**/

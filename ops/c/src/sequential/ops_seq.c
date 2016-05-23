@@ -65,18 +65,11 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   } else {
     // Allocate memory immediately
     int bytes = size * type_size;
-    /*#ifdef __INTEL_COMPILER
-        //On intel, make x size a multiple of 128 bytes by extending d_p
-        int oldsize = dat->size[0];
-        //Compute least common multiple - type_size is a multiple of 2, I need
-    to remove all factors of 2 from size
-        int size_non_2 = size;
-        while (size_non_2%2==0 && size>1) size_non_2 /= 2;
-        int least_common_multiple = 128/type_size * size_non_2;
-        dat->size[0] = ((dat->size[0]-1)/(least_common_multiple
-    )+1)*least_common_multiple;
-        dat->d_p[0] += (dat->size[0] - oldsize);
-    #endif*/
+
+    int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute padding x-dim for vecotrization
+    dat->size[0] += x_pad;
+    dat->d_p[0] = x_pad;
+
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
 #ifdef __INTEL_COMPILER

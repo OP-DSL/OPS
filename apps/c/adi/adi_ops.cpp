@@ -60,7 +60,7 @@ double lambda;
   lambda=1.0f;
 
 
-  ops_init(argc,argv,1);
+  ops_init(argc,argv,2);
 
 
   ops_block heat3D = ops_decl_block(3, "Heat3D");
@@ -100,6 +100,7 @@ double lambda;
   double ct0, ct1, et0, et1;
 
   printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  ops_diagnostic_output();
 
   int iter_range[] = {0,nx, 0,ny, 0,nz};
   ops_par_loop_init_kernel("init_kernel", heat3D, 3, iter_range,
@@ -125,7 +126,11 @@ double lambda;
                ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
 
-  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du );
+  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u );
+
+  ops_tridMultiDimBatch( 3, 1 , size, h_ay, h_by, h_cy, h_du, h_u );
+
+  ops_tridMultiDimBatch( 3, 2 , size, h_az, h_bz, h_cz, h_du, h_u );
 
   }
   ops_timers(&ct1, &et1);
