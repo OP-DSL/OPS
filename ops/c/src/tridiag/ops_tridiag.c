@@ -50,14 +50,15 @@ void ops_tridMultiDimBatch(
   ops_dat a, ops_dat b, ops_dat c,//left hand side coefficients of a
                                   //multidimensional problem. An array containing
                                   //A matrices of individual problems
-  ops_dat d // right hand side coefficients of a multidimensional problem. An
+  ops_dat d, // right hand side coefficients of a multidimensional problem. An
              // array containing d column vectors of individual problems
+  ops_dat u
 ) {
 
   tridDmtsvStridedBatch((const double *)a->data,
     (const double *)b->data,
     (const double *)c->data,
-    (double *)d->data, NULL, ndim, solvedim, dims, dims);
+    (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
 
 
 
