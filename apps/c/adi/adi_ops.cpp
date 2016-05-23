@@ -97,7 +97,7 @@ double lambda;
 
   ops_partition("2D_BLOCK_DECOMPSE");
 
-  double ct0, ct1, et0, et1;
+  double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
 
   printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
   ops_diagnostic_output();
@@ -112,6 +112,8 @@ double lambda;
   for(int it = 0; it<iter; it++) {
 
   int iter_range[] = {0,nx, 0,ny, 0,nz};
+
+  ops_timers(&ct2, &et2);
   ops_par_loop_preproc_kernel("preproc_kernel", heat3D, 3, iter_range,
                ops_arg_dat(h_u, 1, S3D_7PT, "double", OPS_READ),
                ops_arg_dat(h_du, 1, S3D_000, "double", OPS_WRITE),
@@ -125,14 +127,26 @@ double lambda;
                ops_arg_dat(h_bz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
+  ops_timers(&ct3, &et3);
+  ops_printf("Elapsed preproc (sec): %lf (s)\n",et3-et2);
 
+  ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u );
+  ops_timers(&ct3, &et3);
+  ops_printf("Elapsed trid_x (sec): %lf (s)\n",et3-et2);
 
+  ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch( 3, 1 , size, h_ay, h_by, h_cy, h_du, h_u );
+  ops_timers(&ct3, &et3);
+  ops_printf("Elapsed trid_y (sec): %lf (s)\n",et3-et2);
 
+  ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch( 3, 2 , size, h_az, h_bz, h_cz, h_du, h_u );
+  ops_timers(&ct3, &et3);
+  ops_printf("Elapsed trid_z (sec): %lf (s)\n",et3-et2);
 
   }
+
   ops_timers(&ct1, &et1);
 
 

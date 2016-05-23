@@ -66,9 +66,9 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     int bytes = size * type_size;
 
-    int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute padding x-dim for vecotrization
+    /*int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute padding x-dim for vecotrization
     dat->size[0] += x_pad;
-    dat->d_p[0] = x_pad;
+    dat->d_p[0] = x_pad;*/
 
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
