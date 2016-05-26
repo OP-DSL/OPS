@@ -45,7 +45,7 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS = -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK
 else
-  CCFLAGS = -xCORE_AVX2 -m64 -parallel -no-offload -O3 -ip -restrict
+  CCFLAGS = -fp-model strict -fp-model source -prec-div -prec-sqrt #-xCORE_AVX2 -m64 -parallel -no-offload -O3 -ip -restrict
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -openmp -openmp-report2
@@ -124,7 +124,7 @@ endif
 ifdef DEBUG
   NVCC_FLAGS = -O0 -g -G
 else
-  NVCC_FLAGS = -O3
+  NVCC_FLAGS = -O3 -arch sm_35 --ptxas-options=-v -Xptxas -dlcm=cg
 endif
 
 
@@ -182,8 +182,8 @@ adi_seq: Makefile adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)
 # CUDA version
 #
 
-adi_cuda: Makefile ./CUDA/adi_kernels_cu.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o adi_cuda
+adi_cuda: Makefile ./CUDA/adi_kernels_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+	$(MPICPP) $(MPIFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lops_cuda $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
 
 adi_mpi_cuda: Makefile ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o adi_mpi_cuda

@@ -53,23 +53,27 @@
 #include "print_kernel.h"
 
 
-
 // declare defaults options
 int nx;
 int ny;
 int nz;
 int iter;
+int opts[3], synch;
 
 //declare constants
 double lambda;
 
- int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   // Set defaults options
   nx = 256;
   ny = 256;
   nz = 256;
   iter = 10;
+  opts[0] = 0;
+  opts[1] = 0;
+  opts[2] = 0;
+  synch = 1;
 
   //constants
   lambda=1.0f;
@@ -125,6 +129,9 @@ double lambda;
   printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
   ops_diagnostic_output();
 
+  //initialize Tridiagonal Library
+  ops_initTridMultiDimBatchSolve(3 /*dimension*/, size /*size in each dimension*/);
+
   /**--------------------------------- Initialize -------------------------------**/
   int iter_range[] = {0,nx, 0,ny, 0,nz};
   ops_par_loop(init_kernel, "init_kernel", heat3D, 3, iter_range,
@@ -157,19 +164,19 @@ double lambda;
 
   /**----------------- perform tri-diagonal solves in x-direction ---------------**/
   ops_timers(&ct2, &et2);
-  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u );
+  ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u, opts);
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed trid_x (sec): %lf (s)\n",et3-et2);
 
   /**----------------- perform tri-diagonal solves in y-direction ---------------**/
   ops_timers(&ct2, &et2);
-  ops_tridMultiDimBatch( 3, 1 , size, h_ay, h_by, h_cy, h_du, h_u );
+  ops_tridMultiDimBatch( 3, 1 , size, h_ay, h_by, h_cy, h_du, h_u, opts );
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed trid_y (sec): %lf (s)\n",et3-et2);
 
   /**----------------- perform tri-diagonal solves in z-direction ---------------**/
   ops_timers(&ct2, &et2);
-  ops_tridMultiDimBatch( 3, 2 , size, h_az, h_bz, h_cz, h_du, h_u );
+  ops_tridMultiDimBatch_Inc( 3, 2 , size, h_az, h_bz, h_cz, h_du, h_u, opts );
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed trid_z (sec): %lf (s)\n",et3-et2);
 
@@ -179,7 +186,7 @@ double lambda;
 
   /**---------------------------- Print solution with OPS------------------------**/
 
-  //ops_print_dat_to_txtfile(h_ax, "h_ax.dat");
+  ops_print_dat_to_txtfile(h_u, "h_u.dat");
 
   /**-------------------------- Check solution without OPS-----------------------**/
 
