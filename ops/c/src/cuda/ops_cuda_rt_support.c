@@ -199,11 +199,11 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
 
-void ops_cuda_get_data(ops_dat dat) {
-  if (dat->dirty_hd == 2)
-    dat->dirty_hd = 0;
-  else
-    return;
+void ops_cuda_get_data( ops_dat dat )
+{
+  if (dat->dirty_hd == 2) dat->dirty_hd = 0;
+  else return;
+  printf("in here ************\n");
   int bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];

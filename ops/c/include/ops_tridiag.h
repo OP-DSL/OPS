@@ -44,7 +44,12 @@ extern "C" {
 #endif
 
 void ops_tridMultiDimBatch( int ndim, int solvedim, int* dims,
-  ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u );
+  ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, int* opts );
+
+void ops_tridMultiDimBatch_Inc( int ndim, int solvedim, int* dims,
+  ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, int* opts );
+
+void ops_initTridMultiDimBatchSolve(int ndim, int *dims);
 
 #ifdef __cplusplus
 }

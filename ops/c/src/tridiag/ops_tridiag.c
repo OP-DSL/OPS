@@ -43,6 +43,10 @@
 extern "C" {
 #endif
 
+void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
+  //dummy routine for non-GPU backends
+}
+
 void ops_tridMultiDimBatch(
   int ndim, //number of dimsnsions, ndim <= MAXDIM = 8
   int solvedim, // user chosen dimension to perform solve
@@ -52,7 +56,8 @@ void ops_tridMultiDimBatch(
                                   //A matrices of individual problems
   ops_dat d, // right hand side coefficients of a multidimensional problem. An
              // array containing d column vectors of individual problems
-  ops_dat u
+  ops_dat u,
+  int* opts // indicates different algorithms to use -- not used for CPU backends
 ) {
 
   tridDmtsvStridedBatch((const double *)a->data,
@@ -84,6 +89,25 @@ Is this somthing we can work with ?
 
 }
 
+void ops_tridMultiDimBatch_Inc(
+  int ndim, //number of dimsnsions, ndim <= MAXDIM = 8
+  int solvedim, // user chosen dimension to perform solve
+  int* dims, // array containing the sizes of each ndim dimensions
+  ops_dat a, ops_dat b, ops_dat c,//left hand side coefficients of a
+                                  //multidimensional problem. An array containing
+                                  //A matrices of individual problems
+  ops_dat d, // right hand side coefficients of a multidimensional problem. An
+             // array containing d column vectors of individual problems
+  ops_dat u,
+  int* opts // indicates different algorithms to use -- not used for CPU backends
+) {
+
+  tridDmtsvStridedBatchInc((const double *)a->data,
+    (const double *)b->data,
+    (const double *)c->data,
+    (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
+
+}
 #ifdef __cplusplus
 }
 #endif
