@@ -59,11 +59,11 @@ int main(int argc, char **argv)
   // OPS initialisation
   ops_init(argc,argv,6);
 
-  int logical_size_x = 200;
-  int logical_size_y = 200;
-  int ngrid_x = 2;
-  int ngrid_y = 2;
-  int n_iter = 10000;
+  int logical_size_x = 20;
+  int logical_size_y = 20;
+  int ngrid_x = 1;
+  int ngrid_y = 1;
+  int n_iter = 1;
   dx = 0.01;
   dy = 0.01;
   ops_decl_const("dx",1,"double",&dx);

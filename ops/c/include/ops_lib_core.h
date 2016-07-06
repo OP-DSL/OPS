@@ -132,33 +132,29 @@ typedef struct {
   char const *name; /* name of block */
 } ops_block_core;
 
-typedef ops_block_core *ops_block;
+typedef ops_block_core * ops_block;
 
-typedef struct {
-  int index;             /* index */
-  ops_block block;       /* block on which data is defined */
-  int dim;               /* number of elements per grid point*/
-  int elem_size;         /* number of bytes per grid point*/
-  int size[OPS_MAX_DIM]; /* size of the array in each block dimension --
-                            including halo*/
-  int base[OPS_MAX_DIM]; /* base offset to 0,0,... from the start of each
-                            dimension*/
-  int d_m[OPS_MAX_DIM];  /* halo depth in each dimension, negative direction (at
-                            0
-                            end)*/
-  int d_p[OPS_MAX_DIM];  /* halo depth in each dimension, positive direction (at
-                            size end)*/
-  char *data;            /* data on host */
-  char *data_d;          /* data on device */
-  char const *name;      /* name of dataset */
-  char const *type;      /* datatype */
-  int dirty_hd;          /* flag to indicate dirty status on host and device */
-  int user_managed;      /* indicates whether the user is managing memory */
-  int is_hdf5; /* indicates whether the data is to read from an hdf5 file*/
-  char const *hdf5_file; /* name of hdf5 file from which this dataset was read*/
-  int e_dat;             /* flag to indicate if this is an edge dat*/
-  long mem; /*memory in bytes allocated to this dat (under MPI, this will be
-               memory held on a single MPI proc)*/
+typedef struct
+{
+  int         index;       /* index */
+  ops_block   block;       /* block on which data is defined */
+  int         dim;        /* number of elements per grid point*/
+  int         elem_size;        /* number of bytes per grid point*/
+  int         size[OPS_MAX_DIM]; /* size of the array in each block dimension -- including halo*/
+  int         base[OPS_MAX_DIM];      /* base offset to 0,0,... from the start of each dimension*/
+  int         d_m[OPS_MAX_DIM];       /* halo depth in each dimension, negative direction (at 0 end)*/
+  int         d_p[OPS_MAX_DIM];       /* halo depth in each dimension, positive direction (at size end)*/
+  char        *data;       /* data on host */
+  char        *data_d;     /* data on device */
+  char const  *name;       /* name of dataset */
+  char const  *type;       /* datatype */
+  int         dirty_hd;    /* flag to indicate dirty status on host and device */
+  int         user_managed;/* indicates whether the user is managing memory */
+  int         is_hdf5;     /* indicates whether the data is to read from an hdf5 file*/
+  char const  *hdf5_file;  /* name of hdf5 file from which this dataset was read*/
+  int         e_dat;    /* flag to indicate if this is an edge dat*/
+  long        mem;  /*memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)*/
+  long        base_offset; /* computed quantity, giving offset in bytes to the base index */
 } ops_dat_core;
 
 typedef ops_dat_core *ops_dat;
@@ -247,17 +243,18 @@ typedef struct {
   int index;
 } ops_halo_group_core;
 
-typedef ops_halo_group_core *ops_halo_group;
+typedef ops_halo_group_core * ops_halo_group;
 
-typedef struct ops_kernel_descriptor {
-  //  char        *name;     /* name of kernel */
-  ops_arg *args;              /* list of arguments to pass in */
-  int nargs;                  /* number of arguments */
-  int dim;                    /* number of dimensions */
-  int range[2 * OPS_MAX_DIM]; /* execution range */
-  ops_block block;            /* block to execute on */
-  void (*function)(struct ops_kernel_descriptor
-                       *desc); /* Function pointer to a wrapper to be called */
+
+typedef struct ops_kernel_descriptor
+{
+  const char  *name;     /* name of kernel */
+  ops_arg     *args;     /* list of arguments to pass in */
+  int         nargs;     /* number of arguments */
+  int           dim;     /* number of dimensions */
+  int      range[2*OPS_MAX_DIM];     /* execution range */
+  ops_block   block;     /* block to execute on */
+  void (*function)(struct ops_kernel_descriptor *desc); /* Function pointer to a wrapper to be called */
 } ops_kernel_descriptor;
 
 /*

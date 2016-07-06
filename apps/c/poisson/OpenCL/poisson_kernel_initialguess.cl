@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -42,25 +42,31 @@
 
 #undef OPS_ACC0
 
-#define OPS_ACC0(x, y) (x + xdim0_poisson_kernel_initialguess * (y))
 
-// user function
-void poisson_kernel_initialguess(__global double *restrict u)
+#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_initialguess*(y))
 
-{
-  u[OPS_ACC0(0, 0)] = 0.0;
+
+//user function
+void poisson_kernel_initialguess(__global double * restrict u)
+
+ {
+  u[OPS_ACC0(0,0)] = 0.0;
 }
 
-__kernel void ops_poisson_kernel_initialguess(__global double *restrict arg0,
-                                              const int base0, const int size0,
-                                              const int size1) {
+
+
+__kernel void ops_poisson_kernel_initialguess(
+__global double* restrict arg0,
+const int base0,
+const int size0,
+const int size1 ){
+
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_initialguess(
-        &arg0[base0 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim0_poisson_kernel_initialguess]);
+    poisson_kernel_initialguess(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_initialguess]);
   }
+
 }
