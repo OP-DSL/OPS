@@ -127,8 +127,6 @@ void ops_execute() {
   for (int loop = ops_kernel_list.size()-1; loop >= 0; loop--) {
     for (int d = 0; d < dims; d++) {
       for (int tile = 0; tile < total_tiles; tile++) {
-
-        #warning THIN RANGES!!!
         
         //If this tile is the first in this dimension, then start index is the same as the original start index
         if ((tile/tiles_prod[d])%ntiles[d]==0)
@@ -184,6 +182,9 @@ void ops_execute() {
         if (OPS_diags>5)
           printf("%s tile %d dim %d: exec range is: %d-%d\n", ops_kernel_list[loop]->name, tile, d, tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 0], tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]);
 
+        if (tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1] <= tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 0])
+          continue;
+
         //Update read dependencies based on current iteration range
         for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
           //For any dataset read (i.e. not write-only)
@@ -216,8 +217,9 @@ void ops_execute() {
             data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1] = 
               MAX(data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1],
                 tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]);
+//            if (-2147483647 == tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]) printf("%d %d\n",tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1], )
             if (OPS_diags>5)
-              printf("Dataset write %s dependency dim %d set to %d %d\n", ops_kernel_list[loop]->args[arg].dat->name, d, data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0], data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]);
+              printf("Dataset write %s dependency dim %d set to %d %d\n", ops_kernel_list[loop]->args[arg].dat->name, d, data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0], data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]);
           }
         }
       }
