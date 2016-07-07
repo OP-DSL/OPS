@@ -47,9 +47,17 @@ using namespace std;
 std::vector<ops_kernel_descriptor *> ops_kernel_list;
 
 //Tiling
-std::vector<std::vector<int> > tiled_ranges; //ranges for each loop
 std::vector<std::vector<int> > data_read_deps; //latest data dependencies for each dataset
 std::vector<std::vector<int> > data_write_deps; //latest data dependencies for each dataset
+
+struct tiling_plan {
+  int nloops;
+  std::vector<int> loop_sequence;
+  int ntiles;
+  std::vector<std::vector<int> > tiled_ranges; //ranges for each loop
+};
+
+std::vector<tiling_plan> tiling_plans(0);
 
 
 void ops_execute();
@@ -66,9 +74,16 @@ int TILE2D = -1;
 #define TILE4D -1
 #define TILE5D -1
 
+int ops_construct_tile_plan() {
+  //Create new tiling plan
+  if (OPS_diags>2) ops_printf("Creating new tiling plan for %d loops\n",ops_kernel_list.size());
+  tiling_plans.resize(tiling_plans.size()+1);
+  std::vector<std::vector<int> > &tiled_ranges = tiling_plans[tiling_plans.size()-1].tiled_ranges;
+  tiling_plans[tiling_plans.size()-1].nloops = ops_kernel_list.size();
+  tiling_plans[tiling_plans.size()-1].loop_sequence.resize(ops_kernel_list.size());
+  for (int i = 0; i < ops_kernel_list.size(); i++)
+    tiling_plans[tiling_plans.size()-1].loop_sequence[i] = ops_kernel_list[i]->index;
 
-void ops_execute() {
-  if (ops_kernel_list.size()==0) return;
   TILE1D = atoi(getenv ("T1"));
   TILE2D = atoi(getenv ("T2"));
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};  
@@ -103,6 +118,7 @@ void ops_execute() {
 
   //Compute grand total number of tiles
   int total_tiles = tiles_prod[OPS_MAX_DIM];
+  tiling_plans[tiling_plans.size()-1].ntiles = total_tiles;
 
   //Allocate room to store the range of each tile for each loop
   for (int i = 0; i < ops_kernel_list.size(); i++) {
@@ -217,7 +233,6 @@ void ops_execute() {
             data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1] = 
               MAX(data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1],
                 tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]);
-//            if (-2147483647 == tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]) printf("%d %d\n",tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1], )
             if (OPS_diags>5)
               printf("Dataset write %s dependency dim %d set to %d %d\n", ops_kernel_list[loop]->args[arg].dat->name, d, data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0], data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]);
           }
@@ -225,6 +240,31 @@ void ops_execute() {
       }
     }
   }
+  //return index to newly created tiling plan
+  return tiling_plans.size()-1;
+}
+void ops_execute() {
+  if (ops_kernel_list.size()==0) return;
+
+  //Try to find an existing tiling plan for this sequence of loops
+  int match = -1;
+  for (int i = 0; i < tiling_plans.size(); i++) {
+    if (ops_kernel_list.size() == tiling_plans[i].nloops) {
+      int count = 0;
+      for (int j = 0; j < ops_kernel_list.size(); j++) {
+        if (ops_kernel_list[j]->index == tiling_plans[i].loop_sequence[j]) count++;
+        else break;
+      }
+      if (count == ops_kernel_list.size()) {
+        match = i;
+        break;
+      }
+    }
+  }
+  //If not found, construct one
+  if (match==-1) match = ops_construct_tile_plan();
+  std::vector<std::vector<int> > &tiled_ranges = tiling_plans[match].tiled_ranges;
+  int total_tiles = tiling_plans[match].ntiles;
 
   for (int tile = 0; tile < total_tiles; tile++) {
     for (int i = 0; i < ops_kernel_list.size(); i++) {      

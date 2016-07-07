@@ -79,6 +79,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
+  gen_full_code = 0;
+
 ##########################################################################
 #  create new kernel file
 ##########################################################################
@@ -299,16 +301,16 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
         #   code(line[:-1])
         #   code('  start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'];')
 
-        code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
+        code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
 
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)args['+str(n)+'].data;')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
-          code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
           code('#else //OPS_MPI')
-          code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((ops_reduction)args['+str(n)+'].data)->data;')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)((ops_reduction)args['+str(n)+'].data)->data;')
           code('#endif //OPS_MPI')
         code('')
       code('')
@@ -324,16 +326,17 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
 
-    comm('Halo Exchanges')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-    code('')
-    IF('OPS_diags > 1')
-    code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
-    ENDIF()
-    code('')
+    if gen_full_code==1:
+      comm('Halo Exchanges')
+      code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+      code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+      code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+      code('')
+      IF('OPS_diags > 1')
+      code('ops_timers_core(&c1,&t1);')
+      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+      ENDIF()
+      code('')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -341,12 +344,27 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
           for d in range(0,int(dims[n])):
             code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
 
-
-    code('int n_x;')
+    line = ''
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
+        if accs[n] == OPS_MAX:
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
+        if accs[n] == OPS_INC:
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
+        if accs[n] == OPS_WRITE: #this may not be correct ..
+          for d in range(0,int(dims[n])):
+            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
+    code('#pragma omp parallel for'+line)
     if NDIM>2:
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
+    code('#pragma omp simd'+line)
     FOR('n_x','start[0]','end[0]')
     if arg_idx:
       if NDIM==1:
@@ -432,26 +450,27 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
 
-    IF('OPS_diags > 1')
-    code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
-    ENDIF()
+    if gen_full_code==1:
+      IF('OPS_diags > 1')
+      code('ops_timers_core(&c2,&t2);')
+      code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+      ENDIF()
 
-    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
-        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+      code('ops_set_dirtybit_host(args, '+str(nargs)+');')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+          #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
+          code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
-    code('')
-    IF('OPS_diags > 1')
-    comm('Update kernel record')
-    code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
-    ENDIF()
+      code('')
+      IF('OPS_diags > 1')
+      comm('Update kernel record')
+      code('ops_timers_core(&c1,&t1);')
+      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+      ENDIF()
     config.depth = config.depth - 2
     code('}')
 
@@ -468,13 +487,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    depth = 2
+    config.depth = 2
     code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));')
     #code('desc->name = (char *)malloc(strlen(name)+1);')
     #code('strcpy(desc->name, name);')
     code('desc->name = name;')
     code('desc->block = block;')
     code('desc->dim = dim;')
+    code('desc->index = '+str(nk)+';')
     
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')

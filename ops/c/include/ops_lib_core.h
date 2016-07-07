@@ -251,6 +251,7 @@ typedef struct ops_kernel_descriptor
   const char  *name;     /* name of kernel */
   ops_arg     *args;     /* list of arguments to pass in */
   int         nargs;     /* number of arguments */
+  int         index;     /* index of the loop */
   int           dim;     /* number of dimensions */
   int      range[2*OPS_MAX_DIM];     /* execution range */
   ops_block   block;     /* block to execute on */

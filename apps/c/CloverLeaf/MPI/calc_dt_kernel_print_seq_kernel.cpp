@@ -73,27 +73,27 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *p_a0 = (double *)(args[0].data + base0);
+  double * __restrict__ p_a0 = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *p_a1 = (double *)(args[1].data + base1);
+  double * __restrict__ p_a1 = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *p_a2 = (double *)(args[2].data + base2);
+  double * __restrict__ p_a2 = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *p_a3 = (double *)(args[3].data + base3);
+  double * __restrict__ p_a3 = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *p_a4 = (double *)(args[4].data + base4);
+  double * __restrict__ p_a4 = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *p_a5 = (double *)(args[5].data + base5);
+  double * __restrict__ p_a5 = (double *)(args[5].data + base5);
 
   #ifdef OPS_MPI
-  double *p_a6 = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
+  double * __restrict__ p_a6 = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
   #else //OPS_MPI
-  double *p_a6 = (double *)((ops_reduction)args[6].data)->data;
+  double * __restrict__ p_a6 = (double *)((ops_reduction)args[6].data)->data;
   #endif //OPS_MPI
 
 
@@ -105,16 +105,6 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   xdim3 = args[3].dat->size[0];
   xdim4 = args[4].dat->size[0];
   xdim5 = args[5].dat->size[0];
-
-  //Halo Exchanges
-  ops_H_D_exchanges_host(args, 7);
-  ops_halo_exchanges(args,7,range);
-  ops_H_D_exchanges_host(args, 7);
-
-  if (OPS_diags > 1) {
-    ops_timers_core(&c1,&t1);
-    OPS_kernels[30].mpi_time += t1-t2;
-  }
 
   double p_a6_0 = p_a6[0];
   double p_a6_1 = p_a6[1];
@@ -128,8 +118,9 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   double p_a6_9 = p_a6[9];
   double p_a6_10 = p_a6[10];
   double p_a6_11 = p_a6[11];
-  int n_x;
+  #pragma omp parallel for reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    #pragma omp simd reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       double p_a6_local[12];
       p_a6_local[0] = ZERO_double;
@@ -174,67 +165,51 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   p_a6[9] = p_a6_9;
   p_a6[10] = p_a6_10;
   p_a6[11] = p_a6_11;
-  if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[30].time += t2-t1;
-  }
-  ops_set_dirtybit_host(args, 7);
-
-  if (OPS_diags > 1) {
-    //Update kernel record
-    ops_timers_core(&c1,&t1);
-    OPS_kernels[30].mpi_time += t1-t2;
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg5);
-  }
 }
 
 void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
-desc->name = name;
-desc->block = block;
-desc->dim = dim;
-#ifdef OPS_MPI
-sub_block_list sb = OPS_sub_block_list[block->index];
-if (!sb->owned) return;
-for ( int n=0; n<2; n++ ){
-  desc->range[2*n] = sb->decomp_disp[n];desc->range[2*n+1] = sb->decomp_disp[n]+sb->decomp_size[n];
-  if (desc->range[2*n] >= range[2*n]) {
-    desc->range[2*n] = 0;
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  desc->name = name;
+  desc->block = block;
+  desc->dim = dim;
+  desc->index = 30;
+  #ifdef OPS_MPI
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
+  for ( int n=0; n<2; n++ ){
+    desc->range[2*n] = sb->decomp_disp[n];desc->range[2*n+1] = sb->decomp_disp[n]+sb->decomp_size[n];
+    if (desc->range[2*n] >= range[2*n]) {
+      desc->range[2*n] = 0;
+    }
+    else {
+      desc->range[2*n] = range[2*n] - desc->range[2*n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) desc->range[2*n] = range[2*n];
+    if (desc->range[2*n+1] >= range[2*n+1]) {
+      desc->range[2*n+1] = range[2*n+1] - sb->decomp_disp[n];
+    }
+    else {
+      desc->range[2*n+1] = sb->decomp_size[n];
+    }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      desc->range[2*n+1] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-  else {
-    desc->range[2*n] = range[2*n] - desc->range[2*n];
+  #else //OPS_MPI
+  for ( int i=0; i<4; i++ ){
+    desc->range[i] = range[i];
   }
-  if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) desc->range[2*n] = range[2*n];
-  if (desc->range[2*n+1] >= range[2*n+1]) {
-    desc->range[2*n+1] = range[2*n+1] - sb->decomp_disp[n];
+  #endif //OPS_MPI
+  desc->nargs = 7;
+  desc->args = (ops_arg*)malloc(7*sizeof(ops_arg));
+  desc->args[0] = arg0;
+  desc->args[1] = arg1;
+  desc->args[2] = arg2;
+  desc->args[3] = arg3;
+  desc->args[4] = arg4;
+  desc->args[5] = arg5;
+  desc->args[6] = arg6;
+  desc->function = ops_par_loop_calc_dt_kernel_print_execute;
+  ops_enqueue_kernel(desc);
   }
-  else {
-    desc->range[2*n+1] = sb->decomp_size[n];
-  }
-  if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-    desc->range[2*n+1] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-}
-#else //OPS_MPI
-for ( int i=0; i<4; i++ ){
-  desc->range[i] = range[i];
-}
-#endif //OPS_MPI
-desc->nargs = 7;
-desc->args = (ops_arg*)malloc(7*sizeof(ops_arg));
-desc->args[0] = arg0;
-desc->args[1] = arg1;
-desc->args[2] = arg2;
-desc->args[3] = arg3;
-desc->args[4] = arg4;
-desc->args[5] = arg5;
-desc->args[6] = arg6;
-desc->function = ops_par_loop_calc_dt_kernel_print_execute;
-ops_enqueue_kernel(desc);
-}
