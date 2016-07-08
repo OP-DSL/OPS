@@ -30,10 +30,10 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
 ifdef DEBUG
-  CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -DOPS_DEBUG
 else
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS       = -O3      -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt
+  CCFLAGS       = -O3  -no-prec-div -restrict -fno-alias #-fp-model strict -fp-model source -prec-div -prec-sqrt
   #-DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
@@ -273,7 +273,7 @@ cloverleaf_seq: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp ini
                 ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
-                advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_seq
+                advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_seq -openmp
 
 #
 # CUDA version

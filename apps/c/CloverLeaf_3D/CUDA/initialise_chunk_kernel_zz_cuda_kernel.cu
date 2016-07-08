@@ -8,176 +8,174 @@ int ydim0_initialise_chunk_kernel_zz_h = -1;
 
 #undef OPS_ACC0
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_initialise_chunk_kernel_zz * (y) +                                \
-   xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz * (z))
 
-// user function
+#define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_zz*(y)+xdim0_initialise_chunk_kernel_zz*ydim0_initialise_chunk_kernel_zz*(z))
+
+//user function
 __device__
 
-    void
-    initialise_chunk_kernel_zz(int *zz, int *idx) {
-  zz[OPS_ACC0(0, 0, 0)] = idx[2] - 2;
+void initialise_chunk_kernel_zz(int *zz, int *idx) {
+  zz[OPS_ACC0(0,0,0)] = idx[2]-2;
 }
+
+
 
 #undef OPS_ACC0
 
-__global__ void ops_initialise_chunk_kernel_zz(int *__restrict arg0,
-                                               int arg_idx0, int arg_idx1,
-                                               int arg_idx2, int size0,
-                                               int size1, int size2) {
+
+__global__ void ops_initialise_chunk_kernel_zz(
+int* __restrict arg0,
+int arg_idx0, int arg_idx1, int arg_idx2,
+int size0,
+int size1,
+int size2 ){
+
 
   int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
   int arg_idx[3];
-  arg_idx[0] = arg_idx0 + idx_x;
-  arg_idx[1] = arg_idx1 + idx_y;
-  arg_idx[2] = arg_idx2 + idx_z;
-  arg0 += idx_x * 0 * 1 + idx_y * 0 * 1 * xdim0_initialise_chunk_kernel_zz +
-          idx_z * 1 * 1 * xdim0_initialise_chunk_kernel_zz *
-              ydim0_initialise_chunk_kernel_zz;
+  arg_idx[0] = arg_idx0+idx_x;
+  arg_idx[1] = arg_idx1+idx_y;
+  arg_idx[2] = arg_idx2+idx_z;
+  arg0 += idx_x * 0*1 + idx_y * 0*1 * xdim0_initialise_chunk_kernel_zz + idx_z * 1*1 * xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     initialise_chunk_kernel_zz(arg0, arg_idx);
   }
+
 }
 
 // host stub function
-void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block,
-                                             int dim, int *range, ops_arg arg0,
-                                             ops_arg arg1) {
+void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1) {
 
-  // Timing
-  double t1, t2, c1, c2;
+  //Timing
+  double t1,t2,c1,c2;
 
-  ops_arg args[2] = {arg0, arg1};
+  ops_arg args[2] = { arg0, arg1};
 
-#ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 48))
-    return;
-#endif
+
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,48)) return;
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(48, "initialise_chunk_kernel_zz");
+    ops_timing_realloc(48,"initialise_chunk_kernel_zz");
     OPS_kernels[48].count++;
-    ops_timers_core(&c1, &t1);
+    ops_timers_core(&c1,&t1);
   }
 
-  // compute locally allocated range for the sub-block
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
-#ifdef OPS_MPI
+  #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
+  if (!sb->owned) return;
+  for ( int n=0; n<3; n++ ){
+    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+    if (start[n] >= range[2*n]) {
       start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
     }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - sb->decomp_disp[n];
+    }
+    else {
       end[n] = sb->decomp_size[n];
     }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-#else
-  for (int n = 0; n < 3; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
+  #else
+  for ( int n=0; n<3; n++ ){
+    start[n] = range[2*n];end[n] = range[2*n+1];
   }
-#endif
+  #endif
 
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
+  int x_size = MAX(0,end[0]-start[0]);
+  int y_size = MAX(0,end[1]-start[1]);
+  int z_size = MAX(0,end[2]-start[2]);
 
   int arg_idx[3];
-#ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0] + start[0];
-  arg_idx[1] = sb->decomp_disp[1] + start[1];
-  arg_idx[2] = sb->decomp_disp[2] + start[2];
-#else
+  #ifdef OPS_MPI
+  arg_idx[0] = sb->decomp_disp[0]+start[0];
+  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  arg_idx[2] = sb->decomp_disp[2]+start[2];
+  #else
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   arg_idx[2] = start[2];
-#endif
+  #endif
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
-  if (xdim0 != xdim0_initialise_chunk_kernel_zz_h ||
-      ydim0 != ydim0_initialise_chunk_kernel_zz_h) {
-    cudaMemcpyToSymbol(xdim0_initialise_chunk_kernel_zz, &xdim0, sizeof(int));
+  if (xdim0 != xdim0_initialise_chunk_kernel_zz_h || ydim0 != ydim0_initialise_chunk_kernel_zz_h) {
+    cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_zz, &xdim0, sizeof(int) );
     xdim0_initialise_chunk_kernel_zz_h = xdim0;
-    cudaMemcpyToSymbol(ydim0_initialise_chunk_kernel_zz, &ydim0, sizeof(int));
+    cudaMemcpyToSymbol( ydim0_initialise_chunk_kernel_zz, &ydim0, sizeof(int) );
     ydim0_initialise_chunk_kernel_zz_h = ydim0;
   }
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, z_size);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+
+
+  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);
+  dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
+
+
 
   int dat0 = args[0].dat->elem_size;
 
   char *p_a[2];
 
-  // set up initial pointers
+  //set up initial pointers
   int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
-               d_m[2]);
+  #ifdef OPS_MPI
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
+  #else
+  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
+  #endif
+  int base0 = dat0 * 1 *
+  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    args[0].dat->size[1] *
+    (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
+
   ops_H_D_exchanges_device(args, 2);
-  ops_halo_exchanges(args, 2, range);
+  ops_halo_exchanges(args,2,range);
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[48].mpi_time += t2 - t1;
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[48].mpi_time += t2-t1;
   }
 
-  // call kernel wrapper function, passing in pointers to data
-  ops_initialise_chunk_kernel_zz<<<grid, tblock>>>((int *)p_a[0], arg_idx[0],
-                                                   arg_idx[1], arg_idx[2],
-                                                   x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  //call kernel wrapper function, passing in pointers to data
+  ops_initialise_chunk_kernel_zz<<<grid, tblock >>> (  (int *)p_a[0], arg_idx[0], arg_idx[1], arg_idx[2],x_size, y_size, z_size);
+
+  if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1, &t1);
-    OPS_kernels[48].time += t1 - t2;
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[48].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 2);
-  ops_set_halo_dirtybit3(&args[0], range);
+  ops_set_halo_dirtybit3(&args[0],range);
 
   if (OPS_diags > 1) {
-    // Update kernel record
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[48].mpi_time += t2 - t1;
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[48].mpi_time += t2-t1;
     OPS_kernels[48].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

@@ -12,52 +12,37 @@ int ydim2_ideal_gas_kernel;
 int xdim3_ideal_gas_kernel;
 int ydim3_ideal_gas_kernel;
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim0_ideal_gas_kernel * 1 +                                \
-   n_z * xdim0_ideal_gas_kernel * ydim0_ideal_gas_kernel * 1 + x +             \
-   xdim0_ideal_gas_kernel * (y) +                                              \
-   xdim0_ideal_gas_kernel * ydim0_ideal_gas_kernel * (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim1_ideal_gas_kernel * 1 +                                \
-   n_z * xdim1_ideal_gas_kernel * ydim1_ideal_gas_kernel * 1 + x +             \
-   xdim1_ideal_gas_kernel * (y) +                                              \
-   xdim1_ideal_gas_kernel * ydim1_ideal_gas_kernel * (z))
-#define OPS_ACC2(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim2_ideal_gas_kernel * 1 +                                \
-   n_z * xdim2_ideal_gas_kernel * ydim2_ideal_gas_kernel * 1 + x +             \
-   xdim2_ideal_gas_kernel * (y) +                                              \
-   xdim2_ideal_gas_kernel * ydim2_ideal_gas_kernel * (z))
-#define OPS_ACC3(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim3_ideal_gas_kernel * 1 +                                \
-   n_z * xdim3_ideal_gas_kernel * ydim3_ideal_gas_kernel * 1 + x +             \
-   xdim3_ideal_gas_kernel * (y) +                                              \
-   xdim3_ideal_gas_kernel * ydim3_ideal_gas_kernel * (z))
+#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_ideal_gas_kernel*1+n_z*xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*1+x+xdim0_ideal_gas_kernel*(y)+xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*(z))
+#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_ideal_gas_kernel*1+n_z*xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*1+x+xdim1_ideal_gas_kernel*(y)+xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*(z))
+#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_ideal_gas_kernel*1+n_z*xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*1+x+xdim2_ideal_gas_kernel*(y)+xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*(z))
+#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_ideal_gas_kernel*1+n_z*xdim3_ideal_gas_kernel*ydim3_ideal_gas_kernel*1+x+xdim3_ideal_gas_kernel*(y)+xdim3_ideal_gas_kernel*ydim3_ideal_gas_kernel*(z))
 
-// user function
+//user function
 
-void ideal_gas_kernel_c_wrapper(const double *restrict density,
-                                const double *restrict energy,
-                                double *restrict pressure,
-                                double *restrict soundspeed, int x_size,
-                                int y_size, int z_size) {
-#pragma omp parallel for
-  for (int n_z = 0; n_z < z_size; n_z++) {
-    for (int n_y = 0; n_y < y_size; n_y++) {
-      for (int n_x = 0; n_x < x_size; n_x++) {
 
-        double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
-        v = 1.0 / density[OPS_ACC0(0, 0, 0)];
-        pressure[OPS_ACC2(0, 0, 0)] = (1.4 - 1.0) * density[OPS_ACC0(0, 0, 0)] *
-                                      energy[OPS_ACC1(0, 0, 0)];
+void ideal_gas_kernel_c_wrapper(
+  const double * restrict density,
+  const double * restrict energy,
+  double * restrict pressure,
+  double * restrict soundspeed,
+  int x_size, int y_size, int z_size) {
+  #pragma omp parallel for
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        
 
-        pressurebyenergy = (1.4 - 1.0) * density[OPS_ACC0(0, 0, 0)];
-        pressurebyvolume =
-            -1.0 * density[OPS_ACC0(0, 0, 0)] * pressure[OPS_ACC2(0, 0, 0)];
-        sound_speed_squared =
-            v * v *
-            (pressure[OPS_ACC2(0, 0, 0)] * pressurebyenergy - pressurebyvolume);
-        soundspeed[OPS_ACC3(0, 0, 0)] = sqrt(sound_speed_squared);
+  double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
+
+  v = 1.0 / density[OPS_ACC0(0,0,0)];
+  pressure[OPS_ACC2(0,0,0)] = (1.4 - 1.0) * density[OPS_ACC0(0,0,0)] * energy[OPS_ACC1(0,0,0)];
+
+  pressurebyenergy = (1.4 - 1.0) * density[OPS_ACC0(0,0,0)];
+  pressurebyvolume = -1.0*density[OPS_ACC0(0,0,0)] * pressure[OPS_ACC2(0,0,0)];
+  sound_speed_squared = v*v*(pressure[OPS_ACC2(0,0,0)] * pressurebyenergy-pressurebyvolume);
+  soundspeed[OPS_ACC3(0,0,0)] = sqrt(sound_speed_squared);
+
       }
     }
   }
@@ -66,3 +51,4 @@ void ideal_gas_kernel_c_wrapper(const double *restrict density,
 #undef OPS_ACC1
 #undef OPS_ACC2
 #undef OPS_ACC3
+

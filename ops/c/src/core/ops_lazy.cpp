@@ -39,7 +39,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "ops_lib_core.h"
-#include <sys/time.h>
+#include "ops_hdf5.h"
 
 #include <vector>
 using namespace std;
@@ -70,7 +70,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 //#define TILE2D 12
 int TILE1D = -1;
 int TILE2D = -1;
-#define TILE3D -1
+int TILE3D = -1;
 #define TILE4D -1
 #define TILE5D -1
 
@@ -95,6 +95,10 @@ int ops_construct_tile_plan() {
     TILE2D = atoi(getenv ("T2"));
   else
     TILE2D = -1;
+  if (getenv ("T3"))
+    TILE3D = atoi(getenv ("T3"));
+  else
+    TILE3D = -1;
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};  
 
   //Initialise tiling datasets
@@ -180,7 +184,7 @@ int ops_construct_tile_plan() {
           //Look at write dependencies of datasets being read
           for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
             //For any dataset written (i.e. not read)
-            if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[loop]->args[arg].acc != OPS_WRITE) {
+            if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT) { //&& ops_kernel_list[loop]->args[arg].acc != OPS_WRITE
               int d_m_min = 0; //Find biggest positive/negative direction stencil point for this dimension
               int d_p_max = 0;
               for (int p = 0; p < ops_kernel_list[loop]->args[arg].stencil->points; p++) {
@@ -243,6 +247,14 @@ int ops_construct_tile_plan() {
             data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1] = 
               MAX(data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1],
                 tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1]);
+
+            // if (data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0]
+            //     >= tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 0])
+            //   data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0] = tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1];
+            // if (data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]
+            //     <= tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 1])
+            //   data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1] = tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 0];
+
             if (OPS_diags>5)
               printf("Dataset write %s dependency dim %d set to %d %d\n", ops_kernel_list[loop]->args[arg].dat->name, d, data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+0], data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]);
           }
@@ -283,10 +295,11 @@ void ops_execute() {
     for (int i = 0; i < ops_kernel_list.size(); i++) {      
       memcpy(&ops_kernel_list[i]->range[0], &tiled_ranges[i][OPS_MAX_DIM*2*tile], OPS_MAX_DIM*2*sizeof(int));
       if (OPS_diags>5)
-        printf("Executing %s %d-%d %d-%d\n",ops_kernel_list[i]->name, ops_kernel_list[i]->range[0],ops_kernel_list[i]->range[1],ops_kernel_list[i]->range[2],ops_kernel_list[i]->range[3]);
+        printf("Executing %s %d-%d %d-%d %d-%d\n",ops_kernel_list[i]->name, ops_kernel_list[i]->range[0],ops_kernel_list[i]->range[1],ops_kernel_list[i]->range[2],ops_kernel_list[i]->range[3],ops_kernel_list[i]->range[4],ops_kernel_list[i]->range[5]);
       ops_kernel_list[i]->function(ops_kernel_list[i]);
     }
   }
+
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     //free(ops_kernel_list[i]->args);
     //free(ops_kernel_list[i]);

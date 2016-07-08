@@ -345,7 +345,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
         if accs[n] == OPS_WRITE: #this may not be correct ..
           for d in range(0,int(dims[n])):
             line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
-    code('#pragma omp parallel for'+line)
+    if NDIM==3 and reduction==0:
+      line2 = ' collapse(2)'
+    else:
+      line2 = line
+    code('#pragma omp parallel for'+line2)
     if NDIM>2:
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
