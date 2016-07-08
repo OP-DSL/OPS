@@ -77,6 +77,8 @@ int TILE2D = -1;
 int ops_construct_tile_plan() {
   //Create new tiling plan
   if (OPS_diags>2) ops_printf("Creating new tiling plan for %d loops\n",ops_kernel_list.size());
+  double t1,t2,c1,c2;
+  ops_timers_core(&c1,&t1);
   tiling_plans.resize(tiling_plans.size()+1);
   std::vector<std::vector<int> > &tiled_ranges = tiling_plans[tiling_plans.size()-1].tiled_ranges;
   tiling_plans[tiling_plans.size()-1].nloops = ops_kernel_list.size();
@@ -84,9 +86,17 @@ int ops_construct_tile_plan() {
   for (int i = 0; i < ops_kernel_list.size(); i++)
     tiling_plans[tiling_plans.size()-1].loop_sequence[i] = ops_kernel_list[i]->index;
 
-  TILE1D = atoi(getenv ("T1"));
-  TILE2D = atoi(getenv ("T2"));
+  //Get tile sizes
+  if (getenv ("T1"))
+    TILE1D = atoi(getenv ("T1"));
+  else
+    TILE1D = -1;
+  if (getenv ("T2"))
+    TILE2D = atoi(getenv ("T2"));
+  else
+    TILE2D = -1;
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};  
+
   //Initialise tiling datasets
   tiled_ranges.resize(ops_kernel_list.size());
 
@@ -240,6 +250,9 @@ int ops_construct_tile_plan() {
       }
     }
   }
+  ops_timers_core(&c2,&t2);
+  if (OPS_diags>2)
+    printf("Created tiling plan %g seconds\n",t2-t1);
   //return index to newly created tiling plan
   return tiling_plans.size()-1;
 }
@@ -275,8 +288,8 @@ void ops_execute() {
     }
   }
   for (int i = 0; i < ops_kernel_list.size(); i++) {
-    free(ops_kernel_list[i]->args);
-    free(ops_kernel_list[i]);
+    //free(ops_kernel_list[i]->args);
+    //free(ops_kernel_list[i]);
   }
   ops_kernel_list.clear();
 }
