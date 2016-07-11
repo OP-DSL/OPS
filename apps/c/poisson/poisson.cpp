@@ -57,13 +57,38 @@ int main(int argc, char **argv)
   /**-------------------------- Initialisation --------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,6);
+  ops_init(argc,argv,1);
 
+
+  //Mesh
   int logical_size_x = 20;
   int logical_size_y = 20;
   int ngrid_x = 1;
   int ngrid_y = 1;
-  int n_iter = 1;
+  int n_iter = 10;
+  int itertile = n_iter;
+
+  char* pch;
+  for ( int n = 1; n < argc; n++ ) {
+    pch = strstr(argv[n], "-sizex=");
+    if(pch != NULL) {
+      logical_size_x = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-sizey=");
+    if(pch != NULL) {
+      logical_size_y = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-iters=");
+    if(pch != NULL) {
+      n_iter = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-itert=");
+    if(pch != NULL) {
+      itertile = atoi ( argv[n] + 7 ); continue;
+    }
+  }
+
+  ops_printf("Grid: %dx%d in %dx%d blocks, %d iterations, %d tile height\n",logical_size_x,logical_size_y,ngrid_x,ngrid_y,n_iter,itertile);
   dx = 0.01;
   dy = 0.01;
   ops_decl_const("dx",1,"double",&dx);
@@ -205,14 +230,18 @@ int main(int argc, char **argv)
     }
   }
 
+  double it0, it1;
+  ops_timers(&ct0, &it0);
+
   for (int iter = 0; iter < n_iter; iter++) {
-    ops_halo_transfer(u_halos);
+    if (ngrid_x>1 || ngrid_y>1) ops_halo_transfer(u_halos);
+    if (iter%itertile == 0) ops_execute();
+
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
         ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
                  ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
-                 ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
                  ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
@@ -228,6 +257,7 @@ int main(int argc, char **argv)
       }
     }
   }
+  ops_timers(&ct0, &it1);
 
   //ops_print_dat_to_txtfile(u[0], "poisson.dat");
   //ops_print_dat_to_txtfile(ref[0], "poisson.dat");
@@ -261,7 +291,7 @@ int main(int argc, char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
-
+  ops_printf("%lf\n",it1-it0);
 
   ops_exit();
 }

@@ -74,6 +74,8 @@ int TILE3D = -1;
 #define TILE4D -1
 #define TILE5D -1
 
+int ops_dims_tiling_internal = 1;
+
 int ops_construct_tile_plan() {
   //Create new tiling plan
   if (OPS_diags>2) ops_printf("Creating new tiling plan for %d loops\n",ops_kernel_list.size());
@@ -109,6 +111,7 @@ int ops_construct_tile_plan() {
   memcpy(biggest_range,ops_kernel_list[0]->range,2*OPS_MAX_DIM*sizeof(int));
   //TODO: mixed dim blocks, currently it's jsut the last loop's block
   int dims = ops_kernel_list[ops_kernel_list.size()-1]->block->dims;
+  ops_dims_tiling_internal = dims;
   for (int i = 1; i < ops_kernel_list.size(); i++) {
     for (int d = 0; d < dims; d++) {
       biggest_range[2*d] = MIN(biggest_range[2*d], ops_kernel_list[i]->range[2*d]);
@@ -181,9 +184,8 @@ int ops_construct_tile_plan() {
                     data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]));
             }
           }
-          //Look at write dependencies of datasets being read
+          //Look at write dependencies of datasets being accessed
           for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-            //For any dataset written (i.e. not read)
             if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT) { //&& ops_kernel_list[loop]->args[arg].acc != OPS_WRITE
               int d_m_min = 0; //Find biggest positive/negative direction stencil point for this dimension
               int d_p_max = 0;
@@ -292,7 +294,12 @@ void ops_execute() {
   int total_tiles = tiling_plans[match].ntiles;
 
   for (int tile = 0; tile < total_tiles; tile++) {
-    for (int i = 0; i < ops_kernel_list.size(); i++) {      
+    for (int i = 0; i < ops_kernel_list.size(); i++) {
+
+      if (tiled_ranges[i][OPS_MAX_DIM*2*tile+1]-tiled_ranges[i][OPS_MAX_DIM*2*tile+0] == 0 ||
+          (ops_dims_tiling_internal > 1 && tiled_ranges[i][OPS_MAX_DIM*2*tile+3]-tiled_ranges[i][OPS_MAX_DIM*2*tile+2] == 0) ||
+          (ops_dims_tiling_internal > 2 && tiled_ranges[i][OPS_MAX_DIM*2*tile+5]-tiled_ranges[i][OPS_MAX_DIM*2*tile+4] == 0)) continue;
+
       memcpy(&ops_kernel_list[i]->range[0], &tiled_ranges[i][OPS_MAX_DIM*2*tile], OPS_MAX_DIM*2*sizeof(int));
       if (OPS_diags>5)
         printf("Executing %s %d-%d %d-%d %d-%d\n",ops_kernel_list[i]->name, ops_kernel_list[i]->range[0],ops_kernel_list[i]->range[1],ops_kernel_list[i]->range[2],ops_kernel_list[i]->range[3],ops_kernel_list[i]->range[4],ops_kernel_list[i]->range[5]);

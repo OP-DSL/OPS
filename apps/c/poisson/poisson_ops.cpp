@@ -32,7 +32,6 @@ void ops_par_loop_poisson_kernel_initialguess(char const *, ops_block, int , int
 
 void ops_par_loop_poisson_kernel_stencil(char const *, ops_block, int , int*,
   ops_arg,
-  ops_arg,
   ops_arg );
 
 void ops_par_loop_poisson_kernel_update(char const *, ops_block, int , int*,
@@ -52,13 +51,37 @@ int main(int argc, char **argv)
 {
 
 
-  ops_init(argc,argv,6);
+  ops_init(argc,argv,1);
 
-  int logical_size_x = 8192;
-  int logical_size_y = 8192;
+
+  int logical_size_x = 20;
+  int logical_size_y = 20;
   int ngrid_x = 1;
   int ngrid_y = 1;
-  int n_iter = 500;
+  int n_iter = 10;
+  int itertile = n_iter;
+
+  char* pch;
+  for ( int n = 1; n < argc; n++ ) {
+    pch = strstr(argv[n], "-sizex=");
+    if(pch != NULL) {
+      logical_size_x = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-sizey=");
+    if(pch != NULL) {
+      logical_size_y = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-iters=");
+    if(pch != NULL) {
+      n_iter = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-itert=");
+    if(pch != NULL) {
+      itertile = atoi ( argv[n] + 7 ); continue;
+    }
+  }
+
+  ops_printf("Grid: %dx%d in %dx%d blocks, %d iterations, %d tile height\n",logical_size_x,logical_size_y,ngrid_x,ngrid_y,n_iter,itertile);
   dx = 0.01;
   dy = 0.01;
   ops_decl_const2( "dx",1, "double",&dx);
@@ -185,14 +208,18 @@ int main(int argc, char **argv)
     }
   }
 
+  double it0, it1;
+  ops_timers(&ct0, &it0);
+
   for (int iter = 0; iter < n_iter; iter++) {
- 		if (iter%50==0)    ops_halo_transfer(u_halos);
+    if (ngrid_x>1 || ngrid_y>1) ops_halo_transfer(u_halos);
+    if (iter%itertile == 0) ops_execute();
+
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
         ops_par_loop_poisson_kernel_stencil("poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
                      ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
-                     ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
                      ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
@@ -207,6 +234,7 @@ int main(int argc, char **argv)
       }
     }
   }
+  ops_timers(&ct0, &it1);
 
 
 
@@ -239,6 +267,7 @@ int main(int argc, char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
+  ops_printf("%lf\n",it1-it0);
 
   ops_exit();
 }

@@ -127,7 +127,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     arg_idx = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = 1
+        arg_idx = n
 
     config.file_text = ''
     config.depth = 0
@@ -358,11 +358,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     FOR('n_x','start[0]','end[0]')
     if arg_idx:
       if NDIM==1:
-        code('int '+arg_list[n]+'[] = {arg_idx[0]+n_x};')
+        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x};')
       elif NDIM==2:
-        code('int '+arg_list[n]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
+        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
       elif NDIM==3:
-        code('int '+arg_list[n]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':

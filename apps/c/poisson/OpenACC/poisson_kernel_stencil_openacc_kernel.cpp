@@ -9,8 +9,6 @@ extern int xdim0_poisson_kernel_stencil;
 int xdim0_poisson_kernel_stencil_h = -1;
 extern int xdim1_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil_h = -1;
-extern int xdim2_poisson_kernel_stencil;
-int xdim2_poisson_kernel_stencil_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,7 +16,6 @@ extern "C" {
 void poisson_kernel_stencil_c_wrapper(
   double *p_a0,
   double *p_a1,
-  double *p_a2,
   int x_size, int y_size);
 
 #ifdef __cplusplus
@@ -27,15 +24,15 @@ void poisson_kernel_stencil_c_wrapper(
 
 // host stub function
 void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+ ops_arg arg0, ops_arg arg1) {
 
   //Timing
   double t1,t2,c1,c2;
-  ops_arg args[3] = { arg0, arg1, arg2};
+  ops_arg args[2] = { arg0, arg1};
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,2)) return;
+  if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
   if (OPS_diags > 1) {
@@ -81,14 +78,11 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
   xdim0 = args[0].dat->size[0];
   xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  if (xdim0 != xdim0_poisson_kernel_stencil_h || xdim1 != xdim1_poisson_kernel_stencil_h || xdim2 != xdim2_poisson_kernel_stencil_h) {
+  if (xdim0 != xdim0_poisson_kernel_stencil_h || xdim1 != xdim1_poisson_kernel_stencil_h) {
     xdim0_poisson_kernel_stencil = xdim0;
     xdim0_poisson_kernel_stencil_h = xdim0;
     xdim1_poisson_kernel_stencil = xdim1;
     xdim1_poisson_kernel_stencil_h = xdim1;
-    xdim2_poisson_kernel_stencil = xdim2;
-    xdim2_poisson_kernel_stencil_h = xdim2;
   }
 
 
@@ -114,28 +108,18 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + args[2].dat->elem_size * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + args[2].dat->elem_size *
-    args[2].dat->size[0] *
-    start[1] * args[2].stencil->stride[1];
+
   #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data_d + base2);
+  ops_H_D_exchanges_device(args, 2);
   #else
-  double *p_a2 = (double *)((char *)args[2].data + base2);
+  ops_H_D_exchanges_host(args, 2);
   #endif
-
-
-  #ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
-  #else
-  ops_H_D_exchanges_host(args, 3);
-  #endif
-  ops_halo_exchanges(args,3,range);
+  ops_halo_exchanges(args,2,range);
 
   #ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
+  ops_H_D_exchanges_device(args, 2);
   #else
-  ops_H_D_exchanges_host(args, 3);
+  ops_H_D_exchanges_host(args, 2);
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
@@ -145,7 +129,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   poisson_kernel_stencil_c_wrapper(
     p_a0,
     p_a1,
-    p_a2,
     x_size, y_size);
 
   if (OPS_diags > 1) {
@@ -153,11 +136,11 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     OPS_kernels[2].time += t1-t2;
   }
   #ifdef OPS_GPU
-  ops_set_dirtybit_device(args, 3);
+  ops_set_dirtybit_device(args, 2);
   #else
-  ops_set_dirtybit_host(args, 3);
+  ops_set_dirtybit_host(args, 2);
   #endif
-  ops_set_halo_dirtybit3(&args[2],range);
+  ops_set_halo_dirtybit3(&args[1],range);
 
   if (OPS_diags > 1) {
     //Update kernel record
@@ -165,6 +148,5 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     OPS_kernels[2].mpi_time += t2-t1;
     OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
