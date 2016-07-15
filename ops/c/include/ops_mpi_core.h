@@ -46,18 +46,17 @@
 #endif
 #define MPI_ROOT 0
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //
-//Struct for holding the decomposition details of a block on an MPI process
+// Struct for holding the decomposition details of a block on an MPI process
 //
 typedef struct {
   // the decomposition is for this block
   ops_block block;
-  //number of dimensions;
+  // number of dimensions;
   int ndim;
   // my MPI rank in each dimension (in cart cords)
   int coords[OPS_MAX_DIM];
@@ -77,33 +76,32 @@ typedef struct {
   int owned;
 } sub_block;
 
-typedef sub_block * sub_block_list;
-
+typedef sub_block *sub_block_list;
 
 //
-//Struct duplicating information in MPI_Datatypes for (strided) halo access
+// Struct duplicating information in MPI_Datatypes for (strided) halo access
 //
 
-typedef struct
-{
-  int         count;       /* number of blocks */
-  int         blocklength; /* size of blocks */
-  int         stride;      /* stride between blocks */
+typedef struct {
+  int count;       /* number of blocks */
+  int blocklength; /* size of blocks */
+  int stride;      /* stride between blocks */
 } ops_int_halo;
 
 //
-//Struct for holding the decomposition details of a dat on an MPI process
+// Struct for holding the decomposition details of a dat on an MPI process
 //
 
 typedef struct {
   // the decomposition is for this dat
   ops_dat dat;
   // product array -- used for MPI send/Receives
-  int* prod;
-  //MPI Types for send/receive -- these should be defined for the dat, not the block
-  MPI_Datatype* mpidat;
-  //data structures describing halo access
-  ops_int_halo* halos;
+  int *prod;
+  // MPI Types for send/receive -- these should be defined for the dat, not the
+  // block
+  MPI_Datatype *mpidat;
+  // data structures describing halo access
+  ops_int_halo *halos;
   // the size of the local sub-block in each dimension, "owned"
   int decomp_size[OPS_MAX_DIM];
   // the displacement from the start of the block in each dimension
@@ -119,21 +117,21 @@ typedef struct {
   int gbl_d_m[OPS_MAX_DIM];
   int gbl_d_p[OPS_MAX_DIM];
 
-  //flag to indicate MPI halo exchange is needed
-  int         dirtybit;
-  //flag to indicate MPI halo exchange in a direction is needed
-  int*        dirty_dir_send;
-  //flag to indicate MPI halo exchange in a direction is needed
-  int*        dirty_dir_recv;
+  // flag to indicate MPI halo exchange is needed
+  int dirtybit;
+  // flag to indicate MPI halo exchange in a direction is needed
+  int *dirty_dir_send;
+  // flag to indicate MPI halo exchange in a direction is needed
+  int *dirty_dir_recv;
 
 } sub_dat;
 
-typedef sub_dat * sub_dat_list;
+typedef sub_dat *sub_dat_list;
 
 typedef struct {
   ops_halo halo;
-  int nproc_from; //number of processes I have to send to (from part of halo)
-  int nproc_to; //number of processes I have to receive from (to part of halo)
+  int nproc_from; // number of processes I have to send to (from part of halo)
+  int nproc_to; // number of processes I have to receive from (to part of halo)
   int *proclist;
   int *local_from_base;
   int *local_to_base;
@@ -157,7 +155,7 @@ typedef struct {
 } ops_mpi_halo_group;
 
 //
-//MPI Communicator for halo creation and exchange
+// MPI Communicator for halo creation and exchange
 //
 
 extern MPI_Comm OPS_MPI_GLOBAL;
@@ -177,8 +175,10 @@ void ops_mpi_exit();
 /*******************************************************************************
 * External functions defined in ops_mpi_(cuda)_rt_support.c
 *******************************************************************************/
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo);
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo);
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo);
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo);
 void ops_comm_realloc(char **ptr, int size, int prev_size);
 
 #ifdef __cplusplus

@@ -46,40 +46,41 @@
  * reduction routine for arbitrary datatypes
  */
 
-template < ops_access reduction, class T >
-__inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
-{
+template <ops_access reduction, class T>
+__inline__ __device__ void ops_reduction_cuda(volatile T *dat_g, T dat_l) {
   extern __shared__ volatile char temp2[];
   __shared__ volatile T *temp;
-  temp = (T* )temp2;
+  temp = (T *)temp2;
 
-  T   dat_t;
+  T dat_t;
 
-  __syncthreads();     /* important to finish all previous activity */
+  __syncthreads(); /* important to finish all previous activity */
 
-  int tid   = threadIdx.x + threadIdx.y*blockDim.x;
+  int tid = threadIdx.x + threadIdx.y * blockDim.x;
   temp[tid] = dat_l;
 
   // first, cope with blockDim.x perhaps not being a power of 2
 
   __syncthreads();
 
-  int d = 1 << (31 - __clz(((int)(blockDim.x * blockDim.y)-1)) );
+  int d = 1 << (31 - __clz(((int)(blockDim.x * blockDim.y) - 1)));
   // d = blockDim.x/2 rounded up to nearest power of 2
 
-  if ( tid+d < blockDim.x*blockDim.y ) {
-    dat_t = temp[tid+d];
+  if (tid + d < blockDim.x * blockDim.y) {
+    dat_t = temp[tid + d];
 
-    switch ( reduction ) {
-      case OPS_INC:
-        dat_l = dat_l + dat_t;
-        break;
-      case OPS_MIN:
-        if ( dat_t < dat_l ) dat_l = dat_t;
-        break;
-      case OPS_MAX:
-        if ( dat_t > dat_l ) dat_l = dat_t;
-        break;
+    switch (reduction) {
+    case OPS_INC:
+      dat_l = dat_l + dat_t;
+      break;
+    case OPS_MIN:
+      if (dat_t < dat_l)
+        dat_l = dat_t;
+      break;
+    case OPS_MAX:
+      if (dat_t > dat_l)
+        dat_l = dat_t;
+      break;
     }
 
     temp[tid] = dat_l;
@@ -87,22 +88,24 @@ __inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
 
   // second, do reductions involving more than one warp
 
-  for (d >>= 1 ; d > warpSize; d >>= 1 ) {
+  for (d >>= 1; d > warpSize; d >>= 1) {
     __syncthreads();
 
-    if ( tid < d ) {
-      dat_t = temp[tid+d];
+    if (tid < d) {
+      dat_t = temp[tid + d];
 
-      switch ( reduction ) {
-        case OPS_INC:
-          dat_l = dat_l + dat_t;
-          break;
-        case OPS_MIN:
-          if ( dat_t < dat_l ) dat_l = dat_t;
-          break;
-        case OPS_MAX:
-          if ( dat_t > dat_l ) dat_l = dat_t;
-          break;
+      switch (reduction) {
+      case OPS_INC:
+        dat_l = dat_l + dat_t;
+        break;
+      case OPS_MIN:
+        if (dat_t < dat_l)
+          dat_l = dat_t;
+        break;
+      case OPS_MAX:
+        if (dat_t > dat_l)
+          dat_l = dat_t;
+        break;
       }
 
       temp[tid] = dat_l;
@@ -113,21 +116,23 @@ __inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
 
   __syncthreads();
 
-  if ( tid < warpSize ) {
-    for ( ; d > 0; d >>= 1 ) {
-      if ( tid < d ) {
-        dat_t = temp[tid+d];
+  if (tid < warpSize) {
+    for (; d > 0; d >>= 1) {
+      if (tid < d) {
+        dat_t = temp[tid + d];
 
-        switch ( reduction ) {
-          case OPS_INC:
-            dat_l = dat_l + dat_t;
-            break;
-          case OPS_MIN:
-            if ( dat_t < dat_l ) dat_l = dat_t;
-            break;
-          case OPS_MAX:
-            if ( dat_t > dat_l ) dat_l = dat_t;
-            break;
+        switch (reduction) {
+        case OPS_INC:
+          dat_l = dat_l + dat_t;
+          break;
+        case OPS_MIN:
+          if (dat_t < dat_l)
+            dat_l = dat_t;
+          break;
+        case OPS_MAX:
+          if (dat_t > dat_l)
+            dat_l = dat_t;
+          break;
         }
 
         temp[tid] = dat_l;
@@ -136,17 +141,19 @@ __inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
 
     // finally, update global reduction variable
 
-    if ( tid == 0 ) {
-      switch ( reduction ) {
-        case OPS_INC:
-          *dat_g = *dat_g + dat_l;
-          break;
-        case OPS_MIN:
-          if ( dat_l < *dat_g ) *dat_g = dat_l;
-          break;
-        case OPS_MAX:
-          if ( dat_l > *dat_g ) *dat_g = dat_l;
-          break;
+    if (tid == 0) {
+      switch (reduction) {
+      case OPS_INC:
+        *dat_g = *dat_g + dat_l;
+        break;
+      case OPS_MIN:
+        if (dat_l < *dat_g)
+          *dat_g = dat_l;
+        break;
+      case OPS_MAX:
+        if (dat_l > *dat_g)
+          *dat_g = dat_l;
+        break;
       }
     }
   }
@@ -158,15 +165,14 @@ __inline__ __device__ void ops_reduction_cuda( volatile T * dat_g, T dat_l )
  *
  */
 
-template < ops_access reduction, class T >
-__inline__ __device__ void ops_reduction_alt ( volatile T * dat_g, T dat_l )
-{
+template <ops_access reduction, class T>
+__inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
   extern __shared__ volatile T temp[];
-  T   dat_t;
+  T dat_t;
 
-  __syncthreads();  /* important to finish all previous activity */
+  __syncthreads(); /* important to finish all previous activity */
 
-  int tid   = threadIdx.x + threadIdx.y*blockDim.x;
+  int tid = threadIdx.x + threadIdx.y * blockDim.x;
   temp[tid] = dat_l;
 
   __syncthreads();
@@ -175,27 +181,29 @@ __inline__ __device__ void ops_reduction_alt ( volatile T * dat_g, T dat_l )
 
   int d = warpSize;
 
-  if ( blockDim.x < warpSize )
-    d = 1 << (31 - __clz((int)blockDim.x) );
+  if (blockDim.x < warpSize)
+    d = 1 << (31 - __clz((int)blockDim.x));
   // this gives blockDim.x rounded down to nearest power of 2
 
-  if ( tid < d ) {
+  if (tid < d) {
 
     // first, do reductions for each thread
 
-    for (int t = tid+d; t < blockDim.x*blockDim.y; t += d) {
+    for (int t = tid + d; t < blockDim.x * blockDim.y; t += d) {
       dat_t = temp[t];
 
-      switch ( reduction ) {
-        case OPS_INC:
-          dat_l = dat_l + dat_t;
-          break;
-        case OPS_MIN:
-          if ( dat_t < dat_l ) dat_l = dat_t;
-          break;
-        case OPS_MAX:
-          if ( dat_t > dat_l ) dat_l = dat_t;
-          break;
+      switch (reduction) {
+      case OPS_INC:
+        dat_l = dat_l + dat_t;
+        break;
+      case OPS_MIN:
+        if (dat_t < dat_l)
+          dat_l = dat_t;
+        break;
+      case OPS_MAX:
+        if (dat_t > dat_l)
+          dat_l = dat_t;
+        break;
       }
     }
 
@@ -203,20 +211,22 @@ __inline__ __device__ void ops_reduction_alt ( volatile T * dat_g, T dat_l )
 
     // second, do reductions to combine thread reductions
 
-    for (d >>= 1 ; d > 0; d >>= 1 ) {
-      if ( tid < d ) {
-        dat_t = temp[tid+d];
+    for (d >>= 1; d > 0; d >>= 1) {
+      if (tid < d) {
+        dat_t = temp[tid + d];
 
-        switch ( reduction ) {
-          case OPS_INC:
-            dat_l = dat_l + dat_t;
-            break;
-          case OPS_MIN:
-            if ( dat_t < dat_l ) dat_l = dat_t;
-            break;
-          case OPS_MAX:
-            if ( dat_t > dat_l ) dat_l = dat_t;
-            break;
+        switch (reduction) {
+        case OPS_INC:
+          dat_l = dat_l + dat_t;
+          break;
+        case OPS_MIN:
+          if (dat_t < dat_l)
+            dat_l = dat_t;
+          break;
+        case OPS_MAX:
+          if (dat_t > dat_l)
+            dat_l = dat_t;
+          break;
         }
 
         temp[tid] = dat_l;
@@ -225,17 +235,19 @@ __inline__ __device__ void ops_reduction_alt ( volatile T * dat_g, T dat_l )
 
     // finally, update global reduction variable
 
-    if ( tid == 0 ) {
-      switch ( reduction ) {
-        case OPS_INC:
-          *dat_g = *dat_g + dat_l;
-          break;
-        case OPS_MIN:
-          if ( dat_l < *dat_g ) *dat_g = dat_l;
-          break;
-        case OPS_MAX:
-          if ( dat_l > *dat_g ) *dat_g = dat_l;
-          break;
+    if (tid == 0) {
+      switch (reduction) {
+      case OPS_INC:
+        *dat_g = *dat_g + dat_l;
+        break;
+      case OPS_MIN:
+        if (dat_l < *dat_g)
+          *dat_g = dat_l;
+        break;
+      case OPS_MAX:
+        if (dat_l > *dat_g)
+          *dat_g = dat_l;
+        break;
       }
     }
   }

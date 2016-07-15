@@ -37,17 +37,15 @@
  *  @author Gihan R. Mudalige, (Started 23-08-2013)
  */
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void* xmalloc(size_t size);
+void *xmalloc(size_t size);
 
-void* xrealloc(void *ptr, size_t size);
+void *xrealloc(void *ptr, size_t size);
 
-//int min(int array[], int size);
+// int min(int array[], int size);
 
 int binary_search(int a[], int value, int low, int high);
 
@@ -59,96 +57,104 @@ int removeDups(int a[], int array_size);
 
 int file_exist(char const *filename);
 
-inline int mult2(int* size, int dim)
-{
+inline int mult2(int *size, int dim) {
   int result = 1;
-  if(dim > 0) {
-    for(int i = 0; i<dim;i++) result *= size[i];
+  if (dim > 0) {
+    for (int i = 0; i < dim; i++)
+      result *= size[i];
   }
   return result;
 }
 
-inline int add2(int* coords, int* size, int dim)
-{
+inline int add2(int *coords, int *size, int dim) {
   int result = coords[0];
-  for(int i = 1; i<=dim;i++) result += coords[i]*mult2(size,i);
+  for (int i = 1; i <= dim; i++)
+    result += coords[i] * mult2(size, i);
   return result;
 }
 
-
-inline int off2(int ndim, int dim, int* start, int* end, int* size, int* stride)
-{
+inline int off2(int ndim, int dim, int *start, int *end, int *size,
+                int *stride) {
   int i = 0;
   int c1[ndim];
   int c2[ndim];
 
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<ndim; i++) c1[i] = start[i];
+  for (i = 0; i <= dim; i++)
+    c1[i] = start[i] + 1;
+  for (i = dim + 1; i < ndim; i++)
+    c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<ndim; i++) c2[i] = start[i];
+  for (i = 0; i < dim; i++)
+    c2[i] = end[i];
+  for (i = dim; i < ndim; i++)
+    c2[i] = start[i];
 
   for (i = 0; i < ndim; i++) {
     c1[i] *= stride[i];
     c2[i] *= stride[i];
   }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
+  int off = add2(c1, size, dim) - add2(c2, size, dim);
 
   return off;
 }
 
-inline int address2(int ndim, int dat_size, int* start, int* size, int* stride, int* off)
-{
+inline int address2(int ndim, int dat_size, int *start, int *size, int *stride,
+                    int *off) {
   int base = 0;
-  for(int i=0; i<ndim; i++) {
+  for (int i = 0; i < ndim; i++) {
     base = base + dat_size * mult2(size, i) * (start[i] * stride[i] - off[i]);
   }
 
   /* for 2D the code generator hard codes the following */
-  //base = base + dat_size * 1       * (ps[0] * std[0] - off[0]);
-  //base = base + dat_size * size[0] * (ps[1] * std[1] - off[1]);
+  // base = base + dat_size * 1       * (ps[0] * std[0] - off[0]);
+  // base = base + dat_size * size[0] * (ps[1] * std[1] - off[1]);
 
   return base;
 }
 
-
-inline int off2D(int dim, int* start, int* end, int* size, int* stride)
-{
+inline int off2D(int dim, int *start, int *end, int *size, int *stride) {
   int i = 0;
   int c1[2];
   int c2[2];
 
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<2; i++) c1[i] = start[i];
+  for (i = 0; i <= dim; i++)
+    c1[i] = start[i] + 1;
+  for (i = dim + 1; i < 2; i++)
+    c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<2; i++) c2[i] = start[i];
+  for (i = 0; i < dim; i++)
+    c2[i] = end[i];
+  for (i = dim; i < 2; i++)
+    c2[i] = start[i];
 
   for (i = 0; i < 2; i++) {
     c1[i] *= stride[i];
     c2[i] *= stride[i];
   }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
+  int off = add2(c1, size, dim) - add2(c2, size, dim);
   return off;
 }
 
-inline int off3D(int dim, int* start, int* end, int* size, int* stride)
-{
+inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
   int i = 0;
   int c1[3];
   int c2[3];
 
-  for(i=0; i<=dim; i++) c1[i] = start[i]+1;
-  for(i=dim+1; i<3; i++) c1[i] = start[i];
+  for (i = 0; i <= dim; i++)
+    c1[i] = start[i] + 1;
+  for (i = dim + 1; i < 3; i++)
+    c1[i] = start[i];
 
-  for(i = 0; i<dim; i++) c2[i] = end[i];
-  for(i=dim; i<3; i++) c2[i] = start[i];
+  for (i = 0; i < dim; i++)
+    c2[i] = end[i];
+  for (i = dim; i < 3; i++)
+    c2[i] = start[i];
 
   for (i = 0; i < 3; i++) {
     c1[i] *= stride[i];
     c2[i] *= stride[i];
   }
-  int off =  add2(c1, size, dim) - add2(c2, size, dim);
+  int off = add2(c1, size, dim) - add2(c2, size, dim);
   return off;
 }
 
@@ -156,4 +162,4 @@ inline int off3D(int dim, int* start, int* end, int* size, int* stride)
 }
 #endif
 
-#endif/* __OP_UTIL_H */
+#endif /* __OP_UTIL_H */

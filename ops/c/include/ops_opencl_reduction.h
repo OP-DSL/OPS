@@ -47,110 +47,101 @@
 #define OPS_MIN 4
 #define OPS_MAX 5
 
-void reduce_float(float value,
-            __local float* scratch,
-            __global float* result, int type) {
+void reduce_float(float value, __local float *scratch, __global float *result,
+                  int type) {
 
   // Perform parallel reduction
-  int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
-  get_local_id(2)*get_local_size(0)*get_local_size(1);
+  int local_index = get_local_id(0) + get_local_id(1) * get_local_size(0) +
+                    get_local_id(2) * get_local_size(0) * get_local_size(1);
 
-  int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
+  int tot_size = get_local_size(0) * get_local_size(1) * get_local_size(2);
 
-  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  // int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  // get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
-  for(int offset = tot_size / 2;
-      offset > 0;
-      offset = offset / 2) {
+  for (int offset = tot_size / 2; offset > 0; offset = offset / 2) {
     if (local_index < offset) {
       float other = scratch[local_index + offset];
       float mine = scratch[local_index];
-      if(type == OPS_MIN)
+      if (type == OPS_MIN)
         scratch[local_index] = (mine < other) ? mine : other;
-      else if(type == OPS_MAX)
+      else if (type == OPS_MAX)
         scratch[local_index] = (mine > other) ? mine : other;
-      else if(type == OPS_INC)
+      else if (type == OPS_INC)
         scratch[local_index] = mine + other;
     }
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    //result[group_index] = scratch[0];
+    // result[group_index] = scratch[0];
     result[0] = scratch[0];
   }
 }
 
-void reduce_double(double value,
-            __local double* scratch,
-            __global double* result, int type) {
+void reduce_double(double value, __local double *scratch,
+                   __global double *result, int type) {
 
   // Perform parallel reduction
-  int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
-  get_local_id(2)*get_local_size(0)*get_local_size(1);
+  int local_index = get_local_id(0) + get_local_id(1) * get_local_size(0) +
+                    get_local_id(2) * get_local_size(0) * get_local_size(1);
 
-  int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
+  int tot_size = get_local_size(0) * get_local_size(1) * get_local_size(2);
 
-  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  // int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  // get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
-  for(int offset = tot_size / 2;
-      offset > 0;
-      offset = offset / 2) {
+  for (int offset = tot_size / 2; offset > 0; offset = offset / 2) {
     if (local_index < offset) {
       double other = scratch[local_index + offset];
       double mine = scratch[local_index];
-      if(type == OPS_MIN)
+      if (type == OPS_MIN)
         scratch[local_index] = (mine < other) ? mine : other;
-      else if(type == OPS_MAX)
+      else if (type == OPS_MAX)
         scratch[local_index] = (mine > other) ? mine : other;
-      else if(type == OPS_INC)
+      else if (type == OPS_INC)
         scratch[local_index] = mine + other;
     }
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    //result[group_index] = scratch[0];
+    // result[group_index] = scratch[0];
     result[0] = scratch[0];
   }
 }
 
-void reduce_int(int value,
-            __local int* scratch,
-            __global int* result, int type) {
+void reduce_int(int value, __local int *scratch, __global int *result,
+                int type) {
 
   // Perform parallel reduction
-  int local_index = get_local_id(0) + get_local_id(1)*get_local_size(0)+
-  get_local_id(2)*get_local_size(0)*get_local_size(1);
+  int local_index = get_local_id(0) + get_local_id(1) * get_local_size(0) +
+                    get_local_id(2) * get_local_size(0) * get_local_size(1);
 
-  int tot_size = get_local_size(0)*get_local_size(1)*get_local_size(2);
+  int tot_size = get_local_size(0) * get_local_size(1) * get_local_size(2);
 
-  //int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
-  //get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  // int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+
+  // get_group_id(2)*get_num_groups(0)*get_num_groups(1);
 
   scratch[local_index] = value;
   barrier(CLK_LOCAL_MEM_FENCE);
-  for(int offset = tot_size / 2;
-      offset > 0;
-      offset = offset / 2) {
+  for (int offset = tot_size / 2; offset > 0; offset = offset / 2) {
     if (local_index < offset) {
       int other = scratch[local_index + offset];
       int mine = scratch[local_index];
-      if(type == OPS_MIN)
+      if (type == OPS_MIN)
         scratch[local_index] = (mine < other) ? mine : other;
-      else if(type == OPS_MAX)
+      else if (type == OPS_MAX)
         scratch[local_index] = (mine > other) ? mine : other;
-      else if(type == OPS_INC)
+      else if (type == OPS_INC)
         scratch[local_index] = mine + other;
     }
     barrier(CLK_LOCAL_MEM_FENCE);
   }
   if (local_index == 0) {
-    //result[group_index] = scratch[0];
+    // result[group_index] = scratch[0];
     result[0] = scratch[0];
   }
 }
