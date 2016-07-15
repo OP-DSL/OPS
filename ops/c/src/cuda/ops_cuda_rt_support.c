@@ -35,36 +35,30 @@
   * @details Implements cuda backend runtime support functions
   */
 
-
 //
 // header files
 //
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
 
-#include <ops_lib_core.h>
 #include <ops_cuda_rt_support.h>
-
+#include <ops_lib_core.h>
 
 // Small re-declaration to avoid using struct in the C version.
 // This is due to the different way in which C and C++ see structs
 
 typedef struct cudaDeviceProp cudaDeviceProp_t;
 
-int OPS_consts_bytes = 0,
-    OPS_reduct_bytes = 0;
+int OPS_consts_bytes = 0, OPS_reduct_bytes = 0;
 
-char * OPS_consts_h,
-     * OPS_consts_d,
-     * OPS_reduct_h,
-     * OPS_reduct_d;
+char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 
 int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
@@ -73,29 +67,27 @@ char *OPS_gbl_prev = NULL;
 // CUDA utility functions
 //
 
-void __cudaSafeCall ( cudaError_t err, const char * file, const int line )
-{
-  if ( cudaSuccess != err ) {
-    fprintf ( stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n",
-              file, line, cudaGetErrorString ( err ) );
-    exit ( -1 );
+void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
+  if (cudaSuccess != err) {
+    fprintf(stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
+            line, cudaGetErrorString(err));
+    exit(-1);
   }
 }
 
-void cutilDeviceInit( int argc, char ** argv )
-{
+void cutilDeviceInit(int argc, char **argv) {
   (void)argc;
   (void)argv;
   int deviceCount;
-  cutilSafeCall( cudaGetDeviceCount ( &deviceCount ) );
-  if ( deviceCount == 0 ) {
-    printf ( "Error: cutil error: no devices supporting CUDA\n" );
-    exit ( -1 );
+  cutilSafeCall(cudaGetDeviceCount(&deviceCount));
+  if (deviceCount == 0) {
+    printf("Error: cutil error: no devices supporting CUDA\n");
+    exit(-1);
   }
 
   // Test we have access to a device
 
-  //This commented out test does not work with CUDA versions above 6.5
+  // This commented out test does not work with CUDA versions above 6.5
   /*float *test;
   cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
   if (err != cudaSuccess) {
@@ -137,68 +129,65 @@ void cutilDeviceInit( int argc, char ** argv )
     int deviceId = -1;
     cudaGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
-    cutilSafeCall ( cudaGetDeviceProperties ( &deviceProp, deviceId ) );
-    printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
+    cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
+    printf("\n Using CUDA device: %d %s\n", deviceId, deviceProp.name);
   } else {
-    //printf ( "\n Using CPU on rank %d\n",rank );
+    // printf ( "\n Using CPU on rank %d\n",rank );
   }
 }
 
-void ops_cpHostToDevice ( void ** data_d, void ** data_h, int size )
-{
-  //if (!OPS_hybrid_gpu) return;
-  cutilSafeCall ( cudaMalloc ( data_d, size ) );
-  cutilSafeCall ( cudaMemcpy ( *data_d, *data_h, size,
-                               cudaMemcpyHostToDevice ) );
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+  // if (!OPS_hybrid_gpu) return;
+  cutilSafeCall(cudaMalloc(data_d, size));
+  cutilSafeCall(cudaMemcpy(*data_d, *data_h, size, cudaMemcpyHostToDevice));
+  cutilSafeCall(cudaDeviceSynchronize());
 }
-
 
 void ops_download_dat(ops_dat dat) {
 
-  //if (!OPS_hybrid_gpu) return;
+  // if (!OPS_hybrid_gpu) return;
   int bytes = dat->elem_size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
-  //printf("downloading to host from device %d bytes\n",bytes);
-  cutilSafeCall( cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
-
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  // printf("downloading to host from device %d bytes\n",bytes);
+  cutilSafeCall(
+      cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
 }
 
 void ops_upload_dat(ops_dat dat) {
 
-  //if (!OPS_hybrid_gpu) return;
+  // if (!OPS_hybrid_gpu) return;
   int bytes = dat->elem_size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
-  //printf("uploading to device from host %d bytes\n",bytes);
-  cutilSafeCall( cudaMemcpy(dat->data_d, dat->data , bytes, cudaMemcpyHostToDevice));
-
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  // printf("uploading to device from host %d bytes\n",bytes);
+  cutilSafeCall(
+      cudaMemcpy(dat->data_d, dat->data, bytes, cudaMemcpyHostToDevice));
 }
 
-void ops_H_D_exchanges_host(ops_arg *args, int nargs)
-{
-  //printf("in ops_H_D_exchanges\n");
-  for (int n=0; n<nargs; n++)
-    if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
+void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
+  // printf("in ops_H_D_exchanges\n");
+  for (int n = 0; n < nargs; n++)
+    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       ops_download_dat(args[n].dat);
-      //printf("halo exchanges on host\n");
+      // printf("halo exchanges on host\n");
       args[n].dat->dirty_hd = 0;
     }
 }
 
-void ops_H_D_exchanges_device(ops_arg *args, int nargs)
-{
-  for (int n=0; n<nargs; n++)
-    if(args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
+void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
+  for (int n = 0; n < nargs; n++)
+    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       ops_upload_dat(args[n].dat);
       args[n].dat->dirty_hd = 0;
     }
 }
 
-void ops_set_dirtybit_device(ops_arg *args, int nargs)
-{
-  for (int n=0; n<nargs; n++) {
-    if((args[n].argtype == OPS_ARG_DAT) &&
-       (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE || args[n].acc == OPS_RW) ) {
+void ops_set_dirtybit_device(ops_arg *args, int nargs) {
+  for (int n = 0; n < nargs; n++) {
+    if ((args[n].argtype == OPS_ARG_DAT) &&
+        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+         args[n].acc == OPS_RW)) {
       args[n].dat->dirty_hd = 2;
     }
   }
@@ -208,51 +197,46 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs)
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
 
-void ops_cuda_get_data( ops_dat dat )
-{
-  if (dat->dirty_hd == 2) dat->dirty_hd = 0;
-  else return;
+void ops_cuda_get_data(ops_dat dat) {
+  if (dat->dirty_hd == 2)
+    dat->dirty_hd = 0;
+  else
+    return;
   int bytes = dat->elem_size;
-  for (int i=0; i<dat->block->dims; i++) bytes = bytes * dat->size[i];
-  cutilSafeCall ( cudaMemcpy ( dat->data, dat->data_d,
-                               bytes,
-                               cudaMemcpyDeviceToHost ) );
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
-
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  cutilSafeCall(
+      cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
+  cutilSafeCall(cudaDeviceSynchronize());
 }
-
 
 //
 // routines to resize constant/reduct arrays, if necessary
 //
 
-void reallocConstArrays ( int consts_bytes )
-{
-  if ( consts_bytes > OPS_consts_bytes ) {
-    if ( OPS_consts_bytes > 0 ) {
-      free ( OPS_consts_h );
-      cudaFreeHost ( OPS_gbl_prev );
-      cutilSafeCall ( cudaFree ( OPS_consts_d ) );
+void reallocConstArrays(int consts_bytes) {
+  if (consts_bytes > OPS_consts_bytes) {
+    if (OPS_consts_bytes > 0) {
+      free(OPS_consts_h);
+      cudaFreeHost(OPS_gbl_prev);
+      cutilSafeCall(cudaFree(OPS_consts_d));
     }
     OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
-    cudaMallocHost ( (void**)&OPS_gbl_prev, OPS_consts_bytes );
-    OPS_consts_h = ( char * ) malloc ( OPS_consts_bytes );
-    cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_consts_d,
-                                 OPS_consts_bytes ) );
+    cudaMallocHost((void **)&OPS_gbl_prev, OPS_consts_bytes);
+    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    cutilSafeCall(cudaMalloc((void **)&OPS_consts_d, OPS_consts_bytes));
   }
 }
 
-void reallocReductArrays ( int reduct_bytes )
-{
-  if ( reduct_bytes > OPS_reduct_bytes ) {
-    if ( OPS_reduct_bytes > 0 ) {
-      free ( OPS_reduct_h );
-      cutilSafeCall ( cudaFree ( OPS_reduct_d ) );
+void reallocReductArrays(int reduct_bytes) {
+  if (reduct_bytes > OPS_reduct_bytes) {
+    if (OPS_reduct_bytes > 0) {
+      free(OPS_reduct_h);
+      cutilSafeCall(cudaFree(OPS_reduct_d));
     }
     OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_reduct_h = ( char * ) malloc ( OPS_reduct_bytes );
-    cutilSafeCall ( cudaMalloc ( ( void ** ) &OPS_reduct_d,
-                                 OPS_reduct_bytes ) );
+    OPS_reduct_h = (char *)malloc(OPS_reduct_bytes);
+    cutilSafeCall(cudaMalloc((void **)&OPS_reduct_d, OPS_reduct_bytes));
   }
 }
 
@@ -260,48 +244,42 @@ void reallocReductArrays ( int reduct_bytes )
 // routines to move constant/reduct arrays
 //
 
-
-
-void mvConstArraysToDevice ( int consts_bytes )
-{
-  OPS_gbl_changed=0;
-  for(int i = 0; i<consts_bytes; i++)
-  {
-    if (OPS_consts_h[i] != OPS_gbl_prev[i]) OPS_gbl_changed=1;
+void mvConstArraysToDevice(int consts_bytes) {
+  OPS_gbl_changed = 0;
+  for (int i = 0; i < consts_bytes; i++) {
+    if (OPS_consts_h[i] != OPS_gbl_prev[i])
+      OPS_gbl_changed = 1;
   }
   if (OPS_gbl_changed) {
-    //memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
-    //cutilSafeCall ( cudaMemcpyAsync ( OPS_consts_d, OPS_gbl_prev, consts_bytes,
+    // memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
+    // cutilSafeCall ( cudaMemcpyAsync ( OPS_consts_d, OPS_gbl_prev,
+    // consts_bytes,
     //                             cudaMemcpyHostToDevice ) );
-    cutilSafeCall ( cudaMemcpy ( OPS_consts_d, OPS_consts_h, consts_bytes,
-                                 cudaMemcpyHostToDevice ) );
-    memcpy(OPS_gbl_prev,OPS_consts_h,consts_bytes);
+    cutilSafeCall(cudaMemcpy(OPS_consts_d, OPS_consts_h, consts_bytes,
+                             cudaMemcpyHostToDevice));
+    memcpy(OPS_gbl_prev, OPS_consts_h, consts_bytes);
   }
 }
 
-void mvReductArraysToDevice ( int reduct_bytes )
-{
-  cutilSafeCall ( cudaMemcpy ( OPS_reduct_d, OPS_reduct_h, reduct_bytes,
-                               cudaMemcpyHostToDevice ) );
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+void mvReductArraysToDevice(int reduct_bytes) {
+  cutilSafeCall(cudaMemcpy(OPS_reduct_d, OPS_reduct_h, reduct_bytes,
+                           cudaMemcpyHostToDevice));
+  cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void mvReductArraysToHost ( int reduct_bytes )
-{
-  cutilSafeCall ( cudaMemcpy ( OPS_reduct_h, OPS_reduct_d, reduct_bytes,
-                               cudaMemcpyDeviceToHost ) );
-  cutilSafeCall ( cudaDeviceSynchronize ( ) );
+void mvReductArraysToHost(int reduct_bytes) {
+  cutilSafeCall(cudaMemcpy(OPS_reduct_h, OPS_reduct_d, reduct_bytes,
+                           cudaMemcpyDeviceToHost));
+  cutilSafeCall(cudaDeviceSynchronize());
 }
 
-
-void ops_cuda_exit ( )
-{
-  if (!OPS_hybrid_gpu) return;
+void ops_cuda_exit() {
+  if (!OPS_hybrid_gpu)
+    return;
   ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_dat_list, entries)
-  {
-    cutilSafeCall (cudaFree((item->dat)->data_d));
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    cutilSafeCall(cudaFree((item->dat)->data_d));
   }
 
-  cudaDeviceReset ( );
+  cudaDeviceReset();
 }
