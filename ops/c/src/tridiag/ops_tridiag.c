@@ -67,24 +67,29 @@ void ops_tridMultiDimBatch(
 
 
 
-/* Assuming tridMultiDimBatchSolve() can do all 3 dimensions of the solve
+/* Right now, we are simply using the same memory allocated by OPS
+as can be seen by the use of a->data, b->data, c->data etc.
 
-1. copy over ops_dat->data to memaligned, x-dim padded blocks of memory
-   - should we strip block halos ?
-   (under MPI strip intra-block, i.e. MPI halos)
-2. Perform tridiagonal solve in given dimension
-3. copy back solution to ops_dat->data (i.e. strip the x-dim padding)
+These data is currently not padded to be 32 or 64 bit aligned
+in the x-lines and so is inefficient.
 
-The problem is that we do not want to be copying over and over, especially as this
-will be called within a iterative loop
+In the ADI example currently the mesh size is 256^3 and so we are
+32/54 bit alighed, thus we do not see any performance definiencies
+but other sizes will show this issue
 
-If we increase the d_p[0] (the xdimension possitive block halo) so that size[0]
-becomes a multiple of 32 (giving us padded memory) then atleast for single node
-parallelizations we can simply use the ops_dat->data allocated by ops without copys
-(is this true ?)
+As such we will need to think on how to pad arrays.
+The problem is that on apps like Cloverleaf we see poorer performance
+due to extra x dim padding.
+*/
 
-For MPI the above can be done, but will lead to large MPI halos in x-dimension
-Is this somthing we can work with ?
+/*
+For MPI padding will be more important as the partition allocated per MPI proc
+will definitely not be a multiple of 32 or 64 in the x dimension
+
+Perhaps we make use of a setup phase to add padding to the ops data arrays
+and then use them in the tridiagonal solvers. But now the problem is
+that the original OPS lib will not be able to use these padded arrays
+and produce correct results -- need to think how to solve this
 */
 
 }
