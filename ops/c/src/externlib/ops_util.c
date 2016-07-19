@@ -35,16 +35,15 @@
   * @details Some utility functions for the OPS
   */
 
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <limits.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <ops_util.h>
 
@@ -52,12 +51,13 @@
 * Wrapper for malloc from www.gnu.org/
 *******************************************************************************/
 
-void* xmalloc (size_t size)
-{
-  if(size == 0) return (void *)NULL;
+void *xmalloc(size_t size) {
+  if (size == 0)
+    return (void *)NULL;
 
-  register void *value = malloc (size);
-  if (value == 0) printf("Virtual memory exhausted at malloc\n");
+  register void *value = malloc(size);
+  if (value == 0)
+    printf("Virtual memory exhausted at malloc\n");
   return value;
 }
 
@@ -65,16 +65,15 @@ void* xmalloc (size_t size)
 * Wrapper for realloc from www.gnu.org/
 *******************************************************************************/
 
-void* xrealloc (void *ptr, size_t size)
-{
-  if(size == 0)
-  {
+void *xrealloc(void *ptr, size_t size) {
+  if (size == 0) {
     free(ptr);
     return (void *)NULL;
   }
 
-  register void *value = realloc (ptr, size);
-  if (value == 0) printf ("Virtual memory exhausted at realloc\n");
+  register void *value = realloc(ptr, size);
+  if (value == 0)
+    printf("Virtual memory exhausted at realloc\n");
   return value;
 }
 
@@ -82,14 +81,11 @@ void* xrealloc (void *ptr, size_t size)
 * Return the index of the min value in an array
 *******************************************************************************/
 
-int min(int array[], int size)
-{
+int min(int array[], int size) {
   int min = INT_MAX;
   int index = -1;
-  for(int i=0; i<size; i++)
-  {
-    if(array[i]<min)
-    {
+  for (int i = 0; i < size; i++) {
+    if (array[i] < min) {
       index = i;
       min = array[i];
     }
@@ -101,16 +97,15 @@ int min(int array[], int size)
 * Binary search an array for a given value
 *******************************************************************************/
 
-int binary_search(int a[], int value, int low, int high)
-{
+int binary_search(int a[], int value, int low, int high) {
   if (high < low)
     return -1; // not found
 
   int mid = low + (high - low) / 2;
   if (a[mid] > value)
-    return binary_search(a, value, low, mid-1);
+    return binary_search(a, value, low, mid - 1);
   else if (a[mid] < value)
-    return binary_search(a, value, mid+1, high);
+    return binary_search(a, value, mid + 1, high);
   else
     return mid; // found
 }
@@ -119,11 +114,10 @@ int binary_search(int a[], int value, int low, int high)
 * Linear search an array for a given value
 *******************************************************************************/
 
-int linear_search(int a[], int value, int low, int high)
-{
-  for(int i = low; i<=high; i++)
-  {
-    if (a[i] == value) return i;
+int linear_search(int a[], int value, int low, int high) {
+  for (int i = low; i <= high; i++) {
+    if (a[i] == value)
+      return i;
   }
   return -1;
 }
@@ -132,8 +126,7 @@ int linear_search(int a[], int value, int low, int high)
 * Quicksort an array
 *******************************************************************************/
 
-void quickSort(int arr[], int left, int right)
-{
+void quickSort(int arr[], int left, int right) {
   int i = left;
   int j = right;
   int tmp;
@@ -141,13 +134,16 @@ void quickSort(int arr[], int left, int right)
 
   // partition
   while (i <= j) {
-    while (arr[i] < pivot)i++;
-    while (arr[j] > pivot)j--;
+    while (arr[i] < pivot)
+      i++;
+    while (arr[j] > pivot)
+      j--;
     if (i <= j) {
       tmp = arr[i];
       arr[i] = arr[j];
       arr[j] = tmp;
-      i++; j--;
+      i++;
+      j--;
     }
   };
   // recursion
@@ -161,15 +157,12 @@ void quickSort(int arr[], int left, int right)
 * Remove duplicates in an array
 *******************************************************************************/
 
-int removeDups(int a[], int array_size)
-{
+int removeDups(int a[], int array_size) {
   int i, j;
   j = 0;
   // Remove the duplicates ...
-  for (i = 1; i < array_size; i++)
-  {
-    if (a[i] != a[j])
-    {
+  for (i = 1; i < array_size; i++) {
+    if (a[i] != a[j]) {
       j++;
       a[j] = a[i]; // Move it to the front
     }
@@ -182,8 +175,7 @@ int removeDups(int a[], int array_size)
 /*******************************************************************************
 * Check if a file exists
 *******************************************************************************/
-int file_exist (char const *filename)
-{
-  struct stat   buffer;
-  return (stat (filename, &buffer) == 0);
+int file_exist(char const *filename) {
+  struct stat buffer;
+  return (stat(filename, &buffer) == 0);
 }
