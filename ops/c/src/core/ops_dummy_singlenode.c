@@ -265,7 +265,6 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   return base / (dat / dim) + 1;
 }
 
-// this routine needs the correct body !!!!
 int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   /*convert to C indexing*/
   start[0] -= 1;

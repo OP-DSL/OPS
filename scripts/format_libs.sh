@@ -29,5 +29,3 @@ for dir in `ls -d */ `; do
     cd -
   done;
 done
-
-

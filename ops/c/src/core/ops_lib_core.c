@@ -343,9 +343,11 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
-  dat->elem_size =
-      type_size * dim; // note here that the element size is taken to
+
+  // note here that the element size is taken to
   // be the type_size in bytes multiplied by the dimension of an element
+  dat->elem_size = type_size * dim;
+
   dat->e_dat = 0; // default to non-edge dat
 
   for (int n = 0; n < block->dims; n++) {
@@ -394,7 +396,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     exit(-1);
   }
   item->dat = dat;
-  // Double_linked_list test; //Head of the double linked list
+
   // add item to the end of the list
   TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
   OPS_dat_index++;
@@ -481,7 +483,6 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
-  ;
 
   stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
   memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
@@ -490,7 +491,6 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
   memcpy(stencil->stride, stride, sizeof(int) * dims);
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
-
   return stencil;
 }
 
@@ -558,8 +558,6 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
 
   ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
-
-  // grp->halos = &halos[0];
 
   // make a copy
   ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo_core));
