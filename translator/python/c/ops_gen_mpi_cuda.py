@@ -807,8 +807,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   if NDIM==3:
     code('#define OPS_3D')
   code('#include "ops_lib_cpp.h"')
+  code('')
   code('#include "ops_cuda_rt_support.h"')
   code('#include "ops_cuda_reduction.h"')
+  code('')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('#ifdef OPS_MPI')

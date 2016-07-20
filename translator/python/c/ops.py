@@ -675,7 +675,13 @@ def main(source_files):
   ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
   ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels)
 
-
+  import subprocess
+  retcode = subprocess.call("which clang-format > /dev/null", shell=True)
+  if retcode == 0:
+    retcode = subprocess.call("$OPS_INSTALL_PATH/../translator/python/c/format.sh", shell=True)
+  else:
+    print 'Cannot find clang-format in PATH'
+    print 'Install and add clang-format to PATH to format generated code to conform to code formatting guidelines'
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

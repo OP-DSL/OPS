@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -e
 cd ../../../ops/c
-source ../source_intel
+source ../../scripts/source_intel
 make
 cd -
 ./generate.sh
@@ -105,9 +105,12 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
+echo "All Intel complied applications PASSED : Exiting Test Script "
+exit
+
 #COMMENT
 cd -
-source ../source_pgi_15.10
+source ../../scripts/source_pgi_15.10
 make clean
 make
 cd -
