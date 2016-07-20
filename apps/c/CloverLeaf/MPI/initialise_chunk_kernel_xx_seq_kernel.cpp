@@ -57,12 +57,12 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
   }
-#else  // OPS_MPI
+#else
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
   }
-#endif // OPS_MPI
+#endif
 #ifdef OPS_DEBUG
   ops_register_args(args, "initialise_chunk_kernel_xx");
 #endif
@@ -76,10 +76,10 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
 #ifdef OPS_MPI
   arg_idx[0] = sb->decomp_disp[0] + start[0];
   arg_idx[1] = sb->decomp_disp[1] + start[1];
-#else  // OPS_MPI
+#else
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
-#endif // OPS_MPI
+#endif
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -91,10 +91,10 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
                           args[0].dat->base[0] - d_m[0]);
   base0 = base0 +
@@ -148,9 +148,9 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
     p_a[0] = p_a[0] + (dat0 * off0_1);
 #ifdef OPS_MPI
     arg_idx[0] = sb->decomp_disp[0] + start[0];
-#else  // OPS_MPI
+#else
     arg_idx[0] = start[0];
-#endif // OPS_MPI
+#endif
     arg_idx[1]++;
   }
   if (OPS_diags > 1) {

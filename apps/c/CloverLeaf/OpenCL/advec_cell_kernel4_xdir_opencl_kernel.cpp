@@ -182,12 +182,12 @@ void ops_par_loop_advec_cell_kernel4_xdir(
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
   }
-#else  // OPS_MPI
+#else
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
   }
-#endif // OPS_MPI
+#endif
 
   int x_size = MAX(0, end[0] - start[0]);
   int y_size = MAX(0, end[1] - start[1]);
@@ -222,10 +222,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base0 = 1 * 1 * (start[0] * args[0].stencil->stride[0] -
                        args[0].dat->base[0] - d_m[0]);
   base0 = base0 +
@@ -236,10 +236,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[1].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base1 = 1 * 1 * (start[0] * args[1].stencil->stride[0] -
                        args[1].dat->base[0] - d_m[0]);
   base1 = base1 +
@@ -250,10 +250,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[2].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base2 = 1 * 1 * (start[0] * args[2].stencil->stride[0] -
                        args[2].dat->base[0] - d_m[0]);
   base2 = base2 +
@@ -264,10 +264,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[3].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base3 = 1 * 1 * (start[0] * args[3].stencil->stride[0] -
                        args[3].dat->base[0] - d_m[0]);
   base3 = base3 +
@@ -278,10 +278,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[4].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base4 = 1 * 1 * (start[0] * args[4].stencil->stride[0] -
                        args[4].dat->base[0] - d_m[0]);
   base4 = base4 +
@@ -292,10 +292,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[5].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base5 = 1 * 1 * (start[0] * args[5].stencil->stride[0] -
                        args[5].dat->base[0] - d_m[0]);
   base5 = base5 +
@@ -306,10 +306,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[6].dat->d_m[d] + OPS_sub_dat_list[args[6].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[6].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base6 = 1 * 1 * (start[0] * args[6].stencil->stride[0] -
                        args[6].dat->base[0] - d_m[0]);
   base6 = base6 +
@@ -320,10 +320,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[7].dat->d_m[d] + OPS_sub_dat_list[args[7].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[7].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base7 = 1 * 1 * (start[0] * args[7].stencil->stride[0] -
                        args[7].dat->base[0] - d_m[0]);
   base7 = base7 +
@@ -334,10 +334,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[8].dat->d_m[d] + OPS_sub_dat_list[args[8].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[8].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base8 = 1 * 1 * (start[0] * args[8].stencil->stride[0] -
                        args[8].dat->base[0] - d_m[0]);
   base8 = base8 +
@@ -348,10 +348,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[9].dat->d_m[d] + OPS_sub_dat_list[args[9].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[9].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base9 = 1 * 1 * (start[0] * args[9].stencil->stride[0] -
                        args[9].dat->base[0] - d_m[0]);
   base9 = base9 +
@@ -362,10 +362,10 @@ void ops_par_loop_advec_cell_kernel4_xdir(
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[10].dat->d_m[d] + OPS_sub_dat_list[args[10].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[10].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base10 = 1 * 1 * (start[0] * args[10].stencil->stride[0] -
                         args[10].dat->base[0] - d_m[0]);
   base10 = base10 +

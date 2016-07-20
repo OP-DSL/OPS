@@ -466,11 +466,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
     code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
-    code('#else //OPS_MPI')
+    code('#else')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
     ENDFOR()
-    code('#endif //OPS_MPI')
+    code('#endif')
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
@@ -487,10 +487,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-      code('#else //OPS_MPI')
+      code('#else')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
+      code('#endif')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -528,9 +528,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
           else:
             code('#ifdef OPS_MPI')
             code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
-            code('#else //OPS_MPI')
+            code('#else')
             code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
-            code('#endif //OPS_MPI')
+            code('#endif')
 
     code('')
 
@@ -650,9 +650,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('#ifdef OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
-        code('#else //OPS_MPI')
+        code('#else')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
-        code('#endif //OPS_MPI')
+        code('#endif')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):

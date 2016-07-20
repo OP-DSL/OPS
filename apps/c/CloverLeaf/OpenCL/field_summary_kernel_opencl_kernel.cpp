@@ -167,12 +167,12 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
   }
-#else  // OPS_MPI
+#else
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
   }
-#endif // OPS_MPI
+#endif
 
   int x_size = MAX(0, end[0] - start[0]);
   int y_size = MAX(0, end[1] - start[1]);
@@ -199,37 +199,37 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   double *arg6h =
       (double *)(((ops_reduction)args[6].data)->data +
                  ((ops_reduction)args[6].data)->size * block->index);
-#else // OPS_MPI
+#else
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
-#endif // OPS_MPI
+#endif
 #ifdef OPS_MPI
   double *arg7h =
       (double *)(((ops_reduction)args[7].data)->data +
                  ((ops_reduction)args[7].data)->size * block->index);
-#else // OPS_MPI
+#else
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
-#endif // OPS_MPI
+#endif
 #ifdef OPS_MPI
   double *arg8h =
       (double *)(((ops_reduction)args[8].data)->data +
                  ((ops_reduction)args[8].data)->size * block->index);
-#else // OPS_MPI
+#else
   double *arg8h = (double *)(((ops_reduction)args[8].data)->data);
-#endif // OPS_MPI
+#endif
 #ifdef OPS_MPI
   double *arg9h =
       (double *)(((ops_reduction)args[9].data)->data +
                  ((ops_reduction)args[9].data)->size * block->index);
-#else // OPS_MPI
+#else
   double *arg9h = (double *)(((ops_reduction)args[9].data)->data);
-#endif // OPS_MPI
+#endif
 #ifdef OPS_MPI
   double *arg10h =
       (double *)(((ops_reduction)args[10].data)->data +
                  ((ops_reduction)args[10].data)->size * block->index);
-#else // OPS_MPI
+#else
   double *arg10h = (double *)(((ops_reduction)args[10].data)->data);
-#endif // OPS_MPI
+#endif
 
   int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
                 ((y_size - 1) / OPS_block_size_y + 1);
@@ -293,10 +293,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base0 = 1 * 1 * (start[0] * args[0].stencil->stride[0] -
                        args[0].dat->base[0] - d_m[0]);
   base0 = base0 +
@@ -307,10 +307,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[1].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base1 = 1 * 1 * (start[0] * args[1].stencil->stride[0] -
                        args[1].dat->base[0] - d_m[0]);
   base1 = base1 +
@@ -321,10 +321,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[2].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base2 = 1 * 1 * (start[0] * args[2].stencil->stride[0] -
                        args[2].dat->base[0] - d_m[0]);
   base2 = base2 +
@@ -335,10 +335,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[3].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base3 = 1 * 1 * (start[0] * args[3].stencil->stride[0] -
                        args[3].dat->base[0] - d_m[0]);
   base3 = base3 +
@@ -349,10 +349,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[4].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base4 = 1 * 1 * (start[0] * args[4].stencil->stride[0] -
                        args[4].dat->base[0] - d_m[0]);
   base4 = base4 +
@@ -363,10 +363,10 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[5].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base5 = 1 * 1 * (start[0] * args[5].stencil->stride[0] -
                        args[5].dat->base[0] - d_m[0]);
   base5 = base5 +

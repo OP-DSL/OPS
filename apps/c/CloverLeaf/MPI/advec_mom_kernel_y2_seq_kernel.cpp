@@ -64,12 +64,12 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block,
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
   }
-#else  // OPS_MPI
+#else
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
   }
-#endif // OPS_MPI
+#endif
 #ifdef OPS_DEBUG
   ops_register_args(args, "advec_mom_kernel_y2");
 #endif
@@ -113,10 +113,10 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
                           args[0].dat->base[0] - d_m[0]);
   base0 = base0 +
@@ -128,10 +128,10 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[1].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
                           args[1].dat->base[0] - d_m[0]);
   base1 = base1 +
@@ -143,10 +143,10 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[2].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
                           args[2].dat->base[0] - d_m[0]);
   base2 = base2 +
@@ -158,10 +158,10 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] =
         args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else // OPS_MPI
+#else
   for (int d = 0; d < dim; d++)
     d_m[d] = args[3].dat->d_m[d];
-#endif // OPS_MPI
+#endif
   int base3 = dat3 * 1 * (start[0] * args[3].stencil->stride[0] -
                           args[3].dat->base[0] - d_m[0]);
   base3 = base3 +
