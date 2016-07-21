@@ -69,7 +69,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS 	= -O0 -g -Minline -Kieee #-Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O2 -Kieee -Minline #-fastsse -gopt -Mipa=fast -Mlist -Kieee #-Minline #-Minform=severe -Minfo=all
+  CCFLAGS 	= -O2 -Kieee -nofma -Minline #-fastsse -gopt -Mipa=fast -Mlist -Kieee #-Minline #-Minform=severe -Minfo=all
 endif
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CPPFLAGS 	= $(CCFLAGS)
