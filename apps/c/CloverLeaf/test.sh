@@ -5,11 +5,11 @@ source ../../scripts/source_intel
 make
 cd -
 ./generate.sh
-
-#<<COMMENT
 make clean
 make
+
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
+#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out
@@ -216,18 +216,6 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
-#COMMENT
-
-cd -
-source ../../scripts/source_pgi_15.10
-
-#tobe removed
-export LD_LIBRARY_PATH+=:/opt/compilers/intel/intelPS-2015/composer_xe_2015.2.164/compiler/lib/intel64/
-
-make clean
-make
-cd -
-
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" clover.out
@@ -245,4 +233,5 @@ grep "PASSED" clover.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
+
 echo "All PGI complied applications PASSED : Exiting Test Script "

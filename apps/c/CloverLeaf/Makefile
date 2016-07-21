@@ -149,7 +149,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl #cloverleaf_openacc cloverleaf_mpi_openacc
+TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += cloverleaf_openacc cloverleaf_mpi_openacc
