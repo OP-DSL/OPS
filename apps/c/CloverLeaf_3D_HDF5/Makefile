@@ -62,10 +62,10 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS 	= -O2 -g -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O3 -Kieee -Minline #-Minform=severe -Minfo=all
+  CCFLAGS 	= -O3 -Kieee -nofma -Minline #-Minform=severe -Minfo=all
 endif
   CPPFLAGS 	= $(CCFLAGS) -ldl
-  OMPFLAGS 	= -mp
+  OMPFLAGS 	= -mp=nonuma
   MPICPP 	= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS 	= $(CPPFLAGS)
@@ -149,7 +149,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS: clean generate_file generate_file_mpi cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
+TARGETS =  clean generate_file generate_file_mpi cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
 #cloverleaf_openacc cloverleaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)

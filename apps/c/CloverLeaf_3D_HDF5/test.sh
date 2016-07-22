@@ -1,12 +1,13 @@
 #!/bin/bash
 #set -e
 cd ../../../ops/c
-source ../source_intel
+source ../../scripts/source_intel
 make
 cd -
 ./generate.sh
 make clean
 make
+
 #============================ Generate HDF5 file ==========================================================
 echo '============> Generate HDF5 file'
 rm *.h5
@@ -110,15 +111,21 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
+echo "All Intel complied applications PASSED : Exiting Test Script "
+
 #COMMENT
 cd -
-source ../source_pgi_15.10
+source ../../scripts/source_pgi_15.10
+
+#tobe removed
+export LD_LIBRARY_PATH+=:/opt/compilers/intel/intelPS-2015/composer_xe_2015.2.164/compiler/lib/intel64/
+
 make clean
 make
 cd -
 make
 
-
+#<<COMMENT0
 #============================ Test Cloverleaf 3D With PGI Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
@@ -213,13 +220,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
-cd -
-source ../source_pgi_15.10
-make clean
-make
-cd -
-make cloverleaf_openacc -j20
-make cloverleaf_mpi_openacc -j20
+#COMMENT0
 
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -238,3 +239,5 @@ grep "PASSED" clover.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
