@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -46,93 +46,63 @@
 #undef OPS_ACC3
 #undef OPS_ACC4
 
-
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
 #define OPS_ACC3(x) (x)
 #define OPS_ACC4(x) (x)
 
+// user function
+void initialize_kernel(__global double *restrict x,
+                       __global double *restrict rho_new,
+                       __global double *restrict rhou_new,
+                       __global double *restrict rhoE_new,
+                       __global double *restrict rhoin, int *restrict idx,
+                       const double xmin, const double dx, const double pl,
+                       const double pr, const double rhol, const double ul,
+                       const double ur, const double gam1, const double eps,
+                       const double lambda)
 
-//user function
-void initialize_kernel(__global double * restrict x,__global double * restrict rho_new,__global double * restrict rhou_new,
-__global double * restrict rhoE_new,__global double* restrict  rhoin, int * restrict idx,
-  const double xmin,
-const double dx,
-const double pl,
-const double pr,
-const double rhol,
-const double ul,
-const double ur,
-const double gam1,
-const double eps,
-const double lambda)
+{
+  x[OPS_ACC0(0)] = xmin + (idx[0] - 2) * dx;
+  if (x[OPS_ACC0(0)] >= -4.0) {
+    rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda * x[OPS_ACC0(0)]);
+    rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
+    rhoE_new[OPS_ACC3(0)] =
+        (pr / gam1) +
+        0.5 * pow(rhou_new[OPS_ACC2(0)], 2) / rho_new[OPS_ACC1(0)];
+  } else {
+    rho_new[OPS_ACC1(0)] = rhol;
+    rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
+    rhoE_new[OPS_ACC3(0)] =
+        (pl / gam1) +
+        0.5 * pow(rhou_new[OPS_ACC2(0)], 2) / rho_new[OPS_ACC1(0)];
+  }
 
- {
-  x[OPS_ACC0(0)] = xmin + (idx[0]-2) * dx;
-  if (x[OPS_ACC0(0)] >= -4.0){
-		rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
-		rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pr / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
-	else {
-		rho_new[OPS_ACC1(0)] = rhol;
-		rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
-
-	rhoin[OPS_ACC4(0)] = gam1 * (rhoE_new[OPS_ACC3(0)] - 0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] / rho_new[OPS_ACC1(0)]);
-
+  rhoin[OPS_ACC4(0)] =
+      gam1 * (rhoE_new[OPS_ACC3(0)] -
+              0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] /
+                  rho_new[OPS_ACC1(0)]);
 }
 
-
-
 __kernel void ops_initialize_kernel(
-__global double* restrict arg0,
-__global double* restrict arg1,
-__global double* restrict arg2,
-__global double* restrict arg3,
-__global double* restrict arg4,
-const double xmin,
-const double dx,
-const double pl,
-const double pr,
-const double rhol,
-const double ul,
-const double ur,
-const double gam1,
-const double eps,
-const double lambda,
-const int base0,
-const int base1,
-const int base2,
-const int base3,
-const int base4,
-int arg_idx0,
-const int size0 ){
-
+    __global double *restrict arg0, __global double *restrict arg1,
+    __global double *restrict arg2, __global double *restrict arg3,
+    __global double *restrict arg4, const double xmin, const double dx,
+    const double pl, const double pr, const double rhol, const double ul,
+    const double ur, const double gam1, const double eps, const double lambda,
+    const int base0, const int base1, const int base2, const int base3,
+    const int base4, int arg_idx0, const int size0) {
 
   int idx_x = get_global_id(0);
 
   int arg_idx[1];
-  arg_idx[0] = arg_idx0+idx_x;
+  arg_idx[0] = arg_idx0 + idx_x;
   if (idx_x < size0) {
-    initialize_kernel(&arg0[base0 + idx_x * 1*1],
-                      &arg1[base1 + idx_x * 1*1],
-                      &arg2[base2 + idx_x * 1*1],
-                      &arg3[base3 + idx_x * 1*1],
-                      &arg4[base4 + idx_x * 1*1],
-                      arg_idx,
-                      xmin,
-                      dx,
-                      pl,
-                      pr,
-                      rhol,
-                      ul,
-                      ur,
-                      gam1,
-                      eps,
-                      lambda);
+    initialize_kernel(
+        &arg0[base0 + idx_x * 1 * 1], &arg1[base1 + idx_x * 1 * 1],
+        &arg2[base2 + idx_x * 1 * 1], &arg3[base3 + idx_x * 1 * 1],
+        &arg4[base4 + idx_x * 1 * 1], arg_idx, xmin, dx, pl, pr, rhol, ul, ur,
+        gam1, eps, lambda);
   }
-
 }

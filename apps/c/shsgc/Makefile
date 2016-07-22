@@ -71,10 +71,10 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS   = -O0 -Minline -Kieee -Minform=inform -Minfo=all -DOPS_DEBUG
 else
-  CCFLAGS   = -O3 -Kieee -Minline #-Minform=severe -Minfo=all
+  CCFLAGS   = -O3 -Kieee -Minline -nofma #-Minform=severe -Minfo=all
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -mp
+  OMPFLAGS  = -mp=nonuma
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC   = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CPPFLAGS)

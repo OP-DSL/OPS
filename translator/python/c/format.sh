@@ -5,6 +5,11 @@
 
 #for file in ./*.cu ./*.cpp ./*.h ./*.hpp; do clang-format "$file" > "$file"_temp; mv "$file"_temp "$file"; done
 for dir in `ls -d */ `; do
+  ls ./*_ops.cpp 2> /dev/null
+  if [ $? -eq 0 ]
+  then
+    for file in ./*_ops.cpp; do clang-format -i "$file"; done
+  fi
   for subdir in `ls -d $dir`; do
     echo  $dir;
     cd $dir
