@@ -3,106 +3,58 @@
 
 #include "./OpenACC/shsgc_common.h"
 
-
-void ops_decl_const_char(int dim, char const *type,
-int size, char *dat, char const *name){
-  if (!strcmp(name,"nxp")) {
-    nxp = *(int*)dat;
-  }
-  else
-  if (!strcmp(name,"nyp")) {
-    nyp = *(int*)dat;
-  }
-  else
-  if (!strcmp(name,"xhalo")) {
-    xhalo = *(int*)dat;
-  }
-  else
-  if (!strcmp(name,"xmin")) {
-    xmin = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"xmax")) {
-    xmax = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"dx")) {
-    dx = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"pl")) {
-    pl = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"pr")) {
-    pr = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"rhol")) {
-    rhol = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"rhor")) {
-    rhor = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"ul")) {
-    ul = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"ur")) {
-    ur = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"gam")) {
-    gam = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"gam1")) {
-    gam1 = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"eps")) {
-    eps = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"lambda")) {
-    lambda = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"dt")) {
-    dt = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"del2")) {
-    del2 = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"akap2")) {
-    akap2 = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"tvdsmu")) {
-    tvdsmu = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"con")) {
-    con = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"Mach")) {
-    Mach = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"xt")) {
-    xt = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"scale")) {
-    scale = *(int*)dat;
-  }
-  else
-  {
-    printf("error: unknown const name\n"); exit(1);
+void ops_decl_const_char(int dim, char const *type, int size, char *dat,
+                         char const *name) {
+  if (!strcmp(name, "nxp")) {
+    nxp = *(int *)dat;
+  } else if (!strcmp(name, "nyp")) {
+    nyp = *(int *)dat;
+  } else if (!strcmp(name, "xhalo")) {
+    xhalo = *(int *)dat;
+  } else if (!strcmp(name, "xmin")) {
+    xmin = *(double *)dat;
+  } else if (!strcmp(name, "xmax")) {
+    xmax = *(double *)dat;
+  } else if (!strcmp(name, "dx")) {
+    dx = *(double *)dat;
+  } else if (!strcmp(name, "pl")) {
+    pl = *(double *)dat;
+  } else if (!strcmp(name, "pr")) {
+    pr = *(double *)dat;
+  } else if (!strcmp(name, "rhol")) {
+    rhol = *(double *)dat;
+  } else if (!strcmp(name, "rhor")) {
+    rhor = *(double *)dat;
+  } else if (!strcmp(name, "ul")) {
+    ul = *(double *)dat;
+  } else if (!strcmp(name, "ur")) {
+    ur = *(double *)dat;
+  } else if (!strcmp(name, "gam")) {
+    gam = *(double *)dat;
+  } else if (!strcmp(name, "gam1")) {
+    gam1 = *(double *)dat;
+  } else if (!strcmp(name, "eps")) {
+    eps = *(double *)dat;
+  } else if (!strcmp(name, "lambda")) {
+    lambda = *(double *)dat;
+  } else if (!strcmp(name, "dt")) {
+    dt = *(double *)dat;
+  } else if (!strcmp(name, "del2")) {
+    del2 = *(double *)dat;
+  } else if (!strcmp(name, "akap2")) {
+    akap2 = *(double *)dat;
+  } else if (!strcmp(name, "tvdsmu")) {
+    tvdsmu = *(double *)dat;
+  } else if (!strcmp(name, "con")) {
+    con = *(double *)dat;
+  } else if (!strcmp(name, "Mach")) {
+    Mach = *(double *)dat;
+  } else if (!strcmp(name, "xt")) {
+    xt = *(double *)dat;
+  } else if (!strcmp(name, "scale")) {
+    scale = *(int *)dat;
+  } else {
+    printf("error: unknown const name\n");
+    exit(1);
   }
 }

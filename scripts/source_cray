@@ -12,4 +12,3 @@ export OPS_INSTALL_PATH=/lustre/atlas/scratch/gihan/csc103/OPS-GIT/OPS/ops
 export HDF5_INSTALL_PATH=/opt/cray/hdf5-parallel/1.8.14/
 export CUDA_INSTALL_PATH=/opt/nvidia/cudatoolkit6.5/6.5.14-1.0502.9613.6.1/
 export MPI_INSTALL_PATH=/opt/cray/mpt/6.3.0/gni/mpich2-cray/81/include/
-

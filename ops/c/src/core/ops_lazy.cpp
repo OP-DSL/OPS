@@ -32,11 +32,12 @@
 
 /** @brief OPS core library functions
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implementations of the core library functions utilized by all OPS backends
+  * @details Implementations of the core library functions utilized by all OPS
+ * backends
   */
 
-#include <sys/time.h>
 #include "ops_lib_core.h"
+#include <sys/time.h>
 
 #include <vector>
 using namespace std;
@@ -49,7 +50,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   ops_kernel_list.push_back(desc);
   for (int i = 0; i < desc->nargs; i++) {
     if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc != OPS_READ) {
-//      printf("Triggering execution at %s\n", desc->name);
+      //      printf("Triggering execution at %s\n", desc->name);
       ops_execute();
       break;
     }
@@ -58,7 +59,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
 void ops_execute() {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    //printf("Executing %s\n",ops_kernel_list[i]->name);
+    // printf("Executing %s\n",ops_kernel_list[i]->name);
     ops_kernel_list[i]->function(ops_kernel_list[i]);
     free(ops_kernel_list[i]->args);
     free(ops_kernel_list[i]);

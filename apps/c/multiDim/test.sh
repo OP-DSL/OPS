@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -e
 cd ../../../ops/c
-source ../source_intel
+source ../../scripts/source_intel
 make
 cd -
 ../../../translator/python/c/ops.py multidim.cpp
@@ -101,7 +101,8 @@ rm perf_out
 
 
 cd -
-source ../source_pgi_15.10
+source ../../scripts/source_pgi_15.10
+
 make clean
 make
 cd -
@@ -198,15 +199,6 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
-cd -
-source ../source_pgi_15.10
-make clean
-make cuda
-make mpi_cuda
-cd -
-make multidim_openacc
-make multidim_mpi_openacc
 echo '============> Running OpenACC'
 ./multidim_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out

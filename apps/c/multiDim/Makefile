@@ -131,9 +131,9 @@ endif
 TARGETS = multidim_dev_seq multidim_seq multidim_dev_mpi multidim_mpi multidim_openmp multidim_mpi_openmp multidim_cuda multidim_mpi_cuda multidim_opencl multidim_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
-#TARGETS += multidim_openacc multidim_mpi_openacc
+TARGETS += multidim_openacc multidim_mpi_openacc
 else
-#TARGETS += openacc_error
+TARGETS += openacc_error
 endif
 
 

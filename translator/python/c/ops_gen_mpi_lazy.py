@@ -260,11 +260,11 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
     code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
     ENDFOR()
-    code('#else //OPS_MPI')
+    code('#else')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
     ENDFOR()
-    code('#endif //OPS_MPI')
+    code('#endif')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
@@ -288,10 +288,10 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-      code('#else //OPS_MPI')
+      code('#else')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
+      code('#endif')
 
 
     code('')
@@ -326,9 +326,9 @@ def ops_gen_mpi(master, date, consts, kernels):
         #ENDFOR()
         code('#ifdef OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
-        code('#else //OPS_MPI')
+        code('#else')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
-        code('#endif //OPS_MPI')
+        code('#endif')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
@@ -351,9 +351,9 @@ def ops_gen_mpi(master, date, consts, kernels):
         else:
           code('#ifdef OPS_MPI')
           code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index;')
-          code('#else //OPS_MPI')
+          code('#else')
           code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data;')
-          code('#endif //OPS_MPI')
+          code('#endif')
         code('')
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
@@ -468,10 +468,10 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('#ifdef OPS_MPI')
       for n in range (0,1):
         code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-      code('#else //OPS_MPI')
+      code('#else')
       for n in range (0,1):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
+      code('#endif')
       code('arg_idx[1]++;')
     ENDFOR()
 
@@ -486,10 +486,10 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('#ifdef OPS_MPI')
         for n in range (0,2):
           code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
-        code('#else //OPS_MPI')
+        code('#else')
         for n in range (0,2):
           code('arg_idx['+str(n)+'] = start['+str(n)+'];')
-        code('#endif //OPS_MPI')
+        code('#endif')
         code('arg_idx[2]++;')
       ENDFOR()
 

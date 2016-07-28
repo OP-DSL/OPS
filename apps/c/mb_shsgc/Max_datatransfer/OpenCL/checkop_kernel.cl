@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -44,50 +44,35 @@
 #undef OPS_ACC1
 #undef OPS_ACC2
 
-
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
 
+// user function
+void checkop_kernel(const __global double *restrict rho_new,
+                    const __global double *restrict x,
+                    const __global double *restrict rhoin, double *restrict pre,
+                    double *restrict post, int *restrict num, const double rhol)
 
-//user function
-void checkop_kernel(const __global double * restrict rho_new,const __global double * restrict x,const __global double * restrict rhoin,
- double * restrict pre, double * restrict post, int * restrict num,
-  const double rhol)
-
- {
+{
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
-  if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
-    *post = *post + diff*diff;
+  if (fabs(diff) < 0.01 && x[OPS_ACC1(0)] > -4.1) {
+    *post = *post + diff * diff;
     *num = *num + 1;
 
-  }
-  else
-    *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
+  } else
+    *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol) * (rho_new[OPS_ACC0(0)] - rhol);
 }
 
-
-
 __kernel void ops_checkop_kernel(
-__global const double* restrict arg0,
-__global const double* restrict arg1,
-__global const double* restrict arg2,
-__global double* restrict arg3,
-__local double* scratch3,
-int r_bytes3,
-__global double* restrict arg4,
-__local double* scratch4,
-int r_bytes4,
-__global int* restrict arg5,
-__local int* scratch5,
-int r_bytes5,
-const double rhol,
-const int base0,
-const int base1,
-const int base2,
-const int size0 ){
+    __global const double *restrict arg0, __global const double *restrict arg1,
+    __global const double *restrict arg2, __global double *restrict arg3,
+    __local double *scratch3, int r_bytes3, __global double *restrict arg4,
+    __local double *scratch4, int r_bytes4, __global int *restrict arg5,
+    __local int *scratch5, int r_bytes5, const double rhol, const int base0,
+    const int base1, const int base2, const int size0) {
 
   arg3 += r_bytes3;
   double arg3_l[1];
@@ -95,27 +80,25 @@ const int size0 ){
   double arg4_l[1];
   arg5 += r_bytes5;
   int arg5_l[1];
-  for (int d=0; d<1; d++) arg3_l[d] = ZERO_double;
-  for (int d=0; d<1; d++) arg4_l[d] = ZERO_double;
-  for (int d=0; d<1; d++) arg5_l[d] = ZERO_int;
+  for (int d = 0; d < 1; d++)
+    arg3_l[d] = ZERO_double;
+  for (int d = 0; d < 1; d++)
+    arg4_l[d] = ZERO_double;
+  for (int d = 0; d < 1; d++)
+    arg5_l[d] = ZERO_int;
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    checkop_kernel(&arg0[base0 + idx_x * 1*1],
-                   &arg1[base1 + idx_x * 1*1],
-                   &arg2[base2 + idx_x * 1*1],
-                   arg3_l,
-                   arg4_l,
-                   arg5_l,
-                   rhol);
+    checkop_kernel(&arg0[base0 + idx_x * 1 * 1], &arg1[base1 + idx_x * 1 * 1],
+                   &arg2[base2 + idx_x * 1 * 1], arg3_l, arg4_l, arg5_l, rhol);
   }
-  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
-  for (int d=0; d<1; d++)
-    reduce_double(arg3_l[d], scratch3, &arg3[group_index*1+d], OPS_INC);
-  for (int d=0; d<1; d++)
-    reduce_double(arg4_l[d], scratch4, &arg4[group_index*1+d], OPS_INC);
-  for (int d=0; d<1; d++)
-    reduce_int(arg5_l[d], scratch5, &arg5[group_index*1+d], OPS_INC);
-
+  int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
+                    get_group_id(2) * get_num_groups(0) * get_num_groups(1);
+  for (int d = 0; d < 1; d++)
+    reduce_double(arg3_l[d], scratch3, &arg3[group_index * 1 + d], OPS_INC);
+  for (int d = 0; d < 1; d++)
+    reduce_double(arg4_l[d], scratch4, &arg4[group_index * 1 + d], OPS_INC);
+  for (int d = 0; d < 1; d++)
+    reduce_int(arg5_l[d], scratch5, &arg5[group_index * 1 + d], OPS_INC);
 }

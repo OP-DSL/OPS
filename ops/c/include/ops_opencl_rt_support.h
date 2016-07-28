@@ -47,7 +47,7 @@
 // OpenCL specific data structure
 //
 
-typedef struct{
+typedef struct {
   cl_platform_id *platform_id;
   cl_device_id device_id;
   cl_device_id *devices;
@@ -60,15 +60,13 @@ typedef struct{
   cl_uint n_kernels;
   cl_mem *constant;
   cl_uint n_constants;
-  //cl_mem *data_d; // cl_mem struct corresponding to ops_core_dat char* data_d
+  // cl_mem *data_d; // cl_mem struct corresponding to ops_core_dat char* data_d
 } ops_opencl_core;
 
 extern int OPS_cl_device;
 
-
 //#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
-
 
 /* define CUDA warpsize for OPS */
 
@@ -81,28 +79,22 @@ extern "C" {
 /*
 * Global variables actually defined in the corresponding c file
 */
-extern char * OPS_consts_h,
-            * OPS_consts_d,
-            * OPS_reduct_h,
-            * OPS_reduct_d;
+extern char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
 
+#define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
 
-
-#define clSafeCall(ret) __clSafeCall(ret, __FILE__,__LINE__)
-
-
-void openclDeviceInit( int argc, char ** argv);
-void __clSafeCall( cl_int ret, const char * file, const int line );
-void ops_opencl_get_data( ops_dat dat );
-void reallocConstArrays( int consts_bytes );
-void reallocReductArrays( int reduct_bytes );
-void mvConstArraysToDevice( int consts_bytes );
-void mvReductArraysToDevice( int reduct_bytes );
-void mvReductArraysToHost( int reduct_bytes );
-void ops_opencl_exit( );
+void openclDeviceInit(int argc, char **argv);
+void __clSafeCall(cl_int ret, const char *file, const int line);
+void ops_opencl_get_data(ops_dat dat);
+void reallocConstArrays(int consts_bytes);
+void reallocReductArrays(int reduct_bytes);
+void mvConstArraysToDevice(int consts_bytes);
+void mvReductArraysToDevice(int reduct_bytes);
+void mvReductArraysToHost(int reduct_bytes);
+void ops_opencl_exit();
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
 

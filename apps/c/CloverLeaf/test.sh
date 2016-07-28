@@ -1,12 +1,13 @@
 #!/bin/bash
 #set -e
 cd ../../../ops/c
-source ../source_intel
+source ../../scripts/source_intel
 make
 cd -
 ./generate.sh
 make clean
 make
+
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
 #<<COMMENT
 echo '============> Running OpenMP'
@@ -105,9 +106,13 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
+echo "All Intel complied applications PASSED : Exiting Test Script "
+#exit
+
 #COMMENT
 cd -
-source ../source_pgi_15.10
+source ../../scripts/source_pgi_15.10
+
 make clean
 make
 cd -
@@ -208,14 +213,6 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
-cd -
-source ../source_pgi_15.10
-make clean
-make
-cd -
-make cloverleaf_openacc -j20
-make cloverleaf_mpi_openacc -j20
-
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" clover.out
@@ -233,3 +230,5 @@ grep "PASSED" clover.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
