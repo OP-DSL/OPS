@@ -113,9 +113,6 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 cd -
 source ../../scripts/source_pgi_15.10
 
-#tobe removed
-export LD_LIBRARY_PATH+=:/opt/compilers/intel/intelPS-2015/composer_xe_2015.2.164/compiler/lib/intel64/
-
 make clean
 make
 cd -
