@@ -34,12 +34,17 @@ void ops_par_loop_preproc_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_rms_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg );
+
 
 
 #include "data.h"
 
 //#include "init_kernel.h"
-//#include "print_kernel.h"
+//#include "preproc_kernel.h"
+//#include "rms_kernel.h"
 
 
 int nx;
@@ -65,18 +70,22 @@ int main(int argc, char **argv)
   lambda=1.0f;
 
 
-  ops_init(argc,argv,2);
+  ops_init(argc,argv,1);
 
 
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
-  int d_p[3] = {0,0,0};
-  int d_m[3] = {0,0,0};
+  int d_p[3] = {1,1,1};
+  int d_m[3] = {-1,-1,-1};
   int size[3] = {nx, ny, nz};
   int base[3] = {0,0,0};
   double* temp = NULL;
 
   ops_dat h_u     = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_u");
+
+  d_p[0] = 0; d_p[1] = 0; d_p[2] = 0;
+  d_m[0] = 0; d_m[1] = 0; d_m[2] = 0;
+
   ops_dat h_temp  = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_tmp");
   ops_dat h_du    = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_du");
   ops_dat h_ax    = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_ax");
@@ -100,7 +109,9 @@ int main(int argc, char **argv)
   ops_decl_const2( "nz",1, "int",&nz);
   ops_decl_const2( "lambda",1, "double",&lambda);
 
-  ops_partition("2D_BLOCK_DECOMPSE");
+  ops_reduction rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
+
+  ops_partition("3D_BLOCK_DECOMPSE");
 
   double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
 
@@ -136,6 +147,20 @@ int main(int argc, char **argv)
                ops_arg_idx());
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed preproc (sec): %lf (s)\n",et3-et2);
+
+  double rms_value = 0.0;
+  ops_par_loop_rms_kernel("rms_kernel", heat3D, 3, iter_range,
+               ops_arg_dat(h_du, 1, S3D_000, "double", OPS_READ),
+               ops_arg_reduce(rms, 1, "double", OPS_INC));
+
+  ops_reduction_result(rms,&rms_value);
+  ops_printf("Value %3.15g\n",rms_value);
+
+
+
+
+  exit(-2);
+
 
   ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u, opts);

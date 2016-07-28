@@ -72,21 +72,25 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: dims        ! number of elements per grid point
     integer(kind=c_int) :: type_size;  ! bytes per primitive = elem_size/dim
     integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
+    type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
+    type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
+    type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
+    type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
     type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
     type(c_devptr)      :: data_d      ! data on device
 #else
     type(c_ptr)         :: data_d      ! data on device
 #endif
-    type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
-    type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
-    type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
-    type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
     type(c_ptr)         :: name        ! name if the dat
     type(c_ptr)         :: type        ! data type
     integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
     integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
+    integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
+    type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
     integer(kind=c_int) :: e_dat       ! is this an edge dat?
+    integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
+
   end type ops_dat_core
 
   type :: ops_dat

@@ -412,10 +412,21 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   for (int n = 0; n < block->dims; n++)
     dat->base[n] = base[n];
 
-  for (int n = 0; n < block->dims; n++)
-    dat->d_m[n] = d_m[n];
-  for (int n = 0; n < block->dims; n++)
-    dat->d_p[n] = d_p[n];
+  for(int n=0;n<block->dims;n++) {
+    if(d_m[n] <= 0) dat->d_m[n] = d_m[n];
+    else {
+      ops_printf("Error: Non negative d_m during declaration of %s\n", name);
+      exit(2);
+    }
+  }
+
+  for(int n=0;n<block->dims;n++) {
+    if(d_p[n] >=0) dat->d_p[n] = d_p[n];
+    else {
+      ops_printf("Error: Non positive d_p during declaration of %s\n", name);
+      exit(2);
+    }
+  }
 
   // set the size of higher dimensions to 1
   for (int n = block->dims; n < OPS_MAX_DIM; n++) {

@@ -19,7 +19,7 @@ double *az, double *bz, double *cz, int *idx){
     b = 1.0f;
     c = 0.0f;
   } else {
-    d = lambda*(  u[OPS_ACC0(-1,0,0)] + u[OPS_ACC0(1,0,0)]
+    d = lambda*( u[OPS_ACC0(-1,0,0)] + u[OPS_ACC0(1,0,0)]
                + u[OPS_ACC0(0,-1,0)] + u[OPS_ACC0(0,1,0)]
                + u[OPS_ACC0(0,0,-1)] + u[OPS_ACC0(0,0,1)]
                - 6.0f*u[OPS_ACC0(0,0,0)]);
