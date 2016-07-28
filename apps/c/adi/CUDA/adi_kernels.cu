@@ -43,3 +43,4 @@ int size, char *dat, char const *name){
 //user kernel files
 #include "init_kernel_cuda_kernel.cu"
 #include "preproc_kernel_cuda_kernel.cu"
+#include "rms_kernel_cuda_kernel.cu"

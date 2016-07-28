@@ -17,3 +17,4 @@ extern double lambda;
 //user kernel files
 #include "init_kernel_seq_kernel.cpp"
 #include "preproc_kernel_seq_kernel.cpp"
+#include "rms_kernel_seq_kernel.cpp"
