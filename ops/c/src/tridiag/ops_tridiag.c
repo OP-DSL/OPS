@@ -65,8 +65,6 @@ void ops_tridMultiDimBatch(
     (const double *)c->data,
     (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
 
-
-
 /* Right now, we are simply using the same memory allocated by OPS
 as can be seen by the use of a->data, b->data, c->data etc.
 
@@ -80,16 +78,6 @@ but other sizes will show this issue
 As such we will need to think on how to pad arrays.
 The problem is that on apps like Cloverleaf we see poorer performance
 due to extra x dim padding.
-*/
-
-/*
-For MPI padding will be more important as the partition allocated per MPI proc
-will definitely not be a multiple of 32 or 64 in the x dimension
-
-Perhaps we make use of a setup phase to add padding to the ops data arrays
-and then use them in the tridiagonal solvers. But now the problem is
-that the original OPS lib will not be able to use these padded arrays
-and produce correct results -- need to think how to solve this
 */
 
 }
