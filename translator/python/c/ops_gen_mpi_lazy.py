@@ -79,7 +79,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
-  gen_full_code = 0;
+  gen_full_code = 1;
 
 ##########################################################################
 #  create new kernel file

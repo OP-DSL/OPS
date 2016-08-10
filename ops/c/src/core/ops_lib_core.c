@@ -1049,24 +1049,17 @@ void ops_timing_output(FILE *stream) {
 
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
-      ops_compute_moment(OPS_kernels[k].time, &moments_time[0],
-                         &moments_time[1]);
-      ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
-                         &moments_mpi_time[1]);
+      ops_compute_moment(OPS_kernels[k].time, &moments_time[0], &moments_time[1]);
+      ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0], &moments_mpi_time[1]);
 
-      sprintf(
-          buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count,
-          moments_time[0],
-          sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
-          moments_mpi_time[0],
-          sqrt(moments_mpi_time[1] - moments_mpi_time[0] * moments_mpi_time[0]),
-          OPS_kernels[k].transfer / (OPS_kernels[k].time * 1000 * 1000 * 1000));
+      sprintf(buf2,"%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count, moments_time[0],
+        sqrt(moments_time[1] - moments_time[0]*moments_time[0]),
+        moments_mpi_time[0], sqrt(moments_mpi_time[1] - moments_mpi_time[0]*moments_mpi_time[0]),
+        OPS_kernels[k].transfer/((moments_time[0])*1024*1024*1024));
 
-      // sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count,
-      // OPS_kernels[k].time,
-      //  OPS_kernels[k].mpi_time,
-      //  OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
-      ops_fprintf(stream, "%s%s\n", buf, buf2);
+      //sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
+      //  OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+      ops_fprintf(stream,"%s%s\n",buf,buf2);
       sumtime += OPS_kernels[k].time;
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
