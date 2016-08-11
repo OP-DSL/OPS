@@ -60,10 +60,10 @@ int main(int argc, char **argv)
   int s2D_00_M10_P10[]         = {0,0,-1,0,1,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
+  int d_p[2] = {2,2};
 
-  int d_p[2] = {0,0};
+  int d_m[2] = {-2,-2};
 
-  int d_m[2] = {0,0};
   int size4[2] = {24, 24};
   int size0[2] = {12, 12};
   int size1[2] = {6, 6};
