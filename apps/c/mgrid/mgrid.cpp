@@ -65,10 +65,10 @@ int main(int argc, char **argv)
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
   //declare datasets
-  //int d_p[2] = {2,2};
-  int d_p[2] = {0,0};
-  //int d_m[2] = {-2,-2};
-  int d_m[2] = {0,0};
+  int d_p[2] = {2,2};
+  //int d_p[2] = {0,0};
+  int d_m[2] = {-2,-2};
+  //int d_m[2] = {0,0};
   int size4[2] = {24, 24};
   int size0[2] = {12, 12};
   int size1[2] = {6, 6};
@@ -94,11 +94,11 @@ int main(int argc, char **argv)
   ops_dat data0 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride1 , temp, "double", "data0");
   ops_dat data1 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3 , temp, "double", "data1");
   //ops_dat data2 = ops_decl_dat(grid0, 1, size2, base, d_m, d_p, stride2 , temp, "double", "data2");
-  ops_dat data5 = ops_decl_dat(grid0, 1, size4, base, d_m, d_p, stride0, temp, "double", "data3");
-  ops_dat data6 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride1 , temp, "double", "data0");
+  ops_dat data5 = ops_decl_dat(grid0, 1, size4, base, d_m, d_p, stride0, temp, "double", "data5");
+  ops_dat data6 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride1 , temp, "double", "data6");
 
   ops_dat data3 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3 , temp, "double", "data3");
-  //ops_dat data4 = ops_decl_dat(grid0, 1, size3, base, d_m, d_p, stride2 , temp, "double", "data3");
+  //ops_dat data4 = ops_decl_dat(grid0, 1, size3, base, d_m, d_p, stride2 , temp, "double", "data4");
 
   ops_partition("");
 
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
   ops_print_dat_to_txtfile(data0, "data.txt");
   ops_print_dat_to_txtfile(data5, "data.txt");
   
-  ops_par_loop(mgrid_populate_kernel_3, "mgrid_populate_kernel_1", grid0, 2, iter_range_large,
+  ops_par_loop(mgrid_populate_kernel_3, "mgrid_populate_kernel_3", grid0, 2, iter_range_large,
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
