@@ -79,7 +79,7 @@ endif
   CUDAFOR      = -DOPS_WITH_CUDAFOR
   TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda f_openacc
 else
-ifeq ($(OPS_COMPILER),xl)
+ifeq ($(OPS_COMPILER),xlp8)
   CC            = xlc_r
 ifdef DEBUG
   OPT           = -O0 -g

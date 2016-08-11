@@ -16,8 +16,8 @@
 
  initial_timestep=0.1
  max_timestep=0.1
- end_step=2955
+ end_step=87
  end_time=1000.1
  test_problem 5
- checkpoint_frequency=100
+ profiler_on=1
 *endclover

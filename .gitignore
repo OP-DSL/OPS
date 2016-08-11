@@ -47,3 +47,4 @@ poisson_openacc
 *_mpi_openmp
 *_mpi_opencl
 *_mpi_cuda
+*.lst
