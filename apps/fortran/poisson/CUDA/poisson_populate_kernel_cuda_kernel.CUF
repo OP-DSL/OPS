@@ -23,19 +23,21 @@ INTEGER(KIND=4):: xdim6_poisson_populate_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine poisson_populate_kernel(dispx, dispy, idx, u, f, ref)
-  implicit none
+attributes (device) subroutine poisson_populate_kernel_gpu(dispx, dispy, idx, u, f, ref)
+
+USE CUDAFOR
+implicit none
   integer (kind=4), INTENT(IN) :: dispx, dispy
   integer (kind=4), DIMENSION(2), INTENT(IN) :: idx
   real (kind=8), DIMENSION(1) :: u, f, ref
   real(8) x, y
-  real(8), parameter :: M_PI = 4.D0*ATAN(1.D0)
+  real(8), parameter :: M_PI = 3.14159265359_8 !4.D0*ATAN(1.D0)
 
-  x = dx * (idx(1)-1.0_8+dispx)
-  y = dy * (idx(2)-1.0_8+dispy)
-  u(OPS_ACC4(0,0)) = dsin(M_PI*x)*dcos(2.0_8*M_PI*y)
-  f(OPS_ACC5(0,0)) = -5.0_8*M_PI*M_PI*dsin(M_PI*x)*dcos(2.0_8*M_PI*y)
-  ref(OPS_ACC6(0,0)) = dsin(M_PI*x)*dcos(2.0_8*M_PI*y)
+  x = 0.01_8 * (idx(1)-1.0_8+dispx)
+  y = 0.01_8 * (idx(2)-1.0_8+dispy)
+  u(OPS_ACC4(0,0)) = 1 !sin(M_PI*x)*cos(2.0_8*M_PI*y)
+  f(OPS_ACC5(0,0)) = 1 !-5.0_8*M_PI*M_PI*sin(M_PI*x)*cos(2.0_8*M_PI*y)
+  ref(OPS_ACC6(0,0)) = sin(x) !sin(M_PI*x)*cos(2.0_8*M_PI*y)
 
 end subroutine
 

@@ -16,7 +16,7 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.0,cc35
 endif
 endif
 
@@ -62,7 +62,6 @@ endif
   CUDA_ALIGN_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXXLINK       = -lstdc++ -pgcpplibs -lgcc_s
   OMPFLAGS 	= -mp
-  OpenACCFLAGS  := -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 #-Minline
   FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
   FFLAGS        = $(OPT) $(PGFLAGS) -ldl
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
@@ -77,7 +76,7 @@ ifeq ($(OPS_COMPILER),xl)
 ifdef DEBUG
   OPT           = -O0 -g
 else
-  OPT           = -O3 -qarch=pwr8 -qtune=pwr8 -qcuda
+  OPT           = -O2 -qhot -qarch=pwr8 -qtune=pwr8 -qcuda
 endif
   CCFLAGS       = $(OPT)
   CXX           = xlc++_r
@@ -93,7 +92,7 @@ endif
   MPIFLAGS      = $(CXXFLAGS)
   TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda
   OPS_MPI	= -WF,-DOPS_MPI
-  CUDAFOR	= -WF,-DOPS_WITH_CUDAFOR -qcuda -qthreaded
+  CUDAFOR	= -WF,-DOPS_WITH_CUDAFOR -qcuda #-qthreaded
 else
 
 print:
