@@ -76,7 +76,7 @@ ifeq ($(OPS_COMPILER),xl)
 ifdef DEBUG
   OPT           = -O0 -g
 else
-  OPT           = -O2 -qhot -qarch=pwr8 -qtune=pwr8 -qcuda
+  OPT           = -O2 -qhot -qarch=pwr8 -qtune=pwr8 
 endif
   CCFLAGS       = $(OPT)
   CXX           = xlc++_r
@@ -85,7 +85,7 @@ endif
   CXXLINK       = -lstdc++
   OMPFLAGS 	= -qsmp=omp -qthreaded
   FC            = xlf_r
-  FFLAGS        = $(OPT) -ldl -libmc++
+  FFLAGS        = $(OPT) -ldl -L/opt/ibm/lib/ -libmc++
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90
@@ -188,7 +188,6 @@ poisson_mpi_openmp: poisson_ops.F90 constants.F90
         -o poisson_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
 poisson_mpi_cuda: poisson_ops.F90 constants.F90
-ifeq ($(OPS_COMPILER),pgi)
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OPS_MPI) $(CUDAFOR) -c constants.F90 \
 	./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
@@ -203,9 +202,6 @@ ifeq ($(OPS_COMPILER),pgi)
         poisson_update_kernel_cuda_kernel.o \
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
-else
-	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
-endif
 
 poisson_openacc: poisson_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 \
