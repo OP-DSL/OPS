@@ -19,7 +19,7 @@ extern double dy;
 
 //user kernel files
 #include "poisson_kernel_populate_omp_kernel.cpp"
+#include "poisson_kernel_update_omp_kernel.cpp"
 #include "poisson_kernel_initialguess_omp_kernel.cpp"
 #include "poisson_kernel_stencil_omp_kernel.cpp"
-#include "poisson_kernel_update_omp_kernel.cpp"
 #include "poisson_kernel_error_omp_kernel.cpp"

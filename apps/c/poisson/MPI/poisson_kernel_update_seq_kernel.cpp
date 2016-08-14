@@ -23,8 +23,14 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,3)) return;
+  if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
+
+  if (OPS_diags > 1) {
+    ops_timing_realloc(1,"poisson_kernel_update");
+    OPS_kernels[1].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -52,6 +58,16 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
   int xdim0_poisson_kernel_update = args[0].dat->size[0];
   int xdim1_poisson_kernel_update = args[1].dat->size[0];
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 2);
+  ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_host(args, 2);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[1].mpi_time += t1-t2;
+  }
+
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #pragma omp simd
@@ -60,6 +76,20 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
   u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
 
     }
+  }
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[1].time += t2-t1;
+  }
+  ops_set_dirtybit_host(args, 2);
+  ops_set_halo_dirtybit3(&args[1],range);
+
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[1].mpi_time += t1-t2;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -72,7 +102,7 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->index = 3;
+  desc->index = 1;
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) return;

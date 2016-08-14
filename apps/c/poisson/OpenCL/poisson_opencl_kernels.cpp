@@ -69,7 +69,7 @@ void buildOpenCLKernels() {
 
 //user kernel files
 #include "poisson_kernel_populate_opencl_kernel.cpp"
+#include "poisson_kernel_update_opencl_kernel.cpp"
 #include "poisson_kernel_initialguess_opencl_kernel.cpp"
 #include "poisson_kernel_stencil_opencl_kernel.cpp"
-#include "poisson_kernel_update_opencl_kernel.cpp"
 #include "poisson_kernel_error_opencl_kernel.cpp"

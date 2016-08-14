@@ -83,7 +83,7 @@ void buildOpenCLKernels_poisson_kernel_update(int xdim0, int xdim1) {
       printf("compiling poisson_kernel_update -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[3] = clCreateKernel(OPS_opencl_core.program, "ops_poisson_kernel_update", &ret);
+    OPS_opencl_core.kernel[1] = clCreateKernel(OPS_opencl_core.program, "ops_poisson_kernel_update", &ret);
     clSafeCall( ret );
 
     isbuilt_poisson_kernel_update = true;
@@ -103,12 +103,12 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,3)) return;
+  if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(3,"poisson_kernel_update");
-    OPS_kernels[3].count++;
+    ops_timing_realloc(1,"poisson_kernel_update");
+    OPS_kernels[1].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -192,26 +192,26 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[3].mpi_time += t2-t1;
+    OPS_kernels[1].mpi_time += t2-t1;
   }
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 2, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 3, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 4, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 5, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 2, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 3, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 4, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[1], 5, sizeof(cl_int), (void*) &y_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[3], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[1], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[3].time += t1-t2;
+    OPS_kernels[1].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 2);
@@ -220,8 +220,8 @@ void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int d
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[3].mpi_time += t2-t1;
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

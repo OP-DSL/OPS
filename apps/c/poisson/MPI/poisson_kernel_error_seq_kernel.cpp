@@ -27,6 +27,12 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
+  if (OPS_diags > 1) {
+    ops_timing_realloc(4,"poisson_kernel_error");
+    OPS_kernels[4].count++;
+    ops_timers_core(&c2,&t2);
+  }
+
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
@@ -60,6 +66,16 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
   int xdim0_poisson_kernel_error = args[0].dat->size[0];
   int xdim1_poisson_kernel_error = args[1].dat->size[0];
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 3);
+  ops_halo_exchanges(args,3,range);
+  ops_H_D_exchanges_host(args, 3);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[4].mpi_time += t1-t2;
+  }
+
   double p_a2_0 = p_a2[0];
   #pragma omp parallel for reduction(+:p_a2_0)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
@@ -72,6 +88,19 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a2[0] = p_a2_0;
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[4].time += t2-t1;
+  }
+  ops_set_dirtybit_host(args, 3);
+
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[4].mpi_time += t1-t2;
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  }
 }
 #undef OPS_ACC0
 #undef OPS_ACC1

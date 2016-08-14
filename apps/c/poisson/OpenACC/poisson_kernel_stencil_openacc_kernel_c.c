@@ -19,9 +19,9 @@ int xdim1_poisson_kernel_stencil;
 //user function
 inline
 void poisson_kernel_stencil(const double *u, double *u2) {
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]+u[OPS_ACC0(0,1)])*0.125f
-                     - 0.125f*u[OPS_ACC0(0,0)]);
+  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
+                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
+                     + u[OPS_ACC0(0,0)]);
 }
 
 

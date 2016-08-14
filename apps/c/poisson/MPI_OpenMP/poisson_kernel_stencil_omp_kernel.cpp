@@ -8,9 +8,9 @@
 //user function
 inline
 void poisson_kernel_stencil(const double *u, double *u2) {
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]+u[OPS_ACC0(0,1)])*0.125f
-                     - 0.125f*u[OPS_ACC0(0,0)]);
+  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
+                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
+                     + u[OPS_ACC0(0,0)]);
 }
 
 
@@ -30,12 +30,12 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,2)) return;
+  if (!ops_checkpointing_before(args,2,range,3)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(2,"poisson_kernel_stencil");
-    OPS_kernels[2].count++;
+    ops_timing_realloc(3,"poisson_kernel_stencil");
+    OPS_kernels[3].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -107,7 +107,7 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
+    OPS_kernels[3].mpi_time += t2-t1;
   }
 
 
@@ -182,7 +182,7 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[2].time += t1-t2;
+    OPS_kernels[3].time += t1-t2;
   }
 
   ops_set_dirtybit_host(args, 2);
@@ -192,8 +192,8 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[3].mpi_time += t2-t1;
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

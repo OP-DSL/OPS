@@ -31,6 +31,12 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,6,range,0)) return;
   #endif
 
+  if (OPS_diags > 1) {
+    ops_timing_realloc(0,"poisson_kernel_populate");
+    OPS_kernels[0].count++;
+    ops_timers_core(&c2,&t2);
+  }
+
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
@@ -77,6 +83,16 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   int xdim4_poisson_kernel_populate = args[4].dat->size[0];
   int xdim5_poisson_kernel_populate = args[5].dat->size[0];
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 6);
+  ops_halo_exchanges(args,6,range);
+  ops_H_D_exchanges_host(args, 6);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+  }
+
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #pragma omp simd
@@ -92,6 +108,23 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 
 
     }
+  }
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[0].time += t2-t1;
+  }
+  ops_set_dirtybit_host(args, 6);
+  ops_set_halo_dirtybit3(&args[3],range);
+  ops_set_halo_dirtybit3(&args[4],range);
+  ops_set_halo_dirtybit3(&args[5],range);
+
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[0].mpi_time += t1-t2;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 #undef OPS_ACC3

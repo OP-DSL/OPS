@@ -67,6 +67,7 @@ int main(int argc, char **argv)
   int ngrid_y = 1;
   int n_iter = 10;
   int itertile = n_iter;
+  int non_copy = 0;
 
   char* pch;
   for ( int n = 1; n < argc; n++ ) {
@@ -85,6 +86,10 @@ int main(int argc, char **argv)
     pch = strstr(argv[n], "-itert=");
     if(pch != NULL) {
       itertile = atoi ( argv[n] + 7 ); continue;
+    }
+    pch = strstr(argv[n], "-non-copy");
+    if(pch != NULL) {
+      non_copy = 1; continue;
     }
   }
 
@@ -214,6 +219,12 @@ int main(int argc, char **argv)
                ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(ref[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
+
+			ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
+							ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+							ops_arg_dat(u2[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
+
+
     }
   }
 
@@ -245,18 +256,28 @@ int main(int argc, char **argv)
                  ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
-
-
-
-    for (int j = 0; j < ngrid_y; j++) {
-      for (int i = 0; i < ngrid_x; i++) {
-        int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-        ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
-                 ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
-                 ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
-      }
-    }
+		
+		if (non_copy) {
+			for (int j = 0; j < ngrid_y; j++) {
+				for (int i = 0; i < ngrid_x; i++) {
+					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+					ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
+							ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+							ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
+				}
+			}
+		} else {
+			for (int j = 0; j < ngrid_y; j++) {
+				for (int i = 0; i < ngrid_x; i++) {
+					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+					ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
+							ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+							ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
+				}
+			}
+		}
   }
+	ops_execute();
   ops_timers(&ct0, &it1);
 
   //ops_print_dat_to_txtfile(u[0], "poisson.dat");

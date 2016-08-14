@@ -23,8 +23,14 @@ void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,2)) return;
+  if (!ops_checkpointing_before(args,2,range,3)) return;
   #endif
+
+  if (OPS_diags > 1) {
+    ops_timing_realloc(3,"poisson_kernel_stencil");
+    OPS_kernels[3].count++;
+    ops_timers_core(&c2,&t2);
+  }
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -52,16 +58,40 @@ void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
   int xdim0_poisson_kernel_stencil = args[0].dat->size[0];
   int xdim1_poisson_kernel_stencil = args[1].dat->size[0];
 
+  //Halo Exchanges
+  ops_H_D_exchanges_host(args, 2);
+  ops_halo_exchanges(args,2,range);
+  ops_H_D_exchanges_host(args, 2);
+
+  if (OPS_diags > 1) {
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[3].mpi_time += t1-t2;
+  }
+
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #pragma omp simd
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]+u[OPS_ACC0(0,1)])*0.125f
-                     - 0.125f*u[OPS_ACC0(0,0)]);
+  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
+                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
+                     + u[OPS_ACC0(0,0)]);
 
     }
+  }
+  if (OPS_diags > 1) {
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[3].time += t2-t1;
+  }
+  ops_set_dirtybit_host(args, 2);
+  ops_set_halo_dirtybit3(&args[1],range);
+
+  if (OPS_diags > 1) {
+    //Update kernel record
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[3].mpi_time += t1-t2;
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -74,7 +104,7 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->index = 2;
+  desc->index = 3;
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) return;

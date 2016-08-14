@@ -186,7 +186,8 @@ int ops_construct_tile_plan() {
           }
           //Look at write dependencies of datasets being accessed
           for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-            if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT) { //&& ops_kernel_list[loop]->args[arg].acc != OPS_WRITE
+            if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT 
+                && data_write_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1] != -INT_MAX) { //&& ops_kernel_list[loop]->args[arg].acc != OPS_WRITE
               int d_m_min = 0; //Find biggest positive/negative direction stencil point for this dimension
               int d_p_max = 0;
               for (int p = 0; p < ops_kernel_list[loop]->args[arg].stencil->points; p++) {

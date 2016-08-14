@@ -34,7 +34,7 @@ int size, char *dat, char const *name){
 
 //user kernel files
 #include "poisson_kernel_populate_cuda_kernel.cu"
+#include "poisson_kernel_update_cuda_kernel.cu"
 #include "poisson_kernel_initialguess_cuda_kernel.cu"
 #include "poisson_kernel_stencil_cuda_kernel.cu"
-#include "poisson_kernel_update_cuda_kernel.cu"
 #include "poisson_kernel_error_cuda_kernel.cu"
