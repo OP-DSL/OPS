@@ -24,7 +24,7 @@
 #define logical_size_y 200
 #define ngrid_x 2
 #define ngrid_y 2
-#define n_iter  1
+#define n_iter  10000
 
 program POISSON
   use OPS_Fortran_Declarations
@@ -223,10 +223,6 @@ program POISSON
     END DO
   END DO
 
-  call ops_print_dat_to_txtfile(u(1), "poisson_init_u.dat")
-  call ops_print_dat_to_txtfile(f(1), "poisson_init_f.dat")
-  call ops_print_dat_to_txtfile(ref(1), "poisson_init_ref.dat")
-
   DO j = 1, ngrid_y
     DO i = 1, ngrid_x
       iter_range(1) = 1
@@ -239,7 +235,6 @@ program POISSON
 
     END DO
   END DO
-  call ops_print_dat_to_txtfile(u(1), "poisson_guess_u.dat")
 
 
 
@@ -259,7 +254,6 @@ program POISSON
                           & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE));
       END DO
     END DO
-    call ops_print_dat_to_txtfile(u2(1), "poisson_stencil_u2.dat")
 
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
@@ -272,12 +266,10 @@ program POISSON
                           & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
       END DO
     END DO
-    call ops_print_dat_to_txtfile(u(1), "poisson_update_u.dat")
 
   END DO
 
 
-  call ops_print_dat_to_txtfile(u(1), "poisson_fin_u.dat")
 
 
   err = 0.0_8
