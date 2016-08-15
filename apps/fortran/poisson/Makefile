@@ -68,7 +68,7 @@ endif
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda
+  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda poisson_openacc
   OPS_MPI	= -DOPS_MPI
   CUDAFOR	= -DOPS_WITH_CUDAFOR
 else
