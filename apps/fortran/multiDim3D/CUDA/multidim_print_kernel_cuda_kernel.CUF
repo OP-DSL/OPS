@@ -64,6 +64,7 @@ end subroutine
 !host subroutine
 attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, dim, range, &
 & opsArg1)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

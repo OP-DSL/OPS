@@ -343,7 +343,7 @@ cloverleaf_mpi_inline: $(mpiinline_obj_list) clover_leaf_ops.cpp start.cpp build
                 initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
-                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  -DOPS_MPI \
 		clover_leaf_ops.cpp start.cpp build_field.cpp \
                 read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \

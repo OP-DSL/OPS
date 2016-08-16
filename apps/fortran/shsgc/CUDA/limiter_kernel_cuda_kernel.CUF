@@ -96,6 +96,7 @@ attributes (host) subroutine limiter_kernel_host( userSubroutine, block, dim, ra
 & opsArg1, &
 & opsArg2, &
 & opsArg3)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

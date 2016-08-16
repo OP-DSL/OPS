@@ -86,10 +86,10 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenACC'
-./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running OpenACC'
+#./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
