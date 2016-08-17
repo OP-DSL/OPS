@@ -36,8 +36,12 @@
 * functions for interfacing with external Tridiagonal libraries
 */
 
-#include "trid_mpi_cpu.hpp"
 #include <ops_lib_core.h>
+#include <ops_mpi_core.h>
+
+#define FP double // doubles when calling thomas should be FPs
+#define N_MAX 1024
+#include "trid_mpi_cpu.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,16 +92,46 @@ void ops_tridMultiDimBatch(
     }
   }
 
+  // compute tridiagonal system sizes
+  ops_block block = a->block;
+  sub_block *sb = OPS_sub_block_list[block->index];
+  int sys_len_l = sb->pdims[0] * 2;    // Reduced system size in x dim
+  int n_sys_g = a_size[1] * a_size[2]; // ny*nz
+  int n_sys_l_tmp = n_sys_g / sb->pdims[0] /*mpi.procs*/;
+  int n_sys_l = (1 + (n_sys_l_tmp - 1) / sb->pdims[0]) * sb->pdims[0];
+
+  // create separate coommunicator for x dimension communications
+  int free_coords[3];
+  MPI_Comm x_comm;
+  free_coords[0] = 1;
+  free_coords[1] = 0;
+  free_coords[2] = 0;
+  MPI_Cart_sub(sb->comm, free_coords, &x_comm);
+
+  // Containers used to communicate preprocess halo
+  double *halo_sndbuf = (double *)ops_malloc(n_sys_l * sys_len_l * 3 *
+                                             sizeof(double)); // Send Buffer
+  double *halo_rcvbuf = (double *)ops_malloc(n_sys_l * sys_len_l * 3 *
+                                             sizeof(double)); // Receive Buffer
+  double *halo_sndbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
+                                              sizeof(double)); // Send Buffer
+  double *halo_rcvbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
+                                              sizeof(double)); // Receive Buffer
+
+  // Containers used to communicate reduced system
+  double *aa_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
+  double *cc_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
+  double *dd_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
+
   // Do modified Thomas
-  int n_sys_g = a_size[1] * a_size[2];
-  char *aa =
-      (char *)ops_malloc(sizeof(double) * a_size[0] * a_size[1] * a_size[2]);
-  char *bb =
-      (char *)ops_malloc(sizeof(double) * b_size[0] * b_size[1] * b_size[2]);
-  char *cc =
-      (char *)ops_malloc(sizeof(double) * c_size[0] * c_size[1] * c_size[2]);
-  char *dd =
-      (char *)ops_malloc(sizeof(double) * d_size[0] * d_size[1] * d_size[2]);
+  double *aa =
+      (double *)ops_malloc(sizeof(double) * a_size[0] * a_size[1] * a_size[2]);
+  double *bb =
+      (double *)ops_malloc(sizeof(double) * b_size[0] * b_size[1] * b_size[2]);
+  double *cc =
+      (double *)ops_malloc(sizeof(double) * c_size[0] * c_size[1] * c_size[2]);
+  double *dd =
+      (double *)ops_malloc(sizeof(double) * d_size[0] * d_size[1] * d_size[2]);
 #pragma omp parallel for
   for (int id = 0; id < n_sys_g; id++) {
     int a_base = id * a->size[0] - a->d_m[0];
@@ -114,6 +148,49 @@ void ops_tridMultiDimBatch(
                    (&((const double *)u->data)[u_base]), (double *)(&aa[base]),
                    (double *)(&cc[base]), (double *)(&dd[base]), a_size[0], 1);
   }
+
+// Communicate boundary values
+// Pack boundary to a single data structure
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_g; id++) {
+    // Gather coefficients of a,c,d
+    halo_sndbuf[id * 3 * 2 + 0 * 2] = aa[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 0 * 2 + 1] = aa[id * a_size[0] + a_size[0] - 1];
+    halo_sndbuf[id * 3 * 2 + 1 * 2] = cc[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 1 * 2 + 1] = cc[id * a_size[0] + a_size[0] - 1];
+    halo_sndbuf[id * 3 * 2 + 2 * 2] = dd[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
+  }
+
+  MPI_Alltoall(halo_sndbuf, n_sys_l * 3 * 2, MPI_DOUBLE, halo_rcvbuf,
+               n_sys_l * 3 * 2, MPI_DOUBLE, x_comm);
+
+// Unpack boundary data
+#pragma omp parallel for collapse(2)
+  for (int p = 0; p < sb->pdims[0]; p++) {
+    for (int id = 0; id < n_sys_l; id++) {
+      aa_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2];
+      aa_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
+      cc_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2];
+      cc_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
+      dd_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2];
+      dd_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
+    }
+  }
+
+// Compute reduced system
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_l; id++) {
+    int base = id * sys_len_l;
+    thomas_on_reduced(&aa_r[base], &cc_r[base], &dd_r[base], sys_len_l, 1);
+  }
+
   ops_free(aa);
   ops_free(bb);
   ops_free(cc);
@@ -241,6 +318,11 @@ void ops_tridMultiDimBatch_Inc(
     (const double *)c->data,
     (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);*/
 }
+
+void ops_exitTridMultiDimBatchSolve() {
+  // free memory allocated during tridiagonal solve e.g. mpi buffers
+}
+
 #ifdef __cplusplus
 }
 #endif

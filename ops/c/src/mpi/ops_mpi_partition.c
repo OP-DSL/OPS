@@ -221,6 +221,11 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   if (sb->owned)
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
 
+  // Store number of procs in each dimension for latter use
+  sb->pdims = (int *)ops_malloc(ndim * sizeof(int));
+  for (int n = 0; n < ndim; n++)
+    sb->pdims[n] = pdims[n];
+
   /** ---- get IDs of neighbours ---- **/
 
   if (sb->owned) {
