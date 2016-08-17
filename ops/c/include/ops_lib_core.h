@@ -53,6 +53,10 @@
 #include "ops_macros.h"
 #include "ops_util.h"
 
+#ifndef OPS_ALIGNMENT
+#define OPS_ALIGNMENT 64
+#endif
+
 /*
 * enum list for ops_par_loop
 */
@@ -472,6 +476,14 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
 void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 void ops_dat_set_data(ops_dat dat, int part, char *data);
 int ops_dat_get_global_npartitions(ops_dat dat);
+
+/*******************************************************************************
+* Memory allocation functions
+*******************************************************************************/
+void* ops_malloc (size_t size);
+void* ops_realloc (void *ptr, size_t size);
+void  ops_free (void *ptr);
+void* ops_calloc (size_t num, size_t size);
 
 #ifdef __cplusplus
 }
