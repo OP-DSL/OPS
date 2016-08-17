@@ -153,16 +153,15 @@ int main(int argc, char **argv)
                ops_arg_dat(h_du, 1, S3D_000, "double", OPS_READ),
                ops_arg_reduce(rms, 1, "double", OPS_INC));
 
-  ops_reduction_result(rms,&rms_value);
-  ops_printf("Value %lg\n",rms_value);
-
-  exit(-2);
-
   ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch( 3, 0 , size, h_ax, h_bx, h_cx, h_du, h_u, opts);
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed trid_x (sec): %lf (s)\n",et3-et2);
 
+  ops_reduction_result(rms,&rms_value);
+  ops_printf("Value %lg\n",rms_value);
+
+  exit(-2);
 
 
   ops_timers(&ct2, &et2);
