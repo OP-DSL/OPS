@@ -177,12 +177,12 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
 
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(packer1_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], packer1_kernel_src);
+    source_size[0] = strlen(packer1_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], packer1_kernel_src);
 
-    if(packer1_kernel == NULL)
-      packer1_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (packer1_kernel == NULL)
+      packer1_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_opencl_core.program = clCreateProgramWithSource(
@@ -200,9 +200,13 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-      build_log = (char*) ops_malloc(log_size+1);
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
           stderr,
@@ -282,12 +286,12 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
 
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(packer4_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], packer4_kernel_src);
+    source_size[0] = strlen(packer4_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], packer4_kernel_src);
 
-    if(packer4_kernel == NULL)
-      packer4_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (packer4_kernel == NULL)
+      packer4_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_opencl_core.program = clCreateProgramWithSource(
@@ -304,9 +308,13 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-      build_log = (char*) ops_malloc(log_size+1);
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
           stderr,
@@ -500,12 +508,12 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(unpacker1_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], unpacker1_kernel_src);
+    source_size[0] = strlen(unpacker1_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], unpacker1_kernel_src);
 
-    if(unpacker1_kernel == NULL)
-      unpacker1_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (unpacker1_kernel == NULL)
+      unpacker1_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_opencl_core.program = clCreateProgramWithSource(
@@ -523,9 +531,13 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-      build_log = (char*) ops_malloc(log_size+1);
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
           stderr,
@@ -549,48 +561,63 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(unpacker4_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], unpacker4_kernel_src);
+    source_size[0] = strlen(unpacker4_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], unpacker4_kernel_src);
 
-		if(unpacker4_kernel == NULL)
-      unpacker4_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (unpacker4_kernel == NULL)
+      unpacker4_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
-			//attempt to attach sources to program (not compile)
-			OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *)&source_size, &ret);
-			if (ret != CL_SUCCESS) {
-				fprintf(stderr, "Error: Unable to create program from source.\n");
-				clSafeCall(ret);
-				return;
-			}
-			 char buildOpts[] = " ";
-			ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
-			if(ret != CL_SUCCESS) {
-				char* build_log;
-				size_t log_size;
-				clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) ops_malloc(log_size+1);
-				clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-				build_log[log_size] = '\0';
-				fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
-				fprintf(stderr, "\n========================================================= \n");
-				free(build_log);
-				exit(EXIT_FAILURE);
-			}
+    // attempt to attach sources to program (not compile)
+    OPS_opencl_core.program = clCreateProgramWithSource(
+        OPS_opencl_core.context, 1, (const char **)&source_str,
+        (const size_t *)&source_size, &ret);
+    if (ret != CL_SUCCESS) {
+      fprintf(stderr, "Error: Unable to create program from source.\n");
+      clSafeCall(ret);
+      return;
+    }
+    char buildOpts[] = " ";
+    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      fprintf(
+          stderr,
+          "=============== OpenCL Program Build Info ================\n\n%s",
+          build_log);
+      fprintf(stderr,
+              "\n========================================================= \n");
+      free(build_log);
+      exit(EXIT_FAILURE);
+    }
 
-			// Create the OpenCL kernel
-			*unpacker4_kernel = clCreateKernel(OPS_opencl_core.program, "ops_opencl_unpacker4", &ret);
-			clSafeCall( ret );
-			free(source_str[0]);
-			isbuilt_unpacker4_kernel = true;
-		}
+    // Create the OpenCL kernel
+    *unpacker4_kernel =
+        clCreateKernel(OPS_opencl_core.program, "ops_opencl_unpacker4", &ret);
+    clSafeCall(ret);
+    free(source_str[0]);
+    isbuilt_unpacker4_kernel = true;
+  }
 
-  //char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
+  // char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
 
-  if (halo_buffer_size < halo->count*halo->blocklength) {
-    if (halo_buffer_d!=NULL) clSafeCall( clReleaseMemObject(halo_buffer_d));
-    halo_buffer_d = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE, halo->count*halo->blocklength*4,NULL, &ret);
-    halo_buffer_size = halo->count*halo->blocklength*4;
+  if (halo_buffer_size < halo->count * halo->blocklength) {
+    if (halo_buffer_d != NULL)
+      clSafeCall(clReleaseMemObject(halo_buffer_d));
+    halo_buffer_d =
+        clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE,
+                       halo->count * halo->blocklength * 4, NULL, &ret);
+    halo_buffer_size = halo->count * halo->blocklength * 4;
   }
 
   // char * __restrict dest = dat->data_d+dest_offset*dat->elem_size;
@@ -737,7 +764,6 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
 
 char *ops_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
-}
 
 cl_kernel *copy_tobuf_kernel = NULL;
 cl_kernel *copy_frombuf_kernel = NULL;
@@ -819,12 +845,12 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   if (!isbuilt_copy_tobuf_kernel) {
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(copy_tobuf_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], copy_tobuf_kernel_src);
+    source_size[0] = strlen(copy_tobuf_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], copy_tobuf_kernel_src);
 
-    if(copy_tobuf_kernel == NULL)
-      copy_tobuf_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (copy_tobuf_kernel == NULL)
+      copy_tobuf_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_opencl_core.program = clCreateProgramWithSource(
@@ -842,9 +868,13 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-      build_log = (char*) ops_malloc(log_size+1);
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
           stderr,
@@ -967,12 +997,12 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   if (!isbuilt_copy_frombuf_kernel) {
     char *source_str[1];
     size_t source_size[1];
-    source_size[0] = strlen(copy_frombuf_kernel_src)+1;
-    source_str[0] = (char*)ops_malloc(source_size[0]);
-    strcpy (source_str[0], copy_frombuf_kernel_src);
+    source_size[0] = strlen(copy_frombuf_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], copy_frombuf_kernel_src);
 
-    if(copy_frombuf_kernel == NULL)
-      copy_frombuf_kernel = (cl_kernel*) ops_malloc(1*sizeof(cl_kernel));
+    if (copy_frombuf_kernel == NULL)
+      copy_frombuf_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_opencl_core.program = clCreateProgramWithSource(
@@ -990,9 +1020,13 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-      build_log = (char*) ops_malloc(log_size+1);
-      clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
           stderr,

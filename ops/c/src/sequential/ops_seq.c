@@ -66,7 +66,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     int bytes = size * type_size;
 
-    /*int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute padding x-dim for vecotrization
+    /*int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute
+    padding x-dim for vecotrization
     dat->size[0] += x_pad;
     dat->d_p[0] = x_pad;*/
 
@@ -122,8 +123,12 @@ void ops_halo_transfer(ops_halo_group group) {
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
     int size = halo->from->elem_size * halo->iter_size[0];
-    for (int i = 1; i < halo->from->block->dims; i++) size *= halo->iter_size[i];
-    if (size > ops_halo_buffer_size) {ops_halo_buffer = (char *)ops_realloc(ops_halo_buffer, size); ops_halo_buffer_size = size;}
+    for (int i = 1; i < halo->from->block->dims; i++)
+      size *= halo->iter_size[i];
+    if (size > ops_halo_buffer_size) {
+      ops_halo_buffer = (char *)ops_realloc(ops_halo_buffer, size);
+      ops_halo_buffer_size = size;
+    }
 
     // copy to linear buffer from source
     int ranges[OPS_MAX_DIM * 2] = {0};

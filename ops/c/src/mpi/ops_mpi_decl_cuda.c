@@ -134,19 +134,27 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // just once
   // what to do if not ?? How will the halos be handled
 
-  //TODO: proper allocation and TAILQ
-  //create list to hold sub-grid decomposition geometries for each mpi process
-  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(OPS_sub_dat_list, OPS_dat_index*sizeof(sub_dat_list));
+  // TODO: proper allocation and TAILQ
+  // create list to hold sub-grid decomposition geometries for each mpi process
+  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
+      OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
 
-  //store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd= (sub_dat_list)ops_malloc(sizeof(sub_dat));
+  // store away product array prod[] and MPI_Types for this ops_dat
+  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
-  sd->dirty_dir_send =( int *)ops_malloc(sizeof(int)*2*block->dims*MAX_DEPTH);
-  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_send[i] = 1;
-  sd->dirty_dir_recv =( int *)ops_malloc(sizeof(int)*2*block->dims*MAX_DEPTH);
-  for(int i = 0; i<2*block->dims*MAX_DEPTH;i++) sd->dirty_dir_recv[i] = 1;
-  for(int i = 0; i<OPS_MAX_DIM; i++) {sd->d_ip[i] = 0; sd->d_im[i] = 0;}
+  sd->dirty_dir_send =
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+  for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
+    sd->dirty_dir_send[i] = 1;
+  sd->dirty_dir_recv =
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+  for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
+    sd->dirty_dir_recv[i] = 1;
+  for (int i = 0; i < OPS_MAX_DIM; i++) {
+    sd->d_ip[i] = 0;
+    sd->d_im[i] = 0;
+  }
 
   OPS_sub_dat_list[dat->index] = sd;
 
