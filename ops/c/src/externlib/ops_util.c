@@ -45,14 +45,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
 #include <ops_util.h>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
 *******************************************************************************/
-void* xmalloc (size_t size) {
-  if(size == 0) 
+void *xmalloc(size_t size) {
+  if (size == 0)
     return (void *)NULL;
   register void *value = malloc(size);
   if (value == 0)
@@ -63,8 +62,8 @@ void* xmalloc (size_t size) {
 /*******************************************************************************
 * Wrapper for realloc from www.gnu.org/
 *******************************************************************************/
-void* xrealloc (void *ptr, size_t size) {
-  if(size == 0) {
+void *xrealloc(void *ptr, size_t size) {
+  if (size == 0) {
     free(ptr);
     return (void *)NULL;
   }
@@ -78,11 +77,13 @@ void* xrealloc (void *ptr, size_t size) {
 /*******************************************************************************
 * Wrapper for calloc from www.gnu.org/
 *******************************************************************************/
-void* xcalloc (size_t number, size_t size) {
-  if(size == 0) return (void *)NULL;
+void *xcalloc(size_t number, size_t size) {
+  if (size == 0)
+    return (void *)NULL;
 
-  register void *value = calloc (number, size);
-  if (value == 0) printf("Virtual memory exhausted at calloc\n");
+  register void *value = calloc(number, size);
+  if (value == 0)
+    printf("Virtual memory exhausted at calloc\n");
   return value;
 }
 
@@ -92,8 +93,8 @@ void* xcalloc (size_t number, size_t size) {
 int min(int array[], int size) {
   int min = INT_MAX;
   int index = -1;
-  for (int i=0; i<size; i++) {
-    if (array[i]<min) {
+  for (int i = 0; i < size; i++) {
+    if (array[i] < min) {
       index = i;
       min = array[i];
     }
@@ -122,7 +123,7 @@ int binary_search(int a[], int value, int low, int high) {
 *******************************************************************************/
 int linear_search(int a[], int value, int low, int high) {
   for (int i = low; i <= high; i++) {
-    if (a[i] == value) 
+    if (a[i] == value)
       return i;
   }
   return -1;
@@ -180,6 +181,6 @@ int removeDups(int a[], int array_size) {
 * Check if a file exists
 *******************************************************************************/
 int file_exist(char const *filename) {
-  struct stat   buffer;
+  struct stat buffer;
   return (stat(filename, &buffer) == 0);
 }

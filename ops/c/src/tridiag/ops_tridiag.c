@@ -36,70 +36,68 @@
 * functions for interfacing with external Tridiagonal libraries
 */
 
-#include <ops_lib_core.h>
 #include "trid_cpu.h"
+#include <ops_lib_core.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
-  //dummy routine for non-GPU backends
+  // dummy routine for non-GPU backends
 }
 
 void ops_tridMultiDimBatch(
-  int ndim, //number of dimsnsions, ndim <= MAXDIM = 8
-  int solvedim, // user chosen dimension to perform solve
-  int* dims, // array containing the sizes of each ndim dimensions
-  ops_dat a, ops_dat b, ops_dat c,//left hand side coefficients of a
-                                  //multidimensional problem. An array containing
-                                  //A matrices of individual problems
-  ops_dat d, // right hand side coefficients of a multidimensional problem. An
-             // array containing d column vectors of individual problems
-  ops_dat u,
-  int* opts // indicates different algorithms to use -- not used for CPU backends
-) {
+    int ndim,     // number of dimsnsions, ndim <= MAXDIM = 8
+    int solvedim, // user chosen dimension to perform solve
+    int *dims,    // array containing the sizes of each ndim dimensions
+    ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
+    // multidimensional problem. An array containing
+    // A matrices of individual problems
+    ops_dat d, // right hand side coefficients of a multidimensional problem. An
+               // array containing d column vectors of individual problems
+    ops_dat u,
+    int *opts // indicates different algorithms to use -- not used for CPU
+              // backends
+    ) {
 
-  tridDmtsvStridedBatch((const double *)a->data,
-    (const double *)b->data,
-    (const double *)c->data,
-    (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
+  tridDmtsvStridedBatch((const double *)a->data, (const double *)b->data,
+                        (const double *)c->data, (double *)d->data,
+                        (double *)u->data, ndim, solvedim, dims, dims);
 
-/* Right now, we are simply using the same memory allocated by OPS
-as can be seen by the use of a->data, b->data, c->data etc.
+  /* Right now, we are simply using the same memory allocated by OPS
+  as can be seen by the use of a->data, b->data, c->data etc.
 
-These data is currently not padded to be 32 or 64 bit aligned
-in the x-lines and so is inefficient.
+  These data is currently not padded to be 32 or 64 bit aligned
+  in the x-lines and so is inefficient.
 
-In the ADI example currently the mesh size is 256^3 and so we are
-32/54 bit alighed, thus we do not see any performance definiencies
-but other sizes will show this issue
+  In the ADI example currently the mesh size is 256^3 and so we are
+  32/54 bit alighed, thus we do not see any performance definiencies
+  but other sizes will show this issue
 
-As such we will need to think on how to pad arrays.
-The problem is that on apps like Cloverleaf we see poorer performance
-due to extra x dim padding.
-*/
-
+  As such we will need to think on how to pad arrays.
+  The problem is that on apps like Cloverleaf we see poorer performance
+  due to extra x dim padding.
+  */
 }
 
 void ops_tridMultiDimBatch_Inc(
-  int ndim, //number of dimsnsions, ndim <= MAXDIM = 8
-  int solvedim, // user chosen dimension to perform solve
-  int* dims, // array containing the sizes of each ndim dimensions
-  ops_dat a, ops_dat b, ops_dat c,//left hand side coefficients of a
-                                  //multidimensional problem. An array containing
-                                  //A matrices of individual problems
-  ops_dat d, // right hand side coefficients of a multidimensional problem. An
-             // array containing d column vectors of individual problems
-  ops_dat u,
-  int* opts // indicates different algorithms to use -- not used for CPU backends
-) {
+    int ndim,     // number of dimsnsions, ndim <= MAXDIM = 8
+    int solvedim, // user chosen dimension to perform solve
+    int *dims,    // array containing the sizes of each ndim dimensions
+    ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
+    // multidimensional problem. An array containing
+    // A matrices of individual problems
+    ops_dat d, // right hand side coefficients of a multidimensional problem. An
+               // array containing d column vectors of individual problems
+    ops_dat u,
+    int *opts // indicates different algorithms to use -- not used for CPU
+              // backends
+    ) {
 
-  tridDmtsvStridedBatchInc((const double *)a->data,
-    (const double *)b->data,
-    (const double *)c->data,
-    (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
-
+  tridDmtsvStridedBatchInc((const double *)a->data, (const double *)b->data,
+                           (const double *)c->data, (double *)d->data,
+                           (double *)u->data, ndim, solvedim, dims, dims);
 }
 #ifdef __cplusplus
 }

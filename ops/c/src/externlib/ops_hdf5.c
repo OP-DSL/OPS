@@ -830,23 +830,22 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   // read in the actual data
   int t_size = 1;
   for (int d = 0; d < block->dims; d++)
-	t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
-  char* data = (char *)ops_malloc(t_size*dat_dim*type_size);
+    t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
+  char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
 
-
-  if(strcmp(read_type,"double") == 0)
-	  H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
-    else if(strcmp(read_type,"float") == 0)
-      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_FLOAT, data);
-    else if(strcmp(read_type,"int") == 0)
-      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_INT, data);
-    else if(strcmp(read_type,"long") == 0)
-      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LONG, data);
-    else if(strcmp(read_type,"long long") == 0)
-      H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LLONG, data);
-    else {
-      printf("Error: Unknown type in ops_decl_dat_hdf5()\n");
-      exit(-2);
+  if (strcmp(read_type, "double") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
+  else if (strcmp(read_type, "float") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_FLOAT, data);
+  else if (strcmp(read_type, "int") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_INT, data);
+  else if (strcmp(read_type, "long") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LONG, data);
+  else if (strcmp(read_type, "long long") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LLONG, data);
+  else {
+    printf("Error: Unknown type in ops_decl_dat_hdf5()\n");
+    exit(-2);
   }
 
   ops_dat created_dat = ops_decl_dat_char(
@@ -909,8 +908,9 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   // fetch data onto the host ( if needed ) based on the backend
   ops_get_data(dat);
   int t_size = 1;
-  for (int d = 0; d < dat->block->dims; d++) t_size *= dat->size[d];
-  u_dat = (char *)ops_malloc(t_size*dat->elem_size);
-  memcpy(u_dat, dat->data, t_size*dat->elem_size);
+  for (int d = 0; d < dat->block->dims; d++)
+    t_size *= dat->size[d];
+  u_dat = (char *)ops_malloc(t_size * dat->elem_size);
+  memcpy(u_dat, dat->data, t_size * dat->elem_size);
   return (u_dat);
 }
