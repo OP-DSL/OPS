@@ -148,7 +148,7 @@ void ops_tridMultiDimBatch(
                    (&((const double *)u->data)[u_base]), (double *)(&aa[base]),
                    (double *)(&cc[base]), (double *)(&dd[base]), a_size[0], 1);
   }
-  /*
+
   // Communicate boundary values
   // Pack boundary to a single data structure
   #pragma omp parallel for
@@ -222,88 +222,12 @@ void ops_tridMultiDimBatch(
                       (double *)(&dd[base]), &((double *)u->data)[u_base],
                       a_size[0], 1);
     }
-  */
+
   ops_free(aa);
   ops_free(bb);
   ops_free(cc);
   ops_free(dd);
 
-  /*
-  tridDmtsvStridedBatch((const double *)a->data,
-  (const double *)b->data,
-  (const double *)c->data,
-  (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);
-  */
-
-  /**
-      //Do modified Thomas
-      #pragma omp parallel for
-      for(int id=0; id<app.n_sys_g; id++) {
-        int base = id*app.nx_pad;
-        thomas_forward(&app.ax[base],&app.bx[base],&app.cx[base],&app.du[base],&app.h_u[base],&app.aa[base],&app.cc[base],&app.dd[base],app.nx,1);
-      }
-
-      // Communicate boundary values
-      // Pack boundary to a single data structure
-      #pragma omp parallel for
-      for(int id=0; id<app.n_sys_g; id++) {
-        // Gather coefficients of a,c,d
-        mpi.halo_sndbuf[id*3*2 + 0*2     ] = app.aa[id*app.nx_pad           ];
-        mpi.halo_sndbuf[id*3*2 + 0*2 + 1 ] = app.aa[id*app.nx_pad + app.nx-1];
-        mpi.halo_sndbuf[id*3*2 + 1*2     ] = app.cc[id*app.nx_pad           ];
-        mpi.halo_sndbuf[id*3*2 + 1*2 + 1 ] = app.cc[id*app.nx_pad + app.nx-1];
-        mpi.halo_sndbuf[id*3*2 + 2*2     ] = app.dd[id*app.nx_pad           ];
-        mpi.halo_sndbuf[id*3*2 + 2*2 + 1 ] = app.dd[id*app.nx_pad + app.nx-1];
-      }
-
-      // MPI communicate
-
-      // Unpack boundary data
-      #pragma omp parallel for collapse(2)
-      for(int p=0; p<mpi.pdims[0]; p++) {
-        for(int id=0; id<app.n_sys_l; id++) {
-          //printf("p = %d is = %d \n",p,id);
-          app.aa_r[id*app.sys_len_l + p*2    ] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 0*2     ];
-          app.aa_r[id*app.sys_len_l + p*2 + 1] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 0*2 + 1 ];
-          app.cc_r[id*app.sys_len_l + p*2    ] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 1*2     ];
-          app.cc_r[id*app.sys_len_l + p*2 + 1] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 1*2 + 1 ];
-          app.dd_r[id*app.sys_len_l + p*2    ] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 2*2     ];
-          app.dd_r[id*app.sys_len_l + p*2 + 1] =
-  mpi.halo_rcvbuf[p*app.n_sys_l*3*2 + id*3*2 + 2*2 + 1 ];
-        }
-      }
-
-      // Compute reduced system
-      #pragma omp parallel for
-      for(int id=0; id<app.n_sys_l; id++) {
-        int base = id*app.sys_len_l;
-        thomas_on_reduced(&app.aa_r[base], &app.cc_r[base], &app.dd_r[base],
-  app.sys_len_l, 1);
-      }
-
-      // Send back new values
-
-      // Unpack boundary solution
-      #pragma omp parallel for
-      for(int id=0; id<app.n_sys_g; id++) {
-        // Gather coefficients of a,c,d
-        app.dd[id*app.nx_pad           ] = mpi.halo_sndbuf[id*2    ];
-        app.dd[id*app.nx_pad + app.nx-1] = mpi.halo_sndbuf[id*2 + 1];
-      }
-
-      // Do the backward pass of modified Thomas
-      #pragma omp parallel for
-      for(int id=0; id<app.n_sys_g; id++) {
-        int ind = id*app.nx_pad;
-        thomas_backward(&app.aa[ind],&app.cc[ind],&app.dd[ind],&app.h_u[ind],app.nx,1);
-      }
-
-  **/
 
   /* Right now, we are simply using the same memory allocated by OPS
   as can be seen by the use of a->data, b->data, c->data etc.
