@@ -98,6 +98,7 @@ attributes (host) subroutine update_kernel_host( userSubroutine, block, dim, ran
 & opsArg2, &
 & opsArg3, &
 & opsArg4)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

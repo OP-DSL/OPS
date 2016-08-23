@@ -105,8 +105,20 @@ ifeq ($(OPS_COMPILER),xl) #for IBM BlueGene Q
   MPICC     := mpixlc
   MPIFLAGS  := $(CXXFLAGS)
 else
+ifeq ($(OPS_COMPILER),xlp8) #for IBM Power8
+  CC        := mpicc
+  CUDA_ALIGNE_FLAG :=
+  CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O5 -qaltivec=le 
+  CXX       := mpicxx
+  CXXFLAGS  := $(CCFLAGS)
+  MPICXX    := mpicxx
+  MPICC     := mpicc
+  MPIFLAGS  := $(CXXFLAGS)
+else
+
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

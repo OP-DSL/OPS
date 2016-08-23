@@ -78,8 +78,30 @@ endif
   MPIFLAGS      = $(CXXFLAGS)
   TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda f_openacc
 else
+ifeq ($(OPS_COMPILER),xlp8)
+  CC            = xlc_r
+ifdef DEBUG
+  OPT           = -O0 -g
+else
+  OPT           = -O3 -qarch=pwr8 -qtune=pwr8
+endif
+  CCFLAGS       = $(OPT)
+  NVCC          = nvcc $(CODE_GEN_CUDA)
+  NVCCFLAGS     = -O3 -Xcompiler="-std=c99 -fPIC -pipe"
+  CUDA_ALIGNE_FLAG =
+  CXX           = xlc++_r
+  CXXFLAGS      = $(CCFLAGS)
+  F_INC_MOD     = $(F_OPS_MOD)/xl
+  FC            = xlf_r #-qcuda -WF,-DOPS_WITH_CUDAFOR
+  FFLAGS        = $(OPT) -qmoddir=$(F_INC_MOD)
+  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
+  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS      = $(CXXFLAGS)
+  CUDAFOR       = -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded
+  TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 

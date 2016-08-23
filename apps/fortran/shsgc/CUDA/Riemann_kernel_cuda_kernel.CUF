@@ -178,6 +178,7 @@ attributes (host) subroutine Riemann_kernel_host( userSubroutine, block, dim, ra
 & opsArg4, &
 & opsArg5, &
 & opsArg6)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

@@ -1,5 +1,5 @@
 subroutine poisson_populate_kernel(dispx, dispy, idx, u, f, ref)
-
+  implicit none
   integer (kind=4), INTENT(IN) :: dispx, dispy
   integer (kind=4), DIMENSION(2), INTENT(IN) :: idx
   real (kind=8), DIMENSION(1) :: u, f, ref

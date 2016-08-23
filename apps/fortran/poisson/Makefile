@@ -16,7 +16,7 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.0,cc35
 endif
 endif
 
@@ -48,6 +48,7 @@ endif
   MPIF90 	= $(MPI_INSTALL_PATH)/bin/mpif90
   MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
   TARGETS       = clean poisson_seq poisson_openmp poisson_mpi poisson_mpi_openmp
+  OPS_MPI	= -DOPS_MPI
 else
 ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
@@ -61,17 +62,42 @@ endif
   CUDA_ALIGN_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CXXLINK       = -lstdc++ -pgcpplibs -lgcc_s
   OMPFLAGS 	= -mp
-  OpenACCFLAGS  := -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 #-Minline
   FC            = pgfortran -fast $(PGI_CUDA_FORT_FLAGS) #,fastmath,ptxinfo
   FFLAGS        = $(OPT) $(PGFLAGS) -ldl
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda
+  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda poisson_openacc
+  OPS_MPI	= -DOPS_MPI
+  CUDAFOR	= -DOPS_WITH_CUDAFOR
 else
+ifeq ($(OPS_COMPILER),xl)
+ifdef DEBUG
+  OPT           = -O0 -g
+else
+  OPT           = -O3 -qarch=pwr8 -qtune=pwr8 -qcuda
+endif
+  CCFLAGS       = $(OPT)
+  CXX           = xlc++_r
+  CXXFLAGS      = $(CCFLAGS)
+  CUDA_ALIGN_FLAG = #-D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+  CXXLINK       = -lstdc++
+  OMPFLAGS 	= -qsmp=omp -qthreaded
+  FC            = xlf_r
+  FFLAGS        = $(OPT) -ldl -L/opt/ibm/lib/ -libmc++
+  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90        = $(MPI_INSTALL_PATH)/bin/mpif90
+  MPIFLAGS      = $(CXXFLAGS)
+  TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda
+  OPS_MPI	= -WF,-DOPS_MPI
+  CUDAFOR	= -WF,-DOPS_WITH_CUDAFOR -qcuda #-qthreaded
+else
+
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 
@@ -114,34 +140,30 @@ poisson_openmp: poisson_ops.F90 constants.F90
         -o poisson_openmp -lops_for_seq
 
 poisson_cuda: poisson_ops.F90 constants.F90
-ifeq ($(OPS_COMPILER),pgi)
-	$(FC) $(FFLAGS) $(FMODS) -DOPS_WITH_CUDAFOR -c constants.F90 \
+	$(FC) $(FFLAGS) $(FMODS) $(CUDAFOR) -c constants.F90 \
         ./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_stencil_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_update_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_error_kernel_cuda_kernel.CUF \
         poisson_ops.F90
-	$(FC) $(FFLAGS) $(FLINK) -DOPS_WITH_CUDAFOR poisson_ops.o constants.o \
+	$(FC) $(FFLAGS) $(FLINK) $(CUDAFOR) poisson_ops.o constants.o \
         poisson_initialguess_kernel_cuda_kernel.o \
         poisson_populate_kernel_cuda_kernel.o \
         poisson_stencil_kernel_cuda_kernel.o \
         poisson_update_kernel_cuda_kernel.o \
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_cuda -lops_for_cuda
-else
-	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
-endif
 
 poisson_mpi: poisson_ops.F90 constants.F90
-	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_MPI -c constants.F90 \
+	$(MPIF90) $(FFLAGS) $(FMODS) $(OPS_MPI) -c constants.F90 \
         ./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
         ./MPI/poisson_populate_kernel_seq_kernel.F90 \
         ./MPI/poisson_stencil_kernel_seq_kernel.F90 \
         ./MPI/poisson_update_kernel_seq_kernel.F90 \
         ./MPI/poisson_error_kernel_seq_kernel.F90 \
         poisson_ops.F90
-	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI poisson_ops.o constants.o \
+	$(MPIF90) $(FFLAGS) $(FLINK) $(OPS_MPI) poisson_ops.o constants.o \
         poisson_populate_kernel_seq_kernel.o \
         poisson_initialguess_kernel_seq_kernel.o \
         poisson_stencil_kernel_seq_kernel.o \
@@ -150,14 +172,14 @@ poisson_mpi: poisson_ops.F90 constants.F90
 	-o poisson_mpi -lops_for_mpi $(HDF5_LIB)
 
 poisson_mpi_openmp: poisson_ops.F90 constants.F90
-	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FMODS) -DOPS_MPI -c constants.F90 \
+	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FMODS) $(OPS_MPI) -c constants.F90 \
 	./MPI_OpenMP/poisson_initialguess_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_populate_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_stencil_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_update_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_error_kernel_omp_kernel.F90 \
 	poisson_ops.F90
-	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FLINK) -DOPS_MPI poisson_ops.o constants.o \
+	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FLINK) $(OPS_MPI) poisson_ops.o constants.o \
 	poisson_initialguess_kernel_omp_kernel.o \
 	poisson_populate_kernel_omp_kernel.o \
 	poisson_stencil_kernel_omp_kernel.o \
@@ -166,24 +188,20 @@ poisson_mpi_openmp: poisson_ops.F90 constants.F90
         -o poisson_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
 poisson_mpi_cuda: poisson_ops.F90 constants.F90
-ifeq ($(OPS_COMPILER),pgi)
-	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_MPI -DOPS_WITH_CUDAFOR -c constants.F90 \
+	$(MPIF90) $(FFLAGS) $(FMODS) $(OPS_MPI) $(CUDAFOR) -c constants.F90 \
 	./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_stencil_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_update_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_error_kernel_cuda_kernel.CUF \
         poisson_ops.F90
-	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI -DOPS_WITH_CUDAFOR poisson_ops.o constants.o \
+	$(MPIF90) $(FFLAGS) $(FLINK) $(OPS_MPI) $(CUDAFOR) poisson_ops.o constants.o \
         poisson_initialguess_kernel_cuda_kernel.o \
         poisson_populate_kernel_cuda_kernel.o \
         poisson_stencil_kernel_cuda_kernel.o \
         poisson_update_kernel_cuda_kernel.o \
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
-else
-	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
-endif
 
 poisson_openacc: poisson_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 \

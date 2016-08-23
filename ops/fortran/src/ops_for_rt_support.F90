@@ -177,7 +177,7 @@ module OPS_Fortran_RT_Support
     type(c_ptr), value :: idx
   end subroutine getIdx_c
 
-#ifdef OPS_WITH_CUDAFOR
+!#ifdef OPS_WITH_CUDAFOR
   integer function getOPS_block_size_x ( ) BIND(C,name='getOPS_block_size_x')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
@@ -187,7 +187,7 @@ module OPS_Fortran_RT_Support
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
   end function
-#endif
+!#endif
 
   subroutine ops_compute_transfer(ndims, starti, endi, arg, amount) BIND(C,name='ops_compute_transfer_f')
     
@@ -250,7 +250,7 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
     implicit none
     type(ops_block), intent(in)  :: block
-    integer(4), dimension(*), intent(in):: start
+    integer(4), dimension(*), intent(in), target :: start
     integer(4), dimension(*), target :: idx
 
     call getIdx_c ( block%blockCptr, c_loc(start), c_loc(idx))

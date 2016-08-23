@@ -141,6 +141,7 @@ attributes (host) subroutine calupwindeff_kernel_host( userSubroutine, block, di
 & opsArg5, &
 & opsArg6, &
 & opsArg7)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

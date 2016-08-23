@@ -88,6 +88,7 @@ attributes (host) subroutine poisson_stencil_kernel_host( userSubroutine, block,
 & opsArg1, &
 & opsArg2, &
 & opsArg3)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block

@@ -92,7 +92,7 @@ endif
   MPICC     = cc
   MPIFLAGS  = $(CPPFLAGS)
 else
-ifeq ($(OPS_COMPILER),xl)
+ifeq ($(OPS_COMPILER),xlp8)
   CPP       = mpixlc
   CUDA_ALIGN_FLAG :=
 ifdef DEBUG
@@ -318,6 +318,39 @@ cloverleaf_mpi_cuda: Makefile ./CUDA/cloverleaf_kernels_mpi_cu.o clover_leaf_ops
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/cloverleaf_kernels_mpi_cu.o ./CUDA/clover_leaf_kernels.cu
+
+mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+
+./MPI_inline/clover_leaf_kernels.o: ./MPI_inline/clover_leaf_kernels.cpp ./MPI_inline/clover_leaf_common.h Makefile
+				$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC)  \
+ 			       -I. MPI_inline/clover_leaf_kernels.cpp -c -o MPI_inline/clover_leaf_kernels.o
+
+./MPI_inline/%.o: ./MPI_inline/%.cpp ./MPI_inline/%_c.c ./MPI_inline/clover_leaf_common.h Makefile
+				@echo "Compiling kernel" $*
+				$(MPICC) $(MPIFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+			        -I. MPI_inline/$*_c.c -c -o MPI_inline/$*_c.o
+				$(MPICPP) $(MPIFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+				-I. MPI_inline/$*.cpp -c -o MPI_inline/$*.o
+
+cloverleaf_mpi_inline: $(mpiinline_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
+                update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+                calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+                advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
+                initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+                update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+                PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
+	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  -DOPS_MPI \
+		clover_leaf_ops.cpp start.cpp build_field.cpp \
+                read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
+                ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+                viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+                flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+		advec_mom_ops.cpp -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_inline
+
 
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")

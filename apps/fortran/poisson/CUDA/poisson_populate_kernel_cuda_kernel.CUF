@@ -24,7 +24,7 @@ contains
 
 !user function
 attributes (device) subroutine poisson_populate_kernel_gpu(dispx, dispy, idx, u, f, ref)
-
+  implicit none
   integer (kind=4), INTENT(IN) :: dispx, dispy
   integer (kind=4), DIMENSION(2), INTENT(IN) :: idx
   real (kind=8), DIMENSION(1) :: u, f, ref
@@ -107,6 +107,7 @@ attributes (host) subroutine poisson_populate_kernel_host( userSubroutine, block
 & opsArg4, &
 & opsArg5, &
 & opsArg6)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
@@ -199,9 +200,9 @@ attributes (host) subroutine poisson_populate_kernel_host( userSubroutine, block
   x_size = MAX(0,end(1)-start(1)+1)
   y_size = MAX(0,end(2)-start(2)+1)
 
-  call c_f_pointer(opsArg1%data,opsDat1Host,1)
+  call c_f_pointer(opsArg1%data,opsDat1Host,(/1/))
 
-  call c_f_pointer(opsArg2%data,opsDat2Host,1)
+  call c_f_pointer(opsArg2%data,opsDat2Host,(/1/))
 
 
   call c_f_pointer(getDatSizeFromOpsArg(opsArg4),dat4_size,(/dim/))

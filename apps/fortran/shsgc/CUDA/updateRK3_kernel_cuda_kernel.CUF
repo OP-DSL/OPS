@@ -172,6 +172,7 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
 & opsArg9, &
 & opsArg10, &
 & opsArg11)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
@@ -349,9 +350,9 @@ attributes (host) subroutine updateRK3_kernel_host( userSubroutine, block, dim, 
   dat9_base = getDatBaseFromOpsArg1D(opsArg9,start,1)
   call c_f_pointer(opsArg9%data_d,opsDat9Local,(/opsDat9Cardinality/))
 
-  call c_f_pointer(opsArg10%data,opsDat10Host,1)
+  call c_f_pointer(opsArg10%data,opsDat10Host,(/1/))
 
-  call c_f_pointer(opsArg11%data,opsDat11Host,1)
+  call c_f_pointer(opsArg11%data,opsDat11Host,(/1/))
 
   IF ((xdim1 .NE. xdim1_updateRK3_kernel_h) .OR. &
   (xdim2 .NE. xdim2_updateRK3_kernel_h) .OR. &
