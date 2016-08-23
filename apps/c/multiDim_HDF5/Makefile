@@ -132,7 +132,7 @@ TARGETS = write_dev_seq write_seq write_dev_mpi write_mpi write_openmp write_mpi
 read_dev_seq read_seq read_dev_mpi read_mpi read_openmp read_mpi_openmp read_cuda read_mpi_cuda read_opencl read_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += write_openacc write_mpi_openacc
+TARGETS += #no open_acc backend to be build
 else
 TARGETS += openacc_error
 endif
@@ -214,58 +214,6 @@ read_mpi_cuda: Makefile ./CUDA/read_kernels_mpi_cu.o read_ops.cpp $(OPS_INSTALL_
 ./CUDA/read_kernels_mpi_cu.o: ./CUDA/read_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 	-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/read_kernels_mpi_cu.o ./CUDA/read_kernels.cu
-
-openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
-openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
-
-openacc_mpi_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\_mpi.o/g | tr "\n" " ")
-openacc_mpi_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\_mpi.o/g | tr "\n" " ")
-
-
-./OpenACC/write_kernels.o: ./OpenACC/write_kernels.cpp Makefile
-	$(CPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CPPFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/write_kernels.cpp -c -o OpenACC/write_kernels.o
-./OpenACC/read_kernels.o: ./OpenACC/read_kernels.cpp Makefile
-	$(CPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CPPFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/read_kernels.cpp -c -o OpenACC/read_kernels.o
-
-
-./OpenACC/write_kernels_mpi.o: ./OpenACC/write_kernels.cpp Makefile
-	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 -DOPS_MPI $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/write_kernels.cpp -c -o OpenACC/write_kernels_mpi.o
-./OpenACC/read_kernels_mpi.o: ./OpenACC/read_kernels.cpp Makefile
-	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 -DOPS_MPI $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/read_kernels.cpp -c -o OpenACC/read_kernels_mpi.o
-
-
-./OpenACC/%_mpi.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
-	@echo "Compiling kernel" $*
-	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-              -I. OpenACC/$*_c.c -c -o OpenACC/$*_c_mpi.o
-	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-        -I. OpenACC/$*.cpp -c -o OpenACC/$*_mpi.o
-
-./OpenACC/%.o: ./OpenACC/%.cpp ./OpenACC/%_c.c Makefile
-	@echo "Compiling kernel" $*
-	$(CC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CCFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-              -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
-	$(CPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(CPPFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
-        -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
-
-write_openacc: $(openacc_obj_list) ./OpenACC/write_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
-    write_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o write_openacc
-read_openacc: $(openacc_obj_list) ./OpenACC/read_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
-    read_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o read_openacc
-
-
-write_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/write_kernels_mpi.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    write_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o write_mpi_openacc
-read_mpi_openacc: $(openacc_mpi_obj_list) ./OpenACC/read_kernels_mpi.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    read_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o read_mpi_openacc
 
 
 #
