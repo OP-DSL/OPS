@@ -667,9 +667,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
         // Create chunked dataset
         plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_chunk(
-            plist_id, block->dims,
-            GBL_SIZE); // chunk data set need to be the same size on each proc
+        H5Pset_chunk(plist_id, block->dims, GBL_SIZE); // chunk data set need
+                                                       // to be the same size
+                                                       // on each proc
 
         // Create the dataset with default properties and close filespace.
         if (strcmp(dat->type, "double") == 0 ||
@@ -1479,6 +1479,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     hsize_t l_disp[block->dims];   // local disps to remove MPI halos
     hsize_t size[block->dims];     // local size to compute the chunk data set
                                    // dimensions
+    hsize_t size2[block->dims];    // local size - stored for later use
     hsize_t gbl_size[block->dims]; // global size to compute the chunk data set
                                    // dimensions
 
@@ -1499,6 +1500,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
                                     // per MPI proc)
       size[d] = sd->decomp_size[d]; // local size to compute the chunk data set
                                     // dimensions
+      size2[d] = sd->decomp_size[d]; // local size - stored for later use
       gbl_size[d] = sd->gbl_size[d]; // global size to compute the chunk data
                                      // set dimensions
 
@@ -1522,7 +1524,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     int t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
-    // printf("t_size = %d ",t_size);
+
     char *data = (char *)malloc(t_size * dat->elem_size);
     dat->mem = t_size * dat->elem_size;
 
@@ -1583,7 +1585,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     }
 
     // open existing group -- an ops_block is a group
-    group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
+    group_id = H5Gopen(file_id, block->name, H5P_DEFAULT);
 
     // check if ops_dat exists
     if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
@@ -1662,13 +1664,13 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     // add MPI halos
     if (block->dims == 2)
-      add_mpi_halos2D(dat, size, l_disp, data);
+      add_mpi_halos2D(dat, size2, l_disp, data);
     else if (block->dims == 3)
-      add_mpi_halos3D(dat, size, l_disp, data);
+      add_mpi_halos3D(dat, size2, l_disp, data);
     else if (block->dims == 4)
-      add_mpi_halos4D(dat, size, l_disp, data);
+      add_mpi_halos4D(dat, size2, l_disp, data);
     else if (block->dims == 5)
-      add_mpi_halos5D(dat, size, l_disp, data);
+      add_mpi_halos5D(dat, size2, l_disp, data);
 
     free(data);
     H5Sclose(filespace);

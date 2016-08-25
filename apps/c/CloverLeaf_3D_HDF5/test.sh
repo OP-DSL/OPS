@@ -12,6 +12,8 @@ make
 echo '============> Generate HDF5 file'
 rm *.h5
 ./generate_file
+rm *.h5
+$MPI_INSTALL_PATH/bin/mpirun -np 10 ./generate_file_mpi
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 #<<COMMENT

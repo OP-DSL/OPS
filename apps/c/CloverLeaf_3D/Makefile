@@ -38,6 +38,7 @@ else
 endif
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
+  MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS	= $(CCFLAGS)
 else
