@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
       ops_decl_dat_hdf5(block, 1, "double", "single", "write_data.h5");
   ops_dat multi =
       ops_decl_dat_hdf5(block, 2, "double", "multi", "write_data.h5");
+  ops_dat integ = ops_decl_dat_hdf5(block, 1, "int", "integ", "write_data.h5");
 
   ops_partition("empty_string_that_does_nothing_yet");
   ops_diagnostic_output();
@@ -29,6 +30,7 @@ int main(int argc, char **argv) {
   ops_fetch_block_hdf5_file(block, "read_data.h5");
   ops_fetch_dat_hdf5_file(multi, "read_data.h5");
   ops_fetch_dat_hdf5_file(single, "read_data.h5");
+  ops_fetch_dat_hdf5_file(integ, "read_data.h5");
 
   ops_timing_output(stdout);
   ops_printf("\nSucessful exit from OPS!\n");

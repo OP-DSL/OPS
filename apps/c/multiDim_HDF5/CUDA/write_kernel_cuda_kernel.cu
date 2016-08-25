@@ -9,13 +9,20 @@ __constant__ int xdim1_write_kernel;
 int xdim1_write_kernel_h = -1;
 __constant__ int ydim1_write_kernel;
 int ydim1_write_kernel_h = -1;
+__constant__ int xdim2_write_kernel;
+int xdim2_write_kernel_h = -1;
+__constant__ int ydim2_write_kernel;
+int ydim2_write_kernel_h = -1;
 
 #undef OPS_ACC1
+#undef OPS_ACC2
 
 #undef OPS_ACC_MD0
 
 #define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_write_kernel * (y) + xdim1_write_kernel * ydim1_write_kernel * (z))
+#define OPS_ACC2(x, y, z)                                                      \
+  (x + xdim2_write_kernel * (y) + xdim2_write_kernel * ydim2_write_kernel * (z))
 
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   ((x)*2 + (d) + (xdim0_write_kernel * (y)*2) +                                \
@@ -24,23 +31,27 @@ int ydim1_write_kernel_h = -1;
 __device__
 
     void
-    write_kernel(double *arr, double *arr_single, const int *idx) {
+    write_kernel(double *arr, double *arr_single, int *arr_integ,
+                 const int *idx) {
 
   arr[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
   arr[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
 
   arr_single[OPS_ACC1(0, 0, 0)] = 3;
+
+  arr_integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 #undef OPS_ACC1
+#undef OPS_ACC2
 
 #undef OPS_ACC_MD0
 
 __global__ void ops_write_kernel(double *__restrict arg0,
-                                 double *__restrict arg1, int arg_idx0,
-                                 int arg_idx1, int arg_idx2, int size0,
-                                 int size1, int size2) {
+                                 double *__restrict arg1, int *__restrict arg2,
+                                 int arg_idx0, int arg_idx1, int arg_idx2,
+                                 int size0, int size1, int size2) {
 
   int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -54,24 +65,26 @@ __global__ void ops_write_kernel(double *__restrict arg0,
           idx_z * 1 * 2 * xdim0_write_kernel * ydim0_write_kernel;
   arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_write_kernel +
           idx_z * 1 * 1 * xdim1_write_kernel * ydim1_write_kernel;
+  arg2 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_write_kernel +
+          idx_z * 1 * 1 * xdim2_write_kernel * ydim2_write_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    write_kernel(arg0, arg1, arg_idx);
+    write_kernel(arg0, arg1, arg2, arg_idx);
   }
 }
 
 // host stub function
 void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
                                int *range, ops_arg arg0, ops_arg arg1,
-                               ops_arg arg2) {
+                               ops_arg arg2, ops_arg arg3) {
 
   // Timing
   double t1, t2, c1, c2;
 
-  ops_arg args[3] = {arg0, arg1, arg2};
+  ops_arg args[4] = {arg0, arg1, arg2, arg3};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 0))
+  if (!ops_checkpointing_before(args, 4, range, 0))
     return;
 #endif
 
@@ -132,9 +145,12 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   int ydim0 = args[0].dat->size[1];
   int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
 
   if (xdim0 != xdim0_write_kernel_h || ydim0 != ydim0_write_kernel_h ||
-      xdim1 != xdim1_write_kernel_h || ydim1 != ydim1_write_kernel_h) {
+      xdim1 != xdim1_write_kernel_h || ydim1 != ydim1_write_kernel_h ||
+      xdim2 != xdim2_write_kernel_h || ydim2 != ydim2_write_kernel_h) {
     cudaMemcpyToSymbol(xdim0_write_kernel, &xdim0, sizeof(int));
     xdim0_write_kernel_h = xdim0;
     cudaMemcpyToSymbol(ydim0_write_kernel, &ydim0, sizeof(int));
@@ -143,6 +159,10 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     xdim1_write_kernel_h = xdim1;
     cudaMemcpyToSymbol(ydim1_write_kernel, &ydim1, sizeof(int));
     ydim1_write_kernel_h = ydim1;
+    cudaMemcpyToSymbol(xdim2_write_kernel, &xdim2, sizeof(int));
+    xdim2_write_kernel_h = xdim2;
+    cudaMemcpyToSymbol(ydim2_write_kernel, &ydim2, sizeof(int));
+    ydim2_write_kernel_h = ydim2;
   }
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
@@ -151,8 +171,9 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
 
   int dat0 = args[0].dat->elem_size;
   int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
 
-  char *p_a[3];
+  char *p_a[4];
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -194,8 +215,27 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
                d_m[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  ops_H_D_exchanges_device(args, 3);
-  ops_halo_exchanges(args, 3, range);
+#ifdef OPS_MPI
+  for (int d = 0; d < dim; d++)
+    d_m[d] =
+        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
+#else
+  for (int d = 0; d < dim; d++)
+    d_m[d] = args[2].dat->d_m[d];
+#endif
+  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
+                          args[2].dat->base[0] - d_m[0]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1] -
+                                         args[2].dat->base[1] - d_m[1]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+              (start[2] * args[2].stencil->stride[2] - args[2].dat->base[2] -
+               d_m[2]);
+  p_a[2] = (char *)args[2].data_d + base2;
+
+  ops_H_D_exchanges_device(args, 4);
+  ops_halo_exchanges(args, 4, range);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
@@ -204,8 +244,8 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
 
   // call kernel wrapper function, passing in pointers to data
   ops_write_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
-                                     arg_idx[0], arg_idx[1], arg_idx[2], x_size,
-                                     y_size, z_size);
+                                     (int *)p_a[2], arg_idx[0], arg_idx[1],
+                                     arg_idx[2], x_size, y_size, z_size);
 
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
@@ -213,9 +253,10 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].time += t1 - t2;
   }
 
-  ops_set_dirtybit_device(args, 3);
+  ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
+  ops_set_halo_dirtybit3(&args[2], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -223,5 +264,6 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].mpi_time += t2 - t1;
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

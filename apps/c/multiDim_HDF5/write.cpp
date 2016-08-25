@@ -56,19 +56,20 @@ int main(int argc, char **argv) {
 
   ops_block grid0 = ops_decl_block(3, "grid0");
 
-  int d_p[3] = {1, 1,
-                0}; // max halo depths for the dat in the positive direction
-  int d_m[3] = {-1, -1,
-                0}; // max halo depths for the dat in the negative direction
+  int d_p[3] = {1, 1, 0};
+  int d_m[3] = {-1, -1, 0};
   int size[3] = {4, 5, 1}; // size of the dat
   int base[3] = {0, 0, 0};
 
   double *temp = NULL;
+  int *tempi = NULL;
 
   ops_dat single =
       ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "single");
   ops_dat multi =
       ops_decl_dat(grid0, 2, size, base, d_m, d_p, temp, "double", "multi");
+  ops_dat integ =
+      ops_decl_dat(grid0, 1, size, base, d_m, d_p, tempi, "int", "integ");
 
   int range_full[6];
   range_full[0] = 0;
@@ -87,12 +88,15 @@ int main(int argc, char **argv) {
   ops_par_loop(write_kernel, "write_kernel", grid0, 3, range_full,
                ops_arg_dat(multi, 2, S3D_000, "double", OPS_WRITE),
                ops_arg_dat(single, 1, S3D_000, "double", OPS_WRITE),
-               ops_arg_idx());
+               ops_arg_dat(integ, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
   ops_fetch_block_hdf5_file(grid0, "write_data.h5");
 
   ops_fetch_dat_hdf5_file(multi, "write_data.h5");
   ops_fetch_dat_hdf5_file(single, "write_data.h5");
+  ops_fetch_dat_hdf5_file(integ, "write_data.h5");
+
+  ops_print_dat_to_txtfile(integ, "integers.txt");
 
   //*******************************************************************
   // EXIT OPS AND PRINT TIMING INFO

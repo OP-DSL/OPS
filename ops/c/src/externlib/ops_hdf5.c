@@ -341,10 +341,12 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                          H5T_NATIVE_DOUBLE, dat->data);
       else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real(4)") || strcmp(dat->type, "real") == 0)
+               strcmp(dat->type, "real(4)") == 0 ||
+               strcmp(dat->type, "real") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                          H5T_NATIVE_FLOAT, dat->data);
-      else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") ||
+      else if (strcmp(dat->type, "int") == 0 ||
+               strcmp(dat->type, "int(4)") == 0 ||
                strcmp(dat->type, "integer(4)") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                          H5T_NATIVE_INT, dat->data);

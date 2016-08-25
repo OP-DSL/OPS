@@ -678,15 +678,18 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
                               H5P_DEFAULT, plist_id, H5P_DEFAULT);
         else if (strcmp(dat->type, "float") == 0 ||
-                 strcmp(dat->type, "real(4)") || strcmp(dat->type, "real") == 0)
+                 strcmp(dat->type, "real(4)") == 0 ||
+                 strcmp(dat->type, "real") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_FLOAT, filespace,
                               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") ||
+        else if (strcmp(dat->type, "int") == 0 ||
+                 strcmp(dat->type, "int(4)") == 0 ||
                  strcmp(dat->type, "integer") == 0 ||
-                 strcmp(dat->type, "integer(4)") == 0)
+                 strcmp(dat->type, "integer(4)") == 0) {
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_INT, filespace,
                               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "long") == 0)
+
+        } else if (strcmp(dat->type, "long") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LONG, filespace,
                               H5P_DEFAULT, plist_id, H5P_DEFAULT);
         else if (strcmp(dat->type, "long long") == 0)
@@ -916,18 +919,20 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       // write data
       if (strcmp(dat->type, "double") == 0 ||
           strcmp(dat->type, "double precision") == 0 ||
-          strcmp(dat->type, "real(8)") == 0)
+          strcmp(dat->type, "real(8)") == 0) {
         H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id,
                  data);
-      else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real(4)") || strcmp(dat->type, "real") == 0)
+      } else if (strcmp(dat->type, "float") == 0 ||
+                 strcmp(dat->type, "real(4)") == 0 ||
+                 strcmp(dat->type, "real") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id,
                  data);
-      else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") ||
+      else if (strcmp(dat->type, "int") == 0 ||
+               strcmp(dat->type, "int(4)") == 0 ||
                strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0)
+               strcmp(dat->type, "integer(4)") == 0) {
         H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "long") == 0)
+      } else if (strcmp(dat->type, "long") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
       else if (strcmp(dat->type, "long long") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id,
