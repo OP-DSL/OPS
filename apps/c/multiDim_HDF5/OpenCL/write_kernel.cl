@@ -41,11 +41,14 @@
 #define ZERO_bool 0;
 
 #undef OPS_ACC1
+#undef OPS_ACC2
 
 #undef OPS_ACC_MD0
 
 #define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_write_kernel * (y) + xdim1_write_kernel * ydim1_write_kernel * (z))
+#define OPS_ACC2(x, y, z)                                                      \
+  (x + xdim2_write_kernel * (y) + xdim2_write_kernel * ydim2_write_kernel * (z))
 
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   ((x)*2 + (d) + (xdim0_write_kernel * (y)*2) +                                \
@@ -53,7 +56,9 @@
 
 // user function
 void write_kernel(__global double *restrict arr,
-                  __global double *restrict arr_single, const int *restrict idx)
+                  __global double *restrict arr_single,
+                  __global int *restrict arr___global integ,
+                  const int *restrict idx)
 
 {
 
@@ -62,13 +67,16 @@ void write_kernel(__global double *restrict arr,
   arr[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
 
   arr_single[OPS_ACC1(0, 0, 0)] = 3;
+
+  arr_integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 __kernel void ops_write_kernel(__global double *restrict arg0,
-                               __global double *restrict arg1, const int base0,
-                               const int base1, int arg_idx0, int arg_idx1,
-                               int arg_idx2, const int size0, const int size1,
-                               const int size2) {
+                               __global double *restrict arg1,
+                               __global int *restrict arg2, const int base0,
+                               const int base1, const int base2, int arg_idx0,
+                               int arg_idx1, int arg_idx2, const int size0,
+                               const int size1, const int size2) {
 
   int idx_y = get_global_id(1);
   int idx_z = get_global_id(2);
@@ -84,6 +92,8 @@ __kernel void ops_write_kernel(__global double *restrict arg0,
               idx_z * 1 * 2 * xdim0_write_kernel * ydim0_write_kernel],
         &arg1[base1 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_write_kernel +
               idx_z * 1 * 1 * xdim1_write_kernel * ydim1_write_kernel],
+        &arg2[base2 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_write_kernel +
+              idx_z * 1 * 1 * xdim2_write_kernel * ydim2_write_kernel],
         arg_idx);
   }
 }

@@ -8,13 +8,16 @@
 #endif
 
 // user function
-inline void write_kernel(double *arr, double *arr_single, const int *idx) {
+inline void write_kernel(double *arr, double *arr_single, int *arr_integ,
+                         const int *idx) {
 
   arr[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
   arr[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
 
   arr_single[OPS_ACC1(0, 0, 0)] = 3;
+
+  arr_integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 #undef OPS_ACC_MD0
@@ -22,16 +25,16 @@ inline void write_kernel(double *arr, double *arr_single, const int *idx) {
 // host stub function
 void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
                                int *range, ops_arg arg0, ops_arg arg1,
-                               ops_arg arg2) {
+                               ops_arg arg2, ops_arg arg3) {
 
   // Timing
   double t1, t2, c1, c2;
 
-  int offs[3][3];
-  ops_arg args[3] = {arg0, arg1, arg2};
+  int offs[4][3];
+  ops_arg args[4] = {arg0, arg1, arg2, arg3};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 0))
+  if (!ops_checkpointing_before(args, 4, range, 0))
     return;
 #endif
 
@@ -95,6 +98,14 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
       off3D(2, &start[0], &end[0], args[1].dat->size, args[1].stencil->stride) -
       offs[1][1] - offs[1][0];
 
+  offs[2][0] = args[2].stencil->stride[0] * 1; // unit step in x dimension
+  offs[2][1] =
+      off3D(1, &start[0], &end[0], args[2].dat->size, args[2].stencil->stride) -
+      offs[2][0];
+  offs[2][2] =
+      off3D(2, &start[0], &end[0], args[2].dat->size, args[2].stencil->stride) -
+      offs[2][1] - offs[2][0];
+
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int off0_2 = offs[0][2];
@@ -103,11 +114,15 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   int off1_1 = offs[1][1];
   int off1_2 = offs[1][2];
   int dat1 = args[1].dat->elem_size;
+  int off2_0 = offs[2][0];
+  int off2_1 = offs[2][1];
+  int off2_2 = offs[2][2];
+  int dat2 = args[2].dat->elem_size;
 
   // Halo Exchanges
-  ops_H_D_exchanges_host(args, 3);
-  ops_halo_exchanges(args, 3, range);
-  ops_H_D_exchanges_host(args, 3);
+  ops_H_D_exchanges_host(args, 4);
+  ops_halo_exchanges(args, 4, range);
+  ops_H_D_exchanges_host(args, 4);
 
 #ifdef _OPENMP
   int nthreads = omp_get_max_threads();
@@ -118,6 +133,8 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   ydim0 = args[0].dat->size[1];
   xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0];
+  ydim2 = args[2].dat->size[1];
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
@@ -128,7 +145,7 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   for (int thr = 0; thr < nthreads; thr++) {
 
     int z_size = end[2] - start[2];
-    char *p_a[3];
+    char *p_a[4];
 
     int start_i = start[2] + ((z_size - 1) / nthreads + 1) * thr;
     int finish_i =
@@ -189,7 +206,26 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
                  d_m[2]);
     p_a[1] = (char *)args[1].data + base1;
 
-    p_a[2] = (char *)arg_idx;
+#ifdef OPS_MPI
+    for (int d = 0; d < dim; d++)
+      d_m[d] =
+          args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
+#else
+    for (int d = 0; d < dim; d++)
+      d_m[d] = args[2].dat->d_m[d];
+#endif
+    int base2 = dat2 * 1 * (start0 * args[2].stencil->stride[0] -
+                            args[2].dat->base[0] - d_m[0]);
+    base2 = base2 +
+            dat2 * args[2].dat->size[0] * (start1 * args[2].stencil->stride[1] -
+                                           args[2].dat->base[1] - d_m[1]);
+    base2 = base2 +
+            dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+                (start2 * args[2].stencil->stride[2] - args[2].dat->base[2] -
+                 d_m[2]);
+    p_a[2] = (char *)args[2].data + base2;
+
+    p_a[3] = (char *)arg_idx;
 
     for (int n_z = start_i; n_z < finish_i; n_z++) {
       for (int n_y = start[1]; n_y < end[1]; n_y++) {
@@ -198,7 +234,8 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
           // call kernel function, passing in pointers to data -vectorised
           for (int i = 0; i < SIMD_VEC; i++) {
             write_kernel((double *)p_a[0] + i * 1 * 2,
-                         (double *)p_a[1] + i * 1 * 1, arg_idx);
+                         (double *)p_a[1] + i * 1 * 1,
+                         (int *)p_a[2] + i * 1 * 1, arg_idx);
 
             arg_idx[0]++;
           }
@@ -206,22 +243,26 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
           // shift pointers to data x direction
           p_a[0] = p_a[0] + (dat0 * off0_0) * SIMD_VEC;
           p_a[1] = p_a[1] + (dat1 * off1_0) * SIMD_VEC;
+          p_a[2] = p_a[2] + (dat2 * off2_0) * SIMD_VEC;
         }
 
         for (int n_x = start[0] + ((end[0] - start[0]) / SIMD_VEC) * SIMD_VEC;
              n_x < end[0]; n_x++) {
           // call kernel function, passing in pointers to data - remainder
-          write_kernel((double *)p_a[0], (double *)p_a[1], arg_idx);
+          write_kernel((double *)p_a[0], (double *)p_a[1], (int *)p_a[2],
+                       arg_idx);
 
           // shift pointers to data x direction
           p_a[0] = p_a[0] + (dat0 * off0_0);
           p_a[1] = p_a[1] + (dat1 * off1_0);
+          p_a[2] = p_a[2] + (dat2 * off2_0);
           arg_idx[0]++;
         }
 
         // shift pointers to data y direction
         p_a[0] = p_a[0] + (dat0 * off0_1);
         p_a[1] = p_a[1] + (dat1 * off1_1);
+        p_a[2] = p_a[2] + (dat2 * off2_1);
 #ifdef OPS_MPI
         arg_idx[0] = sb->decomp_disp[0] + start0;
 #else
@@ -232,6 +273,7 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
       // shift pointers to data z direction
       p_a[0] = p_a[0] + (dat0 * off0_2);
       p_a[1] = p_a[1] + (dat1 * off1_2);
+      p_a[2] = p_a[2] + (dat2 * off2_2);
 #ifdef OPS_MPI
       arg_idx[0] = sb->decomp_disp[0] + start0;
       arg_idx[1] = sb->decomp_disp[1] + start1;
@@ -248,10 +290,11 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].time += t1 - t2;
   }
 
-  ops_set_dirtybit_host(args, 3);
+  ops_set_dirtybit_host(args, 4);
 
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
+  ops_set_halo_dirtybit3(&args[2], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -259,5 +302,6 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].mpi_time += t2 - t1;
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

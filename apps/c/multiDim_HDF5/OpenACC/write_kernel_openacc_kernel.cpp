@@ -13,13 +13,17 @@ extern int xdim1_write_kernel;
 int xdim1_write_kernel_h = -1;
 extern int ydim1_write_kernel;
 int ydim1_write_kernel_h = -1;
+extern int xdim2_write_kernel;
+int xdim2_write_kernel_h = -1;
+extern int ydim2_write_kernel;
+int ydim2_write_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void write_kernel_c_wrapper(double *p_a0, double *p_a1, int *p_a2, int arg_idx0,
-                            int arg_idx1, int arg_idx2, int x_size, int y_size,
-                            int z_size);
+void write_kernel_c_wrapper(double *p_a0, double *p_a1, int *p_a2, int *p_a3,
+                            int arg_idx0, int arg_idx1, int arg_idx2,
+                            int x_size, int y_size, int z_size);
 
 #ifdef __cplusplus
 }
@@ -28,14 +32,14 @@ void write_kernel_c_wrapper(double *p_a0, double *p_a1, int *p_a2, int arg_idx0,
 // host stub function
 void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
                                int *range, ops_arg arg0, ops_arg arg1,
-                               ops_arg arg2) {
+                               ops_arg arg2, ops_arg arg3) {
 
   // Timing
   double t1, t2, c1, c2;
-  ops_arg args[3] = {arg0, arg1, arg2};
+  ops_arg args[4] = {arg0, arg1, arg2, arg3};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 0))
+  if (!ops_checkpointing_before(args, 4, range, 0))
     return;
 #endif
 
@@ -98,8 +102,11 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   ydim0 = args[0].dat->size[1];
   xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0];
+  ydim2 = args[2].dat->size[1];
   if (xdim0 != xdim0_write_kernel_h || ydim0 != ydim0_write_kernel_h ||
-      xdim1 != xdim1_write_kernel_h || ydim1 != ydim1_write_kernel_h) {
+      xdim1 != xdim1_write_kernel_h || ydim1 != ydim1_write_kernel_h ||
+      xdim2 != xdim2_write_kernel_h || ydim2 != ydim2_write_kernel_h) {
     xdim0_write_kernel = xdim0;
     xdim0_write_kernel_h = xdim0;
     ydim0_write_kernel = ydim0;
@@ -108,10 +115,15 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     xdim1_write_kernel_h = xdim1;
     ydim1_write_kernel = ydim1;
     ydim1_write_kernel_h = ydim1;
+    xdim2_write_kernel = xdim2;
+    xdim2_write_kernel_h = xdim2;
+    ydim2_write_kernel = ydim2;
+    ydim2_write_kernel_h = ydim2;
   }
 
   int dat0 = args[0].dat->elem_size;
   int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -161,39 +173,63 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
 
-  int *p_a2 = NULL;
-
-#ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
+#ifdef OPS_MPI
+  for (int d = 0; d < dim; d++)
+    d_m[d] =
+        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
 #else
-  ops_H_D_exchanges_host(args, 3);
+  for (int d = 0; d < dim; d++)
+    d_m[d] = args[2].dat->d_m[d];
 #endif
-  ops_halo_exchanges(args, 3, range);
+  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
+                          args[2].dat->base[0] - d_m[0]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1] -
+                                         args[2].dat->base[1] - d_m[1]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+              (start[2] * args[2].stencil->stride[2] - args[2].dat->base[2] -
+               d_m[2]);
+#ifdef OPS_GPU
+  int *p_a2 = (int *)((char *)args[2].data_d + base2);
+#else
+  int *p_a2 = (int *)((char *)args[2].data + base2);
+#endif
+
+  int *p_a3 = NULL;
 
 #ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
+  ops_H_D_exchanges_device(args, 4);
 #else
-  ops_H_D_exchanges_host(args, 3);
+  ops_H_D_exchanges_host(args, 4);
+#endif
+  ops_halo_exchanges(args, 4, range);
+
+#ifdef OPS_GPU
+  ops_H_D_exchanges_device(args, 4);
+#else
+  ops_H_D_exchanges_host(args, 4);
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[0].mpi_time += t2 - t1;
   }
 
-  write_kernel_c_wrapper(p_a0, p_a1, p_a2, arg_idx[0], arg_idx[1], arg_idx[2],
-                         x_size, y_size, z_size);
+  write_kernel_c_wrapper(p_a0, p_a1, p_a2, p_a3, arg_idx[0], arg_idx[1],
+                         arg_idx[2], x_size, y_size, z_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
     OPS_kernels[0].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  ops_set_dirtybit_device(args, 3);
+  ops_set_dirtybit_device(args, 4);
 #else
-  ops_set_dirtybit_host(args, 3);
+  ops_set_dirtybit_host(args, 4);
 #endif
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
+  ops_set_halo_dirtybit3(&args[2], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -201,5 +237,6 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].mpi_time += t2 - t1;
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
