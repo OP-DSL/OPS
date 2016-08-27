@@ -40,7 +40,7 @@ void tea_leaf_recip_kernel(double * u, const double * p) {
 }
 
 void tea_leaf_recip2_kernel(double *z, const double *x, const double *y) {
-	z[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)]/y[OPS_ACC1(0,0)];
+	z[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)]/y[OPS_ACC2(0,0)];
 }
 
 void tea_leaf_norm2_kernel(const double *x, double * norm) {

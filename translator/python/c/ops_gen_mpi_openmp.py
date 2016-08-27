@@ -123,8 +123,6 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
-    print name, reduction
-
     arg_idx = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -206,6 +204,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
     j = text[i:].find('{')
+    print name, text[i2:i+j]
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])

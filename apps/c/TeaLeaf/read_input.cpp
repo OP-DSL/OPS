@@ -33,6 +33,28 @@
 #include "data.h"
 #include "definitions.h"
 
+#include <ctype.h>
+
+char *trimwhitespace(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace(*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace(*end)) end--;
+
+  // Write new null terminator
+  *(end+1) = 0;
+
+  return str;
+}
+
 void read_input()
 {
   //some defailt values before read input
@@ -171,11 +193,11 @@ void read_input()
               }
               else if(strcmp(token,"tl_preconditioner_type") == 0) {
                 token = strtok(NULL, " =");
-                if (strcmp(token,"TL_PREC_NONE") == 0)
+                if (strcmp(trimwhitespace(token),"none") == 0)
                   tl_preconditioner_type = TL_PREC_NONE;
-                else if (strcmp(token,"TL_PREC_JAC_DIAG") == 0)
+                else if (strcmp(trimwhitespace(token),"jac_diag") == 0)
                   tl_preconditioner_type = TL_PREC_JAC_DIAG;
-                else if (strcmp(token,"TL_PREC_JAC_BLOCK") == 0)
+                else if (strcmp(trimwhitespace(token),"jac_block") == 0)
                   tl_preconditioner_type = TL_PREC_JAC_BLOCK;
                 else {
                   ops_printf("Unrecognized preconditioner type in input file\n");

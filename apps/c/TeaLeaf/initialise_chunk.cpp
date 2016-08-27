@@ -103,25 +103,25 @@ void initialise_chunk()
 //edge datasets
   int rangex[] = {-2, x_cells+2, -2, y_cells+2};
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
-               ops_arg_dat(cellx       , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(cellx       , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
-               ops_arg_dat(celldx      , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(celldx      , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
   rangex[1]++;
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
-               ops_arg_dat(vertexx     , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexx     , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
-               ops_arg_dat(vertexdx    , 1, S2D_00, "double", OPS_WRITE));  
+               ops_arg_dat(vertexdx    , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));  
 
   int rangey2[] = {-2, x_cells+2, -2, y_cells+2};
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
-               ops_arg_dat(celly       , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(celly       , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
-               ops_arg_dat(celldy      , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(celldy      , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
   rangey2[3]++;
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
-               ops_arg_dat(vertexy     , 1, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(vertexy     , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
   ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
-               ops_arg_dat(vertexdy    , 1, S2D_00, "double", OPS_WRITE));  
+               ops_arg_dat(vertexdy    , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));  
 
 
 

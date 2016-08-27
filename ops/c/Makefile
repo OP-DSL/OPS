@@ -32,13 +32,13 @@ endif
   MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),gnu)
-  CC 	  	:= gcc
+  CC 	  	:= gcc-mp-5
 ifdef DEBUG
   CCFLAGS 	:= -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
 else
   CCFLAGS 	:= -O3 -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g
 endif
-  CXX 	  	:= g++
+  CXX 	  	:= g++-mp-5
   CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store
   MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc

@@ -36,6 +36,19 @@
 
 #include "tea_leaf_ppcg_kernels.h"
 
+void tea_leaf_init_zero2_kernel (double * p, double * z);
+void tea_leaf_init_zero_kernel (double * p);
+void tea_leaf_yeqx_kernel (double * p, const double * x);
+void tea_leaf_yeqax_kernel (double * p, const double * x, const double * a);
+void tea_leaf_dot_kernel (const double * r, const double * p, double *rro);
+void tea_leaf_axpy_kernel(double * u, const double * p, const double * alpha);
+void tea_leaf_axpby_kernel(double * u, const double * p, const double * alpha, const double * beta);
+void tea_leaf_zeqxty_kernel(double * z, const double * x, const double * y);
+void tea_leaf_recip_kernel(double * u, const double * p);
+void tea_leaf_recip2_kernel(double *z, const double *x, const double *y);
+void tea_leaf_norm2_kernel(const double *x, double * norm);
+
+
 void tea_leaf_ppcg_init_sd(
   ops_dat r,
   ops_dat rtemp,

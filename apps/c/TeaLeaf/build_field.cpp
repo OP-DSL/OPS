@@ -64,8 +64,8 @@ void build_field()
   //
   //declare data on blocks
   //
-  int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
-  int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
+  int d_p[2] = {1,1}; //max halo depths for the dat in the possitive direction
+  int d_m[2] = {-1,-1}; //max halo depths for the dat in the negative direction
   int size[2] = {x_cells, y_cells}; //size of the dat
   int base[2] = {0,0};
   int stride[2] = {1, 1};

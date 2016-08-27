@@ -6,7 +6,7 @@
 
 void tea_leaf_common_init_u_u0_kernel(double *u, double *u0, const double *energy, const double *density) {
 	u [OPS_ACC0(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
-	u0[OPS_ACC0(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
+	u0[OPS_ACC1(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
 }
 
 void tea_leaf_common_init_Kx_Ky_kernel(double *Kx, double *Ky, const double *w) {

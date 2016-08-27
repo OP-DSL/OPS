@@ -59,6 +59,14 @@ void start()
 
   build_field();
 
+   ops_decl_const("field", 1, "field_type", &field );
+  ops_decl_const("grid", 1, "grid_type", &grid );
+  ops_decl_const("number_of_states",1,"int",&number_of_states);
+  ops_decl_const("states",number_of_states, "state_type", states );
+  ops_decl_const("g_circ",1,"int",&g_circ);
+  ops_decl_const("g_point",1,"int",&g_point);
+  ops_decl_const("g_rect",1,"int",&g_rect);
+
   /**---------------------------Initialize Chunks----------------------------**/
 
   initialise_chunk();

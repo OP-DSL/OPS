@@ -7,7 +7,7 @@
 
 
 void generate_chunk_kernel( const double *vertexx, const double *vertexy,
-                     double *energy0, double *density,
+                     double *energy0, double *density0,
                      double *u0,
                      const double *cellx, const double *celly) {
 
@@ -17,7 +17,7 @@ void generate_chunk_kernel( const double *vertexx, const double *vertexy,
   //State 1 is always the background state
 
   energy0[OPS_ACC2(0,0)]= states[0].energy;
-  density[OPS_ACC3(0,0)]= states[0].density;
+  density0[OPS_ACC3(0,0)]= states[0].density;
 
   for(int i = 1; i<number_of_states; i++) {
 
@@ -43,7 +43,7 @@ void generate_chunk_kernel( const double *vertexx, const double *vertexy,
       }
       if (is_in2) {
         energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density[OPS_ACC3(0,0)] = states[i].density;
+        density0[OPS_ACC3(0,0)] = states[i].density;
       }
     }
     else if(states[i].geometry == g_circ) {
@@ -60,17 +60,17 @@ void generate_chunk_kernel( const double *vertexx, const double *vertexy,
 
       if (is_in2) {
         energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density[OPS_ACC3(0,0)] = states[i].density;
+        density0[OPS_ACC3(0,0)] = states[i].density;
       }
     }
     else if(states[i].geometry == g_point) {
       if(vertexx[OPS_ACC0(0,0)] == x_cent && vertexy[OPS_ACC1(0,0)] == y_cent) {
         energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density[OPS_ACC3(0,0)] = states[i].density;
+        density0[OPS_ACC3(0,0)] = states[i].density;
       }
     }
   }
-  u0[OPS_ACC4(0,0)] = energy0[OPS_ACC2(0,0)] * density[OPS_ACC3(0,0)];
+  u0[OPS_ACC4(0,0)] = energy0[OPS_ACC2(0,0)] * density0[OPS_ACC3(0,0)];
 }
 
 
