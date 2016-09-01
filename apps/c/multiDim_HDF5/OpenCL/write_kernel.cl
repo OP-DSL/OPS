@@ -55,20 +55,20 @@
    (xdim0_write_kernel * ydim0_write_kernel * (z)*2))
 
 // user function
-void write_kernel(__global double *restrict arr,
-                  __global double *restrict arr_single,
-                  __global int *restrict arr___global integ,
+void write_kernel(__global double *restrict mult,
+                  __global double *restrict single,
+                  __global int *restrict __global integ,
                   const int *restrict idx)
 
 {
 
-  arr[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
+  mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
-  arr[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
+  mult[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
 
-  arr_single[OPS_ACC1(0, 0, 0)] = 3;
+  single[OPS_ACC1(0, 0, 0)] = 3;
 
-  arr_integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 __kernel void ops_write_kernel(__global double *restrict arg0,

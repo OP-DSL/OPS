@@ -5,16 +5,16 @@
   ((x)*2 + (d) + (xdim0 * (y)*2) + (xdim0 * ydim0 * (z)*2))
 
 // user function
-inline void write_kernel(double *arr, double *arr_single, int *arr_integ,
+inline void write_kernel(double *mult, double *single, int *integ,
                          const int *idx) {
 
-  arr[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
+  mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
-  arr[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
+  mult[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
 
-  arr_single[OPS_ACC1(0, 0, 0)] = 3;
+  single[OPS_ACC1(0, 0, 0)] = 3;
 
-  arr_integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 // host stub function
