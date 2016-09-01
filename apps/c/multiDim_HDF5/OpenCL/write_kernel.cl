@@ -57,8 +57,7 @@
 // user function
 void write_kernel(__global double *restrict mult,
                   __global double *restrict single,
-                  __global int *restrict __global integ,
-                  const int *restrict idx)
+                  __global int *restrict digit, const int *restrict idx)
 
 {
 
@@ -68,7 +67,7 @@ void write_kernel(__global double *restrict mult,
 
   single[OPS_ACC1(0, 0, 0)] = 3;
 
-  integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  digit[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 __kernel void ops_write_kernel(__global double *restrict arg0,

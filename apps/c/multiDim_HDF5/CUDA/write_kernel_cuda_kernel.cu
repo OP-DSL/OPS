@@ -31,7 +31,7 @@ int ydim2_write_kernel_h = -1;
 __device__
 
     void
-    write_kernel(double *mult, double *single, int *integ, const int *idx) {
+    write_kernel(double *mult, double *single, int *digit, const int *idx) {
 
   mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
@@ -39,7 +39,7 @@ __device__
 
   single[OPS_ACC1(0, 0, 0)] = 3;
 
-  integ[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  digit[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 #undef OPS_ACC1
