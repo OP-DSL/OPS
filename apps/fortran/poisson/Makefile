@@ -72,11 +72,11 @@ endif
   OPS_MPI	= -DOPS_MPI
   CUDAFOR	= -DOPS_WITH_CUDAFOR
 else
-ifeq ($(OPS_COMPILER),xl)
+ifeq ($(OPS_COMPILER),xlp8)
 ifdef DEBUG
   OPT           = -O0 -g
 else
-  OPT           = -O3 -qarch=pwr8 -qtune=pwr8 -qcuda
+  OPT           = -O3 -qarch=pwr8 -qtune=pwr8
 endif
   CCFLAGS       = $(OPT)
   CXX           = xlc++_r

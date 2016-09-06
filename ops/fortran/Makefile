@@ -91,7 +91,7 @@ endif
   CUDA_ALIGNE_FLAG =
   CXX           = xlc++_r
   CXXFLAGS      = $(CCFLAGS)
-  F_INC_MOD     = $(F_OPS_MOD)/xl
+  F_INC_MOD     = $(F_OPS_MOD)/xlp8
   FC            = xlf_r #-qcuda -WF,-DOPS_WITH_CUDAFOR
   FFLAGS        = $(OPT) -qmoddir=$(F_INC_MOD)
   MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
@@ -99,6 +99,7 @@ endif
   MPIFLAGS      = $(CXXFLAGS)
   CUDAFOR       = -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded
   TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
 endif
@@ -145,13 +146,13 @@ f_seq: 	mkdir core hdf5 $(F_OPS_OBJ)/ops_lib_core.o
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_seq.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 f_cuda: mkdir core
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
-	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.cu -o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o
+	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
+	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
+	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.cu -o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_dummy_singlenode.c -o $(F_OPS_OBJ)/ops_dummy_singlenode.o
-	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
-	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(FC) $(FFLAGS) $(CUDAFOR) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
+	$(FC) $(FFLAGS) $(CUDAFOR) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	ar -r $(F_OPS_LIB)/libops_for_cuda.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
 	$(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
@@ -177,9 +178,9 @@ f_mpi_cuda: mkdir core
 	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_core.c -o $(F_OPS_OBJ)/ops_mpi_core.o
 	$(MPICC) $(MPIFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support.c -o $(F_OPS_OBJ)/ops_mpi_rt_support.o
 	$(MPICC) $(CXXFLAGS) -I$(MPI_INC) $(HDF5_INC) -I$(C_OPS_INC)  -I$(CUDA_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_hdf5.c -o $(F_OPS_OBJ)/ops_mpi_hdf5.o
-	$(NVCC)  $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(NVCC)  $(NVCCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(F_OPS_OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
+	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
+	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
 	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(FFLAGS) -DOPS_WITH_CUDAFOR -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
 	$(FC) $(FFLAGS) -c $(F_OPS_SRC)/ops_for_hdf5_declarations.F90 -o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
@@ -189,10 +190,10 @@ f_mpi_cuda: mkdir core
 	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_mpi_hdf5.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 
 f_openacc: mkdir core
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
+	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
+	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
 	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
-	$(NVCC) $(CCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.cu -o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o
+	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.cu -o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_dummy_singlenode.c -o $(F_OPS_OBJ)/ops_dummy_singlenode.o
 	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_rt_support.F90 -o $(F_OPS_OBJ)/ops_for_rt_support.o
