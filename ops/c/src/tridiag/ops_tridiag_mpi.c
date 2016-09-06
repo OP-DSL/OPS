@@ -51,6 +51,21 @@ void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
 }
 
+void rms(char *name, FP *array, int nx_pad, int nx, int ny, int nz) {
+  // Sum the square of values in app.h_u
+  double sum = 0.0;
+  for (int k = 0; k < nz; k++) {
+    for (int j = 0; j < ny; j++) {
+      for (int i = 0; i < nx; i++) {
+        int ind = k * nx_pad * ny + j * nx_pad + i;
+        // sum += array[ind]*array[ind];
+        sum += array[ind];
+      }
+    }
+  }
+  printf("intermediate %s sum = %lg\n", name, sum);
+}
+
 void ops_tridMultiDimBatch(
     int ndim,     // number of dimsnsions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
@@ -149,79 +164,119 @@ void ops_tridMultiDimBatch(
                    (double *)(&cc[base]), (double *)(&dd[base]), a_size[0], 1);
   }
 
-  // Communicate boundary values
-  // Pack boundary to a single data structure
-  #pragma omp parallel for
-    for (int id = 0; id < n_sys_g; id++) {
-      // Gather coefficients of a,c,d
-      halo_sndbuf[id * 3 * 2 + 0 * 2] = aa[id * a_size[0]];
-      halo_sndbuf[id * 3 * 2 + 0 * 2 + 1] = aa[id * a_size[0] + a_size[0] - 1];
-      halo_sndbuf[id * 3 * 2 + 1 * 2] = cc[id * a_size[0]];
-      halo_sndbuf[id * 3 * 2 + 1 * 2 + 1] = cc[id * a_size[0] + a_size[0] - 1];
-      halo_sndbuf[id * 3 * 2 + 2 * 2] = dd[id * a_size[0]];
-      halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
-    }
+/*int a_base = 0 * a->size[0] - a->d_m[0];
+int b_base = 0 * b->size[0] - b->d_m[0];
+int c_base = 0 * c->size[0] - c->d_m[0];
+int d_base = 0 * d->size[0] - d->d_m[0];
+int u_base = 0 * u->size[0] - u->d_m[0];
+rms("h_ax", &((double *)a->data)[a_base], a->size[0], a->size[0], a->size[1],
+a->size[2]);
+rms("h_bx", &((double *)b->data)[b_base], b->size[0], b->size[0], b->size[1],
+b->size[2]);
+rms("h_cx", &((double *)c->data)[c_base], c->size[0], c->size[0], c->size[1],
+c->size[2]);
+rms("h_du", &((double *)d->data)[d_base], d->size[0], d->size[0], d->size[1],
+d->size[2]);
+rms("h_u", &((double *)u->data)[u_base], u->size[0], u->size[0], u->size[1],
+u->size[2]);*/
 
-    MPI_Alltoall(halo_sndbuf, n_sys_l * 3 * 2, MPI_DOUBLE, halo_rcvbuf,
-                 n_sys_l * 3 * 2, MPI_DOUBLE, x_comm);
+/*rms("aa", &((double *)aa)[0], a_size[0], a_size[0], a_size[1], a_size[2]);
+rms("cc", &((double *)cc)[0], c_size[0], c_size[0], c_size[1], c_size[2]);
+rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);*/
 
-  // Unpack boundary data
-  #pragma omp parallel for collapse(2)
-    for (int p = 0; p < sb->pdims[0]; p++) {
-      for (int id = 0; id < n_sys_l; id++) {
-        aa_r[id * sys_len_l + p * 2] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2];
-        aa_r[id * sys_len_l + p * 2 + 1] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
-        cc_r[id * sys_len_l + p * 2] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2];
-        cc_r[id * sys_len_l + p * 2 + 1] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
-        dd_r[id * sys_len_l + p * 2] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2];
-        dd_r[id * sys_len_l + p * 2 + 1] =
-            halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
-      }
-    }
+// Communicate boundary values
+// Pack boundary to a single data structure
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_g; id++) {
+    // Gather coefficients of a,c,d
+    halo_sndbuf[id * 3 * 2 + 0 * 2] = aa[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 0 * 2 + 1] = aa[id * a_size[0] + a_size[0] - 1];
+    halo_sndbuf[id * 3 * 2 + 1 * 2] = cc[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 1 * 2 + 1] = cc[id * a_size[0] + a_size[0] - 1];
+    halo_sndbuf[id * 3 * 2 + 2 * 2] = dd[id * a_size[0]];
+    halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
+  }
 
-  // Compute reduced system
-  #pragma omp parallel for
+  MPI_Alltoall(halo_sndbuf, n_sys_l * 3 * 2, MPI_DOUBLE, halo_rcvbuf,
+               n_sys_l * 3 * 2, MPI_DOUBLE, x_comm);
+
+// Unpack boundary data
+#pragma omp parallel for collapse(2)
+  for (int p = 0; p < sb->pdims[0]; p++) {
     for (int id = 0; id < n_sys_l; id++) {
-      int base = id * sys_len_l;
-      thomas_on_reduced(&aa_r[base], &cc_r[base], &dd_r[base], sys_len_l, 1);
+      aa_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2];
+      aa_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
+      cc_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2];
+      cc_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
+      dd_r[id * sys_len_l + p * 2] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2];
+      dd_r[id * sys_len_l + p * 2 + 1] =
+          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
     }
+  }
 
-  // Pack boundary solution data
-  #pragma omp parallel for
-    for (int p = 0; p < sb->pdims[0]; p++) {
-      for (int id = 0; id < n_sys_l; id++) {
-        halo_rcvbuf[p * n_sys_l * 2 + id * 2] = dd_r[id * sys_len_l + p * 2];
-        halo_rcvbuf[p * n_sys_l * 2 + id * 2 + 1] =
-            dd_r[id * sys_len_l + p * 2 + 1];
-      }
+/*double sum = 0.0;
+for(int i = 0; i<sys_len_l * n_sys_l; i++)
+  sum += aa_r[i];
+printf("Intermediate aa_r sum = %lf\n",sum);
+sum = 0.0;
+for(int i = 0; i<sys_len_l * n_sys_l; i++)
+  sum += cc_r[i];
+printf("Intermediate cc_r sum = %lf\n",sum);
+sum = 0.0;
+for(int i = 0; i<sys_len_l * n_sys_l; i++)
+  sum += dd_r[i];
+printf("Intermediate dd_r sum = %lf\n",sum);*/
+
+// Compute reduced system
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_l; id++) {
+    int base = id * sys_len_l;
+    thomas_on_reduced(&aa_r[base], &cc_r[base], &dd_r[base], sys_len_l, 1);
+  }
+
+// Pack boundary solution data
+#pragma omp parallel for
+  for (int p = 0; p < sb->pdims[0]; p++) {
+    for (int id = 0; id < n_sys_l; id++) {
+      halo_rcvbuf[p * n_sys_l * 2 + id * 2] = dd_r[id * sys_len_l + p * 2];
+      halo_rcvbuf[p * n_sys_l * 2 + id * 2 + 1] =
+          dd_r[id * sys_len_l + p * 2 + 1];
     }
+  }
 
-    // Send back new values
-    MPI_Alltoall(halo_rcvbuf, n_sys_l * 2, MPI_DOUBLE, halo_sndbuf, n_sys_l * 2,
-                 MPI_DOUBLE, x_comm);
+  // Send back new values
+  MPI_Alltoall(halo_rcvbuf, n_sys_l * 2, MPI_DOUBLE, halo_sndbuf, n_sys_l * 2,
+               MPI_DOUBLE, x_comm);
 
-  // Unpack boundary solution
-  #pragma omp parallel for
-    for (int id = 0; id < n_sys_g; id++) {
-      // Gather coefficients of a,c,d
-      dd[id * a_size[0]] = halo_sndbuf[id * 2];
-      dd[id * a_size[0] + a_size[0] - 1] = halo_sndbuf[id * 2 + 1];
-    }
+// Unpack boundary solution
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_g; id++) {
+    // Gather coefficients of a,c,d
+    dd[id * a_size[0]] = halo_sndbuf[id * 2];
+    dd[id * a_size[0] + a_size[0] - 1] = halo_sndbuf[id * 2 + 1];
+  }
 
-  // Do the backward pass of modified Thomas
-  #pragma omp parallel for
-    for (int id = 0; id < n_sys_g; id++) {
-      int u_base = id * u->size[0] - u->d_m[0];
-      int base = id * a_size[0];
-      thomas_backward((double *)(&aa[base]), (double *)(&cc[base]),
-                      (double *)(&dd[base]), &((double *)u->data)[u_base],
-                      a_size[0], 1);
-    }
+// Do the backward pass of modified Thomas
+#pragma omp parallel for
+  for (int id = 0; id < n_sys_g; id++) {
+    int u_base = (id + 1) * u->size[0] - u->d_m[0];
+    int base = id * a_size[0];
+    thomas_backward((double *)(&aa[base]), (double *)(&cc[base]),
+                    (double *)(&dd[base]), &((double *)u->data)[u_base],
+                    u_size[0], 1);
+  }
+
+  rms("aa", &((double *)aa)[0], a_size[0], a_size[0], a_size[1], a_size[2]);
+  rms("cc", &((double *)cc)[0], c_size[0], c_size[0], c_size[1], c_size[2]);
+  rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);
+  int u_base = 1 * u->size[0] - u->d_m[0];
+  rms("h_u", &((double *)u->data)[u_base], u->size[0], u_size[0], u_size[1],
+      u_size[2]);
 
   ops_free(aa);
   ops_free(bb);
