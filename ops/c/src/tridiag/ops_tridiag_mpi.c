@@ -63,7 +63,10 @@ void rms(char *name, FP *array, int nx_pad, int nx, int ny, int nz) {
       }
     }
   }
-  printf("intermediate %s sum = %lg\n", name, sum);
+  double global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+  ops_printf("intermediate %s sum = %lg\n", name, global_sum);
+
 }
 
 void ops_tridMultiDimBatch(
@@ -182,7 +185,8 @@ u->size[2]);*/
 
 /*rms("aa", &((double *)aa)[0], a_size[0], a_size[0], a_size[1], a_size[2]);
 rms("cc", &((double *)cc)[0], c_size[0], c_size[0], c_size[1], c_size[2]);
-rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);*/
+rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);
+exit(-2);*/
 
 // Communicate boundary values
 // Pack boundary to a single data structure
@@ -197,8 +201,26 @@ rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);*/
     halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
   }
 
+  double sum = 0.0;
+  for(int i = 0; i<sys_len_l * n_sys_l * 3; i++)
+    sum += halo_sndbuf[i]*halo_sndbuf[i];
+  double global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
+  ops_printf("Intermediate halo_sndbuf sum = %lf\n",global_sum);
+  //exit(-2);
+
+
+
   MPI_Alltoall(halo_sndbuf, n_sys_l * 3 * 2, MPI_DOUBLE, halo_rcvbuf,
                n_sys_l * 3 * 2, MPI_DOUBLE, x_comm);
+
+  sum = 0.0;
+  for(int i = 0; i<sys_len_l * n_sys_l * 3; i++)
+    sum += halo_rcvbuf[i]*halo_rcvbuf[i];
+  global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
+  ops_printf("Intermediate halo_rcvbuf sum = %lf\n",global_sum);
+  exit(-2);
 
 // Unpack boundary data
 #pragma omp parallel for collapse(2)
@@ -219,18 +241,29 @@ rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);*/
     }
   }
 
+
+
 /*double sum = 0.0;
 for(int i = 0; i<sys_len_l * n_sys_l; i++)
-  sum += aa_r[i];
-printf("Intermediate aa_r sum = %lf\n",sum);
+  sum += aa_r[i]*aa_r[i];
+double global_sum = 0.0;
+MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+printf("Intermediate aa_r sum = %lf\n",global_sum);
+
 sum = 0.0;
 for(int i = 0; i<sys_len_l * n_sys_l; i++)
-  sum += cc_r[i];
-printf("Intermediate cc_r sum = %lf\n",sum);
+  sum += cc_r[i]*cc_r[i];
+global_sum = 0.0;
+MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+printf("Intermediate cc_r sum = %lf\n",global_sum);
+
 sum = 0.0;
 for(int i = 0; i<sys_len_l * n_sys_l; i++)
-  sum += dd_r[i];
-printf("Intermediate dd_r sum = %lf\n",sum);*/
+  sum += dd_r[i]*dd_r[i];
+global_sum = 0.0;
+MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+printf("Intermediate dd_r sum = %lf\n",global_sum);
+exit(-2);*/
 
 // Compute reduced system
 #pragma omp parallel for
@@ -264,7 +297,9 @@ printf("Intermediate dd_r sum = %lf\n",sum);*/
 // Do the backward pass of modified Thomas
 #pragma omp parallel for
   for (int id = 0; id < n_sys_g; id++) {
-    int u_base = (id + 1) * u->size[0] - u->d_m[0];
+    int u_base = (id - u->d_m[1]) * u->size[0] - u->d_m[0]; //note the u->d_m[0]
+    // to get the base pointer over the block halos
+    // .. need to check this under proper MPI (multiple processors)
     int base = id * a_size[0];
     thomas_backward((double *)(&aa[base]), (double *)(&cc[base]),
                     (double *)(&dd[base]), &((double *)u->data)[u_base],

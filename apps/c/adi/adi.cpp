@@ -219,14 +219,15 @@ int main(int argc, char **argv)
                ops_arg_reduce(rms, 1, "double", OPS_INC));
   ops_reduction_result(rms, &rms_value);
   ops_printf("h_du Value %lg\n", rms_value);
-
+  */
   rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
+  int iter_range2[] = {1,nx-1, 0,ny, 0,nz};
+  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range2,
                ops_arg_dat(h_u, 1, S3D_000, "double", OPS_READ),
                ops_arg_reduce(rms, 1, "double", OPS_INC));
   ops_reduction_result(rms, &rms_value);
   ops_printf("h_u Value %lg\n", rms_value);
-  */
+
   exit(-2);
 
   /**----------------- perform tri-diagonal solves in y-direction ---------------**/
