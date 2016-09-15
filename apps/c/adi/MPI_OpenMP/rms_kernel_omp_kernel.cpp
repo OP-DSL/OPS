@@ -22,13 +22,13 @@ void ops_par_loop_rms_kernel(char const *name, ops_block block, int dim,
   ops_arg args[2] = {arg0, arg1};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 2))
+  if (!ops_checkpointing_before(args, 2, range, 3))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(2, "rms_kernel");
-    OPS_kernels[2].count++;
+    ops_timing_realloc(3, "rms_kernel");
+    OPS_kernels[3].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -114,7 +114,7 @@ void ops_par_loop_rms_kernel(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[2].mpi_time += t2 - t1;
+    OPS_kernels[3].mpi_time += t2 - t1;
   }
 
 #pragma omp parallel for
@@ -187,7 +187,7 @@ void ops_par_loop_rms_kernel(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[2].time += t1 - t2;
+    OPS_kernels[3].time += t1 - t2;
   }
 
   // combine reduction data
@@ -201,7 +201,7 @@ void ops_par_loop_rms_kernel(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[2].mpi_time += t2 - t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[3].mpi_time += t2 - t1;
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

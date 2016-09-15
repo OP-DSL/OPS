@@ -25,6 +25,9 @@ void ops_par_loop_preproc_kernel(char const *, ops_block, int, int *, ops_arg,
 void ops_par_loop_rms_kernel(char const *, ops_block, int, int *, ops_arg,
                              ops_arg);
 
+void ops_par_loop_rms_kernel(char const *, ops_block, int, int *, ops_arg,
+                             ops_arg);
+
 #include "data.h"
 
 //#include "init_kernel.h"
@@ -160,6 +163,14 @@ int main(int argc, char **argv) {
     ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, opts);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
+
+    rms_value = 0.0;
+    int iter_range2[] = {1, nx - 1, 0, ny, 0, nz};
+    ops_par_loop_rms_kernel("rms_kernel", heat3D, 3, iter_range2,
+                            ops_arg_dat(h_u, 1, S3D_000, "double", OPS_READ),
+                            ops_arg_reduce(rms, 1, "double", OPS_INC));
+    ops_reduction_result(rms, &rms_value);
+    ops_printf("h_u Value %lg\n", rms_value);
 
     exit(-2);
 
