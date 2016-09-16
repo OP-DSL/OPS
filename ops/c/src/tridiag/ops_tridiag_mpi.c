@@ -127,19 +127,19 @@ void ops_tridMultiDimBatch(
   MPI_Cart_sub(sb->comm, free_coords, &x_comm);
 
   // Containers used to communicate preprocess halo
-  double *halo_sndbuf = (double *)ops_malloc(n_sys_l * sys_len_l * 3 *
+  double *halo_sndbuf = (double *)ops_malloc(n_sys_g * sys_len_l * 3 * //n_sys_g * 2 * 3
                                              sizeof(double)); // Send Buffer
-  double *halo_rcvbuf = (double *)ops_malloc(n_sys_l * sys_len_l * 3 *
+  double *halo_rcvbuf = (double *)ops_malloc(n_sys_g * sys_len_l * 3 * //n_sys_g * 3* 2* sb->pdims[0]
                                              sizeof(double)); // Receive Buffer
-  double *halo_sndbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
-                                              sizeof(double)); // Send Buffer
-  double *halo_rcvbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
-                                              sizeof(double)); // Receive Buffer
+  //double *halo_sndbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
+    //                                          sizeof(double)); // Send Buffer
+  //double *halo_rcvbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
+    //                                          sizeof(double)); // Receive Buffer
 
   // Containers used to communicate reduced system
-  double *aa_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
-  double *cc_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
-  double *dd_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_l);
+  double *aa_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g); //sys_len_l * n_sys_g
+  double *cc_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g);
+  double *dd_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g);
 
   // Do modified Thomas
   double *aa =
@@ -201,64 +201,64 @@ exit(-2);*/
     halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
   }
 
-  double sum = 0.0;
-  for(int i = 0; i<sys_len_l * n_sys_l * 3; i++)
+  /*double sum = 0.0;
+  for(int i = 0; i<sys_len_l * n_sys_g * 3; i++)
     sum += halo_sndbuf[i]*halo_sndbuf[i];
   double global_sum = 0.0;
   MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
   ops_printf("Intermediate halo_sndbuf sum = %lf\n",global_sum);
-  //exit(-2);
+  //exit(-2);*/
 
 
 
-  MPI_Alltoall(halo_sndbuf, n_sys_l * 3 * 2, MPI_DOUBLE, halo_rcvbuf,
-               n_sys_l * 3 * 2, MPI_DOUBLE, x_comm);
+  MPI_Alltoall(halo_sndbuf, n_sys_g * 3 * 2, MPI_DOUBLE, halo_rcvbuf, //all gather n_sys_g * 3 * 2
+               n_sys_g * 3 * 2, MPI_DOUBLE, x_comm); //n_sys_g * 3 * 2
 
-  sum = 0.0;
-  for(int i = 0; i<sys_len_l * n_sys_l * 3; i++)
+  /*sum = 0.0;
+  for(int i = 0; i<sys_len_l * n_sys_g * 3; i++)
     sum += halo_rcvbuf[i]*halo_rcvbuf[i];
   global_sum = 0.0;
   MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
   ops_printf("Intermediate halo_rcvbuf sum = %lf\n",global_sum);
-  exit(-2);
+  exit(-2);*/
 
 // Unpack boundary data
 #pragma omp parallel for collapse(2)
   for (int p = 0; p < sb->pdims[0]; p++) {
-    for (int id = 0; id < n_sys_l; id++) {
+    for (int id = 0; id < n_sys_g; id++) {
       aa_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 0 * 2]; //n_sys_g
       aa_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
       cc_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 1 * 2];
       cc_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
       dd_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 2 * 2];
       dd_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_l * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
+          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
     }
   }
 
 
-
-/*double sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_l; i++)
+/*
+double sum = 0.0;
+for(int i = 0; i<sys_len_l * n_sys_g; i++)
   sum += aa_r[i]*aa_r[i];
 double global_sum = 0.0;
 MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
 printf("Intermediate aa_r sum = %lf\n",global_sum);
 
 sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_l; i++)
+for(int i = 0; i<sys_len_l * n_sys_g; i++)
   sum += cc_r[i]*cc_r[i];
 global_sum = 0.0;
 MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
 printf("Intermediate cc_r sum = %lf\n",global_sum);
 
 sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_l; i++)
+for(int i = 0; i<sys_len_l * n_sys_g; i++)
   sum += dd_r[i]*dd_r[i];
 global_sum = 0.0;
 MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
@@ -267,23 +267,25 @@ exit(-2);*/
 
 // Compute reduced system
 #pragma omp parallel for
-  for (int id = 0; id < n_sys_l; id++) {
-    int base = id * sys_len_l;
+  for (int id = 0; id < n_sys_g; id++) { //n_sys_g
+    int base = id * sys_len_l; //fine
     thomas_on_reduced(&aa_r[base], &cc_r[base], &dd_r[base], sys_len_l, 1);
   }
+
+//plug back values to sybsystem
 
 // Pack boundary solution data
 #pragma omp parallel for
   for (int p = 0; p < sb->pdims[0]; p++) {
-    for (int id = 0; id < n_sys_l; id++) {
-      halo_rcvbuf[p * n_sys_l * 2 + id * 2] = dd_r[id * sys_len_l + p * 2];
-      halo_rcvbuf[p * n_sys_l * 2 + id * 2 + 1] =
+    for (int id = 0; id < n_sys_g; id++) {
+      halo_rcvbuf[p * n_sys_g * 2 + id * 2] = dd_r[id * sys_len_l + p * 2];
+      halo_rcvbuf[p * n_sys_g * 2 + id * 2 + 1] =
           dd_r[id * sys_len_l + p * 2 + 1];
     }
   }
 
   // Send back new values
-  MPI_Alltoall(halo_rcvbuf, n_sys_l * 2, MPI_DOUBLE, halo_sndbuf, n_sys_l * 2,
+  MPI_Alltoall(halo_rcvbuf, n_sys_g * 2, MPI_DOUBLE, halo_sndbuf, n_sys_g * 2,
                MPI_DOUBLE, x_comm);
 
 // Unpack boundary solution
