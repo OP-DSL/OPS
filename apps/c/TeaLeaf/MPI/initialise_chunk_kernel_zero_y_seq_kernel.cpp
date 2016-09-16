@@ -3,7 +3,7 @@
 //
 
 //user function
-inline void initialise_chunk_kernel_zero(double *var) {
+inline void initialise_chunk_kernel_zero_y(double *var) {
   *var = 0.0;
 }
 
@@ -12,7 +12,7 @@ inline void initialise_chunk_kernel_zero(double *var) {
 
 
 // host stub function
-void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
 
   //Timing
@@ -25,12 +25,12 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,1,range,5)) return;
+  if (!ops_checkpointing_before(args,1,range,7)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(5,"initialise_chunk_kernel_zero");
-    OPS_kernels[5].count++;
+    ops_timing_realloc(7,"initialise_chunk_kernel_zero_y");
+    OPS_kernels[7].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -65,7 +65,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialise_chunk_kernel_zero");
+  ops_register_args(args, "initialise_chunk_kernel_zero_y");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -96,7 +96,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[5].mpi_time += t1-t2;
+    OPS_kernels[7].mpi_time += t1-t2;
   }
 
   int n_x;
@@ -106,7 +106,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
       //call kernel function, passing in pointers to data -vectorised
       #pragma simd
       for ( int i=0; i<SIMD_VEC; i++ ){
-        initialise_chunk_kernel_zero(  (double *)p_a[0]+ i*1*1 );
+        initialise_chunk_kernel_zero_y(  (double *)p_a[0]+ i*0*1 );
 
       }
 
@@ -116,7 +116,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
 
     for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
-      initialise_chunk_kernel_zero(  (double *)p_a[0] );
+      initialise_chunk_kernel_zero_y(  (double *)p_a[0] );
 
 
       //shift pointers to data x direction
@@ -128,7 +128,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[5].time += t2-t1;
+    OPS_kernels[7].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 1);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -136,7 +136,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name, ops_block block
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[5].mpi_time += t1-t2;
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[7].mpi_time += t1-t2;
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

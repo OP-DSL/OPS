@@ -9,6 +9,14 @@ void initialise_chunk_kernel_zero(double *var) {
   *var = 0.0;
 }
 
+void initialise_chunk_kernel_zero_x(double *var) {
+  *var = 0.0;
+}
+
+void initialise_chunk_kernel_zero_y(double *var) {
+  *var = 0.0;
+}
+
 void initialise_chunk_kernel_x(double *vertexx, const int *xx, double *vertexdx) {
 
   int x_min=field.x_min-2;

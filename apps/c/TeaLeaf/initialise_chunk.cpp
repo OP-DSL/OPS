@@ -98,35 +98,34 @@ void initialise_chunk()
                ops_arg_dat(yarea      , 1, S2D_00, "double", OPS_WRITE));
 
   
-  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+3};
 
 //edge datasets
-  int rangex[] = {-2, x_cells+2, -2, y_cells+2};
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
+  int rangex[] = {x_min-2, x_max+2, y_min-2, y_max+2};
+  ops_par_loop(initialise_chunk_kernel_zero_x, "initialise_chunk_kernel_zero_x", tea_grid, 2, rangex,
                ops_arg_dat(cellx       , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
+  ops_par_loop(initialise_chunk_kernel_zero_x, "initialise_chunk_kernel_zero_x", tea_grid, 2, rangex,
                ops_arg_dat(celldx      , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
   rangex[1]++;
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
+  ops_par_loop(initialise_chunk_kernel_zero_x, "initialise_chunk_kernel_zero_x", tea_grid, 2, rangex,
                ops_arg_dat(vertexx     , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangex,
+  ops_par_loop(initialise_chunk_kernel_zero_x, "initialise_chunk_kernel_zero_x", tea_grid, 2, rangex,
                ops_arg_dat(vertexdx    , 1, S2D_00_STRID2D_X, "double", OPS_WRITE));  
 
-  int rangey2[] = {-2, x_cells+2, -2, y_cells+2};
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
+  int rangey2[] = {x_min-2, x_max+2, y_min-2, y_max+2};
+  ops_par_loop(initialise_chunk_kernel_zero_y, "initialise_chunk_kernel_zero_y", tea_grid, 2, rangey2,
                ops_arg_dat(celly       , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
+  ops_par_loop(initialise_chunk_kernel_zero_y, "initialise_chunk_kernel_zero_y", tea_grid, 2, rangey2,
                ops_arg_dat(celldy      , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
   rangey2[3]++;
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
+  ops_par_loop(initialise_chunk_kernel_zero_y, "initialise_chunk_kernel_zero_y", tea_grid, 2, rangey2,
                ops_arg_dat(vertexy     , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));
-  ops_par_loop(initialise_chunk_kernel_zero, "initialise_chunk_kernel_zero", tea_grid, 2, rangey2,
+  ops_par_loop(initialise_chunk_kernel_zero_y, "initialise_chunk_kernel_zero_y", tea_grid, 2, rangey2,
                ops_arg_dat(vertexdy    , 1, S2D_00_STRID2D_Y, "double", OPS_WRITE));  
 
 
 
 
-  int rangefull[] = {-2, x_cells+3, -2, y_cells+3};
+  int rangefull[] = {x_min-2, x_max+3, y_min-2, y_max+3};
 
   ops_par_loop(initialise_chunk_kernel_xx, "initialise_chunk_kernel_xx", tea_grid, 2, rangefull,
                ops_arg_dat(xx, 1, S2D_00_STRID2D_X, "int", OPS_WRITE),
@@ -152,7 +151,7 @@ void initialise_chunk()
                ops_arg_dat(cellx, 1, S2D_00_STRID2D_X, "double", OPS_WRITE),
                ops_arg_dat(celldx, 1, S2D_00_STRID2D_X, "double", OPS_WRITE));
 
-  rangey[0] = x_min-2; rangey[1] = x_max+2; rangey[2] = y_min-2; rangey[3] = y_max+2;
+  int rangey[] = {x_min-2, x_max+3, y_min-2, y_max+2};
   ops_par_loop(initialise_chunk_kernel_celly, "initialise_chunk_kernel_celly", tea_grid, 2, rangey,
                ops_arg_dat(vertexy, 1, S2D_00_0P1_STRID2D_Y, "double", OPS_READ),
                ops_arg_dat(celly, 1, S2D_00_STRID2D_Y, "double", OPS_WRITE),

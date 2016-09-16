@@ -22,6 +22,8 @@ extern int g_rect;
 #include "field_summary_kernel_seq_kernel.cpp"
 #include "generate_chunk_kernel_seq_kernel.cpp"
 #include "initialise_chunk_kernel_zero_seq_kernel.cpp"
+#include "initialise_chunk_kernel_zero_x_seq_kernel.cpp"
+#include "initialise_chunk_kernel_zero_y_seq_kernel.cpp"
 #include "initialise_chunk_kernel_xx_seq_kernel.cpp"
 #include "initialise_chunk_kernel_yy_seq_kernel.cpp"
 #include "initialise_chunk_kernel_x_seq_kernel.cpp"
