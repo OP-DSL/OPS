@@ -57,7 +57,7 @@ int profiler_on;
 int state_max;
 int complete; //logical
 
-double dtold, dt, clover_time, dtinit, dtmin, dtmax, eps, tl_eps, tl_ch_cg_epslim;
+double dtold, dt, clover_time, dtinit, dtmin, dtmax, eps, tl_ch_cg_epslim;
 
 int x_min, y_min, x_max, y_max, x_cells, y_cells, max_iters, coefficient;
 

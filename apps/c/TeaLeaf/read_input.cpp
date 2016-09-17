@@ -114,84 +114,84 @@ void read_input()
       while (fgets (buff, LINESZ, fin)) {
           char* token = strtok(buff, " =");
           while (token) {
-            if(strcmp(token,"*tea\n") != 0 && strcmp(token,"*endtea\n") != 0 ) {
+            if(strcmp(trimwhitespace(token),"*tea\n") != 0 && strcmp(trimwhitespace(token),"*endtea\n") != 0 ) {
               //printf("token: %s ", token);
-              if(strcmp(token,"initial_timestep") == 0) {
+              if(strcmp(trimwhitespace(token),"initial_timestep") == 0) {
                 token = strtok(NULL, " =");
                 dtinit = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "initial_timestep",dtinit);
               }
-              else if(strcmp(token,"end_time") == 0) {
+              else if(strcmp(trimwhitespace(token),"end_time") == 0) {
                 token = strtok(NULL, " =");
                 end_time = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "end_time",end_time);
               }
-              else if(strcmp(token,"end_step") == 0) {
+              else if(strcmp(trimwhitespace(token),"end_step") == 0) {
                 token = strtok(NULL, " =");
                 end_step = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "end_step",end_step);
               }
-              else if(strcmp(token,"xmin") == 0) {
+              else if(strcmp(trimwhitespace(token),"xmin") == 0) {
                 token = strtok(NULL, " =");
                 grid.xmin = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "xmin",grid.xmin);
               }
-              else if(strcmp(token,"xmax") == 0) {
+              else if(strcmp(trimwhitespace(token),"xmax") == 0) {
                 token = strtok(NULL, " =");
                 grid.xmax = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "xmax",grid.xmax);
               }
-              else if(strcmp(token,"ymin") == 0) {
+              else if(strcmp(trimwhitespace(token),"ymin") == 0) {
                 token = strtok(NULL, " =");
                 grid.ymin = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "ymin",grid.ymin);
               }
-              else if(strcmp(token,"ymax") == 0) {
+              else if(strcmp(trimwhitespace(token),"ymax") == 0) {
                 token = strtok(NULL, " =");
                 grid.ymax = atof(token);
                 ops_fprintf(g_out," %20s: %e\n", "ymax",grid.ymax);
               }
-              else if(strcmp(token,"x_cells") == 0) {
+              else if(strcmp(trimwhitespace(token),"x_cells") == 0) {
                 token = strtok(NULL, " =");
                 grid.x_cells = atof(token);
                 ops_fprintf(g_out," %20s: %d\n", "x_cells",grid.x_cells);
               }
-              else if(strcmp(token,"y_cells") == 0) {
+              else if(strcmp(trimwhitespace(token),"y_cells") == 0) {
                 token = strtok(NULL, " =");
                 grid.y_cells = atof(token);
                 ops_fprintf(g_out," %20s: %d\n", "y_cells",grid.y_cells);
               }
-              else if(strcmp(token,"visit_frequency") == 0) {
+              else if(strcmp(trimwhitespace(token),"visit_frequency") == 0) {
                 token = strtok(NULL, " =");
                 visit_frequency = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "visit_frequency",visit_frequency);
               }
-              else if(strcmp(token,"summary_frequency") == 0) {
+              else if(strcmp(trimwhitespace(token),"summary_frequency") == 0) {
                 token = strtok(NULL, " =");
                 summary_frequency = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "summary_frequency",summary_frequency);
               }
-              else if(strcmp(token,"tl_ch_cg_presteps") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_ch_cg_presteps") == 0) {
                 token = strtok(NULL, " =");
                 tl_ch_cg_presteps = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "tl_ch_cg_presteps",tl_ch_cg_presteps);
               }
-              else if(strcmp(token,"tl_ppcg_inner_steps") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_ppcg_inner_steps") == 0) {
                 token = strtok(NULL, " =");
                 tl_ppcg_inner_steps = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "tl_ppcg_inner_steps",tl_ppcg_inner_steps);
               }
-              else if(strcmp(token,"tl_ch_cg_epslim") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_ch_cg_epslim") == 0) {
                 token = strtok(NULL, " =");
                 tl_ch_cg_epslim = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "tl_ch_cg_epslim",tl_ch_cg_epslim);
               }
-              else if(strcmp(token,"tl_check_result") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_check_result") == 0) {
                 token = strtok(NULL, " =");
                 tl_check_result = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "tl_check_result",tl_check_result);
               }
-              else if(strcmp(token,"tl_preconditioner_type") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_preconditioner_type") == 0) {
                 token = strtok(NULL, " =");
                 if (strcmp(trimwhitespace(token),"none") == 0)
                   tl_preconditioner_type = TL_PREC_NONE;
@@ -205,67 +205,65 @@ void read_input()
                 }
                 ops_fprintf(g_out," %20s: %d\n", "tl_preconditioner_type",tl_preconditioner_type);
               }
-              else if(strcmp(token,"verbose_on") == 0) {
+              else if(strcmp(trimwhitespace(token),"verbose_on") == 0) {
                 token = strtok(NULL, " =");
                 verbose_on = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "verbose_on",verbose_on);
               }
-              else if(strcmp(token,"tl_use_jacobi") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_use_jacobi") == 0) {
                 tl_use_jacobi = 1;
                 tl_use_chebyshev = 0;
                 tl_use_ppcg = 0;
                 tl_use_cg = 0;
               }
-              else if(strcmp(token,"tl_use_chebyshev") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_use_chebyshev") == 0) {
                 tl_use_jacobi = 0;
                 tl_use_chebyshev = 1;
                 tl_use_ppcg = 0;
                 tl_use_cg = 0;
               }
-              else if(strcmp(token,"tl_use_ppcg") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_use_ppcg") == 0) {
                 tl_use_jacobi = 0;
                 tl_use_chebyshev = 0;
                 tl_use_ppcg = 1;
                 tl_use_cg = 0;
               }
-              else if(strcmp(token,"tl_use_cg") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_use_cg") == 0) {
                 tl_use_jacobi = 0;
                 tl_use_chebyshev = 0;
                 tl_use_ppcg = 0;
                 tl_use_cg = 1;
               }
-              else if(strcmp(token,"reflective_boundary") == 0) {
-                token = strtok(NULL, " =");
-                reflective_boundary = atoi(token);
-                ops_fprintf(g_out," %20s: %d\n", "reflective_boundary",reflective_boundary);
+              else if(strcmp(trimwhitespace(token),"reflective_boundary") == 0) {
+                reflective_boundary = 1;
               }
-              else if(strcmp(token,"test_problem") == 0) {
+              else if(strcmp(trimwhitespace(token),"test_problem") == 0) {
                 token = strtok(NULL, " =");
                 test_problem = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "test_problem",test_problem);
               }
-              else if(strcmp(token,"profiler_on") == 0) {
+              else if(strcmp(trimwhitespace(token),"profiler_on") == 0) {
                 token = strtok(NULL, " =");
                 profiler_on = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "profiler_on",profiler_on);
               }
-              else if(strcmp(token,"tl_max_iters") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_max_iters") == 0) {
                 token = strtok(NULL, " =");
                 tl_max_iters = atoi(token);
               }
-              else if(strcmp(token,"tl_eps") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_eps") == 0) {
                 token = strtok(NULL, " =");
-                tl_eps = atof(token);
+                eps = atof(token);
               }
-              else if(strcmp(token,"tl_coefficient_density") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_coefficient_density") == 0) {
                 coefficient = CONDUCTIVITY;
                 ops_fprintf(g_out," %s\n", "Diffusion coefficient density");
               }
-              else if(strcmp(token,"tl_coefficient_inverse_density") == 0) {
+              else if(strcmp(trimwhitespace(token),"tl_coefficient_inverse_density") == 0) {
                 coefficient = RECIP_CONDUCTIVITY;
                 ops_fprintf(g_out," %s\n", "iffusion coefficient reciprocal density");
               }
-              else if(strcmp(token,"state") == 0) {
+              else if(strcmp(trimwhitespace(token),"state") == 0) {
 
                 ops_fprintf(g_out,"\n");
                 ops_fprintf(g_out," Reading specification for state %d\n",number_of_states+1);
@@ -277,47 +275,47 @@ void read_input()
 
                 token = strtok(NULL, " =");
                 while(token) {
-                  if(strcmp(token,"xmin") == 0) {
+                  if(strcmp(trimwhitespace(token),"xmin") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].xmin = atof(token);
                     ops_fprintf(g_out," %20s: %e\n","state xmin",states[number_of_states].xmin);
                   }
-                  if(strcmp(token,"xmax") == 0) {
+                  if(strcmp(trimwhitespace(token),"xmax") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].xmax = atof(token);
                     ops_fprintf(g_out," %20s: %e\n","state xmax",states[number_of_states].xmax);
                   }
-                  if(strcmp(token,"ymin") == 0) {
+                  if(strcmp(trimwhitespace(token),"ymin") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].ymin = atof(token);
                     ops_fprintf(g_out," %20s: %e\n","state ymin",states[number_of_states].ymin);
                   }
-                  if(strcmp(token,"ymax") == 0) {
+                  if(strcmp(trimwhitespace(token),"ymax") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].ymax = atof(token);
                     ops_fprintf(g_out," %20s: %e\n","state ymax",states[number_of_states].ymax);
                   }
-                  if(strcmp(token,"density") == 0) {
+                  if(strcmp(trimwhitespace(token),"density") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].density = atof(token);
                     ops_fprintf(g_out," %20s: %e\n", "state density",states[number_of_states].density);
                   }
-                  if(strcmp(token,"energy") == 0) {
+                  if(strcmp(trimwhitespace(token),"energy") == 0) {
                     token = strtok(NULL, " =");
                     states[number_of_states].energy = atof(token);
                     ops_fprintf(g_out," %20s: %e\n", "state energy",states[number_of_states].energy);
                   }
-                  if(strcmp(token,"geometry") == 0) {
+                  if(strcmp(trimwhitespace(token),"geometry") == 0) {
                     token = strtok(NULL, " =");
-                    if(strcmp(token,"rectangle") == 0) {
+                    if(strcmp(trimwhitespace(token),"rectangle") == 0) {
                       states[number_of_states].geometry = g_rect;
                       ops_fprintf(g_out," %20s: %s\n","state geometry","rectangular");
                     }
-                    else if(strcmp(token,"circle") == 0) {
+                    else if(strcmp(trimwhitespace(token),"circle") == 0) {
                       states[number_of_states].geometry = g_circ;
                       ops_fprintf(g_out," %20s: %s\n","state geometry","circular");
                     }
-                    else if(strcmp(token,"point") == 0) {
+                    else if(strcmp(trimwhitespace(token),"point") == 0) {
                       states[number_of_states].geometry = g_point;
                       ops_fprintf(g_out," %20s: %s\n","state geometry","point");
                     }

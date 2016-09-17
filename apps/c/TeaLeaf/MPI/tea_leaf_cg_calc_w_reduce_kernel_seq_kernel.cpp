@@ -6,9 +6,9 @@
 inline void tea_leaf_cg_calc_w_reduce_kernel(double *w, const double *Kx, const double *Ky, const double *p, const double *rx, const double *ry, double *pw) {
   w[OPS_ACC0(0,0)] = (1.0
                 + (*ry)*(Ky[OPS_ACC2(0,1)] + Ky[OPS_ACC2(0,0)])
-                + (*rx)*(Ky[OPS_ACC2(1,0)] + Kx[OPS_ACC1(0,0)]))*p[OPS_ACC3(0,0)]
+                + (*rx)*(Kx[OPS_ACC1(1,0)] + Kx[OPS_ACC1(0,0)]))*p[OPS_ACC3(0,0)]
                 - (*ry)*(Ky[OPS_ACC2(0,1)]*p[OPS_ACC3(0,1)] + Ky[OPS_ACC2(0,0)]*p[OPS_ACC3(0,-1)])
-                - (*rx)*(Ky[OPS_ACC2(1,0)]*p[OPS_ACC3(1,0)] + Kx[OPS_ACC1(0,0)]*p[OPS_ACC3(-1,0)]);
+                - (*rx)*(Kx[OPS_ACC1(1,0)]*p[OPS_ACC3(1,0)] + Kx[OPS_ACC1(0,0)]*p[OPS_ACC3(-1,0)]);
   *pw = *pw + w[OPS_ACC0(0,0)]*p[OPS_ACC3(0,0)];
 }
 

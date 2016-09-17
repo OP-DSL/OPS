@@ -43,6 +43,12 @@ void ops_par_loop_tea_leaf_axpby_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_tea_leaf_axpby_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 #include "tea_leaf.h"

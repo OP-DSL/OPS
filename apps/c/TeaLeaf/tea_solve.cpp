@@ -60,7 +60,7 @@ void tea_leaf() {
 
 	int halo_exchange_depth = 1;
 #warning what is the value of chunk_neighbour = zero_enighbour?
-	int zero_boundary[4] = {0,0,0,0};
+	int zero_boundary[4] = {EXTERNAL_FACE,EXTERNAL_FACE,EXTERNAL_FACE,EXTERNAL_FACE};
 	double rx, ry;
 
   cg_time = 0.0;
@@ -137,7 +137,7 @@ void tea_leaf() {
 
   if (profiler_on) ops_timers_core(&c,&solve_time);
 
-  for (n = 1; n < max_iters; n++) {
+  for (n = 1; n <= max_iters; n++) {
 
     ops_timers_core(&c,&iteration_time);
 
@@ -352,7 +352,7 @@ void tea_leaf() {
     if (verbose_on) {
       ops_fprintf(g_out,"Residual %g\n",error);
     }
-
+    ops_printf("%3.15E\n",error);
     if (fabs(error) < eps*initial_residual) break;
 
     old_error = error;

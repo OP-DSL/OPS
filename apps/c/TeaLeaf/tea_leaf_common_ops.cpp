@@ -40,6 +40,15 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel(char const *, ops_block, int
 void ops_par_loop_tea_leaf_init_zero_kernel(char const *, ops_block, int , int*,
   ops_arg );
 
+void ops_par_loop_tea_leaf_init_zero_kernel(char const *, ops_block, int , int*,
+  ops_arg );
+
+void ops_par_loop_tea_leaf_init_zero_kernel(char const *, ops_block, int , int*,
+  ops_arg );
+
+void ops_par_loop_tea_leaf_init_zero_kernel(char const *, ops_block, int , int*,
+  ops_arg );
+
 void ops_par_loop_tea_leaf_common_init_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg,
@@ -125,7 +134,8 @@ void tea_leaf_common_init(
 
   int rangexy[] = {x_min,x_max,y_min,y_max};
   int rangexy_ext[] = {x_min-halo_depth+1,x_max+halo_depth,y_min-halo_depth+1,y_max+halo_depth};
-
+  int rangexy_ext2[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
+  
   ops_par_loop_tea_leaf_common_init_u_u0_kernel("tea_leaf_common_init_u_u0_kernel", tea_grid, 2, rangexy,
                ops_arg_dat(u, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(u0, 1, S2D_00, "double", OPS_WRITE),
@@ -133,42 +143,42 @@ void tea_leaf_common_init(
                ops_arg_dat(density, 1, S2D_00, "double", OPS_READ));
 
   if (coef == RECIP_CONDUCTIVITY) {
-    ops_par_loop_tea_leaf_recip_kernel("tea_leaf_recip_kernel", tea_grid, 2, rangexy,
+    ops_par_loop_tea_leaf_recip_kernel("tea_leaf_recip_kernel", tea_grid, 2, rangexy_ext2,
                  ops_arg_dat(w, 1, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(density, 1, S2D_00, "double", OPS_READ));
   } else if (coef == CONDUCTIVITY) {
     double one = 1.0;
-    ops_par_loop_tea_leaf_yeqax_kernel("tea_leaf_yeqax_kernel", tea_grid, 2, rangexy,
+    ops_par_loop_tea_leaf_yeqax_kernel("tea_leaf_yeqax_kernel", tea_grid, 2, rangexy_ext2,
                  ops_arg_dat(w, 1, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(density, 1, S2D_00, "double", OPS_READ),
                  ops_arg_gbl(&one, 1, "double", OPS_READ));
   }
 
-  ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel("tea_leaf_common_init_Kx_Ky_kernel", tea_grid, 2, rangexy,
+  ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel("tea_leaf_common_init_Kx_Ky_kernel", tea_grid, 2, rangexy_ext,
                ops_arg_dat(Kx, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(Ky, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(w, 1, S2D_00_M10_0M1, "double", OPS_READ));
 
 
   if (reflective_boundary == 0) {
-    if (zero_boundary[CHUNK_LEFT]) {
-      int range_left[] = {x_min-halo_depth,x_min,y_min-halo_depth,y_max+halo_depth};
-      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, rangexy,
+    if (zero_boundary[CHUNK_LEFT]==EXTERNAL_FACE) {
+      int range_left[] = {x_min-halo_depth,x_min+1,y_min-halo_depth,y_max+halo_depth};
+      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, range_left,
                    ops_arg_dat(Kx, 1, S2D_00, "double", OPS_WRITE));
     }
-    if (zero_boundary[CHUNK_RIGHT]) {
-      int range_right[] = {x_max+1,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
-      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, rangexy,
+    if (zero_boundary[CHUNK_RIGHT]==EXTERNAL_FACE) {
+      int range_right[] = {x_max,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
+      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, range_right,
                    ops_arg_dat(Kx, 1, S2D_00, "double", OPS_WRITE));
     }
-    if (zero_boundary[CHUNK_BOTTOM]) {
-      int range_bottom[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_min};
-      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, rangexy,
+    if (zero_boundary[CHUNK_BOTTOM]==EXTERNAL_FACE) {
+      int range_bottom[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_min+1};
+      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, range_bottom,
                    ops_arg_dat(Ky, 1, S2D_00, "double", OPS_WRITE));
     }
-    if (zero_boundary[CHUNK_TOP]) {
-      int range_top[] = {x_min-halo_depth,x_max+halo_depth,y_max+1,y_max+halo_depth};
-      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, rangexy,
+    if (zero_boundary[CHUNK_TOP]==EXTERNAL_FACE) {
+      int range_top[] = {x_min-halo_depth,x_max+halo_depth,y_max,y_max+halo_depth};
+      ops_par_loop_tea_leaf_init_zero_kernel("tea_leaf_init_zero_kernel", tea_grid, 2, range_top,
                    ops_arg_dat(Ky, 1, S2D_00, "double", OPS_WRITE));
 		}
   }

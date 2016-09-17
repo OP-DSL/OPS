@@ -50,6 +50,12 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *, ops_block, i
   ops_arg,
   ops_arg );
 
+void ops_par_loop_tea_leaf_axpby_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 #include "tea_leaf.h"
@@ -216,17 +222,20 @@ void tea_leaf_cg_calc_p(
   int y_min = field.y_min;
   int y_max = field.y_max;
   int rangexy[] = {x_min,x_max,y_min,y_max};
+	double one = 1.0;
 
   if (preconditioner_type != TL_PREC_NONE || tl_ppcg_active) {
-    ops_par_loop_tea_leaf_axpy_kernel("tea_leaf_axpy_kernel", tea_grid, 2, rangexy,
+    ops_par_loop_tea_leaf_axpby_kernel("tea_leaf_axpby_kernel", tea_grid, 2, rangexy,
                  ops_arg_dat(p, 1, S2D_00, "double", OPS_INC),
                  ops_arg_dat(z, 1, S2D_00, "double", OPS_READ),
-                 ops_arg_gbl(&beta, 1, "double", OPS_READ));
+                 ops_arg_gbl(&beta, 1, "double", OPS_READ),
+                 ops_arg_gbl(&one, 1, "double", OPS_READ));
   } else {
-    ops_par_loop_tea_leaf_axpy_kernel("tea_leaf_axpy_kernel", tea_grid, 2, rangexy,
+    ops_par_loop_tea_leaf_axpby_kernel("tea_leaf_axpby_kernel", tea_grid, 2, rangexy,
                  ops_arg_dat(p, 1, S2D_00, "double", OPS_INC),
                  ops_arg_dat(r, 1, S2D_00, "double", OPS_READ),
-                 ops_arg_gbl(&beta, 1, "double", OPS_READ));
+                 ops_arg_gbl(&beta, 1, "double", OPS_READ),
+                 ops_arg_gbl(&one, 1, "double", OPS_READ));
   }
 }
 

@@ -44,7 +44,7 @@ void generate()
   int y_min = field.y_min;
   int y_max = field.y_max;
 
-  int rangexy[] = {x_min-2,x_max+2,y_min-2,y_max+2};
+  int rangexy[] = {x_min,x_max,y_min,y_max};
 
   ops_par_loop(generate_chunk_kernel, "generate_chunk_kernel", tea_grid, 2, rangexy,
     ops_arg_dat(vertexx, 1, S2D_00_P10_M10_STRID2D_X, "double", OPS_READ),

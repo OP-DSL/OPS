@@ -57,12 +57,12 @@ void start()
 
   generate();
 
-
+  fields[0]=0;fields[1]=0;fields[2]=0;fields[3]=0;fields[4]=0;fields[5]=0;fields[6]=0;
   fields[FIELD_DENSITY]  = 1;
   fields[FIELD_ENERGY0]   = 1;
   fields[FIELD_ENERGY1]   = 1;
 
-  update_halo(fields, 2);
+  update_halo(fields, 1);
 
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Problem initialised and generated\n");

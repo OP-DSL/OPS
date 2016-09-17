@@ -52,7 +52,7 @@ extern int visit_frequency;
 extern int summary_frequency;
 extern int use_vector_loops;
 
-extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, eps, tl_eps, tl_ch_cg_epslim;
+extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, eps, tl_ch_cg_epslim;
 
 extern int x_min, y_min, x_max, y_max, x_cells, y_cells, max_iters, coefficient;
 
