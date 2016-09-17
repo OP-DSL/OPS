@@ -351,8 +351,8 @@ void tea_leaf() {
     if (verbose_on) {
       ops_fprintf(g_out,"Residual %g\n",error);
     }
-    ops_printf("%3.15E\n",error);
-    if (fabs(error) < eps*initial_residual) break;
+    
+		if (fabs(error) < eps*initial_residual) break;
 
     old_error = error;
 

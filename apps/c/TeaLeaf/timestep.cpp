@@ -46,8 +46,8 @@ void timestep() {
 
   // if(profiler_on) profiler%timestep=profiler%timestep+(timer()-kernel_time)
 
-    ops_fprintf(g_out, "Step %d time %g timestep %g\n", step, time, dt);
-    ops_printf("Step %d time %g timestep %g\n", step, time, dt);
+    ops_fprintf(g_out, "Step %d time %g timestep %g\n", step, currtime, dt);
+    ops_printf("Step %d time %g timestep %g\n", step, currtime, dt);
       
 
 }

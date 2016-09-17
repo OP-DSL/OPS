@@ -72,7 +72,7 @@ extern int tl_max_iters;
 
 extern int jdt, kdt;
 
-extern double time, end_time;
+extern double currtime, end_time;
         //These two need to be kept consistent with update_halo
 extern int     CHUNK_LEFT ,
         CHUNK_RIGHT   ,

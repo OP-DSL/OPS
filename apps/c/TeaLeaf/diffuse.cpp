@@ -76,7 +76,7 @@ int verbose_on = 0;
 
 int tl_max_iters;
 
-double time, end_time;
+double currtime, end_time;
 int end_step;
 int visit_frequency;
 int summary_frequency;
@@ -102,7 +102,7 @@ void diffuse()
 
     tea_leaf();
 
-    time = time + dt;
+    currtime = currtime + dt;
 
     if(summary_frequency != 0)
       if((step%summary_frequency) == 0)
