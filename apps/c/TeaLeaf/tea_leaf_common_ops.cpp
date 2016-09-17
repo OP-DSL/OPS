@@ -134,8 +134,8 @@ void tea_leaf_common_init(
 
   int rangexy[] = {x_min,x_max,y_min,y_max};
   int rangexy_ext[] = {x_min-halo_depth+1,x_max+halo_depth,y_min-halo_depth+1,y_max+halo_depth};
-  int rangexy_ext2[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
-  
+	int rangexy_ext2[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
+
   ops_par_loop_tea_leaf_common_init_u_u0_kernel("tea_leaf_common_init_u_u0_kernel", tea_grid, 2, rangexy,
                ops_arg_dat(u, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(u0, 1, S2D_00, "double", OPS_WRITE),

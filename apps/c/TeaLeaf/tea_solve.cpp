@@ -59,7 +59,6 @@ void tea_leaf() {
   double cg_time, ch_time, total_solve_time, ch_per_it, cg_per_it, iteration_time;
 
 	int halo_exchange_depth = 1;
-#warning what is the value of chunk_neighbour = zero_enighbour?
 	int zero_boundary[4] = {EXTERNAL_FACE,EXTERNAL_FACE,EXTERNAL_FACE,EXTERNAL_FACE};
 	double rx, ry;
 
