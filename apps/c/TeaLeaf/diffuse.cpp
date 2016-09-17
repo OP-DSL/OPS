@@ -74,8 +74,6 @@ int tl_ch_cg_presteps,
 
 int verbose_on = 0;
 
-int tl_max_iters;
-
 double currtime, end_time;
 int end_step;
 int visit_frequency;
@@ -123,7 +121,7 @@ void diffuse()
     ops_fprintf(g_out,"Step time per cell %lf\n", step_grind);
 
     if((clover_time+g_small) > end_time || (step >= end_step)) {
-      complete=TRUE;
+      complete=1;
       field_summary();
       ops_fprintf(g_out,"\n\n Calculation complete\n");
       ops_fprintf(g_out,"\n Tea is finishing\n");

@@ -32,7 +32,7 @@ void start()
     ops_fprintf(g_out,"\n");
   }
 
-  time = 0.0;
+  currtime = 0.0;
   step  = 0;
   dt    = dtinit;
 

@@ -68,8 +68,6 @@ extern int tl_ch_cg_presteps,
   ,tl_ppcg_active
   ,verbose_on;
 
-extern int tl_max_iters;
-
 extern int jdt, kdt;
 
 extern double currtime, end_time;

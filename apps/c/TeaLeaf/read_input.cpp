@@ -249,7 +249,7 @@ void read_input()
               }
               else if(strcmp(trimwhitespace(token),"tl_max_iters") == 0) {
                 token = strtok(NULL, " =");
-                tl_max_iters = atoi(token);
+                max_iters = atoi(token);
               }
               else if(strcmp(trimwhitespace(token),"tl_eps") == 0) {
                 token = strtok(NULL, " =");

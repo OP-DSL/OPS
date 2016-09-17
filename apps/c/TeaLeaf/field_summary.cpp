@@ -78,9 +78,15 @@ void field_summary()
   ops_fprintf(g_out," step:   %3d   %-10.3E  %-10.3E  %-15.3E  %-10.3E  %-.3E",
           step, vol, mass, mass/vol, ie, temp);
 
-  if(complete == TRUE) {
-    if(test_problem == 1) {
-      qa_diff=fabs((100.0*(temp/157.550841832793))-100.0);
+  if(complete == 1) {
+    if(test_problem>0) {
+      //qa_diff=fabs((100.0*(temp/157.550841832793))-100.0);
+			if(test_problem==1) qa_diff=fabs((100.0*(temp/157.550841832793))-100.0);
+			if(test_problem==2) qa_diff=fabs((100.0*(temp/116.067951160930))-100.0);
+			if(test_problem==3) qa_diff=fabs((100.0*(temp/95.4865103390698))-100.0);
+			if(test_problem==4) qa_diff=fabs((100.0*(temp/166.838315378708))-100.0);
+			if(test_problem==5) qa_diff=fabs((100.0*(temp/116.482111627676))-100.0);
+			if(test_problem==6) qa_diff=fabs((100.0*(temp/103.88639125996923))-100.0);
       ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
       ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
       if(qa_diff < 0.001) {
