@@ -375,16 +375,16 @@ void tea_leaf() {
   // if (profiler_on) profiler%tea_solve = profiler%tea_solve + (timer() - solve_time)
 
 
-  ops_fprintf(g_out,"Conduction error %g\n", error/initial_residual);
-  ops_printf("Conduction error %g\n", error/initial_residual);
+  ops_fprintf(g_out,"Conduction error %-10.7E\n", error/initial_residual);
+  ops_printf("Conduction error %-10.7E\n", error/initial_residual);
 
   if (tl_check_result) {
     ops_fprintf(g_out,"EXACT error calculated as %g\n", exact_error/initial_residual);
     ops_printf("EXACT error calculated as %g\n", exact_error/initial_residual);
   }
 
-  ops_fprintf(g_out,"Iteration count %d\n", n-1);
-  ops_printf("Iteration count %d\n", n-1);
+  ops_fprintf(g_out,"Iteration count %8d\n", n-1);
+  ops_printf("Iteration count %8d\n", n-1);
 
   if (tl_use_ppcg) {
     ops_fprintf(g_out,"PPCG Iteration count %d (Total %d)\n", ppcg_inner_iters, ppcg_inner_iters + n - 1);

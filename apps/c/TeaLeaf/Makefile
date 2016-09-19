@@ -201,7 +201,7 @@ tealeaf_openmp: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib
 # Sequential version
 #
 tealeaf_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_seq 
+		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_seq -qopenmp 
 
 #
 # CUDA version

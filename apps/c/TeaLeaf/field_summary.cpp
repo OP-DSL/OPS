@@ -87,16 +87,16 @@ void field_summary()
 			if(test_problem==4) qa_diff=fabs((100.0*(temp/166.838315378708))-100.0);
 			if(test_problem==5) qa_diff=fabs((100.0*(temp/116.482111627676))-100.0);
 			if(test_problem==6) qa_diff=fabs((100.0*(temp/103.88639125996923))-100.0);
-      ops_printf("\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
-      ops_fprintf(g_out,"\nTest problem 1 is within %3.15E %% of the expected solution\n",qa_diff);
+      ops_printf("Test problem %3d is within   %-10.7E%% of the expected solution\n",test_problem, qa_diff);
+      ops_fprintf(g_out,"\nTest problem %3d is within   %10.7E%% of the expected solution\n",test_problem, qa_diff);
       if(qa_diff < 0.001) {
-        ops_printf("This test is considered PASSED\n");
-        ops_fprintf(g_out,"This test is considered PASSED\n");
+        ops_printf(" This test is considered PASSED\n");
+        ops_fprintf(g_out," This test is considered PASSED\n");
       }
       else
       {
-        ops_printf("This test is considered NOT PASSED\n");
-        ops_fprintf(g_out,"This test is considered NOT PASSED\n");
+        ops_printf(" This test is considered NOT PASSED\n");
+        ops_fprintf(g_out," This test is considered NOT PASSED\n");
       }
     }
   }

@@ -109,24 +109,24 @@ void diffuse()
     ops_timers(&ct0, &et0);
     wall_clock = et0 - timerstart;
     step_clock = et0 - step_time;
-    ops_printf("Wall clock %lf\n", wall_clock);
-    ops_fprintf(g_out,"Wall clock %lf\n", wall_clock);
+    ops_printf(" Wall clock %.15lf\n", wall_clock);
+    ops_fprintf(g_out," Wall clock %.15lf\n", wall_clock);
     cells = grid.x_cells * grid.y_cells;
     rstep = step;
     grind_time = wall_clock/(rstep * cells);
     step_grind = step_clock/cells;
-    ops_printf("Average time per cell %lf\n", grind_time);
-    ops_fprintf(g_out,"Average time per cell %lf\n", grind_time);
-    ops_printf("Step time per cell %lf\n", step_grind);
-    ops_fprintf(g_out,"Step time per cell %lf\n", step_grind);
+    ops_printf(" Average time per cell   %-10.15E\n", grind_time);
+    ops_fprintf(g_out," Average time per cell   %-10.15E\n", grind_time);
+    ops_printf(" Step time per cell      %-10.15E\n", step_grind);
+    ops_fprintf(g_out," Step time per cell      %-10.15E\n", step_grind);
 
     if((clover_time+g_small) > end_time || (step >= end_step)) {
       complete=1;
       field_summary();
       ops_fprintf(g_out,"\n\n Calculation complete\n");
       ops_fprintf(g_out,"\n Tea is finishing\n");
-      ops_printf("Wall clock %lf\n", wall_clock);
-      ops_fprintf(g_out,"Wall clock %lf\n", wall_clock);
+      ops_printf(" Wall clock %-10.15E\n", wall_clock);
+      ops_fprintf(g_out," Wall clock %-10.15E\n", wall_clock);
       break;
     }
     
@@ -140,8 +140,8 @@ void diffuse()
     process_profile();
   }
 
-  ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);
+  ops_printf("\nTotal Wall time %-10.15E\n",et1-et0);
+  ops_fprintf(g_out,"\nTotal Wall time %-10.15E\n",et1-et0);
 
   fclose(g_out);
 }
