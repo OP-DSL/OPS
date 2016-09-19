@@ -118,7 +118,7 @@ void tea_leaf_ppcg_init(
   // step = 2 or 3, is a partial step of the PPCG algorithm
   
  
-  if (step == 1 || step == 3) *rro = 0.0;
+  *rro = 0.0;
   
   if (step == 1) {
     ops_par_loop(tea_leaf_init_zero2_kernel, "tea_leaf_init_zero2_kernel", tea_grid, 2, rangexy,
@@ -187,7 +187,7 @@ void tea_leaf_kernel_ppcg_inner(
   int rangexy[] = {x_min,x_max,y_min,y_max};
 
   ops_par_loop(tea_leaf_ppcg_inner1_kernel, "tea_leaf_ppcg_inner1_kernel", tea_grid, 2, rangexy,
-    ops_arg_dat(rtemp, 1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(rtemp, 1, S2D_00, "double", OPS_INC),
     ops_arg_dat(Kx, 1, S2D_00_P10, "double", OPS_READ),
     ops_arg_dat(Ky, 1, S2D_00_0P1, "double", OPS_READ),
     ops_arg_dat(sd, 1, S2D_00_0M1_M10_P10_0P1, "double", OPS_READ),

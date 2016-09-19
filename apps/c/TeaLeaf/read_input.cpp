@@ -343,7 +343,7 @@ void read_input()
 
   // Simple guess - better than a default of 10
   if (tl_ppcg_inner_steps == -1) {
-    tl_ppcg_inner_steps = 4*sqrt(sqrt((double)(grid.x_cells*grid.y_cells)));
+    tl_ppcg_inner_steps = 4*(int)(sqrt(sqrt((double)(grid.x_cells*grid.y_cells))));
     ops_fprintf(g_out," %20s: %d\n", "tl_ppcg_inner_steps",tl_ppcg_inner_steps);
   }
 

@@ -194,10 +194,10 @@ void tea_leaf_cheby_iterate(
 void tqli(double *d, double *e, int n, int *info) {
   int i,iter,l,m,cont;
   double b,c,dd,f,g,p,r,s;
-  for (i = 1; i < n; i++) {
+	for (i = 1; i < n; i++) {
     e[i] = e[i+1];
   }
-  e[n] = 0.0;
+	e[n] = 0.0;
   *info = 0;
   for (l = 1; l <=n; l++) {
     iter=0;

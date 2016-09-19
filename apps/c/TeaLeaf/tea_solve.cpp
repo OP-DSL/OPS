@@ -45,7 +45,7 @@ void tea_leaf() {
   double timer,halo_time,solve_time,init_time,reset_time,dot_product_time;
 
   // For CG solver
-  double rro, pw, rrn, alpha, beta;
+  double rro=0.0, pw, rrn, alpha, beta;
 
   // For chebyshev solver and PPCG solver
   double  cg_alphas[max_iters+1], cg_betas[max_iters+1];
@@ -347,7 +347,7 @@ void tea_leaf() {
     }
 
     error=sqrt(fabs(error));
-
+		printf("%10.15E\n",error);
     if (verbose_on) {
       ops_fprintf(g_out,"Residual %g\n",error);
     }

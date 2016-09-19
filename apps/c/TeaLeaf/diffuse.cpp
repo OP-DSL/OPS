@@ -125,8 +125,8 @@ void diffuse()
       field_summary();
       ops_fprintf(g_out,"\n\n Calculation complete\n");
       ops_fprintf(g_out,"\n Tea is finishing\n");
-      ops_printf(" Wall clock %-10.15E\n", wall_clock);
-      ops_fprintf(g_out," Wall clock %-10.15E\n", wall_clock);
+      ops_printf(" Wall clock %.15lf\n", wall_clock);
+      ops_fprintf(g_out," Wall clock %.15lf\n", wall_clock);
       break;
     }
     
