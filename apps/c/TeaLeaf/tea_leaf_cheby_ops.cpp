@@ -194,9 +194,10 @@ void tea_leaf_cheby_iterate(
 void tqli(double *d, double *e, int n, int *info) {
   int i,iter,l,m,cont;
   double b,c,dd,f,g,p,r,s;
-  for (i = n; i > 0; i--) {
-    e[i] = e[i-1];
+  for (i = 1; i < n; i++) {
+    e[i] = e[i+1];
   }
+  e[n] = 0.0;
   *info = 0;
   for (l = 1; l <=n; l++) {
     iter=0;
@@ -322,13 +323,11 @@ void tea_leaf_cheby_first_step(double *ch_alphas, double *ch_betas, int *fields,
 
   tea_leaf_calc_2norm(1, error);
 
-  *error = 1;
-
   double it_alpha = eps*bb/(4.0*(*error));
   double gamm = (sqrt(cn) - 1.0)/(sqrt(cn) + 1.0);
   *est_itc = round(log(it_alpha)/(2.0*log(gamm)));
 
-  ops_fprintf(g_out,"est itc\n%d'n",est_itc);
-  ops_printf("est itc\n%d'n",est_itc);
+  ops_fprintf(g_out,"    est itc\n%11d\n",*est_itc);
+  ops_printf("    est itc\n%11d\n",*est_itc);
 
 }

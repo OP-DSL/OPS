@@ -179,8 +179,8 @@ void tea_leaf() {
         if (tl_use_chebyshev) {
           // calculate chebyshev coefficients
           // preallocate space for the coefficients
-          ch_alphas = (double*)malloc((tl_ppcg_inner_steps+1)*sizeof(double));
-          ch_betas  = (double*)malloc((tl_ppcg_inner_steps+1)*sizeof(double));
+          ch_alphas = (double*)malloc((max_iters+1)*sizeof(double));
+          ch_betas  = (double*)malloc((max_iters+1)*sizeof(double));
           
           tea_calc_ch_coefs(ch_alphas, ch_betas, eigmin, eigmax,
               &theta, max_cheby_iters);
@@ -192,8 +192,8 @@ void tea_leaf() {
         } else if (tl_use_ppcg) {
           // currently also calculate chebyshev coefficients
           // preallocate space for the coefficients
-          ch_alphas = (double*)malloc((tl_ppcg_inner_steps+1)*sizeof(double));
-          ch_betas  = (double*)malloc((tl_ppcg_inner_steps+1)*sizeof(double));
+          ch_alphas = (double*)malloc((max_iters+1)*sizeof(double));
+          ch_betas  = (double*)malloc((max_iters+1)*sizeof(double));
           
           //ls_coefs becomes ch_coefs
           tea_calc_ch_coefs(ch_alphas, ch_betas, eigmin, eigmax,
@@ -205,10 +205,10 @@ void tea_leaf() {
         cn = eigmax/eigmin;
 
         //TODO: formatting
-        ops_fprintf(g_out, "Switching after %d CG its, error %g\n", n, rro);
-        ops_fprintf(g_out, "Eigen min %g Eigen max %g Condition number %g Error %g\n", eigmin, eigmax, cn, old_error);
-        ops_printf("Switching after %d CG its, error %g\n", n, rro);
-        ops_printf("Eigen min %g Eigen max %g Condition number %g Error %g\n", eigmin, eigmax, cn, old_error);
+        ops_fprintf(g_out, "Switching after %3d CG its, error %10.7E\n", n, rro);
+        ops_fprintf(g_out, "Eigen min %10.6E Eigen max %10.6E Condition number %1.6lf Error %10.7E\n", eigmin, eigmax, cn, old_error);
+        ops_printf("Switching after %3d CG its, error %10.7E\n", n, rro);
+        ops_printf("Eigen min %10.6E Eigen max %10.6E Condition number %1.6lf Error %10.7E\n", eigmin, eigmax, cn, old_error);
                 
 
       // Reinitialise CG with PPCG applied

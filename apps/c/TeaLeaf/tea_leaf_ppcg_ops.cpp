@@ -200,8 +200,8 @@ void tea_leaf_ppcg_init(
                  ops_arg_dat(p, 1, S2D_00, "double", OPS_READ),
                  ops_arg_dat(r, 1, S2D_00, "double", OPS_READ),
                  ops_arg_reduce(red_temp, 1, "double", OPS_INC));
+    ops_reduction_result(red_temp, rro);
   }
-  ops_reduction_result(red_temp, rro);
 }
 
 void tea_leaf_kernel_ppcg_inner(
