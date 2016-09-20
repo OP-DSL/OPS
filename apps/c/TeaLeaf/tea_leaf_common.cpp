@@ -225,7 +225,7 @@ void tea_diag_init(
   int x_max = field.x_max;
   int y_min = field.y_min;
   int y_max = field.y_max;
-  int rangexy_ext[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
+  int rangexy_ext[] = {x_min-halo_depth+1,x_max+halo_depth-1,y_min-halo_depth+1,y_max+halo_depth-1};
 
   ops_par_loop(tea_leaf_common_init_diag_init_kernel, "tea_leaf_common_init_diag_init_kernel", tea_grid, 2, rangexy_ext,
       ops_arg_dat(Mi, 1, S2D_00, "double", OPS_WRITE),

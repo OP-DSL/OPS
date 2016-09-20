@@ -100,7 +100,6 @@ void tea_leaf_cheby_init(
   int y_max = field.y_max;
 
   int rangexy[] = {x_min,x_max,y_min,y_max};
-  double thetai = 1.0/theta;
 
   ops_par_loop_tea_leaf_cheby_init_kernel("tea_leaf_cheby_init_kernel", tea_grid, 2, rangexy,
                ops_arg_dat(w, 1, S2D_00, "double", OPS_WRITE),
