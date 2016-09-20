@@ -39,7 +39,7 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
 ifdef DEBUG
-  CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS	= -O0 -g -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
   CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel #-DCOMM_PERF #-DDEBUG

@@ -347,7 +347,7 @@ void tea_leaf() {
     }
 
     error=sqrt(fabs(error));
-		printf("%10.15E\n",error);
+//		printf("%-10.15E\n",error);
     if (verbose_on) {
       ops_fprintf(g_out,"Residual %g\n",error);
     }

@@ -41,6 +41,8 @@ extern int g_rect;
 #include "tea_leaf_axpby_kernel_seq_kernel.cpp"
 #include "tea_leaf_cheby_init_kernel_seq_kernel.cpp"
 #include "tea_leaf_yeqax_kernel_seq_kernel.cpp"
+#include "tea_leaf_recip3_kernel_seq_kernel.cpp"
+#include "tea_leaf_xpy_kernel_seq_kernel.cpp"
 #include "tea_leaf_common_init_u_u0_kernel_seq_kernel.cpp"
 #include "tea_leaf_recip_kernel_seq_kernel.cpp"
 #include "tea_leaf_common_init_Kx_Ky_kernel_seq_kernel.cpp"

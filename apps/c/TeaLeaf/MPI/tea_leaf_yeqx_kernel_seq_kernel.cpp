@@ -25,12 +25,12 @@ void ops_par_loop_tea_leaf_yeqx_kernel(char const *name, ops_block block, int di
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,17)) return;
+  if (!ops_checkpointing_before(args,2,range,31)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(17,"tea_leaf_yeqx_kernel");
-    OPS_kernels[17].count++;
+    ops_timing_realloc(31,"tea_leaf_yeqx_kernel");
+    OPS_kernels[31].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -110,7 +110,7 @@ void ops_par_loop_tea_leaf_yeqx_kernel(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[17].mpi_time += t1-t2;
+    OPS_kernels[31].mpi_time += t1-t2;
   }
 
   int n_x;
@@ -145,7 +145,7 @@ void ops_par_loop_tea_leaf_yeqx_kernel(char const *name, ops_block block, int di
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[17].time += t2-t1;
+    OPS_kernels[31].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -153,8 +153,8 @@ void ops_par_loop_tea_leaf_yeqx_kernel(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[17].mpi_time += t1-t2;
-    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[17].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[31].mpi_time += t1-t2;
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

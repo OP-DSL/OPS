@@ -42,11 +42,14 @@ void tea_leaf_init_zero_kernel (double * p);
 void tea_leaf_yeqx_kernel (double * p, const double * x);
 void tea_leaf_yeqax_kernel (double * p, const double * x, const double * a);
 void tea_leaf_dot_kernel (const double * r, const double * p, double *rro);
+void tea_leaf_xpy_kernel(double * u, const double * p);
+void tea_leaf_xpy_kernel(double * u, const double * p);
 void tea_leaf_axpy_kernel(double * u, const double * p, const double * alpha);
 void tea_leaf_axpby_kernel(double * u, const double * p, const double * alpha, const double * beta);
 void tea_leaf_zeqxty_kernel(double * z, const double * x, const double * y);
 void tea_leaf_recip_kernel(double * u, const double * p);
 void tea_leaf_recip2_kernel(double *z, const double *x, const double *y);
+void tea_leaf_recip3_kernel(double *z, const double *x, const double *theta);
 void tea_leaf_norm2_kernel(const double *x, double * norm);
 
 void tea_leaf_cheby_init(
@@ -71,7 +74,6 @@ void tea_leaf_cheby_init(
   int y_max = field.y_max;
 
   int rangexy[] = {x_min,x_max,y_min,y_max};
-  double thetai = 1.0/theta;
 
   ops_par_loop(tea_leaf_cheby_init_kernel, "tea_leaf_cheby_init_kernel", tea_grid, 2, rangexy,
       ops_arg_dat(w, 1, S2D_00, "double", OPS_WRITE),
@@ -95,17 +97,16 @@ void tea_leaf_cheby_init(
       ops_arg_dat(z, 1, S2D_00, "double", OPS_READ),
       ops_arg_gbl(&thetai, 1, "double", OPS_READ));
   } else {
-    ops_par_loop(tea_leaf_yeqax_kernel, "tea_leaf_yeqax_kernel", tea_grid, 2, rangexy,
+    ops_par_loop(tea_leaf_recip3_kernel, "tea_leaf_recip3_kernel", tea_grid, 2, rangexy,
       ops_arg_dat(p, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_dat(r, 1, S2D_00, "double", OPS_READ),
-      ops_arg_gbl(&thetai, 1, "double", OPS_READ));
+      ops_arg_gbl(&theta, 1, "double", OPS_READ));
   }
 
   double one = 1.0;
-  ops_par_loop(tea_leaf_axpy_kernel, "tea_leaf_axpy_kernel", tea_grid, 2, rangexy,
+  ops_par_loop(tea_leaf_xpy_kernel, "tea_leaf_xpy_kernel", tea_grid, 2, rangexy,
       ops_arg_dat(u, 1, S2D_00, "double", OPS_INC),
-      ops_arg_dat(p, 1, S2D_00, "double", OPS_READ),
-      ops_arg_gbl(&one, 1, "double", OPS_READ));
+      ops_arg_dat(p, 1, S2D_00, "double", OPS_READ));
 
 }
 
@@ -162,11 +163,9 @@ void tea_leaf_cheby_iterate(
       ops_arg_gbl(&ch_betas[step], 1, "double", OPS_READ));
   }
 
-  double one = 1.0;
-  ops_par_loop(tea_leaf_axpy_kernel, "tea_leaf_axpy_kernel", tea_grid, 2, rangexy,
+  ops_par_loop(tea_leaf_xpy_kernel, "tea_leaf_xpy_kernel", tea_grid, 2, rangexy,
     ops_arg_dat(u, 1, S2D_00, "double", OPS_INC),
-    ops_arg_dat(p, 1, S2D_00, "double", OPS_READ),
-    ops_arg_gbl(&one, 1, "double", OPS_READ));
+    ops_arg_dat(p, 1, S2D_00, "double", OPS_READ));
 }
 
 void tqli(double *d, double *e, int n, int *info) {

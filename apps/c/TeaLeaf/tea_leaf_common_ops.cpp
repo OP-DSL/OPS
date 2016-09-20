@@ -27,8 +27,7 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
-void ops_par_loop_tea_leaf_yeqax_kernel(char const *, ops_block, int , int*,
-  ops_arg,
+void ops_par_loop_tea_leaf_yeqx_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
@@ -148,10 +147,9 @@ void tea_leaf_common_init(
                  ops_arg_dat(density, 1, S2D_00, "double", OPS_READ));
   } else if (coef == CONDUCTIVITY) {
     double one = 1.0;
-    ops_par_loop_tea_leaf_yeqax_kernel("tea_leaf_yeqax_kernel", tea_grid, 2, rangexy_ext2,
+    ops_par_loop_tea_leaf_yeqx_kernel("tea_leaf_yeqx_kernel", tea_grid, 2, rangexy_ext2,
                  ops_arg_dat(w, 1, S2D_00, "double", OPS_WRITE),
-                 ops_arg_dat(density, 1, S2D_00, "double", OPS_READ),
-                 ops_arg_gbl(&one, 1, "double", OPS_READ));
+                 ops_arg_dat(density, 1, S2D_00, "double", OPS_READ));
   }
 
   ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel("tea_leaf_common_init_Kx_Ky_kernel", tea_grid, 2, rangexy_ext,

@@ -27,6 +27,10 @@ void tea_leaf_axpy_kernel(double * u, const double * p, const double * alpha) {
   u[OPS_ACC0(0,0)] = u[OPS_ACC0(0,0)] + (*alpha)*p[OPS_ACC1(0,0)];
 }
 
+void tea_leaf_xpy_kernel(double * u, const double * p) {
+  u[OPS_ACC0(0,0)] = u[OPS_ACC0(0,0)] + p[OPS_ACC1(0,0)];
+}
+
 void tea_leaf_axpby_kernel(double * u, const double * p, const double * alpha, const double * beta) {
   u[OPS_ACC0(0,0)] = (*alpha) * u[OPS_ACC0(0,0)] + (*beta)*p[OPS_ACC1(0,0)];
 }
@@ -41,6 +45,10 @@ void tea_leaf_recip_kernel(double * u, const double * p) {
 
 void tea_leaf_recip2_kernel(double *z, const double *x, const double *y) {
 	z[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)]/y[OPS_ACC2(0,0)];
+}
+
+void tea_leaf_recip3_kernel(double *z, const double *x, const double *theta) {
+	z[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)]/(*theta);
 }
 
 void tea_leaf_norm2_kernel(const double *x, double * norm) {
