@@ -3,6 +3,7 @@
 
 //header
 #define OPS_2D
+#define OPS_ACC_MACROS
 #define OPS_ACC_MD_MACROS
 #include "ops_lib_cpp.h"
 #ifdef OPS_MPI
@@ -40,7 +41,6 @@ extern int g_rect;
 #include "tea_leaf_cg_calc_ur_r_reduce_kernel_seq_kernel.cpp"
 #include "tea_leaf_axpby_kernel_seq_kernel.cpp"
 #include "tea_leaf_cheby_init_kernel_seq_kernel.cpp"
-#include "tea_leaf_yeqax_kernel_seq_kernel.cpp"
 #include "tea_leaf_recip3_kernel_seq_kernel.cpp"
 #include "tea_leaf_xpy_kernel_seq_kernel.cpp"
 #include "tea_leaf_common_init_u_u0_kernel_seq_kernel.cpp"

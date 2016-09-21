@@ -27,11 +27,6 @@ void ops_par_loop_tea_leaf_cheby_init_kernel(char const *, ops_block, int , int*
   ops_arg,
   ops_arg );
 
-void ops_par_loop_tea_leaf_yeqax_kernel(char const *, ops_block, int , int*,
-  ops_arg,
-  ops_arg,
-  ops_arg );
-
 void ops_par_loop_tea_leaf_recip3_kernel(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg,
@@ -118,10 +113,10 @@ void tea_leaf_cheby_init(
     else if (preconditioner_type == TL_PREC_JAC_DIAG)
       tea_diag_solve(r, z, Mi, Kx, Ky, rx, ry);
 
-    ops_par_loop_tea_leaf_yeqax_kernel("tea_leaf_yeqax_kernel", tea_grid, 2, rangexy,
+    ops_par_loop_tea_leaf_recip3_kernel("tea_leaf_recip3_kernel", tea_grid, 2, rangexy,
                  ops_arg_dat(p, 1, S2D_00, "double", OPS_WRITE),
                  ops_arg_dat(z, 1, S2D_00, "double", OPS_READ),
-                 ops_arg_gbl(&thetai, 1, "double", OPS_READ));
+                 ops_arg_gbl(&theta, 1, "double", OPS_READ));
   } else {
     ops_par_loop_tea_leaf_recip3_kernel("tea_leaf_recip3_kernel", tea_grid, 2, rangexy,
                  ops_arg_dat(p, 1, S2D_00, "double", OPS_WRITE),
@@ -326,9 +321,9 @@ void tea_leaf_cheby_first_step(double *ch_alphas, double *ch_betas, int *fields,
 
   tea_leaf_calc_2norm(1, error);
 
-  double it_alpha = eps*bb/(4.0*(*error));
+  double it_alpha = eps/2.0*sqrt(bb/(*error));//eps*bb/(4.0*(*error));
   double gamm = (sqrt(cn) - 1.0)/(sqrt(cn) + 1.0);
-  *est_itc = round(log(it_alpha)/(2.0*log(gamm)));
+  *est_itc = round(log(it_alpha)/(log(gamm)));
 
   ops_fprintf(g_out,"    est itc\n%11d\n",*est_itc);
   ops_printf("    est itc\n%11d\n",*est_itc);
