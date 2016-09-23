@@ -585,7 +585,15 @@ it combines the manual datlist and fastfw calls, and triggers the creation of a 
 is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported 
 in a tech-report on checkpointing, to be published later. 
 
+\section{Tiling for Cache-blocking}
+OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling. Currently this is only supported on a single
+node with OpenMP. Once compiled, to enable, use the OPS\_TILING runtime parameter - this will look at the L3 cache size
+of your CPU and guess the correct tile size. If you want to alter the amount of cache to be used for the guess, use the
+OPS\_CACHE\_SIZE=XX runtime parameter, where the value is in Megabytes. To manually specify the tile sizes, use the 
+T1, T2, and T3 environment variables.
 
+To test, please compile CloverLeaf under apps/c/CloverLeaf, modify clover.in to use a $6144^2$ mesh, then run as follows:
+OMP\_NUM\_THREADS=xx numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
 
 \newpage
 \section{OPS User Kernels}
