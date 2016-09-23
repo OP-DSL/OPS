@@ -220,7 +220,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     text = comment_remover(text)
     text = remove_trailing_w_space(text)
 
-    p = re.compile('void\\s+\\b'+name+'\\b')
+    text = re.sub('void\\s+\\b'+name+'\\b','void '+name+'_gpu',text)
+    p = re.compile('void\\s+\\b'+name+'_gpu\\b')
 
     i = p.search(text).start()
 
@@ -341,7 +342,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
-    text = name+'('
+    text = name+'_gpu('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +'arg'+str(n)

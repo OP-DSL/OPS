@@ -304,7 +304,7 @@ void tea_diag_solve(
   int y_min = field.y_min;
   int y_max = field.y_max;
 	int halo_depth = 1;
-#warning halo depth
+
   int rangexy_ext[] = {x_min-halo_depth,x_max+halo_depth,y_min-halo_depth,y_max+halo_depth};
 
   ops_par_loop_tea_leaf_zeqxty_kernel("tea_leaf_zeqxty_kernel", tea_grid, 2, rangexy_ext,
