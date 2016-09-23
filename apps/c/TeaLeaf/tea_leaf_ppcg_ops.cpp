@@ -390,6 +390,8 @@ void tea_leaf_run_ppcg_inner_steps(
           tri_bfp,
           vector_Mi,
           tl_preconditioner_type);
+
+		if (ppcg_cur_step%tiling_frequency == 0) ops_execute();
   }
 
   fields[0]=0;fields[1]=0;fields[2]=0;fields[3]=0;fields[4]=0;fields[5]=0;fields[6]=0;

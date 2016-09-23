@@ -78,6 +78,7 @@ double currtime, end_time;
 int end_step;
 int visit_frequency;
 int summary_frequency;
+int tiling_frequency;
 
 int jdt, kdt;
 
@@ -140,8 +141,8 @@ void diffuse()
     process_profile();
   }
 
-  ops_printf("\nTotal Wall time %-10.15E\n",et1-et0);
-  ops_fprintf(g_out,"\nTotal Wall time %-10.15E\n",et1-et0);
+  ops_printf("\nTotal Wall time %-10.15E\n",et1-timerstart);
+  ops_fprintf(g_out,"\nTotal Wall time %-10.15E\n",et1-timerstart);
 
   fclose(g_out);
 }

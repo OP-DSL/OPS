@@ -50,6 +50,7 @@ extern double end_time;
 extern int end_step;
 extern int visit_frequency;
 extern int summary_frequency;
+extern int tiling_frequency;
 extern int use_vector_loops;
 
 extern double dtold, dt, clover_time, dtinit, dtmin, dtmax, eps, tl_ch_cg_epslim;

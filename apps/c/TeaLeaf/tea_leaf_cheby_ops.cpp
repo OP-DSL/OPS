@@ -321,7 +321,7 @@ void tea_leaf_cheby_first_step(double *ch_alphas, double *ch_betas, int *fields,
 
   tea_leaf_calc_2norm(1, error);
 
-  double it_alpha = eps/2.0*sqrt(bb/(*error));//eps*bb/(4.0*(*error));
+  double it_alpha = eps/2.0*sqrt(bb/(*error));
   double gamm = (sqrt(cn) - 1.0)/(sqrt(cn) + 1.0);
   *est_itc = round(log(it_alpha)/(log(gamm)));
 
