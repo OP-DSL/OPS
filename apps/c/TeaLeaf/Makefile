@@ -159,9 +159,9 @@ else
 TARGETS += openacc_error
 endif
 
-PLAIN_FILES = build_field.cpp diffuse.cpp initialise.cpp read_input.cpp start.cpp tea_leaf.cpp tea_solve.cpp timestep.cpp
-OPS_FILES_NOGEN = field_summary.cpp  generate.cpp initialise_chunk.cpp set_field.cpp  tea_leaf_cg.cpp tea_leaf_cheby.cpp tea_leaf_common.cpp tea_leaf_jacobi.cpp tea_leaf_ppcg.cpp update_halo.cpp
-OPS_FILES_GEN = field_summary_ops.cpp  generate_ops.cpp initialise_chunk_ops.cpp set_field_ops.cpp  tea_leaf_cg_ops.cpp tea_leaf_cheby_ops.cpp tea_leaf_common_ops.cpp tea_leaf_jacobi_ops.cpp tea_leaf_ppcg_ops.cpp update_halo_ops.cpp
+PLAIN_FILES = build_field.cpp diffuse.cpp initialise.cpp read_input.cpp tea_leaf.cpp tea_solve.cpp timestep.cpp
+OPS_FILES_NOGEN = field_summary.cpp  generate.cpp initialise_chunk.cpp start.cpp set_field.cpp  tea_leaf_cg.cpp tea_leaf_cheby.cpp tea_leaf_common.cpp tea_leaf_jacobi.cpp tea_leaf_ppcg.cpp update_halo.cpp
+OPS_FILES_GEN = field_summary_ops.cpp  generate_ops.cpp initialise_chunk_ops.cpp start_ops.cpp set_field_ops.cpp  tea_leaf_cg_ops.cpp tea_leaf_cheby_ops.cpp tea_leaf_common_ops.cpp tea_leaf_jacobi_ops.cpp tea_leaf_ppcg_ops.cpp update_halo_ops.cpp
 HEADERS = data.h generate_chunk_kernel.h tea_leaf_cg_kernels.h tea_leaf.h tea_leaf_ops_vars.h user_types.h \
 		definitions.h initialise_chunk_kernel.h tea_leaf_cheby_kernels.h tea_leaf_jacobi_kernels.h tea_leaf_ppcg_kernels.h \
 		field_summary_kernel.h set_field_kernels.h tea_leaf_common_kernels.h tea_leaf_kernels.h update_halo_kernels.h
