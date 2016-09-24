@@ -69,10 +69,10 @@ void initialise()
     ops_fprintf(g_in," xmax=10.0\n");
     ops_fprintf(g_in," ymax=10.0\n");
     ops_fprintf(g_in," initial_timestep=0.004\n");
-    ops_fprintf(g_in," end_timestep=10\n");
+    ops_fprintf(g_in," end_step=10\n");
     ops_fprintf(g_in," tl_max_iters=1000\n");
-    ops_fprintf(g_in," tl_use_jacobi=1000\n");
-    ops_fprintf(g_in," tl_eps=1e-5\n");
+    ops_fprintf(g_in," tl_use_jacobi\n");
+    ops_fprintf(g_in," tl_eps=1e-15\n");
     ops_fprintf(g_in," test_problem 1\n");
     ops_fprintf(g_in,"*endtea\n");
     fclose(g_in);
