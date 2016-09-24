@@ -75,11 +75,11 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
     if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
       end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-  #else //OPS_MPI
+  #else
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
-  #endif //OPS_MPI
+  #endif
 
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
@@ -103,9 +103,9 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
 
   #ifdef OPS_MPI
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
-  #else //OPS_MPI
+  #else
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
-  #endif //OPS_MPI
+  #endif
 
   //set up initial pointers
   int base0 = args[0].dat->base_offset + args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];

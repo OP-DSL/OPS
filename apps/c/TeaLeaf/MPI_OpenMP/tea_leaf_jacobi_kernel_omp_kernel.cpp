@@ -72,11 +72,11 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
     if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
       end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-  #else //OPS_MPI
+  #else
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
-  #endif //OPS_MPI
+  #endif
   #ifdef OPS_DEBUG
   ops_register_args(args, "tea_leaf_jacobi_kernel");
   #endif
@@ -123,9 +123,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
   double *arg6h = (double *)arg6.data;
   #ifdef OPS_MPI
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
-  #else //OPS_MPI
+  #else
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
-  #endif //OPS_MPI
+  #endif
   //Halo Exchanges
   ops_H_D_exchanges_host(args, 8);
   ops_halo_exchanges(args,8,range);
@@ -182,9 +182,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
     int d_m[OPS_MAX_DIM];
     #ifdef OPS_MPI
     for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-    #else //OPS_MPI
+    #else
     for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-    #endif //OPS_MPI
+    #endif
     int base0 = dat0 * 1 *
     (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
     base0 = base0+ dat0 *
@@ -194,9 +194,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
 
     #ifdef OPS_MPI
     for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-    #else //OPS_MPI
+    #else
     for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-    #endif //OPS_MPI
+    #endif
     int base1 = dat1 * 1 *
     (start0 * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
     base1 = base1+ dat1 *
@@ -206,9 +206,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
 
     #ifdef OPS_MPI
     for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-    #else //OPS_MPI
+    #else
     for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
-    #endif //OPS_MPI
+    #endif
     int base2 = dat2 * 1 *
     (start0 * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
     base2 = base2+ dat2 *
@@ -218,9 +218,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
 
     #ifdef OPS_MPI
     for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-    #else //OPS_MPI
+    #else
     for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
-    #endif //OPS_MPI
+    #endif
     int base3 = dat3 * 1 *
     (start0 * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
     base3 = base3+ dat3 *
@@ -230,9 +230,9 @@ void ops_par_loop_tea_leaf_jacobi_kernel(char const *name, ops_block block, int 
 
     #ifdef OPS_MPI
     for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-    #else //OPS_MPI
+    #else
     for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
-    #endif //OPS_MPI
+    #endif
     int base4 = dat4 * 1 *
     (start0 * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
     base4 = base4+ dat4 *

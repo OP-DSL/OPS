@@ -151,7 +151,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_cuda tealeaf_mpi_cuda tealeaf_opencl tealeaf_mpi_opencl #tealeaf_openacc tealeaf_mpi_openacc
+TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_tiled tealeaf_cuda tealeaf_mpi_cuda tealeaf_opencl tealeaf_mpi_opencl #tealeaf_openacc tealeaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += tealeaf_openacc tealeaf_mpi_openacc
@@ -201,8 +201,15 @@ tealeaf_openmp: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib
 # Sequential version
 #
 tealeaf_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_seq -qopenmp 
+		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_seq
 
+#
+# Tiled version
+#
+tealeaf_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
+		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_tiled -qopenmp
+
+#
 #
 # CUDA version
 #
@@ -275,4 +282,4 @@ openacc_error:
 #
 
 clean:
-		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst
+		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst

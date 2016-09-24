@@ -73,11 +73,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
       end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-  #else //OPS_MPI
+  #else
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
-  #endif //OPS_MPI
+  #endif
   #ifdef OPS_DEBUG
   ops_register_args(args, "field_summary_kernel");
   #endif
@@ -140,30 +140,30 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   #ifdef OPS_MPI
   p_a[4] = ((ops_reduction)args[4].data)->data + ((ops_reduction)args[4].data)->size * block->index;
-  #else //OPS_MPI
+  #else
   p_a[4] = ((ops_reduction)args[4].data)->data;
-  #endif //OPS_MPI
+  #endif
 
 
   #ifdef OPS_MPI
   p_a[5] = ((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index;
-  #else //OPS_MPI
+  #else
   p_a[5] = ((ops_reduction)args[5].data)->data;
-  #endif //OPS_MPI
+  #endif
 
 
   #ifdef OPS_MPI
   p_a[6] = ((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index;
-  #else //OPS_MPI
+  #else
   p_a[6] = ((ops_reduction)args[6].data)->data;
-  #endif //OPS_MPI
+  #endif
 
 
   #ifdef OPS_MPI
   p_a[7] = ((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index;
-  #else //OPS_MPI
+  #else
   p_a[7] = ((ops_reduction)args[7].data)->data;
-  #endif //OPS_MPI
+  #endif
 
 
 
