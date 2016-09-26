@@ -49,7 +49,7 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS 	:= -O0 -g
 else
-  CCFLAGS 	:= -O3 -xCORE_AVX2 -qopenmp #vec-report -xAVX
+  CCFLAGS 	:= -O3 -xHost #-qopenmp #vec-report -xAVX
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)

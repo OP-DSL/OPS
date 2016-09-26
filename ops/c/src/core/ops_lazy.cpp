@@ -40,7 +40,16 @@
 #include <stdlib.h>
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
+#if defined(_OPENMP)
 #include <omp.h>
+#else
+inline int omp_get_max_threads() { 
+	if (getenv ("OMP_NUM_THREADS"))
+    return atoi(getenv ("OMP_NUM_THREADS"));
+	else return 1;
+}
+#endif
+
 
 #include <vector>
 using namespace std;

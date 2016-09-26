@@ -39,14 +39,14 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP		= icpc
 ifdef DEBUG
-  CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  #CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
-  OMPFLAGS	= -openmp #-openmp-report2
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  OMPFLAGS	= -qopenmp #-openmp-report2
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPICC	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPIFLAGS	= $(CCFLAGS)
@@ -223,7 +223,7 @@ cloverleaf_seq: Makefile $(OPS_FILES_GEN) \
 #
 cloverleaf_tiled: Makefile $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
+		$(CPP) $(MPIFLAGS) $(OMPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
 
 
 
