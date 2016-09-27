@@ -18,7 +18,6 @@
 
 // host stub function
 void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -124,7 +123,7 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #pragma omp simd
+    #pragma simd
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       
 

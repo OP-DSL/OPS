@@ -213,7 +213,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
-    code('ops_block block = desc->block;')
+#    code('ops_block block = desc->block;')
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
 
@@ -354,7 +354,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
-    code('#pragma omp simd'+line)
+    code('#pragma simd'+line)
     FOR('n_x','start[0]','end[0]')
     if arg_idx:
       if NDIM==1:

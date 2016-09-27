@@ -9,7 +9,6 @@
 
 // host stub function
 void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -77,7 +76,7 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_bot_execute(ops_kernel_descri
   #pragma omp parallel for collapse(2)
   for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-      #pragma omp simd
+      #pragma simd
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
         
   if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0,0)] = -yvel0[OPS_ACC0(0,2,0)];

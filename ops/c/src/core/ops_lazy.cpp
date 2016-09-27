@@ -198,8 +198,12 @@ int ops_construct_tile_plan() {
 	if (tile_sizes[0]>0) ntiles[0] = (biggest_range[2*0+1]-biggest_range[2*0]-1)/tile_sizes[0]+1;
 	if (tile_sizes[1]>0) ntiles[1] = (biggest_range[2*1+1]-biggest_range[2*1]-1)/tile_sizes[1]+1;
 	if (tile_sizes[2]>0) ntiles[2] = (biggest_range[2*2+1]-biggest_range[2*2]-1)/tile_sizes[2]+1;
+#if OPS_MAX_DIM>3
 	if (tile_sizes[3]>0) ntiles[3] = (biggest_range[2*3+1]-biggest_range[2*3]-1)/tile_sizes[3]+1;
+#endif
+#if OPS_MAX_DIM>4
 	if (tile_sizes[4]>0) ntiles[4] = (biggest_range[2*4+1]-biggest_range[2*4]-1)/tile_sizes[4]+1;
+#endif
 	if (OPS_MAX_DIM>5) {printf("Error, tiling currently not equipped to handle > 5 dims\n");exit(-1);}
 
 	int tiles_prod[OPS_MAX_DIM+1];

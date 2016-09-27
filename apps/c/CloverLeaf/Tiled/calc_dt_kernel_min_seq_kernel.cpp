@@ -8,7 +8,6 @@
 
 // host stub function
 void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -73,7 +72,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   double p_a1_0 = p_a1[0];
   #pragma omp parallel for reduction(min:p_a1_0)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #pragma omp simd reduction(min:p_a1_0)
+    #pragma simd reduction(min:p_a1_0)
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       double *dt_min_val = &p_a1_0;
       

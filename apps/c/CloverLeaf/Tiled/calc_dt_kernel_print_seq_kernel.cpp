@@ -13,7 +13,6 @@
 
 // host stub function
 void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -114,7 +113,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   double p_a6_11 = p_a6[11];
   #pragma omp parallel for reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #pragma omp simd reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
+    #pragma simd reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       double output[12];
       output[0] = ZERO_double;
