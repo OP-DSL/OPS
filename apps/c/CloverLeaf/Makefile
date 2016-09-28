@@ -223,7 +223,7 @@ cloverleaf_seq: Makefile $(OPS_FILES_GEN) \
 #
 cloverleaf_tiled: Makefile $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(CPP) $(MPIFLAGS) $(OMPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
+		$(CPP) $(MPIFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
 
 
 
