@@ -354,7 +354,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
+    code('#ifdef intel')
+    code('#pragma omp simd'+line)
+    code('#else')
     code('#pragma simd'+line)
+    code('#endif')
     FOR('n_x','start[0]','end[0]')
     if arg_idx:
       if NDIM==1:
