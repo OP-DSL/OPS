@@ -152,7 +152,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     if not (('calc_dt_kernel_print' in name)):
       if not (NDIM==3 and 'field_summary' in name):
-        code('#undef OPS_GPU')
+        code('#define OPS_GPU')
         code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

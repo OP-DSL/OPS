@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 int xdim0_generate_chunk_kernel;
 int ydim0_generate_chunk_kernel;
