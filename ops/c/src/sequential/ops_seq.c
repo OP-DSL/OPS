@@ -71,11 +71,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->mem = bytes;
   }
 
-  //Compute offset in bytes to the base index
+  // Compute offset in bytes to the base index
   dat->base_offset = 0;
   long cumsize = 1;
-  for (int i=0; i<block->dims; i++) {
-    dat->base_offset += dat->elem_size * cumsize * (-dat->base[i] - dat->d_m[i]);
+  for (int i = 0; i < block->dims; i++) {
+    dat->base_offset +=
+        dat->elem_size * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
 
@@ -89,7 +90,7 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
 }
 
 void ops_halo_transfer(ops_halo_group group) {
-	ops_execute();
+  ops_execute();
   // Test contents of halo group
   /*ops_halo halo;
   for(int i = 0; i<group->nhalos; i++) {
@@ -105,7 +106,7 @@ void ops_halo_transfer(ops_halo_group group) {
     }
   }
   //return;*/
-  //printf("group->nhalos %d\n",group->nhalos);
+  // printf("group->nhalos %d\n",group->nhalos);
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
     int size = halo->from->elem_size * halo->iter_size[0];
@@ -138,12 +139,23 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->from_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-  #pragma omp parallel for collapse(3)
-    for (int k = MIN(ranges[4],ranges[5]+1); k < MAX(ranges[4]+1,ranges[5]); k++) {
-      for (int j = MIN(ranges[2],ranges[3]+1); j < MAX(ranges[2]+1,ranges[3]); j++) {
-        for (int i = MIN(ranges[0],ranges[1]+1); i < MAX(ranges[0]+1,ranges[1]); i++) {
-          memcpy(ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
-                 halo->from->data + (k*halo->from->size[0]*halo->from->size[1]+j*halo->from->size[0]+i)*halo->from->elem_size, halo->from->elem_size);
+#pragma omp parallel for collapse(3)
+    for (int k = MIN(ranges[4], ranges[5] + 1);
+         k < MAX(ranges[4] + 1, ranges[5]); k++) {
+      for (int j = MIN(ranges[2], ranges[3] + 1);
+           j < MAX(ranges[2] + 1, ranges[3]); j++) {
+        for (int i = MIN(ranges[0], ranges[1] + 1);
+             i < MAX(ranges[0] + 1, ranges[1]); i++) {
+          memcpy(ops_halo_buffer +
+                     ((k - ranges[4]) * step[2] * buf_strides[2] +
+                      (j - ranges[2]) * step[1] * buf_strides[1] +
+                      (i - ranges[0]) * step[0] * buf_strides[0]) *
+                         halo->from->elem_size,
+                 halo->from->data +
+                     (k * halo->from->size[0] * halo->from->size[1] +
+                      j * halo->from->size[0] + i) *
+                         halo->from->elem_size,
+                 halo->from->elem_size);
         }
       }
     }
@@ -166,12 +178,23 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->to_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-  #pragma omp parallel for collapse(3)
-    for (int k = MIN(ranges[4],ranges[5]+1); k < MAX(ranges[4]+1,ranges[5]); k++) {
-      for (int j = MIN(ranges[2],ranges[3]+1); j < MAX(ranges[2]+1,ranges[3]); j++) {
-        for (int i = MIN(ranges[0],ranges[1]+1); i < MAX(ranges[0]+1,ranges[1]); i++) {
-          memcpy(halo->to->data + (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-                 ops_halo_buffer + ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1] + (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size, halo->to->elem_size);
+#pragma omp parallel for collapse(3)
+    for (int k = MIN(ranges[4], ranges[5] + 1);
+         k < MAX(ranges[4] + 1, ranges[5]); k++) {
+      for (int j = MIN(ranges[2], ranges[3] + 1);
+           j < MAX(ranges[2] + 1, ranges[3]); j++) {
+        for (int i = MIN(ranges[0], ranges[1] + 1);
+             i < MAX(ranges[0] + 1, ranges[1]); i++) {
+          memcpy(halo->to->data +
+                     (k * halo->to->size[0] * halo->to->size[1] +
+                      j * halo->to->size[0] + i) *
+                         halo->to->elem_size,
+                 ops_halo_buffer +
+                     ((k - ranges[4]) * step[2] * buf_strides[2] +
+                      (j - ranges[2]) * step[1] * buf_strides[1] +
+                      (i - ranges[0]) * step[0] * buf_strides[0]) *
+                         halo->to->elem_size,
+                 halo->to->elem_size);
         }
       }
     }
@@ -247,6 +270,4 @@ void ops_download_dat(ops_dat dat) { (void)dat; }
 
 void ops_upload_dat(ops_dat dat) { (void)dat; }
 
-void ops_timers(double * cpu, double * et){
-    ops_timers_core(cpu,et);
-}
+void ops_timers(double *cpu, double *et) { ops_timers_core(cpu, et); }

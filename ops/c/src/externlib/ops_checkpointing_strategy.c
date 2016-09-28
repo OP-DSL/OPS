@@ -329,7 +329,9 @@ extern "C" {
 void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
                                  int *range) {}
 bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
-                             int *range) {return false;}
+                             int *range) {
+  return false;
+}
 void ops_statistics_exit() {}
 #ifdef __cplusplus
 }

@@ -146,18 +146,17 @@ void ops_set_args(int argc, char *argv) {
     OPS_diags = atoi(temp + 11);
     ops_printf("\n OPS_diags = %d \n", OPS_diags);
   }
-	pch = strstr(argv, "OPS_CACHE_SIZE=");
-  if(pch != NULL) {
-    strncpy (temp,pch,20);
-    ops_cache_size = atoi ( temp + 15 );
-    ops_printf ( "\n Cache size per process = %d \n", ops_cache_size );
+  pch = strstr(argv, "OPS_CACHE_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 20);
+    ops_cache_size = atoi(temp + 15);
+    ops_printf("\n Cache size per process = %d \n", ops_cache_size);
   }
-	pch = strstr(argv, "OPS_TILING");
-  if(pch != NULL) {
+  pch = strstr(argv, "OPS_TILING");
+  if (pch != NULL) {
     ops_enable_tiling = 1;
-    ops_printf ( "\n Tiling enabled\n" );
+    ops_printf("\n Tiling enabled\n");
   }
-
 
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     ops_checkpoint_inmemory = 1;
@@ -1063,17 +1062,24 @@ void ops_timing_output(FILE *stream) {
 
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
-      ops_compute_moment(OPS_kernels[k].time, &moments_time[0], &moments_time[1]);
-      ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0], &moments_mpi_time[1]);
+      ops_compute_moment(OPS_kernels[k].time, &moments_time[0],
+                         &moments_time[1]);
+      ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
+                         &moments_mpi_time[1]);
 
-      sprintf(buf2,"%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count, moments_time[0],
-        sqrt(moments_time[1] - moments_time[0]*moments_time[0]),
-        moments_mpi_time[0], sqrt(moments_mpi_time[1] - moments_mpi_time[0]*moments_mpi_time[0]),
-        OPS_kernels[k].transfer/((moments_time[0])*1024*1024*1024));
+      sprintf(
+          buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count,
+          moments_time[0],
+          sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
+          moments_mpi_time[0],
+          sqrt(moments_mpi_time[1] - moments_mpi_time[0] * moments_mpi_time[0]),
+          OPS_kernels[k].transfer / ((moments_time[0]) * 1024 * 1024 * 1024));
 
-      //sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count, OPS_kernels[k].time,
-      //  OPS_kernels[k].mpi_time, OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
-      ops_fprintf(stream,"%s%s\n",buf,buf2);
+      // sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count,
+      // OPS_kernels[k].time,
+      //  OPS_kernels[k].mpi_time,
+      //  OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+      ops_fprintf(stream, "%s%s\n", buf, buf2);
       sumtime += OPS_kernels[k].time;
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
