@@ -10,7 +10,9 @@
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
+#ifdef OPS_GPU
 #include "ops_cuda_rt_support.h"
+#endif
 #include "user_types.h"
 
 // global constants

@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_calc_dt_kernel_min;
 int xdim0_calc_dt_kernel_min_h = -1;
@@ -87,8 +87,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     ydim0_calc_dt_kernel_min_h = ydim0;
   }
 
-  int dat0 = args[0].dat->elem_size;
-
 #ifdef OPS_MPI
   double *arg1h =
       (double *)(((ops_reduction)args[1].data)->data +
@@ -98,24 +96,14 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 #endif
 
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
+          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
+              args[0].stencil->stride[1];
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
-               d_m[2]);
+          args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
+              start[2] * args[0].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else

@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_update_halo_kernel4_plus_2_back;
 int xdim0_update_halo_kernel4_plus_2_back_h = -1;
@@ -102,9 +102,6 @@ void ops_par_loop_update_halo_kernel4_plus_2_back(char const *name,
     ydim1_update_halo_kernel4_plus_2_back_h = ydim1;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-
   int *arg2h = (int *)arg2.data;
 // Upload large globals
 #ifdef OPS_GPU
@@ -121,47 +118,28 @@ void ops_par_loop_update_halo_kernel4_plus_2_back(char const *name,
 #endif // OPS_GPU
 
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
+          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
+              args[0].stencil->stride[1];
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
-               d_m[2]);
+          args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
+              start[2] * args[0].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1] -
-                                         args[1].dat->base[1] - d_m[1]);
+          args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
+              args[1].stencil->stride[1];
   base1 = base1 +
-          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-              (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] -
-               d_m[2]);
+          args[1].dat->elem_size * args[1].dat->size[0] * args[1].dat->size[1] *
+              start[2] * args[1].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
