@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/shsgc_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_xder1_kernel;
 int xdim0_xder1_kernel_h = -1;
@@ -83,37 +83,17 @@ void ops_par_loop_xder1_kernel(char const *name, ops_block block, int dim,
     xdim1_xder1_kernel_h = xdim1;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else

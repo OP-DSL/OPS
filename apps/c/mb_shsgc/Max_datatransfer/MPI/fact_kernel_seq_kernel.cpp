@@ -86,29 +86,12 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim,
   int dat1 = args[1].dat->elem_size;
 
   // set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
   p_a[0] = (char *)args[0].data + base0;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
   p_a[1] = (char *)args[1].data + base1;
 
   // initialize global variable with the dimension of dats

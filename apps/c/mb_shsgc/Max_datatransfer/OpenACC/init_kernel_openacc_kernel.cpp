@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/shsgc_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_init_kernel;
 int xdim0_init_kernel_h = -1;
@@ -120,139 +120,65 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
     xdim7_init_kernel_h = xdim7;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
-  int dat7 = args[7].dat->elem_size;
-
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[2].dat->d_m[d];
-#endif
-  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
-                          args[2].dat->base[0] - d_m[0]);
+  int base2 = args[2].dat->base_offset +
+              args[2].dat->elem_size * start[0] * args[2].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a2 = (double *)((char *)args[2].data_d + base2);
 #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[3].dat->d_m[d];
-#endif
-  int base3 = dat3 * 1 * (start[0] * args[3].stencil->stride[0] -
-                          args[3].dat->base[0] - d_m[0]);
+  int base3 = args[3].dat->base_offset +
+              args[3].dat->elem_size * start[0] * args[3].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a3 = (double *)((char *)args[3].data_d + base3);
 #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[4].dat->d_m[d];
-#endif
-  int base4 = dat4 * 1 * (start[0] * args[4].stencil->stride[0] -
-                          args[4].dat->base[0] - d_m[0]);
+  int base4 = args[4].dat->base_offset +
+              args[4].dat->elem_size * start[0] * args[4].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[5].dat->d_m[d];
-#endif
-  int base5 = dat5 * 1 * (start[0] * args[5].stencil->stride[0] -
-                          args[5].dat->base[0] - d_m[0]);
+  int base5 = args[5].dat->base_offset +
+              args[5].dat->elem_size * start[0] * args[5].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a5 = (double *)((char *)args[5].data_d + base5);
 #else
   double *p_a5 = (double *)((char *)args[5].data + base5);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[6].dat->d_m[d] + OPS_sub_dat_list[args[6].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[6].dat->d_m[d];
-#endif
-  int base6 = dat6 * 1 * (start[0] * args[6].stencil->stride[0] -
-                          args[6].dat->base[0] - d_m[0]);
+  int base6 = args[6].dat->base_offset +
+              args[6].dat->elem_size * start[0] * args[6].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a6 = (double *)((char *)args[6].data_d + base6);
 #else
   double *p_a6 = (double *)((char *)args[6].data + base6);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[7].dat->d_m[d] + OPS_sub_dat_list[args[7].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[7].dat->d_m[d];
-#endif
-  int base7 = dat7 * 1 * (start[0] * args[7].stencil->stride[0] -
-                          args[7].dat->base[0] - d_m[0]);
+  int base7 = args[7].dat->base_offset +
+              args[7].dat->elem_size * start[0] * args[7].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a7 = (double *)((char *)args[7].data_d + base7);
 #else
