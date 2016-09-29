@@ -464,7 +464,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     if not (('calc_dt_kernel_print' in name)):
       if not (NDIM==3 and 'field_summary' in name):
-        code('#undef OPS_GPU')
+        code('#define OPS_GPU')
         code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -838,9 +838,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
-  code('#ifdef OPS_GPU')
+  #code('#ifdef OPS_GPU')
   code('#include "ops_cuda_rt_support.h"')
-  code('#endif')
+  #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')
