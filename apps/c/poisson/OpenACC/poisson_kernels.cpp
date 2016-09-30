@@ -3,14 +3,18 @@
 
 #include "./OpenACC/poisson_common.h"
 
-void ops_decl_const_char(int dim, char const *type, int size, char *dat,
-                         char const *name) {
-  if (!strcmp(name, "dx")) {
-    dx = *(double *)dat;
-  } else if (!strcmp(name, "dy")) {
-    dy = *(double *)dat;
-  } else {
-    printf("error: unknown const name\n");
-    exit(1);
+
+void ops_decl_const_char(int dim, char const *type,
+int size, char *dat, char const *name){
+  if (!strcmp(name,"dx")) {
+    dx = *(double*)dat;
+  }
+  else
+  if (!strcmp(name,"dy")) {
+    dy = *(double*)dat;
+  }
+  else
+  {
+    printf("error: unknown const name\n"); exit(1);
   }
 }
