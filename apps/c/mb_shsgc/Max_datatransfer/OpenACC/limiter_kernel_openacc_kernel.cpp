@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/shsgc_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_limiter_kernel;
 int xdim0_limiter_kernel_h = -1;

@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_update_halo_kernel3_plus_4_front;
 int xdim0_update_halo_kernel3_plus_4_front_h = -1;

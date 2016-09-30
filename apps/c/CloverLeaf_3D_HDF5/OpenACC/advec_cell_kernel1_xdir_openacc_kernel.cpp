@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_advec_cell_kernel1_xdir;
 int xdim0_advec_cell_kernel1_xdir_h = -1;

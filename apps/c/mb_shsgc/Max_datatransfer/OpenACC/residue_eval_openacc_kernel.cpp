@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/shsgc_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_residue_eval;
 int xdim0_residue_eval_h = -1;

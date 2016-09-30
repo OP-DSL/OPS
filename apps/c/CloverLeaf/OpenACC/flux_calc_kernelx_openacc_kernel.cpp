@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_flux_calc_kernelx;
 int xdim0_flux_calc_kernelx_h = -1;

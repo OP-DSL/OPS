@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/shsgc_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_Riemann_kernel;
 int xdim0_Riemann_kernel_h = -1;

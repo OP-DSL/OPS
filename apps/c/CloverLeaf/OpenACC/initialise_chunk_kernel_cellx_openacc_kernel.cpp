@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_initialise_chunk_kernel_cellx;
 int xdim0_initialise_chunk_kernel_cellx_h = -1;

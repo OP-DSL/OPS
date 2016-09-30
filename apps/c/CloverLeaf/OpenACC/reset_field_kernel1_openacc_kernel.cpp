@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_reset_field_kernel1;
 int xdim0_reset_field_kernel1_h = -1;
