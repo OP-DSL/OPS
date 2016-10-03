@@ -34,7 +34,7 @@ ifdef DEBUG
   CCFLAGS = -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -openmp -openmp-report2
@@ -127,7 +127,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
+TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_tiled poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += poisson_openacc poisson_mpi_openacc
@@ -170,6 +170,12 @@ poisson_openmp: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/li
 #
 poisson_seq: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_seq
+
+#
+# Tiled version
+#
+poisson_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+	$(CPP) $(MPIFLAGS) $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_tiled 
 
 #
 # CUDA version
@@ -235,4 +241,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
+	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o

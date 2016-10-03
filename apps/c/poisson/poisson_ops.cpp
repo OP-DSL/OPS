@@ -20,14 +20,14 @@ void ops_par_loop_poisson_kernel_populate(char const *, ops_block, int, int *,
                                           ops_arg, ops_arg, ops_arg, ops_arg,
                                           ops_arg, ops_arg);
 
+void ops_par_loop_poisson_kernel_update(char const *, ops_block, int, int *,
+                                        ops_arg, ops_arg);
+
 void ops_par_loop_poisson_kernel_initialguess(char const *, ops_block, int,
                                               int *, ops_arg);
 
 void ops_par_loop_poisson_kernel_stencil(char const *, ops_block, int, int *,
-                                         ops_arg, ops_arg, ops_arg);
-
-void ops_par_loop_poisson_kernel_update(char const *, ops_block, int, int *,
-                                        ops_arg, ops_arg);
+                                         ops_arg, ops_arg);
 
 void ops_par_loop_poisson_kernel_error(char const *, ops_block, int, int *,
                                        ops_arg, ops_arg, ops_arg);
@@ -36,13 +36,48 @@ void ops_par_loop_poisson_kernel_error(char const *, ops_block, int, int *,
 
 int main(int argc, char **argv) {
 
-  ops_init(argc, argv, 6);
+  ops_init(argc, argv, 1);
 
-  int logical_size_x = 200;
-  int logical_size_y = 200;
-  int ngrid_x = 2;
-  int ngrid_y = 2;
-  int n_iter = 10000;
+  int logical_size_x = 20;
+  int logical_size_y = 20;
+  int ngrid_x = 1;
+  int ngrid_y = 1;
+  int n_iter = 10;
+  int itertile = n_iter;
+  int non_copy = 0;
+
+  char *pch;
+  for (int n = 1; n < argc; n++) {
+    pch = strstr(argv[n], "-sizex=");
+    if (pch != NULL) {
+      logical_size_x = atoi(argv[n] + 7);
+      continue;
+    }
+    pch = strstr(argv[n], "-sizey=");
+    if (pch != NULL) {
+      logical_size_y = atoi(argv[n] + 7);
+      continue;
+    }
+    pch = strstr(argv[n], "-iters=");
+    if (pch != NULL) {
+      n_iter = atoi(argv[n] + 7);
+      continue;
+    }
+    pch = strstr(argv[n], "-itert=");
+    if (pch != NULL) {
+      itertile = atoi(argv[n] + 7);
+      continue;
+    }
+    pch = strstr(argv[n], "-non-copy");
+    if (pch != NULL) {
+      non_copy = 1;
+      continue;
+    }
+  }
+
+  ops_printf("Grid: %dx%d in %dx%d blocks, %d iterations, %d tile height\n",
+             logical_size_x, logical_size_y, ngrid_x, ngrid_y, n_iter,
+             itertile);
   dx = 0.01;
   dy = 0.01;
   ops_decl_const2("dx", 1, "double", &dx);
@@ -177,6 +212,11 @@ int main(int argc, char **argv) {
           ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE),
           ops_arg_dat(f[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE),
           ops_arg_dat(ref[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
+
+      ops_par_loop_poisson_kernel_update(
+          "poisson_kernel_update", blocks[i + ngrid_x * j], 2, iter_range,
+          ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00, "double", OPS_READ),
+          ops_arg_dat(u2[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
     }
   }
 
@@ -191,8 +231,15 @@ int main(int argc, char **argv) {
     }
   }
 
+  double it0, it1;
+  ops_timers(&ct0, &it0);
+
   for (int iter = 0; iter < n_iter; iter++) {
-    ops_halo_transfer(u_halos);
+    if (ngrid_x > 1 || ngrid_y > 1)
+      ops_halo_transfer(u_halos);
+    if (iter % itertile == 0)
+      ops_execute();
+
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0, sizes[2 * (i + ngrid_x * j)], 0,
@@ -201,22 +248,37 @@ int main(int argc, char **argv) {
             "poisson_kernel_stencil", blocks[i + ngrid_x * j], 2, iter_range,
             ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00_P10_M10_0P1_0M1, "double",
                         OPS_READ),
-            ops_arg_dat(f[i + ngrid_x * j], 1, S2D_00, "double", OPS_READ),
             ops_arg_dat(u2[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
 
-    for (int j = 0; j < ngrid_y; j++) {
-      for (int i = 0; i < ngrid_x; i++) {
-        int iter_range[] = {0, sizes[2 * (i + ngrid_x * j)], 0,
-                            sizes[2 * (i + ngrid_x * j) + 1]};
-        ops_par_loop_poisson_kernel_update(
-            "poisson_kernel_update", blocks[i + ngrid_x * j], 2, iter_range,
-            ops_arg_dat(u2[i + ngrid_x * j], 1, S2D_00, "double", OPS_READ),
-            ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
+    if (non_copy) {
+      for (int j = 0; j < ngrid_y; j++) {
+        for (int i = 0; i < ngrid_x; i++) {
+          int iter_range[] = {0, sizes[2 * (i + ngrid_x * j)], 0,
+                              sizes[2 * (i + ngrid_x * j) + 1]};
+          ops_par_loop_poisson_kernel_stencil(
+              "poisson_kernel_stencil", blocks[i + ngrid_x * j], 2, iter_range,
+              ops_arg_dat(u2[i + ngrid_x * j], 1, S2D_00_P10_M10_0P1_0M1,
+                          "double", OPS_READ),
+              ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
+        }
+      }
+    } else {
+      for (int j = 0; j < ngrid_y; j++) {
+        for (int i = 0; i < ngrid_x; i++) {
+          int iter_range[] = {0, sizes[2 * (i + ngrid_x * j)], 0,
+                              sizes[2 * (i + ngrid_x * j) + 1]};
+          ops_par_loop_poisson_kernel_update(
+              "poisson_kernel_update", blocks[i + ngrid_x * j], 2, iter_range,
+              ops_arg_dat(u2[i + ngrid_x * j], 1, S2D_00, "double", OPS_READ),
+              ops_arg_dat(u[i + ngrid_x * j], 1, S2D_00, "double", OPS_WRITE));
+        }
       }
     }
   }
+  ops_execute();
+  ops_timers(&ct0, &it1);
 
   double err = 0.0;
   for (int j = 0; j < ngrid_y; j++) {
@@ -236,8 +298,7 @@ int main(int argc, char **argv) {
   ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
-
-  double err_diff = fabs((100.0 * (err / 0.150875331209075)) - 100.0);
+  double err_diff = fabs((100.0 * (err / 20.727007094619303)) - 100.0);
   ops_printf("Total error: %3.15g\n", err);
   ops_printf("Total error is within %3.15E %% of the expected error\n",
              err_diff);
@@ -247,6 +308,8 @@ int main(int argc, char **argv) {
   } else {
     ops_printf("This test is considered FAILED\n");
   }
+
+  ops_printf("%lf\n", it1 - it0);
 
   ops_exit();
 }

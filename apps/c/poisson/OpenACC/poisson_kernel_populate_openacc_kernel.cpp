@@ -106,67 +106,38 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
     xdim5_poisson_kernel_populate_h = xdim5;
   }
 
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
   int *p_a0 = (int *)args[0].data;
   int *p_a1 = (int *)args[1].data;
   int *p_a2 = NULL;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[3].dat->d_m[d];
-#endif
-  int base3 = dat3 * 1 * (start[0] * args[3].stencil->stride[0] -
-                          args[3].dat->base[0] - d_m[0]);
+  int base3 = args[3].dat->base_offset +
+              args[3].dat->elem_size * start[0] * args[3].stencil->stride[0];
   base3 = base3 +
-          dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1] -
-                                         args[3].dat->base[1] - d_m[1]);
+          args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
+              args[3].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a3 = (double *)((char *)args[3].data_d + base3);
 #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[4].dat->d_m[d];
-#endif
-  int base4 = dat4 * 1 * (start[0] * args[4].stencil->stride[0] -
-                          args[4].dat->base[0] - d_m[0]);
+  int base4 = args[4].dat->base_offset +
+              args[4].dat->elem_size * start[0] * args[4].stencil->stride[0];
   base4 = base4 +
-          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1] -
-                                         args[4].dat->base[1] - d_m[1]);
+          args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
+              args[4].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[5].dat->d_m[d];
-#endif
-  int base5 = dat5 * 1 * (start[0] * args[5].stencil->stride[0] -
-                          args[5].dat->base[0] - d_m[0]);
+  int base5 = args[5].dat->base_offset +
+              args[5].dat->elem_size * start[0] * args[5].stencil->stride[0];
   base5 = base5 +
-          dat5 * args[5].dat->size[0] * (start[1] * args[5].stencil->stride[1] -
-                                         args[5].dat->base[1] - d_m[1]);
+          args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
+              args[5].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a5 = (double *)((char *)args[5].data_d + base5);
 #else

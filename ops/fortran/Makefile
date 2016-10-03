@@ -45,7 +45,7 @@ ifdef DEBUG
 else
   OPT	 	= -O3 -xAVX #vec-report -xAVX
 endif
-  CCFLAGS       = $(OPT) -Wall -Werror -wd981
+  CCFLAGS       = $(OPT) -Wall #-Werror -wd981
   CXX 		= icpc
   CXXFLAGS 	= $(CCFLAGS)
   F_INC_MOD	= $(F_OPS_MOD)/intel

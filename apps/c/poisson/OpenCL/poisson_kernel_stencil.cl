@@ -42,33 +42,27 @@
 
 #undef OPS_ACC0
 #undef OPS_ACC1
-#undef OPS_ACC2
 
 #define OPS_ACC0(x, y) (x + xdim0_poisson_kernel_stencil * (y))
 #define OPS_ACC1(x, y) (x + xdim1_poisson_kernel_stencil * (y))
-#define OPS_ACC2(x, y) (x + xdim2_poisson_kernel_stencil * (y))
 
 // user function
 void poisson_kernel_stencil(const __global double *restrict u,
-                            const __global double *restrict f,
-                            __global double *restrict u2,
-
-                            const double dx, const double dy)
+                            __global double *restrict u2)
 
 {
-  u2[OPS_ACC2(0, 0)] = ((u[OPS_ACC0(-1, 0)] + u[OPS_ACC0(1, 0)]) * dx * dx +
-                        (u[OPS_ACC0(0, -1)] + u[OPS_ACC0(0, 1)]) * dy * dy -
-                        dx * dx * dy * dy * f[OPS_ACC1(0, 0)]) /
-                       (2.0 * (dx * dx + dy * dy));
+  u2[OPS_ACC1(0, 0)] =
+      ((u[OPS_ACC0(-1, 0)] - 2.0f * u[OPS_ACC0(0, 0)] + u[OPS_ACC0(1, 0)]) *
+           0.125f +
+       (u[OPS_ACC0(0, -1)] - 2.0f * u[OPS_ACC0(0, 0)] + u[OPS_ACC0(0, 1)]) *
+           0.125f +
+       u[OPS_ACC0(0, 0)]);
 }
 
 __kernel void ops_poisson_kernel_stencil(__global const double *restrict arg0,
-                                         __global const double *restrict arg1,
-                                         __global double *restrict arg2,
-                                         const double dx, const double dy,
+                                         __global double *restrict arg1,
                                          const int base0, const int base1,
-                                         const int base2, const int size0,
-                                         const int size1) {
+                                         const int size0, const int size1) {
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
@@ -77,9 +71,6 @@ __kernel void ops_poisson_kernel_stencil(__global const double *restrict arg0,
     poisson_kernel_stencil(&arg0[base0 + idx_x * 1 * 1 +
                                  idx_y * 1 * 1 * xdim0_poisson_kernel_stencil],
                            &arg1[base1 + idx_x * 1 * 1 +
-                                 idx_y * 1 * 1 * xdim1_poisson_kernel_stencil],
-                           &arg2[base2 + idx_x * 1 * 1 +
-                                 idx_y * 1 * 1 * xdim2_poisson_kernel_stencil],
-                           dx, dy);
+                                 idx_y * 1 * 1 * xdim1_poisson_kernel_stencil]);
   }
 }

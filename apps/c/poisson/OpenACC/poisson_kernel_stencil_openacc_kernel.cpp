@@ -9,14 +9,12 @@ extern int xdim0_poisson_kernel_stencil;
 int xdim0_poisson_kernel_stencil_h = -1;
 extern int xdim1_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil_h = -1;
-extern int xdim2_poisson_kernel_stencil;
-int xdim2_poisson_kernel_stencil_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void poisson_kernel_stencil_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
-                                      int x_size, int y_size);
+void poisson_kernel_stencil_c_wrapper(double *p_a0, double *p_a1, int x_size,
+                                      int y_size);
 
 #ifdef __cplusplus
 }
@@ -25,20 +23,20 @@ void poisson_kernel_stencil_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
 // host stub function
 void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block,
                                          int dim, int *range, ops_arg arg0,
-                                         ops_arg arg1, ops_arg arg2) {
+                                         ops_arg arg1) {
 
   // Timing
   double t1, t2, c1, c2;
-  ops_arg args[3] = {arg0, arg1, arg2};
+  ops_arg args[2] = {arg0, arg1};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 2))
+  if (!ops_checkpointing_before(args, 2, range, 3))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(2, "poisson_kernel_stencil");
-    OPS_kernels[2].count++;
+    ops_timing_realloc(3, "poisson_kernel_stencil");
+    OPS_kernels[3].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -81,117 +79,72 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block,
 
   xdim0 = args[0].dat->size[0];
   xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
   if (xdim0 != xdim0_poisson_kernel_stencil_h ||
-      xdim1 != xdim1_poisson_kernel_stencil_h ||
-      xdim2 != xdim2_poisson_kernel_stencil_h) {
+      xdim1 != xdim1_poisson_kernel_stencil_h) {
     xdim0_poisson_kernel_stencil = xdim0;
     xdim0_poisson_kernel_stencil_h = xdim0;
     xdim1_poisson_kernel_stencil = xdim1;
     xdim1_poisson_kernel_stencil_h = xdim1;
-    xdim2_poisson_kernel_stencil = xdim2;
-    xdim2_poisson_kernel_stencil_h = xdim2;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
+          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
+              args[0].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1] -
-                                         args[1].dat->base[1] - d_m[1]);
+          args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
+              args[1].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[2].dat->d_m[d];
-#endif
-  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
-                          args[2].dat->base[0] - d_m[0]);
-  base2 = base2 +
-          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1] -
-                                         args[2].dat->base[1] - d_m[1]);
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data_d + base2);
+  ops_H_D_exchanges_device(args, 2);
 #else
-  double *p_a2 = (double *)((char *)args[2].data + base2);
+  ops_H_D_exchanges_host(args, 2);
 #endif
+  ops_halo_exchanges(args, 2, range);
 
 #ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
+  ops_H_D_exchanges_device(args, 2);
 #else
-  ops_H_D_exchanges_host(args, 3);
-#endif
-  ops_halo_exchanges(args, 3, range);
-
-#ifdef OPS_GPU
-  ops_H_D_exchanges_device(args, 3);
-#else
-  ops_H_D_exchanges_host(args, 3);
+  ops_H_D_exchanges_host(args, 2);
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[2].mpi_time += t2 - t1;
+    OPS_kernels[3].mpi_time += t2 - t1;
   }
 
-  poisson_kernel_stencil_c_wrapper(p_a0, p_a1, p_a2, x_size, y_size);
+  poisson_kernel_stencil_c_wrapper(p_a0, p_a1, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[2].time += t1 - t2;
+    OPS_kernels[3].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  ops_set_dirtybit_device(args, 3);
+  ops_set_dirtybit_device(args, 2);
 #else
-  ops_set_dirtybit_host(args, 3);
+  ops_set_dirtybit_host(args, 2);
 #endif
-  ops_set_halo_dirtybit3(&args[2], range);
+  ops_set_halo_dirtybit3(&args[1], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[2].mpi_time += t2 - t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[3].mpi_time += t2 - t1;
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

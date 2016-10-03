@@ -138,11 +138,9 @@ int main(int argc, char **argv) {
 
   ops_timers(&ct1, &et1);
 
-  if (profiler_on == 1) {
-    ops_timing_output(stdout);
+  ops_timing_output(stdout);
 
-    process_profile();
-  }
+  process_profile();
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_fprintf(g_out, "\nTotal Wall time %lf\n", et1 - et0);

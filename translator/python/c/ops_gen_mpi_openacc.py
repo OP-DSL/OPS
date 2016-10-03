@@ -649,12 +649,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         if accs[n] == OPS_WRITE:
           GBL_WRITE = True
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
-
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
@@ -693,28 +687,20 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     comm('')
     comm('set up initial pointers')
-    code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#ifdef OPS_MPI')
-        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
-        code('#else')
-        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
-        code('#endif')
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
-        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + args['+str(n)+'].dat->elem_size * start[0] * args['+str(n)+'].stencil->stride[0];')
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
+          line = 'base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->elem_size *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          code('  start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'];')
 
         code('#ifdef OPS_GPU')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data_d + base'+str(n)+');')
         code('#else')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data + base'+str(n)+');')
-        #code('char *p_a'+str(n)+' = (char *)args['+str(n)+'].data + base'+str(n)+';')
         code('#endif')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -852,7 +838,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')
+  #code('#ifdef OPS_GPU')
   code('#include "ops_cuda_rt_support.h"')
+  #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('')

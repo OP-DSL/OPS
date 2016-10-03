@@ -59,6 +59,8 @@ int OPS_enable_checkpointing = 0;
 int ops_thread_offload = 0;
 int ops_checkpoint_inmemory = 0;
 int ops_lock_file = 0;
+int ops_enable_tiling = 0;
+int ops_cache_size = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -143,6 +145,17 @@ void ops_set_args(int argc, char *argv) {
     strncpy(temp, pch, 12);
     OPS_diags = atoi(temp + 11);
     ops_printf("\n OPS_diags = %d \n", OPS_diags);
+  }
+  pch = strstr(argv, "OPS_CACHE_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 20);
+    ops_cache_size = atoi(temp + 15);
+    ops_printf("\n Cache size per process = %d \n", ops_cache_size);
+  }
+  pch = strstr(argv, "OPS_TILING");
+  if (pch != NULL) {
+    ops_enable_tiling = 1;
+    ops_printf("\n Tiling enabled\n");
   }
 
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
@@ -1060,7 +1073,7 @@ void ops_timing_output(FILE *stream) {
           sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
           moments_mpi_time[0],
           sqrt(moments_mpi_time[1] - moments_mpi_time[0] * moments_mpi_time[0]),
-          OPS_kernels[k].transfer / (OPS_kernels[k].time * 1000 * 1000 * 1000));
+          OPS_kernels[k].transfer / ((moments_time[0]) * 1024 * 1024 * 1024));
 
       // sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count,
       // OPS_kernels[k].time,
