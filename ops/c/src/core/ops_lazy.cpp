@@ -299,6 +299,7 @@ int ops_construct_tile_plan() {
           for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
             // For any dataset written (i.e. not read)
             if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT &&
+                ops_kernel_list[loop]->args[arg].opt == 1 &&
                 ops_kernel_list[loop]->args[arg].acc != OPS_READ) {
               // End index is the greatest across all of the dependencies, but
               // no greater than the loop range
@@ -313,9 +314,10 @@ int ops_construct_tile_plan() {
           // Look at write dependencies of datasets being accessed
           for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
             if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT &&
+                ops_kernel_list[loop]->args[arg].opt == 1 &&
                 data_write_deps[ops_kernel_list[loop]->args[arg].dat->index]
                                [tile * OPS_MAX_DIM * 2 + 2 * d + 1] !=
-                    -INT_MAX) { // && ops_kernel_list[loop]->args[arg].acc !=
+                    -INT_MAX ) { //  && ops_kernel_list[loop]->args[arg].acc !=
                                 // OPS_WRITE) {
               int d_m_min = 0;  // Find biggest positive/negative direction
                                // stencil point for this dimension
@@ -364,7 +366,7 @@ int ops_construct_tile_plan() {
                 ops_kernel_list[loop]->range[2 * d + 0];
         }
 
-        if (OPS_diags > 5)
+        if (OPS_diags > 5 && tile_sizes[d] != -1)
           printf("%s tile %d dim %d: exec range is: %d-%d\n",
                  ops_kernel_list[loop]->name, tile, d,
                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
@@ -378,6 +380,7 @@ int ops_construct_tile_plan() {
         for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
           // For any dataset read (i.e. not write-only)
           if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT &&
+              ops_kernel_list[loop]->args[arg].opt == 1 &&
               ops_kernel_list[loop]->args[arg].acc != OPS_WRITE) {
             int d_m_min = 0; // Find biggest positive/negative direction stencil
                              // point for this dimension
@@ -408,7 +411,7 @@ int ops_construct_tile_plan() {
                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1],
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] +
                         d_p_max);
-            if (OPS_diags > 5)
+            if (OPS_diags > 5 && tile_sizes[d] != -1)
               printf("Dataset read %s dependency dim %d set to %d %d\n",
                      ops_kernel_list[loop]->args[arg].dat->name, d,
                      data_read_deps[ops_kernel_list[loop]->args[arg].dat->index]
@@ -421,6 +424,7 @@ int ops_construct_tile_plan() {
         for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
           // For any dataset read (i.e. not write-only)
           if (ops_kernel_list[loop]->args[arg].argtype == OPS_ARG_DAT &&
+              ops_kernel_list[loop]->args[arg].opt == 1 &&
               ops_kernel_list[loop]->args[arg].acc != OPS_READ) {
             // Extend dependency range with stencil
             data_write_deps
@@ -447,7 +451,7 @@ int ops_construct_tile_plan() {
             //   data_read_deps[ops_kernel_list[loop]->args[arg].dat->index][tile*OPS_MAX_DIM*2+2*d+1]
             //   = tiled_ranges[loop][OPS_MAX_DIM*2*tile + 2*d + 0];
 
-            if (OPS_diags > 5)
+            if (OPS_diags > 5 && tile_sizes[d] != -1)
               printf(
                   "Dataset write %s dependency dim %d set to %d %d\n",
                   ops_kernel_list[loop]->args[arg].dat->name, d,
