@@ -22,7 +22,7 @@ cd ../shsgc/
 ./test.sh
 cd ../mb_shsgc/Max_datatransfer
 ./test.sh
-cd ../multidim_HDF5
+cd ../../multiDim_HDF5
 ./test.sh
 
 echo "************Testing Fortran Applications *****************"
