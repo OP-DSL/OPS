@@ -18,6 +18,7 @@
 
 // host stub function
 void ops_par_loop_advec_mom_kernel2_y_execute(ops_kernel_descriptor *desc) {
+  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -73,11 +74,6 @@ void ops_par_loop_advec_mom_kernel2_y_execute(ops_kernel_descriptor *desc) {
   int xdim2_advec_mom_kernel2_y = args[2].dat->size[0];
   int xdim3_advec_mom_kernel2_y = args[3].dat->size[0];
 
-  // Halo Exchanges
-  ops_H_D_exchanges_host(args, 4);
-  ops_halo_exchanges(args, 4, range);
-  ops_H_D_exchanges_host(args, 4);
-
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
     OPS_kernels[26].mpi_time += t1 - t2;
@@ -102,8 +98,6 @@ void ops_par_loop_advec_mom_kernel2_y_execute(ops_kernel_descriptor *desc) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[26].time += t2 - t1;
   }
-  ops_set_dirtybit_host(args, 4);
-  ops_set_halo_dirtybit3(&args[0], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -130,35 +124,10 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block,
   desc->block = block;
   desc->dim = dim;
   desc->index = 26;
-#ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 2; n++) {
-    desc->range[2 * n] = sb->decomp_disp[n];
-    desc->range[2 * n + 1] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (desc->range[2 * n] >= range[2 * n]) {
-      desc->range[2 * n] = 0;
-    } else {
-      desc->range[2 * n] = range[2 * n] - desc->range[2 * n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      desc->range[2 * n] = range[2 * n];
-    if (desc->range[2 * n + 1] >= range[2 * n + 1]) {
-      desc->range[2 * n + 1] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      desc->range[2 * n + 1] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      desc->range[2 * n + 1] +=
-          (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else // OPS_MPI
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
   }
-#endif // OPS_MPI
   desc->nargs = 4;
   desc->args = (ops_arg *)malloc(4 * sizeof(ops_arg));
   desc->args[0] = arg0;

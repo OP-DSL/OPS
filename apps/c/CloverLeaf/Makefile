@@ -226,6 +226,9 @@ cloverleaf_tiled: Makefile $(OPS_FILES_GEN) \
 		$(CPP) $(MPIFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
 
 
+cloverleaf_mpi_tiled: Makefile $(OPS_FILES_GEN) \
+                $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
+		$(CPP) $(MPIFLAGS) -DOPS_MPI $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_tiled
 
 #
 # CUDA version

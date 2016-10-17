@@ -318,8 +318,8 @@ int ops_construct_tile_plan() {
     for (int d = 0; d < dims; d++) {
       for (int tile = 0; tile < total_tiles; tile++) {
 
-        int left_neighbour_end = start[d]; //????
-        int right_neighbour_start = end[d];
+        int left_neighbour_end = ops_kernel_list[loop]->range[2*d] < biggest_range[2*d] ? start[d] : -INT_MAX;
+        int right_neighbour_start = ops_kernel_list[loop]->range[2*d+1] >= biggest_range[2*d+1] ? end[d] : INT_MAX;
 
         // If this tile is the first on this process in this dimension
         if ((tile / tiles_prod[d]) % ntiles[d] == 0) {
@@ -504,14 +504,14 @@ int ops_construct_tile_plan() {
                           d_p_max);
             }
             //If this is the first tile update left neighbour's read dependency
-            if (tile==0) {
+            if (tile==0 && left_neighbour_end >= biggest_range[2*d]) {
               data_read_deps_edge
                   [ops_kernel_list[loop]->args[arg].dat->index][2 * d + 0] = MAX(
                       data_read_deps_edge[ops_kernel_list[loop]->args[arg].dat->index][2 * d + 0],
                       left_neighbour_end + d_p_max);
             }
             //If this is the last tile update right neighbour's read dependency
-            if (tile==total_tiles-1) {
+            if (tile==total_tiles-1 && right_neighbour_start <= biggest_range[2*d+1]) {
               data_read_deps_edge
                   [ops_kernel_list[loop]->args[arg].dat->index][2 * d + 1] = MIN(
                       data_read_deps_edge[ops_kernel_list[loop]->args[arg].dat->index][2 * d + 1],
@@ -591,13 +591,29 @@ int ops_construct_tile_plan() {
   depths_to_exchange.resize(OPS_MAX_DIM*4*dats_to_exchange.size()); //left send, left recv, right send, right recv
   for (int i = 0; i < dats_to_exchange.size(); i++) {
     for (int d = 0; d < dims; d++) {
-      depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = MAX(0,data_read_deps_edge[dats_to_exchange[i]->index][2*d]-biggest_range[2*d]);
+
+      if (data_read_deps_edge[dats_to_exchange[i]->index][2*d] == -INT_MAX)
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = 0;
+      else
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = MAX(0,data_read_deps_edge[dats_to_exchange[i]->index][2*d]-biggest_range[2*d]);
+
       //Left recv depth is the read dependency range of the first tile, extending beyond the left owned range
       //TODO: use owned ranges instead of biggest range, even though they are the same for non-edge processes
-      depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1] = MAX(0,biggest_range[2*d]-data_read_deps[dats_to_exchange[i]->index][2*d]);
-      depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2] = MAX(0,biggest_range[2*d+1]-data_read_deps_edge[dats_to_exchange[i]->index][2*d+1]);
+      if (data_read_deps[dats_to_exchange[i]->index][2*d] == INT_MAX)
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1] = 0;
+      else
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1] = MAX(0,biggest_range[2*d]-data_read_deps[dats_to_exchange[i]->index][2*d]);
+
+      if (data_read_deps_edge[dats_to_exchange[i]->index][2*d+1] == INT_MAX)
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2] = 0;
+      else
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2] = MAX(0,biggest_range[2*d+1]-data_read_deps_edge[dats_to_exchange[i]->index][2*d+1]);
+
       //Right recv depth is the read dependency range of the last tile, extending beyond the right owned range
-      depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1]-biggest_range[2*d+1]);
+      if (data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1] == -INT_MAX)
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = 0;
+      else
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1]-biggest_range[2*d+1]);
       if (OPS_diags > 5)
         printf("Dataset %s, dim %d, left send: %d, left recv: %d, right send: %d, right recv: %d\n",dats_to_exchange[i]->name, d, depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3]);
     }
