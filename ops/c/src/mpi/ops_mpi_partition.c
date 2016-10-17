@@ -51,6 +51,8 @@ extern int ops_buffer_send_2_size;
 extern int ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
 extern char *OPS_checkpoiting_dup_buffer;
+extern int ops_enable_tiling;
+extern int ops_tiling_mpidepth;
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
@@ -322,6 +324,9 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_im[d] = dat->d_m[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
+        if (ops_enable_tiling && ops_tiling_mpidepth>0)
+					sd->d_im[d] = -ops_tiling_mpidepth;
+
         dat->d_m[d] = 0;
       } else {
         sd->decomp_disp[d] +=
@@ -336,6 +341,10 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_ip[d] = dat->d_p[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
+ 
+        if (ops_enable_tiling && ops_tiling_mpidepth>0)
+					sd->d_ip[d] = ops_tiling_mpidepth;
+
         dat->d_p[d] = 0;
       } else {
         sd->decomp_size[d] += dat->d_p[d]; // if last in this dimension, extend

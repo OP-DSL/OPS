@@ -127,20 +127,9 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   (void)iter_range;
 }
 
-void ops_exchange_halo(ops_arg *arg, int d) { (void)arg; }
-
-void ops_exchange_halo2(ops_arg *arg, int *d_pos, int *d_neg /*depth*/) {
-  (void)arg;
-  (void)d_pos;
-  (void)d_neg;
-}
-
-void ops_exchange_halo3(ops_arg *arg, int *d_pos, int *d_neg /*depth*/,
-                        int *iter_range) {
-  (void)arg;
-  (void)d_pos;
-  (void)d_neg;
-  (void)iter_range;
+void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
+  (void)dats;
+  (void)depths;
 }
 
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
@@ -208,6 +197,19 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
     discarded_range[2 * d + 1] =
         discarded_range[2 * d] + range[2 * d + 1] - range[2 * d];
   }
+}
+
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+  for (int n = 0; n < block->dims; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    disp[n] = 0;
+  }
+  return true;
+}
+
+int ops_get_proc() {
+  return 0;
 }
 
 /************* Functions only use in the Fortran Backend ************/

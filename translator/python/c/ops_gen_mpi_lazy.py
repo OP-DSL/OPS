@@ -212,7 +212,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
-#    code('ops_block block = desc->block;')
+    code('ops_block block = desc->block;')
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
 
@@ -312,11 +312,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('')
 
     if gen_full_code==1:
-      comm('Halo Exchanges')
-      code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-      code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-      code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-      code('')
+      # comm('Halo Exchanges')
+      # code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+      # code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+      # code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+      # code('')
       IF('OPS_diags > 1')
       code('ops_timers_core(&c1,&t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
@@ -424,11 +424,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
       code('OPS_kernels['+str(nk)+'].time += t2-t1;')
       ENDIF()
 
-      code('ops_set_dirtybit_host(args, '+str(nargs)+');')
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-          #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
-          code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+      # code('ops_set_dirtybit_host(args, '+str(nargs)+');')
+      # for n in range (0, nargs):
+      #   if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+      #     #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
+      #     code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
       code('')
       IF('OPS_diags > 1')
@@ -470,33 +470,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('desc->block = block;')
     code('desc->dim = dim;')
     code('desc->index = '+str(nk)+';')
-    
-    code('#ifdef OPS_MPI')
-    code('sub_block_list sb = OPS_sub_block_list[block->index];')
-    code('if (!sb->owned) return;')
-    FOR('n','0',str(NDIM))
-    code('desc->range[2*n] = sb->decomp_disp[n];desc->range[2*n+1] = sb->decomp_disp[n]+sb->decomp_size[n];')
-    IF('desc->range[2*n] >= range[2*n]')
-    code('desc->range[2*n] = 0;')
-    ENDIF()
-    ELSE()
-    code('desc->range[2*n] = range[2*n] - desc->range[2*n];')
-    ENDIF()
-    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) desc->range[2*n] = range[2*n];')
-    IF('desc->range[2*n+1] >= range[2*n+1]')
-    code('desc->range[2*n+1] = range[2*n+1] - sb->decomp_disp[n];')
-    ENDIF()
-    ELSE()
-    code('desc->range[2*n+1] = sb->decomp_size[n];')
-    ENDIF()
-    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
-    code('  desc->range[2*n+1] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
-    ENDFOR()
-    code('#else //OPS_MPI')
     FOR('i','0',str(2*NDIM))
     code('desc->range[i] = range[i];')
+    code('desc->orig_range[i] = range[i];')
     ENDFOR()
-    code('#endif //OPS_MPI')
 
     code('desc->nargs = '+str(nargs)+';')
     code('desc->args = (ops_arg*)malloc('+str(nargs)+'*sizeof(ops_arg));')

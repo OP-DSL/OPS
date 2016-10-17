@@ -195,6 +195,7 @@ int main(int argc, char **argv) {
 
   ops_partition("");
   ops_checkpointing_init("check.h5", 5.0, 0);
+  ops_diagnostic_output();
 
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
