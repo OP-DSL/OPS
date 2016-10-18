@@ -349,11 +349,11 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     d_p[d] = dat->d_p[d] + sd->d_ip[d];
   }
 
-  if (sd->d_im[dim] > -left_recv_depth) {
+  if (sb->id_m[dim] != MPI_PROC_NULL && sd->d_im[dim] > -left_recv_depth) {
     printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", left_recv_depth, -sd->d_im[dim]);
     MPI_Abort(sb->comm,-1);
   }
-  if (sd->d_ip[dim] < right_recv_depth) {
+  if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
     printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", right_recv_depth, sd->d_ip[dim]);
     MPI_Abort(sb->comm,-1);
   }
