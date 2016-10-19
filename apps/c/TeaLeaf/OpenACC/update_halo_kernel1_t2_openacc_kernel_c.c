@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/tea_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 int xdim0_update_halo_kernel1_t2;
 int xdim1_update_halo_kernel1_t2;

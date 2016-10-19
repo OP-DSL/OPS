@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/tea_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_initialise_chunk_kernel_y;
 int xdim0_initialise_chunk_kernel_y_h = -1;

@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/tea_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 extern int xdim0_tea_leaf_ppcg_inner1_kernel;
 int xdim0_tea_leaf_ppcg_inner1_kernel_h = -1;

@@ -1,1 +1,1 @@
-~/OPS/translator/python/c/ops.py tea_leaf.cpp start.cpp field_summary.cpp generate.cpp initialise_chunk.cpp set_field.cpp tea_leaf_cg.cpp tea_leaf_cheby.cpp tea_leaf_common.cpp tea_leaf_jacobi.cpp tea_leaf_ppcg.cpp update_halo.cpp
+../../../translator/python/c/ops.py tea_leaf.cpp start.cpp field_summary.cpp generate.cpp initialise_chunk.cpp set_field.cpp tea_leaf_cg.cpp tea_leaf_cheby.cpp tea_leaf_common.cpp tea_leaf_jacobi.cpp tea_leaf_ppcg.cpp update_halo.cpp

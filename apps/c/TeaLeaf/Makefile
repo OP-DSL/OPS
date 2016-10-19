@@ -207,7 +207,7 @@ tealeaf_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/li
 # Tiled version
 #
 tealeaf_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
-		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_tiled -qopenmp
+		$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_tiled
 
 #
 #

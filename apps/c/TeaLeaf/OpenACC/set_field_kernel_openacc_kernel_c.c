@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/tea_leaf_common.h"
 
-#undef OPS_GPU
+#define OPS_GPU
 
 int xdim0_set_field_kernel;
 int xdim1_set_field_kernel;

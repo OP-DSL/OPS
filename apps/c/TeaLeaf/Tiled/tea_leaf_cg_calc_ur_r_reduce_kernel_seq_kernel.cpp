@@ -9,7 +9,6 @@
 
 // host stub function
 void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -83,7 +82,11 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel_execute(ops_kernel_descrip
   double p_a3_0 = p_a3[0];
   #pragma omp parallel for reduction(+:p_a3_0)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #pragma omp simd reduction(+:p_a3_0)
+#ifdef intel
+#pragma omp simd reduction(+ : p_a3_0)
+#else
+#pragma simd reduction(+ : p_a3_0)
+#endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       double *rnn = &p_a3_0;
       
