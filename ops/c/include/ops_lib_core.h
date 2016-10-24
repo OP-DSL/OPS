@@ -271,8 +271,14 @@ typedef struct ops_kernel_descriptor {
 #ifndef MIN
 #define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
+#ifndef MIN3
+#define MIN3(a, b, c) MIN(a,MIN(b,c))
+#endif
 #ifndef MAX
 #define MAX(a, b) ((a > b) ? (a) : (b))
+#endif
+#ifndef MAX3
+#define MAX3(a, b, c) MAX(a,MAX(b,c))
 #endif
 #ifndef SIGN
 #define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))

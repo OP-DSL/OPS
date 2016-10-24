@@ -388,13 +388,13 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_diags > 2) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
                  1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
-      printf("Error: Right recv mismatch\n");
+      printf("Error: Proc %d dat %s dim %d: Right recv mismatch %d sends %d, I receive %d, originally asked to receive %d\n",ops_get_proc(), dat->name, dim, sb->id_p[dim], they_send, actual_depth_recv, right_recv_depth);
       MPI_Abort(sb->comm, -1);
     }
   }
@@ -460,13 +460,13 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_diags > 2) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
-    if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
-      printf("Error: Left recv mismatch\n");
+    if (sb->id_m[dim] != MPI_PROC_NULL && actual_depth_recv != they_send) {
+      printf("Error: Proc %d dat %s dim %d Left recv mismatch %d sends %d, I receive %d originally asked to recv %d\n",ops_get_proc(), dat->name, dim, sb->id_m[dim], they_send, actual_depth_recv, left_recv_depth);
       MPI_Abort(sb->comm, -1);
     }
   }
