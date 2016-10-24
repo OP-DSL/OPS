@@ -146,6 +146,88 @@ size_t ops_internal_get_cache_size() {
   return i;
 }
 
+void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *biggest_range) {
+  //If loop range starts before my left boundary, my left neighbour's end index
+  // is either my start index or the end index of the loop (whichever is smaller)
+  int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
+  MIN(LOOPRANGE[2*d+1],start[d]) : -INT_MAX;
+  //If loop range ends after my right boundary, my right neighbour's start index
+  // is either my end index or the start index of the loop (whichever is greater)
+  int right_neighbour_start = LOOPRANGE[2*d+1] >= biggest_range[2*d+1] ? 
+  MAX(LOOPRANGE[2*d],end[d]) : INT_MAX;
+
+  if (LOOPRANGE[2 * d + 0] != start[d]) {
+    for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+      // For any dataset written (i.e. not read)
+      if (LOOPARG.argtype == OPS_ARG_DAT &&
+        LOOPARG.opt == 1 &&
+        LOOPARG.acc != OPS_READ) {
+
+        //Left neighbour's end index
+        int intersect_begin = 0;
+        //Take intersection of execution range with (my left boundary-1) and prior data dependency
+        int intersect_len = intersection(biggest_range[2*d]-1,data_read_deps_edge[LOOPARG.dat->index][2 * d],
+                                         LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
+        if (intersect_len > 0)
+          left_neighbour_end = MAX(left_neighbour_end,intersect_begin + intersect_len);
+      }
+    }
+  }
+  if (LOOPRANGE[2 * d + 1] != end[d]) {
+  // Look at read dependencies of datasets being written
+    for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+  // For any dataset written (i.e. not read)
+      if (LOOPARG.argtype == OPS_ARG_DAT &&
+        LOOPARG.opt == 1 &&
+        LOOPARG.acc != OPS_READ) {
+
+        int intersect_begin = 0;
+  //Take intersection of execution range with (my right boundary+1) and prior data dependency
+      int intersect_len = intersection(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1], biggest_range[2*d+1]+1,
+        LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
+      if (intersect_len > 0)
+        right_neighbour_start = MIN(right_neighbour_start,intersect_begin);
+    }
+  }
+}
+
+        // Update read dependencies of neighbours
+for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+          // For any dataset read (i.e. not write-only)
+  if (LOOPARG.argtype == OPS_ARG_DAT &&
+    LOOPARG.opt == 1 &&
+    LOOPARG.acc != OPS_WRITE) {
+            int d_m_min = 0; // Find biggest positive/negative direction stencil
+                             // point for this dimension
+          int d_p_max = 0;
+          for (int p = 0;
+           p < LOOPARG.stencil->points; p++) {
+            d_m_min = MIN(d_m_min,
+              LOOPARG.stencil->stencil
+              [LOOPARG.stencil->dims * p + d]);
+          d_p_max = MAX(d_p_max,
+            LOOPARG.stencil->stencil
+            [LOOPARG.stencil->dims * p + d]);
+        }
+            //If this is the first tile update left neighbour's read dependency
+        if (left_neighbour_end+d_p_max > biggest_range[2*d]) {
+          data_read_deps_edge
+          [LOOPARG.dat->index][2 * d + 0] = MAX(
+            data_read_deps_edge[LOOPARG.dat->index][2 * d + 0],
+            left_neighbour_end + d_p_max);
+        }
+            //If this is the last tile update right neighbour's read dependency
+        if (right_neighbour_start+d_m_min < biggest_range[2*d+1]) {
+          data_read_deps_edge
+          [LOOPARG.dat->index][2 * d + 1] = MIN(
+            data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
+            right_neighbour_start + d_m_min);
+        }
+      }
+    }
+  }
+
+
 int ops_construct_tile_plan() {
   // Create new tiling plan
   if (OPS_diags > 2)
@@ -327,17 +409,12 @@ int ops_construct_tile_plan() {
     bool owned = ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
 
     for (int d = 0; d < dims; d++) {
+
+      ops_compute_mpi_dependencies(loop, d, start, end, biggest_range);
+
       for (int tile = 0; tile < total_tiles; tile++) {
 
-        //If loop range starts before my left boundary, my left neighbour's end index
-        // is either my start index or the end index of the loop (whichever is smaller)
-        int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
-                                  MIN(LOOPRANGE[2*d+1],start[d]) : -INT_MAX;
-        //If loop range ends after my right boundary, my right neighbour's start index
-        // is either my end index or the start index of the loop (whichever is greater)
-        int right_neighbour_start = LOOPRANGE[2*d+1] >= biggest_range[2*d+1] ? 
-                                  MAX(LOOPRANGE[2*d],end[d]) : INT_MAX;
-
+        
         // If this tile is the first on this process in this dimension
         if ((tile / tiles_prod[d]) % ntiles[d] == 0) {
           //If this is the leftmost process for this loop, then start index is the
@@ -363,24 +440,6 @@ int ops_construct_tile_plan() {
                   if (intersect_len > 0)
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
                       MIN(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],intersect_begin);
-
-          //         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
-										// MAX(LOOPRANGE[2 * d + 0],
-          //            MIN3(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-										// 	LOOPRANGE[2 * d + 1],
-          //             data_read_deps
-          //             [LOOPARG.dat->index]
-          //             [tile * OPS_MAX_DIM * 2 + 2 * d + 0]));
-
-                //Left neighbour's end index
-                if (tile == 0) {
-                  int intersect_begin = 0;
-                  //Take intersection of execution range with (my left boundary-1) and prior data dependency
-                  int intersect_len = intersection(biggest_range[2*d]-1,data_read_deps_edge[LOOPARG.dat->index][2 * d],
-                                                   LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
-                  if (intersect_len > 0)
-                    left_neighbour_end = MAX(left_neighbour_end,intersect_begin + intersect_len);
-                }
               }
             }
 
@@ -427,13 +486,6 @@ int ops_construct_tile_plan() {
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                   MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
 
-         //      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-									// MIN(LOOPRANGE[2 * d + 1],
-         //           MAX3(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
-									// 		LOOPRANGE[2 * d],
-         //              data_read_deps
-         //                  [LOOPARG.dat->index]
-         //                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1]));
 if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
 	printf("Proc %d reduced dim %d to %d-%d due to read dep on %s (range end %d, range beg %d, deps %d)\n",ops_get_proc(), d, 
 			tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
@@ -444,21 +496,6 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
                       [LOOPARG.dat->index]
                       [tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
 }
-              if (tile == total_tiles-1) {
-                int intersect_begin = 0;
-                //Take intersection of execution range with (my right boundary+1) and prior data dependency
-                int intersect_len = intersection(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1], biggest_range[2*d+1]+1,
-                                                 LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
-                if (intersect_len > 0)
-                  right_neighbour_start = MIN(right_neighbour_start,intersect_begin);
-
-                // right_neighbour_start = 
-                //   MAX(LOOPRANGE[2 * d + 0],
-                //   MIN3(right_neighbour_start,
-                //       LOOPRANGE[2 * d + 1],
-                //       data_read_deps_edge
-                //           [LOOPARG.dat->index][2 * d + 1]));
-              }
             }
           }
           //If this is not the last tile, we need to check write dependencies too
@@ -497,14 +534,6 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                     MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
 
-            //     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-            //         MIN(LOOPRANGE[2 * d + 1],
-            //         MAX3(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
-												// LOOPRANGE[2 * d],
-            //             data_write_deps
-            //                     [LOOPARG.dat->index]
-            //                     [tile * OPS_MAX_DIM * 2 + 2 * d + 1] -
-            //                 d_m_min));
 if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
 	printf("Proc %d reduced dim %d of %s to %d due to write dep on %s w/ stencil p %d\n",ops_get_proc(), d, ops_kernel_list[loop]->name, tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1], LOOPARG.dat->name, d_m_min);
 }
@@ -544,41 +573,41 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][
 }
 
 
-        // Update read dependencies of neighbours
-        for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset read (i.e. not write-only)
-          if (LOOPARG.argtype == OPS_ARG_DAT &&
-              LOOPARG.opt == 1 &&
-              LOOPARG.acc != OPS_WRITE) {
-            int d_m_min = 0; // Find biggest positive/negative direction stencil
-                             // point for this dimension
-            int d_p_max = 0;
-            for (int p = 0;
-                 p < LOOPARG.stencil->points; p++) {
-              d_m_min = MIN(d_m_min,
-                  LOOPARG.stencil->stencil
-                      [LOOPARG.stencil->dims * p + d]);
-              d_p_max = MAX(d_p_max,
-                  LOOPARG.stencil->stencil
-                      [LOOPARG.stencil->dims * p + d]);
-            }
-            //If this is the first tile update left neighbour's read dependency
-            if (tile==0 && left_neighbour_end+d_p_max > biggest_range[2*d]) {
-              data_read_deps_edge
-                  [LOOPARG.dat->index][2 * d + 0] = MAX(
-                      data_read_deps_edge[LOOPARG.dat->index][2 * d + 0],
-                      left_neighbour_end + d_p_max);
-            }
-            //If this is the last tile update right neighbour's read dependency
-            if (tile==total_tiles-1 && right_neighbour_start+d_m_min < biggest_range[2*d+1]) {
-              data_read_deps_edge
-                  [LOOPARG.dat->index][2 * d + 1] = MIN(
-                      data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
-                      right_neighbour_start + d_m_min);
-            }
-					}
-				}
-			
+      //     // Update read dependencies of neighbours
+      //     for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+      //       // For any dataset read (i.e. not write-only)
+      //       if (LOOPARG.argtype == OPS_ARG_DAT &&
+      //           LOOPARG.opt == 1 &&
+      //           LOOPARG.acc != OPS_WRITE) {
+      //         int d_m_min = 0; // Find biggest positive/negative direction stencil
+      //                          // point for this dimension
+      //         int d_p_max = 0;
+      //         for (int p = 0;
+      //              p < LOOPARG.stencil->points; p++) {
+      //           d_m_min = MIN(d_m_min,
+      //               LOOPARG.stencil->stencil
+      //                   [LOOPARG.stencil->dims * p + d]);
+      //           d_p_max = MAX(d_p_max,
+      //               LOOPARG.stencil->stencil
+      //                   [LOOPARG.stencil->dims * p + d]);
+      //         }
+      //         //If this is the first tile update left neighbour's read dependency
+      //         if (tile==0 && left_neighbour_end+d_p_max > biggest_range[2*d]) {
+      //           data_read_deps_edge
+      //               [LOOPARG.dat->index][2 * d + 0] = MAX(
+      //                   data_read_deps_edge[LOOPARG.dat->index][2 * d + 0],
+      //                   left_neighbour_end + d_p_max);
+      //         }
+      //         //If this is the last tile update right neighbour's read dependency
+      //         if (tile==total_tiles-1 && right_neighbour_start+d_m_min < biggest_range[2*d+1]) {
+      //           data_read_deps_edge
+      //               [LOOPARG.dat->index][2 * d + 1] = MIN(
+      //                   data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
+      //                   right_neighbour_start + d_m_min);
+      //         }
+  				// 	}
+  				// }
+  			
         int intersect_begin = 0;
         int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
