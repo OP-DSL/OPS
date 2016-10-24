@@ -485,17 +485,6 @@ int ops_construct_tile_plan() {
               if (intersect_len > 0)
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                   MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
-
-if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
-	printf("Proc %d reduced dim %d to %d-%d due to read dep on %s (range end %d, range beg %d, deps %d)\n",ops_get_proc(), d, 
-			tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-			tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1], LOOPARG.dat->name,
-							LOOPRANGE[2 * d + 1],
-                  LOOPRANGE[2 * d],
-                  data_read_deps
-                      [LOOPARG.dat->index]
-                      [tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
-}
             }
           }
         }
@@ -512,35 +501,28 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
 
-        //   if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 &&
-        //      LOOPRANGE[2 * d + 1] == end[d]) {
-        //     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
-        //         LOOPRANGE[2 * d + 1];
-        // } else {
           //If this is not the last tile, we need to check write dependencies too
-          if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1) { //|| LOOPRANGE[2 * d + 1] != end[d]
+          if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1 &&
+            //unless the next tile shrunk to 0, in which case this is the last tile
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] > 0) {
             // Look at write dependencies of datasets being accessed
             for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
-                                 [tile * OPS_MAX_DIM * 2 + 2 * d + 1] !=
-                      -INT_MAX ) {
+                                 [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != -INT_MAX ) {
                 int d_m_min = 0;  // Find biggest positive/negative direction
                                  // stencil point for this dimension
                 int d_p_max = 0;
                 for (int p = 0;
                      p < LOOPARG.stencil->points; p++) {
-                  d_m_min = MIN(
-                      d_m_min,
+                  d_m_min = MIN(d_m_min,
                       LOOPARG.stencil->stencil
-                          [LOOPARG.stencil->dims * p +
-                           d]);
-                  d_p_max = MAX(
-                      d_p_max,
+                          [LOOPARG.stencil->dims * p + d]);
+                  d_p_max = MAX(d_p_max,
                       LOOPARG.stencil->stencil
-                          [LOOPARG.stencil->dims * p +
-                           d]);
+                          [LOOPARG.stencil->dims * p + d]);
                 }
                 // End index is the greatest across all of the dependencies, but
                 // no greater than the loop range
@@ -549,13 +531,13 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
                 int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                                  data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
                                                  LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
-                if (intersect_len > 0)
+                if (intersect_len > 0) {
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                     MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
-
-if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
-	printf("Proc %d reduced dim %d of %s to %d due to write dep on %s w/ stencil p %d\n",ops_get_proc(), d, ops_kernel_list[loop]->name, tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1], LOOPARG.dat->name, d_m_min);
-}
+                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] >
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1])
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1];
+                }
               }
             }
           }
@@ -572,24 +554,13 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
                           biggest_range[2 * d + 0] +
                               ((tile / tiles_prod[d]) % ntiles[d] + 1) *
                                   tile_sizes[d]));
-if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
-	printf("Proc %d reduced dim %d to %d due to default %s\n",ops_get_proc(), d, tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1], ops_kernel_list[loop]->name);
-}
           }
-//XXX        }
 
         if (OPS_diags > 5 && tile_sizes[d] != -1)
           printf("Proc %d, %s tile %d dim %d: exec range is: %d-%d\n",
                  ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-
-if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]) {
-	printf("Error, proc %d, loop %s, tile %d, dim %d, range is : %d-%d\n",
-				ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
-         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-}
       }
 
 
@@ -603,15 +574,6 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][
 
 //TODO: check if I intersect in other dimensions as well - but this may cause issues over MPI boundaries?
 // also, this might ake adjacent tiles have slightly different skewing - again a problem over MPI?
-
-if (intersect_len <=0 && 
-  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]
-  < tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]) {
-  printf("Error, unrelated execution, proc %d, loop %s, tile %d, dim %d, range is : %d-%d\n",
-        ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
-         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-}
 
 
 				//If invalid/no range, skip updating dependencies
@@ -725,9 +687,9 @@ if (intersect_len <=0 &&
   depths_to_exchange.resize(OPS_MAX_DIM*4*dats_to_exchange.size()); //left send, left recv, right send, right recv
   for (int i = 0; i < dats_to_exchange.size(); i++) {
     for (int d = 0; d < dims; d++) {
-			if (d == 2 && dats_to_exchange[i]->index == 23) {
-				printf("Proc %d Here my right dep %d prev tile right dep %d\n", ops_get_proc(), data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1],data_read_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]);
-			}
+			// if (d == 2 && dats_to_exchange[i]->index == 23) {
+			// 	printf("Proc %d Here my right dep %d prev tile right dep %d\n", ops_get_proc(), data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1],data_read_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]);
+			// }
       if (data_read_deps_edge[dats_to_exchange[i]->index][2*d] == -INT_MAX)
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = 0;
       else
@@ -746,33 +708,23 @@ if (intersect_len <=0 &&
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2] = MAX(0,biggest_range[2*d+1]-data_read_deps_edge[dats_to_exchange[i]->index][2*d+1]);
 
       //Right recv depth is the read dependency range of the last tile, extending beyond the right owned range
-      //Since the last tile may disappear at the first loop (due to different skewing slopes), I need to check the one
-      //before the last tile as well
+      //Since the last tiles may disappear at the first loop (due to different skewing slopes), I need to check all the tiles and
+      //take the max
       
-      // if (ntiles[d]>1 && (data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1] <
-      //                    data_read_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]
-      //                    ||
-      //                    data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1] < 
-      //                    data_write_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]
-      //                    )) {
-      //   printf("Proc %d Tile overrun dat %s dim %d %d vs %d\n",ops_get_proc(),dats_to_exchange[i]->name, d,
-      //     data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1],
-      //     data_read_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]);
-      // }
-      // int right_read_dep = data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1];
-      // if (ntiles[d]>1)
-      //   right_read_dep = MAX(right_read_dep,data_read_deps[dats_to_exchange[i]->index][(total_tiles-2*tiles_prod[d])*OPS_MAX_DIM*2+2*d+1]);
-      
-      // if (right_read_dep == -INT_MAX) {
-      //   depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = 0;
-      // } else {
-      //   depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,right_read_dep-biggest_range[2*d+1]);
-      // }
-      if (data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1] == -INT_MAX)
+      int right_read_dep = -INT_MAX;
+      for (int tile = 0; tile < ntiles[d]; tile++)
+        right_read_dep = MAX(right_read_dep,data_read_deps[dats_to_exchange[i]->index][tile*tiles_prod[d]*OPS_MAX_DIM*2+2*d+1]);
+      if (right_read_dep == -INT_MAX) {
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = 0;
-      else
-        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1]-biggest_range[2*d+1]);
-      if (OPS_diags > 2)
+      } else {
+        depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,right_read_dep-biggest_range[2*d+1]);
+      }
+
+      // if (data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1] == -INT_MAX)
+      //   depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = 0;
+      // else
+      //   depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,data_read_deps[dats_to_exchange[i]->index][(total_tiles-1)*OPS_MAX_DIM*2+2*d+1]-biggest_range[2*d+1]);
+      if (OPS_diags > 6)
         printf("Proc %d Dataset %s, dim %d, left send: %d, left recv: %d, right send: %d, right recv: %d\n", ops_get_proc(),dats_to_exchange[i]->name, d, depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3]);
     }
   }

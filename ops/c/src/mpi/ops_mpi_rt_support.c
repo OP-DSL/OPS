@@ -388,7 +388,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
 
-  if (OPS_diags > 2) { // Consistency checking
+  if (OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
@@ -460,7 +460,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
-  if (OPS_diags > 2) { // Consistency checking
+  if (OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
