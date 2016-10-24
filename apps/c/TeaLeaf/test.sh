@@ -9,7 +9,7 @@ make clean
 make
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
-<<COMMENT
+#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./tealeaf_openmp > perf_out
 grep "Total Wall time" tea.out
@@ -134,7 +134,7 @@ rm perf_out
 echo "All Intel complied applications PASSED : Exiting Test Script "
 #exit
 
-COMMENT
+#COMMENT
 cd -
 source ../../scripts/source_pgi_15.10
 
