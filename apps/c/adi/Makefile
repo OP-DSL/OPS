@@ -132,7 +132,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = adi_dev_seq adi_seq adi_dev_mpi adi_mpi adi_openmp adi_mpi_openmp adi_cuda adi_mpi_cuda adi_opencl adi_mpi_opencl
+TARGETS = adi_dev_seq adi_seq adi_openmp adi_cuda #adi_mpi_openmp adi_dev_mpi adi_mpi adi_mpi_cuda adi_opencl adi_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 #TARGETS += adi_openacc adi_mpi_openacc

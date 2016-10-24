@@ -204,7 +204,7 @@ void ops_cuda_get_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-  printf("in here ************\n");
+
   int bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];

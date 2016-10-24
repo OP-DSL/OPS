@@ -37,4 +37,3 @@ void ops_decl_const_char(int dim, char const *type, int size, char *dat,
 // user kernel files
 #include "init_kernel_cuda_kernel.cu"
 #include "preproc_kernel_cuda_kernel.cu"
-#include "rms_kernel_cuda_kernel.cu"
