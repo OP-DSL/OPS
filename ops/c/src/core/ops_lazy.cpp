@@ -498,8 +498,27 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
 }
             }
           }
+        }
+
+
+
+        }
+        for (int tile = 0; tile < total_tiles; tile++) {
+
+
+          if ((tile / tiles_prod[d]) % ntiles[d] != 0) 
+            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] =
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) + 2 * d + 1];
+          if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
+            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+
+        //   if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 &&
+        //      LOOPRANGE[2 * d + 1] == end[d]) {
+        //     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
+        //         LOOPRANGE[2 * d + 1];
+        // } else {
           //If this is not the last tile, we need to check write dependencies too
-          if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1) {
+          if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1) { //|| LOOPRANGE[2 * d + 1] != end[d]
             // Look at write dependencies of datasets being accessed
             for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
@@ -557,7 +576,7 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] < tiled_ranges[loop][
 	printf("Proc %d reduced dim %d to %d due to default %s\n",ops_get_proc(), d, tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1], ops_kernel_list[loop]->name);
 }
           }
-        }
+//XXX        }
 
         if (OPS_diags > 5 && tile_sizes[d] != -1)
           printf("Proc %d, %s tile %d dim %d: exec range is: %d-%d\n",
@@ -571,43 +590,12 @@ if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][
          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
 }
+      }
 
 
-      //     // Update read dependencies of neighbours
-      //     for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-      //       // For any dataset read (i.e. not write-only)
-      //       if (LOOPARG.argtype == OPS_ARG_DAT &&
-      //           LOOPARG.opt == 1 &&
-      //           LOOPARG.acc != OPS_WRITE) {
-      //         int d_m_min = 0; // Find biggest positive/negative direction stencil
-      //                          // point for this dimension
-      //         int d_p_max = 0;
-      //         for (int p = 0;
-      //              p < LOOPARG.stencil->points; p++) {
-      //           d_m_min = MIN(d_m_min,
-      //               LOOPARG.stencil->stencil
-      //                   [LOOPARG.stencil->dims * p + d]);
-      //           d_p_max = MAX(d_p_max,
-      //               LOOPARG.stencil->stencil
-      //                   [LOOPARG.stencil->dims * p + d]);
-      //         }
-      //         //If this is the first tile update left neighbour's read dependency
-      //         if (tile==0 && left_neighbour_end+d_p_max > biggest_range[2*d]) {
-      //           data_read_deps_edge
-      //               [LOOPARG.dat->index][2 * d + 0] = MAX(
-      //                   data_read_deps_edge[LOOPARG.dat->index][2 * d + 0],
-      //                   left_neighbour_end + d_p_max);
-      //         }
-      //         //If this is the last tile update right neighbour's read dependency
-      //         if (tile==total_tiles-1 && right_neighbour_start+d_m_min < biggest_range[2*d+1]) {
-      //           data_read_deps_edge
-      //               [LOOPARG.dat->index][2 * d + 1] = MIN(
-      //                   data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
-      //                   right_neighbour_start + d_m_min);
-      //         }
-  				// 	}
-  				// }
-  			
+
+      for (int tile = 0; tile < total_tiles; tile++) {
+
         int intersect_begin = 0;
         int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
