@@ -33,7 +33,7 @@
 /** @brief 3D heat diffusion PDE solved using ADI
  *  @author Endre Lazlo, converted to OPS by Gihan Mudalige
  *  @details PDE is solved with the ADI (Alternating Direction Implicit) method
- *	uses the Scalar tridiagonal solver for CPU and GPU written by Endre. Lazslo
+ *  uses the Scalar tridiagonal solver for CPU and GPU written by Endre. Lazslo
 **/
 
 // standard headers
@@ -51,9 +51,7 @@
 
 #include "init_kernel.h"
 #include "preproc_kernel.h"
-#include "rms_kernel.h"
-
-
+//#include "print_kernel.h"
 
 // declare defaults options
 int nx;
@@ -83,7 +81,7 @@ int main(int argc, char **argv)
   /**------------------------------ Initialisation ------------------------------**/
 
   // OPS initialisation
-  ops_init(argc,argv,1);
+  ops_init(argc, argv, 2);
 
   /**------------------------------OPS Declarations------------------------------**/
 
@@ -91,17 +89,15 @@ int main(int argc, char **argv)
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
   //declare data on blocks
-  int d_p[3] = {1,1,1}; //max halo depths for the dat in the possitive direction
-  int d_m[3] = {-1,-1,-1}; //max halo depths for the dat in the negative direction
+  int d_p[3] = {0, 0,
+                0}; // max halo depths for the dat in the possitive direction
+  int d_m[3] = {0, 0,
+                0}; // max halo depths for the dat in the negative direction
   int size[3] = {nx, ny, nz}; //size of the dat -- should be identical to the block on which its define on
   int base[3] = {0,0,0};
   double* temp = NULL;
 
   ops_dat h_u     = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_u");
-
-  d_p[0] = 0; d_p[1] = 0; d_p[2] = 0; //max halo depths for the dat in the possitive direction
-  d_m[0] = 0; d_m[1] = 0; d_m[2] = 0; //max halo depths for the dat in the negative direction
-
   ops_dat h_temp  = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_tmp");
   ops_dat h_du    = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_du");
   ops_dat h_ax    = ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_ax");
@@ -127,11 +123,8 @@ int main(int argc, char **argv)
   ops_decl_const( "nz", 1, "int", &nz );
   ops_decl_const( "lambda", 1, "double", &lambda );
 
-  //reduction handle to check output
-  ops_reduction rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
-
   //decompose the block
-  ops_partition("3D_BLOCK_DECOMPSE");
+  ops_partition("2D_BLOCK_DECOMPSE");
 
   double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
 
@@ -171,64 +164,12 @@ int main(int argc, char **argv)
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed preproc (sec): %lf (s)\n",et3-et2);
 
-  double rms_value = 0.0;
-  /*ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_du, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_du Value %lg\n", rms_value);*/
-
-  rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_u, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_u Value %lg\n", rms_value);
-
   /**----------------- perform tri-diagonal solves in x-direction
    * ---------------**/
   ops_timers(&ct2, &et2);
   ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, opts);
   ops_timers(&ct3, &et3);
   ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
-
-  /*rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_ax, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_ax Value %lg\n", rms_value);
-
-  rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_bx, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms,&rms_value);
-  ops_printf("h_bx Value %lg\n", rms_value);
-
-  rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_cx, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_cx Value %lg\n", rms_value);
-
-  rms_value = 0.0;
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range,
-               ops_arg_dat(h_du, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_du Value %lg\n", rms_value);
-  */
-  rms_value = 0.0;
-  int iter_range2[] = {1,nx-1, 0,ny, 0,nz};
-  ops_par_loop(rms_kernel, "rms_kernel", heat3D, 3, iter_range2,
-               ops_arg_dat(h_u, 1, S3D_000, "double", OPS_READ),
-               ops_arg_reduce(rms, 1, "double", OPS_INC));
-  ops_reduction_result(rms, &rms_value);
-  ops_printf("h_u Value %lg\n", rms_value);
-
-  exit(-2);
 
   /**----------------- perform tri-diagonal solves in y-direction ---------------**/
   ops_timers(&ct2, &et2);
