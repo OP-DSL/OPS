@@ -1146,7 +1146,7 @@ float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg) {
   }
   size *=
       arg->dat->elem_size *
-      ((arg->argtype == OPS_READ || arg->argtype == OPS_WRITE) ? 1.0f : 2.0f);
+      ((arg->acc == OPS_READ || arg->acc == OPS_WRITE) ? 1.0f : 2.0f);
   return size;
 }
 

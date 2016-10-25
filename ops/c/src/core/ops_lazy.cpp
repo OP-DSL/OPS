@@ -498,6 +498,9 @@ void ops_execute() {
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
 
+  if (OPS_diags>2)
+    printf("Tiled execution of %d loops\n",ops_kernel_list.size());
+
   for (int tile = 0; tile < total_tiles; tile++) {
     for (int i = 0; i < ops_kernel_list.size(); i++) {
 

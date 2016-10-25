@@ -119,7 +119,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     cumsize *= dat->size[i];
   }
 
-  ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data), bytes);
+  ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+    ( void ** ) &( dat->data ), bytes );
 
   return dat;
 }

@@ -160,7 +160,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
           if NDIM==3:
             code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
 
-
 ##########################################################################
 #  start with seq kernel function
 ##########################################################################

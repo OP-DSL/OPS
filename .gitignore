@@ -1,5 +1,5 @@
 numawrap*
-clover.out
+*.out
 *_cu.o
 *.o
 cloverleaf_seq
