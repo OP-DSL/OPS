@@ -37,12 +37,12 @@
   */
 #include <stdlib.h>
 #include <sys/time.h>
+#include "ops_lib_core.h"
+#include "ops_hdf5.h"
+
 #if defined(_OPENMP)
 #include <omp.h>
 #else
-
-#include "ops_lib_core.h"
-#include "ops_hdf5.h"
 
 inline int omp_get_max_threads() {
   if (getenv("OMP_NUM_THREADS"))
