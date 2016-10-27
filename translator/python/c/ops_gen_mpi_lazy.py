@@ -245,7 +245,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
 
     if gen_full_code:
       IF('OPS_diags > 1')
-      code('ops_timing_realloc('+str(nk)+',"'+name+'");')
       code('OPS_kernels['+str(nk)+'].count++;')
       code('ops_timers_core(&c2,&t2);')
       ENDIF()
@@ -489,6 +488,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
         code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
         code('desc->args['+str(n)+'].data = tmp;')
     code('desc->function = ops_par_loop_'+name+'_execute;')
+    IF('OPS_diags > 1')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    ENDIF()
     code('ops_enqueue_kernel(desc);')
     depth = 0
     code('}')

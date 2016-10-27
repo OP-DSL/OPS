@@ -1062,18 +1062,18 @@ void ops_timing_output(FILE *stream) {
     ops_fprintf(stream, "%s\n", buf);
     double sumtime = 0.0f;
     for (int k = 0; k < OPS_kern_max; k++) {
-      if (OPS_kernels[k].count < 1)
-        continue;
-      sprintf(buf, "%s", OPS_kernels[k].name);
-      for (int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
-        strcat(buf, " ");
-
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
       ops_compute_moment(OPS_kernels[k].time, &moments_time[0],
                          &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
+                             
+      if (OPS_kernels[k].count < 1)
+        continue;
+      sprintf(buf, "%s", OPS_kernels[k].name);
+      for (int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
+        strcat(buf, " ");
 
       sprintf(
           buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count,
