@@ -159,6 +159,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->block = block;
   desc->dim = dim;
   desc->index = 55;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 55;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -166,12 +168,19 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->nargs = 7;
   desc->args = (ops_arg*)malloc(7*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->args[5] = arg5;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
   if (OPS_diags > 1) {
     ops_timing_realloc(55,"initialise_chunk_kernel_volume");

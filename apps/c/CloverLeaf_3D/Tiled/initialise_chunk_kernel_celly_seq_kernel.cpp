@@ -118,6 +118,8 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   desc->block = block;
   desc->dim = dim;
   desc->index = 53;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 53;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -125,8 +127,11 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   desc->nargs = 3;
   desc->args = (ops_arg*)malloc(3*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_celly_execute;
   if (OPS_diags > 1) {
     ops_timing_realloc(53,"initialise_chunk_kernel_celly");

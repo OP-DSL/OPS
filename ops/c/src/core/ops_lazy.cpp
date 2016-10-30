@@ -85,7 +85,7 @@ inline int intersection(int range1_beg, int range1_end, int range2_beg,
 
 struct tiling_plan {
   int nloops;
-  std::vector<int> loop_sequence;
+  std::vector<unsigned long> loop_sequence;
   int ntiles;
   std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
   std::vector<ops_dat> dats_to_exchange;
@@ -243,7 +243,7 @@ int ops_construct_tile_plan() {
       ops_kernel_list.size());
   for (int i = 0; i < ops_kernel_list.size(); i++)
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
-        ops_kernel_list[i]->index;
+        ops_kernel_list[i]->hash;
 
   // Get tile sizes
   if (getenv("T1"))
@@ -707,7 +707,7 @@ int ops_construct_tile_plan() {
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = MAX(0,right_read_dep-biggest_range[2*d+1]);
       }
 
-      if (OPS_diags > 6)
+      if (OPS_diags > 5)
         printf("Proc %d Dataset %s, dim %d, left send: %d, left recv: %d, right send: %d, right recv: %d\n", ops_get_proc(),dats_to_exchange[i]->name, d, depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2],depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3]);
     }
   }
@@ -728,7 +728,7 @@ void ops_execute() {
     if (ops_kernel_list.size() == tiling_plans[i].nloops) {
       int count = 0;
       for (int j = 0; j < ops_kernel_list.size(); j++) {
-        if (ops_kernel_list[j]->index == tiling_plans[i].loop_sequence[j])
+        if (ops_kernel_list[j]->hash == tiling_plans[i].loop_sequence[j])
           count++;
         else
           break;

@@ -469,6 +469,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('desc->block = block;')
     code('desc->dim = dim;')
     code('desc->index = '+str(nk)+';')
+    code('desc->hash = 5381;')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + '+str(nk)+';')
     FOR('i','0',str(2*NDIM))
     code('desc->range[i] = range[i];')
     code('desc->orig_range[i] = range[i];')
@@ -479,6 +481,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     declared = 0
     for n in range (0, nargs):
       code('desc->args['+str(n)+'] = arg'+str(n)+';')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if declared == 0:
           code('char *tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')

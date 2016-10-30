@@ -10,6 +10,7 @@
 
 // host stub function
 void ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute(ops_kernel_descriptor *desc) {
+  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -30,7 +31,6 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute(ops_kernel_descr
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(40,"tea_leaf_common_init_diag_init_kernel");
     OPS_kernels[40].count++;
     ops_timers_core(&c2,&t2);
   }
@@ -71,11 +71,6 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute(ops_kernel_descr
   int xdim1_tea_leaf_common_init_diag_init_kernel = args[1].dat->size[0];
   int xdim2_tea_leaf_common_init_diag_init_kernel = args[2].dat->size[0];
 
-  //Halo Exchanges
-  ops_H_D_exchanges_host(args, 5);
-  ops_halo_exchanges(args,5,range);
-  ops_H_D_exchanges_host(args, 5);
-
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
     OPS_kernels[40].mpi_time += t1-t2;
@@ -83,11 +78,11 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute(ops_kernel_descr
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-#ifdef intel
-#pragma omp simd
-#else
-#pragma simd
-#endif
+    #ifdef intel
+    #pragma omp simd
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       
 	Mi[OPS_ACC0(0,0)] = 1.0/(1.0
@@ -100,8 +95,6 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute(ops_kernel_descr
     ops_timers_core(&c2,&t2);
     OPS_kernels[40].time += t2-t1;
   }
-  ops_set_dirtybit_host(args, 5);
-  ops_set_halo_dirtybit3(&args[0],range);
 
   if (OPS_diags > 1) {
     //Update kernel record
@@ -125,37 +118,20 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel(char const *name, ops_bl
   desc->block = block;
   desc->dim = dim;
   desc->index = 40;
-  #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    desc->range[2*n] = sb->decomp_disp[n];desc->range[2*n+1] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (desc->range[2*n] >= range[2*n]) {
-      desc->range[2*n] = 0;
-    }
-    else {
-      desc->range[2*n] = range[2*n] - desc->range[2*n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) desc->range[2*n] = range[2*n];
-    if (desc->range[2*n+1] >= range[2*n+1]) {
-      desc->range[2*n+1] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      desc->range[2*n+1] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      desc->range[2*n+1] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
-  #else //OPS_MPI
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 40;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
   }
-  #endif //OPS_MPI
   desc->nargs = 5;
   desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
   char *tmp = (char*)malloc(1*sizeof(double));
   memcpy(tmp, arg3.data,1*sizeof(double));
@@ -165,5 +141,8 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel(char const *name, ops_bl
   memcpy(tmp, arg4.data,1*sizeof(double));
   desc->args[4].data = tmp;
   desc->function = ops_par_loop_tea_leaf_common_init_diag_init_kernel_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(40,"tea_leaf_common_init_diag_init_kernel");
+  }
   ops_enqueue_kernel(desc);
   }

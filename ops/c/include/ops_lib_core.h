@@ -253,6 +253,7 @@ typedef ops_halo_group_core *ops_halo_group;
 
 typedef struct ops_kernel_descriptor {
   const char *name;           /* name of kernel */
+	unsigned long hash;					/* hash of loop */
   ops_arg *args;              /* list of arguments to pass in */
   int nargs;                  /* number of arguments */
   int index;                  /* index of the loop */

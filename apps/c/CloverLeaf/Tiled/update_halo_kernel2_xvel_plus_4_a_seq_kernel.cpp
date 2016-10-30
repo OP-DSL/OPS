@@ -104,6 +104,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
   desc->block = block;
   desc->dim = dim;
   desc->index = 51;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 51;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -111,7 +113,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_a(char const *name, ops_block 
   desc->nargs = 3;
   desc->args = (ops_arg*)malloc(3*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
   char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));

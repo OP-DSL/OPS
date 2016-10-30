@@ -108,6 +108,8 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
   desc->block = block;
   desc->dim = dim;
   desc->index = 48;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 48;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -115,6 +117,7 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, 
   desc->nargs = 2;
   desc->args = (ops_arg*)malloc(2*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_initialise_chunk_kernel_zz_execute;
   if (OPS_diags > 1) {

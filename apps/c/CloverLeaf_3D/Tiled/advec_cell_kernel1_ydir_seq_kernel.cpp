@@ -135,6 +135,8 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   desc->block = block;
   desc->dim = dim;
   desc->index = 11;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 11;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -142,10 +144,15 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   desc->nargs = 5;
   desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel1_ydir_execute;
   if (OPS_diags > 1) {
     ops_timing_realloc(11,"advec_cell_kernel1_ydir");

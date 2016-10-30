@@ -226,6 +226,8 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->block = block;
   desc->dim = dim;
   desc->index = 5;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 5;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -233,19 +235,33 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->nargs = 14;
   desc->args = (ops_arg*)malloc(14*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->args[5] = arg5;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->args[7] = arg7;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg7.dat->index;
   desc->args[8] = arg8;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg8.dat->index;
   desc->args[9] = arg9;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg9.dat->index;
   desc->args[10] = arg10;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg10.dat->index;
   desc->args[11] = arg11;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg11.dat->index;
   desc->args[12] = arg12;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg12.dat->index;
   desc->args[13] = arg13;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg13.dat->index;
   desc->function = ops_par_loop_PdV_kernel_nopredict_execute;
   if (OPS_diags > 1) {
     ops_timing_realloc(5,"PdV_kernel_nopredict");

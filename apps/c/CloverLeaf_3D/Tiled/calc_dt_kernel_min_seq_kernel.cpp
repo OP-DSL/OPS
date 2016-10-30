@@ -106,6 +106,8 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->index = 38;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 38;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -113,6 +115,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->nargs = 2;
   desc->args = (ops_arg*)malloc(2*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_calc_dt_kernel_min_execute;
   if (OPS_diags > 1) {

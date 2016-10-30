@@ -180,6 +180,8 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   desc->block = block;
   desc->dim = dim;
   desc->index = 14;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 14;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -187,16 +189,27 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
   desc->nargs = 11;
   desc->args = (ops_arg*)malloc(11*sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->args[5] = arg5;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->args[7] = arg7;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg7.dat->index;
   desc->args[8] = arg8;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg8.dat->index;
   desc->args[9] = arg9;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg9.dat->index;
   desc->args[10] = arg10;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg10.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel4_ydir_execute;
   if (OPS_diags > 1) {
     ops_timing_realloc(14,"advec_cell_kernel4_ydir");
