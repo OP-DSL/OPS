@@ -92,7 +92,7 @@ struct tiling_plan {
   std::vector<int> depths_to_exchange;
 };
 
-std::vector<tiling_plan> tiling_plans(0);
+std::vector<tiling_plan> tiling_plans;
 
 void ops_execute();
 
@@ -123,6 +123,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_diags > 1)
       OPS_kernels[desc->index].mpi_time += t2-t1;
   }
+//ops_execute();
 }
 
 //#define TILE1D -1
@@ -285,6 +286,11 @@ int ops_construct_tile_plan() {
       biggest_range[2 * d] = 1;
       biggest_range[2 * d + 1] = 1;
     }
+  }
+  
+  for (int d = 0; d < dims; d++) {
+    if (biggest_range[2*d] > biggest_range[2*d+1])
+      biggest_range[2*d] = biggest_range[2*d+1];
   }
 
   size_t full_owned_size = 1;

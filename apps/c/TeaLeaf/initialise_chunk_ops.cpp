@@ -199,7 +199,4 @@ void initialise_chunk()
                ops_arg_dat(xarea, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_dat(celldx, 1, S2D_00_STRID2D_X, "double", OPS_READ),
                ops_arg_dat(yarea, 1, S2D_00, "double", OPS_WRITE));
-
-
-
 }

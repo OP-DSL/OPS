@@ -474,6 +474,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     FOR('i','0',str(2*NDIM))
     code('desc->range[i] = range[i];')
     code('desc->orig_range[i] = range[i];')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + range[i];')
     ENDFOR()
 
     code('desc->nargs = '+str(nargs)+';')

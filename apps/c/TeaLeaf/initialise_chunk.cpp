@@ -126,6 +126,9 @@ void initialise_chunk()
 
 
   int rangefull[] = {x_min-2, x_max+3, y_min-2, y_max+3};
+  ops_execute(); //The following 4 loops slightly break the 
+                 //abstraction to initialise edge datasets
+                 //tiling dependency analysis does not like that
 
   ops_par_loop(initialise_chunk_kernel_xx, "initialise_chunk_kernel_xx", tea_grid, 2, rangefull,
                ops_arg_dat(xx, 1, S2D_00_STRID2D_X, "int", OPS_WRITE),
