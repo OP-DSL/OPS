@@ -18,7 +18,7 @@ int ydim1_xder1_kernel_h = -1;
 __device__
 
     void
-    xder1_kernel(const double *inp, double *out) {
+    xder1_kernel_gpu(const double *inp, double *out) {
   double dix = 1 / (12.00 * dx);
   out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)] +
                       8.0 * (inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)])) *
@@ -37,7 +37,7 @@ __global__ void ops_xder1_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    xder1_kernel(arg0, arg1);
+    xder1_kernel_gpu(arg0, arg1);
   }
 }
 

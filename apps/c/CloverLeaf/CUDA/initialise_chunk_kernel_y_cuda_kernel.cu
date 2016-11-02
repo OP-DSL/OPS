@@ -23,8 +23,8 @@ int ydim2_initialise_chunk_kernel_y_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_y(double *vertexy, const int *yy,
-                              double *vertexdy) {
+    initialise_chunk_kernel_y_gpu(double *vertexy, const int *yy,
+                                  double *vertexdy) {
 
   int y_min = field.y_min - 2;
   double min_y, d_y;
@@ -53,7 +53,7 @@ __global__ void ops_initialise_chunk_kernel_y(double *__restrict arg0,
   arg2 += idx_x * 0 * 1 + idx_y * 1 * 1 * xdim2_initialise_chunk_kernel_y;
 
   if (idx_x < size0 && idx_y < size1) {
-    initialise_chunk_kernel_y(arg0, arg1, arg2);
+    initialise_chunk_kernel_y_gpu(arg0, arg1, arg2);
   }
 }
 

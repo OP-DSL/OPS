@@ -16,7 +16,7 @@ int ydim0_initialise_chunk_kernel_zz_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_zz(int *zz, int *idx) {
+    initialise_chunk_kernel_zz_gpu(int *zz, int *idx) {
   zz[OPS_ACC0(0, 0, 0)] = idx[2] - 2;
 }
 
@@ -40,7 +40,7 @@ __global__ void ops_initialise_chunk_kernel_zz(int *__restrict arg0,
               ydim0_initialise_chunk_kernel_zz;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    initialise_chunk_kernel_zz(arg0, arg_idx);
+    initialise_chunk_kernel_zz_gpu(arg0, arg_idx);
   }
 }
 

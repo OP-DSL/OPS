@@ -23,8 +23,9 @@ int ydim2_checkop_kernel_h = -1;
 __device__
 
     void
-    checkop_kernel(const double *rho_new, const double *x, const double *rhoin,
-                   double *pre, double *post, int *num) {
+    checkop_kernel_gpu(const double *rho_new, const double *x,
+                       const double *rhoin, double *pre, double *post,
+                       int *num) {
 
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
@@ -62,7 +63,7 @@ ops_checkop_kernel(const double *__restrict arg0, const double *__restrict arg1,
   arg2 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    checkop_kernel(arg0, arg1, arg2, arg3_l, arg4_l, arg5_l);
+    checkop_kernel_gpu(arg0, arg1, arg2, arg3_l, arg4_l, arg5_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(

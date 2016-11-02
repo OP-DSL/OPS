@@ -18,7 +18,7 @@ int ydim1_poisson_kernel_error_h = -1;
 __device__
 
     void
-    poisson_kernel_error(const double *u, const double *ref, double *err) {
+    poisson_kernel_error_gpu(const double *u, const double *ref, double *err) {
   *err = *err +
          (u[OPS_ACC0(0, 0)] - ref[OPS_ACC1(0, 0)]) *
              (u[OPS_ACC0(0, 0)] - ref[OPS_ACC1(0, 0)]);
@@ -43,7 +43,7 @@ __global__ void ops_poisson_kernel_error(const double *__restrict arg0,
   arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_poisson_kernel_error;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_error(arg0, arg1, arg2_l);
+    poisson_kernel_error_gpu(arg0, arg1, arg2_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(

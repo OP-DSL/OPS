@@ -38,9 +38,9 @@ int ydim5_save_kernel_h = -1;
 __device__
 
     void
-    save_kernel(double *rho_old, double *rhou_old, double *rhoE_old,
-                const double *rho_new, const double *rhou_new,
-                const double *rhoE_new) {
+    save_kernel_gpu(double *rho_old, double *rhou_old, double *rhoE_old,
+                    const double *rho_new, const double *rhou_new,
+                    const double *rhoE_new) {
   rho_old[OPS_ACC0(0)] = rho_new[OPS_ACC3(0)];
   rhou_old[OPS_ACC1(0)] = rhou_new[OPS_ACC4(0)];
   rhoE_old[OPS_ACC2(0)] = rhoE_new[OPS_ACC5(0)];
@@ -70,7 +70,7 @@ __global__ void ops_save_kernel(double *__restrict arg0,
   arg5 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    save_kernel(arg0, arg1, arg2, arg3, arg4, arg5);
+    save_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5);
   }
 }
 

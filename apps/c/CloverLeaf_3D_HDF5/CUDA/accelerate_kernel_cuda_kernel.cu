@@ -120,12 +120,13 @@ int ydim13_accelerate_kernel_h = -1;
 __device__
 
     void
-    accelerate_kernel(const double *density0, const double *volume,
-                      double *stepbymass, const double *xvel0, double *xvel1,
-                      const double *xarea, const double *pressure,
-                      const double *yvel0, double *yvel1, const double *yarea,
-                      const double *viscosity, const double *zvel0,
-                      double *zvel1, const double *zarea) {
+    accelerate_kernel_gpu(const double *density0, const double *volume,
+                          double *stepbymass, const double *xvel0,
+                          double *xvel1, const double *xarea,
+                          const double *pressure, const double *yvel0,
+                          double *yvel1, const double *yarea,
+                          const double *viscosity, const double *zvel0,
+                          double *zvel1, const double *zarea) {
 
   double nodal_mass = 0.0;
   nodal_mass = (density0[OPS_ACC0(-1, -1, 0)] * volume[OPS_ACC1(-1, -1, 0)] +
@@ -272,8 +273,8 @@ __global__ void ops_accelerate_kernel(
            idx_z * 1 * 1 * xdim13_accelerate_kernel * ydim13_accelerate_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    accelerate_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
-                      arg9, arg10, arg11, arg12, arg13);
+    accelerate_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
+                          arg9, arg10, arg11, arg12, arg13);
   }
 }
 

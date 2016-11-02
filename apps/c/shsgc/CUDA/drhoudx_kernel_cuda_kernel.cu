@@ -18,7 +18,7 @@ int ydim1_drhoudx_kernel_h = -1;
 __device__
 
     void
-    drhoudx_kernel(const double *rhou_new, double *rho_res) {
+    drhoudx_kernel_gpu(const double *rhou_new, double *rho_res) {
 
   double fnim1 = rhou_new[OPS_ACC0(-1)];
   double fnim2 = rhou_new[OPS_ACC0(-2)];
@@ -41,7 +41,7 @@ __global__ void ops_drhoudx_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    drhoudx_kernel(arg0, arg1);
+    drhoudx_kernel_gpu(arg0, arg1);
   }
 }
 

@@ -18,7 +18,7 @@ int ydim1_poisson_kernel_stencil_h = -1;
 __device__
 
     void
-    poisson_kernel_stencil(const double *u, double *u2) {
+    poisson_kernel_stencil_gpu(const double *u, double *u2) {
   u2[OPS_ACC1(0, 0)] =
       ((u[OPS_ACC0(-1, 0)] - 2.0f * u[OPS_ACC0(0, 0)] + u[OPS_ACC0(1, 0)]) *
            0.125f +
@@ -41,7 +41,7 @@ __global__ void ops_poisson_kernel_stencil(const double *__restrict arg0,
   arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_poisson_kernel_stencil;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_stencil(arg0, arg1);
+    poisson_kernel_stencil_gpu(arg0, arg1);
   }
 }
 

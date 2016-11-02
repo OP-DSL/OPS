@@ -64,9 +64,10 @@ int ydim6_update_halo_kernel1_b1_h = -1;
 __device__
 
     inline void
-    update_halo_kernel1_b1(double *density0, double *density1, double *energy0,
-                           double *energy1, double *pressure, double *viscosity,
-                           double *soundspeed, const int *fields) {
+    update_halo_kernel1_b1_gpu(double *density0, double *density1,
+                               double *energy0, double *energy1,
+                               double *pressure, double *viscosity,
+                               double *soundspeed, const int *fields) {
 
   if (fields[FIELD_DENSITY0] == 1)
     density0[OPS_ACC0(0, 0, 0)] = density0[OPS_ACC0(0, 1, 0)];
@@ -126,7 +127,7 @@ ops_update_halo_kernel1_b1(double *__restrict arg0, double *__restrict arg1,
               ydim6_update_halo_kernel1_b1;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel1_b1(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+    update_halo_kernel1_b1_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
   }
 }
 

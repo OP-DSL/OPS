@@ -18,7 +18,7 @@ int ydim1_poisson_kernel_update_h = -1;
 __device__
 
     void
-    poisson_kernel_update(const double *u2, double *u) {
+    poisson_kernel_update_gpu(const double *u2, double *u) {
   u[OPS_ACC1(0, 0)] = u2[OPS_ACC0(0, 0)];
 }
 
@@ -36,7 +36,7 @@ __global__ void ops_poisson_kernel_update(const double *__restrict arg0,
   arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_poisson_kernel_update;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_update(arg0, arg1);
+    poisson_kernel_update_gpu(arg0, arg1);
   }
 }
 

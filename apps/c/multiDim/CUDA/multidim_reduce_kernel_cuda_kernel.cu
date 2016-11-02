@@ -13,7 +13,7 @@ int ydim0_multidim_reduce_kernel_h = -1;
 __device__
 
     void
-    multidim_reduce_kernel(const double *val, double *redu_dat1) {
+    multidim_reduce_kernel_gpu(const double *val, double *redu_dat1) {
 
   redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0, 0, 0)];
   redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1, 0, 0)];
@@ -35,7 +35,7 @@ __global__ void ops_multidim_reduce_kernel(const double *__restrict arg0,
   arg0 += idx_x * 1 * 2 + idx_y * 1 * 2 * xdim0_multidim_reduce_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_reduce_kernel(arg0, arg1_l);
+    multidim_reduce_kernel_gpu(arg0, arg1_l);
   }
   for (int d = 0; d < 2; d++)
     ops_reduction_cuda<OPS_INC>(

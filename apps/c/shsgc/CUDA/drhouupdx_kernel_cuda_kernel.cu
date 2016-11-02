@@ -28,8 +28,8 @@ int ydim3_drhouupdx_kernel_h = -1;
 __device__
 
     void
-    drhouupdx_kernel(const double *rhou_new, const double *rho_new,
-                     const double *rhoE_new, double *rhou_res) {
+    drhouupdx_kernel_gpu(const double *rhou_new, const double *rho_new,
+                         const double *rhoE_new, double *rhou_res) {
 
   double fni =
       rhou_new[OPS_ACC0(0)] * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)];
@@ -74,7 +74,7 @@ __global__ void ops_drhouupdx_kernel(const double *__restrict arg0,
   arg3 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    drhouupdx_kernel(arg0, arg1, arg2, arg3);
+    drhouupdx_kernel_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

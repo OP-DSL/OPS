@@ -19,7 +19,7 @@ int ydim1_multidim_copy_kernel_h = -1;
 __device__
 
     void
-    multidim_copy_kernel(const double *src, double *dest) {
+    multidim_copy_kernel_gpu(const double *src, double *dest) {
   dest[OPS_ACC_MD1(0, 0, 0)] = src[OPS_ACC_MD0(0, 0, 0)];
   dest[OPS_ACC_MD1(1, 0, 0)] = src[OPS_ACC_MD0(1, 0, 0)];
 }
@@ -38,7 +38,7 @@ __global__ void ops_multidim_copy_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 2 + idx_y * 1 * 2 * xdim1_multidim_copy_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_copy_kernel(arg0, arg1);
+    multidim_copy_kernel_gpu(arg0, arg1);
   }
 }
 

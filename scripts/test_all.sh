@@ -1,5 +1,5 @@
 #!/bin/bash
-
+source ./source_intel #default source to set environment vars
 #exit script if any error is encountered during the build or
 #application executions.
 set -e
@@ -13,6 +13,8 @@ cd ../CloverLeaf/
 cd ../CloverLeaf_3D/
 ./test.sh
 cd ../CloverLeaf_3D_HDF5/
+./test.sh
+cd ../TeaLeaf/
 ./test.sh
 cd ../poisson/
 ./test.sh

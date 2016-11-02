@@ -16,7 +16,7 @@ int ydim0_calc_dt_kernel_min_h = -1;
 __device__
 
     void
-    calc_dt_kernel_min(const double *dt_min, double *dt_min_val) {
+    calc_dt_kernel_min_gpu(const double *dt_min, double *dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0, 0, 0)]);
 }
 
@@ -38,7 +38,7 @@ __global__ void ops_calc_dt_kernel_min(const double *__restrict arg0,
           idx_z * 1 * 1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_min(arg0, arg1_l);
+    calc_dt_kernel_min_gpu(arg0, arg1_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_MIN>(&arg1[d +

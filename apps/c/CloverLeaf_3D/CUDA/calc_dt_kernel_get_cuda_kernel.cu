@@ -32,8 +32,9 @@ int ydim4_calc_dt_kernel_get_h = -1;
 __device__
 
     void
-    calc_dt_kernel_get(const double *cellx, const double *celly, double *xl_pos,
-                       double *yl_pos, const double *cellz, double *zl_pos) {
+    calc_dt_kernel_get_gpu(const double *cellx, const double *celly,
+                           double *xl_pos, double *yl_pos, const double *cellz,
+                           double *zl_pos) {
   *xl_pos = cellx[OPS_ACC0(0, 0, 0)];
   *yl_pos = celly[OPS_ACC1(0, 0, 0)];
   *zl_pos = cellz[OPS_ACC4(0, 0, 0)];
@@ -73,7 +74,7 @@ __global__ void ops_calc_dt_kernel_get(const double *__restrict arg0,
           idx_z * 1 * 1 * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_get(arg0, arg1, arg2_l, arg3_l, arg4, arg5_l);
+    calc_dt_kernel_get_gpu(arg0, arg1, arg2_l, arg3_l, arg4, arg5_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(&arg2[d +

@@ -38,10 +38,10 @@ int ydim5_calc_dt_kernel_print_h = -1;
 __device__
 
     void
-    calc_dt_kernel_print(const double *xvel0, const double *yvel0,
-                         const double *density0, const double *energy0,
-                         const double *pressure, const double *soundspeed,
-                         double *output) {
+    calc_dt_kernel_print_gpu(const double *xvel0, const double *yvel0,
+                             const double *density0, const double *energy0,
+                             const double *pressure, const double *soundspeed,
+                             double *output) {
   output[0] = xvel0[OPS_ACC0(1, 0)];
   output[1] = yvel0[OPS_ACC1(1, 0)];
   output[2] = xvel0[OPS_ACC0(-1, 0)];
@@ -84,7 +84,7 @@ __global__ void ops_calc_dt_kernel_print(
   arg5 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim5_calc_dt_kernel_print;
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel_print(arg0, arg1, arg2, arg3, arg4, arg5, arg6_l);
+    calc_dt_kernel_print_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6_l);
   }
   for (int d = 0; d < 12; d++)
     ops_reduction_cuda<OPS_INC>(

@@ -63,12 +63,12 @@ int ydim10_advec_cell_kernel4_ydir_h = -1;
 __device__
 
     inline void
-    advec_cell_kernel4_ydir(double *density1, double *energy1,
-                            const double *mass_flux_y, const double *vol_flux_y,
-                            const double *pre_vol, const double *post_vol,
-                            double *pre_mass, double *post_mass,
-                            double *advec_vol, double *post_ener,
-                            const double *ener_flux) {
+    advec_cell_kernel4_ydir_gpu(double *density1, double *energy1,
+                                const double *mass_flux_y,
+                                const double *vol_flux_y, const double *pre_vol,
+                                const double *post_vol, double *pre_mass,
+                                double *post_mass, double *advec_vol,
+                                double *post_ener, const double *ener_flux) {
 
   pre_mass[OPS_ACC6(0, 0)] = density1[OPS_ACC0(0, 0)] * pre_vol[OPS_ACC4(0, 0)];
   post_mass[OPS_ACC7(0, 0)] = pre_mass[OPS_ACC6(0, 0)] +
@@ -122,8 +122,8 @@ __global__ void ops_advec_cell_kernel4_ydir(
   arg10 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim10_advec_cell_kernel4_ydir;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_cell_kernel4_ydir(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
-                            arg8, arg9, arg10);
+    advec_cell_kernel4_ydir_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
+                                arg8, arg9, arg10);
   }
 }
 

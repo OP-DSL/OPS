@@ -32,8 +32,8 @@ int ydim4_vars_kernel_h = -1;
 __device__
 
     void
-    vars_kernel(const double *alam, const double *al, const double *gt,
-                double *cmp, double *cf) {
+    vars_kernel_gpu(const double *alam, const double *al, const double *gt,
+                    double *cmp, double *cf) {
   double anu, aaa, ga, qf, ww;
   for (int m = 0; m < 3; m++) {
     anu = alam[OPS_ACC_MD0(m, 0)];
@@ -69,7 +69,7 @@ __global__ void ops_vars_kernel(const double *__restrict arg0,
   arg4 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    vars_kernel(arg0, arg1, arg2, arg3, arg4);
+    vars_kernel_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

@@ -22,7 +22,7 @@ int ydim2_limiter_kernel_h = -1;
 __device__
 
     void
-    limiter_kernel(const double *al, double *tht, double *gt) {
+    limiter_kernel_gpu(const double *al, double *tht, double *gt) {
 
   double aalm, aal, all, ar, gtt;
   for (int m = 0; m < 3; m++) {
@@ -51,7 +51,7 @@ __global__ void ops_limiter_kernel(const double *__restrict arg0,
   arg2 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    limiter_kernel(arg0, arg1, arg2);
+    limiter_kernel_gpu(arg0, arg1, arg2);
   }
 }
 

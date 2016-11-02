@@ -53,11 +53,11 @@ int ydim4_advec_mom_kernel_post_pre_advec_x_h = -1;
 __device__
 
     inline void
-    advec_mom_kernel_post_pre_advec_x(double *node_mass_post,
-                                      const double *post_vol,
-                                      const double *density1,
-                                      double *node_mass_pre,
-                                      const double *node_flux) {
+    advec_mom_kernel_post_pre_advec_x_gpu(double *node_mass_post,
+                                          const double *post_vol,
+                                          const double *density1,
+                                          double *node_mass_pre,
+                                          const double *node_flux) {
 
   node_mass_post[OPS_ACC0(0, 0, 0)] =
       0.125 * (density1[OPS_ACC2(0, -1, 0)] * post_vol[OPS_ACC1(0, -1, 0)] +
@@ -111,7 +111,7 @@ __global__ void ops_advec_mom_kernel_post_pre_advec_x(
               ydim4_advec_mom_kernel_post_pre_advec_x;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel_post_pre_advec_x(arg0, arg1, arg2, arg3, arg4);
+    advec_mom_kernel_post_pre_advec_x_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

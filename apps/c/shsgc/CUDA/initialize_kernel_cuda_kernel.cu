@@ -33,8 +33,8 @@ int ydim4_initialize_kernel_h = -1;
 __device__
 
     void
-    initialize_kernel(double *x, double *rho_new, double *rhou_new,
-                      double *rhoE_new, double *rhoin, int *idx) {
+    initialize_kernel_gpu(double *x, double *rho_new, double *rhou_new,
+                          double *rhoE_new, double *rhoin, int *idx) {
   x[OPS_ACC0(0)] = xmin + (idx[0] - 2) * dx;
   if (x[OPS_ACC0(0)] >= -4.0) {
     rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda * x[OPS_ACC0(0)]);
@@ -78,7 +78,7 @@ ops_initialize_kernel(double *__restrict arg0, double *__restrict arg1,
   arg4 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    initialize_kernel(arg0, arg1, arg2, arg3, arg4, arg_idx);
+    initialize_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg_idx);
   }
 }
 

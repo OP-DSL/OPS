@@ -28,8 +28,9 @@ int ydim3_advec_cell_kernel2_ydir_h = -1;
 __device__
 
     inline void
-    advec_cell_kernel2_ydir(double *pre_vol, double *post_vol,
-                            const double *volume, const double *vol_flux_y) {
+    advec_cell_kernel2_ydir_gpu(double *pre_vol, double *post_vol,
+                                const double *volume,
+                                const double *vol_flux_y) {
 
   pre_vol[OPS_ACC0(0, 0)] = volume[OPS_ACC2(0, 0)] +
                             vol_flux_y[OPS_ACC3(0, 1)] -
@@ -57,7 +58,7 @@ __global__ void ops_advec_cell_kernel2_ydir(double *__restrict arg0,
   arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_advec_cell_kernel2_ydir;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_cell_kernel2_ydir(arg0, arg1, arg2, arg3);
+    advec_cell_kernel2_ydir_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

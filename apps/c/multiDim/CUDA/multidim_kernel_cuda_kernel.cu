@@ -12,7 +12,7 @@ int ydim0_multidim_kernel_h = -1;
 __device__
 
     void
-    multidim_kernel(double *val, int *idx) {
+    multidim_kernel_gpu(double *val, int *idx) {
   val[OPS_ACC_MD0(0, 0, 0)] = (double)(idx[0]);
   val[OPS_ACC_MD0(1, 0, 0)] = (double)(idx[1]);
 }
@@ -31,7 +31,7 @@ __global__ void ops_multidim_kernel(double *__restrict arg0, int arg_idx0,
   arg0 += idx_x * 1 * 2 + idx_y * 1 * 2 * xdim0_multidim_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_kernel(arg0, arg_idx);
+    multidim_kernel_gpu(arg0, arg_idx);
   }
 }
 

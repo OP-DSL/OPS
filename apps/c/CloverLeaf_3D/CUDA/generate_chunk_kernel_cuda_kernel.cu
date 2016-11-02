@@ -96,11 +96,11 @@ int ydim10_generate_chunk_kernel_h = -1;
 __device__
 
     void
-    generate_chunk_kernel(const double *vertexx, const double *vertexy,
-                          const double *vertexz, double *energy0,
-                          double *density0, double *xvel0, double *yvel0,
-                          double *zvel0, const double *cellx,
-                          const double *celly, const double *cellz) {
+    generate_chunk_kernel_gpu(const double *vertexx, const double *vertexy,
+                              const double *vertexz, double *energy0,
+                              double *density0, double *xvel0, double *yvel0,
+                              double *zvel0, const double *cellx,
+                              const double *celly, const double *cellz) {
 
   double radius, x_cent, y_cent, z_cent;
   int is_in = 0;
@@ -262,8 +262,8 @@ __global__ void ops_generate_chunk_kernel(
                ydim10_generate_chunk_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    generate_chunk_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
-                          arg9, arg10);
+    generate_chunk_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
+                              arg8, arg9, arg10);
   }
 }
 

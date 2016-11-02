@@ -28,8 +28,8 @@ int ydim3_ideal_gas_kernel_h = -1;
 __device__
 
     void
-    ideal_gas_kernel(const double *density, const double *energy,
-                     double *pressure, double *soundspeed) {
+    ideal_gas_kernel_gpu(const double *density, const double *energy,
+                         double *pressure, double *soundspeed) {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
@@ -63,7 +63,7 @@ __global__ void ops_ideal_gas_kernel(const double *__restrict arg0,
   arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_ideal_gas_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    ideal_gas_kernel(arg0, arg1, arg2, arg3);
+    ideal_gas_kernel_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

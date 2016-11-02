@@ -13,7 +13,7 @@ int ydim0_poisson_kernel_initialguess_h = -1;
 __device__
 
     void
-    poisson_kernel_initialguess(double *u) {
+    poisson_kernel_initialguess_gpu(double *u) {
   u[OPS_ACC0(0, 0)] = 0.0;
 }
 
@@ -28,7 +28,7 @@ __global__ void ops_poisson_kernel_initialguess(double *__restrict arg0,
   arg0 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim0_poisson_kernel_initialguess;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_initialguess(arg0);
+    poisson_kernel_initialguess_gpu(arg0);
   }
 }
 

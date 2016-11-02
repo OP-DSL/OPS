@@ -23,8 +23,9 @@ int ydim5_poisson_kernel_populate_h = -1;
 __device__
 
     void
-    poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx,
-                            double *u, double *f, double *ref) {
+    poisson_kernel_populate_gpu(const int *dispx, const int *dispy,
+                                const int *idx, double *u, double *f,
+                                double *ref) {
   double x = dx * (double)(idx[0] + dispx[0]);
   double y = dy * (double)(idx[1] + dispy[0]);
 
@@ -55,7 +56,7 @@ __global__ void ops_poisson_kernel_populate(const int arg0, const int arg1,
   arg5 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim5_poisson_kernel_populate;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_populate(&arg0, &arg1, arg_idx, arg3, arg4, arg5);
+    poisson_kernel_populate_gpu(&arg0, &arg1, arg_idx, arg3, arg4, arg5);
   }
 }
 

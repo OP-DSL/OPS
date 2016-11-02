@@ -43,10 +43,10 @@ int ydim6_viscosity_kernel_h = -1;
 __device__
 
     void
-    viscosity_kernel(const double *xvel0, const double *yvel0,
-                     const double *celldx, const double *celldy,
-                     const double *pressure, const double *density0,
-                     double *viscosity) {
+    viscosity_kernel_gpu(const double *xvel0, const double *yvel0,
+                         const double *celldx, const double *celldy,
+                         const double *pressure, const double *density0,
+                         double *viscosity) {
 
   double ugrad, vgrad, grad2, pgradx, pgrady, pgradx2, pgrady2, grad, ygrad,
       xgrad, div, strain2, limiter, pgrad;
@@ -120,7 +120,7 @@ __global__ void ops_viscosity_kernel(
   arg6 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim6_viscosity_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    viscosity_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    viscosity_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
   }
 }
 

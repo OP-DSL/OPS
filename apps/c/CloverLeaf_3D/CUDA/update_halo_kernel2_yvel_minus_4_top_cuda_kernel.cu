@@ -26,8 +26,8 @@ int ydim1_update_halo_kernel2_yvel_minus_4_top_h = -1;
 __device__
 
     inline void
-    update_halo_kernel2_yvel_minus_4_top(double *yvel0, double *yvel1,
-                                         const int *fields) {
+    update_halo_kernel2_yvel_minus_4_top_gpu(double *yvel0, double *yvel1,
+                                             const int *fields) {
   if (fields[FIELD_YVEL0] == 1)
     yvel0[OPS_ACC0(0, 0, 0)] = -yvel0[OPS_ACC0(0, -4, 0)];
   if (fields[FIELD_YVEL1] == 1)
@@ -55,7 +55,7 @@ __global__ void ops_update_halo_kernel2_yvel_minus_4_top(
               ydim1_update_halo_kernel2_yvel_minus_4_top;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel2_yvel_minus_4_top(arg0, arg1, arg2);
+    update_halo_kernel2_yvel_minus_4_top_gpu(arg0, arg1, arg2);
   }
 }
 

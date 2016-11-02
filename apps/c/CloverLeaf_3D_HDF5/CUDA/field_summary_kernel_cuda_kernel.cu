@@ -64,11 +64,11 @@ int ydim6_field_summary_kernel_h = -1;
 __device__
 
     void
-    field_summary_kernel(const double *volume, const double *density0,
-                         const double *energy0, const double *pressure,
-                         const double *xvel0, const double *yvel0,
-                         const double *zvel0, double *vol, double *mass,
-                         double *ie, double *ke, double *press) {
+    field_summary_kernel_gpu(const double *volume, const double *density0,
+                             const double *energy0, const double *pressure,
+                             const double *xvel0, const double *yvel0,
+                             const double *zvel0, double *vol, double *mass,
+                             double *ie, double *ke, double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 
@@ -166,8 +166,8 @@ __global__ void ops_field_summary_kernel(
       idx_z * 1 * 1 * xdim6_field_summary_kernel * ydim6_field_summary_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    field_summary_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7_l,
-                         arg8_l, arg9_l, arg10_l, arg11_l);
+    field_summary_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7_l,
+                             arg8_l, arg9_l, arg10_l, arg11_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(&arg7[d +

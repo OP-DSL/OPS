@@ -28,8 +28,8 @@ int ydim3_reset_field_kernel1_h = -1;
 __device__
 
     void
-    reset_field_kernel1(double *density0, const double *density1,
-                        double *energy0, const double *energy1) {
+    reset_field_kernel1_gpu(double *density0, const double *density1,
+                            double *energy0, const double *energy1) {
 
   density0[OPS_ACC0(0, 0)] = density1[OPS_ACC1(0, 0)];
   energy0[OPS_ACC2(0, 0)] = energy1[OPS_ACC3(0, 0)];
@@ -55,7 +55,7 @@ __global__ void ops_reset_field_kernel1(double *__restrict arg0,
   arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_reset_field_kernel1;
 
   if (idx_x < size0 && idx_y < size1) {
-    reset_field_kernel1(arg0, arg1, arg2, arg3);
+    reset_field_kernel1_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

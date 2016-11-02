@@ -31,7 +31,7 @@ int ydim2_write_kernel_h = -1;
 __device__
 
     void
-    write_kernel(double *mult, double *single, int *digit, const int *idx) {
+    write_kernel_gpu(double *mult, double *single, int *digit, const int *idx) {
 
   mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
 
@@ -68,7 +68,7 @@ __global__ void ops_write_kernel(double *__restrict arg0,
           idx_z * 1 * 1 * xdim2_write_kernel * ydim2_write_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    write_kernel(arg0, arg1, arg2, arg_idx);
+    write_kernel_gpu(arg0, arg1, arg2, arg_idx);
   }
 }
 

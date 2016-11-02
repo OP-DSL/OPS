@@ -32,8 +32,8 @@ int ydim2_initialise_chunk_kernel_z_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_z(double *vertexz, const int *zz,
-                              double *vertexdz) {
+    initialise_chunk_kernel_z_gpu(double *vertexz, const int *zz,
+                                  double *vertexdz) {
   int z_min = field.z_min - 2;
 
   double min_z, d_z;
@@ -68,7 +68,7 @@ __global__ void ops_initialise_chunk_kernel_z(double *__restrict arg0,
               ydim2_initialise_chunk_kernel_z;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    initialise_chunk_kernel_z(arg0, arg1, arg2);
+    initialise_chunk_kernel_z_gpu(arg0, arg1, arg2);
   }
 }
 

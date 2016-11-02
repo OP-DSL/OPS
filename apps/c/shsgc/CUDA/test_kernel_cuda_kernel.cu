@@ -13,7 +13,7 @@ int ydim0_test_kernel_h = -1;
 __device__
 
     void
-    test_kernel(const double *rho_new, double *rms) {
+    test_kernel_gpu(const double *rho_new, double *rms) {
 
   rms[0] = rms[0] + pow(rho_new[OPS_ACC0(0)], 2.0);
 }
@@ -32,7 +32,7 @@ __global__ void ops_test_kernel(const double *__restrict arg0,
   arg0 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    test_kernel(arg0, arg1_l);
+    test_kernel_gpu(arg0, arg1_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(

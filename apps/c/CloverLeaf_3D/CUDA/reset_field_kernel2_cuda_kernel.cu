@@ -56,9 +56,9 @@ int ydim5_reset_field_kernel2_h = -1;
 __device__
 
     void
-    reset_field_kernel2(double *xvel0, const double *xvel1, double *yvel0,
-                        const double *yvel1, double *zvel0,
-                        const double *zvel1) {
+    reset_field_kernel2_gpu(double *xvel0, const double *xvel1, double *yvel0,
+                            const double *yvel1, double *zvel0,
+                            const double *zvel1) {
 
   xvel0[OPS_ACC0(0, 0, 0)] = xvel1[OPS_ACC1(0, 0, 0)];
   yvel0[OPS_ACC2(0, 0, 0)] = yvel1[OPS_ACC3(0, 0, 0)];
@@ -96,7 +96,7 @@ ops_reset_field_kernel2(double *__restrict arg0, const double *__restrict arg1,
           idx_z * 1 * 1 * xdim5_reset_field_kernel2 * ydim5_reset_field_kernel2;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    reset_field_kernel2(arg0, arg1, arg2, arg3, arg4, arg5);
+    reset_field_kernel2_gpu(arg0, arg1, arg2, arg3, arg4, arg5);
   }
 }
 

@@ -23,7 +23,7 @@ int ydim2_zerores_kernel_h = -1;
 __device__
 
     void
-    zerores_kernel(double *rho_res, double *rhou_res, double *rhoE_res) {
+    zerores_kernel_gpu(double *rho_res, double *rhou_res, double *rhoE_res) {
   rho_res[OPS_ACC0(0)] = 0.0;
   rhou_res[OPS_ACC1(0)] = 0.0;
   rhoE_res[OPS_ACC2(0)] = 0.0;
@@ -44,7 +44,7 @@ __global__ void ops_zerores_kernel(double *__restrict arg0,
   arg2 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    zerores_kernel(arg0, arg1, arg2);
+    zerores_kernel_gpu(arg0, arg1, arg2);
   }
 }
 

@@ -40,8 +40,8 @@ int ydim3_revert_kernel_h = -1;
 __device__
 
     void
-    revert_kernel(const double *density0, double *density1,
-                  const double *energy0, double *energy1) {
+    revert_kernel_gpu(const double *density0, double *density1,
+                      const double *energy0, double *energy1) {
 
   density1[OPS_ACC1(0, 0, 0)] = density0[OPS_ACC0(0, 0, 0)];
   energy1[OPS_ACC3(0, 0, 0)] = energy0[OPS_ACC2(0, 0, 0)];
@@ -72,7 +72,7 @@ __global__ void ops_revert_kernel(const double *__restrict arg0,
           idx_z * 1 * 1 * xdim3_revert_kernel * ydim3_revert_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    revert_kernel(arg0, arg1, arg2, arg3);
+    revert_kernel_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

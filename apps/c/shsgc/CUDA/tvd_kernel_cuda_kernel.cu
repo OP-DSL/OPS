@@ -17,7 +17,7 @@ int ydim1_tvd_kernel_h = -1;
 __device__
 
     void
-    tvd_kernel(const double *tht, double *ep2) {
+    tvd_kernel_gpu(const double *tht, double *ep2) {
   double maxim;
   for (int m = 0; m < 3; m++) {
     if (tht[OPS_ACC_MD0(m, 0)] > tht[OPS_ACC_MD0(m, 1)])
@@ -40,7 +40,7 @@ __global__ void ops_tvd_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    tvd_kernel(arg0, arg1);
+    tvd_kernel_gpu(arg0, arg1);
   }
 }
 

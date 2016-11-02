@@ -33,9 +33,9 @@ int ydim4_calvar_kernel_h = -1;
 __device__
 
     void
-    calvar_kernel(const double *rho_new, const double *rhou_new,
-                  const double *rhoE_new, double *workarray2,
-                  double *workarray3) {
+    calvar_kernel_gpu(const double *rho_new, const double *rhou_new,
+                      const double *rhoE_new, double *workarray2,
+                      double *workarray3) {
   double p, rhoi, u;
   rhoi = 1 / rho_new[OPS_ACC0(0)];
   u = rhou_new[OPS_ACC1(0)] * rhoi;
@@ -66,7 +66,7 @@ __global__ void ops_calvar_kernel(const double *__restrict arg0,
   arg4 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    calvar_kernel(arg0, arg1, arg2, arg3, arg4);
+    calvar_kernel_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

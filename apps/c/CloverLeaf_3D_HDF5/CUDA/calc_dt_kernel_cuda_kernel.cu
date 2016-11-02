@@ -120,13 +120,13 @@ int ydim13_calc_dt_kernel_h = -1;
 __device__
 
     void
-    calc_dt_kernel(const double *celldx, const double *celldy,
-                   const double *soundspeed, const double *viscosity,
-                   const double *density0, const double *xvel0,
-                   const double *xarea, const double *volume,
-                   const double *yvel0, const double *yarea, double *dt_min,
-                   const double *celldz, const double *zvel0,
-                   const double *zarea) {
+    calc_dt_kernel_gpu(const double *celldx, const double *celldy,
+                       const double *soundspeed, const double *viscosity,
+                       const double *density0, const double *xvel0,
+                       const double *xarea, const double *volume,
+                       const double *yvel0, const double *yarea, double *dt_min,
+                       const double *celldz, const double *zvel0,
+                       const double *zarea) {
 
   double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1,
       dw2;
@@ -239,8 +239,8 @@ ops_calc_dt_kernel(const double *__restrict arg0, const double *__restrict arg1,
            idx_z * 1 * 1 * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9,
-                   arg10, arg11, arg12, arg13);
+    calc_dt_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
+                       arg9, arg10, arg11, arg12, arg13);
   }
 }
 

@@ -33,9 +33,9 @@ int ydim4_initialise_chunk_kernel_volume_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_volume(double *volume, const double *celldy,
-                                   double *xarea, const double *celldx,
-                                   double *yarea) {
+    initialise_chunk_kernel_volume_gpu(double *volume, const double *celldy,
+                                       double *xarea, const double *celldx,
+                                       double *yarea) {
 
   double d_x, d_y;
 
@@ -68,7 +68,7 @@ __global__ void ops_initialise_chunk_kernel_volume(
   arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_initialise_chunk_kernel_volume;
 
   if (idx_x < size0 && idx_y < size1) {
-    initialise_chunk_kernel_volume(arg0, arg1, arg2, arg3, arg4);
+    initialise_chunk_kernel_volume_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

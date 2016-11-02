@@ -39,9 +39,9 @@ int ydim5_Riemann_kernel_h = -1;
 __device__
 
     void
-    Riemann_kernel(const double *rho_new, const double *rhou_new,
-                   const double *rhoE_new, double *alam, double *r,
-                   double *al) {
+    Riemann_kernel_gpu(const double *rho_new, const double *rhou_new,
+                       const double *rhoE_new, double *alam, double *r,
+                       double *al) {
   double rl, rr, rho, u, hl, hr, h, Vsq, csq, c;
   double dw1, dw2, dw3, delpc2, rdeluc;
 
@@ -120,7 +120,7 @@ __global__ void ops_Riemann_kernel(const double *__restrict arg0,
   arg5 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    Riemann_kernel(arg0, arg1, arg2, arg3, arg4, arg5);
+    Riemann_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5);
   }
 }
 

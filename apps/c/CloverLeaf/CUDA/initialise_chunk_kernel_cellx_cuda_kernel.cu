@@ -23,8 +23,8 @@ int ydim2_initialise_chunk_kernel_cellx_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_cellx(const double *vertexx, double *cellx,
-                                  double *celldx) {
+    initialise_chunk_kernel_cellx_gpu(const double *vertexx, double *cellx,
+                                      double *celldx) {
 
   double d_x;
   d_x = (grid.xmax - grid.xmin) / (double)grid.x_cells;
@@ -51,7 +51,7 @@ __global__ void ops_initialise_chunk_kernel_cellx(const double *__restrict arg0,
   arg2 += idx_x * 1 * 1 + idx_y * 0 * 1 * xdim2_initialise_chunk_kernel_cellx;
 
   if (idx_x < size0 && idx_y < size1) {
-    initialise_chunk_kernel_cellx(arg0, arg1, arg2);
+    initialise_chunk_kernel_cellx_gpu(arg0, arg1, arg2);
   }
 }
 

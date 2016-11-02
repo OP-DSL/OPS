@@ -26,7 +26,8 @@ int ydim1_advec_mom_kernel_mass_flux_z_h = -1;
 __device__
 
     inline void
-    advec_mom_kernel_mass_flux_z(double *node_flux, const double *mass_flux_z) {
+    advec_mom_kernel_mass_flux_z_gpu(double *node_flux,
+                                     const double *mass_flux_z) {
 
   node_flux[OPS_ACC0(0, 0, 0)] =
       0.125 *
@@ -56,7 +57,7 @@ __global__ void ops_advec_mom_kernel_mass_flux_z(double *__restrict arg0,
               ydim1_advec_mom_kernel_mass_flux_z;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel_mass_flux_z(arg0, arg1);
+    advec_mom_kernel_mass_flux_z_gpu(arg0, arg1);
   }
 }
 

@@ -48,10 +48,10 @@ int ydim7_generate_chunk_kernel_h = -1;
 __device__
 
     void
-    generate_chunk_kernel(const double *vertexx, const double *vertexy,
-                          double *energy0, double *density0, double *xvel0,
-                          double *yvel0, const double *cellx,
-                          const double *celly) {
+    generate_chunk_kernel_gpu(const double *vertexx, const double *vertexy,
+                              double *energy0, double *density0, double *xvel0,
+                              double *yvel0, const double *cellx,
+                              const double *celly) {
 
   double radius, x_cent, y_cent;
   int is_in = 0;
@@ -174,7 +174,7 @@ __global__ void ops_generate_chunk_kernel(
   arg7 += idx_x * 0 * 1 + idx_y * 1 * 1 * xdim7_generate_chunk_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    generate_chunk_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+    generate_chunk_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
   }
 }
 

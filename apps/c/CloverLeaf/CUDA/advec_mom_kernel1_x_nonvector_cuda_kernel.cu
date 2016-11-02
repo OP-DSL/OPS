@@ -33,9 +33,10 @@ int ydim4_advec_mom_kernel1_x_nonvector_h = -1;
 __device__
 
     inline void
-    advec_mom_kernel1_x_nonvector(const double *node_flux,
-                                  const double *node_mass_pre, double *mom_flux,
-                                  const double *celldx, const double *vel1) {
+    advec_mom_kernel1_x_nonvector_gpu(const double *node_flux,
+                                      const double *node_mass_pre,
+                                      double *mom_flux, const double *celldx,
+                                      const double *vel1) {
 
   double sigma, wind, width;
   double vdiffuw, vdiffdw, auw, adw, limiter;
@@ -102,7 +103,7 @@ __global__ void ops_advec_mom_kernel1_x_nonvector(const double *__restrict arg0,
   arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_advec_mom_kernel1_x_nonvector;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel1_x_nonvector(arg0, arg1, arg2, arg3, arg4);
+    advec_mom_kernel1_x_nonvector_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

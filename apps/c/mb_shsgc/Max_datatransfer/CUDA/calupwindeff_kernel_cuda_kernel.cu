@@ -42,9 +42,9 @@ int ydim6_calupwindeff_kernel_h = -1;
 __device__
 
     void
-    calupwindeff_kernel(const double *cmp, const double *gt, const double *cf,
-                        const double *al, const double *ep2, const double *r,
-                        double *eff) {
+    calupwindeff_kernel_gpu(const double *cmp, const double *gt,
+                            const double *cf, const double *al,
+                            const double *ep2, const double *r, double *eff) {
   double e1 = (cmp[OPS_ACC_MD0(0, 0)] *
                    (gt[OPS_ACC_MD1(0, 0)] + gt[OPS_ACC_MD1(0, 1)]) -
                cf[OPS_ACC_MD2(0, 0)] * al[OPS_ACC_MD3(0, 0)]) *
@@ -96,7 +96,7 @@ __global__ void ops_calupwindeff_kernel(const double *__restrict arg0,
   arg6 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    calupwindeff_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    calupwindeff_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
   }
 }
 

@@ -17,7 +17,7 @@ int ydim1_fact_kernel_h = -1;
 __device__
 
     void
-    fact_kernel(const double *eff, double *s) {
+    fact_kernel_gpu(const double *eff, double *s) {
   double fact;
   for (int m = 0; m < 3; m++) {
     fact = 0.50 * dt / dx;
@@ -38,7 +38,7 @@ __global__ void ops_fact_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    fact_kernel(arg0, arg1);
+    fact_kernel_gpu(arg0, arg1);
   }
 }
 

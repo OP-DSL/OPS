@@ -38,8 +38,8 @@ int ydim5_residue_eval_h = -1;
 __device__
 
     void
-    residue_eval(const double *der1, const double *der2, const double *der3,
-                 double *rho_res, double *rhou_res, double *rhoE_res) {
+    residue_eval_gpu(const double *der1, const double *der2, const double *der3,
+                     double *rho_res, double *rhou_res, double *rhoE_res) {
   rho_res[OPS_ACC3(0)] = der1[OPS_ACC0(0)];
   rhou_res[OPS_ACC4(0)] = der2[OPS_ACC1(0)];
   rhoE_res[OPS_ACC5(0)] = der3[OPS_ACC2(0)];
@@ -67,7 +67,7 @@ ops_residue_eval(const double *__restrict arg0, const double *__restrict arg1,
   arg5 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    residue_eval(arg0, arg1, arg2, arg3, arg4, arg5);
+    residue_eval_gpu(arg0, arg1, arg2, arg3, arg4, arg5);
   }
 }
 

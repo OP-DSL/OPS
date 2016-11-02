@@ -71,10 +71,10 @@ int ydim6_initialise_chunk_kernel_volume_h = -1;
 __device__
 
     void
-    initialise_chunk_kernel_volume(double *volume, const double *celldy,
-                                   double *xarea, const double *celldx,
-                                   double *yarea, const double *celldz,
-                                   double *zarea) {
+    initialise_chunk_kernel_volume_gpu(double *volume, const double *celldy,
+                                       double *xarea, const double *celldx,
+                                       double *yarea, const double *celldz,
+                                       double *zarea) {
 
   double d_x, d_y, d_z;
 
@@ -132,7 +132,8 @@ __global__ void ops_initialise_chunk_kernel_volume(
               ydim6_initialise_chunk_kernel_volume;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    initialise_chunk_kernel_volume(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    initialise_chunk_kernel_volume_gpu(arg0, arg1, arg2, arg3, arg4, arg5,
+                                       arg6);
   }
 }
 

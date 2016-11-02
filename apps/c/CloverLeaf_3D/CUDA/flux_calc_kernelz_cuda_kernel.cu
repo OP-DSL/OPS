@@ -40,8 +40,8 @@ int ydim3_flux_calc_kernelz_h = -1;
 __device__
 
     void
-    flux_calc_kernelz(double *vol_flux_z, const double *zarea,
-                      const double *zvel0, const double *zvel1) {
+    flux_calc_kernelz_gpu(double *vol_flux_z, const double *zarea,
+                          const double *zvel0, const double *zvel1) {
 
   vol_flux_z[OPS_ACC0(0, 0, 0)] =
       0.125 * dt * (zarea[OPS_ACC1(0, 0, 0)]) *
@@ -76,7 +76,7 @@ __global__ void ops_flux_calc_kernelz(double *__restrict arg0,
           idx_z * 1 * 1 * xdim3_flux_calc_kernelz * ydim3_flux_calc_kernelz;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    flux_calc_kernelz(arg0, arg1, arg2, arg3);
+    flux_calc_kernelz_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

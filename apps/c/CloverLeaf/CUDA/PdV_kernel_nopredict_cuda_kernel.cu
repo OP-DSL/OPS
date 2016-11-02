@@ -78,13 +78,13 @@ int ydim13_PdV_kernel_nopredict_h = -1;
 __device__
 
     void
-    PdV_kernel_nopredict(const double *xarea, const double *xvel0,
-                         const double *xvel1, const double *yarea,
-                         const double *yvel0, const double *yvel1,
-                         double *volume_change, const double *volume,
-                         const double *pressure, const double *density0,
-                         double *density1, const double *viscosity,
-                         const double *energy0, double *energy1) {
+    PdV_kernel_nopredict_gpu(const double *xarea, const double *xvel0,
+                             const double *xvel1, const double *yarea,
+                             const double *yvel0, const double *yvel1,
+                             double *volume_change, const double *volume,
+                             const double *pressure, const double *density0,
+                             double *density1, const double *viscosity,
+                             const double *energy0, double *energy1) {
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
@@ -166,8 +166,8 @@ __global__ void ops_PdV_kernel_nopredict(
   arg13 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim13_PdV_kernel_nopredict;
 
   if (idx_x < size0 && idx_y < size1) {
-    PdV_kernel_nopredict(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
-                         arg9, arg10, arg11, arg12, arg13);
+    PdV_kernel_nopredict_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
+                             arg8, arg9, arg10, arg11, arg12, arg13);
   }
 }
 

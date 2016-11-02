@@ -28,8 +28,9 @@ int ydim3_advec_mom_kernel2_x_h = -1;
 __device__
 
     inline void
-    advec_mom_kernel2_x(double *vel1, const double *node_mass_post,
-                        const double *node_mass_pre, const double *mom_flux) {
+    advec_mom_kernel2_x_gpu(double *vel1, const double *node_mass_post,
+                            const double *node_mass_pre,
+                            const double *mom_flux) {
 
   vel1[OPS_ACC0(0, 0)] =
       (vel1[OPS_ACC0(0, 0)] * node_mass_pre[OPS_ACC2(0, 0)] +
@@ -57,7 +58,7 @@ __global__ void ops_advec_mom_kernel2_x(double *__restrict arg0,
   arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_advec_mom_kernel2_x;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel2_x(arg0, arg1, arg2, arg3);
+    advec_mom_kernel2_x_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

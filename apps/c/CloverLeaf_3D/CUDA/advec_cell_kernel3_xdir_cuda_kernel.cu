@@ -72,10 +72,10 @@ int ydim7_advec_cell_kernel3_xdir_h = -1;
 __device__
 
     inline void
-    advec_cell_kernel3_xdir(const double *vol_flux_x, const double *pre_vol,
-                            const int *xx, const double *vertexdx,
-                            const double *density1, const double *energy1,
-                            double *mass_flux_x, double *ener_flux) {
+    advec_cell_kernel3_xdir_gpu(const double *vol_flux_x, const double *pre_vol,
+                                const int *xx, const double *vertexdx,
+                                const double *density1, const double *energy1,
+                                double *mass_flux_x, double *ener_flux) {
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
@@ -184,7 +184,7 @@ __global__ void ops_advec_cell_kernel3_xdir(
               ydim7_advec_cell_kernel3_xdir;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_cell_kernel3_xdir(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+    advec_cell_kernel3_xdir_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
   }
 }
 

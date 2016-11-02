@@ -33,8 +33,9 @@ int ydim4_advec_mom_kernel_y1_h = -1;
 __device__
 
     inline void
-    advec_mom_kernel_y1(double *pre_vol, double *post_vol, const double *volume,
-                        const double *vol_flux_x, const double *vol_flux_y) {
+    advec_mom_kernel_y1_gpu(double *pre_vol, double *post_vol,
+                            const double *volume, const double *vol_flux_x,
+                            const double *vol_flux_y) {
 
   post_vol[OPS_ACC1(0, 0)] = volume[OPS_ACC2(0, 0)] +
                              vol_flux_x[OPS_ACC3(1, 0)] -
@@ -67,7 +68,7 @@ __global__ void ops_advec_mom_kernel_y1(double *__restrict arg0,
   arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_advec_mom_kernel_y1;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_y1(arg0, arg1, arg2, arg3, arg4);
+    advec_mom_kernel_y1_gpu(arg0, arg1, arg2, arg3, arg4);
   }
 }
 

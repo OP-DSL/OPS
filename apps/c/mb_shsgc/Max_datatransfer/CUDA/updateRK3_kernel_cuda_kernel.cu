@@ -53,10 +53,10 @@ int ydim8_updateRK3_kernel_h = -1;
 __device__
 
     void
-    updateRK3_kernel(double *rho_new, double *rhou_new, double *rhoE_new,
-                     double *rho_old, double *rhou_old, double *rhoE_old,
-                     double *rho_res, double *rhou_res, double *rhoE_res,
-                     const double *a1, const double *a2) {
+    updateRK3_kernel_gpu(double *rho_new, double *rhou_new, double *rhoE_new,
+                         double *rho_old, double *rhou_old, double *rhoE_old,
+                         double *rho_res, double *rhou_res, double *rhoE_res,
+                         const double *a1, const double *a2) {
 
   rho_new[OPS_ACC0(0)] =
       rho_old[OPS_ACC3(0)] + dt * a1[0] * (-rho_res[OPS_ACC6(0)]);
@@ -105,8 +105,8 @@ __global__ void ops_updateRK3_kernel(
   arg8 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    updateRK3_kernel(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
-                     &arg9, &arg10);
+    updateRK3_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
+                         &arg9, &arg10);
   }
 }
 

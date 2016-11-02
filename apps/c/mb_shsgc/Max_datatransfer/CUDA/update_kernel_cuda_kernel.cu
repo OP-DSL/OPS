@@ -29,8 +29,8 @@ int ydim3_update_kernel_h = -1;
 __device__
 
     void
-    update_kernel(double *rho_new, double *rhou_new, double *rhoE_new,
-                  const double *s) {
+    update_kernel_gpu(double *rho_new, double *rhou_new, double *rhoE_new,
+                      const double *s) {
   rho_new[OPS_ACC0(0)] = rho_new[OPS_ACC0(0)] + s[OPS_ACC_MD3(0, 0)];
   rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1, 0)];
   rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2, 0)];
@@ -55,7 +55,7 @@ __global__ void ops_update_kernel(double *__restrict arg0,
   arg3 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    update_kernel(arg0, arg1, arg2, arg3);
+    update_kernel_gpu(arg0, arg1, arg2, arg3);
   }
 }
 

@@ -18,8 +18,8 @@ int ydim1_update_halo_kernel3_minus_2_a_h = -1;
 __device__
 
     inline void
-    update_halo_kernel3_minus_2_a(double *vol_flux_x, double *mass_flux_x,
-                                  const int *fields) {
+    update_halo_kernel3_minus_2_a_gpu(double *vol_flux_x, double *mass_flux_x,
+                                      const int *fields) {
   if (fields[FIELD_VOL_FLUX_X] == 1)
     vol_flux_x[OPS_ACC0(0, 0)] = -(vol_flux_x[OPS_ACC0(2, 0)]);
   if (fields[FIELD_MASS_FLUX_X] == 1)
@@ -41,7 +41,7 @@ __global__ void ops_update_halo_kernel3_minus_2_a(double *__restrict arg0,
   arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_update_halo_kernel3_minus_2_a;
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel3_minus_2_a(arg0, arg1, arg2);
+    update_halo_kernel3_minus_2_a_gpu(arg0, arg1, arg2);
   }
 }
 
