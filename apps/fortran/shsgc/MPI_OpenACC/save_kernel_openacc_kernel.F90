@@ -207,9 +207,9 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
   dat6_base = getDatBaseFromOpsArg1D(opsArg6,start,1)
   call c_f_pointer(opsArg6%data_d,opsDat6Local,(/opsDat6Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,6)
+  call ops_H_D_exchanges_device(opsArgArray,6)
   call ops_halo_exchanges(opsArgArray,6,range)
-  call ops_H_D_exchanges_host(opsArgArray,6)
+  call ops_H_D_exchanges_device(opsArgArray,6)
 
   call ops_timers_core(t2)
 
@@ -230,7 +230,7 @@ subroutine save_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 6)
+  call ops_set_dirtybit_device(opsArgArray, 6)
   call ops_set_halo_dirtybit3(opsArg1,range)
   call ops_set_halo_dirtybit3(opsArg2,range)
   call ops_set_halo_dirtybit3(opsArg3,range)

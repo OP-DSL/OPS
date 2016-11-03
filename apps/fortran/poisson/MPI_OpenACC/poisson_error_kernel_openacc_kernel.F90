@@ -56,7 +56,7 @@ subroutine poisson_error_kernel_wrap( &
   !$acc parallel deviceptr(opsDat1Local,opsDat2Local) reduction(+:opsDat3Local)
   !$acc loop reduction(+:opsDat3Local)
   DO n_y = 1, end(2)-start(2)+1
-    !DIR$ SIMD
+    !$acc loop
     DO n_x = 1, end(1)-start(1)+1
       call poisson_error_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*1 + (n_y-1)*xdim1*1), &
@@ -140,9 +140,9 @@ subroutine poisson_error_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getReductionPtrFromOpsArg(opsArg3,block),opsDat3Local, (/opsArg3%dim/))
   dat3_base = 1
 
-  call ops_H_D_exchanges_host(opsArgArray,3)
+  call ops_H_D_exchanges_device(opsArgArray,3)
   call ops_halo_exchanges(opsArgArray,3,range)
-  call ops_H_D_exchanges_host(opsArgArray,3)
+  call ops_H_D_exchanges_device(opsArgArray,3)
 
   call ops_timers_core(t2)
 
@@ -157,7 +157,7 @@ subroutine poisson_error_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 3)
+  call ops_set_dirtybit_device(opsArgArray, 3)
 
   !Timing and data movement
   transfer_total = 0.0_4

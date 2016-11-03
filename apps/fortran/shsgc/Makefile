@@ -16,7 +16,7 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.5,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35
 endif
 endif
 
@@ -211,7 +211,7 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         -o shsgc_openacc -lops_for_cuda -lops_hdf5 $(HDF5_LIB)
 
 shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
-	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
+	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -DOPS_MPI -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhouupdx_kernel_openacc_kernel.F90 ./MPI_OpenACC/zerores_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhoudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/save_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhoEpudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/updateRK3_kernel_openacc_kernel.F90 \
@@ -219,7 +219,7 @@ shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
         ./MPI_OpenACC/tvd_kernel_openacc_kernel.F90 ./MPI_OpenACC/vars_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/calupwindeff_kernel_openacc_kernel.F90 ./MPI_OpenACC/fact_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/update_kernel_openacc_kernel.F90 ./MPI_OpenACC/test_kernel_openacc_kernel.F90 shsgc_ops.F90
-	$(MPIF90) $(OPT) $(FLINK) $(OpenACCFLAGS) shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(OpenACCFLAGS) -DOPS_MPI shsgc_ops.o constants.o initialize_kernel_openacc_kernel.o \
         drhouupdx_kernel_openacc_kernel.o zerores_kernel_openacc_kernel.o save_kernel_openacc_kernel.o \
         drhoudx_kernel_openacc_kernel.o drhoEpudx_kernel_openacc_kernel.o updateRK3_kernel_openacc_kernel.o \
         Riemann_kernel_openacc_kernel.o limiter_kernel_openacc_kernel.o tvd_kernel_openacc_kernel.o \

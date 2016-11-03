@@ -88,8 +88,9 @@ attributes (global) subroutine update_kernel_wrap( &
     & opsDat3Local(dat3_base+arg3), &
     & opsDat4Local(dat4_base+arg4) )
 
-
   ENDIF
+
+
 end subroutine
 
 !host subroutine
@@ -109,28 +110,28 @@ attributes (host) subroutine update_kernel_host( userSubroutine, block, dim, ran
   integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
   INTEGER(KIND=4) :: xdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
   INTEGER(KIND=4) :: xdim2
 
   type ( ops_arg )  , INTENT(IN) :: opsArg3
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat3Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat3Local
   integer(kind=4) :: opsDat3Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat3_size
   integer(kind=4) :: dat3_base
   INTEGER(KIND=4) :: xdim3
 
   type ( ops_arg )  , INTENT(IN) :: opsArg4
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat4Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat4_size
   integer(kind=4) :: dat4_base
@@ -221,6 +222,7 @@ attributes (host) subroutine update_kernel_host( userSubroutine, block, dim, ran
   !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,4)
   call ops_halo_exchanges(opsArgArray,4,range)
+  call ops_H_D_exchanges_device(opsArgArray,4)
 
   call ops_timers_core(t2)
   call update_kernel_wrap <<<grid,tblock>>> (&

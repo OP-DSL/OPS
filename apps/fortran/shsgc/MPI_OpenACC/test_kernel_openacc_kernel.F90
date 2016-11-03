@@ -109,9 +109,9 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
 
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
   call ops_timers_core(t2)
 
@@ -124,7 +124,7 @@ subroutine test_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 2)
+  call ops_set_dirtybit_device(opsArgArray, 2)
 
   !Timing and data movement
   transfer_total = 0.0_4
