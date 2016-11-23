@@ -64,9 +64,23 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   } else {
     // Allocate memory immediately
     int bytes = size * type_size;
+#ifdef __INTEL_COMPILER
+    //On intel, make x size a multiple of 128 bytes by extending d_p
+    int oldsize = dat->size[0];
+    //Compute least common multiple - type_size is a multiple of 2, I need to remove all factors of 2 from size
+    int size_non_2 = size;
+    while (size_non_2%2==0 && size>1) size_non_2 /= 2;
+    int least_common_multiple = 128/type_size * size_non_2;
+    dat->size[0] = ((dat->size[0]-1)/(least_common_multiple )+1)*least_common_multiple;
+    dat->d_p[0] += (dat->size[0] - oldsize);
+#endif
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
+#ifdef __INTEL_COMPILER
+    dat->data = (char *)_mm_malloc(bytes, 2*1024*1024); // initialize data bits to 0
+#else
     dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
+#endif
     dat->user_managed = 0;
     dat->mem = bytes;
   }

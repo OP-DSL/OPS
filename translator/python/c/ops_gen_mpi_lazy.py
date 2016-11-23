@@ -99,25 +99,34 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
+    assume_same = 0
     if NDIM == 2:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID2D_X') > 0:
           stride[NDIM*n+1] = 0
+          assume_same=0
         elif str(stens[n]).find('STRID2D_Y') > 0:
           stride[NDIM*n] = 0
+          assume_same=0
 
     if NDIM == 3:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID3D_X') > 0:
           stride[NDIM*n+1] = 0
           stride[NDIM*n+2] = 0
+          assume_same=0
         elif str(stens[n]).find('STRID3D_Y') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+2] = 0
+          assume_same=0
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
+          assume_same=0
 
+    for n in range (1,nargs):
+      if typs[0] <> typs[n]:
+        assume_same=0
 
     reduction = 0
     for n in range (0, nargs):
@@ -142,12 +151,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
-          if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) (n_x*'+str(stride[NDIM*n])+'+x)')
-          if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+x+xdim'+str(n)+'_'+name+'*(y))')
-          if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'+x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+          if assume_same:
+            if NDIM==1:
+              code('#define OPS_ACC'+str(n)+'(x) (base + n_x*'+str(stride[NDIM*n])+'+x)')
+            if NDIM==2:
+              code('#define OPS_ACC'+str(n)+'(x,y) (base + n_x*'+str(stride[NDIM*n])+'+n_y*xdim0_'+name+'*'+str(stride[NDIM*n+1])+'+x+xdim0_'+name+'*(y))')
+            if NDIM==3:
+              code('#define OPS_ACC'+str(n)+'(x,y,z) (base + n_x*'+str(stride[NDIM*n])+'+n_y*xdim0_'+name+'*'+str(stride[NDIM*n+1])+'+n_z*xdim0_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'+x+xdim0_'+name+'*(y)+xdim0_'+name+'*ydim'+str(n)+'_'+name+'*(z))') 
+          else:
+            if NDIM==1:
+              code('#define OPS_ACC'+str(n)+'(x) (n_x*'+str(stride[NDIM*n])+'+x)')
+            if NDIM==2:
+              code('#define OPS_ACC'+str(n)+'(x,y) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+x+xdim'+str(n)+'_'+name+'*(y))')
+            if NDIM==3:
+              code('#define OPS_ACC'+str(n)+'(x,y,z) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'+x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
     code('')
 
     for n in range (0, nargs):
@@ -279,13 +296,21 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
 
     code('')
     comm('set up initial pointers and exchange halos if necessary')
+    if assume_same:
+      code('int base;')
     for n in range (0, nargs):
       pre = ''
       if accs[n] == OPS_READ:
         pre = 'const '
       if arg_typ[n] == 'ops_arg_dat':
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset;')
-        code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
+        if assume_same:
+          code('base = args['+str(n)+'].dat->base_offset/sizeof('+typs[n]+');')
+          code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)(args['+str(n)+'].data );')
+          code('__assume_aligned('+arg_list[n]+',2*1024*1024);')
+        else:
+          code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset;')
+          code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
+        
 
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -302,13 +327,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
 
 
     comm("initialize global variable with the dimension of dats")
+    if assume_same:
+      code('int xdim0_'+name+';')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM > 1:
-          code('int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        if NDIM>1:
+          if assume_same:
+            code('xdim0_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+          else:
+            code('int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
           code('int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
     code('')
+    if assume_same:
+      code('__assume(xdim0_'+name+'%16==0);')
 
     if gen_full_code==1:
       # comm('Halo Exchanges')
@@ -353,7 +385,12 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
     code('#ifdef intel')
-    code('#pragma omp simd'+line)
+    line3 = ''
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        line3 = line3 +arg_list[n]+','
+    code('#pragma loop_count(10000)')
+    code('#pragma omp simd'+line+' aligned('+line3[:-1]+')')
     code('#else')
     code('#pragma simd'+line)
     code('#endif')
