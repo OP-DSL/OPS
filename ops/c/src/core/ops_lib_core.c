@@ -85,7 +85,7 @@ double ops_sendrecv_time = 0.0;
 */
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
-  char *dest = (char *)calloc(len, sizeof(char));
+  char *dest = (char *)calloc(len+16, sizeof(char));
   return strncpy(dest, src, len);
 }
 
