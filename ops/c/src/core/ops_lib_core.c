@@ -314,6 +314,7 @@ ops_block ops_decl_block(int dims, const char *name) {
   }
 
   if (OPS_block_index == OPS_block_max) {
+    if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
     OPS_block_max += 30;
     OPS_block_list = (ops_block_descriptor *)realloc(
         OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
