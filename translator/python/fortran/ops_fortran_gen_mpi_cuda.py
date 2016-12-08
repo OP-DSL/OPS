@@ -700,6 +700,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     code(line)
 
     code('')
+    ENDIF()
+    code('')
     #reduction across blocks
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_gbl' and (accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX):
@@ -724,7 +726,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
             code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+ '(' +
                  '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,'+operation+','+dims[n]+')')
     code('')
-    ENDIF()
 
     config.depth = config.depth - 2
     code('end subroutine')
@@ -759,7 +760,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         code('')
       if arg_typ[n] == 'ops_arg_dat':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat'+str(n+1)+'Local')
+        code(typs[n]+', DIMENSION(:), DEVICE, POINTER  :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
@@ -983,6 +984,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     comm('halo exchanges')
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
+    code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('')
     code('call ops_timers_core(t2)')
 

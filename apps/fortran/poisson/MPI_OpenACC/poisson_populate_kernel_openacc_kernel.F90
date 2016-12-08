@@ -76,10 +76,10 @@ subroutine poisson_populate_kernel_wrap( &
   !$acc parallel deviceptr(opsDat4Local,opsDat5Local,opsDat6Local)
   !$acc loop
   DO n_y = 1, end(2)-start(2)+1
-    idx_local(2) = idx(2) + n_y - 1
-    !DIR$ SIMD
+    !$acc loop
     DO n_x = 1, end(1)-start(1)+1
       idx_local(1) = idx(1) + n_x - 1
+      idx_local(2) = idx(2) + n_y - 1
       call poisson_populate_kernel( &
       & opsDat1Local, &
       & opsDat2Local, &
@@ -202,9 +202,9 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   dat6_base = getDatBaseFromOpsArg2D(opsArg6,start,1)
   call c_f_pointer(opsArg6%data_d,opsDat6Local,(/opsDat6Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,6)
+  call ops_H_D_exchanges_device(opsArgArray,6)
   call ops_halo_exchanges(opsArgArray,6,range)
-  call ops_H_D_exchanges_host(opsArgArray,6)
+  call ops_H_D_exchanges_device(opsArgArray,6)
 
   call ops_timers_core(t2)
 
@@ -224,7 +224,7 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 6)
+  call ops_set_dirtybit_device(opsArgArray, 6)
   call ops_set_halo_dirtybit3(opsArg4,range)
   call ops_set_halo_dirtybit3(opsArg5,range)
   call ops_set_halo_dirtybit3(opsArg6,range)

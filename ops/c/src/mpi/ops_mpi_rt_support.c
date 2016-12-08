@@ -74,213 +74,6 @@ void ops_realloc_buffers(const ops_int_halo *halo1, const ops_int_halo *halo2) {
   }
 }
 
-/*fixed depth halo exchange*/
-void ops_exchange_halo(ops_arg *arg, int d /*depth*/) {
-  if (!arg->opt)
-    return;
-  ops_dat dat = arg->dat;
-  sub_block_list sb = OPS_sub_block_list[dat->block->index];
-  sub_dat *sd = OPS_sub_dat_list[dat->index];
-  int any_dirty = sd->dirtybit;
-  for (int n = 0; n < sb->ndim; n++)
-    for (int d1 = 0; d1 <= d; d1++)
-      any_dirty = any_dirty ||
-                  sd->dirty_dir_send[2 * MAX_DEPTH * n + MAX_DEPTH + d1] ||
-                  sd->dirty_dir_send[2 * MAX_DEPTH * n + d1] ||
-                  sd->dirty_dir_recv[2 * MAX_DEPTH * n + MAX_DEPTH + d1] ||
-                  sd->dirty_dir_recv[2 * MAX_DEPTH * n + d1];
-
-  if (any_dirty) { // need to check OPS accs
-
-    int i1, i2, i3, i4; // indicies for halo and boundary of the dat
-    int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
-    for (int d = 0; d < OPS_MAX_DIM; d++) {
-      d_m[d] = dat->d_m[d] + sd->d_im[d];
-      d_p[d] = dat->d_p[d] + sd->d_ip[d];
-    }
-    int *prod = sd->prod;
-    MPI_Status status;
-
-    for (int n = 0; n < sb->ndim; n++) {
-      if (dat->size[n] > 1 && d > 0) {
-
-        i1 = (-d_m[n] - d) * prod[n - 1];
-        i2 = (-d_m[n]) * prod[n - 1];
-        i3 = (prod[n] / prod[n - 1] - (d_p[n]) - d) * prod[n - 1];
-        i4 = (prod[n] / prod[n - 1] - (d_p[n])) * prod[n - 1];
-#ifdef AGGREGATE
-        ops_realloc_buffers(&sd->halos[MAX_DEPTH * n + d],
-                            &sd->halos[MAX_DEPTH * n + d]);
-        ops_pack(dat, i3, ops_buffer_send_1, &sd->halos[MAX_DEPTH * n + d]);
-        int exch_size = sd->halos[MAX_DEPTH * n + d].blocklength *
-                        sd->halos[MAX_DEPTH * n + d].count;
-        MPI_Sendrecv(ops_buffer_send_1, exch_size, MPI_BYTE, sb->id_p[n], 0,
-                     ops_buffer_recv_1, exch_size, MPI_BYTE, sb->id_m[n], 0,
-                     sb->comm, &status);
-        ops_unpack(dat, i1, ops_buffer_recv_1, &sd->halos[MAX_DEPTH * n + d]);
-#else
-        // send in positive direction, receive from negative direction
-        // printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-        MPI_Sendrecv(&dat->data[i3 * size], 1, sd->mpidat[MAX_DEPTH * n + d],
-                     sb->id_p[n], 0, &dat->data[i1 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + d], sb->id_m[n], 0, sb->comm,
-                     &status);
-#endif
-        for (int d1 = 0; d1 <= d; d1++)
-          sd->dirty_dir_send[2 * MAX_DEPTH * n + MAX_DEPTH + d1] = 0;
-        for (int d1 = 0; d1 <= d; d1++)
-          sd->dirty_dir_recv[2 * MAX_DEPTH * n + d1] = 0;
-
-#ifdef AGGREGATE
-        ops_pack(dat, i2, ops_buffer_send_1, &sd->halos[MAX_DEPTH * n + d]);
-        exch_size = sd->halos[MAX_DEPTH * n + d].blocklength *
-                    sd->halos[MAX_DEPTH * n + d].count;
-        MPI_Sendrecv(ops_buffer_send_1, exch_size, MPI_BYTE, sb->id_m[n], 1,
-                     ops_buffer_recv_1, exch_size, MPI_BYTE, sb->id_p[n], 1,
-                     sb->comm, &status);
-        ops_unpack(dat, i4, ops_buffer_recv_1, &sd->halos[MAX_DEPTH * n + d]);
-#else
-        // send in negative direction, receive from positive direction
-        // printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-        MPI_Sendrecv(&dat->data[i2 * size], 1, sd->mpidat[MAX_DEPTH * n + d],
-                     sb->id_m[n], 1, &dat->data[i4 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + d], sb->id_p[n], 1, sb->comm,
-                     &status);
-#endif
-        for (int d1 = 0; d1 <= d; d1++)
-          sd->dirty_dir_send[2 * MAX_DEPTH * n + d1] = 0;
-        for (int d1 = 0; d1 <= d; d1++)
-          sd->dirty_dir_recv[2 * MAX_DEPTH * n + MAX_DEPTH + d1] = 0;
-      }
-    }
-
-    sd->dirtybit = 0;
-  }
-}
-
-/*dynamic depth halo exchange*/
-void ops_exchange_halo2(ops_arg *arg, int *d_pos, int *d_neg /*depth*/) {
-  ops_dat dat = arg->dat;
-
-  if (!arg->opt)
-    return;
-
-  sub_block_list sb = OPS_sub_block_list[dat->block->index];
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-
-  int i1, i2, i3, i4; // indicies for halo and boundary of the dat
-  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    d_m[d] = dat->d_m[d] + sd->d_im[d];
-    d_p[d] = dat->d_p[d] + sd->d_ip[d];
-  }
-  int *prod = sd->prod;
-  MPI_Status status;
-
-  for (int n = 0; n < sb->ndim; n++) {
-
-    int d_min = abs(d_neg[n]);
-    if (dat->size[n] > 1) { //&& (d_pos[n] > 0 || d_min > 0) ) {
-
-      int actual_depth = 0;
-      for (int d = 0; d <= d_min; d++)
-        if (sd->dirty_dir_send[2 * MAX_DEPTH * n + MAX_DEPTH + d] == 1 ||
-            sd->dirty_dir_recv[2 * MAX_DEPTH * n + d] == 1)
-          actual_depth = d;
-
-      i1 = (-d_m[n] - actual_depth) * prod[n - 1];
-      i3 = (prod[n] / prod[n - 1] - (d_p[n]) - actual_depth) * prod[n - 1];
-      // printf("Exchange %s, dim %d min depth %d req %d\n",dat->name, n,
-      // actual_depth, d_min);
-
-      if (OPS_diags > 5) { // Consistency checking
-        int they_send;
-        MPI_Sendrecv(&actual_depth, 1, MPI_INT, sb->id_p[n], 666, &they_send, 1,
-                     MPI_INT, sb->id_m[n], 666, sb->comm, &status);
-        if (sb->id_m[n] >= 0 && actual_depth != they_send) {
-          printf("Error: Left recv mismatch\n");
-          MPI_Abort(sb->comm, -1);
-        }
-      }
-
-#ifdef AGGREGATE
-      ops_realloc_buffers(&sd->halos[MAX_DEPTH * n + actual_depth],
-                          &sd->halos[MAX_DEPTH * n + actual_depth]);
-      ops_pack(dat, i3, ops_buffer_send_1,
-               &sd->halos[MAX_DEPTH * n + actual_depth]);
-      int exch_size = sd->halos[MAX_DEPTH * n + actual_depth].blocklength *
-                      sd->halos[MAX_DEPTH * n + actual_depth].count;
-      MPI_Sendrecv(ops_buffer_send_1, exch_size, MPI_BYTE, sb->id_p[n],
-                   sb->ndim + n, ops_buffer_recv_1, exch_size, MPI_BYTE,
-                   sb->id_m[n], sb->ndim + n, sb->comm, &status);
-      ops_unpack(dat, i1, ops_buffer_recv_1,
-                 &sd->halos[MAX_DEPTH * n + actual_depth]);
-#else
-      // send in positive direction, receive from negative direction
-      // printf("Exchaning 1 From:%d To: %d\n", i3, i1);
-      if (actual_depth > 0)
-        MPI_Sendrecv(&dat->data[i3 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + actual_depth], sb->id_p[n],
-                     sb->ndim + n, &dat->data[i1 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + actual_depth], sb->id_m[n],
-                     sb->ndim + n, sb->comm, &status);
-#endif
-      for (int d = 0; d <= actual_depth; d++)
-        sd->dirty_dir_send[2 * MAX_DEPTH * n + MAX_DEPTH + d] = 0;
-      for (int d = 0; d <= actual_depth; d++)
-        sd->dirty_dir_recv[2 * MAX_DEPTH * n + d] = 0;
-
-      actual_depth = 0;
-      for (int d = 0; d <= d_pos[n]; d++)
-        if (sd->dirty_dir_send[2 * MAX_DEPTH * n + d] == 1 ||
-            sd->dirty_dir_recv[2 * MAX_DEPTH * n + MAX_DEPTH + d] == 1)
-          actual_depth = d;
-
-      i2 = (-d_m[n]) * prod[n - 1];
-      i4 = (prod[n] / prod[n - 1] - (d_p[n])) * prod[n - 1];
-      // printf("Exchange %s, dim %d max depth %d req %d\n",dat->name, n,
-      // actual_depth, d_pos[n]);
-
-      if (OPS_diags > 5) { // Consistency checking
-        int they_send;
-        MPI_Sendrecv(&actual_depth, 1, MPI_INT, sb->id_m[n], 665, &they_send, 1,
-                     MPI_INT, sb->id_p[n], 665, sb->comm, &status);
-        if (sb->id_p[n] >= 0 && actual_depth != they_send) {
-          printf("Error: Right recv mismatch\n");
-          MPI_Abort(sb->comm, -1);
-        }
-      }
-
-#ifdef AGGREGATE
-      ops_realloc_buffers(&sd->halos[MAX_DEPTH * n + actual_depth],
-                          &sd->halos[MAX_DEPTH * n + actual_depth]);
-      ops_pack(dat, i2, ops_buffer_send_1,
-               &sd->halos[MAX_DEPTH * n + actual_depth]);
-      exch_size = sd->halos[MAX_DEPTH * n + actual_depth].blocklength *
-                  sd->halos[MAX_DEPTH * n + actual_depth].count;
-      MPI_Sendrecv(ops_buffer_send_1, exch_size, MPI_BYTE, sb->id_m[n], n,
-                   ops_buffer_recv_1, exch_size, MPI_BYTE, sb->id_p[n], n,
-                   sb->comm, &status);
-      ops_unpack(dat, i4, ops_buffer_recv_1,
-                 &sd->halos[MAX_DEPTH * n + actual_depth]);
-#else
-      // send in negative direction, receive from positive direction
-      // printf("Exchaning 2 From:%d To: %d\n", i2, i4);
-      if (actual_depth > 0)
-        MPI_Sendrecv(&dat->data[i2 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + actual_depth], sb->id_m[n], n,
-                     &dat->data[i4 * size], 1,
-                     sd->mpidat[MAX_DEPTH * n + actual_depth], sb->id_p[n], n,
-                     sb->comm, &status);
-#endif
-      for (int d = 0; d <= actual_depth; d++)
-        sd->dirty_dir_send[2 * MAX_DEPTH * n + d] = 0;
-      for (int d = 0; d <= actual_depth; d++)
-        sd->dirty_dir_recv[2 * MAX_DEPTH * n + MAX_DEPTH + d] = 0;
-    }
-  }
-}
-
 int intersection(int range1_beg, int range1_end, int range2_beg,
                  int range2_end) {
   int i_min = MAX(range1_beg, range2_beg);
@@ -292,251 +85,16 @@ int contains(int point, int *range) {
   return (point >= range[0] && point < range[1]);
 }
 
-void ops_exchange_halo3(ops_arg *arg, int *d_pos, int *d_neg /*depth*/,
-                        int *iter_range) {
-  ops_dat dat = arg->dat;
-
-  if (!arg->opt)
-    return;
-
-  sub_block_list sb = OPS_sub_block_list[dat->block->index];
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  int left_send_depth[OPS_MAX_DIM] = {0};
-  int left_recv_depth[OPS_MAX_DIM] = {0};
-  int right_send_depth[OPS_MAX_DIM] = {0};
-  int right_recv_depth[OPS_MAX_DIM] = {0};
-
-  int range_intersect[OPS_MAX_DIM] = {0};
-
-  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    d_m[d] = dat->d_m[d] + sd->d_im[d];
-    d_p[d] = dat->d_p[d] + sd->d_ip[d];
-  }
-  int *prod = sd->prod;
-  MPI_Status status;
-  int ndim = sb->ndim;
-
-  for (int dim = 0; dim < ndim; dim++) {
-    range_intersect[dim] = intersection(
-        iter_range[2 * dim] + d_neg[dim], iter_range[2 * dim + 1] + d_pos[dim],
-        sd->decomp_disp[dim],
-        (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
-                                                        // of the dependency
-                                                        // range with my full
-                                                        // range
-
-    if (d_pos[dim] > 0) {
-      left_send_depth[dim] =
-          contains(sd->decomp_disp[dim] - 1, &iter_range[2 * dim])
-              ? // if my left neighbor's last point is in the iteration range
-              d_pos[dim]
-              : // then it needs full depth required by the stencil
-              (iter_range[2 * dim + 1] < sd->decomp_disp[dim]
-                   ? // otherwise if range ends somewhere before my range begins
-                   MAX(0, d_pos[dim] -
-                              (sd->decomp_disp[dim] - iter_range[2 * dim + 1]))
-                   :   // the dependency may still reach into my range
-                   0); // otherwise 0
-
-      right_recv_depth[dim] =
-          contains((sd->decomp_disp[dim] + sd->decomp_size[dim]) - 1,
-                   &iter_range[2 * dim])
-              ? // if my last point is in the iteration range
-              d_pos[dim]
-              : // then I need full depth required by the stencil
-              (iter_range[2 * dim + 1] <
-                       (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                   ? // otherwise if range ends somewhere before my range ends
-                   MAX(0, d_pos[dim] -
-                              ((sd->decomp_disp[dim] + sd->decomp_size[dim]) -
-                               iter_range[2 * dim + 1]))
-                   : // the dependency may still reach into my neighbor's range
-                   0); // otherwise 0
-    }
-
-    if (d_neg[dim] < 0) {
-      left_recv_depth[dim] =
-          contains(sd->decomp_disp[dim], &iter_range[2 * dim])
-              ? // if my first point is in the iteration range
-              -d_neg[dim]
-              : // then I need full depth required by the stencil
-              (iter_range[2 * dim] > sd->decomp_disp[dim]
-                   ? // otherwise if range starts somewhere after my range
-                   // begins
-                   MAX(0, -d_neg[dim] -
-                              (iter_range[2 * dim] - sd->decomp_disp[dim]))
-                   : // the dependency may still reach into my left neighbor's
-                   // range
-                   0); // otherwise 0
-
-      right_send_depth[dim] =
-          contains((sd->decomp_disp[dim] + sd->decomp_size[dim]),
-                   &iter_range[2 * dim])
-              ? // if my neighbor's first point is in the iteration range
-              -d_neg[dim]
-              : // then it needs full depth required by the stencil
-              (iter_range[2 * dim] >
-                       (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                   ? // otherwise if range starts somewhere after my neighbor's
-                   // range begins
-                   MAX(0, -d_neg[dim] -
-                              (iter_range[2 * dim] -
-                               (sd->decomp_disp[dim] + sd->decomp_size[dim])))
-                   :   // the dependency may still reach into my range
-                   0); // otherwise 0
-    }
-  }
-
-  for (int dim = 0; dim < ndim; dim++) {
-    if (dat->size[dim] <= 1)
-      continue;
-
-    // decide whether we intersect in all other dimensions
-    int other_dims = 1;
-    for (int d2 = 0; d2 < ndim; d2++)
-      if (d2 != dim)
-        other_dims =
-            other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
-
-    if (other_dims == 0)
-      continue;
-
-    // negative direction
-
-    // decide actual depth based on dirtybits
-    int actual_depth_send = 0;
-    for (int d = 0; d <= left_send_depth[dim]; d++)
-      if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + d] == 1)
-        actual_depth_send = d;
-
-    int actual_depth_recv = 0;
-    for (int d = 0; d <= right_recv_depth[dim]; d++)
-      if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
-        actual_depth_recv = d;
-
-    // set up initial pointers
-    int i2 = (-d_m[dim]) * prod[dim - 1];
-    int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
-
-    if (OPS_diags > 5) { // Consistency checking
-      int they_send;
-      MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665,
-                   &they_send, 1, MPI_INT, sb->id_p[dim], 665, sb->comm,
-                   &status);
-      if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
-        printf("\nError: Right recv mismatch: expecting %d receiving %d\n",
-               actual_depth_recv, they_send);
-        MPI_Abort(sb->comm, -1);
-      }
-    }
-
-#ifdef AGGREGATE
-    ops_realloc_buffers(&sd->halos[MAX_DEPTH * dim + actual_depth_send],
-                        &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
-    ops_pack(dat, i2, ops_buffer_send_1,
-             &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
-    int send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
-                    sd->halos[MAX_DEPTH * dim + actual_depth_send].count;
-    int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
-                    sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
-    MPI_Sendrecv(ops_buffer_send_1, send_size, MPI_BYTE, sb->id_m[dim], dim,
-                 ops_buffer_recv_1, recv_size, MPI_BYTE, sb->id_p[dim], dim,
-                 sb->comm, &status);
-    ops_unpack(dat, i4, ops_buffer_recv_1,
-               &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
-#else
-    // negative direction exchange
-    MPI_Sendrecv(&dat->data[i2 * size], 1,
-                 sd->mpidat[MAX_DEPTH * dim + actual_depth_send], sb->id_m[dim],
-                 dim, &dat->data[i4 * size], 1,
-                 sd->mpidat[MAX_DEPTH * dim + actual_depth_recv], sb->id_p[dim],
-                 dim, sb->comm, &status);
-#endif
-
-    // clear dirtybits
-    for (int d = 0; d <= actual_depth_send; d++)
-      sd->dirty_dir_send[2 * MAX_DEPTH * dim + d] = 0;
-    for (int d = 0; d <= actual_depth_recv; d++)
-      sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
-
-    // similarly for positive direction
-
-    // decide actual depth based on dirtybits
-    actual_depth_send = 0;
-    for (int d = 0; d <= right_send_depth[dim]; d++)
-      if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
-        actual_depth_send = d;
-
-    actual_depth_recv = 0;
-    for (int d = 0; d <= left_recv_depth[dim]; d++)
-      if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
-        actual_depth_recv = d;
-
-    // set up initial pointers
-    int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
-    int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
-             prod[dim - 1];
-
-    if (OPS_diags > 5) { // Consistency checking
-      int they_send;
-      MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666,
-                   &they_send, 1, MPI_INT, sb->id_m[dim], 666, sb->comm,
-                   &status);
-      if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
-        printf("\nError: Left recv mismatch: expecting %d receiving %d\n",
-               actual_depth_recv, they_send);
-        MPI_Abort(sb->comm, -1);
-      }
-    }
-#ifdef AGGREGATE
-    ops_realloc_buffers(&sd->halos[MAX_DEPTH * dim + actual_depth_send],
-                        &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
-    ops_pack(dat, i3, ops_buffer_send_1,
-             &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
-    send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
-                sd->halos[MAX_DEPTH * dim + actual_depth_send].count;
-    recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
-                sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
-    MPI_Sendrecv(ops_buffer_send_1, send_size, MPI_BYTE, sb->id_p[dim], dim,
-                 ops_buffer_recv_1, recv_size, MPI_BYTE, sb->id_m[dim], dim,
-                 sb->comm, &status);
-    ops_unpack(dat, i1, ops_buffer_recv_1,
-               &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
-#else
-    // positive direction exchange
-    MPI_Sendrecv(&dat->data[i3 * size], 1,
-                 sd->mpidat[MAX_DEPTH * dim + actual_depth_send], sb->id_p[dim],
-                 ndim + dim, &dat->data[i1 * size], 1,
-                 sd->mpidat[MAX_DEPTH * dim + actual_depth_recv], sb->id_m[dim],
-                 ndim + dim, sb->comm, &status);
-#endif
-    // clear dirtybits
-    for (int d = 0; d <= actual_depth_send; d++)
-      sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
-    for (int d = 0; d <= actual_depth_recv; d++)
-      sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] = 0;
-  }
-}
-
-void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
+int ops_compute_intersections(ops_dat dat, int d_pos, int d_neg, 
                               int *iter_range, int dim,
-                              int *send_recv_offsets) {
+                              int *left_send_depth, int *left_recv_depth,
+                              int *right_send_depth, int *right_recv_depth) {
+
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  int left_send_depth = 0;
-  int left_recv_depth = 0;
-  int right_send_depth = 0;
-  int right_recv_depth = 0;
 
   int range_intersect[OPS_MAX_DIM] = {0};
 
-  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    d_m[d] = dat->d_m[d] + sd->d_im[d];
-    d_p[d] = dat->d_p[d] + sd->d_ip[d];
-  }
-  int *prod = sd->prod;
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
@@ -550,7 +108,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   }
 
   if (d_pos > 0) {
-    left_send_depth =
+    *left_send_depth =
         contains(sd->decomp_disp[dim] - 1, &iter_range[2 * dim])
             ? // if my left neighbor's last point is in the iteration range
             d_pos
@@ -562,7 +120,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                  :   // the dependency may still reach into my range
                  0); // otherwise 0
 
-    right_recv_depth =
+    *right_recv_depth =
         contains((sd->decomp_disp[dim] + sd->decomp_size[dim]) - 1,
                  &iter_range[2 * dim])
             ? // if my last point is in the iteration range
@@ -578,7 +136,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   }
 
   if (d_neg < 0) {
-    left_recv_depth =
+    *left_recv_depth =
         contains(sd->decomp_disp[dim], &iter_range[2 * dim])
             ? // if my first point is in the iteration range
             -d_neg
@@ -590,7 +148,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                  // range
                  0); // otherwise 0
 
-    right_send_depth =
+    *right_send_depth =
         contains((sd->decomp_disp[dim] + sd->decomp_size[dim]),
                  &iter_range[2 * dim])
             ? // if my neighbor's first point is in the iteration range
@@ -613,7 +171,30 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
           other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
 
   if (other_dims == 0)
-    return;
+    return 0;
+  return 1;
+
+}
+void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
+                              int *iter_range, int dim,
+                              int *send_recv_offsets) {
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int left_send_depth = 0;
+  int left_recv_depth = 0;
+  int right_send_depth = 0;
+  int right_recv_depth = 0;
+
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d] + sd->d_im[d];
+    d_p[d] = dat->d_p[d] + sd->d_ip[d];
+  }
+
+  int *prod = sd->prod;
+
+  if (!ops_compute_intersections(dat, d_pos,d_neg, iter_range, dim,
+          &left_send_depth, &left_recv_depth, &right_send_depth, &right_recv_depth)) return;
 
   //
   // negative direction
@@ -753,6 +334,179 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
 }
 
+void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
+                              int *send_recv_offsets) {
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int left_send_depth = depths[0];
+  int left_recv_depth = depths[1];
+  int right_send_depth = depths[2];
+  int right_recv_depth = depths[3];
+
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d] + sd->d_im[d];
+    d_p[d] = dat->d_p[d] + sd->d_ip[d];
+  }
+
+  if (sb->id_m[dim] != MPI_PROC_NULL && sd->d_im[dim] > -left_recv_depth) {
+    printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", left_recv_depth, -sd->d_im[dim]);
+    MPI_Abort(sb->comm,-1);
+  }
+  if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
+    printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", right_recv_depth, sd->d_ip[dim]);
+    MPI_Abort(sb->comm,-1);
+  }
+
+  int *prod = sd->prod;
+
+  //
+  // negative direction
+  //
+
+  // decide actual depth based on dirtybits
+  int actual_depth_send = 0;
+  for (int d = 0; d <= left_send_depth; d++)
+    if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + d] == 1)
+      actual_depth_send = d;
+
+  int actual_depth_recv = 0;
+  for (int d = 0; d <= right_recv_depth; d++)
+    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
+      actual_depth_recv = d;
+
+  if (sb->id_m[dim] == MPI_PROC_NULL) {
+    actual_depth_send = 0;
+  }
+  if (sb->id_p[dim] == MPI_PROC_NULL) {
+    actual_depth_recv = 0;
+  }
+
+  // set up initial pointers
+  int i2 = (-d_m[dim]) * prod[dim - 1];
+  // int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
+  // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
+  // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
+
+  if (OPS_diags > 5) { // Consistency checking
+    int they_send;
+    MPI_Status status;
+    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
+                 1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
+    if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Error: Proc %d dat %s dim %d: Right recv mismatch %d sends %d, I receive %d, originally asked to receive %d\n",ops_get_proc(), dat->name, dim, sb->id_p[dim], they_send, actual_depth_recv, right_recv_depth);
+      MPI_Abort(sb->comm, -1);
+    }
+  }
+
+  // Compute size of packed data
+  int send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
+                  sd->halos[MAX_DEPTH * dim + actual_depth_send].count;
+  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+                  sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+
+  if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
+    if (OPS_diags > 4)
+      printf("Realloc ops_buffer_send_1\n");
+    ops_buffer_send_1 = (char *)realloc(ops_buffer_send_1,
+                                        send_recv_offsets[0] + 4 * send_size);
+    ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
+  }
+  if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
+    if (OPS_diags > 4)
+      printf("Realloc ops_buffer_recv_1\n");
+    ops_buffer_recv_1 = (char *)realloc(ops_buffer_recv_1,
+                                        send_recv_offsets[1] + 4 * recv_size);
+    ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
+  }
+
+  // Pack data
+  if (actual_depth_send > 0)
+    ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
+             &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  // increase offset
+  send_recv_offsets[0] += send_size;
+  send_recv_offsets[1] += recv_size;
+
+  // clear dirtybits
+  for (int d = 0; d <= actual_depth_send; d++)
+    sd->dirty_dir_send[2 * MAX_DEPTH * dim + d] = 0;
+
+  //
+  // similarly for positive direction
+  //
+
+  // decide actual depth based on dirtybits
+  actual_depth_send = 0;
+  for (int d = 0; d <= right_send_depth; d++)
+    if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
+      actual_depth_send = d;
+
+  actual_depth_recv = 0;
+  for (int d = 0; d <= left_recv_depth; d++)
+    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
+      actual_depth_recv = d;
+
+  if (sb->id_p[dim] == MPI_PROC_NULL) {
+    actual_depth_send = 0;
+  }
+  if (sb->id_m[dim] == MPI_PROC_NULL) {
+    actual_depth_recv = 0;
+  }
+
+  // set up initial pointers
+  // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
+  int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
+           prod[dim - 1];
+
+  if (OPS_diags > 5) { // Consistency checking
+    int they_send;
+    MPI_Status status;
+    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
+                 1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
+    if (sb->id_m[dim] != MPI_PROC_NULL && actual_depth_recv != they_send) {
+      printf("Error: Proc %d dat %s dim %d Left recv mismatch %d sends %d, I receive %d originally asked to recv %d\n",ops_get_proc(), dat->name, dim, sb->id_m[dim], they_send, actual_depth_recv, left_recv_depth);
+      MPI_Abort(sb->comm, -1);
+    }
+  }
+
+  // Compute size of packed data
+  send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
+              sd->halos[MAX_DEPTH * dim + actual_depth_send].count;
+  recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+              sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+
+  if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
+    if (OPS_diags > 4)
+      printf("Realloc ops_buffer_send_2\n");
+    ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2,
+                                        send_recv_offsets[2] + 4 * send_size);
+    ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
+  }
+  if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
+    if (OPS_diags > 4)
+      printf("Realloc ops_buffer_recv_2\n");
+    ops_buffer_recv_2 = (char *)realloc(ops_buffer_recv_2,
+                                        send_recv_offsets[3] + 4 * recv_size);
+    ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
+  }
+
+  // pack data
+  if (actual_depth_send > 0)
+    ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
+             &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  // increase offset
+  send_recv_offsets[2] += send_size;
+  send_recv_offsets[3] += recv_size;
+
+  // clear dirtybits
+  for (int d = 0; d <= actual_depth_send; d++)
+    sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
+}
+
+
 void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
                                 int *iter_range, int dim,
                                 int *send_recv_offsets) {
@@ -760,65 +514,18 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int left_recv_depth = 0;
   int right_recv_depth = 0;
-
-  int range_intersect[OPS_MAX_DIM] = {0};
+  int left_send_depth = 0;
+  int right_send_depth = 0;
+  int *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
     d_m[d] = dat->d_m[d] + sd->d_im[d];
     d_p[d] = dat->d_p[d] + sd->d_ip[d];
   }
-  int *prod = sd->prod;
-  int ndim = sb->ndim;
 
-  for (int dim = 0; dim < ndim; dim++) {
-    range_intersect[dim] = intersection(
-        iter_range[2 * dim] + d_neg, iter_range[2 * dim + 1] + d_pos,
-        sd->decomp_disp[dim],
-        (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
-                                                        // of the dependency
-                                                        // range with my full
-                                                        // range
-  }
-
-  if (d_pos > 0) {
-    right_recv_depth =
-        contains((sd->decomp_disp[dim] + sd->decomp_size[dim]) - 1,
-                 &iter_range[2 * dim])
-            ? // if my last point is in the iteration range
-            d_pos
-            : // then I need full depth required by the stencil
-            (iter_range[2 * dim + 1] <
-                     (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                 ? // otherwise if range ends somewhere before my range ends
-                 MAX(0, d_pos - ((sd->decomp_disp[dim] + sd->decomp_size[dim]) -
-                                 iter_range[2 * dim + 1]))
-                 :   // the dependency may still reach into my neighbor's range
-                 0); // otherwise 0
-  }
-
-  if (d_neg < 0) {
-    left_recv_depth =
-        contains(sd->decomp_disp[dim], &iter_range[2 * dim])
-            ? // if my first point is in the iteration range
-            -d_neg
-            : // then I need full depth required by the stencil
-            (iter_range[2 * dim] > sd->decomp_disp[dim]
-                 ? // otherwise if range starts somewhere after my range begins
-                 MAX(0, -d_neg - (iter_range[2 * dim] - sd->decomp_disp[dim]))
-                 : // the dependency may still reach into my left neighbor's
-                 // range
-                 0); // otherwise 0
-  }
-
-  // decide whether we intersect in all other dimensions
-  int other_dims = 1;
-  for (int d2 = 0; d2 < ndim; d2++)
-    if (d2 != dim)
-      other_dims =
-          other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
-  if (other_dims == 0)
-    return;
+  if (!ops_compute_intersections(dat, d_pos,d_neg, iter_range, dim,
+          &left_send_depth, &left_recv_depth, &right_send_depth, &right_recv_depth)) return;
 
   //
   // negative direction
@@ -873,6 +580,87 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   // clear dirtybits
   for (int d = 0; d <= actual_depth_recv; d++)
     sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] = 0;
+}
+
+
+void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
+                              int *send_recv_offsets) {
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int left_send_depth = depths[0];
+  int left_recv_depth = depths[1];
+  int right_send_depth = depths[2];
+  int right_recv_depth = depths[3];
+
+  int *prod = sd->prod;
+
+  int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = dat->d_m[d] + sd->d_im[d];
+    d_p[d] = dat->d_p[d] + sd->d_ip[d];
+  }
+  //
+  // negative direction
+  //
+
+  // decide actual depth based on dirtybits
+  int actual_depth_recv = 0;
+  for (int d = 0; d <= right_recv_depth; d++)
+    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
+      actual_depth_recv = d;
+
+  if (sb->id_p[dim] == MPI_PROC_NULL) {
+    actual_depth_recv = 0;
+  }
+
+  // set up initial pointers
+  int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
+
+  // Compute size of packed data
+  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+                  sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+
+  // Unpack data
+  if (actual_depth_recv > 0)
+    ops_unpack(dat, i4, ops_buffer_recv_1 + send_recv_offsets[1],
+               &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
+  // increase offset
+  send_recv_offsets[1] += recv_size;
+  // clear dirtybits
+  for (int d = 0; d <= actual_depth_recv; d++)
+    sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
+
+  //
+  // similarly for positive direction
+  //
+
+  // decide actual depth based on dirtybits
+  actual_depth_recv = 0;
+  for (int d = 0; d <= left_recv_depth; d++)
+    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
+      actual_depth_recv = d;
+
+  if (sb->id_m[dim] == MPI_PROC_NULL) {
+    actual_depth_recv = 0;
+  }
+
+  // set up initial pointers
+  int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
+
+  // Compute size of packed data
+  recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+              sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+
+  // Unpack data
+  if (actual_depth_recv > 0)
+    ops_unpack(dat, i1, ops_buffer_recv_2 + send_recv_offsets[3],
+               &sd->halos[MAX_DEPTH * dim + actual_depth_recv]);
+  // increase offset
+  send_recv_offsets[3] += recv_size;
+  // clear dirtybits
+  for (int d = 0; d <= actual_depth_recv; d++)
+    sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] = 0;
+
 }
 
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
@@ -985,6 +773,79 @@ void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
       }
       if (d_pos > 0 || d_neg < 0)
         ops_exchange_halo_unpacker(dat, d_pos, d_neg, range, dim,
+                                   send_recv_offsets);
+    }
+
+    MPI_Waitall(2, &request[0], &status[0]);
+    //  ops_timers_core(&c2,&t2);
+    //  ops_scatter_time += t2-t1;
+  }
+}
+
+void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
+  // double c1,c2,t1,t2;
+  int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
+                            // directions, negative then positive
+  MPI_Comm comm = MPI_COMM_NULL;
+
+  for (int dim = 0; dim < OPS_MAX_DIM; dim++) {
+    // ops_timers_core(&c1,&t1);
+    int id_m = -1, id_p = -1;
+    
+    for (int i = 0; i < 4; i++)
+      send_recv_offsets[i] = 0;
+    for (int i = 0; i < ndats; i++) {
+      ops_dat dat = dats[i];
+      int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+      if (dat_ndim <= dim || dat->size[dim] <= 1)
+        continue; // dimension of the sub-block is less than current dim OR has
+                  // a size of 1 (edge dat)
+      comm = OPS_sub_block_list[dat->block->index]
+                 ->comm; // use communicator for this sub-block
+
+      id_m = OPS_sub_block_list[dat->block->index]
+                 ->id_m[dim]; // neighbor in negative direction
+      id_p = OPS_sub_block_list[dat->block->index]
+                 ->id_p[dim]; // neighbor in possitive direction
+      
+      ops_exchange_halo_packer_given(dat, &depths[OPS_MAX_DIM*4*i + dim*4], dim,
+                                 send_recv_offsets);
+    }
+    //  ops_timers_core(&c2,&t2);
+    //  ops_gather_time += t2-t1;
+
+    // early exit
+    if (comm == MPI_COMM_NULL)
+      continue;
+
+    MPI_Request request[4];
+    MPI_Isend(ops_buffer_send_1, send_recv_offsets[0], MPI_BYTE,
+              send_recv_offsets[0] > 0 ? id_m : MPI_PROC_NULL, dim, comm,
+              &request[0]);
+    MPI_Isend(ops_buffer_send_2, send_recv_offsets[2], MPI_BYTE,
+              send_recv_offsets[2] > 0 ? id_p : MPI_PROC_NULL,
+              OPS_MAX_DIM + dim, comm, &request[1]);
+    MPI_Irecv(ops_buffer_recv_1, send_recv_offsets[1], MPI_BYTE,
+              send_recv_offsets[1] > 0 ? id_p : MPI_PROC_NULL, dim, comm,
+              &request[2]);
+    MPI_Irecv(ops_buffer_recv_2, send_recv_offsets[3], MPI_BYTE,
+              send_recv_offsets[3] > 0 ? id_m : MPI_PROC_NULL,
+              OPS_MAX_DIM + dim, comm, &request[3]);
+
+    MPI_Status status[4];
+    MPI_Waitall(2, &request[2], &status[2]);
+
+    //  ops_timers_core(&c1,&t1);
+    //  ops_sendrecv_time += t1-t2;
+
+    for (int i = 0; i < 4; i++)
+      send_recv_offsets[i] = 0;
+    for (int i = 0; i < ndats; i++) {
+      ops_dat dat = dats[i];
+      int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+      if (dat_ndim <= dim || dat->size[dim] <= 1)
+        continue;
+      ops_exchange_halo_unpacker_given(dat, &depths[OPS_MAX_DIM*4*i + dim*4], dim,
                                    send_recv_offsets);
     }
 

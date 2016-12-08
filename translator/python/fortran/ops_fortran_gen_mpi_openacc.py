@@ -281,24 +281,22 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
 
     elif NDIM==2:
       DO('n_y','1','end(2)-start(2)+1')
-      if arg_idx == 1:
-        code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ SIMD')
+      code('!$acc loop')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
+        code('idx_local(2) = idx(2) + n_y - 1')
 
     elif NDIM==3:
       DO('n_z','1','end(3)-start(3)+1')
-      if arg_idx == 1:
-        code('idx_local(3) = idx(3) + n_z - 1')
+      code('!$acc loop')
       DO('n_y','1','end(2)-start(2)+1')
-      if arg_idx == 1:
-        code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ SIMD')
+      code('!$acc loop')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
+        code('idx_local(2) = idx(2) + n_y - 1')
+        code('idx_local(3) = idx(3) + n_z - 1')
 
     code('call '+name + '( &')
     indent = config.depth *' '
@@ -475,9 +473,9 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = 1')
           code('')
 
-    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
+    code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
-    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
+    code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('')
     code('call ops_timers_core(t2)')
     code('')
@@ -499,7 +497,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     code('')
     code('call ops_timers_core(t3)')
 
-    code('call ops_set_dirtybit_host(opsArgArray, '+str(nargs)+')')
+    code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')

@@ -42,7 +42,7 @@ ifdef DEBUG
   CCFLAGS	= -O0 -g -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel -fma #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
@@ -208,6 +208,9 @@ tealeaf_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/li
 #
 tealeaf_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_tiled
+
+tealeaf_mpi_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+		$(CPP) $(OMPFLAGS) -DOPS_MPI $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o tealeaf_mpi_tiled
 
 #
 #

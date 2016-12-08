@@ -71,7 +71,7 @@
 #ifdef MAX_DEPTH
 #undef MAX_DEPTH
 #endif
-#define MAX_DEPTH 5
+#define MAX_DEPTH 80
 
 #define OPS_MAX_DIM 3
 
@@ -253,11 +253,13 @@ typedef ops_halo_group_core *ops_halo_group;
 
 typedef struct ops_kernel_descriptor {
   const char *name;           /* name of kernel */
+	unsigned long hash;					/* hash of loop */
   ops_arg *args;              /* list of arguments to pass in */
   int nargs;                  /* number of arguments */
   int index;                  /* index of the loop */
   int dim;                    /* number of dimensions */
-  int range[2 * OPS_MAX_DIM]; /* execution range */
+  int range[2 * OPS_MAX_DIM]; /* process local execution range */
+  int orig_range[2 * OPS_MAX_DIM]; /* original execution range */
   ops_block block;            /* block to execute on */
   void (*function)(struct ops_kernel_descriptor
                        *desc); /* Function pointer to a wrapper to be called */
@@ -270,8 +272,14 @@ typedef struct ops_kernel_descriptor {
 #ifndef MIN
 #define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
+#ifndef MIN3
+#define MIN3(a, b, c) MIN(a,MIN(b,c))
+#endif
 #ifndef MAX
 #define MAX(a, b) ((a > b) ? (a) : (b))
+#endif
+#ifndef MAX3
+#define MAX3(a, b, c) MAX(a,MAX(b,c))
 #endif
 #ifndef SIGN
 #define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
@@ -415,10 +423,7 @@ void ops_set_dirtybit_host(
 void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
-void ops_exchange_halo(ops_arg *arg, int d /*depth*/);
-void ops_exchange_halo2(ops_arg *arg, int *d_pos, int *d_neg /*depth*/);
-void ops_exchange_halo3(ops_arg *arg, int *d_pos, int *d_neg /*depth*/,
-                        int *iter_range);
+void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
 
 void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
@@ -450,6 +455,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute();
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
+int ops_get_proc();
 
 #ifdef __cplusplus
 }

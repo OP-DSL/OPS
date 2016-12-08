@@ -250,9 +250,9 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   dat7_base = getDatBaseFromOpsArg1D(opsArg7,start,multi_d7)
   call c_f_pointer(opsArg7%data_d,opsDat7Local,(/opsDat7Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,7)
+  call ops_H_D_exchanges_device(opsArgArray,7)
   call ops_halo_exchanges(opsArgArray,7,range)
-  call ops_H_D_exchanges_host(opsArgArray,7)
+  call ops_H_D_exchanges_device(opsArgArray,7)
 
   call ops_timers_core(t2)
 
@@ -275,7 +275,7 @@ subroutine calupwindeff_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 7)
+  call ops_set_dirtybit_device(opsArgArray, 7)
   call ops_set_halo_dirtybit3(opsArg7,range)
 
   !Timing and data movement

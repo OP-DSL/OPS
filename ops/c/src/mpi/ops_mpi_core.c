@@ -131,6 +131,12 @@ int ops_is_root() {
   return (my_rank == MPI_ROOT);
 }
 
+int ops_get_proc() {
+  int my_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  return my_rank;
+}
+
 void ops_set_dirtybit_host(ops_arg *args, int nargs) {
   for (int n = 0; n < nargs; n++) {
     if ((args[n].argtype == OPS_ARG_DAT) &&
@@ -279,6 +285,34 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
 
 void ops_get_dat_full_range(ops_dat dat, int **full_range) {
   *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
+}
+
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) {
+    for (int n = 0; n < block->dims; n++) {
+      start[n] = 0;
+      end[n] = 0;
+      disp[n] = 0;
+    }
+    return false;
+  }
+
+  for (int n = 0; n < block->dims; n++) {
+    start[n] = MAX(sb->decomp_disp[n], range[2*n]);
+    end[n] = MIN(sb->decomp_disp[n] + sb->decomp_size[n], range[2*n+1]);
+
+    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
+      start[n] = range[2 * n];
+
+    if (sb->id_p[n] == MPI_PROC_NULL &&
+        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
+      end[n] = range[2 * n + 1];
+
+    disp[n] = sb->decomp_disp[n];
+  
+  }
+  return true;
 }
 
 /************* Functions only use in the Fortran Backend ************/

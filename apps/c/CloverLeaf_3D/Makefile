@@ -223,6 +223,10 @@ cloverleaf_seq: $(OPS_FILES_GEN) \
 cloverleaf_tiled: $(OPS_FILES_GEN) \
                 $(HEADERS)
 		$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
+
+cloverleaf_mpi_tiled: $(OPS_FILES_GEN) \
+                $(HEADERS)
+		$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) $(OPS_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_tiled
  
 #
 # CUDA version

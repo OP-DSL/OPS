@@ -36,6 +36,7 @@
 
 // host stub function
 void ops_par_loop_advec_mom_kernel_z1_execute(ops_kernel_descriptor *desc) {
+  ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -56,7 +57,6 @@ void ops_par_loop_advec_mom_kernel_z1_execute(ops_kernel_descriptor *desc) {
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(20, "advec_mom_kernel_z1");
     OPS_kernels[20].count++;
     ops_timers_core(&c2, &t2);
   }
@@ -107,11 +107,6 @@ void ops_par_loop_advec_mom_kernel_z1_execute(ops_kernel_descriptor *desc) {
   int xdim5_advec_mom_kernel_z1 = args[5].dat->size[0];
   int ydim5_advec_mom_kernel_z1 = args[5].dat->size[1];
 
-  // Halo Exchanges
-  ops_H_D_exchanges_host(args, 6);
-  ops_halo_exchanges(args, 6, range);
-  ops_H_D_exchanges_host(args, 6);
-
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
     OPS_kernels[20].mpi_time += t1 - t2;
@@ -141,9 +136,6 @@ void ops_par_loop_advec_mom_kernel_z1_execute(ops_kernel_descriptor *desc) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[20].time += t2 - t1;
   }
-  ops_set_dirtybit_host(args, 6);
-  ops_set_halo_dirtybit3(&args[0], range);
-  ops_set_halo_dirtybit3(&args[1], range);
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -174,43 +166,29 @@ void ops_par_loop_advec_mom_kernel_z1(char const *name, ops_block block,
   desc->block = block;
   desc->dim = dim;
   desc->index = 20;
-#ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 3; n++) {
-    desc->range[2 * n] = sb->decomp_disp[n];
-    desc->range[2 * n + 1] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (desc->range[2 * n] >= range[2 * n]) {
-      desc->range[2 * n] = 0;
-    } else {
-      desc->range[2 * n] = range[2 * n] - desc->range[2 * n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      desc->range[2 * n] = range[2 * n];
-    if (desc->range[2 * n + 1] >= range[2 * n + 1]) {
-      desc->range[2 * n + 1] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      desc->range[2 * n + 1] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      desc->range[2 * n + 1] +=
-          (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else // OPS_MPI
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 20;
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
   }
-#endif // OPS_MPI
   desc->nargs = 6;
   desc->args = (ops_arg *)malloc(6 * sizeof(ops_arg));
   desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->args[5] = arg5;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_z1_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(20, "advec_mom_kernel_z1");
+  }
   ops_enqueue_kernel(desc);
 }

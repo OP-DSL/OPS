@@ -281,5 +281,5 @@ void ops_cuda_exit() {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
 
-  cudaDeviceReset();
+//  cudaDeviceReset();
 }

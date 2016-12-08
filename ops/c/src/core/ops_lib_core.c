@@ -61,6 +61,8 @@ int ops_checkpoint_inmemory = 0;
 int ops_lock_file = 0;
 int ops_enable_tiling = 0;
 int ops_cache_size = 0;
+int ops_tiling_mpidepth = -1;
+extern double ops_tiled_halo_exchange_time;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -156,6 +158,12 @@ void ops_set_args(int argc, char *argv) {
   if (pch != NULL) {
     ops_enable_tiling = 1;
     ops_printf("\n Tiling enabled\n");
+  }
+	pch = strstr(argv, "OPS_TILING_MAXDEPTH=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    ops_tiling_mpidepth = atoi(temp + 20);
+    ops_printf("\n Max tiling depth across processes = %d \n", ops_tiling_mpidepth);
   }
 
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
@@ -1054,18 +1062,18 @@ void ops_timing_output(FILE *stream) {
     ops_fprintf(stream, "%s\n", buf);
     double sumtime = 0.0f;
     for (int k = 0; k < OPS_kern_max; k++) {
-      if (OPS_kernels[k].count < 1)
-        continue;
-      sprintf(buf, "%s", OPS_kernels[k].name);
-      for (int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
-        strcat(buf, " ");
-
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
       ops_compute_moment(OPS_kernels[k].time, &moments_time[0],
                          &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
+                             
+      if (OPS_kernels[k].count < 1)
+        continue;
+      sprintf(buf, "%s", OPS_kernels[k].name);
+      for (int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
+        strcat(buf, " ");
 
       sprintf(
           buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count,
@@ -1083,6 +1091,8 @@ void ops_timing_output(FILE *stream) {
       sumtime += OPS_kernels[k].time;
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
+    if (ops_tiled_halo_exchange_time > 0.0)
+      ops_fprintf(stream, "Total tiled halo exchange time: %g\n", ops_tiled_halo_exchange_time);
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
     free(buf);

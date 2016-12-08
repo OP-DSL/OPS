@@ -179,9 +179,9 @@ subroutine drhouupdx_kernel_host( userSubroutine, block, dim, range, &
   dat4_base = getDatBaseFromOpsArg1D(opsArg4,start,1)
   call c_f_pointer(opsArg4%data_d,opsDat4Local,(/opsDat4Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,4)
+  call ops_H_D_exchanges_device(opsArgArray,4)
   call ops_halo_exchanges(opsArgArray,4,range)
-  call ops_H_D_exchanges_host(opsArgArray,4)
+  call ops_H_D_exchanges_device(opsArgArray,4)
 
   call ops_timers_core(t2)
 
@@ -198,7 +198,7 @@ subroutine drhouupdx_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 4)
+  call ops_set_dirtybit_device(opsArgArray, 4)
   call ops_set_halo_dirtybit3(opsArg4,range)
 
   !Timing and data movement

@@ -12,11 +12,11 @@ ifndef NV_ARCH
 endif
 ifeq ($(NV_ARCH),Fermi)
   CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.5,cc20
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc20
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda6.0,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35 
 endif
 endif
 
@@ -71,6 +71,7 @@ endif
   TARGETS       = clean poisson_seq poisson_openmp poisson_cuda poisson_mpi poisson_mpi_openmp poisson_mpi_cuda poisson_openacc
   OPS_MPI	= -DOPS_MPI
   CUDAFOR	= -DOPS_WITH_CUDAFOR
+  OpenACCFLAGS = -acc -ta=nvidia
 else
 ifeq ($(OPS_COMPILER),xlp8)
 ifdef DEBUG
@@ -217,8 +218,23 @@ poisson_openacc: poisson_ops.F90 constants.F90
         poisson_stencil_kernel_openacc_kernel.o \
         poisson_update_kernel_openacc_kernel.o \
         poisson_error_kernel_openacc_kernel.o \
-        -o poisson_openacc -lops_for_openacc $(HDF5_LIB)
+        -o poisson_openacc -lops_for_cuda $(HDF5_LIB)
 
+poisson_mpi_openacc: poisson_ops.F90 constants.F90
+	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) $(OPS_MPI) -c constants.F90 \
+        ./MPI_OpenACC/poisson_initialguess_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_populate_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_stencil_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_update_kernel_openacc_kernel.F90 \
+        ./MPI_OpenACC/poisson_error_kernel_openacc_kernel.F90 \
+        poisson_ops.F90
+	$(MPIF90) $(FFLAGS) $(FLINK) $(OpenACCFLAGS) $(OPS_MPI) poisson_ops.o constants.o \
+        poisson_initialguess_kernel_openacc_kernel.o \
+        poisson_populate_kernel_openacc_kernel.o \
+        poisson_stencil_kernel_openacc_kernel.o \
+        poisson_update_kernel_openacc_kernel.o \
+        poisson_error_kernel_openacc_kernel.o \
+        -o poisson_mpi_openacc -lops_for_mpi_cuda $(HDF5_LIB)
 
 clean:
 	rm -f *.o
