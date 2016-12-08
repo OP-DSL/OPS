@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 
   ops_halo *halos = (ops_halo *)malloc(
       2 * (ngrid_x * (ngrid_y - 1) + (ngrid_x - 1) * ngrid_y) *
-      sizeof(ops_halo *));
+      sizeof(ops_halo));
   int off = 0;
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {

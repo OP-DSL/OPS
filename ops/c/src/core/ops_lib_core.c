@@ -314,7 +314,7 @@ ops_block ops_decl_block(int dims, const char *name) {
   }
 
   if (OPS_block_index == OPS_block_max) {
-    OPS_block_max += 10;
+    OPS_block_max += 30;
     OPS_block_list = (ops_block_descriptor *)realloc(
         OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
 
@@ -581,8 +581,8 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   grp->nhalos = nhalos;
 
   // make a copy
-  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo_core));
-  memcpy(halos_temp, &halos[0], nhalos * sizeof(ops_halo_core));
+  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo));
+  memcpy(halos_temp, &halos[0], nhalos * sizeof(ops_halo));
   grp->halos = halos_temp;
 
   grp->index = OPS_halo_group_index;
