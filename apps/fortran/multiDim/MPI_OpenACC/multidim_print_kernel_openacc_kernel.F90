@@ -41,7 +41,7 @@ subroutine multidim_print_kernel_wrap( &
   !$acc parallel deviceptr(opsDat1Local)
   !$acc loop
   DO n_y = 1, end(2)-start(2)+1
-    !DIR$ SIMD
+    !$acc loop
     DO n_x = 1, end(1)-start(1)+1
       call multidim_print_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2) )
@@ -99,9 +99,9 @@ subroutine multidim_print_kernel_host( userSubroutine, block, dim, range, &
   dat1_base = getDatBaseFromOpsArg2D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,1)
+  call ops_H_D_exchanges_device(opsArgArray,1)
   call ops_halo_exchanges(opsArgArray,1,range)
-  call ops_H_D_exchanges_host(opsArgArray,1)
+  call ops_H_D_exchanges_device(opsArgArray,1)
 
   call ops_timers_core(t2)
 
@@ -112,7 +112,7 @@ subroutine multidim_print_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 1)
+  call ops_set_dirtybit_device(opsArgArray, 1)
 
   !Timing and data movement
   transfer_total = 0.0_4

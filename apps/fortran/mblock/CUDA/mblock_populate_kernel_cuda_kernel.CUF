@@ -17,13 +17,14 @@ INTEGER(KIND=4):: xdim1_mblock_populate_kernel_h  = -1
 contains
 
 !user function
-attributes (device) subroutine mblock_populate_kernel(val, idx)
+attributes (device) subroutine mblock_populate_kernel_gpu(val, idx)
   IMPLICIT NONE
   real (kind=8), DIMENSION(1):: val
   INTEGER(kind=4), DIMENSION(1), INTENT(IN) :: idx
 
   val(OPS_ACC1(0,0)) = (idx(1)-1)+20*(idx(2)-1)
 end subroutine
+
 
 #undef OPS_ACC1
 
@@ -53,26 +54,31 @@ attributes (global) subroutine mblock_populate_kernel_wrap( &
   idx_local(2) = idx(2)+ n_y-1
   arg1 = (n_x-1) * 1*1 + (n_y-1) * 1*1 * xdim1_mblock_populate_kernel
   IF ((n_x-1) < size1 .AND. (n_y-1) < size2) THEN
-    call mblock_populate_kernel( &
+    call mblock_populate_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1), &
     & idx_local )
 
-
   ENDIF
+
+
 end subroutine
 
 !host subroutine
 attributes (host) subroutine mblock_populate_kernel_host( userSubroutine, block, dim, range, &
 & opsArg1, &
 & opsArg2)
+  use cudafor
   IMPLICIT NONE
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
   integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  real(kind=8) t1,t2,t3
+  real(kind=4) transfer_total, transfer
+  integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
@@ -101,6 +107,9 @@ attributes (host) subroutine mblock_populate_kernel_host( userSubroutine, block,
 
   opsArgArray(1) = opsArg1
   opsArgArray(2) = opsArg2
+
+  call setKernelTime(0,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call ops_timers_core(t1)
 
 #ifdef OPS_MPI
   IF (getRange(block, start, end, range) < 0) THEN
@@ -145,15 +154,24 @@ attributes (host) subroutine mblock_populate_kernel_host( userSubroutine, block,
   !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
+  call ops_timers_core(t2)
   call mblock_populate_kernel_wrap <<<grid,tblock>>> (&
   & opsDat1Local, &
   & idx, &
   & dat1_base, &
   & x_size, y_size )
 
+  istat = cudaDeviceSynchronize()
+  call ops_timers_core(t3)
   call ops_set_dirtybit_device(opsArgArray, 2)
   call ops_set_halo_dirtybit3(opsArg1,range)
 
+  !Timing and data movement
+  transfer_total = 0.0_4
+  call ops_compute_transfer(2, start, end, opsArg1,transfer)
+  transfer_total = transfer_total + transfer
+  call setKernelTime(0,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
 END MODULE
