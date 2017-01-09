@@ -180,9 +180,10 @@ attributes (global) subroutine multidim_reduce_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsGblDat2Device )
 
-    call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
-
   ENDIF
+
+  call ReductionFloat8Mdim(reductionArrayDevice2(((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*(2) + 1:),opsGblDat2Device,0,2)
+
 end subroutine
 
 !host subroutine
@@ -200,7 +201,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
@@ -291,6 +292,7 @@ attributes (host) subroutine multidim_reduce_kernel_host( userSubroutine, block,
   !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
   call ops_timers_core(t2)
   call multidim_reduce_kernel_wrap <<<grid,tblock,nshared>>> (&

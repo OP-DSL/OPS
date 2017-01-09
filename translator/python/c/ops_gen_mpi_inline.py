@@ -253,13 +253,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
         pre = 'const '
       else:
         pre = ''
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
-        code(pre+typs[n]+' '+arg_list[n]+',')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+        code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
       else:
-        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-          code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
-        else:
-          code(pre+typs[n]+' * restrict '+arg_list[n]+',')
+        code(pre+typs[n]+' * restrict '+arg_list[n]+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0, ')
@@ -313,10 +310,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
         text = text +' p_a'+str(n)+''
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          if dims[n].isdigit() and int(dims[n])==1:
-            text = text +' &p_a'+str(n)+''
-          else:
-            text = text +' p_a'+str(n)+''
+          text = text +' p_a'+str(n)+''
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
             text = text +' &p_a'+str(n)+'_l'
@@ -392,10 +386,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     code('void '+name+'_c_wrapper(')
     config.depth = config.depth+2
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
-        code(typs[n]+' p_a'+str(n)+',')
-      else:
-        code(typs[n]+' *p_a'+str(n)+',')
+      code(typs[n]+' *p_a'+str(n)+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0,')
@@ -623,10 +614,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     code(name+'_c_wrapper(')
     config.depth = config.depth+2
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ and dims[n].isdigit() and int(dims[n])==1:
-        code('*p_a'+str(n)+',')
-      else:
-        code('p_a'+str(n)+',')
+      code('p_a'+str(n)+',')
     if arg_idx:
       if NDIM==1:
         code('arg_idx[0],')

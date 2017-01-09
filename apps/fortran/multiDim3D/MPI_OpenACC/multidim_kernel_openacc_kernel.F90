@@ -49,12 +49,13 @@ subroutine multidim_kernel_wrap( &
   !$acc parallel deviceptr(opsDat1Local)
   !$acc loop
   DO n_z = 1, end(3)-start(3)+1
-    idx_local(3) = idx(3) + n_z - 1
+    !$acc loop
     DO n_y = 1, end(2)-start(2)+1
-      idx_local(2) = idx(2) + n_y - 1
-      !DIR$ SIMD
+      !$acc loop
       DO n_x = 1, end(1)-start(1)+1
         idx_local(1) = idx(1) + n_x - 1
+        idx_local(2) = idx(2) + n_y - 1
+        idx_local(3) = idx(3) + n_z - 1
         call multidim_kernel( &
         & opsDat1Local(dat1_base+(n_x-1)*3 + (n_y-1)*xdim1*3  + (n_z-1)*ydim1*xdim1*3), &
         & idx_local )
@@ -125,9 +126,9 @@ subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
   dat1_base = getDatBaseFromOpsArg3D(opsArg1,start,multi_d1)
   call c_f_pointer(opsArg1%data_d,opsDat1Local,(/opsDat1Cardinality/))
 
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
   call ops_timers_core(t2)
 
@@ -139,7 +140,7 @@ subroutine multidim_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 2)
+  call ops_set_dirtybit_device(opsArgArray, 2)
   call ops_set_halo_dirtybit3(opsArg1,range)
 
   !Timing and data movement

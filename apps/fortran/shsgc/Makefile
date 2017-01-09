@@ -69,6 +69,7 @@ endif
   MPICXX        := $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIF90 	:= $(MPI_INSTALL_PATH)/bin/mpif90 $(PGI_CUDA_FORT_FLAGS)
   MPIFLAGS      := $(FFLAGS)
+  CUDAFOR       = -DOPS_WITH_CUDAFOR
   TARGETS       := clean shsgc_seq shsgc_mpi shsgc_openmp shsgc_mpi_openmp shsgc_cuda shsgc_mpi_cuda shsgc_openacc shsgc_mpi_openacc
 else
 print:
@@ -118,7 +119,7 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
 
 shsgc_cuda: shsgc_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
-	$(FC) $(OPT) $(FMODS) -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
+	$(FC) $(OPT) $(FMODS) $(CUDAFOR) -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
         ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
         ./CUDA/drhoudx_kernel_cuda_kernel.CUF ./CUDA/save_kernel_cuda_kernel.CUF \
         ./CUDA/drhoEpudx_kernel_cuda_kernel.CUF ./CUDA/updateRK3_kernel_cuda_kernel.CUF \
@@ -126,7 +127,7 @@ ifeq ($(OPS_COMPILER),pgi)
         ./CUDA/tvd_kernel_cuda_kernel.CUF ./CUDA/vars_kernel_cuda_kernel.CUF \
         ./CUDA/calupwindeff_kernel_cuda_kernel.CUF ./CUDA/fact_kernel_cuda_kernel.CUF \
         ./CUDA/update_kernel_cuda_kernel.CUF ./CUDA/test_kernel_cuda_kernel.CUF shsgc_ops.F90
-	$(MPIF90) $(OPT) $(FLINK) $(FFLAGS) shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
+	$(MPIF90) $(OPT) $(FLINK) $(FFLAGS) $(CUDAFOR) shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
         drhouupdx_kernel_cuda_kernel.o zerores_kernel_cuda_kernel.o save_kernel_cuda_kernel.o \
         drhoudx_kernel_cuda_kernel.o drhoEpudx_kernel_cuda_kernel.o updateRK3_kernel_cuda_kernel.o \
         Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \
@@ -173,7 +174,7 @@ shsgc_mpi_openmp: shsgc_ops.F90 constants.F90
 
 shsgc_mpi_cuda: shsgc_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
-	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -DOPS_WITH_CUDAFOR -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
+	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI $(CUDAFOR) -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
         ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
         ./CUDA/drhoudx_kernel_cuda_kernel.CUF ./CUDA/save_kernel_cuda_kernel.CUF \
         ./CUDA/drhoEpudx_kernel_cuda_kernel.CUF ./CUDA/updateRK3_kernel_cuda_kernel.CUF \
@@ -181,7 +182,7 @@ ifeq ($(OPS_COMPILER),pgi)
         ./CUDA/tvd_kernel_cuda_kernel.CUF ./CUDA/vars_kernel_cuda_kernel.CUF \
         ./CUDA/calupwindeff_kernel_cuda_kernel.CUF ./CUDA/fact_kernel_cuda_kernel.CUF \
         ./CUDA/update_kernel_cuda_kernel.CUF ./CUDA/test_kernel_cuda_kernel.CUF shsgc_ops.F90
-	$(MPIF90) $(OPT) $(MPIFLAGS) $(FLINK) -DOPS_MPI -DOPS_WITH_CUDAFOR shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
+	$(MPIF90) $(OPT) $(MPIFLAGS) $(FLINK) -DOPS_MPI $(CUDAFOR) shsgc_ops.o constants.o initialize_kernel_cuda_kernel.o \
         drhouupdx_kernel_cuda_kernel.o zerores_kernel_cuda_kernel.o save_kernel_cuda_kernel.o \
         drhoudx_kernel_cuda_kernel.o drhoEpudx_kernel_cuda_kernel.o updateRK3_kernel_cuda_kernel.o \
         Riemann_kernel_cuda_kernel.o limiter_kernel_cuda_kernel.o tvd_kernel_cuda_kernel.o \

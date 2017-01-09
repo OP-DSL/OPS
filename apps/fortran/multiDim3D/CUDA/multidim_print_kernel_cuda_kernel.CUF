@@ -57,8 +57,9 @@ attributes (global) subroutine multidim_print_kernel_wrap( &
     call multidim_print_kernel_gpu( &
     & opsDat1Local(dat1_base+arg1) )
 
-
   ENDIF
+
+
 end subroutine
 
 !host subroutine
@@ -75,7 +76,7 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
   integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
@@ -144,6 +145,7 @@ attributes (host) subroutine multidim_print_kernel_host( userSubroutine, block, 
   !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,1)
   call ops_halo_exchanges(opsArgArray,1,range)
+  call ops_H_D_exchanges_device(opsArgArray,1)
 
   call ops_timers_core(t2)
   call multidim_print_kernel_wrap <<<grid,tblock>>> (&

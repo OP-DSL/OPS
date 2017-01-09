@@ -49,8 +49,9 @@ subroutine multidim_reduce_kernel_wrap( &
   !$acc parallel deviceptr(opsDat1Local) reduction(+:opsDat2Local)
   !$acc loop reduction(+:opsDat2Local)
   DO n_z = 1, end(3)-start(3)+1
+    !$acc loop
     DO n_y = 1, end(2)-start(2)+1
-      !DIR$ SIMD
+      !$acc loop
       DO n_x = 1, end(1)-start(1)+1
         call multidim_reduce_kernel( &
         & opsDat1Local(dat1_base+(n_x-1)*3 + (n_y-1)*xdim1*3  + (n_z-1)*ydim1*xdim1*3), &
@@ -118,9 +119,9 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   call c_f_pointer(getReductionPtrFromOpsArg(opsArg2,block),opsDat2Local, (/opsArg2%dim/))
   dat2_base = 1
 
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
-  call ops_H_D_exchanges_host(opsArgArray,2)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
   call ops_timers_core(t2)
 
@@ -133,7 +134,7 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   & end )
 
   call ops_timers_core(t3)
-  call ops_set_dirtybit_host(opsArgArray, 2)
+  call ops_set_dirtybit_device(opsArgArray, 2)
 
   !Timing and data movement
   transfer_total = 0.0_4

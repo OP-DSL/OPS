@@ -71,8 +71,9 @@ attributes (global) subroutine multidim_copy_kernel_wrap( &
     & opsDat1Local(dat1_base+arg1), &
     & opsDat2Local(dat2_base+arg2) )
 
-
   ENDIF
+
+
 end subroutine
 
 !host subroutine
@@ -90,7 +91,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   integer(kind=4) :: istat
 
   type ( ops_arg )  , INTENT(IN) :: opsArg1
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat1Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
@@ -99,7 +100,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   INTEGER(KIND=4) :: ydim1, zdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE  :: opsDat2Local
+  real(8), DIMENSION(:), DEVICE, POINTER  :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
@@ -184,6 +185,7 @@ attributes (host) subroutine multidim_copy_kernel_host( userSubroutine, block, d
   !halo exchanges
   call ops_H_D_exchanges_device(opsArgArray,2)
   call ops_halo_exchanges(opsArgArray,2,range)
+  call ops_H_D_exchanges_device(opsArgArray,2)
 
   call ops_timers_core(t2)
   call multidim_copy_kernel_wrap <<<grid,tblock>>> (&
