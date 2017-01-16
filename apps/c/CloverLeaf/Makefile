@@ -151,7 +151,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_mpi_inline cloverleaf_tiled cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
+TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_mpi_inline cloverleaf_tiled cloverleaf_mpi_tiled cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += cloverleaf_openacc cloverleaf_mpi_openacc
@@ -338,4 +338,4 @@ openacc_error:
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled  cloverleaf_mpi_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt

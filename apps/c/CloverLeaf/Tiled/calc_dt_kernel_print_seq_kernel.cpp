@@ -122,11 +122,13 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
                 + : p_a6_10) reduction(+ : p_a6_11)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
+#pragma loop_count(10000)
 #pragma omp simd reduction(+ : p_a6_0) reduction(+ : p_a6_1) reduction(        \
     + : p_a6_2) reduction(+ : p_a6_3) reduction(+ : p_a6_4) reduction(         \
         + : p_a6_5) reduction(+ : p_a6_6) reduction(+ : p_a6_7) reduction(     \
             + : p_a6_8) reduction(+ : p_a6_9) reduction(                       \
-                + : p_a6_10) reduction(+ : p_a6_11)
+                + : p_a6_10) reduction(+ : p_a6_11) aligned(                   \
+                    xvel0, yvel0, density0, energy0, pressure, soundspeed)
 #else
 #pragma simd reduction(+ : p_a6_0) reduction(+ : p_a6_1) reduction(            \
     + : p_a6_2) reduction(+ : p_a6_3) reduction(+ : p_a6_4) reduction(         \
@@ -228,6 +230,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 7;
   desc->args = (ops_arg *)malloc(7 * sizeof(ops_arg));

@@ -127,7 +127,9 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(celldx, celldy, soundspeed, viscosity, density0,      \
+                         xvel0, xarea, volume, yvel0, yarea, dt_min)
 #else
 #pragma simd
 #endif
@@ -226,6 +228,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 11;
   desc->args = (ops_arg *)malloc(11 * sizeof(ops_arg));

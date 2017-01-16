@@ -66,7 +66,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(node_flux, mass_flux_x)
 #else
 #pragma simd
 #endif
@@ -108,6 +109,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 2;
   desc->args = (ops_arg *)malloc(2 * sizeof(ops_arg));
