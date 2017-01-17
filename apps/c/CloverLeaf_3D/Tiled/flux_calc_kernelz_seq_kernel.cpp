@@ -94,7 +94,8 @@ void ops_par_loop_flux_calc_kernelz_execute(ops_kernel_descriptor *desc) {
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vol_flux_z, zarea, zvel0, zvel1)
 #else
 #pragma simd
 #endif
@@ -143,6 +144,7 @@ void ops_par_loop_flux_calc_kernelz(char const *name, ops_block block, int dim,
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 4;
   desc->args = (ops_arg *)malloc(4 * sizeof(ops_arg));

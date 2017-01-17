@@ -116,7 +116,9 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(node_mass_post, post_vol, density1, node_mass_pre,    \
+                         node_flux)
 #else
 #pragma simd
 #endif
@@ -175,6 +177,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
   desc->args = (ops_arg *)malloc(5 * sizeof(ops_arg));

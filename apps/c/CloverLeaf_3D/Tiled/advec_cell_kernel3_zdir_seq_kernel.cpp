@@ -138,7 +138,9 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vol_flux_z, pre_vol, zz, vertexdz, density1, energy1, \
+                         mass_flux_z, ener_flux)
 #else
 #pragma simd
 #endif
@@ -261,6 +263,7 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 8;
   desc->args = (ops_arg *)malloc(8 * sizeof(ops_arg));
