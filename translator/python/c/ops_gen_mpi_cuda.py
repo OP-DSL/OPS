@@ -815,6 +815,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('#include "ops_cuda_rt_support.h"')
   code('#include "ops_cuda_reduction.h"')
   code('')
+  code('#include <cuComplex.h>')  # Include the CUDA complex numbers library, in case complex numbers are used anywhere.
+  code('')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
   code('#ifdef OPS_MPI')
