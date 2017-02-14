@@ -214,8 +214,78 @@ def parse_signature_cuda(text):
     arg_list.append(args[n].strip())
   return arg_list
 
+def complex_numbers_cuda(text):
+    """ Handle complex numbers, and translate to the relevant CUDA function in cuComplex.h """
+
+    # Complex number assignment
+    p = re.compile("([a-zA-Z_][a-zA-Z0-9]+)(\s+\_\_complex\_\_\s+)([a-zA-Z_][a-zA-Z0-9]*)\s*=\s*(.+)\s*;")
+    result = p.finditer(text)
+    new_code = text
+    complex_variable_names = []
+    for match in result:
+        complex_variable_names.append(match.group(3))
+        rhs = match.group(4)
+        if rhs in complex_variable_names:
+            # Assignment of another complex variable already defined.
+            if match.group(1) == "double":
+                new_statement = "cuDoubleComplex %s = %s;" % (match.group(3), rhs)
+            elif match.group(1) == "float":
+                new_statement = "cuFloatComplex %s = %s;" % (match.group(3), rhs)
+            else:
+                continue
+        else:
+            # Assignment of a complex number in real and imaginary parts.
+            p = re.compile("(\S+I?)\s*([+-]?)\s*(\S*I?)?")
+            complex_number = p.search(rhs)
+            if(complex_number.group(1)[-1] == "I"):  # Real after imaginary part
+                imag = complex_number.group(1)[:-1]
+                if(complex_number.group(3)):  # If real part specified
+                    real = complex_number.group(3)
+                else:
+                    real = "0.0"
+            elif(complex_number.group(3)[-1] == "I"):  # Imaginary after real part
+                if(complex_number.group(2) == "-"):
+                    imag = "-" + complex_number.group(3)[:-1]
+                else:
+                    imag = complex_number.group(3)[:-1]
+                if(complex_number.group(1)):  # If real part specified
+                    real = complex_number.group(1)
+                else:
+                    real = "0.0"
+            else:  # No imaginary part
+                real = complex_number.group(0)
+                imag = "0.0"
+            if match.group(1) == "double":
+                new_statement = "cuDoubleComplex %s = make_cuDoubleComplex(%s, %s);" % (match.group(3), real, imag)
+            elif match.group(1) == "float":
+                new_statement = "cuFloatComplex %s = make_cuFloatComplex(%s, %s);" % (match.group(3), real, imag)
+            else:
+                continue
+
+        # Perform replacement.
+        new_code = new_code.replace(match.group(0), new_statement)
+
+    # Complex number __real__ and __imag__
+    p = re.compile("(\_\_real\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+    result = p.finditer(new_code)
+    for match in result:
+        new_code = new_code.replace(match.group(0), "cuCreal(%s)" % (match.group(2)))
+    p = re.compile("(\_\_imag\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+    result = p.finditer(new_code)
+    for match in result:
+        new_code = new_code.replace(match.group(0), "cuCimag(%s)" % (match.group(2)))
+
+    # Multiplication of two complex numbers
+    p = re.compile("([a-zA-Z_][a-zA-Z0-9]*)\s*\*\s*([a-zA-Z_][a-zA-Z0-9]*)")
+    result = p.finditer(new_code)
+    for match in result:
+        if(match.group(1) in complex_variable_names or match.group(2) in complex_variable_names):
+            new_code = new_code.replace(match.group(0), "cuCmul(%s, %s)" % (match.group(1), match.group(2)))
+
+    return new_code
+
 def arg_parse(text, j):
-    """Parsing arguments in op_par_loop to find the correct closing brace"""
+    """Parsing arguments in ops_par_loop to find the correct closing brace"""
 
     depth = 0
     loc2 = j
