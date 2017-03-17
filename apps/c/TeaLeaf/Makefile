@@ -41,8 +41,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  #CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel -fma #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  #CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel -fma #-DCOMM_PERF #-DDEBUG
   #CCFLAGS	= -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
@@ -285,4 +285,4 @@ openacc_error:
 #
 
 clean:
-		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst
+		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_mpi_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst

@@ -250,9 +250,8 @@ void read_input()
                 ops_fprintf(g_out," %20s: %d\n", "test_problem",test_problem);
               }
               else if(strcmp(trimwhitespace(token),"profiler_on") == 0) {
-                token = strtok(NULL, " =");
-                profiler_on = atoi(token);
-                ops_fprintf(g_out," %20s: %d\n", "profiler_on",profiler_on);
+                profiler_on = 1;
+                ops_fprintf(g_out," %20s\n", "profiler_on");
               }
               else if(strcmp(trimwhitespace(token),"tl_max_iters") == 0) {
                 token = strtok(NULL, " =");

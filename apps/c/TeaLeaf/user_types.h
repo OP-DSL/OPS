@@ -8,7 +8,8 @@
 #define FIELD_P       4
 #define FIELD_SD      5
 #define FIELD_R       6
-#define NUM_FIELDS    7
+#define FIELD_Z       7
+#define NUM_FIELDS    8
 
 #define fixed 1
 

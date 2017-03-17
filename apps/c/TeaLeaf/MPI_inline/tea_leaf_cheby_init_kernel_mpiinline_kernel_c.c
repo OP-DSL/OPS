@@ -10,45 +10,38 @@ int xdim3_tea_leaf_cheby_init_kernel;
 int xdim4_tea_leaf_cheby_init_kernel;
 int xdim5_tea_leaf_cheby_init_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim0_tea_leaf_cheby_init_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim1_tea_leaf_cheby_init_kernel * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim2_tea_leaf_cheby_init_kernel * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim3_tea_leaf_cheby_init_kernel * (y))
-#define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim4_tea_leaf_cheby_init_kernel * (y))
-#define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_tea_leaf_cheby_init_kernel * 1 + x +                  \
-   xdim5_tea_leaf_cheby_init_kernel * (y))
+#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_tea_leaf_cheby_init_kernel*1+x+xdim0_tea_leaf_cheby_init_kernel*(y))
+#define OPS_ACC1(x,y) (n_x*1+n_y*xdim1_tea_leaf_cheby_init_kernel*1+x+xdim1_tea_leaf_cheby_init_kernel*(y))
+#define OPS_ACC2(x,y) (n_x*1+n_y*xdim2_tea_leaf_cheby_init_kernel*1+x+xdim2_tea_leaf_cheby_init_kernel*(y))
+#define OPS_ACC3(x,y) (n_x*1+n_y*xdim3_tea_leaf_cheby_init_kernel*1+x+xdim3_tea_leaf_cheby_init_kernel*(y))
+#define OPS_ACC4(x,y) (n_x*1+n_y*xdim4_tea_leaf_cheby_init_kernel*1+x+xdim4_tea_leaf_cheby_init_kernel*(y))
+#define OPS_ACC5(x,y) (n_x*1+n_y*xdim5_tea_leaf_cheby_init_kernel*1+x+xdim5_tea_leaf_cheby_init_kernel*(y))
 
-// user function
+//user function
+
+
 
 void tea_leaf_cheby_init_kernel_c_wrapper(
-    double *restrict w, double *restrict r, const double *restrict Kx,
-    const double *restrict Ky, const double *restrict u,
-    const double *restrict u0, const double rx, const double ry, int x_size,
-    int y_size) {
-#pragma omp parallel for
-  for (int n_y = 0; n_y < y_size; n_y++) {
-    for (int n_x = 0; n_x < x_size; n_x++) {
+  double * restrict w,
+  double * restrict r,
+  const double * restrict Kx,
+  const double * restrict Ky,
+  const double * restrict u,
+  const double * restrict u0,
+  const double * restrict rx,
+  const double * restrict ry,
+  int x_size, int y_size) {
+  #pragma omp parallel for
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      
+	w[OPS_ACC0(0,0)] = (1.0
+        + (*ry)*(Ky[OPS_ACC3(0, 1)] + Ky[OPS_ACC3(0,0)])
+        + (*rx)*(Kx[OPS_ACC2(1, 0)] + Kx[OPS_ACC2(0,0)]))*u[OPS_ACC4(0,0)]
+        - (*ry)*(Ky[OPS_ACC3(0, 1)] *u[OPS_ACC4(0, 1)] + Ky[OPS_ACC3(0,0)]*u[OPS_ACC4(0, -1)])
+        - (*rx)*(Kx[OPS_ACC2(1, 0)] *u[OPS_ACC4(1, 0)] + Kx[OPS_ACC2(0,0)]*u[OPS_ACC4(-1, 0)]);
+    r[OPS_ACC1(0,0)] = u0[OPS_ACC5(0,0)] - w[OPS_ACC0(0,0)];
 
-      w[OPS_ACC0(0, 0)] =
-          (1.0 + (*ry) * (Ky[OPS_ACC3(0, 1)] + Ky[OPS_ACC3(0, 0)]) +
-           (*rx) * (Kx[OPS_ACC2(1, 0)] + Kx[OPS_ACC2(0, 0)])) *
-              u[OPS_ACC4(0, 0)] -
-          (*ry) * (Ky[OPS_ACC3(0, 1)] * u[OPS_ACC4(0, 1)] +
-                   Ky[OPS_ACC3(0, 0)] * u[OPS_ACC4(0, -1)]) -
-          (*rx) * (Kx[OPS_ACC2(1, 0)] * u[OPS_ACC4(1, 0)] +
-                   Kx[OPS_ACC2(0, 0)] * u[OPS_ACC4(-1, 0)]);
-      r[OPS_ACC1(0, 0)] = u0[OPS_ACC5(0, 0)] - w[OPS_ACC0(0, 0)];
     }
   }
 }
@@ -58,3 +51,4 @@ void tea_leaf_cheby_init_kernel_c_wrapper(
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
+

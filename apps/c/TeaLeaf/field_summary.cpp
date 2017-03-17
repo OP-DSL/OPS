@@ -81,17 +81,15 @@ void field_summary()
   if(complete == 1) {
     if(test_problem>0) {
       if (test_problem == 1)
-        qa_diff = fabs((100.0 * (temp / 157.550841832793)) - 100.0);
+        qa_diff = fabs((100.0 * (temp / 157.55084183279294)) - 100.0);
       if (test_problem == 2) // tea_bm_short.in
-        qa_diff = fabs((100.0 * (temp / 116.067951160930)) - 100.0);
+        qa_diff = fabs((100.0 * (temp / 106.27221178646569)) - 100.0);
       if (test_problem == 3)
-        qa_diff = fabs((100.0 * (temp / 95.4865103390698)) - 100.0);
+        qa_diff = fabs((100.0 * (temp / 99.955877498324000)) - 100.0);
       if (test_problem == 4)
-        qa_diff = fabs((100.0 * (temp / 166.838315378708)) - 100.0);
+        qa_diff = fabs((100.0 * (temp / 97.277332050749976)) - 100.0);
       if (test_problem == 5)
-        qa_diff = fabs((100.0 * (temp / 116.482111627676)) - 100.0);
-      if (test_problem == 6)
-        qa_diff = fabs((100.0 * (temp / 103.88639125996923)) - 100.0);
+        qa_diff = fabs((100.0 * (temp / 95.462351583362249)) - 100.0);
       ops_printf("Test problem %3d is within   %-10.7E%% of the expected solution\n",test_problem, qa_diff);
       ops_fprintf(g_out,"\nTest problem %3d is within   %10.7E%% of the expected solution\n",test_problem, qa_diff);
       if(qa_diff < 0.001) {
