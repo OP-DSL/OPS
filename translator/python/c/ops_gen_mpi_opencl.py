@@ -1166,9 +1166,12 @@ void buildOpenCLKernels() {
 
   comm('user kernel files')
 
-  for nk in range(0,len(kernel_name_list)):
-    if not (('initialise' in kernel_name_list[nk]) or ('generate' in kernel_name_list[nk])):
-      code('#include "'+kernel_name_list[nk]+'_opencl_kernel.cpp"')
+  #create unique set of kernel names list
+  unique = list(set(kernel_name_list))
+
+  for nk in range(0,len(unique)):
+    if not (('initialise' in unique[nk]) or ('generate' in unique[nk])):
+      code('#include "'+unique[nk]+'_opencl_kernel.cpp"')
 
 
   master = master.split('.')[0]
