@@ -100,7 +100,8 @@ void ops_par_loop_update_halo_kernel1_t1_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(density0, energy0, energy1, u, p, sd)
 #else
 #pragma simd
 #endif

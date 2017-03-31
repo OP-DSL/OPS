@@ -74,7 +74,8 @@ void ops_par_loop_initialise_chunk_kernel_x_execute(
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vertexx, xx, vertexdx)
 #else
 #pragma simd
 #endif

@@ -79,7 +79,8 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel_execute(
 #pragma omp parallel for reduction(+ : p_a3_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a3_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a3_0) aligned(r, w)
 #else
 #pragma simd reduction(+ : p_a3_0)
 #endif

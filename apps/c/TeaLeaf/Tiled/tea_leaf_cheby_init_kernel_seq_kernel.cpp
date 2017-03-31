@@ -104,7 +104,8 @@ void ops_par_loop_tea_leaf_cheby_init_kernel_execute(
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(w, r, Kx, Ky, u, u0)
 #else
 #pragma simd
 #endif

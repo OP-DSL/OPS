@@ -122,8 +122,9 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
     + : p_a5_0) reduction(+ : p_a6_0) reduction(+ : p_a7_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
+#pragma loop_count(10000)
 #pragma omp simd reduction(+ : p_a4_0) reduction(+ : p_a5_0) reduction(        \
-    + : p_a6_0) reduction(+ : p_a7_0)
+    + : p_a6_0) reduction(+ : p_a7_0) aligned(volume, density, energy, u)
 #else
 #pragma simd reduction(+ : p_a4_0) reduction(+ : p_a5_0) reduction(            \
     + : p_a6_0) reduction(+ : p_a7_0)

@@ -105,7 +105,8 @@ void ops_par_loop_tea_leaf_jacobi_kernel_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for reduction(+ : p_a7_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a7_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a7_0) aligned(u1, Kx, Ky, un, u0)
 #else
 #pragma simd reduction(+ : p_a7_0)
 #endif

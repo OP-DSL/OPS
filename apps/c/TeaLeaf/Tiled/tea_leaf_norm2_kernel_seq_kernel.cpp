@@ -67,7 +67,8 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for reduction(+ : p_a1_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a1_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a1_0) aligned(x)
 #else
 #pragma simd reduction(+ : p_a1_0)
 #endif
