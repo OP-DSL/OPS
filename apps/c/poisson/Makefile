@@ -127,7 +127,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_tiled poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
+TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_tiled poisson_mpi_tiled poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += poisson_openacc poisson_mpi_openacc
@@ -245,4 +245,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
+	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o

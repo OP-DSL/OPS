@@ -75,7 +75,8 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for reduction(+ : p_a2_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a2_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a2_0) aligned(u, ref)
 #else
 #pragma simd reduction(+ : p_a2_0)
 #endif
@@ -118,6 +119,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 3;
   desc->args = (ops_arg *)malloc(3 * sizeof(ops_arg));
