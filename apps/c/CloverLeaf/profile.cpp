@@ -38,7 +38,7 @@ void process_profile()
 {
 
   char out_file[] = "prof.out";
-  FILE* prof_out;
+  FILE* prof_out=NULL;
   char line[100];
 
   if ((OPS_diags > 1) && ops_is_root() && (prof_out = fopen(out_file,"w")) == NULL) {
