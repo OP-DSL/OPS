@@ -272,11 +272,11 @@ void ops_exit_core() {
 
   while ((item = TAILQ_FIRST(&OPS_dat_list))) {
     if ((item->dat)->user_managed == 0)
-#ifdef __INTEL_COMPILER
-      _mm_free((item->dat)->data);
-#else
+//#ifdef __INTEL_COMPILER
+//      _mm_free((item->dat)->data);
+//#else
       free((item->dat)->data);
-#endif
+//#endif
     free((char *)(item->dat)->name);
     free((char *)(item->dat)->type);
     TAILQ_REMOVE(&OPS_dat_list, item, entries);
