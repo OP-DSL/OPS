@@ -6,6 +6,7 @@ make
 cd -
 ../../../translator/python/fortran/ops_fortran.py multidim.F90
 make
+#<<COMMENT
 echo '============================ Test MultiDim Intel Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
@@ -31,10 +32,10 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
+#COMMENT
 
 cd $OPS_INSTALL_PATH/fortran
-source ../source_pgi_15.10
+source ../../scripts/source_pgi_15.10
 make
 cd -
 make
