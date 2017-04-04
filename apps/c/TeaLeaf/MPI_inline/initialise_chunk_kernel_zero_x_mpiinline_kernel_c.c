@@ -5,23 +5,20 @@
 
 int xdim0_initialise_chunk_kernel_zero_x;
 
-#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_initialise_chunk_kernel_zero_x*0+x+xdim0_initialise_chunk_kernel_zero_x*(y))
+#define OPS_ACC0(x, y)                                                         \
+  (n_x * 1 + n_y * xdim0_initialise_chunk_kernel_zero_x * 0 + x +              \
+   xdim0_initialise_chunk_kernel_zero_x * (y))
 
-//user function
+// user function
 
+void initialise_chunk_kernel_zero_x_c_wrapper(double *restrict var, int x_size,
+                                              int y_size) {
+#pragma omp parallel for
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
 
-
-void initialise_chunk_kernel_zero_x_c_wrapper(
-  double * restrict var,
-  int x_size, int y_size) {
-  #pragma omp parallel for
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      
-  *var = 0.0;
-
+      *var = 0.0;
     }
   }
 }
 #undef OPS_ACC0
-

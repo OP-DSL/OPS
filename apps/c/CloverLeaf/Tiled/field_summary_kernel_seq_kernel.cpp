@@ -150,8 +150,10 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
         reduction(+ : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
+#pragma loop_count(10000)
 #pragma omp simd reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(        \
-    + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
+    + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0) aligned(          \
+        volume, density0, energy0, pressure, xvel0, yvel0)
 #else
 #pragma simd reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(            \
     + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
@@ -234,6 +236,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 11;
   desc->args = (ops_arg *)malloc(11 * sizeof(ops_arg));

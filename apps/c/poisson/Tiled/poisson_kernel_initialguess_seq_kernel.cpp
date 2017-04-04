@@ -58,7 +58,8 @@ void ops_par_loop_poisson_kernel_initialguess_execute(
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(u)
 #else
 #pragma simd
 #endif
@@ -95,6 +96,7 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 1;
   desc->args = (ops_arg *)malloc(1 * sizeof(ops_arg));

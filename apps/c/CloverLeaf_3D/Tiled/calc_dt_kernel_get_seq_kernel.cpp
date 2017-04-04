@@ -114,8 +114,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a2_0) reduction(+ : p_a3_0)                   \
-                                                     reduction(+ : p_a5_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a2_0) reduction(+ : p_a3_0) reduction(        \
+    + : p_a5_0) aligned(cellx, celly, cellz)
 #else
 #pragma simd reduction(+ : p_a2_0) reduction(+ : p_a3_0) reduction(+ : p_a5_0)
 #endif
@@ -166,6 +167,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 6;
   desc->args = (ops_arg *)malloc(6 * sizeof(ops_arg));

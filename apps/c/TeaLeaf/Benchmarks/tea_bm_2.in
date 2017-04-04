@@ -13,7 +13,9 @@ ymax=10.0
 initial_timestep=0.004
 end_step=10
 tl_max_iters=10000
-tl_use_cg
+tl_use_ppcg
 tl_eps 1.0e-15
-test_problem 2
+profiler_on=1
+tiling_frequency=10
 *endtea
+ 

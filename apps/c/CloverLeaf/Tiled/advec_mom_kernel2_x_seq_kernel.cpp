@@ -81,7 +81,8 @@ void ops_par_loop_advec_mom_kernel2_x_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vel1, node_mass_post, node_mass_pre, mom_flux)
 #else
 #pragma simd
 #endif
@@ -128,6 +129,7 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 4;
   desc->args = (ops_arg *)malloc(4 * sizeof(ops_arg));

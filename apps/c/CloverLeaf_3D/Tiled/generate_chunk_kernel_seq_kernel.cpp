@@ -172,7 +172,9 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vertexx, vertexy, vertexz, energy0, density0, xvel0,  \
+                         yvel0, zvel0, cellx, celly, cellz)
 #else
 #pragma simd
 #endif
@@ -329,6 +331,7 @@ void ops_par_loop_generate_chunk_kernel(
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 11;
   desc->args = (ops_arg *)malloc(11 * sizeof(ops_arg));

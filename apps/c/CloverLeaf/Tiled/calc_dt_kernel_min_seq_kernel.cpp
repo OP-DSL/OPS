@@ -67,7 +67,8 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for reduction(min : p_a1_0)
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(min : p_a1_0)
+#pragma loop_count(10000)
+#pragma omp simd reduction(min : p_a1_0) aligned(dt_min)
 #else
 #pragma simd reduction(min : p_a1_0)
 #endif
@@ -105,6 +106,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 2;
   desc->args = (ops_arg *)malloc(2 * sizeof(ops_arg));

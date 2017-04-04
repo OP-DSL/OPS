@@ -90,7 +90,8 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(volume, celldy, xarea, celldx, yarea)
 #else
 #pragma simd
 #endif
@@ -144,6 +145,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
   desc->args = (ops_arg *)malloc(5 * sizeof(ops_arg));

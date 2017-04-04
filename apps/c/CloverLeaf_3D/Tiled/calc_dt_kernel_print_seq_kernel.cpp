@@ -181,24 +181,31 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(         \
-    + : p_a7_2) reduction(+ : p_a7_3) reduction(+ : p_a7_4) reduction(          \
-        + : p_a7_5) reduction(+ : p_a7_6) reduction(+ : p_a7_7) reduction(      \
-            + : p_a7_8) reduction(+ : p_a7_9) reduction(                        \
-                + : p_a7_10) reduction(+ : p_a7_11) reduction(                  \
-                    + : p_a7_12) reduction(+ : p_a7_13) reduction(              \
-                        + : p_a7_14) reduction(+ : p_a7_15) reduction(          \
-                            + : p_a7_16) reduction(+ : p_a7_17) reduction(      \
-                                + : p_a7_18) reduction(+ : p_a7_19) reduction(  \
-                                    + : p_a7_20)                                \
-                                        reduction(+ : p_a7_21) reduction(       \
-                                            + : p_a7_22) reduction(             \
-                                                + : p_a7_23) reduction(         \
-                                                    + : p_a7_24) reduction(     \
-                                                        + : p_a7_25) reduction( \
-                                                            + : p_a7_26)        \
-                                                                reduction(      \
-                                                                    + : p_a7_27)
+#pragma loop_count(10000)
+#pragma omp simd reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(            \
+    + : p_a7_2) reduction(+ : p_a7_3) reduction(+ : p_a7_4) reduction(             \
+        + : p_a7_5) reduction(+ : p_a7_6) reduction(+ : p_a7_7) reduction(         \
+            + : p_a7_8) reduction(+ : p_a7_9) reduction(                           \
+                + : p_a7_10) reduction(+ : p_a7_11) reduction(                     \
+                    + : p_a7_12) reduction(+ : p_a7_13) reduction(                 \
+                        + : p_a7_14) reduction(+ : p_a7_15) reduction(             \
+                            + : p_a7_16) reduction(+ : p_a7_17) reduction(         \
+                                + : p_a7_18) reduction(+ : p_a7_19) reduction(     \
+                                    + : p_a7_20) reduction(+ : p_a7_21) reduction( \
+                                        + : p_a7_22)                               \
+                                            reduction(+ : p_a7_23) reduction(      \
+                                                + : p_a7_24) reduction(            \
+                                                    + : p_a7_25) reduction(        \
+                                                        + : p_a7_26) reduction(    \
+                                                            + : p_a7_27)           \
+                                                                aligned(           \
+                                                                    xvel0,         \
+                                                                    yvel0,         \
+                                                                    zvel0,         \
+                                                                    density0,      \
+                                                                    energy0,       \
+                                                                    pressure,      \
+                                                                    soundspeed)
 #else
 #pragma simd reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(             \
     + : p_a7_2) reduction(+ : p_a7_3) reduction(+ : p_a7_4) reduction(          \
@@ -380,6 +387,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 8;
   desc->args = (ops_arg *)malloc(8 * sizeof(ops_arg));

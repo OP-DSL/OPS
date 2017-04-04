@@ -80,7 +80,8 @@ void ops_par_loop_update_halo_kernel5_plus_4_a_execute(
   for (int n_z = start[2]; n_z < end[2]; n_z++) {
     for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(vol_flux_z, mass_flux_z)
 #else
 #pragma simd
 #endif
@@ -124,6 +125,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_a(char const *name,
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 3;
   desc->args = (ops_arg *)malloc(3 * sizeof(ops_arg));

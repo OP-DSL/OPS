@@ -63,6 +63,10 @@ extern int ops_cache_size;
 
 double ops_tiled_halo_exchange_time = 0.0;
 
+/////////////////////////////////////////////////////////////////////////
+// Data structures
+/////////////////////////////////////////////////////////////////////////
+
 std::vector<ops_kernel_descriptor *> ops_kernel_list;
 
 // Tiling
@@ -74,15 +78,7 @@ std::vector<std::vector<int> >
 std::vector<std::vector<int> >
     data_read_deps_edge; // latest data dependencies for each dataset around the edges
 
-inline int intersection(int range1_beg, int range1_end, int range2_beg,
-                 int range2_end, int *intersect_begin) {
-  if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
-  int i_min = MAX(range1_beg, range2_beg);
-  int i_max = MIN(range1_end, range2_end);
-  *intersect_begin = i_min;
-  return i_max > i_min ? i_max - i_min : 0;
-}
-
+//Tiling plan & storage
 struct tiling_plan {
   int nloops;
   std::vector<unsigned long> loop_sequence;
@@ -92,9 +88,51 @@ struct tiling_plan {
   std::vector<int> depths_to_exchange;
 };
 
-std::vector<tiling_plan> tiling_plans(0);
+std::vector<tiling_plan> tiling_plans;
+
+// tile sizes
+int TILE1D = -1;
+int TILE2D = -1;
+int TILE3D = -1;
+#define TILE4D -1
+#define TILE5D -1
+
+// dimensionality of blocks used throughout
+int ops_dims_tiling_internal = 1;
+
+/////////////////////////////////////////////////////////////////////////
+// Helper functions
+/////////////////////////////////////////////////////////////////////////
+
+//Computes intersection of two ranges
+inline int intersection(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *intersect_begin) {
+  if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
+  int i_min = MAX(range1_beg, range2_beg);
+  int i_max = MIN(range1_end, range2_end);
+  *intersect_begin = i_min;
+  return i_max > i_min ? i_max - i_min : 0;
+}
+
+//Queries L3 cache size
+size_t ops_internal_get_cache_size() {
+  FILE *p = 0;
+  p = fopen("/sys/devices/system/cpu/cpu0/cache/index3/size", "r");
+  unsigned int i = 0;
+  if (p) {
+    fscanf(p, "%d", &i);
+    fclose(p);
+  }
+  return i;
+}
 
 void ops_execute();
+
+/////////////////////////////////////////////////////////////////////////
+// Enqueueing loops
+// - if tiling enabled, add to the list
+// - if tiling disabled, execute immediately on CPU
+/////////////////////////////////////////////////////////////////////////
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (ops_enable_tiling)
@@ -123,28 +161,12 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_diags > 1)
       OPS_kernels[desc->index].mpi_time += t2-t1;
   }
+//ops_execute();
 }
 
-//#define TILE1D -1
-//#define TILE2D 12
-int TILE1D = -1;
-int TILE2D = -1;
-int TILE3D = -1;
-#define TILE4D -1
-#define TILE5D -1
-
-int ops_dims_tiling_internal = 1;
-
-size_t ops_internal_get_cache_size() {
-  FILE *p = 0;
-  p = fopen("/sys/devices/system/cpu/cpu0/cache/index3/size", "r");
-  unsigned int i = 0;
-  if (p) {
-    fscanf(p, "%d", &i);
-    fclose(p);
-  }
-  return i;
-}
+/////////////////////////////////////////////////////////////////////////
+// Computing dependencies across MPI
+/////////////////////////////////////////////////////////////////////////
 
 void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *biggest_range) {
   //If loop range starts before my left boundary, my left neighbour's end index
@@ -223,13 +245,19 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
 }
 
 
+/////////////////////////////////////////////////////////////////////////
+// Creating a new tiling plan
+/////////////////////////////////////////////////////////////////////////
+
 int ops_construct_tile_plan() {
   // Create new tiling plan
-  if (OPS_diags > 2)
-    ops_printf("Creating new tiling plan for %d loops\n",
-               ops_kernel_list.size());
   double t1, t2, c1, c2;
   ops_timers_core(&c1, &t1);
+
+  //
+  // Set up pointers
+  //
+
   tiling_plans.resize(tiling_plans.size() + 1);
   std::vector<std::vector<int> > &tiled_ranges =
       tiling_plans[tiling_plans.size() - 1].tiled_ranges;
@@ -245,24 +273,9 @@ int ops_construct_tile_plan() {
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
         ops_kernel_list[i]->hash;
 
-  // Get tile sizes
-  if (getenv("T1"))
-    TILE1D = atoi(getenv("T1"));
-  else
-    TILE1D = -1;
-  if (getenv("T2"))
-    TILE2D = atoi(getenv("T2"));
-  else
-    TILE2D = -1;
-  if (getenv("T3"))
-    TILE3D = atoi(getenv("T3"));
-  else
-    TILE3D = -1;
-  int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
-  // Initialise tiling datasets
-  tiled_ranges.resize(ops_kernel_list.size());
-
+  //
   // Compute biggest range
+  //
   int dims = ops_kernel_list[ops_kernel_list.size() - 1]->block->dims;
   int biggest_range[2 * OPS_MAX_DIM];
   for (int d = 0; d < dims; d++) {
@@ -286,6 +299,11 @@ int ops_construct_tile_plan() {
       biggest_range[2 * d + 1] = 1;
     }
   }
+  
+  for (int d = 0; d < dims; d++) {
+    if (biggest_range[2*d] > biggest_range[2*d+1])
+      biggest_range[2*d] = biggest_range[2*d+1];
+  }
 
   size_t full_owned_size = 1;
   for (int d = 0; d < dims; d++) {
@@ -293,6 +311,28 @@ int ops_construct_tile_plan() {
 		if (OPS_diags>5) printf("Proc %d dim %d biggest range %d-%d\n",ops_get_proc(), d, biggest_range[2 * d], biggest_range[2 * d+1]);
   }
 
+  //
+  // Get tile sizes
+  //
+  if (getenv("T1"))
+    TILE1D = atoi(getenv("T1"));
+  else
+    TILE1D = -1;
+  if (getenv("T2"))
+    TILE2D = atoi(getenv("T2"));
+  else
+    TILE2D = -1;
+  if (getenv("T3"))
+    TILE3D = atoi(getenv("T3"));
+  else
+    TILE3D = -1;
+  int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
+  // Initialise tiling datasets
+  tiled_ranges.resize(ops_kernel_list.size());
+
+  //
+  // If no tile sizes specified, compute it
+  //
   if (ops_cache_size == 0)
     ops_cache_size = ops_internal_get_cache_size() / 1000;
   // If tile sizes undefined, make an educated guess
@@ -336,12 +376,14 @@ int ops_construct_tile_plan() {
       if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
         tile_sizes[0] = tile_sizes[1] = tile_sizes[2] = -1;
     }
-    if (OPS_diags > 2)
+    if (OPS_diags > 3)
       ops_printf("Defaulting to the following tile size: %dx%dx%d\n",
                  tile_sizes[0], tile_sizes[1], tile_sizes[2]);
   }
 
+  //
   // Compute max number of tiles in each dimension
+  //
   int ntiles[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++)
     ntiles[d] = 1;
@@ -373,6 +415,10 @@ int ops_construct_tile_plan() {
   int total_tiles = tiles_prod[OPS_MAX_DIM];
   tiling_plans[tiling_plans.size() - 1].ntiles = total_tiles;
 
+  //
+  // Initialise storage
+  //
+
   // Allocate room to store the range of each tile for each loop
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     tiled_ranges[i].resize(total_tiles * OPS_MAX_DIM * 2);
@@ -398,7 +444,9 @@ int ops_construct_tile_plan() {
     }
   }
 
-  // Loop over ops_par_loops, backward
+  //
+  // Main tiling dependency analysis loop
+  //
   for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     bool owned = ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
@@ -664,7 +712,6 @@ int ops_construct_tile_plan() {
   std::vector<int> datasets_accessed(OPS_dat_index, -1);
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
-      //TODO: this is not safe - what if only a small part of it is written (e.g. halo)?
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].opt == 1 && datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] == -1) {
         datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] = (ops_kernel_list[i]->args[arg].acc == OPS_WRITE ? 0 : 1);
         if (ops_kernel_list[i]->args[arg].acc != OPS_WRITE)
@@ -673,6 +720,7 @@ int ops_construct_tile_plan() {
               ops_printf("First access to dataset %s is %d (0-write, 1-read)\n",ops_kernel_list[i]->args[arg].dat->name, datasets_accessed[ops_kernel_list[i]->args[arg].dat->index]);
       }
   }
+
   //Register halo depths needed
   depths_to_exchange.resize(OPS_MAX_DIM*4*dats_to_exchange.size()); //left send, left recv, right send, right recv
   for (int i = 0; i < dats_to_exchange.size(); i++) {
@@ -714,10 +762,15 @@ int ops_construct_tile_plan() {
 
   ops_timers_core(&c2, &t2);
   if (OPS_diags > 2)
-    printf("Created tiling plan %g seconds\n", t2 - t1);
+    printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+
   // return index to newly created tiling plan
   return tiling_plans.size() - 1;
 }
+
+////////////////////////////////////////////////////////////////////
+// Execute tiling plan
+////////////////////////////////////////////////////////////////////
 void ops_execute() {
   if (ops_kernel_list.size() == 0)
     return;
@@ -758,6 +811,9 @@ void ops_execute() {
     ops_timers_core(&c,&t2);
     ops_tiled_halo_exchange_time += t2-t1;
   }
+
+  if (OPS_diags>3)
+    ops_printf("Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {

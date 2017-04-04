@@ -4,7 +4,7 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-#./generate.sh
+./generate.sh
 make clean
 make
 

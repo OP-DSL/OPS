@@ -105,7 +105,9 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
 #pragma omp parallel for
   for (int n_y = start[1]; n_y < end[1]; n_y++) {
 #ifdef intel
-#pragma omp simd
+#pragma loop_count(10000)
+#pragma omp simd aligned(xvel0, yvel0, celldx, celldy, pressure, density0,     \
+                         viscosity)
 #else
 #pragma simd
 #endif
@@ -199,6 +201,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 7;
   desc->args = (ops_arg *)malloc(7 * sizeof(ops_arg));
