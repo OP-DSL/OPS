@@ -586,11 +586,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
     // make sure we multiply by the number of data values per
     // element (i.e. dat->dim) to get full size of the data
+    size[0] = size[0] * dat->dim;
+    disp[0] = disp[0] * dat->dim;
     if (block->dims == 1)
      {
        gbl_size[0] = gbl_size[0] * dat->dim; //-- this needs to be tested for 1D
-       size[0] = size[0] * dat->dim;
-       disp[0] = disp[0] * dat->dim;
      }
      else if (block->dims == 2)
      {
@@ -598,15 +598,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
        //to a more consistent post-processing procedure for multi-dim data
        //**note we are using [1] instead of [0] here !!
        gbl_size[0] = gbl_size[0] * dat->dim;
-       size[0] = size[0] * dat->dim;
-       disp[0] = disp[0] * dat->dim;
      }
      else if (block->dims == 3)
      {
        gbl_size[0] =
            gbl_size[0] * dat->dim; //**note that for 3D we are using [0] here !!
-       size[0] = size[0] * dat->dim;
-       disp[0] = disp[0] * dat->dim;
      }
 
     // MPI variables
@@ -1552,7 +1548,8 @@ void ops_read_dat_hdf5(ops_dat dat) {
     if (block->dims == 1)
       gbl_size[0] = gbl_size[0] * dat->dim; //-- this needs to be tested for 1D
     else if (block->dims == 2)
-      gbl_size[1] = gbl_size[1] *
+     //Jianping Meng: It looks that growing the zeroth index  is better
+      gbl_size[0] = gbl_size[0] *
                     dat->dim; //**note we are using [1] instead of [0] here !!
     else if (block->dims == 3)
       gbl_size[0] =
