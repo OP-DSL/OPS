@@ -25,13 +25,13 @@ module load intel-compilers
 module load intel-mpi
 export MPI_INSTALL_PATH=/opt/compilers/intel/intelPS-2015/impi/5.0.3.048/intel64/
 #export MPI_INSTALL_PATH=/home/mgiles/mudalige/mvapich2/intel-15
-#source /opt/compilers/intel/intelPS-2015/composerxe/bin/compilervars.sh intel64
-#source /opt/compilers/intel/intelPS-2015/impi_latest/intel64/bin/mpivars.sh intel64
+source /opt/compilers/intel/intelPS-2015/composerxe/bin/compilervars.sh intel64
+source /opt/compilers/intel/intelPS-2015/impi_latest/intel64/bin/mpivars.sh intel64
 
-#export INTEL_PATH=/opt/compilers/intel/intelPS-2015/composerxe/
-#export MPICH_CXX=/opt/compilers/intel/intelPS-2015/composerxe/bin/icpc
-#export MPICH_CC=/opt/compilers/intel/intelPS-2015/composerxe/bin/icc
-#export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
+export INTEL_PATH=/opt/compilers/intel/intelPS-2015/composerxe/
+export MPICH_CXX=/opt/compilers/intel/intelPS-2015/composerxe/bin/icpc
+export MPICH_CC=/opt/compilers/intel/intelPS-2015/composerxe/bin/icc
+export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 
 #Intel based HDF5
 #unset HDF5_INSTALL_PATH

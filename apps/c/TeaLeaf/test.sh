@@ -58,6 +58,15 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
+echo '============> Running MPI_Tiled'
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+grep "Total Wall time" tea.out
+grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
+grep "PASSED" tea.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f tea.out
+
+
 #echo '============> Running MPI_Inline'
 #export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_inline > perf_out
 #grep "Total Wall time" tea.out
