@@ -16,7 +16,7 @@ rm *.h5
 $MPI_INSTALL_PATH/bin/mpirun -np 10 ./generate_file_mpi
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
-<<COMMENT
+#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out
@@ -115,7 +115,7 @@ rm perf_out
 
 echo "All Intel complied applications PASSED : Exiting Test Script "
 
-COMMENT
+#COMMENT
 cd -
 source ../../scripts/source_pgi_15.10
 
@@ -124,7 +124,7 @@ make
 cd -
 make
 
-<<COMMENT0
+#<<COMMENT0
 #============================ Test Cloverleaf 3D With PGI Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
@@ -219,7 +219,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
-COMMENT0
+#COMMENT0
 
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
