@@ -63,6 +63,7 @@ int ops_enable_tiling = 0;
 int ops_cache_size = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
+int ops_force_decomp[OPS_MAX_DIM] = {0};
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -165,6 +166,24 @@ void ops_set_args(int argc, char *argv) {
     ops_tiling_mpidepth = atoi(temp + 20);
     ops_printf("\n Max tiling depth across processes = %d \n", ops_tiling_mpidepth);
   }
+  pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    ops_force_decomp[0] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in x direction = %d \n", ops_force_decomp[0]);
+  }
+  pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    ops_force_decomp[1] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in y direction = %d \n", ops_force_decomp[1]);
+  }
+  pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    ops_force_decomp[2] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in z direction = %d \n", ops_force_decomp[2]);
+  }
 
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     ops_checkpoint_inmemory = 1;
@@ -193,7 +212,7 @@ void ops_set_args(int argc, char *argv) {
 */
 void ops_init_core(int argc, char **argv, int diags) {
   OPS_diags = diags;
-
+  for (int d = 0; d < OPS_MAX_DIM; d++) ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
 
     ops_set_args(argc, argv[n]);
