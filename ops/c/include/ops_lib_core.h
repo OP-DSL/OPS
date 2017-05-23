@@ -138,6 +138,7 @@ typedef struct {
   int index;             /* index */
   ops_block block;       /* block on which data is defined */
   int dim;               /* number of elements per grid point*/
+  int type_size;         /* bytes per primitive = elem_size/dim */
   int elem_size;         /* number of bytes per grid point*/
   int size[OPS_MAX_DIM]; /* size of the array in each block dimension --
                             including halo*/
@@ -301,6 +302,7 @@ typedef struct ops_kernel_descriptor {
 extern int OPS_hybrid_gpu, OPS_gpu_direct;
 extern int OPS_kern_max, OPS_kern_curr;
 extern ops_kernel *OPS_kernels;
+extern int OPS_soa;
 
 extern int ops_current_kernel;
 

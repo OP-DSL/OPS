@@ -61,6 +61,7 @@ int ops_checkpoint_inmemory = 0;
 int ops_lock_file = 0;
 int ops_enable_tiling = 0;
 int ops_cache_size = 0;
+int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
@@ -389,6 +390,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   dat->block = block;
   dat->dim = dim;
 
+  dat->type_size = type_size;
   // note here that the element size is taken to
   // be the type_size in bytes multiplied by the dimension of an element
   dat->elem_size = type_size * dim;
@@ -896,11 +898,14 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
       for (int i = 0; i < dat->size[2]; i++) {
         for (int j = 0; j < dat->size[1]; j++) {
           for (int k = 0; k < dat->size[0]; k++) {
-            if (fprintf(fp, " %3.10lf",
-                        ((double *)dat->data)[i * dat->size[1] * dat->size[0] +
-                                              j * dat->size[0] + k]) < 0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
+            for (int d = 0; d < dat->dim; d++) {
+              if (fprintf(fp, " %3.10lf",
+                          ((double *)dat->data)
+                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
+                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
+                printf("Error: error writing to %s\n", file_name);
+                exit(2);
+              }
             }
           }
           fprintf(fp, "\n");
@@ -912,11 +917,14 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
       for (int i = 0; i < dat->size[2]; i++) {
         for (int j = 0; j < dat->size[1]; j++) {
           for (int k = 0; k < dat->size[0]; k++) {
-            if (fprintf(fp, "%e ",
-                        ((float *)dat->data)[i * dat->size[1] * dat->size[0] +
-                                             j * dat->size[0] + k]) < 0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
+            for (int d = 0; d < dat->dim; d++) {
+              if (fprintf(fp, "%e ",
+                          ((float *)dat->data)
+                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
+                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
+                printf("Error: error writing to %s\n", file_name);
+                exit(2);
+              }
             }
           }
           fprintf(fp, "\n");
@@ -930,11 +938,14 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
       for (int i = 0; i < dat->size[2]; i++) {
         for (int j = 0; j < dat->size[1]; j++) {
           for (int k = 0; k < dat->size[0]; k++) {
-            if (fprintf(fp, "%d ",
-                        ((int *)dat->data)[i * dat->size[1] * dat->size[0] +
-                                           j * dat->size[0] + k]) < 0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
+            for (int d = 0; d < dat->dim; d++) {
+              if (fprintf(fp, "%d ",
+                          ((int *)dat->data)
+                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
+                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
+                printf("Error: error writing to %s\n", file_name);
+                exit(2);
+              }
             }
           }
           fprintf(fp, "\n");
@@ -954,8 +965,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
         for (int j = 0; j < dat->size[0]; j++) {
           for (int d = 0; d < dat->dim; d++) {
             if (fprintf(fp, " %3.10lf",
-                        ((double *)dat
-                             ->data)[(i * dat->size[0] + j) * dat->dim + d]) <
+                        ((double *)dat->data)
+                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
+                                 : (i * dat->size[0] + j) * dat->dim + d]) <
                 0) {
               printf("Error: error writing to %s\n", file_name);
               exit(2);
@@ -970,8 +982,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
         for (int j = 0; j < dat->size[0]; j++) {
           for (int d = 0; d < dat->dim; d++) {
             if (fprintf(fp, " %e",
-                        ((float *)dat->data)[(i * dat->size[0] + j) * dat->dim +
-                                             d]) < 0) {
+                        ((float *)dat->data)
+                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
+                                 : (i * dat->size[0] + j) * dat->dim + d]) < 0) {
               printf("Error: error writing to %s\n", file_name);
               exit(2);
             }
@@ -988,7 +1001,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
           for (int d = 0; d < dat->dim; d++) {
             if (fprintf(
                     fp, "%d ",
-                    ((int *)dat->data)[(i * dat->size[0] + j) * dat->dim + d]) <
+                    ((int *)dat->data)
+                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
+                                 : (i * dat->size[0] + j) * dat->dim + d]) <
                 0) {
               printf("Error: error writing to %s\n", file_name);
               exit(2);
@@ -1009,7 +1024,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
         strcmp(dat->type, "double precision") == 0) {
       for (int j = 0; j < dat->size[0]; j++) {
         for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%3.10lf", ((double *)dat->data)[j * dat->dim + d]) <
+          if (fprintf(fp, "%3.10lf", ((double *)dat->data)
+            [OPS_soa ? j + d * dat->size[0]
+                     : j * dat->dim + d]) <
               0) {
             printf("Error: error writing to %s\n", file_name);
             exit(2);
@@ -1023,7 +1040,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
                strcmp(dat->type, "real") == 0) {
       for (int j = 0; j < dat->size[0]; j++) {
         for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%e\n", ((float *)dat->data)[j * dat->dim + d]) < 0) {
+          if (fprintf(fp, "%e\n", ((float *)dat->data)
+            [OPS_soa ? j + d * dat->size[0]
+                     : j * dat->dim + d]) < 0) {
             printf("Error: error writing to %s\n", file_name);
             exit(2);
           }
@@ -1036,7 +1055,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
                strcmp(dat->type, "int(4)") == 0) {
       for (int j = 0; j < dat->size[0]; j++) {
         for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%d\n", ((int *)dat->data)[j * dat->dim + d]) < 0) {
+          if (fprintf(fp, "%d\n", ((int *)dat->data)
+            [OPS_soa ? j + d * dat->size[0]
+                     : j * dat->dim + d]) < 0) {
             printf("Error: error writing to %s\n", file_name);
             exit(2);
           }

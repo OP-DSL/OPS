@@ -383,7 +383,7 @@ int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
   /*convert to C indexing*/
   start[0] -= 1;
 
-  int dat = arg->dat->elem_size;
+  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // printf("start[0] = %d, base = %d, dim = %d, d_m[0] = %d dat = %d\n",
@@ -398,7 +398,7 @@ int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
   // printf("base = %d\n",base/(dat/dim));
   /*revert to Fortran indexing*/
   start[0] += 1;
-  return base / (dat / dim) + 1;
+  return base / (arg->dat->type_size) + 1;
 }
 
 int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
@@ -406,7 +406,7 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   start[0] -= 1;
   start[1] -= 1;
 
-  int dat = arg->dat->elem_size;
+  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // set up initial pointers
@@ -423,7 +423,7 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   /*revert to Fortran indexing*/
   start[0] += 1;
   start[1] += 1;
-  return base / (dat / dim) + 1;
+  return base / (arg->dat->type_size) + 1;
 }
 
 int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
@@ -432,7 +432,7 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   start[1] -= 1;
   start[2] -= 1;
 
-  int dat = arg->dat->elem_size;
+  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // set up initial pointers
@@ -453,7 +453,7 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   start[0] += 1;
   start[1] += 1;
   start[2] += 1;
-  return base / (dat / dim) + 1;
+  return base / (arg->dat->type_size) + 1;
 }
 
 char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {

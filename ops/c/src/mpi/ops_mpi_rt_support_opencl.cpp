@@ -551,14 +551,14 @@ static bool isbuilt_copy_frombuf_kernel = false;
 
 const char copy_tobuf_kernel_src[] =
     "__kernel void ops_opencl_copy_tobuf("
-    "__global char * restrict dest, __global const char * restrict src,"
+    "__global char * restrict dest, __global char * restrict src,"
     "const int rx_s, const int rx_e,"
     "const int ry_s, const int ry_e,"
     "const int rz_s, const int rz_e,"
     "const int x_step, const int y_step, const int z_step,"
     "const int size_x, const int size_y, const int size_z,"
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
-    "const int elem_size"
+    "const int type_size, const int dim, const int OPS_soa"
     ") {"
 
     "  int idx_z = rz_s + z_step*get_global_id(2);"
@@ -568,25 +568,30 @@ const char copy_tobuf_kernel_src[] =
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
     "    (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-    "    src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;"
+    "    if (OPS_soa) src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
+    "    else         src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size * dim;"
     "    dest  += ((idx_z-rz_s)*z_step*buf_strides_z+ "
     "(idx_y-ry_s)*y_step*buf_strides_y + "
-    "(idx_x-rx_s)*x_step*buf_strides_x)*elem_size;"
-    "    for(int i=0;i<elem_size;i++) "
-    "    dest[i] = src[i];"
+    "(idx_x-rx_s)*x_step*buf_strides_x)*type_size * dim;"
+    "    for(int d=0;d<dim;d++) {"
+    "      if (OPS_soa) src += size_x * size_y * size_z * type_size;"
+    "      else src += type_size;"
+    "      for(int i=0;i<type_size;i++)"
+    "        dest[d*dim+i] = src[i];"
+    "    }"
     "  }"
     "}\n";
 
 const char copy_frombuf_kernel_src[] =
     "__kernel void ops_opencl_copy_frombuf("
-    "__global char * restrict dest, __global const char * restrict src,"
+    "__global char * restrict dest, __global char * restrict src,"
     "const int rx_s, const int rx_e,"
     "const int ry_s, const int ry_e,"
     "const int rz_s, const int rz_e,"
     "const int x_step, const int y_step, const int z_step,"
     "const int size_x, const int size_y, const int size_z,"
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
-    "const int elem_size"
+    "const int type_size, const int dim, const int OPS_soa"
     "){"
     "  int idx_z = rz_s + z_step*get_global_id(2);"
     "  int idx_y = ry_s + y_step*get_global_id(1);"
@@ -595,12 +600,17 @@ const char copy_frombuf_kernel_src[] =
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
     "    (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-    "    dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * elem_size;"
+    "    if (OPS_soa) dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
+    "    else         dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size * dim;"
     "    src  += ((idx_z-rz_s)*z_step*buf_strides_z+ "
     "(idx_y-ry_s)*y_step*buf_strides_y + "
-    "(idx_x-rx_s)*x_step*buf_strides_x)*elem_size;"
-    "    for(int i=0;i<elem_size;i++) "
-    "    dest[i] = src[i];"
+    "(idx_x-rx_s)*x_step*buf_strides_x)*type_size * dim;"
+    "    for(int d=0;d<dim;d++) {"
+    "      if (OPS_soa) dest += size_x * size_y * size_z * type_size;"
+    "      else dest += type_size;"
+    "      for(int i=0;i<type_size;i++)"
+    "        dest[i] = src[d*dim+i];"
+    "    }"
     "  }"
     "}\n";
 
@@ -739,7 +749,11 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   clSafeCall(clSetKernelArg(copy_tobuf_kernel[0], 16, sizeof(cl_int),
                             (void *)&buf_strides_z));
   clSafeCall(clSetKernelArg(copy_tobuf_kernel[0], 17, sizeof(cl_int),
-                            (void *)&src->elem_size));
+                            (void *)&src->type_size));
+  clSafeCall(clSetKernelArg(copy_tobuf_kernel[0], 18, sizeof(cl_int),
+                            (void *)&src->dim));
+  clSafeCall(clSetKernelArg(copy_tobuf_kernel[0], 19, sizeof(cl_int),
+                            (void *)&OPS_soa));
 
   clSafeCall(clEnqueueNDRangeKernel(OPS_opencl_core.command_queue,
                                     *copy_tobuf_kernel, 3, NULL, globalWorkSize,
@@ -892,7 +906,11 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   clSafeCall(clSetKernelArg(copy_frombuf_kernel[0], 16, sizeof(cl_int),
                             (void *)&buf_strides_z));
   clSafeCall(clSetKernelArg(copy_frombuf_kernel[0], 17, sizeof(cl_int),
-                            (void *)&dest->elem_size));
+                            (void *)&dest->type_size));
+  clSafeCall(clSetKernelArg(copy_frombuf_kernel[0], 18, sizeof(cl_int),
+                            (void *)&dest->dim));
+  clSafeCall(clSetKernelArg(copy_frombuf_kernel[0], 19, sizeof(cl_int),
+                            (void *)&OPS_soa));
   clSafeCall(clEnqueueNDRangeKernel(
       OPS_opencl_core.command_queue, *copy_frombuf_kernel, 3, NULL,
       globalWorkSize, localWorkSize, 0, NULL, NULL));

@@ -94,13 +94,13 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     dat->dirty_hd = 0;
   }
 
-  const char *__restrict src = dat->data_d + src_offset * dat->elem_size;
-  if (halo_buffer_size < halo->count * halo->blocklength && !OPS_gpu_direct) {
+  const char *__restrict src = dat->data_d + src_offset * (OPS_soa ? dat->type_size : dat->elem_size);
+  if (halo_buffer_size < halo->count * halo->blocklength * dat->dim && !OPS_gpu_direct) {
     if (halo_buffer_d != NULL)
       cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void **)&halo_buffer_d,
-                             halo->count * halo->blocklength * 4));
-    halo_buffer_size = halo->count * halo->blocklength * 4;
+                             halo->count * halo->blocklength * dat->dim * 4));
+    halo_buffer_size = halo->count * halo->blocklength * dat->dim * 4;
   }
   char *device_buf = NULL;
   if (OPS_gpu_direct)
@@ -123,7 +123,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   }
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d,
-                             halo->count * halo->blocklength,
+                             halo->count * halo->blocklength * dat->dim,
                              cudaMemcpyDeviceToHost));
   else
     cutilSafeCall(cudaDeviceSynchronize());
@@ -136,13 +136,13 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     ops_upload_dat(dat);
     dat->dirty_hd = 0;
   }
-  char *__restrict dest = dat->data_d + dest_offset * dat->elem_size;
-  if (halo_buffer_size < halo->count * halo->blocklength && !OPS_gpu_direct) {
+  char *__restrict dest = dat->data_d + dest_offset * (OPS_soa ? dat->type_size : dat->elem_size);
+  if (halo_buffer_size < halo->count * halo->blocklength * dat->dim && !OPS_gpu_direct) {
     if (halo_buffer_d != NULL)
       cutilSafeCall(cudaFree(halo_buffer_d));
     cutilSafeCall(cudaMalloc((void **)&halo_buffer_d,
-                             halo->count * halo->blocklength * 4));
-    halo_buffer_size = halo->count * halo->blocklength * 4;
+                             halo->count * halo->blocklength * dat->dim * 4));
+    halo_buffer_size = halo->count * halo->blocklength * dat->dim * 4;
   }
 
   const char *device_buf = NULL;
@@ -153,7 +153,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(halo_buffer_d, src,
-                             halo->count * halo->blocklength,
+                             halo->count * halo->blocklength * dat->dim,
                              cudaMemcpyHostToDevice));
   if (halo->blocklength % 4 == 0) {
     int num_threads = 128;
@@ -201,7 +201,7 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int x_step, int y_step, int z_step,
                                   int size_x, int size_y, int size_z,
                                   int buf_strides_x, int buf_strides_y,
-                                  int buf_strides_z, int elem_size) {
+                                  int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
@@ -211,12 +211,13 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
       (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-    src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * elem_size;
+    if (OPS_soa) src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+    else src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
     dest += ((idx_z - rz_s) * z_step * buf_strides_z +
              (idx_y - ry_s) * y_step * buf_strides_y +
              (idx_x - rx_s) * x_step * buf_strides_x) *
-            elem_size;
-    memcpy(dest, src, elem_size);
+            type_size * dim ;
+    memcpy(dest+d*type_size, src, type_size);
   }
 }
 
@@ -225,7 +226,7 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int x_step, int y_step, int z_step,
                                     int size_x, int size_y, int size_z,
                                     int buf_strides_x, int buf_strides_y,
-                                    int buf_strides_z, int elem_size) {
+                                    int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
@@ -235,12 +236,17 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
       (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-    dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * elem_size;
+    if (OPS_soa) dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+    else dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
     src += ((idx_z - rz_s) * z_step * buf_strides_z +
             (idx_y - ry_s) * y_step * buf_strides_y +
             (idx_x - rx_s) * x_step * buf_strides_x) *
-           elem_size;
-    memcpy(dest, src, elem_size);
+           type_size * dim;
+    for (int d = 0; d < dim; d++) {
+      if (OPS_soa) dest += size_x * size_y * size_z * type_size;
+      else dest += type_size;
+      memcpy(dest, src + d * type_size, type_size);
+    }
   }
 }
 
@@ -294,7 +300,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   copy_kernel_tobuf<<<grid, tblock>>>(
       gpu_ptr, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, src->elem_size);
+      buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_soa);
 
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size * sizeof(char),
@@ -354,7 +360,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   copy_kernel_frombuf<<<grid, tblock>>>(
       dest->data_d, gpu_ptr, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, dest->elem_size);
+      buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_soa);
   dest->dirty_hd = 2;
 }
 

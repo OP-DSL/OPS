@@ -387,7 +387,8 @@ void ops_decomp_dats(sub_block *sb) {
     dat->base_offset = 0;
     long cumsize = 1;
     for (int i = 0; i < block->dims; i++) {
-      dat->base_offset += dat->elem_size * cumsize *
+      dat->base_offset += (OPS_soa ? dat->type_size : dat->elem_size)
+                          * cumsize *
                           (-dat->base[i] - dat->d_m[i] - sd->d_im[i]);
       cumsize *= dat->size[i];
     }
@@ -421,8 +422,8 @@ void ops_decomp_dats(sub_block *sb) {
         // (strided) halo access
         sd->halos[MAX_DEPTH * n + d].count = prod[sb->ndim - 1] / prod[n];
         sd->halos[MAX_DEPTH * n + d].blocklength =
-            d * prod[n - 1] * dat->elem_size;
-        sd->halos[MAX_DEPTH * n + d].stride = prod[n] * dat->elem_size;
+            d * prod[n - 1] * dat->type_size;
+        sd->halos[MAX_DEPTH * n + d].stride = prod[n] * dat->type_size;
 
         // printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1],
         // prod[n]);
