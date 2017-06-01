@@ -190,7 +190,7 @@ void read_input()
               }
               else if(strcmp(trimwhitespace(token),"tl_ch_cg_epslim") == 0) {
                 token = strtok(NULL, " =");
-                tl_ch_cg_epslim = atoi(token);
+                tl_ch_cg_epslim = atof(token);
                 ops_fprintf(g_out," %20s: %d\n", "tl_ch_cg_epslim",tl_ch_cg_epslim);
               }
               else if(strcmp(trimwhitespace(token),"tl_check_result") == 0) {

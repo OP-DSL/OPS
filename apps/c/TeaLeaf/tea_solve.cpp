@@ -192,8 +192,8 @@ void tea_leaf() {
         } else if (tl_use_ppcg) {
           // currently also calculate chebyshev coefficients
           // preallocate space for the coefficients
-          ch_alphas = (double*)malloc((max_iters+1)*sizeof(double));
-          ch_betas  = (double*)malloc((max_iters+1)*sizeof(double));
+          ch_alphas = (double*)malloc(MAX((max_iters+1),(tl_ppcg_inner_steps+1))*sizeof(double));
+          ch_betas  = (double*)malloc(MAX((max_iters+1),(tl_ppcg_inner_steps+1))*sizeof(double));
           
           //ls_coefs becomes ch_coefs
           tea_calc_ch_coefs(ch_alphas, ch_betas, eigmin, eigmax,
