@@ -68,6 +68,7 @@ from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_mpi_openmp4 import ops_gen_mpi_openmp4
 
 import util
 
@@ -809,6 +810,7 @@ def main(source_files):
   ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_gen_mpi_openmp4(str(source_files[0]), date, consts, kernels)
 
   import subprocess
   retcode = subprocess.call("which clang-format > /dev/null", shell=True)

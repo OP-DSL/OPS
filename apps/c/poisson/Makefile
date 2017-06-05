@@ -87,8 +87,17 @@ endif
   MPICC     = cc
   MPIFLAGS  = $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),clang)                                                                              
+CPP           = clang++                                                                                   
+CPPFLAGS      = -O0 -g -DUNIX -Wall                                                                       
+MPICPP        = $(MPI_INSTALL_PATH)/bin/mpiCC
+MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
+                                                             
+MPIFLAGS      = $(CPPFLAGS)                                                                              
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
@@ -105,6 +114,8 @@ ifdef CHECKPOINTING
 endif
 endif
 
+#HDF5_INC             := -I/usr/include/hdf5/openmpi/
+#HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
 
 # flags for nvcc
 # set NV_ARCH to select the correct one
@@ -240,11 +251,35 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 	$(MPICC) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
               -I. OpenACC/$*_c.c -c -o OpenACC/$*_c.o
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
-        -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
+		-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
 poisson_openacc: $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
     poisson_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o poisson_openacc
+
+
+openmp45_obj_list = $(shell find OpenMP4/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+openmp45_c_obj_list = $(shell find OpenMP4/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+./OpenMP4/poisson_kernels.o: ./OpenMP4/poisson_kernels.cpp Makefile
+	$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
+	-I. OpenMP4/poisson_kernels.cpp -c -o OpenMP4/poisson_kernels.o
+
+./OpenMP4/%.o: ./OpenMP4/%.cpp ./OpenMP4/%_c.c Makefile
+	@echo "Compiling kernel" $*
+	$(MPICC) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
+              -I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
+	$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
+        -I. OpenMP4/$*.cpp -c -o OpenMP4/$*.o
+
+poisson_openmp45: $(openmp45_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+	$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+    poisson_ops.cpp -I. $(openmp45_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o poisson_openmp45
+
+
+
+
+
 
 poisson_mpi_openacc: $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
