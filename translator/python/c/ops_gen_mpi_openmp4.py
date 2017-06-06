@@ -371,7 +371,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     #code('\n')
     #code(line)
     line = line + '\n'
-    line = line + '#pragma omp distribute parallel for simd collapse(2) schedule(static,1)'
+    line = line + '#pragma omp distribute parallel for simd collapse('+str(NDIM)+') schedule(static,1)'
     #code(line)
     
     for n in range (0,nargs):
@@ -394,7 +394,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     if NDIM==3:
       FOR('n_z','0','z_size')
       code('#ifdef OPS_GPU')
-      code(line)
+      #code(line)
       code('#endif')
       FOR('n_y','0','y_size')
       code('#ifdef OPS_GPU')
@@ -471,7 +471,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
           text = text +' p_a'+str(n)+'+ base'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
           ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         elif NDIM == 3:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          text = text +' p_a'+str(n)+'+ base'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
           text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:

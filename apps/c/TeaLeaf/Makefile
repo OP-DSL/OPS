@@ -25,6 +25,9 @@ ifdef CHECKPOINTING
 endif
 endif
 
+#HDF5_INC             := -I/usr/include/hdf5/openmpi/
+#HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
+
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++
 ifdef DEBUG
@@ -107,8 +110,15 @@ endif
   MPICC     = mpixlc
   MPIFLAGS  = $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),clang)
+CPP           = clang++
+CPPFLAGS      = -O0 -g -DUNIX -Wall
+MPICPP        = $(MPI_INSTALL_PATH)/bin/mpiCC
+MPIFLAGS      = $(CPPFLAGS)
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
@@ -264,6 +274,28 @@ tealeaf_openacc: $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(
 tealeaf_mpi_openacc: $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
 		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_openacc
+
+
+openmp4_obj_list = $(shell find ./OpenMP4/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+openmp4_c_obj_list = $(shell find ./OpenMP4/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+./OpenMP4/tea_leaf_kernels.o: ./OpenMP4/tea_leaf_kernels.cpp ./OpenMP4/tea_leaf_common.h Makefile
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		-I. OpenMP4/tea_leaf_kernels.cpp -c -o OpenMP4/tea_leaf_kernels.o
+
+./OpenMP4/%.o: ./OpenMP4/%.cpp ./OpenMP4/%_c.c ./OpenMP4/tea_leaf_common.h Makefile
+		@echo "Compiling kernel" $*
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		-I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		-I. OpenMP4/$*.cpp -c -o OpenMP4/$*.o
+
+tealeaf_openmp4: $(openmp4_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) \
+                $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_openmp4
+
+
 
 tealeaf_opencl: ./OpenCL/tealeaf_opencl_kernels.o $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 		$(CPP) $(MPIFLAGS) $(OCL_FLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) ./OpenCL/tealeaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB) -o tealeaf_opencl
