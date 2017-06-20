@@ -295,7 +295,7 @@ void ops_par_loop_advec_cell_kernel4_xdir(
       int size = 1;
       for (int i = 0; i < args[10].dat->block->dims; i++)
         size += size * args[10].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+      //#pragma omp target update to( args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 11);
@@ -305,7 +305,7 @@ void ops_par_loop_advec_cell_kernel4_xdir(
       int size = 1;
       for (int i = 0; i < args[10].dat->block->dims; i++)
         size += size * args[10].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+      //#pragma omp target update from(args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 11);

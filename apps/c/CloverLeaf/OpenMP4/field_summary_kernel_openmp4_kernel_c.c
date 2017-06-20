@@ -34,86 +34,83 @@ void field_summary_kernel_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, double *p_a7, double *p_a8, double *p_a9, double *p_a10,
     int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
   double p_a6_0 = p_a6[0];
   double p_a7_0 = p_a7[0];
   double p_a8_0 = p_a8[0];
   double p_a9_0 = p_a9[0];
   double p_a10_0 = p_a10[0];
 #pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
-                                              p_a3[0 : tot3],                  \
-                                                   p_a4[0 : tot4],             \
-                                                        p_a5[0 : tot5])
-#ifdef OPS_GPU
-
-#pragma omp target map(                                                        \
     to : p_a0[0 : tot0],                                                       \
               p_a1[0 : tot1],                                                  \
                    p_a2[0 : tot2],                                             \
                         p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4], p_a5[0 : tot5])                   \
-                                 map(tofrom : p_a6_0) map(tofrom : p_a7_0)     \
-                                     map(tofrom : p_a8_0) map(tofrom : p_a9_0) \
-                                         map(tofrom : p_a10_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128)                      \
-    reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(                     \
-        + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
-#pragma omp distribute parallel for simd collapse(2)                           \
-    schedule(static, 1) reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction( \
-        + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
+                             p_a4[0 : tot4],                                   \
+                                  p_a5[0 : tot5],                              \
+                                       states[0 : number_of_states])
+#ifdef OPS_GPU
+
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block) map(tofrom : p_a6_0)                   \
+        map(tofrom : p_a7_0) map(tofrom : p_a8_0) map(tofrom : p_a9_0)         \
+            map(tofrom : p_a10_0)                                              \
+                reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(         \
+                    + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
+#pragma omp distribute parallel for simd schedule(static, 1) reduction(        \
+    + : p_a6_0) reduction(+ : p_a7_0) reduction(+ : p_a8_0) reduction(         \
+        + : p_a9_0) reduction(+ : p_a10_0)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const double *volume =
-          p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_field_summary_kernel * 1 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *volume =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_field_summary_kernel * 1 * 1;
 
-      const double *density0 =
-          p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_field_summary_kernel * 1 * 1;
-      const double *energy0 =
-          p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_field_summary_kernel * 1 * 1;
+    const double *density0 =
+        p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_field_summary_kernel * 1 * 1;
+    const double *energy0 =
+        p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_field_summary_kernel * 1 * 1;
 
-      const double *pressure =
-          p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_field_summary_kernel * 1 * 1;
-      const double *xvel0 =
-          p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_field_summary_kernel * 1 * 1;
+    const double *pressure =
+        p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_field_summary_kernel * 1 * 1;
+    const double *xvel0 =
+        p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_field_summary_kernel * 1 * 1;
 
-      const double *yvel0 =
-          p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_field_summary_kernel * 1 * 1;
-      double *vol = &p_a6_0;
+    const double *yvel0 =
+        p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_field_summary_kernel * 1 * 1;
+    double *vol = &p_a6_0;
 
-      double *mass = &p_a7_0;
-      double *ie = &p_a8_0;
+    double *mass = &p_a7_0;
+    double *ie = &p_a8_0;
 
-      double *ke = &p_a9_0;
-      double *press = &p_a10_0;
+    double *ke = &p_a9_0;
+    double *press = &p_a10_0;
 
-      double vsqrd, cell_vol, cell_mass;
+    double vsqrd, cell_vol, cell_mass;
 
-      vsqrd = 0.0;
-      vsqrd = vsqrd +
-              0.25 * (xvel0[OPS_ACC4(0, 0)] * xvel0[OPS_ACC4(0, 0)] +
-                      yvel0[OPS_ACC5(0, 0)] * yvel0[OPS_ACC5(0, 0)]);
-      vsqrd = vsqrd +
-              0.25 * (xvel0[OPS_ACC4(1, 0)] * xvel0[OPS_ACC4(1, 0)] +
-                      yvel0[OPS_ACC5(1, 0)] * yvel0[OPS_ACC5(1, 0)]);
-      vsqrd = vsqrd +
-              0.25 * (xvel0[OPS_ACC4(0, 1)] * xvel0[OPS_ACC4(0, 1)] +
-                      yvel0[OPS_ACC5(0, 1)] * yvel0[OPS_ACC5(0, 1)]);
-      vsqrd = vsqrd +
-              0.25 * (xvel0[OPS_ACC4(1, 1)] * xvel0[OPS_ACC4(1, 1)] +
-                      yvel0[OPS_ACC5(1, 1)] * yvel0[OPS_ACC5(1, 1)]);
+    vsqrd = 0.0;
+    vsqrd = vsqrd +
+            0.25 * (xvel0[OPS_ACC4(0, 0)] * xvel0[OPS_ACC4(0, 0)] +
+                    yvel0[OPS_ACC5(0, 0)] * yvel0[OPS_ACC5(0, 0)]);
+    vsqrd = vsqrd +
+            0.25 * (xvel0[OPS_ACC4(1, 0)] * xvel0[OPS_ACC4(1, 0)] +
+                    yvel0[OPS_ACC5(1, 0)] * yvel0[OPS_ACC5(1, 0)]);
+    vsqrd = vsqrd +
+            0.25 * (xvel0[OPS_ACC4(0, 1)] * xvel0[OPS_ACC4(0, 1)] +
+                    yvel0[OPS_ACC5(0, 1)] * yvel0[OPS_ACC5(0, 1)]);
+    vsqrd = vsqrd +
+            0.25 * (xvel0[OPS_ACC4(1, 1)] * xvel0[OPS_ACC4(1, 1)] +
+                    yvel0[OPS_ACC5(1, 1)] * yvel0[OPS_ACC5(1, 1)]);
 
-      cell_vol = volume[OPS_ACC0(0, 0)];
-      cell_mass = cell_vol * density0[OPS_ACC1(0, 0)];
-      *vol = *vol + cell_vol;
-      *mass = *mass + cell_mass;
-      *ie = *ie + cell_mass * energy0[OPS_ACC2(0, 0)];
-      *ke = *ke + cell_mass * 0.5 * vsqrd;
-      *press = *press + cell_vol * pressure[OPS_ACC3(0, 0)];
-    }
+    cell_vol = volume[OPS_ACC0(0, 0)];
+    cell_mass = cell_vol * density0[OPS_ACC1(0, 0)];
+    *vol = *vol + cell_vol;
+    *mass = *mass + cell_mass;
+    *ie = *ie + cell_mass * energy0[OPS_ACC2(0, 0)];
+    *ke = *ke + cell_mass * 0.5 * vsqrd;
+    *press = *press + cell_vol * pressure[OPS_ACC3(0, 0)];
   }
   p_a6[0] = p_a6_0;
   p_a7[0] = p_a7_0;

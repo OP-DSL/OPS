@@ -20,35 +20,35 @@ void calc_dt_kernel_get_c_wrapper(double *p_a0, int base0, int tot0,
                                   double *p_a1, int base1, int tot1,
                                   double *p_a2, double *p_a3, int x_size,
                                   int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
   double p_a2_0 = p_a2[0];
   double p_a3_0 = p_a3[0];
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1])
+#pragma omp target enter data map(                                             \
+    to : p_a0[0 : tot0], p_a1[0 : tot1], states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0], p_a1[0 : tot1])                    \
-                           map(tofrom : p_a2_0) map(tofrom : p_a3_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128)                      \
-    reduction(+ : p_a2_0) reduction(+ : p_a3_0)
-#pragma omp distribute parallel for simd collapse(2)                           \
-    schedule(static, 1) reduction(+ : p_a2_0) reduction(+ : p_a3_0)
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block) map(tofrom : p_a2_0)                   \
+        map(tofrom : p_a3_0) reduction(+ : p_a2_0) reduction(+ : p_a3_0)
+#pragma omp distribute parallel for simd schedule(static, 1) reduction(        \
+    + : p_a2_0) reduction(+ : p_a3_0)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const double *cellx =
-          p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_get * 0 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *cellx =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_get * 0 * 1;
 
-      const double *celly =
-          p_a1 + base1 + n_x * 0 * 1 + n_y * xdim1_calc_dt_kernel_get * 1 * 1;
-      double *xl_pos = &p_a2_0;
+    const double *celly =
+        p_a1 + base1 + n_x * 0 * 1 + n_y * xdim1_calc_dt_kernel_get * 1 * 1;
+    double *xl_pos = &p_a2_0;
 
-      double *yl_pos = &p_a3_0;
+    double *yl_pos = &p_a3_0;
 
-      *xl_pos = cellx[OPS_ACC0(0, 0)];
-      *yl_pos = celly[OPS_ACC1(0, 0)];
-    }
+    *xl_pos = cellx[OPS_ACC0(0, 0)];
+    *yl_pos = celly[OPS_ACC1(0, 0)];
   }
   p_a2[0] = p_a2_0;
   p_a3[0] = p_a3_0;

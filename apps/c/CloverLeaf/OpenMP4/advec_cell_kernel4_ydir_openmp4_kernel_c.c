@@ -50,84 +50,75 @@ void advec_cell_kernel4_ydir_c_wrapper(
     double *p_a6, int base6, int tot6, double *p_a7, int base7, int tot7,
     double *p_a8, int base8, int tot8, double *p_a9, int base9, int tot9,
     double *p_a10, int base10, int tot10, int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
 #pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10])
+    to : p_a0                                                                  \
+    [0 : tot0], p_a1                                                           \
+     [0 : tot1], p_a2                                                          \
+      [0 : tot2],                                                              \
+       p_a3[0 : tot3],                                                         \
+            p_a4[0 : tot4],                                                    \
+                 p_a5[0 : tot5],                                               \
+                      p_a6[0 : tot6],                                          \
+                           p_a7[0 : tot7],                                     \
+                                p_a8[0 : tot8],                                \
+                                     p_a9[0 : tot9],                           \
+                                          p_a10[0 : tot10],                    \
+                                                states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(2) schedule(static, 1)
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block)
+#pragma omp distribute parallel for simd schedule(static, 1)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double *density1 = p_a0 + base0 + n_x * 1 * 1 +
-                         n_y * xdim0_advec_cell_kernel4_ydir * 1 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    double *density1 = p_a0 + base0 + n_x * 1 * 1 +
+                       n_y * xdim0_advec_cell_kernel4_ydir * 1 * 1;
 
-      double *energy1 = p_a1 + base1 + n_x * 1 * 1 +
-                        n_y * xdim1_advec_cell_kernel4_ydir * 1 * 1;
-      const double *mass_flux_y = p_a2 + base2 + n_x * 1 * 1 +
-                                  n_y * xdim2_advec_cell_kernel4_ydir * 1 * 1;
+    double *energy1 = p_a1 + base1 + n_x * 1 * 1 +
+                      n_y * xdim1_advec_cell_kernel4_ydir * 1 * 1;
+    const double *mass_flux_y = p_a2 + base2 + n_x * 1 * 1 +
+                                n_y * xdim2_advec_cell_kernel4_ydir * 1 * 1;
 
-      const double *vol_flux_y = p_a3 + base3 + n_x * 1 * 1 +
-                                 n_y * xdim3_advec_cell_kernel4_ydir * 1 * 1;
-      const double *pre_vol = p_a4 + base4 + n_x * 1 * 1 +
-                              n_y * xdim4_advec_cell_kernel4_ydir * 1 * 1;
+    const double *vol_flux_y = p_a3 + base3 + n_x * 1 * 1 +
+                               n_y * xdim3_advec_cell_kernel4_ydir * 1 * 1;
+    const double *pre_vol = p_a4 + base4 + n_x * 1 * 1 +
+                            n_y * xdim4_advec_cell_kernel4_ydir * 1 * 1;
 
-      const double *post_vol = p_a5 + base5 + n_x * 1 * 1 +
-                               n_y * xdim5_advec_cell_kernel4_ydir * 1 * 1;
-      double *pre_mass = p_a6 + base6 + n_x * 1 * 1 +
-                         n_y * xdim6_advec_cell_kernel4_ydir * 1 * 1;
+    const double *post_vol = p_a5 + base5 + n_x * 1 * 1 +
+                             n_y * xdim5_advec_cell_kernel4_ydir * 1 * 1;
+    double *pre_mass = p_a6 + base6 + n_x * 1 * 1 +
+                       n_y * xdim6_advec_cell_kernel4_ydir * 1 * 1;
 
-      double *post_mass = p_a7 + base7 + n_x * 1 * 1 +
-                          n_y * xdim7_advec_cell_kernel4_ydir * 1 * 1;
-      double *advec_vol = p_a8 + base8 + n_x * 1 * 1 +
-                          n_y * xdim8_advec_cell_kernel4_ydir * 1 * 1;
+    double *post_mass = p_a7 + base7 + n_x * 1 * 1 +
+                        n_y * xdim7_advec_cell_kernel4_ydir * 1 * 1;
+    double *advec_vol = p_a8 + base8 + n_x * 1 * 1 +
+                        n_y * xdim8_advec_cell_kernel4_ydir * 1 * 1;
 
-      double *post_ener = p_a9 + base9 + n_x * 1 * 1 +
-                          n_y * xdim9_advec_cell_kernel4_ydir * 1 * 1;
-      const double *ener_flux = p_a10 + base10 + n_x * 1 * 1 +
-                                n_y * xdim10_advec_cell_kernel4_ydir * 1 * 1;
+    double *post_ener = p_a9 + base9 + n_x * 1 * 1 +
+                        n_y * xdim9_advec_cell_kernel4_ydir * 1 * 1;
+    const double *ener_flux = p_a10 + base10 + n_x * 1 * 1 +
+                              n_y * xdim10_advec_cell_kernel4_ydir * 1 * 1;
 
-      pre_mass[OPS_ACC6(0, 0)] =
-          density1[OPS_ACC0(0, 0)] * pre_vol[OPS_ACC4(0, 0)];
-      post_mass[OPS_ACC7(0, 0)] = pre_mass[OPS_ACC6(0, 0)] +
-                                  mass_flux_y[OPS_ACC2(0, 0)] -
-                                  mass_flux_y[OPS_ACC2(0, 1)];
-      post_ener[OPS_ACC9(0, 0)] =
-          (energy1[OPS_ACC1(0, 0)] * pre_mass[OPS_ACC6(0, 0)] +
-           ener_flux[OPS_ACC10(0, 0)] - ener_flux[OPS_ACC10(0, 1)]) /
-          post_mass[OPS_ACC7(0, 0)];
-      advec_vol[OPS_ACC8(0, 0)] = pre_vol[OPS_ACC4(0, 0)] +
-                                  vol_flux_y[OPS_ACC3(0, 0)] -
-                                  vol_flux_y[OPS_ACC3(0, 1)];
-      density1[OPS_ACC0(0, 0)] =
-          post_mass[OPS_ACC7(0, 0)] / advec_vol[OPS_ACC8(0, 0)];
-      energy1[OPS_ACC1(0, 0)] = post_ener[OPS_ACC9(0, 0)];
-    }
+    pre_mass[OPS_ACC6(0, 0)] =
+        density1[OPS_ACC0(0, 0)] * pre_vol[OPS_ACC4(0, 0)];
+    post_mass[OPS_ACC7(0, 0)] = pre_mass[OPS_ACC6(0, 0)] +
+                                mass_flux_y[OPS_ACC2(0, 0)] -
+                                mass_flux_y[OPS_ACC2(0, 1)];
+    post_ener[OPS_ACC9(0, 0)] =
+        (energy1[OPS_ACC1(0, 0)] * pre_mass[OPS_ACC6(0, 0)] +
+         ener_flux[OPS_ACC10(0, 0)] - ener_flux[OPS_ACC10(0, 1)]) /
+        post_mass[OPS_ACC7(0, 0)];
+    advec_vol[OPS_ACC8(0, 0)] = pre_vol[OPS_ACC4(0, 0)] +
+                                vol_flux_y[OPS_ACC3(0, 0)] -
+                                vol_flux_y[OPS_ACC3(0, 1)];
+    density1[OPS_ACC0(0, 0)] =
+        post_mass[OPS_ACC7(0, 0)] / advec_vol[OPS_ACC8(0, 0)];
+    energy1[OPS_ACC1(0, 0)] = post_ener[OPS_ACC9(0, 0)];
   }
 }
 #undef OPS_ACC0

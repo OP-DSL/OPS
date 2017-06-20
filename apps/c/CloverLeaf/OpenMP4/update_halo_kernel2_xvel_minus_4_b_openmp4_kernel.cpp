@@ -136,7 +136,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_b(char const *name,
       int size = 1;
       for (int i = 0; i < args[2].dat->block->dims; i++)
         size += size * args[2].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+      //#pragma omp target update to( args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 3);
@@ -146,7 +146,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_b(char const *name,
       int size = 1;
       for (int i = 0; i < args[2].dat->block->dims; i++)
         size += size * args[2].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+      //#pragma omp target update from(args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 3);

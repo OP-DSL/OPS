@@ -37,67 +37,62 @@ void update_halo_kernel1_l1_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, int base6, int tot6, int *p_a7, int tot7, int x_size,
     int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
 #pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2],                                  \
-                                   p_a3[0 : tot3],                             \
-                                        p_a4[0 : tot4],                        \
-                                             p_a5[0 : tot5],                   \
-                                                  p_a6[0 : tot6],              \
-                                                       p_a7[0 : tot7])
+    to : p_a0[0 : tot0],                                                       \
+              p_a1[0 : tot1],                                                  \
+                   p_a2[0 : tot2],                                             \
+                        p_a3[0 : tot3],                                        \
+                             p_a4[0 : tot4],                                   \
+                                  p_a5[0 : tot5],                              \
+                                       p_a6[0 : tot6],                         \
+                                            p_a7[0 : tot7],                    \
+                                                 states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0],                                    \
-                                 p_a1[0 : tot1],                               \
-                                      p_a2[0 : tot2],                          \
-                                           p_a3[0 : tot3],                     \
-                                                p_a4[0 : tot4],                \
-                                                     p_a5[0 : tot5],           \
-                                                          p_a6[0 : tot6],      \
-                                                               p_a7[0 : tot7])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(2) schedule(static, 1)
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block)
+#pragma omp distribute parallel for simd schedule(static, 1)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double *density0 = p_a0 + base0 + n_x * 1 * 1 +
-                         n_y * xdim0_update_halo_kernel1_l1 * 1 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    double *density0 =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_update_halo_kernel1_l1 * 1 * 1;
 
-      double *density1 = p_a1 + base1 + n_x * 1 * 1 +
-                         n_y * xdim1_update_halo_kernel1_l1 * 1 * 1;
-      double *energy0 = p_a2 + base2 + n_x * 1 * 1 +
-                        n_y * xdim2_update_halo_kernel1_l1 * 1 * 1;
+    double *density1 =
+        p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_update_halo_kernel1_l1 * 1 * 1;
+    double *energy0 =
+        p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_update_halo_kernel1_l1 * 1 * 1;
 
-      double *energy1 = p_a3 + base3 + n_x * 1 * 1 +
-                        n_y * xdim3_update_halo_kernel1_l1 * 1 * 1;
-      double *pressure = p_a4 + base4 + n_x * 1 * 1 +
-                         n_y * xdim4_update_halo_kernel1_l1 * 1 * 1;
+    double *energy1 =
+        p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_update_halo_kernel1_l1 * 1 * 1;
+    double *pressure =
+        p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_update_halo_kernel1_l1 * 1 * 1;
 
-      double *viscosity = p_a5 + base5 + n_x * 1 * 1 +
-                          n_y * xdim5_update_halo_kernel1_l1 * 1 * 1;
-      double *soundspeed = p_a6 + base6 + n_x * 1 * 1 +
-                           n_y * xdim6_update_halo_kernel1_l1 * 1 * 1;
+    double *viscosity =
+        p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_update_halo_kernel1_l1 * 1 * 1;
+    double *soundspeed =
+        p_a6 + base6 + n_x * 1 * 1 + n_y * xdim6_update_halo_kernel1_l1 * 1 * 1;
 
-      const int *fields = p_a7;
+    const int *fields = p_a7;
 
-      if (fields[FIELD_DENSITY0] == 1)
-        density0[OPS_ACC0(0, 0)] = density0[OPS_ACC0(1, 0)];
-      if (fields[FIELD_DENSITY1] == 1)
-        density1[OPS_ACC1(0, 0)] = density1[OPS_ACC1(1, 0)];
-      if (fields[FIELD_ENERGY0] == 1)
-        energy0[OPS_ACC2(0, 0)] = energy0[OPS_ACC2(1, 0)];
-      if (fields[FIELD_ENERGY1] == 1)
-        energy1[OPS_ACC3(0, 0)] = energy1[OPS_ACC3(1, 0)];
-      if (fields[FIELD_PRESSURE] == 1)
-        pressure[OPS_ACC4(0, 0)] = pressure[OPS_ACC4(1, 0)];
-      if (fields[FIELD_VISCOSITY] == 1)
-        viscosity[OPS_ACC5(0, 0)] = viscosity[OPS_ACC5(1, 0)];
-      if (fields[FIELD_SOUNDSPEED] == 1)
-        soundspeed[OPS_ACC6(0, 0)] = soundspeed[OPS_ACC6(1, 0)];
-    }
+    if (fields[FIELD_DENSITY0] == 1)
+      density0[OPS_ACC0(0, 0)] = density0[OPS_ACC0(1, 0)];
+    if (fields[FIELD_DENSITY1] == 1)
+      density1[OPS_ACC1(0, 0)] = density1[OPS_ACC1(1, 0)];
+    if (fields[FIELD_ENERGY0] == 1)
+      energy0[OPS_ACC2(0, 0)] = energy0[OPS_ACC2(1, 0)];
+    if (fields[FIELD_ENERGY1] == 1)
+      energy1[OPS_ACC3(0, 0)] = energy1[OPS_ACC3(1, 0)];
+    if (fields[FIELD_PRESSURE] == 1)
+      pressure[OPS_ACC4(0, 0)] = pressure[OPS_ACC4(1, 0)];
+    if (fields[FIELD_VISCOSITY] == 1)
+      viscosity[OPS_ACC5(0, 0)] = viscosity[OPS_ACC5(1, 0)];
+    if (fields[FIELD_SOUNDSPEED] == 1)
+      soundspeed[OPS_ACC6(0, 0)] = soundspeed[OPS_ACC6(1, 0)];
   }
 }
 #undef OPS_ACC0

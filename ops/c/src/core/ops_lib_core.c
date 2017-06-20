@@ -78,6 +78,8 @@ Double_linked_list OPS_dat_list; // Head of the double linked list
 
 int OPS_block_size_x = 32;
 int OPS_block_size_y = 4;
+int OPS_threads = 64;
+int OPS_threads_for_block = 128;
 
 double ops_gather_time = 0.0;
 double ops_scatter_time = 0.0;
@@ -138,6 +140,18 @@ void ops_set_args(int argc, char *argv) {
     strncpy(temp, pch, 20);
     OPS_block_size_y = atoi(temp + 17);
     ops_printf("\n OPS_block_size_y = %d \n", OPS_block_size_y);
+  }
+  pch = strstr(argv, "OPS_NTHREADS=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 17);
+    OPS_threads = atoi(temp + 13);
+    ops_printf("\n OPS_threads = %d \n", OPS_threads);
+  }
+  pch = strstr(argv, "OPS_THREADS_FOR_BLOCK=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 26);
+    OPS_threads_for_block = atoi(temp + 22);
+    ops_printf("\n OPS_threads_for_block = %d \n", OPS_threads_for_block);
   }
   pch = strstr(argv, "-gpudirect");
   if (pch != NULL) {

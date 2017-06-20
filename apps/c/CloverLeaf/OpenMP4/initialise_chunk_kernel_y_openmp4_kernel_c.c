@@ -23,36 +23,37 @@ void initialise_chunk_kernel_y_c_wrapper(double *p_a0, int base0, int tot0,
                                          int *p_a1, int base1, int tot1,
                                          double *p_a2, int base2, int tot2,
                                          int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1],         \
-                                                            p_a2[0 : tot2])
+  int num_blocks = OPS_threads;
+#pragma omp target enter data map(                                             \
+    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
+                                              states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(2) schedule(static, 1)
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block)
+#pragma omp distribute parallel for simd schedule(static, 1)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double *vertexy = p_a0 + base0 + n_x * 0 * 1 +
-                        n_y * xdim0_initialise_chunk_kernel_y * 1 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    double *vertexy = p_a0 + base0 + n_x * 0 * 1 +
+                      n_y * xdim0_initialise_chunk_kernel_y * 1 * 1;
 
-      const int *yy = p_a1 + base1 + n_x * 0 * 1 +
-                      n_y * xdim1_initialise_chunk_kernel_y * 1 * 1;
-      double *vertexdy = p_a2 + base2 + n_x * 0 * 1 +
-                         n_y * xdim2_initialise_chunk_kernel_y * 1 * 1;
+    const int *yy = p_a1 + base1 + n_x * 0 * 1 +
+                    n_y * xdim1_initialise_chunk_kernel_y * 1 * 1;
+    double *vertexdy = p_a2 + base2 + n_x * 0 * 1 +
+                       n_y * xdim2_initialise_chunk_kernel_y * 1 * 1;
 
-      int y_min = field.y_min - 2;
-      double min_y, d_y;
+    int y_min = field.y_min - 2;
+    double min_y, d_y;
 
-      d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
-      min_y = grid.ymin + d_y * field.bottom;
+    d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
+    min_y = grid.ymin + d_y * field.bottom;
 
-      vertexy[OPS_ACC0(0, 0)] = min_y + d_y * (yy[OPS_ACC1(0, 0)] - y_min);
-      vertexdy[OPS_ACC2(0, 0)] = (double)d_y;
-    }
+    vertexy[OPS_ACC0(0, 0)] = min_y + d_y * (yy[OPS_ACC1(0, 0)] - y_min);
+    vertexdy[OPS_ACC2(0, 0)] = (double)d_y;
   }
 }
 #undef OPS_ACC0

@@ -175,7 +175,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
       int size = 1;
       for (int i = 0; i < args[4].dat->block->dims; i++)
         size += size * args[4].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+      //#pragma omp target update to( args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 5);
@@ -185,7 +185,7 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
       int size = 1;
       for (int i = 0; i < args[4].dat->block->dims; i++)
         size += size * args[4].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+      //#pragma omp target update from(args[n].dat->data[0:size])
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 5);

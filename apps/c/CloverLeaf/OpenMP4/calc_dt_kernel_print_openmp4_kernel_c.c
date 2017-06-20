@@ -33,7 +33,7 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, int base0, int tot0,
                                     double *p_a4, int base4, int tot4,
                                     double *p_a5, int base5, int tot5,
                                     double *p_a6, int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
   double p_a6_0 = p_a6[0];
   double p_a6_1 = p_a6[1];
   double p_a6_2 = p_a6[2];
@@ -47,90 +47,87 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, int base0, int tot0,
   double p_a6_10 = p_a6[10];
   double p_a6_11 = p_a6[11];
 #pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
-                                              p_a3[0 : tot3],                  \
-                                                   p_a4[0 : tot4],             \
-                                                        p_a5[0 : tot5])
+    to : p_a0[0 : tot0],                                                       \
+              p_a1[0 : tot1],                                                  \
+                   p_a2[0 : tot2],                                             \
+                        p_a3[0 : tot3],                                        \
+                             p_a4[0 : tot4],                                   \
+                                  p_a5[0 : tot5],                              \
+                                       states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
-                                              p_a3[0 : tot3],                  \
-                                                   p_a4[0 : tot4],             \
-                                                        p_a5[0 : tot5])        \
-                                                       map(tofrom : p_a6_11)
-#pragma omp teams num_teams(num_blocks) thread_limit(128) reduction(           \
+#pragma omp target teams num_teams(num_blocks) thread_limit(                   \
+    OPS_threads_for_block) map(tofrom : p_a6_11) reduction(                    \
     + : p_a6_0) reduction(+ : p_a6_1) reduction(+ : p_a6_2) reduction(         \
         + : p_a6_3) reduction(+ : p_a6_4) reduction(+ : p_a6_5) reduction(     \
             + : p_a6_6) reduction(+ : p_a6_7) reduction(+ : p_a6_8) reduction( \
                 + : p_a6_9) reduction(+ : p_a6_10) reduction(+ : p_a6_11)
-#pragma omp distribute parallel for simd collapse(2) schedule(static,          \
-                                                              1) reduction(    \
+#pragma omp distribute parallel for simd schedule(static, 1) reduction(        \
     + : p_a6_0) reduction(+ : p_a6_1) reduction(+ : p_a6_2) reduction(         \
         + : p_a6_3) reduction(+ : p_a6_4) reduction(+ : p_a6_5) reduction(     \
             + : p_a6_6) reduction(+ : p_a6_7) reduction(+ : p_a6_8) reduction( \
                 + : p_a6_9) reduction(+ : p_a6_10) reduction(+ : p_a6_11)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double p_a6_local[12];
-      p_a6_local[0] = ZERO_double;
-      p_a6_local[1] = ZERO_double;
-      p_a6_local[2] = ZERO_double;
-      p_a6_local[3] = ZERO_double;
-      p_a6_local[4] = ZERO_double;
-      p_a6_local[5] = ZERO_double;
-      p_a6_local[6] = ZERO_double;
-      p_a6_local[7] = ZERO_double;
-      p_a6_local[8] = ZERO_double;
-      p_a6_local[9] = ZERO_double;
-      p_a6_local[10] = ZERO_double;
-      p_a6_local[11] = ZERO_double;
-      const double *xvel0 =
-          p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_print * 1 * 1;
+    double p_a6_local[12];
+    p_a6_local[0] = ZERO_double;
+    p_a6_local[1] = ZERO_double;
+    p_a6_local[2] = ZERO_double;
+    p_a6_local[3] = ZERO_double;
+    p_a6_local[4] = ZERO_double;
+    p_a6_local[5] = ZERO_double;
+    p_a6_local[6] = ZERO_double;
+    p_a6_local[7] = ZERO_double;
+    p_a6_local[8] = ZERO_double;
+    p_a6_local[9] = ZERO_double;
+    p_a6_local[10] = ZERO_double;
+    p_a6_local[11] = ZERO_double;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *xvel0 =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_print * 1 * 1;
 
-      const double *yvel0 =
-          p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_calc_dt_kernel_print * 1 * 1;
-      const double *density0 =
-          p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_calc_dt_kernel_print * 1 * 1;
+    const double *yvel0 =
+        p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_calc_dt_kernel_print * 1 * 1;
+    const double *density0 =
+        p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_calc_dt_kernel_print * 1 * 1;
 
-      const double *energy0 =
-          p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_calc_dt_kernel_print * 1 * 1;
-      const double *pressure =
-          p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_calc_dt_kernel_print * 1 * 1;
+    const double *energy0 =
+        p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_calc_dt_kernel_print * 1 * 1;
+    const double *pressure =
+        p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_calc_dt_kernel_print * 1 * 1;
 
-      const double *soundspeed =
-          p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_calc_dt_kernel_print * 1 * 1;
-      double *output = p_a6_local;
+    const double *soundspeed =
+        p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_calc_dt_kernel_print * 1 * 1;
+    double *output = p_a6_local;
 
-      output[0] = xvel0[OPS_ACC0(1, 0)];
-      output[1] = yvel0[OPS_ACC1(1, 0)];
-      output[2] = xvel0[OPS_ACC0(-1, 0)];
-      output[3] = yvel0[OPS_ACC1(-1, 0)];
-      output[4] = xvel0[OPS_ACC0(0, 1)];
-      output[5] = yvel0[OPS_ACC1(0, 1)];
-      output[6] = xvel0[OPS_ACC0(0, -1)];
-      output[7] = yvel0[OPS_ACC1(0, -1)];
-      output[8] = density0[OPS_ACC2(0, 0)];
-      output[9] = energy0[OPS_ACC3(0, 0)];
-      output[10] = pressure[OPS_ACC4(0, 0)];
-      output[11] = soundspeed[OPS_ACC5(0, 0)];
+    output[0] = xvel0[OPS_ACC0(1, 0)];
+    output[1] = yvel0[OPS_ACC1(1, 0)];
+    output[2] = xvel0[OPS_ACC0(-1, 0)];
+    output[3] = yvel0[OPS_ACC1(-1, 0)];
+    output[4] = xvel0[OPS_ACC0(0, 1)];
+    output[5] = yvel0[OPS_ACC1(0, 1)];
+    output[6] = xvel0[OPS_ACC0(0, -1)];
+    output[7] = yvel0[OPS_ACC1(0, -1)];
+    output[8] = density0[OPS_ACC2(0, 0)];
+    output[9] = energy0[OPS_ACC3(0, 0)];
+    output[10] = pressure[OPS_ACC4(0, 0)];
+    output[11] = soundspeed[OPS_ACC5(0, 0)];
 
-      p_a6_0 += p_a6_local[0];
-      p_a6_1 += p_a6_local[1];
-      p_a6_2 += p_a6_local[2];
-      p_a6_3 += p_a6_local[3];
-      p_a6_4 += p_a6_local[4];
-      p_a6_5 += p_a6_local[5];
-      p_a6_6 += p_a6_local[6];
-      p_a6_7 += p_a6_local[7];
-      p_a6_8 += p_a6_local[8];
-      p_a6_9 += p_a6_local[9];
-      p_a6_10 += p_a6_local[10];
-      p_a6_11 += p_a6_local[11];
-    }
+    p_a6_0 += p_a6_local[0];
+    p_a6_1 += p_a6_local[1];
+    p_a6_2 += p_a6_local[2];
+    p_a6_3 += p_a6_local[3];
+    p_a6_4 += p_a6_local[4];
+    p_a6_5 += p_a6_local[5];
+    p_a6_6 += p_a6_local[6];
+    p_a6_7 += p_a6_local[7];
+    p_a6_8 += p_a6_local[8];
+    p_a6_9 += p_a6_local[9];
+    p_a6_10 += p_a6_local[10];
+    p_a6_11 += p_a6_local[11];
   }
   p_a6[0] = p_a6_0;
   p_a6[1] = p_a6_1;

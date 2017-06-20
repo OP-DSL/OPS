@@ -302,7 +302,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
   #  for n in range (0,nargs):
    #   code('int tot'+ +str(n) + '= ')
 
-    code("int num_blocks = round(((double)x_size*(double)y_size)/128);");
+    #code("int num_blocks = round(((double)x_size*(double)y_size)/OPS_block_size_x);");
+    code("int num_blocks = OPS_threads;");
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
@@ -319,17 +320,24 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl' :
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
+    
+    for nc in range (0,len(consts)):
+      if re.search('[a-zA-Z]', consts[nc]['dim']) or  (int(consts[nc]['dim']) != 1) :
+        num = str(consts[nc]['dim'])
+        line = line + str(consts[nc]['name']).replace('"','')+'[0:'+num+'],' 
     line = line[:-1]+')'
     code(line)
 
-    line = '#pragma omp target map(to:'
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
-      if arg_typ[n] == 'ops_arg_gbl' :
-        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
-    line = line[:-1]+')'
+    #line = '#pragma omp target map(to:'
+    line = '#pragma omp target teams num_teams(num_blocks)  thread_limit(OPS_threads_for_block) '
+    #line = '#pragma omp target '
+    #for n in range (0,nargs):
+    #  if arg_typ[n] == 'ops_arg_dat':
+    #    line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
+    #  if arg_typ[n] == 'ops_arg_gbl' :
+    #    if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+    #      line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
+    #line = line[:-1]+')'
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl' :   
         if accs[n] <> OPS_READ:
@@ -353,7 +361,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 #            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     code('#ifdef OPS_GPU')
     #line = line + '\n #pragma omp target \n'
-    line = line + '\n#pragma omp teams num_teams(num_blocks)  thread_limit(128)'
+    #line = line + '\n#pragma omp teams num_teams(num_blocks)  thread_limit(OPS_threads_for_block)'
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_MIN:
@@ -371,7 +379,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     #code('\n')
     #code(line)
     line = line + '\n'
-    line = line + '#pragma omp distribute parallel for simd collapse('+str(NDIM)+') schedule(static,1)'
+    #line = line + '#pragma omp distribute parallel for simd collapse('+str(NDIM)+') schedule(static,1)'
+    line = line + '#pragma omp distribute parallel for simd schedule(static,1)'
     #code(line)
     
     for n in range (0,nargs):
@@ -404,7 +413,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       #code(line)
       code('#endif')
     if NDIM==2:
-      FOR('n_y','0','y_size')
+      #FOR('n_y','0','y_size*x_size')
+      FOR('i','0','y_size*x_size')
       code('#ifdef OPS_GPU')
       #line = '#pragma omp target \n'
       #line = '#pragma omp teams \n'
@@ -430,12 +440,19 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       #code(line)
       code('#endif')
 
-    FOR('n_x','0','x_size')
+    #FOR('n_x','0','x_size')
+    #if arg_idx:
+    #  if NDIM==1:
+    #    code('int arg_idx[] = {arg_idx0+n_x};')
+    #  elif NDIM==2:
+    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
+    #  elif NDIM==3:
+    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
     if arg_idx:
       if NDIM==1:
         code('int arg_idx[] = {arg_idx0+n_x};')
       elif NDIM==2:
-        code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
+        code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size};')
       elif NDIM==3:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
 
@@ -462,6 +479,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 
     #text = name+'( '
     text = '' 
+    text = text +' int n_x= i%x_size;'
+    text = text +' int n_y= i/x_size;'
     for n in range (0, nargs):
       text = text + kernel_params[n] + ' = '
       if arg_typ[n] == 'ops_arg_dat':
@@ -512,7 +531,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
             code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
 
 
-    ENDFOR()
+    #ENDFOR()
     if NDIM==2:
       ENDFOR()
     if NDIM==3:
@@ -838,7 +857,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     code('int size = 1;')
     code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
     code('  size += size  * args['+str(n)+'].dat->size[i];')
-    code('#pragma omp target update to( args[n].dat->data[0:size])')
+    code('//#pragma omp target update to( args[n].dat->data[0:size])')
     code('args[n].dat->dirty_hd = 0;')
     code('}')
     code('//ops_H_D_exchanges_device(args, '+str(nargs)+');')
@@ -848,7 +867,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     code('int size = 1;')
     code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
     code('  size += size  * args['+str(n)+'].dat->size[i];')
-    code('#pragma omp target update from(args[n].dat->data[0:size])')
+    code('//#pragma omp target update from(args[n].dat->data[0:size])')
       #//ops_download_dat(args[n].dat);
       #// printf("halo exchanges on host\n");
     code('args[n].dat->dirty_hd = 0;')

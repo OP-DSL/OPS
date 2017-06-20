@@ -50,110 +50,101 @@ void accelerate_kernel_c_wrapper(
     double *p_a6, int base6, int tot6, double *p_a7, int base7, int tot7,
     double *p_a8, int base8, int tot8, double *p_a9, int base9, int tot9,
     double *p_a10, int base10, int tot10, int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
+  int num_blocks = OPS_threads;
 #pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10])
+    to : p_a0                                                                  \
+    [0 : tot0], p_a1                                                           \
+     [0 : tot1], p_a2                                                          \
+      [0 : tot2],                                                              \
+       p_a3[0 : tot3],                                                         \
+            p_a4[0 : tot4],                                                    \
+                 p_a5[0 : tot5],                                               \
+                      p_a6[0 : tot6],                                          \
+                           p_a7[0 : tot7],                                     \
+                                p_a8[0 : tot8],                                \
+                                     p_a9[0 : tot9],                           \
+                                          p_a10[0 : tot10],                    \
+                                                states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(2) schedule(static, 1)
+#pragma omp target teams num_teams(num_blocks)                                 \
+    thread_limit(OPS_threads_for_block)
+#pragma omp distribute parallel for simd schedule(static, 1)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
+  for (int i = 0; i < y_size * x_size; i++) {
 #ifdef OPS_GPU
 #endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const double *density0 =
-          p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_accelerate_kernel * 1 * 1;
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *density0 =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_accelerate_kernel * 1 * 1;
 
-      const double *volume =
-          p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_accelerate_kernel * 1 * 1;
-      double *stepbymass =
-          p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_accelerate_kernel * 1 * 1;
+    const double *volume =
+        p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_accelerate_kernel * 1 * 1;
+    double *stepbymass =
+        p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_accelerate_kernel * 1 * 1;
 
-      const double *xvel0 =
-          p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_accelerate_kernel * 1 * 1;
-      double *xvel1 =
-          p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_accelerate_kernel * 1 * 1;
+    const double *xvel0 =
+        p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_accelerate_kernel * 1 * 1;
+    double *xvel1 =
+        p_a4 + base4 + n_x * 1 * 1 + n_y * xdim4_accelerate_kernel * 1 * 1;
 
-      const double *xarea =
-          p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_accelerate_kernel * 1 * 1;
-      const double *pressure =
-          p_a6 + base6 + n_x * 1 * 1 + n_y * xdim6_accelerate_kernel * 1 * 1;
+    const double *xarea =
+        p_a5 + base5 + n_x * 1 * 1 + n_y * xdim5_accelerate_kernel * 1 * 1;
+    const double *pressure =
+        p_a6 + base6 + n_x * 1 * 1 + n_y * xdim6_accelerate_kernel * 1 * 1;
 
-      const double *yvel0 =
-          p_a7 + base7 + n_x * 1 * 1 + n_y * xdim7_accelerate_kernel * 1 * 1;
-      double *yvel1 =
-          p_a8 + base8 + n_x * 1 * 1 + n_y * xdim8_accelerate_kernel * 1 * 1;
+    const double *yvel0 =
+        p_a7 + base7 + n_x * 1 * 1 + n_y * xdim7_accelerate_kernel * 1 * 1;
+    double *yvel1 =
+        p_a8 + base8 + n_x * 1 * 1 + n_y * xdim8_accelerate_kernel * 1 * 1;
 
-      const double *yarea =
-          p_a9 + base9 + n_x * 1 * 1 + n_y * xdim9_accelerate_kernel * 1 * 1;
-      const double *viscosity =
-          p_a10 + base10 + n_x * 1 * 1 + n_y * xdim10_accelerate_kernel * 1 * 1;
+    const double *yarea =
+        p_a9 + base9 + n_x * 1 * 1 + n_y * xdim9_accelerate_kernel * 1 * 1;
+    const double *viscosity =
+        p_a10 + base10 + n_x * 1 * 1 + n_y * xdim10_accelerate_kernel * 1 * 1;
 
-      double nodal_mass;
+    double nodal_mass;
 
-      nodal_mass = (density0[OPS_ACC0(-1, -1)] * volume[OPS_ACC1(-1, -1)] +
-                    density0[OPS_ACC0(0, -1)] * volume[OPS_ACC1(0, -1)] +
-                    density0[OPS_ACC0(0, 0)] * volume[OPS_ACC1(0, 0)] +
-                    density0[OPS_ACC0(-1, 0)] * volume[OPS_ACC1(-1, 0)]) *
-                   0.25;
+    nodal_mass = (density0[OPS_ACC0(-1, -1)] * volume[OPS_ACC1(-1, -1)] +
+                  density0[OPS_ACC0(0, -1)] * volume[OPS_ACC1(0, -1)] +
+                  density0[OPS_ACC0(0, 0)] * volume[OPS_ACC1(0, 0)] +
+                  density0[OPS_ACC0(-1, 0)] * volume[OPS_ACC1(-1, 0)]) *
+                 0.25;
 
-      stepbymass[OPS_ACC2(0, 0)] = 0.5 * dt / nodal_mass;
+    stepbymass[OPS_ACC2(0, 0)] = 0.5 * dt / nodal_mass;
 
-      xvel1[OPS_ACC4(0, 0)] =
-          xvel0[OPS_ACC3(0, 0)] -
-          stepbymass[OPS_ACC2(0, 0)] *
-              (xarea[OPS_ACC5(0, 0)] *
-                   (pressure[OPS_ACC6(0, 0)] - pressure[OPS_ACC6(-1, 0)]) +
-               xarea[OPS_ACC5(0, -1)] *
-                   (pressure[OPS_ACC6(0, -1)] - pressure[OPS_ACC6(-1, -1)]));
+    xvel1[OPS_ACC4(0, 0)] =
+        xvel0[OPS_ACC3(0, 0)] -
+        stepbymass[OPS_ACC2(0, 0)] *
+            (xarea[OPS_ACC5(0, 0)] *
+                 (pressure[OPS_ACC6(0, 0)] - pressure[OPS_ACC6(-1, 0)]) +
+             xarea[OPS_ACC5(0, -1)] *
+                 (pressure[OPS_ACC6(0, -1)] - pressure[OPS_ACC6(-1, -1)]));
 
-      yvel1[OPS_ACC8(0, 0)] =
-          yvel0[OPS_ACC7(0, 0)] -
-          stepbymass[OPS_ACC2(0, 0)] *
-              (yarea[OPS_ACC9(0, 0)] *
-                   (pressure[OPS_ACC6(0, 0)] - pressure[OPS_ACC6(0, -1)]) +
-               yarea[OPS_ACC9(-1, 0)] *
-                   (pressure[OPS_ACC6(-1, 0)] - pressure[OPS_ACC6(-1, -1)]));
+    yvel1[OPS_ACC8(0, 0)] =
+        yvel0[OPS_ACC7(0, 0)] -
+        stepbymass[OPS_ACC2(0, 0)] *
+            (yarea[OPS_ACC9(0, 0)] *
+                 (pressure[OPS_ACC6(0, 0)] - pressure[OPS_ACC6(0, -1)]) +
+             yarea[OPS_ACC9(-1, 0)] *
+                 (pressure[OPS_ACC6(-1, 0)] - pressure[OPS_ACC6(-1, -1)]));
 
-      xvel1[OPS_ACC4(0, 0)] =
-          xvel1[OPS_ACC4(0, 0)] -
-          stepbymass[OPS_ACC2(0, 0)] *
-              (xarea[OPS_ACC5(0, 0)] *
-                   (viscosity[OPS_ACC10(0, 0)] - viscosity[OPS_ACC10(-1, 0)]) +
-               xarea[OPS_ACC5(0, -1)] * (viscosity[OPS_ACC10(0, -1)] -
-                                         viscosity[OPS_ACC10(-1, -1)]));
+    xvel1[OPS_ACC4(0, 0)] =
+        xvel1[OPS_ACC4(0, 0)] -
+        stepbymass[OPS_ACC2(0, 0)] *
+            (xarea[OPS_ACC5(0, 0)] *
+                 (viscosity[OPS_ACC10(0, 0)] - viscosity[OPS_ACC10(-1, 0)]) +
+             xarea[OPS_ACC5(0, -1)] *
+                 (viscosity[OPS_ACC10(0, -1)] - viscosity[OPS_ACC10(-1, -1)]));
 
-      yvel1[OPS_ACC8(0, 0)] =
-          yvel1[OPS_ACC8(0, 0)] -
-          stepbymass[OPS_ACC2(0, 0)] *
-              (yarea[OPS_ACC9(0, 0)] *
-                   (viscosity[OPS_ACC10(0, 0)] - viscosity[OPS_ACC10(0, -1)]) +
-               yarea[OPS_ACC9(-1, 0)] * (viscosity[OPS_ACC10(-1, 0)] -
-                                         viscosity[OPS_ACC10(-1, -1)]));
-    }
+    yvel1[OPS_ACC8(0, 0)] =
+        yvel1[OPS_ACC8(0, 0)] -
+        stepbymass[OPS_ACC2(0, 0)] *
+            (yarea[OPS_ACC9(0, 0)] *
+                 (viscosity[OPS_ACC10(0, 0)] - viscosity[OPS_ACC10(0, -1)]) +
+             yarea[OPS_ACC9(-1, 0)] *
+                 (viscosity[OPS_ACC10(-1, 0)] - viscosity[OPS_ACC10(-1, -1)]));
   }
 }
 #undef OPS_ACC0
