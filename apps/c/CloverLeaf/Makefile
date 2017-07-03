@@ -25,8 +25,8 @@ ifdef CHECKPOINTING
 endif
 endif
 
-#HDF5_INC             := -I/usr/include/hdf5/openmpi/
-#HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
+HDF5_INC             := -I/usr/include/hdf5/openmpi/
+HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
 
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++
@@ -115,7 +115,11 @@ endif
 else
 ifeq ($(OPS_COMPILER),clang)
 CPP           = clang++
+ifdef DEBUG
 CPPFLAGS      = -O0 -g -DUNIX -Wall
+else
+CPPFLAGS      = -O3 -DUNIX -Wall #-O0 -g -DUNIX -Wall
+endif
 MPICPP        = $(MPI_INSTALL_PATH)/bin/mpiCC
 MPIFLAGS      = $(CPPFLAGS)
 else
@@ -334,15 +338,16 @@ openmp4_c_obj_list = $(shell find ./OpenMP4/ -name "*_c.c" | sed s/\\.c/\\.o/g |
 
 ./OpenMP4/%.o: ./OpenMP4/%.cpp ./OpenMP4/%_c.c ./OpenMP4/clover_leaf_common.h Makefile
 		@echo "Compiling kernel" $*
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/$*.cpp -c -o OpenMP4/$*.o
 
 cloverleaf_openmp4: $(openmp4_obj_list) $(OPS_FILES_GEN) \
-                $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOMPTARGET_DEBUG -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
-		$(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_openmp4
+                $(HEADERS) Makefile 
+	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOMPTARGET_DEBUG  -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+		$(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_openmp4 $(HDF5_LIB) -o cloverleaf_openmp4
+
 
 cloverleaf_openacc: $(openacc_obj_list) $(OPS_FILES_GEN) \
                 $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a

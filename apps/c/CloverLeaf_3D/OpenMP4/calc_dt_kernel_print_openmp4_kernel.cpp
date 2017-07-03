@@ -150,6 +150,27 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
     ydim6_calc_dt_kernel_print_h = ydim6;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+  int tot1 = 1;
+  for (int i = 0; i < args[1].dat->block->dims; i++)
+    tot1 = tot1 * args[1].dat->size[i];
+  int tot2 = 1;
+  for (int i = 0; i < args[2].dat->block->dims; i++)
+    tot2 = tot2 * args[2].dat->size[i];
+  int tot3 = 1;
+  for (int i = 0; i < args[3].dat->block->dims; i++)
+    tot3 = tot3 * args[3].dat->size[i];
+  int tot4 = 1;
+  for (int i = 0; i < args[4].dat->block->dims; i++)
+    tot4 = tot4 * args[4].dat->size[i];
+  int tot5 = 1;
+  for (int i = 0; i < args[5].dat->block->dims; i++)
+    tot5 = tot5 * args[5].dat->size[i];
+  int tot6 = 1;
+  for (int i = 0; i < args[6].dat->block->dims; i++)
+    tot6 = tot6 * args[6].dat->size[i];
 #ifdef OPS_MPI
   double *arg7h =
       (double *)(((ops_reduction)args[7].data)->data +
@@ -258,34 +279,13 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
 #endif
 
   double *p_a7 = arg7h;
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-  int tot1 = 1;
-  for (int i = 0; i < args[1].dat->block->dims; i++)
-    tot1 = tot1 * args[1].dat->size[i];
-  int tot2 = 1;
-  for (int i = 0; i < args[2].dat->block->dims; i++)
-    tot2 = tot2 * args[2].dat->size[i];
-  int tot3 = 1;
-  for (int i = 0; i < args[3].dat->block->dims; i++)
-    tot3 = tot3 * args[3].dat->size[i];
-  int tot4 = 1;
-  for (int i = 0; i < args[4].dat->block->dims; i++)
-    tot4 = tot4 * args[4].dat->size[i];
-  int tot5 = 1;
-  for (int i = 0; i < args[5].dat->block->dims; i++)
-    tot5 = tot5 * args[5].dat->size[i];
-  int tot6 = 1;
-  for (int i = 0; i < args[6].dat->block->dims; i++)
-    tot6 = tot6 * args[6].dat->size[i];
 
 #ifdef OPS_GPU
   for (int n = 0; n < 8; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[7].dat->block->dims; i++)
-        size += size * args[7].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -294,8 +294,8 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
   for (int n = 0; n < 8; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[7].dat->block->dims; i++)
-        size += size * args[7].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -303,6 +303,11 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
 #endif
   ops_halo_exchanges(args, 8, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 8);
+#else
+// ops_H_D_exchanges_host(args, 8);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[40].mpi_time += t2 - t1;
@@ -322,23 +327,23 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
     OPS_kernels[40].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 8; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 8);
+  // for (int n = 0; n < 8; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 8);
 #else
-  for (int n = 0; n < 8; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 8);
+  // for (int n = 0; n < 8; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 8);
 #endif
 
   if (OPS_diags > 1) {

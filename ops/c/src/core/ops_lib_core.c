@@ -141,10 +141,10 @@ void ops_set_args(int argc, char *argv) {
     OPS_block_size_y = atoi(temp + 17);
     ops_printf("\n OPS_block_size_y = %d \n", OPS_block_size_y);
   }
-  pch = strstr(argv, "OPS_NTHREADS=");
+  pch = strstr(argv, "OPS_NTEAMS=");
   if (pch != NULL) {
     strncpy(temp, pch, 17);
-    OPS_threads = atoi(temp + 13);
+    OPS_threads = atoi(temp + 11);
     ops_printf("\n OPS_threads = %d \n", OPS_threads);
   }
   pch = strstr(argv, "OPS_THREADS_FOR_BLOCK=");

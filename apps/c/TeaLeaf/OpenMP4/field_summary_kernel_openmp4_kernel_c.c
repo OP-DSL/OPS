@@ -28,58 +28,46 @@ void field_summary_kernel_c_wrapper(double *p_a0, int base0, int tot0,
                                     double *p_a3, int base3, int tot3,
                                     double *p_a4, double *p_a5, double *p_a6,
                                     double *p_a7, int x_size, int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
   double p_a4_0 = p_a4[0];
   double p_a5_0 = p_a5[0];
   double p_a6_0 = p_a6[0];
   double p_a7_0 = p_a7[0];
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2], p_a3[0 : tot3])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2], p_a3[0 : tot3])                  \
-                                  map(tofrom : p_a4_0) map(tofrom : p_a5_0)    \
-                                      map(tofrom : p_a6_0)                     \
-                                          map(tofrom : p_a7_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128) reduction(           \
-    + : p_a4_0)                                                                \
-        reduction(+ : p_a5_0) reduction(+ : p_a6_0) reduction(+ : p_a7_0)
-#pragma omp distribute parallel for simd collapse(2)                           \
-    schedule(static, 1) reduction(+ : p_a4_0) reduction(+ : p_a5_0) reduction( \
-        + : p_a6_0) reduction(+ : p_a7_0)
+#pragma omp target teams distribute parallel for num_teams(                    \
+    OPS_threads) thread_limit(OPS_threads_for_block) schedule(                 \
+    static, 1) map(tofrom : p_a4_0) map(tofrom : p_a5_0) map(tofrom : p_a6_0)  \
+        map(tofrom : p_a7_0) reduction(+ : p_a4_0) reduction(                  \
+            + : p_a5_0) reduction(+ : p_a6_0) reduction(+ : p_a7_0)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const double *volume =
-          p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_field_summary_kernel * 1 * 1;
+  for (int i = 0; i < y_size * x_size; i++) {
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *volume =
+        p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_field_summary_kernel * 1 * 1;
 
-      const double *density =
-          p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_field_summary_kernel * 1 * 1;
-      const double *energy =
-          p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_field_summary_kernel * 1 * 1;
+    const double *density =
+        p_a1 + base1 + n_x * 1 * 1 + n_y * xdim1_field_summary_kernel * 1 * 1;
+    const double *energy =
+        p_a2 + base2 + n_x * 1 * 1 + n_y * xdim2_field_summary_kernel * 1 * 1;
 
-      const double *u =
-          p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_field_summary_kernel * 1 * 1;
-      double *vol = &p_a4_0;
+    const double *u =
+        p_a3 + base3 + n_x * 1 * 1 + n_y * xdim3_field_summary_kernel * 1 * 1;
+    double *vol = &p_a4_0;
 
-      double *mass = &p_a5_0;
-      double *ie = &p_a6_0;
+    double *mass = &p_a5_0;
+    double *ie = &p_a6_0;
 
-      double *temp = &p_a7_0;
+    double *temp = &p_a7_0;
 
-      double cell_vol, cell_mass;
+    double cell_vol, cell_mass;
 
-      cell_vol = volume[OPS_ACC0(0, 0)];
-      cell_mass = cell_vol * density[OPS_ACC1(0, 0)];
-      *vol = *vol + cell_vol;
-      *mass = *mass + cell_mass;
-      *ie = *ie + cell_mass * energy[OPS_ACC2(0, 0)];
-      *temp = *temp + cell_mass * u[OPS_ACC3(0, 0)];
-    }
+    cell_vol = volume[OPS_ACC0(0, 0)];
+    cell_mass = cell_vol * density[OPS_ACC1(0, 0)];
+    *vol = *vol + cell_vol;
+    *mass = *mass + cell_mass;
+    *ie = *ie + cell_mass * energy[OPS_ACC2(0, 0)];
+    *temp = *temp + cell_mass * u[OPS_ACC3(0, 0)];
   }
   p_a4[0] = p_a4_0;
   p_a5[0] = p_a5_0;

@@ -18,33 +18,33 @@ extern int ydim5_calc_dt_kernel_print;
 extern int xdim6_calc_dt_kernel_print;
 extern int ydim6_calc_dt_kernel_print;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_calc_dt_kernel_print * (y) +                                      \
    xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_calc_dt_kernel_print * (y) +                                      \
    xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_calc_dt_kernel_print * (y) +                                      \
    xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_calc_dt_kernel_print * (y) +                                      \
    xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_calc_dt_kernel_print * (y) +                                      \
    xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print * (z))
-#define OPS_OPENMP45(x, y, z)                                                  \
+#define OPS_ACC5(x, y, z)                                                      \
   (x + xdim5_calc_dt_kernel_print * (y) +                                      \
    xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print * (z))
-#define OPS_OPENMP46(x, y, z)                                                  \
+#define OPS_ACC6(x, y, z)                                                      \
   (x + xdim6_calc_dt_kernel_print * (y) +                                      \
    xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print * (z))
 
@@ -56,7 +56,6 @@ void calc_dt_kernel_print_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, int base6, int tot6, double *p_a7, int x_size, int y_size,
     int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
   double p_a7_0 = p_a7[0];
   double p_a7_1 = p_a7[1];
   double p_a7_2 = p_a7[2];
@@ -85,23 +84,12 @@ void calc_dt_kernel_print_c_wrapper(
   double p_a7_25 = p_a7[25];
   double p_a7_26 = p_a7[26];
   double p_a7_27 = p_a7[27];
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
-                                              p_a3[0 : tot3],                  \
-                                                   p_a4[0 : tot4],             \
-                                                        p_a5[0 : tot5],        \
-                                                             p_a6[0 : tot6])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2],                                  \
-                                   p_a3[0 : tot3],                             \
-                                        p_a4[0 : tot4],                        \
-                                             p_a5[0 : tot5], p_a6[0 : tot6])   \
-                                                 map(tofrom : p_a7_27)
-#pragma omp teams num_teams(num_blocks) thread_limit(                           \
-    128) reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(                 \
+#pragma omp target teams distribute parallel for num_teams(                     \
+    OPS_threads) thread_limit(OPS_threads_for_block) collapse(                  \
+    3) schedule(static, 1) map(                                                 \
+    tofrom : p_a7_27) reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(    \
     + : p_a7_2) reduction(+ : p_a7_3) reduction(+ : p_a7_4) reduction(          \
         + : p_a7_5) reduction(+ : p_a7_6) reduction(+ : p_a7_7) reduction(      \
             + : p_a7_8) reduction(+ : p_a7_9) reduction(                        \
@@ -119,32 +107,9 @@ void calc_dt_kernel_print_c_wrapper(
                                                             + : p_a7_26)        \
                                                                 reduction(      \
                                                                     + : p_a7_27)
-#pragma omp distribute parallel for simd collapse(                              \
-    3) schedule(static, 1) reduction(+ : p_a7_0) reduction(                     \
-    + : p_a7_1) reduction(+ : p_a7_2) reduction(+ : p_a7_3) reduction(          \
-        + : p_a7_4) reduction(+ : p_a7_5) reduction(+ : p_a7_6) reduction(      \
-            + : p_a7_7) reduction(+ : p_a7_8) reduction(+ : p_a7_9) reduction(  \
-                + : p_a7_10) reduction(+ : p_a7_11) reduction(                  \
-                    + : p_a7_12) reduction(+ : p_a7_13) reduction(              \
-                        + : p_a7_14) reduction(+ : p_a7_15) reduction(          \
-                            + : p_a7_16) reduction(+ : p_a7_17) reduction(      \
-                                + : p_a7_18) reduction(+ : p_a7_19) reduction(  \
-                                    + : p_a7_20)                                \
-                                        reduction(+ : p_a7_21) reduction(       \
-                                            + : p_a7_22) reduction(             \
-                                                + : p_a7_23) reduction(         \
-                                                    + : p_a7_24) reduction(     \
-                                                        + : p_a7_25) reduction( \
-                                                            + : p_a7_26)        \
-                                                                reduction(      \
-                                                                    + : p_a7_27)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         double p_a7_local[28];
         p_a7_local[0] = ZERO_double;
@@ -301,10 +266,10 @@ void calc_dt_kernel_print_c_wrapper(
   p_a7[26] = p_a7_26;
   p_a7[27] = p_a7_27;
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6

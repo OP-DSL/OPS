@@ -37,26 +37,12 @@ void update_halo_kernel1_l2_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, int base6, int tot6, int *p_a7, int tot7, int x_size,
     int y_size) {
-  int num_blocks = OPS_threads;
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks)                                 \
-    thread_limit(OPS_threads_for_block)
-#pragma omp distribute parallel for simd schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(static, 1)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     int n_x = i % x_size;
     int n_y = i / x_size;
     double *density0 =

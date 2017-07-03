@@ -71,6 +71,10 @@ void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name,
     xdim0_initialise_chunk_kernel_zero_y_h = xdim0;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
               args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
@@ -83,16 +87,12 @@ void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name,
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
 
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-
 #ifdef OPS_GPU
   for (int n = 0; n < 1; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[0].dat->block->dims; i++)
-        size += size * args[0].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -101,8 +101,8 @@ void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name,
   for (int n = 0; n < 1; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[0].dat->block->dims; i++)
-        size += size * args[0].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -110,6 +110,11 @@ void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name,
 #endif
   ops_halo_exchanges(args, 1, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 1);
+#else
+// ops_H_D_exchanges_host(args, 1);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[7].mpi_time += t2 - t1;
@@ -123,23 +128,23 @@ void ops_par_loop_initialise_chunk_kernel_zero_y(char const *name,
     OPS_kernels[7].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 1; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 1);
+  // for (int n = 0; n < 1; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 1);
 #else
-  for (int n = 0; n < 1; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 1);
+  // for (int n = 0; n < 1; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 1);
 #endif
   ops_set_halo_dirtybit3(&args[0], range);
 

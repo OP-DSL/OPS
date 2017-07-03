@@ -112,7 +112,11 @@ endif
 else
 ifeq ($(OPS_COMPILER),clang)
 CPP           = clang++
+ifdef DEBUG 
 CPPFLAGS      = -O0 -g -DUNIX -Wall
+else
+CPPFLAGS      = -O3 -DUNIX -Wall
+endif
 MPICPP        = $(MPI_INSTALL_PATH)/bin/mpiCC
 MPIFLAGS      = $(CPPFLAGS)
 else
@@ -280,20 +284,20 @@ openmp4_obj_list = $(shell find ./OpenMP4/ -name "*.cpp" | sed s/\\.cpp/\\.o/g |
 openmp4_c_obj_list = $(shell find ./OpenMP4/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
 ./OpenMP4/tea_leaf_kernels.o: ./OpenMP4/tea_leaf_kernels.cpp ./OpenMP4/tea_leaf_common.h Makefile
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/tea_leaf_kernels.cpp -c -o OpenMP4/tea_leaf_kernels.o
 
 ./OpenMP4/%.o: ./OpenMP4/%.cpp ./OpenMP4/%_c.c ./OpenMP4/tea_leaf_common.h Makefile
 		@echo "Compiling kernel" $*
 		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/$*.cpp -c -o OpenMP4/$*.o
 
 tealeaf_openmp4: $(openmp4_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) \
-                $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
-		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_openmp4
+                $(HEADERS) Makefile 
+	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
+		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_openmp4 $(HDF5_LIB) -o tealeaf_openmp4
 
 
 

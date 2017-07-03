@@ -28,49 +28,49 @@ extern int ydim9_generate_chunk_kernel;
 extern int xdim10_generate_chunk_kernel;
 extern int ydim10_generate_chunk_kernel;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
-#undef OPS_OPENMP48
-#undef OPS_OPENMP49
-#undef OPS_OPENMP410
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_generate_chunk_kernel * (y) +                                     \
    xdim0_generate_chunk_kernel * ydim0_generate_chunk_kernel * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_generate_chunk_kernel * (y) +                                     \
    xdim1_generate_chunk_kernel * ydim1_generate_chunk_kernel * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_generate_chunk_kernel * (y) +                                     \
    xdim2_generate_chunk_kernel * ydim2_generate_chunk_kernel * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_generate_chunk_kernel * (y) +                                     \
    xdim3_generate_chunk_kernel * ydim3_generate_chunk_kernel * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_generate_chunk_kernel * (y) +                                     \
    xdim4_generate_chunk_kernel * ydim4_generate_chunk_kernel * (z))
-#define OPS_OPENMP45(x, y, z)                                                  \
+#define OPS_ACC5(x, y, z)                                                      \
   (x + xdim5_generate_chunk_kernel * (y) +                                     \
    xdim5_generate_chunk_kernel * ydim5_generate_chunk_kernel * (z))
-#define OPS_OPENMP46(x, y, z)                                                  \
+#define OPS_ACC6(x, y, z)                                                      \
   (x + xdim6_generate_chunk_kernel * (y) +                                     \
    xdim6_generate_chunk_kernel * ydim6_generate_chunk_kernel * (z))
-#define OPS_OPENMP47(x, y, z)                                                  \
+#define OPS_ACC7(x, y, z)                                                      \
   (x + xdim7_generate_chunk_kernel * (y) +                                     \
    xdim7_generate_chunk_kernel * ydim7_generate_chunk_kernel * (z))
-#define OPS_OPENMP48(x, y, z)                                                  \
+#define OPS_ACC8(x, y, z)                                                      \
   (x + xdim8_generate_chunk_kernel * (y) +                                     \
    xdim8_generate_chunk_kernel * ydim8_generate_chunk_kernel * (z))
-#define OPS_OPENMP49(x, y, z)                                                  \
+#define OPS_ACC9(x, y, z)                                                      \
   (x + xdim9_generate_chunk_kernel * (y) +                                     \
    xdim9_generate_chunk_kernel * ydim9_generate_chunk_kernel * (z))
-#define OPS_OPENMP410(x, y, z)                                                 \
+#define OPS_ACC10(x, y, z)                                                     \
   (x + xdim10_generate_chunk_kernel * (y) +                                    \
    xdim10_generate_chunk_kernel * ydim10_generate_chunk_kernel * (z))
 
@@ -83,42 +83,13 @@ void generate_chunk_kernel_c_wrapper(
     double *p_a6, int base6, int tot6, double *p_a7, int base7, int tot7,
     double *p_a8, int base8, int tot8, double *p_a9, int base9, int tot9,
     double *p_a10, int base10, int tot10, int x_size, int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10],states[0:2])
 #ifdef OPS_GPU
-
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       p_a6[0 : tot6],                         \
-                                            p_a7[0 : tot7],                    \
-                                                 p_a8[0 : tot8],               \
-                                                      p_a9[0 : tot9],          \
-                                                           p_a10[0 : tot10])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target enter data map(to:states[0:2])
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *vertexx =
             p_a0 + base0 + n_x * 1 * 1 +
@@ -278,14 +249,14 @@ void generate_chunk_kernel_c_wrapper(
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
-#undef OPS_OPENMP48
-#undef OPS_OPENMP49
-#undef OPS_OPENMP410
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10

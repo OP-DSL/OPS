@@ -33,7 +33,6 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, int base0, int tot0,
                                     double *p_a4, int base4, int tot4,
                                     double *p_a5, int base5, int tot5,
                                     double *p_a6, int x_size, int y_size) {
-  int num_blocks = OPS_threads;
   double p_a6_0 = p_a6[0];
   double p_a6_1 = p_a6[1];
   double p_a6_2 = p_a6[2];
@@ -46,31 +45,17 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, int base0, int tot0,
   double p_a6_9 = p_a6[9];
   double p_a6_10 = p_a6[10];
   double p_a6_11 = p_a6[11];
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks) thread_limit(                   \
-    OPS_threads_for_block) map(tofrom : p_a6_11) reduction(                    \
-    + : p_a6_0) reduction(+ : p_a6_1) reduction(+ : p_a6_2) reduction(         \
-        + : p_a6_3) reduction(+ : p_a6_4) reduction(+ : p_a6_5) reduction(     \
-            + : p_a6_6) reduction(+ : p_a6_7) reduction(+ : p_a6_8) reduction( \
-                + : p_a6_9) reduction(+ : p_a6_10) reduction(+ : p_a6_11)
-#pragma omp distribute parallel for simd schedule(static, 1) reduction(        \
-    + : p_a6_0) reduction(+ : p_a6_1) reduction(+ : p_a6_2) reduction(         \
-        + : p_a6_3) reduction(+ : p_a6_4) reduction(+ : p_a6_5) reduction(     \
-            + : p_a6_6) reduction(+ : p_a6_7) reduction(+ : p_a6_8) reduction( \
-                + : p_a6_9) reduction(+ : p_a6_10) reduction(+ : p_a6_11)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(static, 1) map(               \
+        tofrom : p_a6_11) reduction(+ : p_a6_0) reduction(                     \
+        + : p_a6_1) reduction(+ : p_a6_2) reduction(+ : p_a6_3) reduction(     \
+            + : p_a6_4) reduction(+ : p_a6_5) reduction(+ : p_a6_6) reduction( \
+                + : p_a6_7) reduction(+ : p_a6_8) reduction(                   \
+                    + : p_a6_9) reduction(+ : p_a6_10) reduction(+ : p_a6_11)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     double p_a6_local[12];
     p_a6_local[0] = ZERO_double;
     p_a6_local[1] = ZERO_double;

@@ -54,32 +54,12 @@ void PdV_kernel_predict_c_wrapper(
     double *p_a8, int base8, int tot8, double *p_a9, int base9, int tot9,
     double *p_a10, int base10, int tot10, double *p_a11, int base11, int tot11,
     int x_size, int y_size) {
-  int num_blocks = OPS_threads;
-#pragma omp target enter data map(                                             \
-    to : p_a0                                                                  \
-    [0 : tot0], p_a1                                                           \
-     [0 : tot1], p_a2                                                          \
-      [0 : tot2],                                                              \
-       p_a3[0 : tot3],                                                         \
-            p_a4[0 : tot4],                                                    \
-                 p_a5[0 : tot5],                                               \
-                      p_a6[0 : tot6],                                          \
-                           p_a7[0 : tot7],                                     \
-                                p_a8[0 : tot8],                                \
-                                     p_a9[0 : tot9],                           \
-                                          p_a10[0 : tot10],                    \
-                                                p_a11[0 : tot11],              \
-                                                      states                   \
-                                                      [0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks)                                 \
-    thread_limit(OPS_threads_for_block)
-#pragma omp distribute parallel for simd schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(static, 1)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     int n_x = i % x_size;
     int n_y = i / x_size;
     const double *xarea =

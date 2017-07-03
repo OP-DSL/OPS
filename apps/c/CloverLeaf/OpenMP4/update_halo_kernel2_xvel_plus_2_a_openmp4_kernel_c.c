@@ -21,19 +21,12 @@ void update_halo_kernel2_xvel_plus_2_a_c_wrapper(double *p_a0, int base0,
                                                  int base1, int tot1, int *p_a2,
                                                  int tot2, int x_size,
                                                  int y_size) {
-  int num_blocks = OPS_threads;
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2],                       \
-                                              states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks)                                 \
-    thread_limit(OPS_threads_for_block)
-#pragma omp distribute parallel for simd schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(static, 1)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     int n_x = i % x_size;
     int n_y = i / x_size;
     double *xvel0 = p_a0 + base0 + n_x * 1 * 1 +

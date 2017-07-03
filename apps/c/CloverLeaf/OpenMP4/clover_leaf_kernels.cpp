@@ -7,32 +7,46 @@ void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   if (!strcmp(name, "g_small")) {
     g_small = *(double *)dat;
+#pragma omp target enter data map(to : g_small)
   } else if (!strcmp(name, "g_big")) {
     g_big = *(double *)dat;
+#pragma omp target enter data map(to : g_big)
   } else if (!strcmp(name, "dtc_safe")) {
     dtc_safe = *(double *)dat;
+#pragma omp target enter data map(to : dtc_safe)
   } else if (!strcmp(name, "dtu_safe")) {
     dtu_safe = *(double *)dat;
+#pragma omp target enter data map(to : dtu_safe)
   } else if (!strcmp(name, "dtv_safe")) {
     dtv_safe = *(double *)dat;
+#pragma omp target enter data map(to : dtv_safe)
   } else if (!strcmp(name, "dtdiv_safe")) {
     dtdiv_safe = *(double *)dat;
+#pragma omp target enter data map(to : dtdiv_safe)
   } else if (!strcmp(name, "field")) {
     field = *(field_type *)dat;
+#pragma omp target enter data map(to : field)
   } else if (!strcmp(name, "grid")) {
     grid = *(grid_type *)dat;
+#pragma omp target enter data map(to : grid)
   } else if (!strcmp(name, "number_of_states")) {
     number_of_states = *(int *)dat;
+#pragma omp target enter data map(to : number_of_states)
   } else if (!strcmp(name, "states")) {
     states = (state_type *)dat;
+#pragma omp target enter data map(to : states[0 : number_of_states])
   } else if (!strcmp(name, "g_circ")) {
     g_circ = *(int *)dat;
+#pragma omp target enter data map(to : g_circ)
   } else if (!strcmp(name, "g_point")) {
     g_point = *(int *)dat;
+#pragma omp target enter data map(to : g_point)
   } else if (!strcmp(name, "g_rect")) {
     g_rect = *(int *)dat;
+#pragma omp target enter data map(to : g_rect)
   } else if (!strcmp(name, "dt")) {
     dt = *(double *)dat;
+#pragma omp target enter data map(to : dt)
   } else {
     printf("error: unknown const name\n");
     exit(1);

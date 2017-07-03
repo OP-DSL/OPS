@@ -47,13 +47,13 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
   ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 8, range, 56))
+  if (!ops_checkpointing_before(args, 8, range, 67))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(56, "update_halo_kernel1_fr2");
-    OPS_kernels[56].count++;
+    ops_timing_realloc(67, "update_halo_kernel1_fr2");
+    OPS_kernels[67].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -153,20 +153,44 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
     ydim6_update_halo_kernel1_fr2_h = ydim6;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+  int tot1 = 1;
+  for (int i = 0; i < args[1].dat->block->dims; i++)
+    tot1 = tot1 * args[1].dat->size[i];
+  int tot2 = 1;
+  for (int i = 0; i < args[2].dat->block->dims; i++)
+    tot2 = tot2 * args[2].dat->size[i];
+  int tot3 = 1;
+  for (int i = 0; i < args[3].dat->block->dims; i++)
+    tot3 = tot3 * args[3].dat->size[i];
+  int tot4 = 1;
+  for (int i = 0; i < args[4].dat->block->dims; i++)
+    tot4 = tot4 * args[4].dat->size[i];
+  int tot5 = 1;
+  for (int i = 0; i < args[5].dat->block->dims; i++)
+    tot5 = tot5 * args[5].dat->size[i];
+  int tot6 = 1;
+  for (int i = 0; i < args[6].dat->block->dims; i++)
+    tot6 = tot6 * args[6].dat->size[i];
   int *arg7h = (int *)arg7.data;
 // Upload large globals
 #ifdef OPS_GPU
   int consts_bytes = 0;
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
   int OPS_consts_bytes = 4 * consts_bytes;
-  OPS_consts_h = (char *)malloc(OPS_consts_bytes);
-  memset(OPS_consts_h, 0, OPS_consts_bytes);
+  if (OPS_consts_h == NULL) {
+    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    memset(OPS_consts_h, 0, OPS_consts_bytes);
+  }
   consts_bytes = 0;
   args[7].data = OPS_consts_h + consts_bytes;
   args[7].data_d = OPS_consts_d + consts_bytes;
   for (int d = 0; d < NUM_FIELDS; d++)
     ((int *)args[7].data)[d] = arg7h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
+  mvConstArraysToDevice(consts_bytes);
 #endif // OPS_GPU
 
   // set up initial pointers
@@ -273,34 +297,13 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
 #else
   int *p_a7 = arg7h;
 #endif
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-  int tot1 = 1;
-  for (int i = 0; i < args[1].dat->block->dims; i++)
-    tot1 = tot1 * args[1].dat->size[i];
-  int tot2 = 1;
-  for (int i = 0; i < args[2].dat->block->dims; i++)
-    tot2 = tot2 * args[2].dat->size[i];
-  int tot3 = 1;
-  for (int i = 0; i < args[3].dat->block->dims; i++)
-    tot3 = tot3 * args[3].dat->size[i];
-  int tot4 = 1;
-  for (int i = 0; i < args[4].dat->block->dims; i++)
-    tot4 = tot4 * args[4].dat->size[i];
-  int tot5 = 1;
-  for (int i = 0; i < args[5].dat->block->dims; i++)
-    tot5 = tot5 * args[5].dat->size[i];
-  int tot6 = 1;
-  for (int i = 0; i < args[6].dat->block->dims; i++)
-    tot6 = tot6 * args[6].dat->size[i];
 
 #ifdef OPS_GPU
   for (int n = 0; n < 8; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[7].dat->block->dims; i++)
-        size += size * args[7].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -309,8 +312,8 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
   for (int n = 0; n < 8; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[7].dat->block->dims; i++)
-        size += size * args[7].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -318,9 +321,14 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
 #endif
   ops_halo_exchanges(args, 8, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 8);
+#else
+// ops_H_D_exchanges_host(args, 8);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[56].mpi_time += t2 - t1;
+    OPS_kernels[67].mpi_time += t2 - t1;
   }
 
   update_halo_kernel1_fr2_c_wrapper(p_a0, base0 / args[0].dat->elem_size, tot0,
@@ -334,26 +342,26 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[56].time += t1 - t2;
+    OPS_kernels[67].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 8; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 8);
+  // for (int n = 0; n < 8; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 8);
 #else
-  for (int n = 0; n < 8; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 8);
+  // for (int n = 0; n < 8; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 8);
 #endif
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
@@ -366,13 +374,13 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[56].mpi_time += t2 - t1;
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[67].mpi_time += t2 - t1;
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[67].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }

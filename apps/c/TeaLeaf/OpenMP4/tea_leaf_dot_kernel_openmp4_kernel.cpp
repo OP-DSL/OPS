@@ -77,6 +77,12 @@ void ops_par_loop_tea_leaf_dot_kernel(char const *name, ops_block block,
     xdim1_tea_leaf_dot_kernel_h = xdim1;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+  int tot1 = 1;
+  for (int i = 0; i < args[1].dat->block->dims; i++)
+    tot1 = tot1 * args[1].dat->size[i];
 #ifdef OPS_MPI
   double *arg2h =
       (double *)(((ops_reduction)args[2].data)->data +
@@ -109,19 +115,13 @@ void ops_par_loop_tea_leaf_dot_kernel(char const *name, ops_block block,
 #endif
 
   double *p_a2 = arg2h;
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-  int tot1 = 1;
-  for (int i = 0; i < args[1].dat->block->dims; i++)
-    tot1 = tot1 * args[1].dat->size[i];
 
 #ifdef OPS_GPU
   for (int n = 0; n < 3; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[2].dat->block->dims; i++)
-        size += size * args[2].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -130,8 +130,8 @@ void ops_par_loop_tea_leaf_dot_kernel(char const *name, ops_block block,
   for (int n = 0; n < 3; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[2].dat->block->dims; i++)
-        size += size * args[2].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -139,6 +139,11 @@ void ops_par_loop_tea_leaf_dot_kernel(char const *name, ops_block block,
 #endif
   ops_halo_exchanges(args, 3, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 3);
+#else
+// ops_H_D_exchanges_host(args, 3);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[18].mpi_time += t2 - t1;
@@ -153,23 +158,23 @@ void ops_par_loop_tea_leaf_dot_kernel(char const *name, ops_block block,
     OPS_kernels[18].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 3; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 3);
+  // for (int n = 0; n < 3; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 3);
 #else
-  for (int n = 0; n < 3; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 3);
+  // for (int n = 0; n < 3; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 3);
 #endif
 
   if (OPS_diags > 1) {

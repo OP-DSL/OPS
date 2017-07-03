@@ -10,14 +10,14 @@ extern int ydim0_update_halo_kernel4_minus_4_b;
 extern int xdim1_update_halo_kernel4_minus_4_b;
 extern int ydim1_update_halo_kernel4_minus_4_b;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
+#undef OPS_ACC0
+#undef OPS_ACC1
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_update_halo_kernel4_minus_4_b * (y) +                             \
    xdim0_update_halo_kernel4_minus_4_b * ydim0_update_halo_kernel4_minus_4_b * \
        (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_update_halo_kernel4_minus_4_b * (y) +                             \
    xdim1_update_halo_kernel4_minus_4_b * ydim1_update_halo_kernel4_minus_4_b * \
        (z))
@@ -28,21 +28,13 @@ void update_halo_kernel4_minus_4_b_c_wrapper(double *p_a0, int base0, int tot0,
                                              double *p_a1, int base1, int tot1,
                                              int *p_a2, int tot2, int x_size,
                                              int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1],         \
-                                                            p_a2[0 : tot2])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         double *vol_flux_y = p_a0 + base0 + n_x * 1 * 1 +
                              n_y * xdim0_update_halo_kernel4_minus_4_b * 1 * 1 +
@@ -65,5 +57,5 @@ void update_halo_kernel4_minus_4_b_c_wrapper(double *p_a0, int base0, int tot0,
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
+#undef OPS_ACC0
+#undef OPS_ACC1

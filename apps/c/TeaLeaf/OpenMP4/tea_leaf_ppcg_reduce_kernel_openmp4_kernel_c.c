@@ -24,35 +24,28 @@ void tea_leaf_ppcg_reduce_kernel_c_wrapper(double *p_a0, int base0, int tot0,
                                            double *p_a2, int base2, int tot2,
                                            double *p_a3, int x_size,
                                            int y_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
   double p_a3_0 = p_a3[0];
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1],         \
-                                                            p_a2[0 : tot2])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2])    \
-                                                map(tofrom : p_a3_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128) reduction(+ : p_a3_0)
-#pragma omp distribute parallel for simd collapse(2)                           \
-    schedule(static, 1) reduction(+ : p_a3_0)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block)                                        \
+        schedule(static, 1) map(tofrom : p_a3_0) reduction(+ : p_a3_0)
 #endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const double *rstore = p_a0 + base0 + n_x * 1 * 1 +
-                             n_y * xdim0_tea_leaf_ppcg_reduce_kernel * 1 * 1;
+  for (int i = 0; i < y_size * x_size; i++) {
+    int n_x = i % x_size;
+    int n_y = i / x_size;
+    const double *rstore = p_a0 + base0 + n_x * 1 * 1 +
+                           n_y * xdim0_tea_leaf_ppcg_reduce_kernel * 1 * 1;
 
-      const double *r = p_a1 + base1 + n_x * 1 * 1 +
-                        n_y * xdim1_tea_leaf_ppcg_reduce_kernel * 1 * 1;
-      const double *z = p_a2 + base2 + n_x * 1 * 1 +
-                        n_y * xdim2_tea_leaf_ppcg_reduce_kernel * 1 * 1;
+    const double *r = p_a1 + base1 + n_x * 1 * 1 +
+                      n_y * xdim1_tea_leaf_ppcg_reduce_kernel * 1 * 1;
+    const double *z = p_a2 + base2 + n_x * 1 * 1 +
+                      n_y * xdim2_tea_leaf_ppcg_reduce_kernel * 1 * 1;
 
-      double *rnn = &p_a3_0;
+    double *rnn = &p_a3_0;
 
-      *rnn = *rnn +
-             (r[OPS_ACC1(0, 0)] - rstore[OPS_ACC0(0, 0)]) * z[OPS_ACC2(0, 0)];
-    }
+    *rnn =
+        *rnn + (r[OPS_ACC1(0, 0)] - rstore[OPS_ACC0(0, 0)]) * z[OPS_ACC2(0, 0)];
   }
   p_a3[0] = p_a3_0;
 }

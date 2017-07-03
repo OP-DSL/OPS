@@ -80,6 +80,10 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
     xdim0_initialise_chunk_kernel_xx_h = xdim0;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
               args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
@@ -94,16 +98,12 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
 
   int *p_a1 = NULL;
 
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-
 #ifdef OPS_GPU
   for (int n = 0; n < 2; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[1].dat->block->dims; i++)
-        size += size * args[1].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -112,8 +112,8 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
   for (int n = 0; n < 2; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[1].dat->block->dims; i++)
-        size += size * args[1].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -121,6 +121,11 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
 #endif
   ops_halo_exchanges(args, 2, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 2);
+#else
+// ops_H_D_exchanges_host(args, 2);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[8].mpi_time += t2 - t1;
@@ -135,23 +140,23 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
     OPS_kernels[8].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 2; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 2);
+  // for (int n = 0; n < 2; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 2);
 #else
-  for (int n = 0; n < 2; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 2);
+  // for (int n = 0; n < 2; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 2);
 #endif
   ops_set_halo_dirtybit3(&args[0], range);
 

@@ -34,35 +34,21 @@ void field_summary_kernel_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, double *p_a7, double *p_a8, double *p_a9, double *p_a10,
     int x_size, int y_size) {
-  int num_blocks = OPS_threads;
   double p_a6_0 = p_a6[0];
   double p_a7_0 = p_a7[0];
   double p_a8_0 = p_a8[0];
   double p_a9_0 = p_a9[0];
   double p_a10_0 = p_a10[0];
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0],                                                       \
-              p_a1[0 : tot1],                                                  \
-                   p_a2[0 : tot2],                                             \
-                        p_a3[0 : tot3],                                        \
-                             p_a4[0 : tot4],                                   \
-                                  p_a5[0 : tot5],                              \
-                                       states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks)                                 \
-    thread_limit(OPS_threads_for_block) map(tofrom : p_a6_0)                   \
-        map(tofrom : p_a7_0) map(tofrom : p_a8_0) map(tofrom : p_a9_0)         \
-            map(tofrom : p_a10_0)                                              \
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(                              \
+        static, 1) map(tofrom : p_a6_0) map(tofrom : p_a7_0)                   \
+            map(tofrom : p_a8_0) map(tofrom : p_a9_0) map(tofrom : p_a10_0)    \
                 reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(         \
                     + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
-#pragma omp distribute parallel for simd schedule(static, 1) reduction(        \
-    + : p_a6_0) reduction(+ : p_a7_0) reduction(+ : p_a8_0) reduction(         \
-        + : p_a9_0) reduction(+ : p_a10_0)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     int n_x = i % x_size;
     int n_y = i / x_size;
     const double *volume =

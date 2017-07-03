@@ -12,19 +12,19 @@ extern int ydim1_initialise_chunk_kernel_cellx;
 extern int xdim2_initialise_chunk_kernel_cellx;
 extern int ydim2_initialise_chunk_kernel_cellx;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_initialise_chunk_kernel_cellx * (y) +                             \
    xdim0_initialise_chunk_kernel_cellx * ydim0_initialise_chunk_kernel_cellx * \
        (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_initialise_chunk_kernel_cellx * (y) +                             \
    xdim1_initialise_chunk_kernel_cellx * ydim1_initialise_chunk_kernel_cellx * \
        (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_initialise_chunk_kernel_cellx * (y) +                             \
    xdim2_initialise_chunk_kernel_cellx * ydim2_initialise_chunk_kernel_cellx * \
        (z))
@@ -36,21 +36,13 @@ void initialise_chunk_kernel_cellx_c_wrapper(double *p_a0, int base0, int tot0,
                                              double *p_a2, int base2, int tot2,
                                              int x_size, int y_size,
                                              int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1],         \
-                                                            p_a2[0 : tot2])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *vertexx =
             p_a0 + base0 + n_x * 1 * 1 +
@@ -76,6 +68,6 @@ void initialise_chunk_kernel_cellx_c_wrapper(double *p_a0, int base0, int tot0,
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2

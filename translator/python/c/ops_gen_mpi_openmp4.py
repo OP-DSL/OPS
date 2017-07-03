@@ -303,7 +303,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
    #   code('int tot'+ +str(n) + '= ')
 
     #code("int num_blocks = round(((double)x_size*(double)y_size)/OPS_block_size_x);");
-    code("int num_blocks = OPS_threads;");
+    #code("int num_blocks = OPS_threads;");
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
@@ -315,8 +315,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     
     line = '#pragma omp target enter data map(to:'
     for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
+      #if arg_typ[n] == 'ops_arg_dat':
+      #  line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
       if arg_typ[n] == 'ops_arg_gbl' :
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           line = line + 'p_a'+str(n)+'[0:tot'+str(n)+'],'
@@ -326,10 +326,10 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
         num = str(consts[nc]['dim'])
         line = line + str(consts[nc]['name']).replace('"','')+'[0:'+num+'],' 
     line = line[:-1]+')'
-    code(line)
+    #code(line)
 
-    #line = '#pragma omp target map(to:'
-    line = '#pragma omp target teams num_teams(num_blocks)  thread_limit(OPS_threads_for_block) '
+    #line = '#pragma omp target teams \n'
+    line = '#pragma omp target teams distribute parallel for num_teams(OPS_threads)  thread_limit(OPS_threads_for_block) collapse('+str(NDIM)+') schedule(static,1)'
     #line = '#pragma omp target '
     #for n in range (0,nargs):
     #  if arg_typ[n] == 'ops_arg_dat':
@@ -378,44 +378,45 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
             line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     #code('\n')
     #code(line)
-    line = line + '\n'
+    #line = line + '\n'
     #line = line + '#pragma omp distribute parallel for simd collapse('+str(NDIM)+') schedule(static,1)'
-    line = line + '#pragma omp distribute parallel for simd schedule(static,1)'
+    #line = line + '#pragma omp distribute parallel for simd schedule(static,1)'
     #code(line)
     
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_MAX:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_INC:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_WRITE: #this may not be correct
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
+    #for n in range (0,nargs):
+    #  if arg_typ[n] == 'ops_arg_gbl':
+    #    if accs[n] == OPS_MIN:
+    #      for d in range(0,int(dims[n])):
+    #        line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
+    #    if accs[n] == OPS_MAX:
+    #      for d in range(0,int(dims[n])):
+    #        line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
+    #    if accs[n] == OPS_INC:
+    #      for d in range(0,int(dims[n])):
+    #        line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
+    #    if accs[n] == OPS_WRITE: #this may not be correct
+    #      for d in range(0,int(dims[n])):
+    #        line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
     code('\n')
     code(line)
     code('#endif')
     if NDIM==3:
       FOR('n_z','0','z_size')
-      code('#ifdef OPS_GPU')
+      #code('#ifdef OPS_GPU')
       #code(line)
-      code('#endif')
+      #code('#endif')
       FOR('n_y','0','y_size')
-      code('#ifdef OPS_GPU')
+      #code('#ifdef OPS_GPU')
       #line = '#pragma omp target \n'
       #line = '#pragma omp teams \n'
       #line = line + '#pragma omp distribute parallel for simd \n'
       #code(line)
-      code('#endif')
+      #code('#endif')
+      #FOR('i','0','y_size*x_size*z_size')
     if NDIM==2:
-      #FOR('n_y','0','y_size*x_size')
-      FOR('i','0','y_size*x_size')
-      code('#ifdef OPS_GPU')
+      FOR('n_y','0','y_size')
+      #FOR('i','0','y_size*x_size')
+      #code('#ifdef OPS_GPU')
       #line = '#pragma omp target \n'
       #line = '#pragma omp teams \n'
       #line = line + '#pragma omp distribute parallel for simd \n'
@@ -438,23 +439,23 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       #      for d in range(0,int(dims[n])):
       #        line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
       #code(line)
-      code('#endif')
+      #code('#endif')
 
-    #FOR('n_x','0','x_size')
-    #if arg_idx:
-    #  if NDIM==1:
-    #    code('int arg_idx[] = {arg_idx0+n_x};')
-    #  elif NDIM==2:
-    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
-    #  elif NDIM==3:
-    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
+    FOR('n_x','0','x_size')
     if arg_idx:
       if NDIM==1:
         code('int arg_idx[] = {arg_idx0+n_x};')
       elif NDIM==2:
-        code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size};')
+        code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
       elif NDIM==3:
         code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
+    #if arg_idx:
+    #  if NDIM==1:
+    #    code('int arg_idx[] = {arg_idx0+n_x};')
+    #  elif NDIM==2:
+    #    code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size};')
+    #  elif NDIM==3:
+    #    code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size, arg_idx2+i/(x_size*y_size)};')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -479,8 +480,10 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 
     #text = name+'( '
     text = '' 
-    text = text +' int n_x= i%x_size;'
-    text = text +' int n_y= i/x_size;'
+    #text = text +' int n_x= i%x_size;'
+    #text = text +' int n_y= i/x_size;'
+    #if NDIM == 3:
+    # text = text +' int n_z= i/(x_size*y_size);'
     for n in range (0, nargs):
       text = text + kernel_params[n] + ' = '
       if arg_typ[n] == 'ops_arg_dat':
@@ -531,12 +534,12 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
             code('p_a'+str(n)+'_'+str(d)+' +=p_a'+str(n)+'_local['+str(d)+'];')
 
 
-    #ENDFOR()
+    ENDFOR()
     if NDIM==2:
       ENDFOR()
     if NDIM==3:
-      ENDFOR()
-      ENDFOR()
+     ENDFOR()
+     ENDFOR()
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -772,6 +775,12 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 
     code('')
     for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('int tot'+str(n)+' = 1;')
+        code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
+        code('  tot'+str(n)+ '= tot'+str(n)+ ' * args['+str(n)+'].dat->size[i];')
+
+    for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1)):
             #code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)args['+str(n)+'].data;')
@@ -787,26 +796,73 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       comm('Upload large globals')
       code('#ifdef OPS_GPU')
       code('int consts_bytes = 0;')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
-    if GBL_READ == True and GBL_READ_MDIM == True:
-      code('int OPS_consts_bytes = 4 * consts_bytes;');
-      code('OPS_consts_h = (char *)malloc(OPS_consts_bytes);');
-      code('memset(OPS_consts_h, 0 , OPS_consts_bytes);');
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+            code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
+      #code('OPS_gbl_changed = 0;')
+      #code('if (OPS_gbl_prev != NULL)')
+      #code('for (int i = 0; i < consts_bytes; i++) {')
+      #code('if (OPS_consts_h[i] != OPS_gbl_prev[i])')
+      #code('OPS_gbl_changed = 1;')
+      #code('}')
+      #code('else {')
+      
+      #code('OPS_gbl_changed = 0;')
+      #code('OPS_gbl_prev = (char *)malloc(consts_bytes);')
+      #if GBL_READ == True and GBL_READ_MDIM == True:
+      #  code('int OPS_consts_bytes = 4 * consts_bytes;');
+      #  code('if(OPS_consts_h == NULL)')
+      #  code('OPS_consts_h = (char *)malloc(OPS_consts_bytes);');
+      #  code('memset(OPS_consts_h, 0 , OPS_consts_bytes);');
+        #code('reallocConstArrays(consts_bytes);')
+      if GBL_READ == True and GBL_READ_MDIM == True:
+        code('int OPS_consts_bytes = 4 * consts_bytes;');
+        code('if(OPS_consts_h == NULL){')
+        code('OPS_consts_h = (char *)malloc(OPS_consts_bytes);'); 
+        #code('#pragma omp target enter data map(to: OPS_consts_h[0:consts_bytes]);')
+        code('memset(OPS_consts_h, 0 , OPS_consts_bytes);}');
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+           code('consts_bytes = 0;')
+           code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
+           code('args['+str(n)+'].data_d = OPS_consts_d + consts_bytes;')
+           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
+           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+           #code('#pragma omp target enter data map(to: OPS_consts_h[0:consts_bytes]);')
+           #code(' memcpy(OPS_gbl_prev, OPS_consts_h, consts_bytes);')      
+      #code('}')
+      #code('if(OPS_gbl_changed) {')
+    #if GBL_READ == True and GBL_READ_MDIM == True:
+    #  code('int OPS_consts_bytes = 4 * consts_bytes;');
+    #  code('if(OPS_consts_h == NULL)')
+    #  code('OPS_consts_h = (char *)malloc(OPS_consts_bytes);');
+    #  code('memset(OPS_consts_h, 0 , OPS_consts_bytes);');
      #code('reallocConstArrays(consts_bytes);')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes = 0;')
-          code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
-          code('args['+str(n)+'].data_d = OPS_consts_d + consts_bytes;')
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
-       #code('#endif //OPS_GPU') 
+    #for n in range (0, nargs):
+    #  if arg_typ[n] == 'ops_arg_gbl':
+    #    if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
+    #      code('consts_bytes = 0;')
+    #      code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
+    #      code('args['+str(n)+'].data_d = OPS_consts_d + consts_bytes;')
+    #      code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
+    #      code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+      #code('#endif //OPS_GPU') 
     if GBL_READ == True and GBL_READ_MDIM == True:
-      #code('mvConstArraysToDevice(consts_bytes);')
+      code('mvConstArraysToDevice(consts_bytes);')
+      #code('#pragma omp target update to(OPS_consts_h[0:consts_bytes]);')
+      #code(' memcpy(OPS_gbl_prev, OPS_consts_h, consts_bytes);')
+      #code('}else{')
+      #code('int OPS_consts_bytes = 4 * consts_bytes;')
+      #code('memset(OPS_consts_h, 0, OPS_consts_bytes);')
+      #code('int consts_bytes = 0;')
+      #code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
+      #code('for (int d = 0; d < NUM_FIELDS; d++)')
+      #code('((int *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
+      #code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+      #code('#pragma omp target update to( OPS_consts_h[0:consts_bytes]);')
+      #code('}')
       code('#endif //OPS_GPU')
 
 
@@ -844,20 +900,20 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       else:
         code(typs[n]+' *p_a'+str(n)+' = NULL;')
         code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('int tot'+str(n)+' = 1;')
-        code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
-        code('  tot'+str(n)+ '= tot'+str(n)+ ' * args['+str(n)+'].dat->size[i];')
+#    for n in range (0, nargs):
+#      if arg_typ[n] == 'ops_arg_dat':
+#        code('int tot'+str(n)+' = 1;')
+#        code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
+#        code('  tot'+str(n)+ '= tot'+str(n)+ ' * args['+str(n)+'].dat->size[i];')
 
     code('')
     code('#ifdef OPS_GPU')
     code('for (int n = 0; n < '+str(nargs)+'; n++)')
     code('if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {')
     code('int size = 1;')
-    code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
-    code('  size += size  * args['+str(n)+'].dat->size[i];')
-    code('//#pragma omp target update to( args[n].dat->data[0:size])')
+    code('for (int i = 0; i < args[n].dat->block->dims; i++)')
+    code('  size += size  * args[n].dat->size[i];')
+    code('  #pragma omp target update to( args[n].dat->data[0:size])')
     code('args[n].dat->dirty_hd = 0;')
     code('}')
     code('//ops_H_D_exchanges_device(args, '+str(nargs)+');')
@@ -865,9 +921,9 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     code('for (int n = 0; n < '+str(nargs)+'; n++)')
     code('if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {')
     code('int size = 1;')
-    code('for (int i = 0; i < args['+str(n)+'].dat->block->dims; i++)')
-    code('  size += size  * args['+str(n)+'].dat->size[i];')
-    code('//#pragma omp target update from(args[n].dat->data[0:size])')
+    code('for (int i = 0; i < args[n].dat->block->dims; i++)')
+    code('  size += size  * args[n].dat->size[i];')
+    code('#pragma omp target update from(args[n].dat->data[0:size])')
       #//ops_download_dat(args[n].dat);
       #// printf("halo exchanges on host\n");
     code('args[n].dat->dirty_hd = 0;')
@@ -876,11 +932,11 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     code('#endif')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
-    #code('#ifdef OPS_GPU')
-    #code('//ops_H_D_exchanges_device(args, '+str(nargs)+');')
-    #code('#else')
-    #code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-    #code('#endif')
+    code('#ifdef OPS_GPU')
+    code('//ops_H_D_exchanges_device(args, '+str(nargs)+');')
+    code('#else')
+    code('//ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('#endif')
 
     IF('OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
@@ -939,23 +995,23 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('#ifdef OPS_GPU')
-    code('for (int n = 0; n < '+str(nargs)+'; n++) {')
-    code('if ((args[n].argtype == OPS_ARG_DAT) &&')
-    code('(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||')
-    code('args[n].acc == OPS_RW)) {')
-    code('args[n].dat->dirty_hd = 2;')
-    code('}')
-    code('}')
-    code('//ops_set_dirtybit_device(args, '+str(nargs)+');')
+    code('//for (int n = 0; n < '+str(nargs)+'; n++) {')
+    code('//if ((args[n].argtype == OPS_ARG_DAT) &&')
+    code('//(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||')
+    code('//args[n].acc == OPS_RW)) {')
+    code('//args[n].dat->dirty_hd = 2;')
+    code('//}')
+    code('//}')
+    code('ops_set_dirtybit_device(args, '+str(nargs)+');')
     code('#else')
-    code('for (int n = 0; n < '+str(nargs)+'; n++) {')
-    code('if ((args[n].argtype == OPS_ARG_DAT) &&')
-    code('(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||')
-    code('args[n].acc == OPS_RW)) {')
-    code('args[n].dat->dirty_hd = 1;')
-    code('}')
-    code('}')
-    code('//ops_set_dirtybit_host(args, '+str(nargs)+');')
+    code('//for (int n = 0; n < '+str(nargs)+'; n++) {')
+    code('//if ((args[n].argtype == OPS_ARG_DAT) &&')
+    code('//(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||')
+    code('//args[n].acc == OPS_RW)) {')
+    code('//args[n].dat->dirty_hd = 1;')
+    code('//}')
+    code('//}')
+    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     code('#endif')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
@@ -1007,6 +1063,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
   code('#endif')
   #code('#ifdef OPS_GPU')
   code('#include "ops_cuda_rt_support.h"')
+  code('#include "ops_openmp4_rt_support.h"')
   #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')

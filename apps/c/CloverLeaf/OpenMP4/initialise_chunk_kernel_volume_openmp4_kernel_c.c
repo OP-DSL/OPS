@@ -31,22 +31,12 @@ void initialise_chunk_kernel_volume_c_wrapper(double *p_a0, int base0, int tot0,
                                               double *p_a3, int base3, int tot3,
                                               double *p_a4, int base4, int tot4,
                                               int x_size, int y_size) {
-  int num_blocks = OPS_threads;
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2],                                  \
-                                   p_a3[0 : tot3],                             \
-                                        p_a4[0 : tot4],                        \
-                                             states[0 : number_of_states])
 #ifdef OPS_GPU
 
-#pragma omp target teams num_teams(num_blocks)                                 \
-    thread_limit(OPS_threads_for_block)
-#pragma omp distribute parallel for simd schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) schedule(static, 1)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-#ifdef OPS_GPU
-#endif
     int n_x = i % x_size;
     int n_y = i / x_size;
     double *volume = p_a0 + base0 + n_x * 1 * 1 +

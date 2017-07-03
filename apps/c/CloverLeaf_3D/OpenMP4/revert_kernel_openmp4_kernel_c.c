@@ -14,21 +14,21 @@ extern int ydim2_revert_kernel;
 extern int xdim3_revert_kernel;
 extern int ydim3_revert_kernel;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_revert_kernel * (y) +                                             \
    xdim0_revert_kernel * ydim0_revert_kernel * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_revert_kernel * (y) +                                             \
    xdim1_revert_kernel * ydim1_revert_kernel * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_revert_kernel * (y) +                                             \
    xdim2_revert_kernel * ydim2_revert_kernel * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_revert_kernel * (y) +                                             \
    xdim3_revert_kernel * ydim3_revert_kernel * (z))
 
@@ -38,22 +38,13 @@ void revert_kernel_c_wrapper(double *p_a0, int base0, int tot0, double *p_a1,
                              int base1, int tot1, double *p_a2, int base2,
                              int tot2, double *p_a3, int base3, int tot3,
                              int x_size, int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2], p_a3[0 : tot3])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0[0 : tot0], p_a1[0 : tot1], p_a2[0 : tot2], p_a3[0 : tot3])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *density0 =
             p_a0 + base0 + n_x * 1 * 1 + n_y * xdim0_revert_kernel * 1 * 1 +
@@ -77,7 +68,7 @@ void revert_kernel_c_wrapper(double *p_a0, int base0, int tot0, double *p_a1,
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3

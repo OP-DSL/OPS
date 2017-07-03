@@ -12,17 +12,17 @@ extern int ydim1_calc_dt_kernel_get;
 extern int xdim4_calc_dt_kernel_get;
 extern int ydim4_calc_dt_kernel_get;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP44
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC4
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_calc_dt_kernel_get * (y) +                                        \
    xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_calc_dt_kernel_get * (y) +                                        \
    xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_calc_dt_kernel_get * (y) +                                        \
    xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get * (z))
 
@@ -33,30 +33,18 @@ void calc_dt_kernel_get_c_wrapper(double *p_a0, int base0, int tot0,
                                   double *p_a2, double *p_a3, double *p_a4,
                                   int base4, int tot4, double *p_a5, int x_size,
                                   int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
   double p_a2_0 = p_a2[0];
   double p_a3_0 = p_a3[0];
   double p_a5_0 = p_a5[0];
-#pragma omp target enter data map(to : p_a0[0 : tot0], p_a1[0 : tot1],         \
-                                                            p_a4[0 : tot4])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0],                                    \
-                                 p_a1[0 : tot1], p_a4[0 : tot4])               \
-                                     map(tofrom : p_a2_0) map(tofrom : p_a3_0) \
-                                         map(tofrom : p_a5_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128)                      \
-    reduction(+ : p_a2_0) reduction(+ : p_a3_0) reduction(+ : p_a5_0)
-#pragma omp distribute parallel for simd collapse(3) schedule(                 \
-    static, 1)                                                                 \
+#pragma omp target teams distribute parallel for num_teams(                    \
+    OPS_threads) thread_limit(OPS_threads_for_block) collapse(3) schedule(     \
+    static, 1) map(tofrom : p_a2_0) map(tofrom : p_a3_0) map(tofrom : p_a5_0)  \
         reduction(+ : p_a2_0) reduction(+ : p_a3_0) reduction(+ : p_a5_0)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *cellx =
             p_a0 + base0 + n_x * 1 * 1 +
@@ -89,6 +77,6 @@ void calc_dt_kernel_get_c_wrapper(double *p_a0, int base0, int tot0,
   p_a3[0] = p_a3_0;
   p_a5[0] = p_a5_0;
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP44
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC4

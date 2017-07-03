@@ -20,33 +20,33 @@ extern int ydim5_update_halo_kernel1_l1;
 extern int xdim6_update_halo_kernel1_l1;
 extern int ydim6_update_halo_kernel1_l1;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_update_halo_kernel1_l1 * (y) +                                    \
    xdim0_update_halo_kernel1_l1 * ydim0_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_update_halo_kernel1_l1 * (y) +                                    \
    xdim1_update_halo_kernel1_l1 * ydim1_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_update_halo_kernel1_l1 * (y) +                                    \
    xdim2_update_halo_kernel1_l1 * ydim2_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_update_halo_kernel1_l1 * (y) +                                    \
    xdim3_update_halo_kernel1_l1 * ydim3_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_update_halo_kernel1_l1 * (y) +                                    \
    xdim4_update_halo_kernel1_l1 * ydim4_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP45(x, y, z)                                                  \
+#define OPS_ACC5(x, y, z)                                                      \
   (x + xdim5_update_halo_kernel1_l1 * (y) +                                    \
    xdim5_update_halo_kernel1_l1 * ydim5_update_halo_kernel1_l1 * (z))
-#define OPS_OPENMP46(x, y, z)                                                  \
+#define OPS_ACC6(x, y, z)                                                      \
   (x + xdim6_update_halo_kernel1_l1 * (y) +                                    \
    xdim6_update_halo_kernel1_l1 * ydim6_update_halo_kernel1_l1 * (z))
 
@@ -58,34 +58,13 @@ void update_halo_kernel1_l1_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, int base6, int tot6, int *p_a7, int tot7, int x_size,
     int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2],                                  \
-                                   p_a3[0 : tot3],                             \
-                                        p_a4[0 : tot4],                        \
-                                             p_a5[0 : tot5],                   \
-                                                  p_a6[0 : tot6],              \
-                                                       p_a7[0 : tot7])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0],                                    \
-                                 p_a1[0 : tot1],                               \
-                                      p_a2[0 : tot2],                          \
-                                           p_a3[0 : tot3],                     \
-                                                p_a4[0 : tot4],                \
-                                                     p_a5[0 : tot5],           \
-                                                          p_a6[0 : tot6],      \
-                                                               p_a7[0 : tot7])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         double *density0 = p_a0 + base0 + n_x * 1 * 1 +
                            n_y * xdim0_update_halo_kernel1_l1 * 1 * 1 +
@@ -142,10 +121,10 @@ void update_halo_kernel1_l1_c_wrapper(
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6

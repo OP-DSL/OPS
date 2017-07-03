@@ -26,13 +26,13 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 73))
+  if (!ops_checkpointing_before(args, 3, range, 84))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(73, "update_halo_kernel2_yvel_minus_2_top");
-    OPS_kernels[73].count++;
+    ops_timing_realloc(84, "update_halo_kernel2_yvel_minus_2_top");
+    OPS_kernels[84].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -92,20 +92,29 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
     ydim1_update_halo_kernel2_yvel_minus_2_top_h = ydim1;
   }
 
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+  int tot1 = 1;
+  for (int i = 0; i < args[1].dat->block->dims; i++)
+    tot1 = tot1 * args[1].dat->size[i];
   int *arg2h = (int *)arg2.data;
 // Upload large globals
 #ifdef OPS_GPU
   int consts_bytes = 0;
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
   int OPS_consts_bytes = 4 * consts_bytes;
-  OPS_consts_h = (char *)malloc(OPS_consts_bytes);
-  memset(OPS_consts_h, 0, OPS_consts_bytes);
+  if (OPS_consts_h == NULL) {
+    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    memset(OPS_consts_h, 0, OPS_consts_bytes);
+  }
   consts_bytes = 0;
   args[2].data = OPS_consts_h + consts_bytes;
   args[2].data_d = OPS_consts_d + consts_bytes;
   for (int d = 0; d < NUM_FIELDS; d++)
     ((int *)args[2].data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
+  mvConstArraysToDevice(consts_bytes);
 #endif // OPS_GPU
 
   // set up initial pointers
@@ -142,19 +151,13 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
 #else
   int *p_a2 = arg2h;
 #endif
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-  int tot1 = 1;
-  for (int i = 0; i < args[1].dat->block->dims; i++)
-    tot1 = tot1 * args[1].dat->size[i];
 
 #ifdef OPS_GPU
   for (int n = 0; n < 3; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[2].dat->block->dims; i++)
-        size += size * args[2].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -163,8 +166,8 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
   for (int n = 0; n < 3; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[2].dat->block->dims; i++)
-        size += size * args[2].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -172,9 +175,14 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
 #endif
   ops_halo_exchanges(args, 3, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 3);
+#else
+// ops_H_D_exchanges_host(args, 3);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
+    OPS_kernels[84].mpi_time += t2 - t1;
   }
 
   update_halo_kernel2_yvel_minus_2_top_c_wrapper(
@@ -184,26 +192,26 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[73].time += t1 - t2;
+    OPS_kernels[84].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 3; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 3);
+  // for (int n = 0; n < 3; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 3);
 #else
-  for (int n = 0; n < 3; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 3);
+  // for (int n = 0; n < 3; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 3);
 #endif
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
@@ -211,8 +219,8 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_2_top(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[84].mpi_time += t2 - t1;
+    OPS_kernels[84].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[84].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

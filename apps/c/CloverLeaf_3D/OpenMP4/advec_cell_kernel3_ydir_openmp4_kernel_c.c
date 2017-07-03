@@ -22,37 +22,37 @@ extern int ydim6_advec_cell_kernel3_ydir;
 extern int xdim7_advec_cell_kernel3_ydir;
 extern int ydim7_advec_cell_kernel3_ydir;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_advec_cell_kernel3_ydir * (y) +                                   \
    xdim0_advec_cell_kernel3_ydir * ydim0_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_advec_cell_kernel3_ydir * (y) +                                   \
    xdim1_advec_cell_kernel3_ydir * ydim1_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_advec_cell_kernel3_ydir * (y) +                                   \
    xdim2_advec_cell_kernel3_ydir * ydim2_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_advec_cell_kernel3_ydir * (y) +                                   \
    xdim3_advec_cell_kernel3_ydir * ydim3_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_advec_cell_kernel3_ydir * (y) +                                   \
    xdim4_advec_cell_kernel3_ydir * ydim4_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP45(x, y, z)                                                  \
+#define OPS_ACC5(x, y, z)                                                      \
   (x + xdim5_advec_cell_kernel3_ydir * (y) +                                   \
    xdim5_advec_cell_kernel3_ydir * ydim5_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP46(x, y, z)                                                  \
+#define OPS_ACC6(x, y, z)                                                      \
   (x + xdim6_advec_cell_kernel3_ydir * (y) +                                   \
    xdim6_advec_cell_kernel3_ydir * ydim6_advec_cell_kernel3_ydir * (z))
-#define OPS_OPENMP47(x, y, z)                                                  \
+#define OPS_ACC7(x, y, z)                                                      \
   (x + xdim7_advec_cell_kernel3_ydir * (y) +                                   \
    xdim7_advec_cell_kernel3_ydir * ydim7_advec_cell_kernel3_ydir * (z))
 
@@ -64,34 +64,13 @@ void advec_cell_kernel3_ydir_c_wrapper(
     double *p_a4, int base4, int tot4, double *p_a5, int base5, int tot5,
     double *p_a6, int base6, int tot6, double *p_a7, int base7, int tot7,
     int x_size, int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(                                             \
-    to : p_a0[0 : tot0], p_a1[0 : tot1],                                       \
-                              p_a2[0 : tot2],                                  \
-                                   p_a3[0 : tot3],                             \
-                                        p_a4[0 : tot4],                        \
-                                             p_a5[0 : tot5],                   \
-                                                  p_a6[0 : tot6],              \
-                                                       p_a7[0 : tot7])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0],                                    \
-                                 p_a1[0 : tot1],                               \
-                                      p_a2[0 : tot2],                          \
-                                           p_a3[0 : tot3],                     \
-                                                p_a4[0 : tot4],                \
-                                                     p_a5[0 : tot5],           \
-                                                          p_a6[0 : tot6],      \
-                                                               p_a7[0 : tot7])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *vol_flux_y = p_a0 + base0 + n_x * 1 * 1 +
                                    n_y * xdim0_advec_cell_kernel3_ydir * 1 * 1 +
@@ -206,11 +185,11 @@ void advec_cell_kernel3_ydir_c_wrapper(
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7

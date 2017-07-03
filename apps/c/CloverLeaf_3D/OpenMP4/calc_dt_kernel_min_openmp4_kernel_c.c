@@ -8,9 +8,9 @@
 extern int xdim0_calc_dt_kernel_min;
 extern int ydim0_calc_dt_kernel_min;
 
-#undef OPS_OPENMP40
+#undef OPS_ACC0
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_calc_dt_kernel_min * (y) +                                        \
    xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min * (z))
 
@@ -19,23 +19,15 @@ extern int ydim0_calc_dt_kernel_min;
 void calc_dt_kernel_min_c_wrapper(double *p_a0, int base0, int tot0,
                                   double *p_a1, int x_size, int y_size,
                                   int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
   double p_a1_0 = p_a1[0];
-#pragma omp target enter data map(to : p_a0[0 : tot0])
 #ifdef OPS_GPU
 
-#pragma omp target map(to : p_a0[0 : tot0]) map(tofrom : p_a1_0)
-#pragma omp teams num_teams(num_blocks) thread_limit(128)                      \
-    reduction(min : p_a1_0)
-#pragma omp distribute parallel for simd collapse(3)                           \
-    schedule(static, 1) reduction(min : p_a1_0)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3)                            \
+        schedule(static, 1) map(tofrom : p_a1_0) reduction(min : p_a1_0)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *dt_min =
             p_a0 + base0 + n_x * 1 * 1 +
@@ -50,4 +42,4 @@ void calc_dt_kernel_min_c_wrapper(double *p_a0, int base0, int tot0,
   }
   p_a1[0] = p_a1_0;
 }
-#undef OPS_OPENMP40
+#undef OPS_ACC0

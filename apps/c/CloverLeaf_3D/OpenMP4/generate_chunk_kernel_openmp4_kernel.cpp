@@ -62,13 +62,13 @@ void ops_par_loop_generate_chunk_kernel(
                       arg6, arg7, arg8, arg9, arg10};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 11, range, 130))
+  if (!ops_checkpointing_before(args, 11, range, 56))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(130, "generate_chunk_kernel");
-    OPS_kernels[130].count++;
+    ops_timing_realloc(56, "generate_chunk_kernel");
+    OPS_kernels[56].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -199,6 +199,40 @@ void ops_par_loop_generate_chunk_kernel(
     ydim10_generate_chunk_kernel = ydim10;
     ydim10_generate_chunk_kernel_h = ydim10;
   }
+
+  int tot0 = 1;
+  for (int i = 0; i < args[0].dat->block->dims; i++)
+    tot0 = tot0 * args[0].dat->size[i];
+  int tot1 = 1;
+  for (int i = 0; i < args[1].dat->block->dims; i++)
+    tot1 = tot1 * args[1].dat->size[i];
+  int tot2 = 1;
+  for (int i = 0; i < args[2].dat->block->dims; i++)
+    tot2 = tot2 * args[2].dat->size[i];
+  int tot3 = 1;
+  for (int i = 0; i < args[3].dat->block->dims; i++)
+    tot3 = tot3 * args[3].dat->size[i];
+  int tot4 = 1;
+  for (int i = 0; i < args[4].dat->block->dims; i++)
+    tot4 = tot4 * args[4].dat->size[i];
+  int tot5 = 1;
+  for (int i = 0; i < args[5].dat->block->dims; i++)
+    tot5 = tot5 * args[5].dat->size[i];
+  int tot6 = 1;
+  for (int i = 0; i < args[6].dat->block->dims; i++)
+    tot6 = tot6 * args[6].dat->size[i];
+  int tot7 = 1;
+  for (int i = 0; i < args[7].dat->block->dims; i++)
+    tot7 = tot7 * args[7].dat->size[i];
+  int tot8 = 1;
+  for (int i = 0; i < args[8].dat->block->dims; i++)
+    tot8 = tot8 * args[8].dat->size[i];
+  int tot9 = 1;
+  for (int i = 0; i < args[9].dat->block->dims; i++)
+    tot9 = tot9 * args[9].dat->size[i];
+  int tot10 = 1;
+  for (int i = 0; i < args[10].dat->block->dims; i++)
+    tot10 = tot10 * args[10].dat->size[i];
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
@@ -355,46 +389,12 @@ void ops_par_loop_generate_chunk_kernel(
   double *p_a10 = (double *)((char *)args[10].data + base10);
 #endif
 
-  int tot0 = 1;
-  for (int i = 0; i < args[0].dat->block->dims; i++)
-    tot0 = tot0 * args[0].dat->size[i];
-  int tot1 = 1;
-  for (int i = 0; i < args[1].dat->block->dims; i++)
-    tot1 = tot1 * args[1].dat->size[i];
-  int tot2 = 1;
-  for (int i = 0; i < args[2].dat->block->dims; i++)
-    tot2 = tot2 * args[2].dat->size[i];
-  int tot3 = 1;
-  for (int i = 0; i < args[3].dat->block->dims; i++)
-    tot3 = tot3 * args[3].dat->size[i];
-  int tot4 = 1;
-  for (int i = 0; i < args[4].dat->block->dims; i++)
-    tot4 = tot4 * args[4].dat->size[i];
-  int tot5 = 1;
-  for (int i = 0; i < args[5].dat->block->dims; i++)
-    tot5 = tot5 * args[5].dat->size[i];
-  int tot6 = 1;
-  for (int i = 0; i < args[6].dat->block->dims; i++)
-    tot6 = tot6 * args[6].dat->size[i];
-  int tot7 = 1;
-  for (int i = 0; i < args[7].dat->block->dims; i++)
-    tot7 = tot7 * args[7].dat->size[i];
-  int tot8 = 1;
-  for (int i = 0; i < args[8].dat->block->dims; i++)
-    tot8 = tot8 * args[8].dat->size[i];
-  int tot9 = 1;
-  for (int i = 0; i < args[9].dat->block->dims; i++)
-    tot9 = tot9 * args[9].dat->size[i];
-  int tot10 = 1;
-  for (int i = 0; i < args[10].dat->block->dims; i++)
-    tot10 = tot10 * args[10].dat->size[i];
-
 #ifdef OPS_GPU
   for (int n = 0; n < 11; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
-      for (int i = 0; i < args[10].dat->block->dims; i++)
-        size += size * args[10].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update to(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -403,8 +403,8 @@ void ops_par_loop_generate_chunk_kernel(
   for (int n = 0; n < 11; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
-      for (int i = 0; i < args[10].dat->block->dims; i++)
-        size += size * args[10].dat->size[i];
+      for (int i = 0; i < args[n].dat->block->dims; i++)
+        size += size * args[n].dat->size[i];
 #pragma omp target update from(args[n].dat->data[0 : size])
       args[n].dat->dirty_hd = 0;
     }
@@ -412,9 +412,14 @@ void ops_par_loop_generate_chunk_kernel(
 #endif
   ops_halo_exchanges(args, 11, range);
 
+#ifdef OPS_GPU
+// ops_H_D_exchanges_device(args, 11);
+#else
+// ops_H_D_exchanges_host(args, 11);
+#endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[130].mpi_time += t2 - t1;
+    OPS_kernels[56].mpi_time += t2 - t1;
   }
 
   generate_chunk_kernel_c_wrapper(p_a0, base0 / args[0].dat->elem_size, tot0,
@@ -432,26 +437,26 @@ void ops_par_loop_generate_chunk_kernel(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[130].time += t1 - t2;
+    OPS_kernels[56].time += t1 - t2;
   }
 #ifdef OPS_GPU
-  for (int n = 0; n < 11; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-// ops_set_dirtybit_device(args, 11);
+  // for (int n = 0; n < 11; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 2;
+  //}
+  //}
+  ops_set_dirtybit_device(args, 11);
 #else
-  for (int n = 0; n < 11; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 1;
-    }
-  }
-// ops_set_dirtybit_host(args, 11);
+  // for (int n = 0; n < 11; n++) {
+  // if ((args[n].argtype == OPS_ARG_DAT) &&
+  //(args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+  // args[n].acc == OPS_RW)) {
+  // args[n].dat->dirty_hd = 1;
+  //}
+  //}
+  ops_set_dirtybit_host(args, 11);
 #endif
   ops_set_halo_dirtybit3(&args[3], range);
   ops_set_halo_dirtybit3(&args[4], range);
@@ -462,17 +467,17 @@ void ops_par_loop_generate_chunk_kernel(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[130].mpi_time += t2 - t1;
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_kernels[56].mpi_time += t2 - t1;
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg10);
   }
 }

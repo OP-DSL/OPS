@@ -21,15 +21,16 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 ifeq ($(OPS_COMPILER),clang)
   CC 	  	:= clang
 ifdef DEBUG
-  CCFLAGS 	:= -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
+  CCFLAGS 	:= -O0 -fPIC -DUNIX -Wall -g #-ffloat-store
 else
-  CCFLAGS 	:= -O3 -std=c99 -fPIC -DUNIX -Wall #-g -ffloat-store
+  CCFLAGS 	:= -O3 -fPIC -DUNIX -Wall #-g -ffloat-store
 endif
   CXX 	  	:= clang++
   CXXFLAGS	:= -fPIC -DUNIX -Wall # -ffloat-store -std=c99
   MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpiCC
   MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+  OMP4FLAGS	:= -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda
 else
 ifeq ($(OPS_COMPILER),gnu)
   CC 	  	:= gcc
@@ -164,7 +165,8 @@ endif
 else
   CHKCC			:= $(CC)
 endif
-
+HDF5_INC             := -I/usr/include/hdf5/openmpi/
+HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
 .PHONY: clean mklib
 
 TARGETS = clean core seq mpi 
@@ -265,6 +267,19 @@ mpi_opencl: mklib opencl $(OBJ)/ops_opencl_rt_support.o
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_opencl.o $(OBJ)/ops_mpi_rt_support.o \
         $(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_opencl.o $(OBJ)/ops_mpi_partition.o \
 	$(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o
+
+openmp4: mklib core $(SRC)/openmp4/ops_openmp4_decl.c \
+	$(SRC)/openmp4/ops_openmp4_rt_support.c $(OBJ)/ops_lib_core.o
+
+	$(CXX) $(CCFLAGS) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(OMP4FLAGS) -I$(INC) \
+	-c $(SRC)/openmp4/ops_openmp4_decl.c -o $(OBJ)/ops_openmp4_decl.o
+	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
+	$(CXX) $(CCFLAGS) $(OMP4FLAGS) -I$(INC) -c $(SRC)/openmp4/ops_openmp4_rt_support.c \
+	-o $(OBJ)/ops_openmp4_rt_support.o
+#	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/op_rt_support.c -o $(OBJ)/op_rt_support.o
+#	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(OBJ)/ops_mpi_rt_support_cuda.o -I/usr/lib/openmpi/include
+	ar -r $(LIB)/libops_openmp4.a $(OBJ)/ops_openmp4_rt_support.o \
+	$(OBJ)/ops_openmp4_decl.o $(OBJ)/ops_lib_core.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_util.o $(OBJ)/ops_checkpointing.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_lazy.o #$(OBJ)/ops_mpi_partition.o $(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_hdf5.o $(OBJ)/ops_mpi_rt_support.o $(OBJ)/ops_mpi_rt_support_cuda.o 
 
 
 clean:

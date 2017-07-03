@@ -40,73 +40,73 @@ extern int ydim15_PdV_kernel_nopredict;
 extern int xdim16_PdV_kernel_nopredict;
 extern int ydim16_PdV_kernel_nopredict;
 
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
-#undef OPS_OPENMP48
-#undef OPS_OPENMP49
-#undef OPS_OPENMP410
-#undef OPS_OPENMP411
-#undef OPS_OPENMP412
-#undef OPS_OPENMP413
-#undef OPS_OPENMP414
-#undef OPS_OPENMP415
-#undef OPS_OPENMP416
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+#undef OPS_ACC14
+#undef OPS_ACC15
+#undef OPS_ACC16
 
-#define OPS_OPENMP40(x, y, z)                                                  \
+#define OPS_ACC0(x, y, z)                                                      \
   (x + xdim0_PdV_kernel_nopredict * (y) +                                      \
    xdim0_PdV_kernel_nopredict * ydim0_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP41(x, y, z)                                                  \
+#define OPS_ACC1(x, y, z)                                                      \
   (x + xdim1_PdV_kernel_nopredict * (y) +                                      \
    xdim1_PdV_kernel_nopredict * ydim1_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP42(x, y, z)                                                  \
+#define OPS_ACC2(x, y, z)                                                      \
   (x + xdim2_PdV_kernel_nopredict * (y) +                                      \
    xdim2_PdV_kernel_nopredict * ydim2_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP43(x, y, z)                                                  \
+#define OPS_ACC3(x, y, z)                                                      \
   (x + xdim3_PdV_kernel_nopredict * (y) +                                      \
    xdim3_PdV_kernel_nopredict * ydim3_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP44(x, y, z)                                                  \
+#define OPS_ACC4(x, y, z)                                                      \
   (x + xdim4_PdV_kernel_nopredict * (y) +                                      \
    xdim4_PdV_kernel_nopredict * ydim4_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP45(x, y, z)                                                  \
+#define OPS_ACC5(x, y, z)                                                      \
   (x + xdim5_PdV_kernel_nopredict * (y) +                                      \
    xdim5_PdV_kernel_nopredict * ydim5_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP46(x, y, z)                                                  \
+#define OPS_ACC6(x, y, z)                                                      \
   (x + xdim6_PdV_kernel_nopredict * (y) +                                      \
    xdim6_PdV_kernel_nopredict * ydim6_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP47(x, y, z)                                                  \
+#define OPS_ACC7(x, y, z)                                                      \
   (x + xdim7_PdV_kernel_nopredict * (y) +                                      \
    xdim7_PdV_kernel_nopredict * ydim7_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP48(x, y, z)                                                  \
+#define OPS_ACC8(x, y, z)                                                      \
   (x + xdim8_PdV_kernel_nopredict * (y) +                                      \
    xdim8_PdV_kernel_nopredict * ydim8_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP49(x, y, z)                                                  \
+#define OPS_ACC9(x, y, z)                                                      \
   (x + xdim9_PdV_kernel_nopredict * (y) +                                      \
    xdim9_PdV_kernel_nopredict * ydim9_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP410(x, y, z)                                                 \
+#define OPS_ACC10(x, y, z)                                                     \
   (x + xdim10_PdV_kernel_nopredict * (y) +                                     \
    xdim10_PdV_kernel_nopredict * ydim10_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP411(x, y, z)                                                 \
+#define OPS_ACC11(x, y, z)                                                     \
   (x + xdim11_PdV_kernel_nopredict * (y) +                                     \
    xdim11_PdV_kernel_nopredict * ydim11_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP412(x, y, z)                                                 \
+#define OPS_ACC12(x, y, z)                                                     \
   (x + xdim12_PdV_kernel_nopredict * (y) +                                     \
    xdim12_PdV_kernel_nopredict * ydim12_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP413(x, y, z)                                                 \
+#define OPS_ACC13(x, y, z)                                                     \
   (x + xdim13_PdV_kernel_nopredict * (y) +                                     \
    xdim13_PdV_kernel_nopredict * ydim13_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP414(x, y, z)                                                 \
+#define OPS_ACC14(x, y, z)                                                     \
   (x + xdim14_PdV_kernel_nopredict * (y) +                                     \
    xdim14_PdV_kernel_nopredict * ydim14_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP415(x, y, z)                                                 \
+#define OPS_ACC15(x, y, z)                                                     \
   (x + xdim15_PdV_kernel_nopredict * (y) +                                     \
    xdim15_PdV_kernel_nopredict * ydim15_PdV_kernel_nopredict * (z))
-#define OPS_OPENMP416(x, y, z)                                                 \
+#define OPS_ACC16(x, y, z)                                                     \
   (x + xdim16_PdV_kernel_nopredict * (y) +                                     \
    xdim16_PdV_kernel_nopredict * ydim16_PdV_kernel_nopredict * (z))
 
@@ -122,56 +122,13 @@ void PdV_kernel_nopredict_c_wrapper(
     double *p_a12, int base12, int tot12, double *p_a13, int base13, int tot13,
     double *p_a14, int base14, int tot14, double *p_a15, int base15, int tot15,
     double *p_a16, int base16, int tot16, int x_size, int y_size, int z_size) {
-  int num_blocks = round(((double)x_size * (double)y_size) / 128);
-#pragma omp target enter data map(                                             \
-    to : p_a0                                                                  \
-    [0 : tot0],                                                                \
-     p_a1[0 : tot1],                                                           \
-          p_a2[0 : tot2],                                                      \
-               p_a3[0 : tot3],                                                 \
-                    p_a4[0 : tot4],                                            \
-                         p_a5[0 : tot5],                                       \
-                              p_a6[0 : tot6],                                  \
-                                   p_a7[0 : tot7],                             \
-                                        p_a8[0 : tot8],                        \
-                                             p_a9[0 : tot9],                   \
-                                                  p_a10[0 : tot10], p_a11      \
-                                                        [0 : tot11], p_a12     \
-                                                         [0 : tot12], p_a13    \
-                                                          [0 : tot13], p_a14   \
-                                                           [0 : tot14], p_a15  \
-                                                            [0 : tot15],       \
-                                                             p_a16[0 : tot16])
 #ifdef OPS_GPU
 
-#pragma omp target map(                                                        \
-    to : p_a0                                                                  \
-    [0 : tot0],                                                                \
-     p_a1[0 : tot1],                                                           \
-          p_a2[0 : tot2],                                                      \
-               p_a3[0 : tot3],                                                 \
-                    p_a4[0 : tot4],                                            \
-                         p_a5[0 : tot5],                                       \
-                              p_a6[0 : tot6],                                  \
-                                   p_a7[0 : tot7],                             \
-                                        p_a8[0 : tot8],                        \
-                                             p_a9[0 : tot9],                   \
-                                                  p_a10[0 : tot10], p_a11      \
-                                                        [0 : tot11], p_a12     \
-                                                         [0 : tot12], p_a13    \
-                                                          [0 : tot13], p_a14   \
-                                                           [0 : tot14], p_a15  \
-                                                            [0 : tot15],       \
-                                                             p_a16[0 : tot16])
-#pragma omp teams num_teams(num_blocks) thread_limit(128)
-#pragma omp distribute parallel for simd collapse(3) schedule(static, 1)
+#pragma omp target teams distribute parallel for num_teams(OPS_threads)        \
+    thread_limit(OPS_threads_for_block) collapse(3) schedule(static, 1)
 #endif
   for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#endif
     for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         const double *xarea =
             p_a0 + base0 + n_x * 1 * 1 +
@@ -320,20 +277,20 @@ void PdV_kernel_nopredict_c_wrapper(
     }
   }
 }
-#undef OPS_OPENMP40
-#undef OPS_OPENMP41
-#undef OPS_OPENMP42
-#undef OPS_OPENMP43
-#undef OPS_OPENMP44
-#undef OPS_OPENMP45
-#undef OPS_OPENMP46
-#undef OPS_OPENMP47
-#undef OPS_OPENMP48
-#undef OPS_OPENMP49
-#undef OPS_OPENMP410
-#undef OPS_OPENMP411
-#undef OPS_OPENMP412
-#undef OPS_OPENMP413
-#undef OPS_OPENMP414
-#undef OPS_OPENMP415
-#undef OPS_OPENMP416
+#undef OPS_ACC0
+#undef OPS_ACC1
+#undef OPS_ACC2
+#undef OPS_ACC3
+#undef OPS_ACC4
+#undef OPS_ACC5
+#undef OPS_ACC6
+#undef OPS_ACC7
+#undef OPS_ACC8
+#undef OPS_ACC9
+#undef OPS_ACC10
+#undef OPS_ACC11
+#undef OPS_ACC12
+#undef OPS_ACC13
+#undef OPS_ACC14
+#undef OPS_ACC15
+#undef OPS_ACC16
