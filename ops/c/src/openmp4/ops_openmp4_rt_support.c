@@ -216,6 +216,12 @@ void ops_cuda_exit() {
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     #pragma omp target exit data map(from: (item->dat)->data)
+    (item->dat)->user_managed =1;
     free((item->dat)->data);
+    free((char *)(item->dat)->name);
+    free((char *)(item->dat)->type);
+    TAILQ_REMOVE(&OPS_dat_list, item, entries);
+    free(item->dat);
+    free(item);
   }
 }

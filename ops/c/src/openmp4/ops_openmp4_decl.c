@@ -64,7 +64,6 @@ void ops_init(int argc, char **argv, int diags) {
 
 void ops_exit() {
   ops_cuda_exit(); // frees dat_d memory 
-  ops_exit();   // frees plan memory
   ops_exit_core(); // frees lib core variables
 }
 
