@@ -54,9 +54,10 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
                          int buf_strides_y, int buf_strides_z) {
-  for (int k = rz_s; (z_step == 1 ? k < rz_e : k > rz_e); k += z_step) {
-    for (int j = ry_s; (y_step == 1 ? j < ry_e : j > ry_e); j += y_step) {
-      for (int i = rx_s; (x_step == 1 ? i < rx_e : i > rx_e); i += x_step) {
+#pragma omp parallel for collapse(3)
+  for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
+    for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
+      for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         memcpy(dest + dest_offset +
                    ((k - rz_s) * z_step * buf_strides_z +
                     (j - ry_s) * y_step * buf_strides_y +
@@ -76,9 +77,10 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
                            int buf_strides_z) {
-  for (int k = rz_s; (z_step == 1 ? k < rz_e : k > rz_e); k += z_step) {
-    for (int j = ry_s; (y_step == 1 ? j < ry_e : j > ry_e); j += y_step) {
-      for (int i = rx_s; (x_step == 1 ? i < rx_e : i > rx_e); i += x_step) {
+#pragma omp parallel for collapse(3)
+  for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
+    for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
+      for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         memcpy(dest->data +
                    (k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
                        dest->elem_size,

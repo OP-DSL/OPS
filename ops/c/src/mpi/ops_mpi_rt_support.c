@@ -1149,6 +1149,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
 }
 
 void ops_halo_transfer(ops_halo_group group) {
+  ops_execute();
   ops_mpi_halo_group *mpi_group = &OPS_mpi_halo_group_list[group->index];
   if (mpi_group->nhalos == 0)
     return;
