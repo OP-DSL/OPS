@@ -327,6 +327,12 @@ cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o $(OPS_FILES_GEN)
 
 
 #
+#error
+#
+openacc_error:
+	@echo "cloverleaf_mpi_openacc cannot be built with $(OPS_COMPILER) compilers .. requires an OpenACC compiler (e.g. pgi)"
+
+#
 # cleanup
 #
 
