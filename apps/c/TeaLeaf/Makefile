@@ -41,9 +41,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -O3 -g -no-prec-div -xHost -parallel -fma #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  CCFLAGS	= -O3 -ipo -fp-model strict -fp-model source -no-prec-div -prec-sqrt -vec-report2 -xHost -parallel -restrict -fno-alias -inline-forceinline #-DCOMM_PERF #-DDEBUG
+  #CCFLAGS	= -O3 -no-prec-div -ip  -fp-model strict -fp-model source -prec-div -prec-sqrt
 endif
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -qopenmp #-openmp-report2
@@ -151,7 +150,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_tiled tealeaf_cuda tealeaf_mpi_cuda tealeaf_opencl tealeaf_mpi_opencl #tealeaf_openacc tealeaf_mpi_openacc
+TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_tiled tealeaf_cuda tealeaf_mpi_cuda tealeaf_opencl tealeaf_mpi_opencl tealeaf_mpi_tiled #tealeaf_openacc tealeaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += tealeaf_openacc tealeaf_mpi_openacc
