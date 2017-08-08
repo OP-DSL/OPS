@@ -29,11 +29,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-OPS OpenMP code generator
+OPS CUDA code generator
 
 This routine is called by ops.py which parses the input files
 
-It produces a file xxx_omp_kernel.cpp for each kernel,
+It produces a file xxx_cuda_kernel.cpp for each kernel,
 plus a master kernel file
 
 """
@@ -50,6 +50,7 @@ para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
 parse_signature = util.parse_signature_cuda
+complex_numbers_cuda = util.complex_numbers_cuda
 check_accs = util.check_accs
 mult = util.mult
 
@@ -194,7 +195,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
 
 
 ##########################################################################
-#  generate headder
+#  generate header
 ##########################################################################
 
     comm('user function')
@@ -238,7 +239,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
     arg_list = parse_signature(text[i2+len(name):i+j])
     check_accs(name, arg_list, arg_typ, text[i+j:k])
     code('__device__')
-    code(text[i:k+2])
+
+    new_code = complex_numbers_cuda(text[i:k+2])  # Handle complex numbers with the cuComplex.h CUDA library.
+    code(new_code)
     code('')
     code('')
     for n in range (0, nargs):
@@ -811,6 +814,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels):
   code('')
   code('#include "ops_cuda_rt_support.h"')
   code('#include "ops_cuda_reduction.h"')
+  code('')
+  code('#include <cuComplex.h>')  # Include the CUDA complex numbers library, in case complex numbers are used anywhere.
   code('')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
