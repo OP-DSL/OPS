@@ -160,14 +160,14 @@ $MPI_INSTALL_PATH/bin/mpirun -np 2 ./complex_numbers_mpi_opencl OPS_CL_DEVICE=1 
 grep "Total Wall time" perf_out
 rm -f perf_out
 
-echo '============> Running OpenACC'
-./complex_numbers_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" perf_out
-rm -f perf_out
+#echo '============> Running OpenACC'
+#./complex_numbers_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" perf_out
+#rm -f perf_out
 
-echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./complex_numbers_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" perf_out
-rm -f perf_out
+#echo '============> Running MPI+OpenACC'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./complex_numbers_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" perf_out
+#rm -f perf_out
 
 echo "All PGI complied applications PASSED : Exiting Test Script "
