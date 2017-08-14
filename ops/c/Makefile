@@ -152,6 +152,7 @@ mpi_opencl: mklib opencl $(OBJ)/ops_opencl_rt_support.o
 
 
 clean:
+	-rm -if $(OBJ)/*.optrpt #remove optimization output files from intel compiler
 	-rm -if $(OBJ)/*.o
 	-rm -if $(OBJ)/*~
 	-rm -if $(LIB)/*.a

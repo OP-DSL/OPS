@@ -195,6 +195,12 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   }
 }
 
+
+//set dirty bit for single ops_arg dat
+void ops_set_dirtybit_device_dat(ops_dat dat) {
+  dat->dirty_hd = 2;
+}
+
 //
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
@@ -204,7 +210,6 @@ void ops_cuda_get_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-
   int bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];

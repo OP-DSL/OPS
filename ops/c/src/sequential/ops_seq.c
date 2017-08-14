@@ -66,10 +66,14 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     int bytes = size * type_size;
 
-    /*int x_pad = (1+((dat->size[0]-1)/32))*32 - dat->size[0]; // Compute
-    padding x-dim for vecotrization
+    //nx_pad    = (1+((nx          -1)/SIMD_VEC))*SIMD_VEC; // Compute padding for vecotrization (in adi_cpu tridiagonal library)
+
+    // Compute    padding x-dim for vecotrization
+    int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
-    dat->d_p[0] = x_pad;*/
+    dat->d_p[0] = x_pad;
+    //printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
+
 
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
