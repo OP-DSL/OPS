@@ -88,6 +88,8 @@ void ops_cuda_exit();
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
 
+void ops_set_dirtybit_device_dat(ops_dat dat);
+
 void ops_halo_copy_dh(const char *src, char *dest, int size);
 void ops_halo_copy_hd(const char *src, char *dest, int size);
 // void ops_cuda_halo_copy(char * dest, char * src, int size);

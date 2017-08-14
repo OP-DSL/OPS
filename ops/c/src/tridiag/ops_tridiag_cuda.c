@@ -56,10 +56,11 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
     ops_dat u,
-    int *opts // indicates different algorithms to use
+    int *pads 
 
     ) {
 
+  int opts[3] = {0,0,0}; // indicates different algorithms to use
   int sync = 0;
   if (OPS_diags > 1)
     sync = 1;
@@ -68,6 +69,8 @@ void ops_tridMultiDimBatch_Inc(
                            (const double *)c->data_d, (double *)d->data_d,
                            (double *)u->data_d, ndim, solvedim, dims, dims,
                            opts, sync);
+  ops_set_dirtybit_device_dat(u);
+
 }
 
 void ops_tridMultiDimBatch(
@@ -80,8 +83,11 @@ void ops_tridMultiDimBatch(
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
     ops_dat u,
-    int *opts // indicates different algorithms to use
+    int *pads 
     ) {
+
+
+  int opts[3] = {0,0,0}; // indicates different algorithms to use
 
   int sync = 0;
   if (OPS_diags > 1)
@@ -91,6 +97,9 @@ void ops_tridMultiDimBatch(
                         (const double *)c->data_d, (double *)d->data_d,
                         (double *)u->data_d, ndim, solvedim, dims, dims, opts,
                         sync);
+
+
+
 }
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
