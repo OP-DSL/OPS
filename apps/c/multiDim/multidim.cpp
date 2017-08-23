@@ -42,7 +42,7 @@
 
 // OPS header file
 #define OPS_2D
-//#define OPS_SOA
+#define OPS_SOA
 #include "ops_seq.h"
 
 #include "multidim_kernel.h"
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,1);
-//  OPS_soa = 1;
+  OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 
