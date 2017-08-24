@@ -65,7 +65,7 @@ ELSEIF = util.ELSEIF
 ELSE = util.ELSE
 ENDIF = util.ENDIF
 
-def ops_gen_mpi_inline(master, date, consts, kernels):
+def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
   OPS_ID   = 1;  OPS_GBL   = 2;
 
@@ -153,8 +153,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+'_'+name+';')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('int zdim'+str(n)+'_'+name+';')
+    code('')
     code('')
 
     #code('#define OPS_ACC_MACROS')
@@ -173,12 +176,20 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' +(x)*'+str(dims[n])+'+(d))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+ '+(x)+(d)*xdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' +(x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y)))')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
-
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'zdim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)))')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
 
 
 ##########################################################################
@@ -375,9 +386,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('extern int xdim'+str(n)+'_'+name+';')
         code('int xdim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('extern int ydim'+str(n)+'_'+name+';')
           code('int ydim'+str(n)+'_'+name+'_h = -1;')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('extern int zdim'+str(n)+'_'+name+';')
+          code('int zdim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
     code('#ifdef __cplusplus')
@@ -499,8 +513,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
     #timing structs
     code('')
     comm('Timing')
@@ -511,8 +527,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+        if NDIM>3 or (NDIM==3 and soa_set):
+          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
     condition = condition[:-4]
     IF(condition)
 
@@ -520,9 +538,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
         code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
           code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+'_'+name+' = zdim'+str(n)+';')
+          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
     ENDIF()
     code('')
 
@@ -552,7 +573,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
         #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
+        code('int dat'+str(n)+' = (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
 
     code('')
     for n in range (0, nargs):
@@ -690,6 +711,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels):
     code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  if soa_set:
+    code('#define OPS_SOA')
   code('#ifdef __cplusplus')
   code('#include "ops_lib_cpp.h"')
   code('#endif')

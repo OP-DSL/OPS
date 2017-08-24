@@ -67,7 +67,7 @@ ELSE = util.ELSE
 ENDIF = util.ENDIF
 
 
-def ops_gen_mpi_openmp(master, date, consts, kernels):
+def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
 
   OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
 
@@ -146,11 +146,20 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'*(y))+(d)*xdim'+str(n)+'*ydim'+str(n)+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'*(y))+(xdim'+str(n)+'*ydim'+str(n)+'*(z))+(d)*xdim'+str(n)+'*ydim'+str(n)+'*zdim'+str(n)+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+dims[n]+'))')
 
 
 ##########################################################################
@@ -329,7 +338,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         for d in range (0, NDIM):
           code('int off'+str(n)+'_'+str(d)+' = offs['+str(n)+']['+str(d)+'];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
+        code('int dat'+str(n)+' =  (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
 
     code('')
     if reduction == True:
@@ -393,9 +402,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
 
     # for n in range (0, nargs):
@@ -514,9 +525,15 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if accs[n] <> OPS_READ:
-          text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
+          if soa_set:
+            text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          else:
+            text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
         else:
-          text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
+          if soa_set:
+            text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
+          else:
+            text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           text = text +' &arg_gbl'+str(n)+'[64*thr]'
@@ -706,6 +723,8 @@ def ops_gen_mpi_openmp(master, date, consts, kernels):
     code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  if soa_set:
+    code('#define OPS_SOA')
   code('#define OPS_ACC_MD_MACROS')
   code('#include "ops_lib_cpp.h"')
   code('#ifdef OPS_MPI')

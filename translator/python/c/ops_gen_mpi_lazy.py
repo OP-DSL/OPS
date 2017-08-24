@@ -65,7 +65,7 @@ ELSEIF = util.ELSEIF
 ELSE = util.ELSE
 ENDIF = util.ENDIF
 
-def ops_gen_mpi_lazy(master, date, consts, kernels):
+def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
   global dims, stens
   global g_m, file_text, depth
@@ -171,11 +171,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' +(x)*'+str(dims[n])+'+(d))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+ '+(x)+(d)*xdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' +(x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y)))')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'zdim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)))')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
 
 ##########################################################################
 #  start with seq kernel function
@@ -336,8 +345,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
             code('xdim0_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
           else:
             code('int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('int zdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[2];')
+
     code('')
     if assume_same:
       code('__assume(xdim0_'+name+'%16==0);')
@@ -560,6 +572,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels):
     code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  if soa_set:
+    code('#define OPS_SOA')
   code('#define OPS_ACC_MACROS')
   code('#define OPS_ACC_MD_MACROS')
   code('#include "ops_lib_cpp.h"')

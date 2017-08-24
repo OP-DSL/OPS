@@ -375,14 +375,11 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     comm("initialize global variable with the dimension of dats")
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM > 1:
-          code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-          if NDIM == 2 and soa_set:
-            code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-        if NDIM > 2:
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-          if NDIM == 3 and soa_set:
-            code('zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[1];')
     code('')
 
     comm('Halo Exchanges')

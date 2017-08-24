@@ -34,6 +34,7 @@ else
 endif
   OMPFLAGS  = -fopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),intel)
@@ -47,6 +48,7 @@ endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPICC  = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPIFLAGS  = $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),mic)
@@ -164,9 +166,14 @@ OMP_KERNELS = multidim_omp_kernels.cpp
 multidim_mpi_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o multidim_mpi_openmp
 
+multidim_mpi_tiled: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) multidim_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o multidim_mpi_tiled
 
 multidim_openmp: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o multidim_openmp
+
+multidim_tiled: Makefile multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) multidim_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o multidim_tiled
 
 #
 # Sequential version
@@ -248,6 +255,26 @@ multidim_mpi_opencl: ./OpenCL/multidim_mpi_opencl_kernels.o multidim_ops.cpp mul
 ./OpenCL/multidim_mpi_opencl_kernels.o: ./OpenCL/multidim_opencl_kernels.cpp Makefile
 	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/multidim_opencl_kernels.o ./OpenCL/multidim_opencl_kernels.cpp
+
+mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+
+./MPI_inline/multidim_kernels.o: ./MPI_inline/multidim_kernels.cpp ./MPI_inline/multidim_common.h Makefile
+				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC)  \
+ 			       -I. MPI_inline/multidim_kernels.cpp -c -o MPI_inline/multidim_kernels.o
+
+./MPI_inline/%.o: ./MPI_inline/%.cpp ./MPI_inline/%_c.c ./MPI_inline/multidim_common.h Makefile
+				@echo "Compiling kernel" $*
+				$(MPICC) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+			        -I. MPI_inline/$*_c.c -c -o MPI_inline/$*_c.o
+				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+				-I. MPI_inline/$*.cpp -c -o MPI_inline/$*.o
+
+multidim_mpi_inline: $(mpiinline_obj_list) multidim_ops.cpp multidim_kernel.h multidim_print_kernel.h multidim_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  -DOPS_MPI \
+		multidim_ops.cpp -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -lops_mpi $(HDF5_LIB) -o multidim_mpi_inline
+
 
 #
 #error

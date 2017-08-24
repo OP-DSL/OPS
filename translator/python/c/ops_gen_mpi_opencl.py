@@ -67,7 +67,7 @@ ELSE = util.ELSE
 ENDIF = util.ENDIF
 
 
-def ops_gen_mpi_opencl(master, date, consts, kernels):
+def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
   OPS_ID   = 1;  OPS_GBL   = 2;  OPS_MAP = 3;
 
@@ -226,11 +226,20 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
 
 
     code('')
@@ -430,17 +439,32 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
-          text = text +'&arg'+str(n)+'[base'+str(n)+\
-          ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+']'
+          if soa_set:
+            text = text +'&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+']'
+          else:
+            text = text +'&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+']'
         elif NDIM==2:
-          text = text +'&arg'+str(n)+'[base'+str(n)+\
-          ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
-          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+']'
+          if soa_set:
+            text = text +'&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+ \
+                ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+']'
+          else:
+            text = text +'&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+                ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+']'
         elif NDIM==3:
-          text = text + '&arg'+str(n)+'[base'+str(n)+\
-          ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
-          ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+ \
-          ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+']'
+          if soa_set:
+            text = text + '&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+ \
+                ' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+ \
+                ' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+']'
+          else:
+            text = text + '&arg'+str(n)+'[base'+str(n)+\
+                ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
+                ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+ \
+                ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+']'
 
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
@@ -513,10 +537,14 @@ def ops_gen_mpi_opencl(master, date, consts, kernels):
         arg_text = arg_text +'int_xdim'+str(n)+' '
         compile_line = compile_line + ' -Dxdim'+str(n)+'_'+name+'=%d'+' '
         arg_values = arg_values + 'xdim'+str(n)+' '
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           arg_text = arg_text +'int_ydim'+str(n)+' '
           compile_line = compile_line + ' -Dydim'+str(n)+'_'+name+'=%d'+' '
           arg_values = arg_values + 'ydim'+str(n)+' '
+        if NDIM>3 or (NDIM==3 and soa_set):
+          arg_text = arg_text +'int_zdim'+str(n)+' '
+          compile_line = compile_line + ' -Dzdim'+str(n)+'_'+name+'=%d'+' '
+          arg_values = arg_values + 'zdim'+str(n)+' '
 
     ' '.join(arg_values.split())
     arg_values = arg_values.replace(' ',',')
@@ -731,9 +759,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
     code('')
 
     comm('build opencl kernel if not already built')
@@ -743,8 +773,10 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         arg_text = arg_text +'xdim'+str(n)+' '
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           arg_text = arg_text +'ydim'+str(n)+' '
+        if NDIM>3 or (NDIM==3 and soa_set):
+          arg_text = arg_text +'zdim'+str(n)+' '
 
     ' '.join(arg_text.split())
     arg_text = arg_text.replace(' ',',')
@@ -886,12 +918,18 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
         code('#else')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif')
-        code('int base'+str(n)+' = 1 *'+str(dims[n])+'*')
+        if soa_set:
+          code('int base'+str(n)+' = 1 *')
+        else:
+          code('int base'+str(n)+' = 1 *'+str(dims[n])+'*')
         code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+' +'
           for d2 in range (0,d):
-            line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
+            if soa_set:
+              line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] * '
+            else:
+              line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
           code(line[:-1])
           code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
         #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+',d_m[0]);')
@@ -1064,6 +1102,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  if soa_set:
+    code('#define OPS_SOA')
   code('#include "stdlib.h"')
   code('#include "stdio.h"')
   code('#include "ops_lib_cpp.h"')
