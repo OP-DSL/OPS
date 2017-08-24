@@ -273,6 +273,7 @@ def main(source_files):
   nexit = 0
   nkernels = 0
   nconsts = 0
+  soa_set = 0
   consts = []
   kernels = []
   kernels_in_files = []
@@ -321,6 +322,20 @@ def main(source_files):
 
       ninit = ninit + inits
       nexit = nexit + exits
+
+      #
+      # check for SoA 
+      #
+      file_soa = len(re.findall('#define OPS_SOA', text))
+      if a > 0 and soa_set == 1 and file_soa == 0:
+        print 'Error: all or no source files must include #define OPS_SOA'
+        sys.exit(1)
+      if file_soa <> 0:
+        soa_set = file_soa
+      if inits > 0 and file_soa and len(re.findall(r'\bOPS_soa\b\s*=\s*1', text))==0:
+        print 'Error: the source file with ops_init, must include the line OPS_soa = 1 immediately after ops_init'
+        sys.exit(1)
+      
 
       #
       # parse and process constants
@@ -671,7 +686,7 @@ def main(source_files):
   #ops_gen_cuda(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
 
-  ops_gen_mpi(str(source_files[0]), date, consts, kernels)
+  ops_gen_mpi(str(source_files[0]), date, consts, kernels,soa_set)
   ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels)
   ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels)
   ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)

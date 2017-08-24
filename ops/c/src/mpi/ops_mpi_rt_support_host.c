@@ -11,13 +11,14 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     for (unsigned int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
         memcpy(dest+i*halo->blocklength*dat->dim+d*dat->type_size,
-               src+i*halo->stride + d*(dat->size[0]*dat->size[1]*dat->size[2]), halo->blocklength);
+               src+i*halo->stride + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, halo->blocklength);
     }
   } else {
     const char *__restrict src = dat->data + src_offset * dat->elem_size;
   #pragma omp parallel for shared(src,dest)
     for (unsigned int i = 0; i < halo->count; i++) {
       memcpy(dest+i*halo->blocklength*dat->dim, src+i*halo->stride*dat->dim, halo->blocklength*dat->dim);
+      
     }
   }
 }
@@ -29,7 +30,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   #pragma omp parallel for shared(src,dest)
     for (unsigned int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
-        memcpy(dest+i*halo->stride*dat->dim + d*(dat->size[0]*dat->size[1]*dat->size[2]), 
+        memcpy(dest+i*halo->stride + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
           src+i*halo->blocklength*dat->dim + d*dat->type_size, halo->blocklength);
     }
   } else {

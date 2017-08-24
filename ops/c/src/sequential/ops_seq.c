@@ -175,7 +175,7 @@ void ops_halo_transfer(ops_halo_group group) {
                      (OPS_soa ? 
                        ((k * halo->from->size[0] * halo->from->size[1] +
                          j * halo->from->size[0] + i) +
-                       d * halo->from->size[0] * halo->from->size[1] * halo->from->size[3]) * halo->from->type_size
+                       d * halo->from->size[0] * halo->from->size[1] * halo->from->size[2]) * halo->from->type_size
                      : (k * halo->from->size[0] * halo->from->size[1] +
                          j * halo->from->size[0] + i) *
                          halo->from->elem_size + d * halo->from->type_size),
