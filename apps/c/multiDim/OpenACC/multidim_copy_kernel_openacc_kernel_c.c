@@ -6,7 +6,9 @@
 #define OPS_GPU
 
 int xdim0_multidim_copy_kernel;
+int ydim0_multidim_copy_kernel;
 int xdim1_multidim_copy_kernel;
+int ydim1_multidim_copy_kernel;
 
 
 

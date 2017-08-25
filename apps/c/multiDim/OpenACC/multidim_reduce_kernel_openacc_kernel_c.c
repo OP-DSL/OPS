@@ -6,6 +6,7 @@
 #define OPS_GPU
 
 int xdim0_multidim_reduce_kernel;
+int ydim0_multidim_reduce_kernel;
 
 
 

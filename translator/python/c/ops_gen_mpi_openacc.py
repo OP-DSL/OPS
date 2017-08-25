@@ -157,8 +157,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+'_'+name+';')
+#        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('int zdim'+str(n)+'_'+name+';')
 #        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
     code('')
 

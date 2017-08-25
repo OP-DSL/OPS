@@ -78,9 +78,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
              (idx_x - rx_s) * x_step * buf_strides_x) *
             type_size * dim;
     for (int d = 0; d < dim; d++) {
+      memcpy(dest+d*type_size, src, type_size);
       if (OPS_soa) src += size_x * size_y * size_z * type_size;
       else src += type_size;
-      memcpy(dest+d*type_size, src, type_size);
     }
   }
 }
@@ -107,9 +107,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
             (idx_x - rx_s) * x_step * buf_strides_x) *
            type_size * dim;
     for (int d = 0; d < dim; d++) {
+      memcpy(dest, src + d*type_size, type_size);
       if (OPS_soa) dest += size_x * size_y * size_z * type_size;
       else dest += type_size;
-      memcpy(dest, src + d*type_size, type_size);
     }
   }
 }

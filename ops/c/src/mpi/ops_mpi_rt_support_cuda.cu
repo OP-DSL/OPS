@@ -56,6 +56,18 @@ __global__ void ops_cuda_packer_1(const char *__restrict src,
   }
 }
 
+__global__ void ops_cuda_packer_1_soa(const char *__restrict src,
+                                  char *__restrict dest, int count, int len,
+                                  int stride, int dim, int size) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int block = idx / len;
+  if (idx < count * len) {
+    for (int d=0; d<dim; d++) {   
+      dest[idx*dim+d] = src[stride * block + idx % len + d * size];
+    }
+  }
+}
+
 __global__ void ops_cuda_unpacker_1(const char *__restrict src,
                                     char *__restrict dest, int count, int len,
                                     int stride) {
@@ -65,6 +77,19 @@ __global__ void ops_cuda_unpacker_1(const char *__restrict src,
     dest[stride * block + idx % len] = src[idx];
   }
 }
+
+__global__ void ops_cuda_unpacker_1_soa(const char *__restrict src,
+                                    char *__restrict dest, int count, int len,
+                                    int stride, int dim, int size) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int block = idx / len;
+  if (idx < count * len) {
+    for (int d=0; d<dim; d++) {   
+      dest[stride * block + idx % len + d * size] = src[idx*dim + d];
+    }
+  }
+}
+
 
 __global__ void ops_cuda_packer_4(const int *__restrict src,
                                   int *__restrict dest, int count, int len,
@@ -108,18 +133,25 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   else
     device_buf = halo_buffer_d;
 
-  if (halo->blocklength % 4 == 0) {
-    int num_threads = 128;
-    int num_blocks =
-        (((halo->blocklength / 4) * halo->count) - 1) / num_threads + 1;
-    ops_cuda_packer_4<<<num_blocks, num_threads>>>(
-        (const int *)src, (int *)device_buf, halo->count, halo->blocklength / 4,
-        halo->stride / 4);
-  } else {
+  if (OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
+    ops_cuda_packer_1_soa<<<num_blocks, num_threads>>>(
+        src, device_buf, halo->count, halo->blocklength, halo->stride,
+        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+
+  } else if (halo->blocklength % 4 == 0) {
+    int num_threads = 128;
+    int num_blocks =
+        (((dat->dim * halo->blocklength / 4) * halo->count) - 1) / num_threads + 1;
+    ops_cuda_packer_4<<<num_blocks, num_threads>>>(
+        (const int *)src, (int *)device_buf, halo->count, halo->blocklength*dat->dim / 4,
+        halo->stride*dat->dim / 4);
+  } else {
+    int num_threads = 128;
+    int num_blocks = ((dat->dim * halo->blocklength * halo->count) - 1) / num_threads + 1;
     ops_cuda_packer_1<<<num_blocks, num_threads>>>(
-        src, device_buf, halo->count, halo->blocklength, halo->stride);
+        src, device_buf, halo->count, halo->blocklength*dat->dim, halo->stride*dat->dim);
   }
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d,
@@ -155,18 +187,24 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     cutilSafeCall(cudaMemcpy(halo_buffer_d, src,
                              halo->count * halo->blocklength * dat->dim,
                              cudaMemcpyHostToDevice));
-  if (halo->blocklength % 4 == 0) {
-    int num_threads = 128;
-    int num_blocks =
-        (((halo->blocklength / 4) * halo->count) - 1) / num_threads + 1;
-    ops_cuda_unpacker_4<<<num_blocks, num_threads>>>(
-        (const int *)device_buf, (int *)dest, halo->count,
-        halo->blocklength / 4, halo->stride / 4);
-  } else {
+  if (OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
+    ops_cuda_unpacker_1_soa<<<num_blocks, num_threads>>>(
+        device_buf, dest, halo->count, halo->blocklength, halo->stride,
+        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+  } else if (halo->blocklength % 4 == 0) {
+    int num_threads = 128;
+    int num_blocks =
+        (((dat->dim * halo->blocklength / 4) * halo->count) - 1) / num_threads + 1;
+    ops_cuda_unpacker_4<<<num_blocks, num_threads>>>(
+        (const int *)device_buf, (int *)dest, halo->count,
+        halo->blocklength*dat->dim / 4, halo->stride*dat->dim / 4);
+  } else {
+    int num_threads = 128;
+    int num_blocks = ((dat->dim * halo->blocklength * halo->count) - 1) / num_threads + 1;
     ops_cuda_unpacker_1<<<num_blocks, num_threads>>>(
-        device_buf, dest, halo->count, halo->blocklength, halo->stride);
+        device_buf, dest, halo->count, halo->blocklength*dat->dim, halo->stride*dat->dim);
   }
 
   dat->dirty_hd = 2;
@@ -218,9 +256,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
              (idx_x - rx_s) * x_step * buf_strides_x) *
             type_size * dim ;
     for (int d = 0; d < dim; d++) {
+      memcpy(dest+d*type_size, src, type_size);
       if (OPS_soa) src += size_x * size_y * size_z * type_size;
       else src += type_size;
-      memcpy(dest+d*type_size, src, type_size);
     }
   }
 }
@@ -247,9 +285,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
             (idx_x - rx_s) * x_step * buf_strides_x) *
            type_size * dim;
     for (int d = 0; d < dim; d++) {
+      memcpy(dest, src + d * type_size, type_size);
       if (OPS_soa) dest += size_x * size_y * size_z * type_size;
       else dest += type_size;
-      memcpy(dest, src + d * type_size, type_size);
     }
   }
 }
