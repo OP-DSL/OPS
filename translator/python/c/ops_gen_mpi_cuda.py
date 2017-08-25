@@ -201,7 +201,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
               code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
           if NDIM==3:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
             else:
               code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
 

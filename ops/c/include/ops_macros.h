@@ -660,6 +660,7 @@
 #define OPS_ACC_MACROS
 #ifdef OPS_3D     // macros for 3D application
 #ifndef OPS_DEBUG // no debug checks
+#ifndef OPS_SOA
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   ((x)*multi_d0 + (d) + (xdim0 * (y)*multi_d0) + (xdim0 * ydim0 * (z)*multi_d0))
 #define OPS_ACC_MD1(d, x, y, z)                                                \
@@ -950,6 +951,308 @@
 #define OPS_ACC_MD99(d, x, y, z)                                               \
   ((x)*multi_d99 + (d) + (xdim99 * (y)*multi_d99) +                            \
    (xdim99 * ydim99 * (z)*multi_d99))
+#else
+#define OPS_ACC_MD0(d, x, y, z)                                                \
+  ((x) + (xdim0 * (y)) + \
+  (xdim0 * ydim0 * (z)) + (d) * xdim0 * ydim0 * zdim0)
+#define OPS_ACC_MD1(d, x, y, z)                  \
+  ((x) + (xdim1 * (y)) + \
+  (xdim1 * ydim1 * (z)) + (d) * xdim1 * ydim1 * zdim1)
+#define OPS_ACC_MD2(d, x, y, z)                  \
+  ((x) + (xdim2 * (y)) + \
+  (xdim2 * ydim2 * (z)) + (d) * xdim2 * ydim2 * zdim2)
+#define OPS_ACC_MD3(d, x, y, z)                  \
+  ((x) + (xdim3 * (y)) + \
+  (xdim3 * ydim3 * (z)) + (d) * xdim3 * ydim3 * zdim3)
+#define OPS_ACC_MD4(d, x, y, z)                  \
+  ((x) + (xdim4 * (y)) + \
+  (xdim4 * ydim4 * (z)) + (d) * xdim4 * ydim4 * zdim4)
+#define OPS_ACC_MD5(d, x, y, z)                  \
+  ((x) + (xdim5 * (y)) + \
+  (xdim5 * ydim5 * (z)) + (d) * xdim5 * ydim5 * zdim5)
+#define OPS_ACC_MD6(d, x, y, z)                  \
+  ((x) + (xdim6 * (y)) + \
+  (xdim6 * ydim6 * (z)) + (d) * xdim6 * ydim6 * zdim6)
+#define OPS_ACC_MD7(d, x, y, z)                  \
+  ((x) + (xdim7 * (y)) + \
+  (xdim7 * ydim7 * (z)) + (d) * xdim7 * ydim7 * zdim7)
+#define OPS_ACC_MD8(d, x, y, z)                  \
+  ((x) + (xdim8 * (y)) + \
+  (xdim8 * ydim8 * (z)) + (d) * xdim8 * ydim8 * zdim8)
+#define OPS_ACC_MD9(d, x, y, z)                  \
+  ((x) + (xdim9 * (y)) + \
+  (xdim9 * ydim9 * (z)) + (d) * xdim9 * ydim9 * zdim9)
+#define OPS_ACC_MD10(d, x, y, z)                    \
+  ((x) + (xdim10 * (y)) + \
+   (xdim10 * ydim10 * (z)) + (d) * xdim10 * ydim10 * zdim10)
+#define OPS_ACC_MD11(d, x, y, z)                    \
+  ((x) + (xdim11 * (y)) + \
+   (xdim11 * ydim11 * (z)) + (d) * xdim11 * ydim11 * zdim11)
+#define OPS_ACC_MD12(d, x, y, z)                    \
+  ((x) + (xdim12 * (y)) + \
+   (xdim12 * ydim12 * (z)) + (d) * xdim12 * ydim12 * zdim12)
+#define OPS_ACC_MD13(d, x, y, z)                    \
+  ((x) + (xdim13 * (y)) + \
+   (xdim13 * ydim13 * (z)) + (d) * xdim13 * ydim13 * zdim13)
+#define OPS_ACC_MD14(d, x, y, z)                    \
+  ((x) + (xdim14 * (y)) + \
+   (xdim14 * ydim14 * (z)) + (d) * xdim14 * ydim14 * zdim14)
+#define OPS_ACC_MD15(d, x, y, z)                    \
+  ((x) + (xdim15 * (y)) + \
+   (xdim15 * ydim15 * (z)) + (d) * xdim15 * ydim15 * zdim15)
+#define OPS_ACC_MD16(d, x, y, z)                    \
+  ((x) + (xdim16 * (y)) + \
+   (xdim16 * ydim16 * (z)) + (d) * xdim16 * ydim16 * zdim16)
+#define OPS_ACC_MD17(d, x, y, z)                    \
+  ((x) + (xdim17 * (y)) + \
+   (xdim17 * ydim17 * (z)) + (d) * xdim17 * ydim17 * zdim17)
+#define OPS_ACC_MD18(d, x, y, z)                    \
+  ((x) + (xdim18 * (y)) + \
+   (xdim18 * ydim18 * (z)) + (d) * xdim18 * ydim18 * zdim18)
+#define OPS_ACC_MD19(d, x, y, z)                    \
+  ((x) + (xdim19 * (y)) + \
+   (xdim19 * ydim19 * (z)) + (d) * xdim19 * ydim19 * zdim19)
+#define OPS_ACC_MD20(d, x, y, z)                    \
+  ((x) + (xdim20 * (y)) + \
+   (xdim20 * ydim20 * (z)) + (d) * xdim20 * ydim20 * zdim20)
+#define OPS_ACC_MD21(d, x, y, z)                    \
+  ((x) + (xdim21 * (y)) + \
+   (xdim21 * ydim21 * (z)) + (d) * xdim21 * ydim21 * zdim21)
+#define OPS_ACC_MD22(d, x, y, z)                    \
+  ((x) + (xdim22 * (y)) + \
+   (xdim22 * ydim22 * (z)) + (d) * xdim22 * ydim22 * zdim22)
+#define OPS_ACC_MD23(d, x, y, z)                    \
+  ((x) + (xdim23 * (y)) + \
+   (xdim23 * ydim23 * (z)) + (d) * xdim23 * ydim23 * zdim23)
+#define OPS_ACC_MD24(d, x, y, z)                    \
+  ((x) + (xdim24 * (y)) + \
+   (xdim24 * ydim24 * (z)) + (d) * xdim24 * ydim24 * zdim24)
+#define OPS_ACC_MD25(d, x, y, z)                    \
+  ((x) + (xdim25 * (y)) + \
+   (xdim25 * ydim25 * (z)) + (d) * xdim25 * ydim25 * zdim25)
+#define OPS_ACC_MD26(d, x, y, z)                    \
+  ((x) + (xdim26 * (y)) + \
+   (xdim26 * ydim26 * (z)) + (d) * xdim26 * ydim26 * zdim26)
+#define OPS_ACC_MD27(d, x, y, z)                    \
+  ((x) + (xdim27 * (y)) + \
+   (xdim27 * ydim27 * (z)) + (d) * xdim27 * ydim27 * zdim27)
+#define OPS_ACC_MD28(d, x, y, z)                    \
+  ((x) + (xdim28 * (y)) + \
+   (xdim28 * ydim28 * (z)) + (d) * xdim28 * ydim28 * zdim28)
+#define OPS_ACC_MD29(d, x, y, z)                    \
+  ((x) + (xdim29 * (y)) + \
+   (xdim29 * ydim29 * (z)) + (d) * xdim29 * ydim29 * zdim29)
+#define OPS_ACC_MD30(d, x, y, z)                    \
+  ((x) + (xdim30 * (y)) + \
+   (xdim30 * ydim30 * (z)) + (d) * xdim30 * ydim30 * zdim30)
+#define OPS_ACC_MD31(d, x, y, z)                    \
+  ((x) + (xdim31 * (y)) + \
+   (xdim31 * ydim31 * (z)) + (d) * xdim31 * ydim31 * zdim31)
+#define OPS_ACC_MD32(d, x, y, z)                    \
+  ((x) + (xdim32 * (y)) + \
+   (xdim32 * ydim32 * (z)) + (d) * xdim32 * ydim32 * zdim32)
+#define OPS_ACC_MD33(d, x, y, z)                    \
+  ((x) + (xdim33 * (y)) + \
+   (xdim33 * ydim33 * (z)) + (d) * xdim33 * ydim33 * zdim33)
+#define OPS_ACC_MD34(d, x, y, z)                    \
+  ((x) + (xdim34 * (y)) + \
+   (xdim34 * ydim34 * (z)) + (d) * xdim34 * ydim34 * zdim34)
+#define OPS_ACC_MD35(d, x, y, z)                    \
+  ((x) + (xdim35 * (y)) + \
+   (xdim35 * ydim35 * (z)) + (d) * xdim35 * ydim35 * zdim35)
+#define OPS_ACC_MD36(d, x, y, z)                    \
+  ((x) + (xdim36 * (y)) + \
+   (xdim36 * ydim36 * (z)) + (d) * xdim36 * ydim36 * zdim36)
+#define OPS_ACC_MD37(d, x, y, z)                    \
+  ((x) + (xdim37 * (y)) + \
+   (xdim37 * ydim37 * (z)) + (d) * xdim37 * ydim37 * zdim37)
+#define OPS_ACC_MD38(d, x, y, z)                    \
+  ((x) + (xdim38 * (y)) + \
+   (xdim38 * ydim38 * (z)) + (d) * xdim38 * ydim38 * zdim38)
+#define OPS_ACC_MD39(d, x, y, z)                    \
+  ((x) + (xdim39 * (y)) + \
+   (xdim39 * ydim39 * (z)) + (d) * xdim39 * ydim39 * zdim39)
+#define OPS_ACC_MD40(d, x, y, z)                    \
+  ((x) + (xdim40 * (y)) + \
+   (xdim40 * ydim40 * (z)) + (d) * xdim40 * ydim40 * zdim40)
+#define OPS_ACC_MD41(d, x, y, z)                    \
+  ((x) + (xdim41 * (y)) + \
+   (xdim41 * ydim41 * (z)) + (d) * xdim41 * ydim41 * zdim41)
+#define OPS_ACC_MD42(d, x, y, z)                    \
+  ((x) + (xdim42 * (y)) + \
+   (xdim42 * ydim42 * (z)) + (d) * xdim42 * ydim42 * zdim42)
+#define OPS_ACC_MD43(d, x, y, z)                    \
+  ((x) + (xdim43 * (y)) + \
+   (xdim43 * ydim43 * (z)) + (d) * xdim43 * ydim43 * zdim43)
+#define OPS_ACC_MD44(d, x, y, z)                    \
+  ((x) + (xdim44 * (y)) + \
+   (xdim44 * ydim44 * (z)) + (d) * xdim44 * ydim44 * zdim44)
+#define OPS_ACC_MD45(d, x, y, z)                    \
+  ((x) + (xdim45 * (y)) + \
+   (xdim45 * ydim45 * (z)) + (d) * xdim45 * ydim45 * zdim45)
+#define OPS_ACC_MD46(d, x, y, z)                    \
+  ((x) + (xdim46 * (y)) + \
+   (xdim46 * ydim46 * (z)) + (d) * xdim46 * ydim46 * zdim46)
+#define OPS_ACC_MD47(d, x, y, z)                    \
+  ((x) + (xdim47 * (y)) + \
+   (xdim47 * ydim47 * (z)) + (d) * xdim47 * ydim47 * zdim47)
+#define OPS_ACC_MD48(d, x, y, z)                    \
+  ((x) + (xdim48 * (y)) + \
+   (xdim48 * ydim48 * (z)) + (d) * xdim48 * ydim48 * zdim48)
+#define OPS_ACC_MD49(d, x, y, z)                    \
+  ((x) + (xdim49 * (y)) + \
+   (xdim49 * ydim49 * (z)) + (d) * xdim49 * ydim49 * zdim49)
+#define OPS_ACC_MD50(d, x, y, z)                    \
+  ((x) + (xdim50 * (y)) + \
+   (xdim50 * ydim50 * (z)) + (d) * xdim50 * ydim50 * zdim50)
+#define OPS_ACC_MD51(d, x, y, z)                    \
+  ((x) + (xdim51 * (y)) + \
+   (xdim51 * ydim51 * (z)) + (d) * xdim51 * ydim51 * zdim51)
+#define OPS_ACC_MD52(d, x, y, z)                    \
+  ((x) + (xdim52 * (y)) + \
+   (xdim52 * ydim52 * (z)) + (d) * xdim52 * ydim52 * zdim52)
+#define OPS_ACC_MD53(d, x, y, z)                    \
+  ((x) + (xdim53 * (y)) + \
+   (xdim53 * ydim53 * (z)) + (d) * xdim53 * ydim53 * zdim53)
+#define OPS_ACC_MD54(d, x, y, z)                    \
+  ((x) + (xdim54 * (y)) + \
+   (xdim54 * ydim54 * (z)) + (d) * xdim54 * ydim54 * zdim54)
+#define OPS_ACC_MD55(d, x, y, z)                    \
+  ((x) + (xdim55 * (y)) + \
+   (xdim55 * ydim55 * (z)) + (d) * xdim55 * ydim55 * zdim55)
+#define OPS_ACC_MD56(d, x, y, z)                    \
+  ((x) + (xdim56 * (y)) + \
+   (xdim56 * ydim56 * (z)) + (d) * xdim56 * ydim56 * zdim56)
+#define OPS_ACC_MD57(d, x, y, z)                    \
+  ((x) + (xdim57 * (y)) + \
+   (xdim57 * ydim57 * (z)) + (d) * xdim57 * ydim57 * zdim57)
+#define OPS_ACC_MD58(d, x, y, z)                    \
+  ((x) + (xdim58 * (y)) + \
+   (xdim58 * ydim58 * (z)) + (d) * xdim58 * ydim58 * zdim58)
+#define OPS_ACC_MD59(d, x, y, z)                    \
+  ((x) + (xdim59 * (y)) + \
+   (xdim59 * ydim59 * (z)) + (d) * xdim59 * ydim59 * zdim59)
+#define OPS_ACC_MD60(d, x, y, z)                    \
+  ((x) + (xdim60 * (y)) + \
+   (xdim60 * ydim60 * (z)) + (d) * xdim60 * ydim60 * zdim60)
+#define OPS_ACC_MD61(d, x, y, z)                    \
+  ((x) + (xdim61 * (y)) + \
+   (xdim61 * ydim61 * (z)) + (d) * xdim61 * ydim61 * zdim61)
+#define OPS_ACC_MD62(d, x, y, z)                    \
+  ((x) + (xdim62 * (y)) + \
+   (xdim62 * ydim62 * (z)) + (d) * xdim62 * ydim62 * zdim62)
+#define OPS_ACC_MD63(d, x, y, z)                    \
+  ((x) + (xdim63 * (y)) + \
+   (xdim63 * ydim63 * (z)) + (d) * xdim63 * ydim63 * zdim63)
+#define OPS_ACC_MD64(d, x, y, z)                    \
+  ((x) + (xdim64 * (y)) + \
+   (xdim64 * ydim64 * (z)) + (d) * xdim64 * ydim64 * zdim64)
+#define OPS_ACC_MD65(d, x, y, z)                    \
+  ((x) + (xdim65 * (y)) + \
+   (xdim65 * ydim65 * (z)) + (d) * xdim65 * ydim65 * zdim65)
+#define OPS_ACC_MD66(d, x, y, z)                    \
+  ((x) + (xdim66 * (y)) + \
+   (xdim66 * ydim66 * (z)) + (d) * xdim66 * ydim66 * zdim66)
+#define OPS_ACC_MD67(d, x, y, z)                    \
+  ((x) + (xdim67 * (y)) + \
+   (xdim67 * ydim67 * (z)) + (d) * xdim67 * ydim67 * zdim67)
+#define OPS_ACC_MD68(d, x, y, z)                    \
+  ((x) + (xdim68 * (y)) + \
+   (xdim68 * ydim68 * (z)) + (d) * xdim68 * ydim68 * zdim68)
+#define OPS_ACC_MD69(d, x, y, z)                    \
+  ((x) + (xdim69 * (y)) + \
+   (xdim69 * ydim69 * (z)) + (d) * xdim69 * ydim69 * zdim69)
+#define OPS_ACC_MD70(d, x, y, z)                    \
+  ((x) + (xdim70 * (y)) + \
+   (xdim70 * ydim70 * (z)) + (d) * xdim70 * ydim70 * zdim70)
+#define OPS_ACC_MD71(d, x, y, z)                    \
+  ((x) + (xdim71 * (y)) + \
+   (xdim71 * ydim71 * (z)) + (d) * xdim71 * ydim71 * zdim71)
+#define OPS_ACC_MD72(d, x, y, z)                    \
+  ((x) + (xdim72 * (y)) + \
+   (xdim72 * ydim72 * (z)) + (d) * xdim72 * ydim72 * zdim72)
+#define OPS_ACC_MD73(d, x, y, z)                    \
+  ((x) + (xdim73 * (y)) + \
+   (xdim73 * ydim73 * (z)) + (d) * xdim73 * ydim73 * zdim73)
+#define OPS_ACC_MD74(d, x, y, z)                    \
+  ((x) + (xdim74 * (y)) + \
+   (xdim74 * ydim74 * (z)) + (d) * xdim74 * ydim74 * zdim74)
+#define OPS_ACC_MD75(d, x, y, z)                    \
+  ((x) + (xdim75 * (y)) + \
+   (xdim75 * ydim75 * (z)) + (d) * xdim75 * ydim75 * zdim75)
+#define OPS_ACC_MD76(d, x, y, z)                    \
+  ((x) + (xdim76 * (y)) + \
+   (xdim76 * ydim76 * (z)) + (d) * xdim76 * ydim76 * zdim76)
+#define OPS_ACC_MD77(d, x, y, z)                    \
+  ((x) + (xdim77 * (y)) + \
+   (xdim77 * ydim77 * (z)) + (d) * xdim77 * ydim77 * zdim77)
+#define OPS_ACC_MD78(d, x, y, z)                    \
+  ((x) + (xdim78 * (y)) + \
+   (xdim78 * ydim78 * (z)) + (d) * xdim78 * ydim78 * zdim78)
+#define OPS_ACC_MD79(d, x, y, z)                    \
+  ((x) + (xdim79 * (y)) + \
+   (xdim79 * ydim79 * (z)) + (d) * xdim79 * ydim79 * zdim79)
+#define OPS_ACC_MD80(d, x, y, z)                    \
+  ((x) + (xdim80 * (y)) + \
+   (xdim80 * ydim80 * (z)) + (d) * xdim80 * ydim80 * zdim80)
+#define OPS_ACC_MD81(d, x, y, z)                    \
+  ((x) + (xdim81 * (y)) + \
+   (xdim81 * ydim81 * (z)) + (d) * xdim81 * ydim81 * zdim81)
+#define OPS_ACC_MD82(d, x, y, z)                    \
+  ((x) + (xdim82 * (y)) + \
+   (xdim82 * ydim82 * (z)) + (d) * xdim82 * ydim82 * zdim82)
+#define OPS_ACC_MD83(d, x, y, z)                    \
+  ((x) + (xdim83 * (y)) + \
+   (xdim83 * ydim83 * (z)) + (d) * xdim83 * ydim83 * zdim83)
+#define OPS_ACC_MD84(d, x, y, z)                    \
+  ((x) + (xdim84 * (y)) + \
+   (xdim84 * ydim84 * (z)) + (d) * xdim84 * ydim84 * zdim84)
+#define OPS_ACC_MD85(d, x, y, z)                    \
+  ((x) + (xdim85 * (y)) + \
+   (xdim85 * ydim85 * (z)) + (d) * xdim85 * ydim85 * zdim85)
+#define OPS_ACC_MD86(d, x, y, z)                    \
+  ((x) + (xdim86 * (y)) + \
+   (xdim86 * ydim86 * (z)) + (d) * xdim86 * ydim86 * zdim86)
+#define OPS_ACC_MD87(d, x, y, z)                    \
+  ((x) + (xdim87 * (y)) + \
+   (xdim87 * ydim87 * (z)) + (d) * xdim87 * ydim87 * zdim87)
+#define OPS_ACC_MD88(d, x, y, z)                    \
+  ((x) + (xdim88 * (y)) + \
+   (xdim88 * ydim88 * (z)) + (d) * xdim88 * ydim88 * zdim88)
+#define OPS_ACC_MD89(d, x, y, z)                    \
+  ((x) + (xdim89 * (y)) + \
+   (xdim89 * ydim89 * (z)) + (d) * xdim89 * ydim89 * zdim89)
+#define OPS_ACC_MD90(d, x, y, z)                    \
+  ((x) + (xdim90 * (y)) + \
+   (xdim90 * ydim90 * (z)) + (d) * xdim90 * ydim90 * zdim90)
+#define OPS_ACC_MD91(d, x, y, z)                    \
+  ((x) + (xdim91 * (y)) + \
+   (xdim91 * ydim91 * (z)) + (d) * xdim91 * ydim91 * zdim91)
+#define OPS_ACC_MD92(d, x, y, z)                    \
+  ((x) + (xdim92 * (y)) + \
+   (xdim92 * ydim92 * (z)) + (d) * xdim92 * ydim92 * zdim92)
+#define OPS_ACC_MD93(d, x, y, z)                    \
+  ((x) + (xdim93 * (y)) + \
+   (xdim93 * ydim93 * (z)) + (d) * xdim93 * ydim93 * zdim93)
+#define OPS_ACC_MD94(d, x, y, z)                    \
+  ((x) + (xdim94 * (y)) + \
+   (xdim94 * ydim94 * (z)) + (d) * xdim94 * ydim94 * zdim94)
+#define OPS_ACC_MD95(d, x, y, z)                    \
+  ((x) + (xdim95 * (y)) + \
+   (xdim95 * ydim95 * (z)) + (d) * xdim95 * ydim95 * zdim95)
+#define OPS_ACC_MD96(d, x, y, z)                    \
+  ((x) + (xdim96 * (y)) + \
+   (xdim96 * ydim96 * (z)) + (d) * xdim96 * ydim96 * zdim96)
+#define OPS_ACC_MD97(d, x, y, z)                    \
+  ((x) + (xdim97 * (y)) + \
+   (xdim97 * ydim97 * (z)) + (d) * xdim97 * ydim97 * zdim97)
+#define OPS_ACC_MD98(d, x, y, z)                    \
+  ((x) + (xdim98 * (y)) + \
+   (xdim98 * ydim98 * (z)) + (d) * xdim98 * ydim98 * zdim98)
+#define OPS_ACC_MD99(d, x, y, z)                    \
+  ((x) + (xdim99 * (y)) + \
+   (xdim99 * ydim99 * (z)) + (d) * xdim99 * ydim99 * zdim99)
+#endif
 #else
 /// TODO #define OPS_ACC_MD0(x,y,z,d) (ops_stencil_check_3d_md(0, x, y, z,
 /// xdim0, ydim0))
@@ -1409,6 +1712,22 @@ extern int ydim0, ydim1, ydim2, ydim3, ydim4, ydim5, ydim6, ydim7, ydim8, ydim9,
 
 #endif
 
+#if defined OPS_3D && defined OPS_SOA
+extern int zdim0, zdim1, zdim2, zdim3, zdim4, zdim5, zdim6, zdim7, zdim8, zdim9,
+    zdim10, zdim11, zdim12, zdim13, zdim14, zdim15, zdim16, zdim17, zdim18,
+    zdim19, zdim20, zdim21, zdim22, zdim23, zdim24, zdim25, zdim26, zdim27,
+    zdim28, zdim29, zdim30, zdim31, zdim32, zdim33, zdim34, zdim35, zdim36,
+    zdim37, zdim38, zdim39, zdim40, zdim41, zdim42, zdim43, zdim44, zdim45,
+    zdim46, zdim47, zdim48, zdim49, zdim50, zdim51, zdim52, zdim53, zdim54,
+    zdim55, zdim56, zdim57, zdim58, zdim59, zdim60, zdim61, zdim62, zdim63,
+    zdim64, zdim65, zdim66, zdim67, zdim68, zdim69, zdim70, zdim71, zdim72,
+    zdim73, zdim74, zdim75, zdim76, zdim77, zdim78, zdim79, zdim80, zdim81,
+    zdim82, zdim83, zdim84, zdim85, zdim86, zdim87, zdim88, zdim89, zdim90,
+    zdim91, zdim92, zdim93, zdim94, zdim95, zdim96, zdim97, zdim98, zdim99;
+
+#endif
+
+#ifndef OPS_SOA
 extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d7, multi_d8, multi_d9, multi_d10, multi_d11, multi_d12, multi_d13,
     multi_d14, multi_d15, multi_d16, multi_d17, multi_d18, multi_d19, multi_d20,
@@ -1424,4 +1743,6 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d84, multi_d85, multi_d86, multi_d87, multi_d88, multi_d89, multi_d90,
     multi_d91, multi_d92, multi_d93, multi_d94, multi_d95, multi_d96, multi_d97,
     multi_d98, multi_d99;
+#endif
 #endif // OPS_MACROS_H
+

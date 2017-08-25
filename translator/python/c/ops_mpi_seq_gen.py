@@ -355,6 +355,9 @@ for nargs in range (1,maxargs+1):
       f.write('    #if defined OPS_3D || defined OPS_SOA\n')
       f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
       f.write('    #endif\n')
+      f.write('    #if defined OPS_3D && defined OPS_SOA\n')
+      f.write('    zdim'+str(n)+' = args['+str(n)+'].dat->size[2];\n')
+      f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
 

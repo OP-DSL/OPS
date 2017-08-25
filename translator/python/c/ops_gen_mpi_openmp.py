@@ -157,7 +157,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
               code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+'))')
           if NDIM==3:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'*(y))+(xdim'+str(n)+'*ydim'+str(n)+'*(z))+(d)*xdim'+str(n)+'*ydim'+str(n)+'*zdim'+str(n)+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'*(y))+(xdim'+str(n)+'*ydim'+str(n)+'*(z))+(d)*xdim'+str(n)+'*ydim'+str(n)+'*zdim'+str(n)+')')
             else:
               code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'*(y)*'+dims[n]+')+(xdim'+str(n)+'*ydim'+str(n)+'*(z)*'+dims[n]+'))')
 
