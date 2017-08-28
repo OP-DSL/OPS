@@ -133,7 +133,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
 
-    arg_idx = 0
+    arg_idx = -1
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = n
@@ -292,7 +292,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     code('')
-    if arg_idx:
+    if arg_idx<>-1:
       code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       code('sub_block_list sb = OPS_sub_block_list[block->index];')
@@ -407,7 +407,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#pragma simd'+line)
     code('#endif')
     FOR('n_x','start[0]','end[0]')
-    if arg_idx:
+    if arg_idx <> -1:
       if NDIM==1:
         code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x};')
       elif NDIM==2:
