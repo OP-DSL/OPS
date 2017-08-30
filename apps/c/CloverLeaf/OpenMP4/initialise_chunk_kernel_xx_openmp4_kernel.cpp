@@ -91,7 +91,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  int *p_a0 = (int *)((char *)args[0].data);
+  int *p_a0 = (int *)((char *)args[0].data + base0);
 #else
   int *p_a0 = (int *)((char *)args[0].data + base0);
 #endif
@@ -131,8 +131,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
     OPS_kernels[35].mpi_time += t2 - t1;
   }
 
-  initialise_chunk_kernel_xx_c_wrapper(p_a0, base0 / args[0].dat->elem_size,
-                                       tot0, p_a1, arg_idx[0], arg_idx[1],
+  initialise_chunk_kernel_xx_c_wrapper(p_a0, p_a1, arg_idx[0], arg_idx[1],
                                        x_size, y_size);
 
   if (OPS_diags > 1) {

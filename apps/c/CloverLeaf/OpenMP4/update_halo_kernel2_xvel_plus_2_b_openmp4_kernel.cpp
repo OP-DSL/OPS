@@ -111,7 +111,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
@@ -122,7 +122,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
@@ -166,9 +166,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name,
     OPS_kernels[54].mpi_time += t2 - t1;
   }
 
-  update_halo_kernel2_xvel_plus_2_b_c_wrapper(
-      p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-      base1 / args[1].dat->elem_size, tot1, p_a2, NUM_FIELDS, x_size, y_size);
+  update_halo_kernel2_xvel_plus_2_b_c_wrapper(p_a0, p_a1, p_a2, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

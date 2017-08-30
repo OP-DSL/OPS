@@ -120,7 +120,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
@@ -131,7 +131,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
@@ -142,7 +142,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
           args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
               args[2].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data);
+  double *p_a2 = (double *)((char *)args[2].data + base2);
 #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
 #endif
@@ -153,7 +153,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
           args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
               args[3].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a3 = (double *)((char *)args[3].data);
+  double *p_a3 = (double *)((char *)args[3].data + base3);
 #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
 #endif
@@ -164,7 +164,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
           args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
               args[4].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a4 = (double *)((char *)args[4].data);
+  double *p_a4 = (double *)((char *)args[4].data + base4);
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
@@ -202,12 +202,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
     OPS_kernels[41].mpi_time += t2 - t1;
   }
 
-  initialise_chunk_kernel_volume_c_wrapper(
-      p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-      base1 / args[1].dat->elem_size, tot1, p_a2,
-      base2 / args[2].dat->elem_size, tot2, p_a3,
-      base3 / args[3].dat->elem_size, tot3, p_a4,
-      base4 / args[4].dat->elem_size, tot4, x_size, y_size);
+  initialise_chunk_kernel_volume_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, x_size,
+                                           y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

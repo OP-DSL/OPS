@@ -134,7 +134,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
@@ -145,7 +145,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
@@ -156,7 +156,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
               args[2].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data);
+  double *p_a2 = (double *)((char *)args[2].data + base2);
 #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
 #endif
@@ -167,7 +167,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
               args[3].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a3 = (double *)((char *)args[3].data);
+  double *p_a3 = (double *)((char *)args[3].data + base3);
 #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
 #endif
@@ -178,7 +178,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
               args[4].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a4 = (double *)((char *)args[4].data);
+  double *p_a4 = (double *)((char *)args[4].data + base4);
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
@@ -189,7 +189,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
               args[5].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a5 = (double *)((char *)args[5].data);
+  double *p_a5 = (double *)((char *)args[5].data + base5);
 #else
   double *p_a5 = (double *)((char *)args[5].data + base5);
 #endif
@@ -200,7 +200,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
           args[6].dat->elem_size * args[6].dat->size[0] * start[1] *
               args[6].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a6 = (double *)((char *)args[6].data);
+  double *p_a6 = (double *)((char *)args[6].data + base6);
 #else
   double *p_a6 = (double *)((char *)args[6].data + base6);
 #endif
@@ -238,13 +238,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[34].mpi_time += t2 - t1;
   }
 
-  viscosity_kernel_c_wrapper(p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-                             base1 / args[1].dat->elem_size, tot1, p_a2,
-                             base2 / args[2].dat->elem_size, tot2, p_a3,
-                             base3 / args[3].dat->elem_size, tot3, p_a4,
-                             base4 / args[4].dat->elem_size, tot4, p_a5,
-                             base5 / args[5].dat->elem_size, tot5, p_a6,
-                             base6 / args[6].dat->elem_size, tot6, x_size,
+  viscosity_kernel_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6, x_size,
                              y_size);
 
   if (OPS_diags > 1) {

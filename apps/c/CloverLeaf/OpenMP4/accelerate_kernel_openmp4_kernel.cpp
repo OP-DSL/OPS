@@ -175,7 +175,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
@@ -186,7 +186,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
@@ -197,7 +197,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
               args[2].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data);
+  double *p_a2 = (double *)((char *)args[2].data + base2);
 #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
 #endif
@@ -208,7 +208,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
               args[3].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a3 = (double *)((char *)args[3].data);
+  double *p_a3 = (double *)((char *)args[3].data + base3);
 #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
 #endif
@@ -219,7 +219,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
               args[4].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a4 = (double *)((char *)args[4].data);
+  double *p_a4 = (double *)((char *)args[4].data + base4);
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
@@ -230,7 +230,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
               args[5].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a5 = (double *)((char *)args[5].data);
+  double *p_a5 = (double *)((char *)args[5].data + base5);
 #else
   double *p_a5 = (double *)((char *)args[5].data + base5);
 #endif
@@ -241,7 +241,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[6].dat->elem_size * args[6].dat->size[0] * start[1] *
               args[6].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a6 = (double *)((char *)args[6].data);
+  double *p_a6 = (double *)((char *)args[6].data + base6);
 #else
   double *p_a6 = (double *)((char *)args[6].data + base6);
 #endif
@@ -252,7 +252,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[7].dat->elem_size * args[7].dat->size[0] * start[1] *
               args[7].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a7 = (double *)((char *)args[7].data);
+  double *p_a7 = (double *)((char *)args[7].data + base7);
 #else
   double *p_a7 = (double *)((char *)args[7].data + base7);
 #endif
@@ -263,7 +263,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[8].dat->elem_size * args[8].dat->size[0] * start[1] *
               args[8].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a8 = (double *)((char *)args[8].data);
+  double *p_a8 = (double *)((char *)args[8].data + base8);
 #else
   double *p_a8 = (double *)((char *)args[8].data + base8);
 #endif
@@ -274,7 +274,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
           args[9].dat->elem_size * args[9].dat->size[0] * start[1] *
               args[9].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a9 = (double *)((char *)args[9].data);
+  double *p_a9 = (double *)((char *)args[9].data + base9);
 #else
   double *p_a9 = (double *)((char *)args[9].data + base9);
 #endif
@@ -285,7 +285,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
            args[10].dat->elem_size * args[10].dat->size[0] * start[1] *
                args[10].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a10 = (double *)((char *)args[10].data);
+  double *p_a10 = (double *)((char *)args[10].data + base10);
 #else
   double *p_a10 = (double *)((char *)args[10].data + base10);
 #endif
@@ -323,18 +323,8 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[6].mpi_time += t2 - t1;
   }
 
-  accelerate_kernel_c_wrapper(p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-                              base1 / args[1].dat->elem_size, tot1, p_a2,
-                              base2 / args[2].dat->elem_size, tot2, p_a3,
-                              base3 / args[3].dat->elem_size, tot3, p_a4,
-                              base4 / args[4].dat->elem_size, tot4, p_a5,
-                              base5 / args[5].dat->elem_size, tot5, p_a6,
-                              base6 / args[6].dat->elem_size, tot6, p_a7,
-                              base7 / args[7].dat->elem_size, tot7, p_a8,
-                              base8 / args[8].dat->elem_size, tot8, p_a9,
-                              base9 / args[9].dat->elem_size, tot9, p_a10,
-                              base10 / args[10].dat->elem_size, tot10, x_size,
-                              y_size);
+  accelerate_kernel_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6, p_a7,
+                              p_a8, p_a9, p_a10, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

@@ -105,7 +105,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data + base0);
 #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
 #endif
@@ -116,7 +116,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data + base1);
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
@@ -157,9 +157,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     OPS_kernels[29].mpi_time += t2 - t1;
   }
 
-  calc_dt_kernel_get_c_wrapper(p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-                               base1 / args[1].dat->elem_size, tot1, p_a2, p_a3,
-                               x_size, y_size);
+  calc_dt_kernel_get_c_wrapper(p_a0, p_a1, p_a2, p_a3, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

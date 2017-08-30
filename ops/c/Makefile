@@ -165,8 +165,8 @@ endif
 else
   CHKCC			:= $(CC)
 endif
-HDF5_INC             := -I/usr/include/hdf5/openmpi/
-HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
+HDF5_INC             := -I/usr/include/hdf5/serial/
+HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5_hl -lhdf5 -lz
 .PHONY: clean mklib
 
 TARGETS = clean core seq mpi 
