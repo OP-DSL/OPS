@@ -7,8 +7,12 @@
 
 extern int xdim0_multidim_copy_kernel;
 int xdim0_multidim_copy_kernel_h = -1;
+extern int ydim0_multidim_copy_kernel;
+int ydim0_multidim_copy_kernel_h = -1;
 extern int xdim1_multidim_copy_kernel;
 int xdim1_multidim_copy_kernel_h = -1;
+extern int ydim1_multidim_copy_kernel;
+int ydim1_multidim_copy_kernel_h = -1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,21 +82,30 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block,
   int y_size = MAX(0, end[1] - start[1]);
 
   xdim0 = args[0].dat->size[0];
+  ydim0 = args[0].dat->size[1];
   xdim1 = args[1].dat->size[0];
+  ydim1 = args[1].dat->size[1];
   if (xdim0 != xdim0_multidim_copy_kernel_h ||
-      xdim1 != xdim1_multidim_copy_kernel_h) {
+      ydim0 != ydim0_multidim_copy_kernel_h ||
+      xdim1 != xdim1_multidim_copy_kernel_h ||
+      ydim1 != ydim1_multidim_copy_kernel_h) {
     xdim0_multidim_copy_kernel = xdim0;
     xdim0_multidim_copy_kernel_h = xdim0;
+    ydim0_multidim_copy_kernel = ydim0;
+    ydim0_multidim_copy_kernel_h = ydim0;
     xdim1_multidim_copy_kernel = xdim1;
     xdim1_multidim_copy_kernel_h = xdim1;
+    ydim1_multidim_copy_kernel = ydim1;
+    ydim1_multidim_copy_kernel_h = ydim1;
   }
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
-              args[0].stencil->stride[1];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
@@ -100,10 +113,11 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block,
 #endif
 
   int base1 = args[1].dat->base_offset +
-              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
+              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+                  start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
-              args[1].stencil->stride[1];
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else

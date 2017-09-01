@@ -78,7 +78,7 @@ void ops_par_loop_initialise_chunk_kernel_zero(char const *name,
     xdim0_initialise_chunk_kernel_zero_h = xdim0;
   }
 
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];

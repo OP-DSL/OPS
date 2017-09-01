@@ -3,7 +3,6 @@
 //
 __constant__ int xdim0_initialise_chunk_kernel_xx;
 int xdim0_initialise_chunk_kernel_xx_h = -1;
-int ydim0_initialise_chunk_kernel_xx_h = -1;
 
 #undef OPS_ACC0
 
@@ -112,7 +111,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[2];
 

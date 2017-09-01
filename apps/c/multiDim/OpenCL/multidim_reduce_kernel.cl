@@ -43,7 +43,8 @@
 #undef OPS_ACC_MD0
 
 #define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim0_multidim_reduce_kernel * (y)*2))
+  ((x) + (xdim0_multidim_reduce_kernel * (y)) +                                \
+   (d)*xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel)
 
 // user function
 void multidim_reduce_kernel(const __global double *restrict val,
@@ -70,9 +71,9 @@ __kernel void ops_multidim_reduce_kernel(__global const double *restrict arg0,
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_reduce_kernel(&arg0[base0 + idx_x * 1 * 2 +
-                                 idx_y * 1 * 2 * xdim0_multidim_reduce_kernel],
-                           arg1_l);
+    multidim_reduce_kernel(
+        &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_reduce_kernel],
+        arg1_l);
   }
   int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
                     get_group_id(2) * get_num_groups(0) * get_num_groups(1);

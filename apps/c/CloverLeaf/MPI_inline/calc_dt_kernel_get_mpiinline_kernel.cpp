@@ -84,8 +84,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     xdim1_calc_dt_kernel_get_h = xdim1;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
 #ifdef OPS_MPI
   double *arg2h =

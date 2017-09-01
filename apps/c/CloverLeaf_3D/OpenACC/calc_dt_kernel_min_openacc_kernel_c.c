@@ -37,10 +37,11 @@ void calc_dt_kernel_min_c_wrapper(double *p_a0, double *p_a1, int x_size,
 #pragma acc loop reduction(min : p_a1_0)
 #endif
       for (int n_x = 0; n_x < x_size; n_x++) {
-        calc_dt_kernel_min(
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_min * 1 * 1 +
-                n_z * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min * 1,
-            &p_a1_0);
+        calc_dt_kernel_min(p_a0 + n_x * 1 * 1 +
+                               n_y * xdim0_calc_dt_kernel_min * 1 * 1 +
+                               n_z * xdim0_calc_dt_kernel_min *
+                                   ydim0_calc_dt_kernel_min * 1 * 1,
+                           &p_a1_0);
       }
     }
   }

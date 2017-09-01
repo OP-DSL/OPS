@@ -44,9 +44,11 @@
 #undef OPS_ACC_MD1
 
 #define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim0_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim0_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel)
 #define OPS_ACC_MD1(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim1_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim1_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel)
 
 // user function
 void multidim_copy_kernel(const __global double *restrict src,
@@ -66,9 +68,8 @@ __kernel void ops_multidim_copy_kernel(__global const double *restrict arg0,
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_copy_kernel(&arg0[base0 + idx_x * 1 * 2 +
-                               idx_y * 1 * 2 * xdim0_multidim_copy_kernel],
-                         &arg1[base1 + idx_x * 1 * 2 +
-                               idx_y * 1 * 2 * xdim1_multidim_copy_kernel]);
+    multidim_copy_kernel(
+        &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel],
+        &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel]);
   }
 }

@@ -70,6 +70,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: index       ! index
     type(c_ptr)         :: block       ! block on which data is defined
     integer(kind=c_int) :: dims        ! number of elements per grid point
+    integer(kind=c_int) :: type_size;  ! bytes per primitive = elem_size/dim
     integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
     type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR

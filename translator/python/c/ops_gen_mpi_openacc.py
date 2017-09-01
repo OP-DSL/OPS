@@ -65,7 +65,7 @@ ELSEIF = util.ELSEIF
 ELSE = util.ELSE
 ENDIF = util.ENDIF
 
-def ops_gen_mpi_openacc(master, date, consts, kernels):
+def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
   OPS_ID   = 1;  OPS_GBL   = 2;
 
@@ -157,8 +157,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('int xdim'+str(n)+'_'+name+';')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+'_'+name+';')
+#        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('int zdim'+str(n)+'_'+name+';')
 #        code('#pragma acc declare create(xdim'+str(n)+'_'+name+')')
     code('')
 
@@ -190,12 +193,20 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
           if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
-
+            if soa_set:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
+            else:
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
 
 
 ##########################################################################
@@ -381,13 +392,24 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM == 1:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])
+          if soa_set:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])
+          else:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])
         elif NDIM == 2:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
-          ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          if soa_set:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+\
+                ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+          else:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
+                ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         elif NDIM == 3:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-          text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          if soa_set:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+            text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          else:
+            text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+            text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
@@ -470,9 +492,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('extern int xdim'+str(n)+'_'+name+';')
         code('int xdim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('extern int ydim'+str(n)+'_'+name+';')
           code('int ydim'+str(n)+'_'+name+'_h = -1;')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('extern int zdim'+str(n)+'_'+name+';')
+          code('int zdim'+str(n)+'_'+name+'_h = -1;')
     code('')
 
     code('#ifdef __cplusplus')
@@ -604,16 +629,20 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
 
 
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+        if NDIM>3 or (NDIM==3 and soa_set):
+          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
     condition = condition[:-4]
     IF(condition)
 
@@ -621,9 +650,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
         code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
-        if NDIM==3:
+        if NDIM>2 or (NDIM==2 and soa_set):
           code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
           code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
+        if NDIM>3 or (NDIM==3 and soa_set):
+          code('zdim'+str(n)+'_'+name+' = zdim'+str(n)+';')
+          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
     ENDIF()
     code('')
 
@@ -689,9 +721,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + args['+str(n)+'].dat->elem_size * start[0] * args['+str(n)+'].stencil->stride[0];')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * start[0] * args['+str(n)+'].stencil->stride[0];')
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->elem_size *\n'
+          line = 'base'+str(n)+' = base'+str(n)+' + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
@@ -832,6 +864,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     code('#define OPS_2D')
   if NDIM==3:
     code('#define OPS_3D')
+  if soa_set:
+    code('#define OPS_SOA')
   code('#ifdef __cplusplus')
   code('#include "ops_lib_cpp.h"')
   code('#endif')

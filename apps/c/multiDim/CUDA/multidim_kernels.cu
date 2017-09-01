@@ -4,10 +4,13 @@
 // header
 #define OPS_ACC_MD_MACROS
 #define OPS_2D
+#define OPS_SOA
 #include "ops_lib_cpp.h"
 
 #include "ops_cuda_reduction.h"
 #include "ops_cuda_rt_support.h"
+
+#include <cuComplex.h>
 
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"

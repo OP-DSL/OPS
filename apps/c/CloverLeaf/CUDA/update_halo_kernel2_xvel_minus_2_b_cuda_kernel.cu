@@ -3,10 +3,8 @@
 //
 __constant__ int xdim0_update_halo_kernel2_xvel_minus_2_b;
 int xdim0_update_halo_kernel2_xvel_minus_2_b_h = -1;
-int ydim0_update_halo_kernel2_xvel_minus_2_b_h = -1;
 __constant__ int xdim1_update_halo_kernel2_xvel_minus_2_b;
 int xdim1_update_halo_kernel2_xvel_minus_2_b_h = -1;
-int ydim1_update_halo_kernel2_xvel_minus_2_b_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -137,8 +135,8 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_b(char const *name,
     ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
 

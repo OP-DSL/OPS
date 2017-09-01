@@ -4,6 +4,7 @@
 // header
 #define OPS_ACC_MD_MACROS
 #define OPS_2D
+#define OPS_SOA
 #include "ops_lib_cpp.h"
 #include "ops_opencl_rt_support.h"
 #include "stdio.h"

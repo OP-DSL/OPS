@@ -61,7 +61,7 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int x_step, int y_step, int z_step,
                                   int size_x, int size_y, int size_z,
                                   int buf_strides_x, int buf_strides_y,
-                                  int buf_strides_z, int elem_size) {
+                                  int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
@@ -71,12 +71,17 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
       (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-    src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * elem_size;
+    if (OPS_soa) src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+    else src += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
     dest += ((idx_z - rz_s) * z_step * buf_strides_z +
              (idx_y - ry_s) * y_step * buf_strides_y +
              (idx_x - rx_s) * x_step * buf_strides_x) *
-            elem_size;
-    memcpy(dest, src, elem_size);
+            type_size * dim;
+    for (int d = 0; d < dim; d++) {
+      memcpy(dest+d*type_size, src, type_size);
+      if (OPS_soa) src += size_x * size_y * size_z * type_size;
+      else src += type_size;
+    }
   }
 }
 
@@ -85,7 +90,7 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int x_step, int y_step, int z_step,
                                     int size_x, int size_y, int size_z,
                                     int buf_strides_x, int buf_strides_y,
-                                    int buf_strides_z, int elem_size) {
+                                    int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
@@ -95,12 +100,17 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
       (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-    dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * elem_size;
+    if (OPS_soa) dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+    else dest += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
     src += ((idx_z - rz_s) * z_step * buf_strides_z +
             (idx_y - ry_s) * y_step * buf_strides_y +
             (idx_x - rx_s) * x_step * buf_strides_x) *
-           elem_size;
-    memcpy(dest, src, elem_size);
+           type_size * dim;
+    for (int d = 0; d < dim; d++) {
+      memcpy(dest, src + d*type_size, type_size);
+      if (OPS_soa) dest += size_x * size_y * size_z * type_size;
+      else dest += type_size;
+    }
   }
 }
 
@@ -134,7 +144,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   copy_kernel_tobuf<<<grid, tblock>>>(
       dest, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, src->elem_size);
+      buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_soa);
 
   // TODO: MPI buffers and GPUDirect
 }
@@ -170,6 +180,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   copy_kernel_frombuf<<<grid, tblock>>>(
       dest->data_d, src, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, dest->elem_size);
+      buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_soa);
   dest->dirty_hd = 2;
 }

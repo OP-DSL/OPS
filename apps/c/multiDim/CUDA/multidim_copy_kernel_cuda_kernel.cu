@@ -3,18 +3,22 @@
 //
 __constant__ int xdim0_multidim_copy_kernel;
 int xdim0_multidim_copy_kernel_h = -1;
+__constant__ int ydim0_multidim_copy_kernel;
 int ydim0_multidim_copy_kernel_h = -1;
 __constant__ int xdim1_multidim_copy_kernel;
 int xdim1_multidim_copy_kernel_h = -1;
+__constant__ int ydim1_multidim_copy_kernel;
 int ydim1_multidim_copy_kernel_h = -1;
 
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
 #define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim0_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim0_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel)
 #define OPS_ACC_MD1(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim1_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim1_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel)
 // user function
 __device__
 
@@ -34,8 +38,8 @@ __global__ void ops_multidim_copy_kernel(const double *__restrict arg0,
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 * 2 + idx_y * 1 * 2 * xdim0_multidim_copy_kernel;
-  arg1 += idx_x * 1 * 2 + idx_y * 1 * 2 * xdim1_multidim_copy_kernel;
+  arg0 += idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel;
+  arg1 += idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
     multidim_copy_kernel_gpu(arg0, arg1);
@@ -100,22 +104,30 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block,
   int y_size = MAX(0, end[1] - start[1]);
 
   int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
   int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
 
   if (xdim0 != xdim0_multidim_copy_kernel_h ||
-      xdim1 != xdim1_multidim_copy_kernel_h) {
+      ydim0 != ydim0_multidim_copy_kernel_h ||
+      xdim1 != xdim1_multidim_copy_kernel_h ||
+      ydim1 != ydim1_multidim_copy_kernel_h) {
     cudaMemcpyToSymbol(xdim0_multidim_copy_kernel, &xdim0, sizeof(int));
     xdim0_multidim_copy_kernel_h = xdim0;
+    cudaMemcpyToSymbol(ydim0_multidim_copy_kernel, &ydim0, sizeof(int));
+    ydim0_multidim_copy_kernel_h = ydim0;
     cudaMemcpyToSymbol(xdim1_multidim_copy_kernel, &xdim1, sizeof(int));
     xdim1_multidim_copy_kernel_h = xdim1;
+    cudaMemcpyToSymbol(ydim1_multidim_copy_kernel, &ydim1, sizeof(int));
+    ydim1_multidim_copy_kernel_h = ydim1;
   }
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[2];
 

@@ -63,14 +63,17 @@ void reset_field_kernel1_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         reset_field_kernel1(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_reset_field_kernel1 * 1 * 1 +
-                n_z * xdim0_reset_field_kernel1 * ydim0_reset_field_kernel1 * 1,
+                n_z * xdim0_reset_field_kernel1 * ydim0_reset_field_kernel1 *
+                    1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_reset_field_kernel1 * 1 * 1 +
-                n_z * xdim1_reset_field_kernel1 * ydim1_reset_field_kernel1 * 1,
+                n_z * xdim1_reset_field_kernel1 * ydim1_reset_field_kernel1 *
+                    1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_reset_field_kernel1 * 1 * 1 +
-                n_z * xdim2_reset_field_kernel1 * ydim2_reset_field_kernel1 * 1,
+                n_z * xdim2_reset_field_kernel1 * ydim2_reset_field_kernel1 *
+                    1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_reset_field_kernel1 * 1 * 1 +
                 n_z * xdim3_reset_field_kernel1 * ydim3_reset_field_kernel1 *
-                    1);
+                    1 * 1);
       }
     }
   }

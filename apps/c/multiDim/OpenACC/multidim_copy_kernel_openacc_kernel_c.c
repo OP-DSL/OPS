@@ -6,15 +6,19 @@
 #define OPS_GPU
 
 int xdim0_multidim_copy_kernel;
+int ydim0_multidim_copy_kernel;
 int xdim1_multidim_copy_kernel;
+int ydim1_multidim_copy_kernel;
 
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
 #define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim0_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim0_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel)
 #define OPS_ACC_MD1(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim1_multidim_copy_kernel * (y)*2))
+  ((x) + (xdim1_multidim_copy_kernel * (y)) +                                  \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel)
 // user function
 inline void multidim_copy_kernel(const double *src, double *dest) {
   dest[OPS_ACC_MD1(0, 0, 0)] = src[OPS_ACC_MD0(0, 0, 0)];
@@ -36,8 +40,8 @@ void multidim_copy_kernel_c_wrapper(double *p_a0, double *p_a1, int x_size,
 #endif
     for (int n_x = 0; n_x < x_size; n_x++) {
       multidim_copy_kernel(
-          p_a0 + n_x * 1 * 2 + n_y * xdim0_multidim_copy_kernel * 1 * 2,
-          p_a1 + n_x * 1 * 2 + n_y * xdim1_multidim_copy_kernel * 1 * 2);
+          p_a0 + n_x * 1 + n_y * xdim0_multidim_copy_kernel * 1,
+          p_a1 + n_x * 1 + n_y * xdim1_multidim_copy_kernel * 1);
     }
   }
 }

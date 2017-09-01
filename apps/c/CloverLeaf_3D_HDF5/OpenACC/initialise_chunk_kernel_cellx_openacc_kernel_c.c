@@ -62,15 +62,15 @@ void initialise_chunk_kernel_cellx_c_wrapper(double *p_a0, double *p_a1,
             p_a0 + n_x * 1 * 1 +
                 n_y * xdim0_initialise_chunk_kernel_cellx * 0 * 1 +
                 n_z * xdim0_initialise_chunk_kernel_cellx *
-                    ydim0_initialise_chunk_kernel_cellx * 0,
+                    ydim0_initialise_chunk_kernel_cellx * 0 * 1,
             p_a1 + n_x * 1 * 1 +
                 n_y * xdim1_initialise_chunk_kernel_cellx * 0 * 1 +
                 n_z * xdim1_initialise_chunk_kernel_cellx *
-                    ydim1_initialise_chunk_kernel_cellx * 0,
+                    ydim1_initialise_chunk_kernel_cellx * 0 * 1,
             p_a2 + n_x * 1 * 1 +
                 n_y * xdim2_initialise_chunk_kernel_cellx * 0 * 1 +
                 n_z * xdim2_initialise_chunk_kernel_cellx *
-                    ydim2_initialise_chunk_kernel_cellx * 0);
+                    ydim2_initialise_chunk_kernel_cellx * 0 * 1);
       }
     }
   }

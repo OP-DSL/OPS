@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define OPS_2D
+#define OPS_SOA
 #include "ops_lib_cpp.h"
 
 //
@@ -34,11 +35,15 @@ int main(int argc, char **argv) {
   int y_cells = 4;
 
   ops_init(argc, argv, 1);
+  OPS_soa = 1;
 
   ops_block grid2D = ops_decl_block(2, "grid2D");
 
   int s2D_00[] = {0, 0};
+  int s2D_00_P10_M10[] = {0, 0, 1, 0, -1, 0};
   ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "00");
+  ops_stencil S2D_00_P10_M10 =
+      ops_decl_stencil(2, 3, s2D_00_P10_M10, "00:10:-10");
 
   int d_p[2] = {1, 1};
   int d_m[2] = {-1, -1};
@@ -50,6 +55,22 @@ int main(int argc, char **argv) {
       ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1 =
       ops_decl_dat(grid2D, 2, size, base, d_m, d_p, temp, "double", "dat1");
+
+  ops_halo_group halos0;
+  {
+    int halo_iter[] = {1, 4};
+    int base_from[] = {3, 0};
+    int base_to[] = {-1, 0};
+    int dir[] = {1, 2};
+    ops_halo h0 =
+        ops_decl_halo(dat0, dat0, halo_iter, base_from, base_to, dir, dir);
+    base_from[0] = 0;
+    base_to[0] = 4;
+    ops_halo h1 =
+        ops_decl_halo(dat0, dat0, halo_iter, base_from, base_to, dir, dir);
+    ops_halo grp[] = {h0, h1};
+    halos0 = ops_decl_halo_group(2, grp);
+  }
 
   double reduct_result[2] = {0.0, 0.0};
   ops_reduction reduct_dat1 =
@@ -66,8 +87,9 @@ int main(int argc, char **argv) {
       ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE), ops_arg_idx());
   ops_par_loop_multidim_copy_kernel(
       "multidim_copy_kernel", grid2D, 2, iter_range,
-      ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ),
+      ops_arg_dat(dat0, 2, S2D_00_P10_M10, "double", OPS_READ),
       ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
+  ops_halo_transfer(halos0);
 
   ops_par_loop_multidim_reduce_kernel(
       "multidim_reduce_kernel", grid2D, 2, iter_range,
@@ -78,9 +100,6 @@ int main(int argc, char **argv) {
 
   ops_timers(&ct1, &et1);
   ops_print_dat_to_txtfile(dat0, "multidim.dat");
-
-  ops_fetch_block_hdf5_file(grid2D, "multidim.h5");
-  ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   double result_diff =

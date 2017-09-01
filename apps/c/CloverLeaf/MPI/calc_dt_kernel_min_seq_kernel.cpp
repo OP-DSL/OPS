@@ -73,14 +73,15 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
-              args[0].stencil->stride[1];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   p_a[0] = (char *)args[0].data + base0;
 
 #ifdef OPS_MPI

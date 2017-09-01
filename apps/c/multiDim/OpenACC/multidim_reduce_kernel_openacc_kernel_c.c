@@ -6,11 +6,13 @@
 #define OPS_GPU
 
 int xdim0_multidim_reduce_kernel;
+int ydim0_multidim_reduce_kernel;
 
 #undef OPS_ACC_MD0
 
 #define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x)*2 + (d) + (xdim0_multidim_reduce_kernel * (y)*2))
+  ((x) + (xdim0_multidim_reduce_kernel * (y)) +                                \
+   (d)*xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel)
 // user function
 inline void multidim_reduce_kernel(const double *val, double *redu_dat1) {
 
@@ -36,9 +38,8 @@ void multidim_reduce_kernel_c_wrapper(double *p_a0, double *p_a1, int x_size,
       double p_a1_local[2];
       p_a1_local[0] = ZERO_double;
       p_a1_local[1] = ZERO_double;
-      multidim_reduce_kernel(p_a0 + n_x * 1 * 2 +
-                                 n_y * xdim0_multidim_reduce_kernel * 1 * 2,
-                             p_a1_local);
+      multidim_reduce_kernel(
+          p_a0 + n_x * 1 + n_y * xdim0_multidim_reduce_kernel * 1, p_a1_local);
 
       p_a1_0 += p_a1_local[0];
       p_a1_1 += p_a1_local[1];

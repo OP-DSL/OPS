@@ -3,16 +3,12 @@
 //
 __constant__ int xdim0_reset_field_kernel2;
 int xdim0_reset_field_kernel2_h = -1;
-int ydim0_reset_field_kernel2_h = -1;
 __constant__ int xdim1_reset_field_kernel2;
 int xdim1_reset_field_kernel2_h = -1;
-int ydim1_reset_field_kernel2_h = -1;
 __constant__ int xdim2_reset_field_kernel2;
 int xdim2_reset_field_kernel2_h = -1;
-int ydim2_reset_field_kernel2_h = -1;
 __constant__ int xdim3_reset_field_kernel2;
 int xdim3_reset_field_kernel2_h = -1;
-int ydim3_reset_field_kernel2_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -140,10 +136,10 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
 
   char *p_a[4];
 

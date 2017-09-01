@@ -67,13 +67,14 @@ void flux_calc_kernelz_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         flux_calc_kernelz(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_flux_calc_kernelz * 1 * 1 +
-                n_z * xdim0_flux_calc_kernelz * ydim0_flux_calc_kernelz * 1,
+                n_z * xdim0_flux_calc_kernelz * ydim0_flux_calc_kernelz * 1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_flux_calc_kernelz * 1 * 1 +
-                n_z * xdim1_flux_calc_kernelz * ydim1_flux_calc_kernelz * 1,
+                n_z * xdim1_flux_calc_kernelz * ydim1_flux_calc_kernelz * 1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_flux_calc_kernelz * 1 * 1 +
-                n_z * xdim2_flux_calc_kernelz * ydim2_flux_calc_kernelz * 1,
+                n_z * xdim2_flux_calc_kernelz * ydim2_flux_calc_kernelz * 1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_flux_calc_kernelz * 1 * 1 +
-                n_z * xdim3_flux_calc_kernelz * ydim3_flux_calc_kernelz * 1);
+                n_z * xdim3_flux_calc_kernelz * ydim3_flux_calc_kernelz * 1 *
+                    1);
       }
     }
   }

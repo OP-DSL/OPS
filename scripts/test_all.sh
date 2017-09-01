@@ -20,6 +20,8 @@ cd ../poisson/
 ./test.sh
 cd ../multiDim/
 ./test.sh
+cd ../multiDim3D/
+./test.sh
 cd ../shsgc/
 ./test.sh
 cd ../mb_shsgc/Max_datatransfer

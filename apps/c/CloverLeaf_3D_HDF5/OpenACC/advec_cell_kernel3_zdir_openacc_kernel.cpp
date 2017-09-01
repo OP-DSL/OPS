@@ -179,13 +179,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
-              args[0].stencil->stride[1];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
-              start[2] * args[0].stencil->stride[2];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
+              args[0].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
@@ -193,13 +195,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base1 = args[1].dat->base_offset +
-              args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
+              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+                  start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
-              args[1].stencil->stride[1];
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
   base1 = base1 +
-          args[1].dat->elem_size * args[1].dat->size[0] * args[1].dat->size[1] *
-              start[2] * args[1].stencil->stride[2];
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * args[1].dat->size[1] * start[2] *
+              args[1].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
@@ -207,13 +211,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base2 = args[2].dat->base_offset +
-              args[2].dat->elem_size * start[0] * args[2].stencil->stride[0];
+              (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+                  start[0] * args[2].stencil->stride[0];
   base2 = base2 +
-          args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
-              args[2].stencil->stride[1];
+          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              args[2].dat->size[0] * start[1] * args[2].stencil->stride[1];
   base2 = base2 +
-          args[2].dat->elem_size * args[2].dat->size[0] * args[2].dat->size[1] *
-              start[2] * args[2].stencil->stride[2];
+          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              args[2].dat->size[0] * args[2].dat->size[1] * start[2] *
+              args[2].stencil->stride[2];
 #ifdef OPS_GPU
   int *p_a2 = (int *)((char *)args[2].data_d + base2);
 #else
@@ -221,13 +227,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base3 = args[3].dat->base_offset +
-              args[3].dat->elem_size * start[0] * args[3].stencil->stride[0];
+              (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+                  start[0] * args[3].stencil->stride[0];
   base3 = base3 +
-          args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
-              args[3].stencil->stride[1];
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
   base3 = base3 +
-          args[3].dat->elem_size * args[3].dat->size[0] * args[3].dat->size[1] *
-              start[2] * args[3].stencil->stride[2];
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * args[3].dat->size[1] * start[2] *
+              args[3].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a3 = (double *)((char *)args[3].data_d + base3);
 #else
@@ -235,13 +243,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base4 = args[4].dat->base_offset +
-              args[4].dat->elem_size * start[0] * args[4].stencil->stride[0];
+              (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+                  start[0] * args[4].stencil->stride[0];
   base4 = base4 +
-          args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
-              args[4].stencil->stride[1];
+          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
   base4 = base4 +
-          args[4].dat->elem_size * args[4].dat->size[0] * args[4].dat->size[1] *
-              start[2] * args[4].stencil->stride[2];
+          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              args[4].dat->size[0] * args[4].dat->size[1] * start[2] *
+              args[4].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
 #else
@@ -249,13 +259,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base5 = args[5].dat->base_offset +
-              args[5].dat->elem_size * start[0] * args[5].stencil->stride[0];
+              (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+                  start[0] * args[5].stencil->stride[0];
   base5 = base5 +
-          args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
-              args[5].stencil->stride[1];
+          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              args[5].dat->size[0] * start[1] * args[5].stencil->stride[1];
   base5 = base5 +
-          args[5].dat->elem_size * args[5].dat->size[0] * args[5].dat->size[1] *
-              start[2] * args[5].stencil->stride[2];
+          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              args[5].dat->size[0] * args[5].dat->size[1] * start[2] *
+              args[5].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a5 = (double *)((char *)args[5].data_d + base5);
 #else
@@ -263,13 +275,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base6 = args[6].dat->base_offset +
-              args[6].dat->elem_size * start[0] * args[6].stencil->stride[0];
+              (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+                  start[0] * args[6].stencil->stride[0];
   base6 = base6 +
-          args[6].dat->elem_size * args[6].dat->size[0] * start[1] *
-              args[6].stencil->stride[1];
+          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+              args[6].dat->size[0] * start[1] * args[6].stencil->stride[1];
   base6 = base6 +
-          args[6].dat->elem_size * args[6].dat->size[0] * args[6].dat->size[1] *
-              start[2] * args[6].stencil->stride[2];
+          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+              args[6].dat->size[0] * args[6].dat->size[1] * start[2] *
+              args[6].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a6 = (double *)((char *)args[6].data_d + base6);
 #else
@@ -277,13 +291,15 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block,
 #endif
 
   int base7 = args[7].dat->base_offset +
-              args[7].dat->elem_size * start[0] * args[7].stencil->stride[0];
+              (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+                  start[0] * args[7].stencil->stride[0];
   base7 = base7 +
-          args[7].dat->elem_size * args[7].dat->size[0] * start[1] *
-              args[7].stencil->stride[1];
+          (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+              args[7].dat->size[0] * start[1] * args[7].stencil->stride[1];
   base7 = base7 +
-          args[7].dat->elem_size * args[7].dat->size[0] * args[7].dat->size[1] *
-              start[2] * args[7].stencil->stride[2];
+          (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+              args[7].dat->size[0] * args[7].dat->size[1] * start[2] *
+              args[7].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a7 = (double *)((char *)args[7].data_d + base7);
 #else

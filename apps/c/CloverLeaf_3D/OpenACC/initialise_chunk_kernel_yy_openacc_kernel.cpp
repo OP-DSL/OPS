@@ -102,13 +102,15 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block,
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
-              args[0].stencil->stride[1];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
-              start[2] * args[0].stencil->stride[2];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
+              args[0].stencil->stride[2];
 #ifdef OPS_GPU
   int *p_a0 = (int *)((char *)args[0].data_d + base0);
 #else

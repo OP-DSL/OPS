@@ -149,31 +149,31 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block block,
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int off0_2 = offs[0][2];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
   int off1_2 = offs[1][2];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int off2_0 = offs[2][0];
   int off2_1 = offs[2][1];
   int off2_2 = offs[2][2];
-  int dat2 = args[2].dat->elem_size;
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
   int off3_0 = offs[3][0];
   int off3_1 = offs[3][1];
   int off3_2 = offs[3][2];
-  int dat3 = args[3].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int off4_0 = offs[4][0];
   int off4_1 = offs[4][1];
   int off4_2 = offs[4][2];
-  int dat4 = args[4].dat->elem_size;
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
   int off5_0 = offs[5][0];
   int off5_1 = offs[5][1];
   int off5_2 = offs[5][2];
-  int dat5 = args[5].dat->elem_size;
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
   int off6_0 = offs[6][0];
   int off6_1 = offs[6][1];
   int off6_2 = offs[6][2];
-  int dat6 = args[6].dat->elem_size;
+  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 8);

@@ -10,7 +10,7 @@
 
 static bool isbuilt_multidim_reduce_kernel = false;
 
-void buildOpenCLKernels_multidim_reduce_kernel(int xdim0) {
+void buildOpenCLKernels_multidim_reduce_kernel(int xdim0, int ydim0) {
 
   // int ocl_fma = OCL_FMA;
   if (!isbuilt_multidim_reduce_kernel) {
@@ -63,12 +63,14 @@ void buildOpenCLKernels_multidim_reduce_kernel(int xdim0) {
       if (OCL_FMA)
         sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include "
                            "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_multidim_reduce_kernel=%d ",
-                pPath, 32, xdim0);
+                           "-Dxdim0_multidim_reduce_kernel=%d  "
+                           "-Dydim0_multidim_reduce_kernel=%d ",
+                pPath, 32, xdim0, ydim0);
       else
         sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_multidim_reduce_kernel=%d ",
-                pPath, 32, xdim0);
+                           "-Dxdim0_multidim_reduce_kernel=%d  "
+                           "-Dydim0_multidim_reduce_kernel=%d ",
+                pPath, 32, xdim0, ydim0);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
@@ -166,10 +168,11 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
   int y_size = MAX(0, end[1] - start[1]);
 
   int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
 
   // build opencl kernel if not already built
 
-  buildOpenCLKernels_multidim_reduce_kernel(xdim0);
+  buildOpenCLKernels_multidim_reduce_kernel(xdim0, ydim0);
 
   // set up OpenCL thread blocks
   size_t globalWorkSize[3] = {
@@ -215,11 +218,11 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
 #endif
-  int base0 = 1 * 2 * (start[0] * args[0].stencil->stride[0] -
-                       args[0].dat->base[0] - d_m[0]);
+  int base0 = 1 * (start[0] * args[0].stencil->stride[0] -
+                   args[0].dat->base[0] - d_m[0]);
   base0 = base0 +
-          args[0].dat->size[0] * 2 * (start[1] * args[0].stencil->stride[1] -
-                                      args[0].dat->base[1] - d_m[1]);
+          args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
+                                  args[0].dat->base[1] - d_m[1]);
 
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args, 2, range);

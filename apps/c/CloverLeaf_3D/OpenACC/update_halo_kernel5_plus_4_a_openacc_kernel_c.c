@@ -56,11 +56,11 @@ void update_halo_kernel5_plus_4_a_c_wrapper(double *p_a0, double *p_a1,
             p_a0 + n_x * 1 * 1 +
                 n_y * xdim0_update_halo_kernel5_plus_4_a * 1 * 1 +
                 n_z * xdim0_update_halo_kernel5_plus_4_a *
-                    ydim0_update_halo_kernel5_plus_4_a * 1,
+                    ydim0_update_halo_kernel5_plus_4_a * 1 * 1,
             p_a1 + n_x * 1 * 1 +
                 n_y * xdim1_update_halo_kernel5_plus_4_a * 1 * 1 +
                 n_z * xdim1_update_halo_kernel5_plus_4_a *
-                    ydim1_update_halo_kernel5_plus_4_a * 1,
+                    ydim1_update_halo_kernel5_plus_4_a * 1 * 1,
             p_a2);
       }
     }

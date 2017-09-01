@@ -90,42 +90,43 @@ top =  """
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
+#include "ops_macros.h"
 
 """
 
 f.write(top)
 
-#
-# now define the macros and extern vars
-#
+# #
+# # now define the macros and extern vars
+# #
 
-f.write('#ifndef OPS_ACC_MACROS\n')
-f.write('#ifdef OPS_3D\n')
-f.write('#ifndef OPS_DEBUG\n')
-for nargs in range (0,maxargs):
-  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (x+xdim'+str(nargs)+'*(y)+xdim'+str(nargs)+'*ydim'+str(nargs)+'*(z))\n')
-f.write('#else\n\n')
-for nargs in range (0,maxargs):
-  f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (ops_stencil_check_3d('+str(nargs)+', x, y, z, xdim'+str(nargs)+', ydim'+str(nargs)+'))\n')
-f.write('#endif\n')
-f.write('#else\n')
-f.write('#ifndef OPS_DEBUG\n')
-for nargs in range (0,maxargs):
-  f.write('#define OPS_ACC'+str(nargs)+'(x,y) (x+xdim'+str(nargs)+'*(y))\n')
-f.write('#else\n\n')
-for nargs in range (0,maxargs):
-  f.write('#define OPS_ACC'+str(nargs)+'(x,y) (ops_stencil_check_2d('+str(nargs)+', x, y, xdim'+str(nargs)+', -1))\n')
-f.write('#endif\n')
-f.write('#endif\n')
-f.write('#endif\n\n')
+# f.write('#ifndef OPS_ACC_MACROS\n')
+# f.write('#ifdef OPS_3D\n')
+# f.write('#ifndef OPS_DEBUG\n')
+# for nargs in range (0,maxargs):
+#   f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (x+xdim'+str(nargs)+'*(y)+xdim'+str(nargs)+'*ydim'+str(nargs)+'*(z))\n')
+# f.write('#else\n\n')
+# for nargs in range (0,maxargs):
+#   f.write('#define OPS_ACC'+str(nargs)+'(x,y,z) (ops_stencil_check_3d('+str(nargs)+', x, y, z, xdim'+str(nargs)+', ydim'+str(nargs)+'))\n')
+# f.write('#endif\n')
+# f.write('#else\n')
+# f.write('#ifndef OPS_DEBUG\n')
+# for nargs in range (0,maxargs):
+#   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (x+xdim'+str(nargs)+'*(y))\n')
+# f.write('#else\n\n')
+# for nargs in range (0,maxargs):
+#   f.write('#define OPS_ACC'+str(nargs)+'(x,y) (ops_stencil_check_2d('+str(nargs)+', x, y, xdim'+str(nargs)+', -1))\n')
+# f.write('#endif\n')
+# f.write('#endif\n')
+# f.write('#endif\n\n')
 
-for nargs in range (0,maxargs):
-  f.write('extern int xdim'+str(nargs)+';\n')
+# for nargs in range (0,maxargs):
+#   f.write('extern int xdim'+str(nargs)+';\n')
 
-f.write('#ifdef OPS_3D\n')
-for nargs in range (0,maxargs):
-  f.write('extern int ydim'+str(nargs)+';\n')
-f.write('#endif\n')
+# f.write('#ifdef OPS_3D\n')
+# for nargs in range (0,maxargs):
+#   f.write('extern int ydim'+str(nargs)+';\n')
+# f.write('#endif\n')
 functions =  """
 
 static int arg_idx[OPS_MAX_DIM];
@@ -313,7 +314,7 @@ for nargs in range (1,maxargs+1):
     f.write('      for (int d = 0; d < dim; d++) d_m[d] = args[i].dat->d_m[d];\n')
     f.write('  #endif //OPS_MPI\n')
     f.write('      p_a[i] = (char *)args[i].data //base of 2D array\n')
-    f.write('      + address(ndim, args[i].dat->elem_size, &start[0], \n')
+    f.write('      + address(ndim, OPS_soa ? args[i].dat->type_size : args[i].dat->elem_size, &start[0], \n')
     f.write('        args[i].dat->size, args[i].stencil->stride, args[i].dat->base,\n')
     f.write('        d_m);\n')
     f.write('    }\n')
@@ -348,9 +349,14 @@ for nargs in range (1,maxargs+1):
     for n in range (0, nargs):
       f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
       f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->size[0];\n') # no need to multiply by dat->dim as macro already does this *args['+str(n)+'].dat->dim;\n')
+      f.write('    #ifndef OPS_SOA\n')
       f.write('    multi_d'+str(n)+' = args['+str(n)+'].dat->dim;\n')
-      f.write('    #ifdef OPS_3D\n')
+      f.write('    #endif\n')
+      f.write('    #if defined OPS_3D || defined OPS_SOA\n')
       f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
+      f.write('    #endif\n')
+      f.write('    #if defined OPS_3D && defined OPS_SOA\n')
+      f.write('    zdim'+str(n)+' = args['+str(n)+'].dat->size[2];\n')
       f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
@@ -410,7 +416,7 @@ for nargs in range (1,maxargs+1):
     f.write('    // shift pointers to data\n')
     f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
-    f.write('        p_a[i] = p_a[i] + (args[i].dat->elem_size * offs[i][m]);\n')
+    f.write('        p_a[i] = p_a[i] + ((OPS_soa ? args[i].dat->type_size : args[i].dat->elem_size) * offs[i][m]);\n')
     f.write('      else if (args[i].argtype == OPS_ARG_IDX) {\n')
     f.write('        arg_idx[m]++;\n')
     f.write('  #ifdef OPS_MPI\n')

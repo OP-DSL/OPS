@@ -94,11 +94,11 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_right(
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int off0_2 = offs[0][2];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
   int off1_2 = offs[1][2];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 3);

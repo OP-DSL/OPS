@@ -102,13 +102,13 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
 
   int off3_0 = offs[3][0];
   int off3_1 = offs[3][1];
-  int dat3 = args[3].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int off4_0 = offs[4][0];
   int off4_1 = offs[4][1];
-  int dat4 = args[4].dat->elem_size;
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
   int off5_0 = offs[5][0];
   int off5_1 = offs[5][1];
-  int dat5 = args[5].dat->elem_size;
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   p_a[0] = args[0].data;
@@ -118,24 +118,27 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
   p_a[2] = (char *)arg_idx;
 
   int base3 = args[3].dat->base_offset +
-              args[3].dat->elem_size * start[0] * args[3].stencil->stride[0];
+              (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+                  start[0] * args[3].stencil->stride[0];
   base3 = base3 +
-          args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
-              args[3].stencil->stride[1];
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
   p_a[3] = (char *)args[3].data + base3;
 
   int base4 = args[4].dat->base_offset +
-              args[4].dat->elem_size * start[0] * args[4].stencil->stride[0];
+              (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+                  start[0] * args[4].stencil->stride[0];
   base4 = base4 +
-          args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
-              args[4].stencil->stride[1];
+          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
   p_a[4] = (char *)args[4].data + base4;
 
   int base5 = args[5].dat->base_offset +
-              args[5].dat->elem_size * start[0] * args[5].stencil->stride[0];
+              (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+                  start[0] * args[5].stencil->stride[0];
   base5 = base5 +
-          args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
-              args[5].stencil->stride[1];
+          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              args[5].dat->size[0] * start[1] * args[5].stencil->stride[1];
   p_a[5] = (char *)args[5].data + base5;
 
   // initialize global variable with the dimension of dats

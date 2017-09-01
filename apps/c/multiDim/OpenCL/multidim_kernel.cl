@@ -42,7 +42,9 @@
 
 #undef OPS_ACC_MD0
 
-#define OPS_ACC_MD0(d, x, y) ((x)*2 + (d) + (xdim0_multidim_kernel * (y)*2))
+#define OPS_ACC_MD0(d, x, y)                                                   \
+  ((x) + (xdim0_multidim_kernel * (y)) +                                       \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel)
 
 // user function
 void multidim_kernel(__global double *restrict val, int *restrict idx)
@@ -64,7 +66,6 @@ __kernel void ops_multidim_kernel(__global double *restrict arg0,
   arg_idx[1] = arg_idx1 + idx_y;
   if (idx_x < size0 && idx_y < size1) {
     multidim_kernel(
-        &arg0[base0 + idx_x * 1 * 2 + idx_y * 1 * 2 * xdim0_multidim_kernel],
-        arg_idx);
+        &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_kernel], arg_idx);
   }
 }

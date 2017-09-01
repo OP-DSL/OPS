@@ -156,8 +156,8 @@ void ops_par_loop_update_halo_kernel3_plus_2_a(char const *name,
     ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
 

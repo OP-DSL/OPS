@@ -115,7 +115,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   long cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        dat->elem_size * cumsize * (-dat->base[i] - dat->d_m[i]);
+        (OPS_soa ? dat->type_size : dat->elem_size)
+        * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
 

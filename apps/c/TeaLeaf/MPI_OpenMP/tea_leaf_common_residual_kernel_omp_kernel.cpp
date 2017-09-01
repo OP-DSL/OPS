@@ -111,19 +111,19 @@ void ops_par_loop_tea_leaf_common_residual_kernel(char const *name,
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int off2_0 = offs[2][0];
   int off2_1 = offs[2][1];
-  int dat2 = args[2].dat->elem_size;
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
   int off3_0 = offs[3][0];
   int off3_1 = offs[3][1];
-  int dat3 = args[3].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int off4_0 = offs[4][0];
   int off4_1 = offs[4][1];
-  int dat4 = args[4].dat->elem_size;
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 7);

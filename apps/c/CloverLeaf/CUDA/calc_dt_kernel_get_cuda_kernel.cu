@@ -3,10 +3,8 @@
 //
 __constant__ int xdim0_calc_dt_kernel_get;
 int xdim0_calc_dt_kernel_get_h = -1;
-int ydim0_calc_dt_kernel_get_h = -1;
 __constant__ int xdim1_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get_h = -1;
-int ydim1_calc_dt_kernel_get_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -173,8 +171,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[4];
 

@@ -94,7 +94,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   long cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        dat->elem_size * cumsize * (-dat->base[i] - dat->d_m[i]);
+        (OPS_soa ? dat->type_size : dat->elem_size)
+        * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
 
@@ -164,16 +165,22 @@ void ops_halo_transfer(ops_halo_group group) {
            j < MAX(ranges[2] + 1, ranges[3]); j++) {
         for (int i = MIN(ranges[0], ranges[1] + 1);
              i < MAX(ranges[0] + 1, ranges[1]); i++) {
-          memcpy(ops_halo_buffer +
+          for (int d = 0; d < halo->from->dim; d++) {
+            memcpy(ops_halo_buffer +
                      ((k - ranges[4]) * step[2] * buf_strides[2] +
                       (j - ranges[2]) * step[1] * buf_strides[1] +
                       (i - ranges[0]) * step[0] * buf_strides[0]) *
-                         halo->from->elem_size,
+                         halo->from->elem_size + d * halo->from->type_size,
                  halo->from->data +
-                     (k * halo->from->size[0] * halo->from->size[1] +
-                      j * halo->from->size[0] + i) *
-                         halo->from->elem_size,
-                 halo->from->elem_size);
+                     (OPS_soa ? 
+                       ((k * halo->from->size[0] * halo->from->size[1] +
+                         j * halo->from->size[0] + i) +
+                       d * halo->from->size[0] * halo->from->size[1] * halo->from->size[2]) * halo->from->type_size
+                     : (k * halo->from->size[0] * halo->from->size[1] +
+                         j * halo->from->size[0] + i) *
+                         halo->from->elem_size + d * halo->from->type_size),
+                 halo->from->type_size);
+          }
         }
       }
     }
@@ -203,16 +210,22 @@ void ops_halo_transfer(ops_halo_group group) {
            j < MAX(ranges[2] + 1, ranges[3]); j++) {
         for (int i = MIN(ranges[0], ranges[1] + 1);
              i < MAX(ranges[0] + 1, ranges[1]); i++) {
-          memcpy(halo->to->data +
+          for (int d = 0; d < halo->to->dim; d++) {
+            memcpy(halo->to->data +
+                   (OPS_soa ?
                      (k * halo->to->size[0] * halo->to->size[1] +
+                      j * halo->to->size[0] + i +
+                         d * halo->to->size[0] * halo->to->size[1] * halo->to->size[2]) * halo->to->type_size
+                    :(k * halo->to->size[0] * halo->to->size[1] +
                       j * halo->to->size[0] + i) *
-                         halo->to->elem_size,
+                         halo->to->elem_size + d * halo->to->type_size),
                  ops_halo_buffer +
                      ((k - ranges[4]) * step[2] * buf_strides[2] +
                       (j - ranges[2]) * step[1] * buf_strides[1] +
                       (i - ranges[0]) * step[0] * buf_strides[0]) *
-                         halo->to->elem_size,
-                 halo->to->elem_size);
+                         halo->to->elem_size + d * halo->to->type_size,
+                 halo->to->type_size);
+          }
         }
       }
     }

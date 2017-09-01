@@ -3,19 +3,14 @@
 //
 __constant__ int xdim0_advec_mom_kernel1_y_nonvector;
 int xdim0_advec_mom_kernel1_y_nonvector_h = -1;
-int ydim0_advec_mom_kernel1_y_nonvector_h = -1;
 __constant__ int xdim1_advec_mom_kernel1_y_nonvector;
 int xdim1_advec_mom_kernel1_y_nonvector_h = -1;
-int ydim1_advec_mom_kernel1_y_nonvector_h = -1;
 __constant__ int xdim2_advec_mom_kernel1_y_nonvector;
 int xdim2_advec_mom_kernel1_y_nonvector_h = -1;
-int ydim2_advec_mom_kernel1_y_nonvector_h = -1;
 __constant__ int xdim3_advec_mom_kernel1_y_nonvector;
 int xdim3_advec_mom_kernel1_y_nonvector_h = -1;
-int ydim3_advec_mom_kernel1_y_nonvector_h = -1;
 __constant__ int xdim4_advec_mom_kernel1_y_nonvector;
 int xdim4_advec_mom_kernel1_y_nonvector_h = -1;
-int ydim4_advec_mom_kernel1_y_nonvector_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -194,11 +189,11 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
 
   char *p_a[5];
 

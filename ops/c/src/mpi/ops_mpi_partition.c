@@ -53,6 +53,7 @@ extern int *mpi_neigh_size;
 extern char *OPS_checkpoiting_dup_buffer;
 extern int ops_enable_tiling;
 extern int ops_tiling_mpidepth;
+extern int ops_force_decomp[OPS_MAX_DIM];
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
@@ -135,6 +136,8 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       // Use MPI_Dims_create to split the block along different dimensions
       int ndim = block->dims;
       int pdims[OPS_MAX_DIM] = {0};
+      for (int d = 0; d < ndim; d++) {
+        pdims[d] = ops_force_decomp[d]; printf("%d %d\n",d,pdims[d]);}
       MPI_Dims_create(nproc_each_block, ndim, pdims);
       for (int d = 0; d < ndim; d++)
         (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[d];
@@ -384,7 +387,8 @@ void ops_decomp_dats(sub_block *sb) {
     dat->base_offset = 0;
     long cumsize = 1;
     for (int i = 0; i < block->dims; i++) {
-      dat->base_offset += dat->elem_size * cumsize *
+      dat->base_offset += (OPS_soa ? dat->type_size : dat->elem_size)
+                          * cumsize *
                           (-dat->base[i] - dat->d_m[i] - sd->d_im[i]);
       cumsize *= dat->size[i];
     }
@@ -418,8 +422,8 @@ void ops_decomp_dats(sub_block *sb) {
         // (strided) halo access
         sd->halos[MAX_DEPTH * n + d].count = prod[sb->ndim - 1] / prod[n];
         sd->halos[MAX_DEPTH * n + d].blocklength =
-            d * prod[n - 1] * dat->elem_size;
-        sd->halos[MAX_DEPTH * n + d].stride = prod[n] * dat->elem_size;
+            d * prod[n - 1] * dat->type_size;
+        sd->halos[MAX_DEPTH * n + d].stride = prod[n] * dat->type_size;
 
         // printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1],
         // prod[n]);

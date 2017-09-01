@@ -6,10 +6,13 @@
 #define OPS_GPU
 
 int xdim0_multidim_kernel;
+int ydim0_multidim_kernel;
 
 #undef OPS_ACC_MD0
 
-#define OPS_ACC_MD0(d, x, y) ((x)*2 + (d) + (xdim0_multidim_kernel * (y)*2))
+#define OPS_ACC_MD0(d, x, y)                                                   \
+  ((x) + (xdim0_multidim_kernel * (y)) +                                       \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel)
 // user function
 inline void multidim_kernel(double *val, int *idx) {
   val[OPS_ACC_MD0(0, 0, 0)] = (double)(idx[0]);
@@ -30,7 +33,7 @@ void multidim_kernel_c_wrapper(double *p_a0, int *p_a1, int arg_idx0,
 #endif
     for (int n_x = 0; n_x < x_size; n_x++) {
       int arg_idx[] = {arg_idx0 + n_x, arg_idx1 + n_y};
-      multidim_kernel(p_a0 + n_x * 1 * 2 + n_y * xdim0_multidim_kernel * 1 * 2,
+      multidim_kernel(p_a0 + n_x * 1 + n_y * xdim0_multidim_kernel * 1,
                       arg_idx);
     }
   }

@@ -96,13 +96,13 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
 
   int off3_0 = offs[3][0];
   int off3_1 = offs[3][1];
-  int dat3 = args[3].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int off4_0 = offs[4][0];
   int off4_1 = offs[4][1];
-  int dat4 = args[4].dat->elem_size;
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
   int off5_0 = offs[5][0];
   int off5_1 = offs[5][1];
-  int dat5 = args[5].dat->elem_size;
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 6);
