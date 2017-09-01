@@ -93,23 +93,23 @@ void advec_mom_kernel_post_pre_advec_y_c_wrapper(double *p_a0, double *p_a1,
             p_a0 + n_x * 1 * 1 +
                 n_y * xdim0_advec_mom_kernel_post_pre_advec_y * 1 * 1 +
                 n_z * xdim0_advec_mom_kernel_post_pre_advec_y *
-                    ydim0_advec_mom_kernel_post_pre_advec_y * 1,
+                    ydim0_advec_mom_kernel_post_pre_advec_y * 1 * 1,
             p_a1 + n_x * 1 * 1 +
                 n_y * xdim1_advec_mom_kernel_post_pre_advec_y * 1 * 1 +
                 n_z * xdim1_advec_mom_kernel_post_pre_advec_y *
-                    ydim1_advec_mom_kernel_post_pre_advec_y * 1,
+                    ydim1_advec_mom_kernel_post_pre_advec_y * 1 * 1,
             p_a2 + n_x * 1 * 1 +
                 n_y * xdim2_advec_mom_kernel_post_pre_advec_y * 1 * 1 +
                 n_z * xdim2_advec_mom_kernel_post_pre_advec_y *
-                    ydim2_advec_mom_kernel_post_pre_advec_y * 1,
+                    ydim2_advec_mom_kernel_post_pre_advec_y * 1 * 1,
             p_a3 + n_x * 1 * 1 +
                 n_y * xdim3_advec_mom_kernel_post_pre_advec_y * 1 * 1 +
                 n_z * xdim3_advec_mom_kernel_post_pre_advec_y *
-                    ydim3_advec_mom_kernel_post_pre_advec_y * 1,
+                    ydim3_advec_mom_kernel_post_pre_advec_y * 1 * 1,
             p_a4 + n_x * 1 * 1 +
                 n_y * xdim4_advec_mom_kernel_post_pre_advec_y * 1 * 1 +
                 n_z * xdim4_advec_mom_kernel_post_pre_advec_y *
-                    ydim4_advec_mom_kernel_post_pre_advec_y * 1);
+                    ydim4_advec_mom_kernel_post_pre_advec_y * 1 * 1);
       }
     }
   }

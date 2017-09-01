@@ -287,23 +287,23 @@ void ops_par_loop_PdV_kernel_nopredict(
     ydim16_PdV_kernel_nopredict_h = ydim16;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
-  int dat6 = args[6].dat->elem_size;
-  int dat7 = args[7].dat->elem_size;
-  int dat8 = args[8].dat->elem_size;
-  int dat9 = args[9].dat->elem_size;
-  int dat10 = args[10].dat->elem_size;
-  int dat11 = args[11].dat->elem_size;
-  int dat12 = args[12].dat->elem_size;
-  int dat13 = args[13].dat->elem_size;
-  int dat14 = args[14].dat->elem_size;
-  int dat15 = args[15].dat->elem_size;
-  int dat16 = args[16].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  int dat7 = (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
+  int dat8 = (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
+  int dat9 = (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size);
+  int dat10 = (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size);
+  int dat11 = (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size);
+  int dat12 = (OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size);
+  int dat13 = (OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size);
+  int dat14 = (OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size);
+  int dat15 = (OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size);
+  int dat16 = (OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size);
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];

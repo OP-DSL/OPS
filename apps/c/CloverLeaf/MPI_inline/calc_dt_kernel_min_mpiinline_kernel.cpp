@@ -77,7 +77,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     xdim0_calc_dt_kernel_min_h = xdim0;
   }
 
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
 #ifdef OPS_MPI
   double *arg1h =

@@ -237,25 +237,25 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
         calc_dt_kernel_print(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a4 + n_x * 1 * 1 + n_y * xdim4_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a5 + n_x * 1 * 1 + n_y * xdim5_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a6 + n_x * 1 * 1 + n_y * xdim6_calc_dt_kernel_print * 1 * 1 +
                 n_z * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print *
-                    1,
+                    1 * 1,
             p_a7_local);
 
         p_a7_0 += p_a7_local[0];

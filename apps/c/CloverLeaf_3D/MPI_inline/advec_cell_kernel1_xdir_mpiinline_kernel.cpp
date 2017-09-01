@@ -148,12 +148,12 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block,
     ydim5_advec_cell_kernel1_xdir_h = ydim5;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];

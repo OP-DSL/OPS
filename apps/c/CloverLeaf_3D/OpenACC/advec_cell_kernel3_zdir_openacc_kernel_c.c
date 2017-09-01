@@ -155,28 +155,28 @@ void advec_cell_kernel3_zdir_c_wrapper(double *p_a0, double *p_a1, int *p_a2,
         advec_cell_kernel3_zdir(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim0_advec_cell_kernel3_zdir *
-                    ydim0_advec_cell_kernel3_zdir * 1,
+                    ydim0_advec_cell_kernel3_zdir * 1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim1_advec_cell_kernel3_zdir *
-                    ydim1_advec_cell_kernel3_zdir * 1,
+                    ydim1_advec_cell_kernel3_zdir * 1 * 1,
             p_a2 + n_x * 0 * 1 + n_y * xdim2_advec_cell_kernel3_zdir * 0 * 1 +
                 n_z * xdim2_advec_cell_kernel3_zdir *
-                    ydim2_advec_cell_kernel3_zdir * 1,
+                    ydim2_advec_cell_kernel3_zdir * 1 * 1,
             p_a3 + n_x * 0 * 1 + n_y * xdim3_advec_cell_kernel3_zdir * 0 * 1 +
                 n_z * xdim3_advec_cell_kernel3_zdir *
-                    ydim3_advec_cell_kernel3_zdir * 1,
+                    ydim3_advec_cell_kernel3_zdir * 1 * 1,
             p_a4 + n_x * 1 * 1 + n_y * xdim4_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim4_advec_cell_kernel3_zdir *
-                    ydim4_advec_cell_kernel3_zdir * 1,
+                    ydim4_advec_cell_kernel3_zdir * 1 * 1,
             p_a5 + n_x * 1 * 1 + n_y * xdim5_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim5_advec_cell_kernel3_zdir *
-                    ydim5_advec_cell_kernel3_zdir * 1,
+                    ydim5_advec_cell_kernel3_zdir * 1 * 1,
             p_a6 + n_x * 1 * 1 + n_y * xdim6_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim6_advec_cell_kernel3_zdir *
-                    ydim6_advec_cell_kernel3_zdir * 1,
+                    ydim6_advec_cell_kernel3_zdir * 1 * 1,
             p_a7 + n_x * 1 * 1 + n_y * xdim7_advec_cell_kernel3_zdir * 1 * 1 +
                 n_z * xdim7_advec_cell_kernel3_zdir *
-                    ydim7_advec_cell_kernel3_zdir * 1);
+                    ydim7_advec_cell_kernel3_zdir * 1 * 1);
       }
     }
   }

@@ -64,12 +64,15 @@ void calc_dt_kernel_get_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         calc_dt_kernel_get(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_get * 0 * 1 +
-                n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get * 0,
+                n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get * 0 *
+                    1,
             p_a1 + n_x * 0 * 1 + n_y * xdim1_calc_dt_kernel_get * 1 * 1 +
-                n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get * 0,
+                n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get * 0 *
+                    1,
             &p_a2_0, &p_a3_0,
             p_a4 + n_x * 0 * 1 + n_y * xdim4_calc_dt_kernel_get * 0 * 1 +
-                n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get * 1,
+                n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get * 1 *
+                    1,
             &p_a5_0);
       }
     }

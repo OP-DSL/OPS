@@ -38,12 +38,12 @@ void initialise_chunk_kernel_zz_c_wrapper(int *p_a0, int *p_a1, int arg_idx0,
 #endif
       for (int n_x = 0; n_x < x_size; n_x++) {
         int arg_idx[] = {arg_idx0 + n_x, arg_idx1 + n_y, arg_idx2 + n_z};
-        initialise_chunk_kernel_zz(p_a0 + n_x * 0 * 1 +
-                                       n_y * xdim0_initialise_chunk_kernel_zz *
-                                           0 * 1 +
-                                       n_z * xdim0_initialise_chunk_kernel_zz *
-                                           ydim0_initialise_chunk_kernel_zz * 1,
-                                   arg_idx);
+        initialise_chunk_kernel_zz(
+            p_a0 + n_x * 0 * 1 +
+                n_y * xdim0_initialise_chunk_kernel_zz * 0 * 1 +
+                n_z * xdim0_initialise_chunk_kernel_zz *
+                    ydim0_initialise_chunk_kernel_zz * 1 * 1,
+            arg_idx);
       }
     }
   }

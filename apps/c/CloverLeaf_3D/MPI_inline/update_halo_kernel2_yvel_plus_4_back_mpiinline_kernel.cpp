@@ -100,8 +100,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_back(char const *name,
     ydim1_update_halo_kernel2_yvel_plus_4_back_h = ydim1;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   int *arg2h = (int *)arg2.data;
 

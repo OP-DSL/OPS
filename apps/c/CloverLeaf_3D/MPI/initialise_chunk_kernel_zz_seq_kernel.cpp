@@ -89,17 +89,19 @@ void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block,
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int off0_2 = offs[0][2];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
-              args[0].stencil->stride[1];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   base0 = base0 +
-          args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
-              start[2] * args[0].stencil->stride[2];
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
+              args[0].stencil->stride[2];
   p_a[0] = (char *)args[0].data + base0;
 
   p_a[1] = (char *)arg_idx;

@@ -55,11 +55,11 @@ void update_halo_kernel2_xvel_minus_2_left_c_wrapper(double *p_a0, double *p_a1,
             p_a0 + n_x * 1 * 1 +
                 n_y * xdim0_update_halo_kernel2_xvel_minus_2_left * 1 * 1 +
                 n_z * xdim0_update_halo_kernel2_xvel_minus_2_left *
-                    ydim0_update_halo_kernel2_xvel_minus_2_left * 1,
+                    ydim0_update_halo_kernel2_xvel_minus_2_left * 1 * 1,
             p_a1 + n_x * 1 * 1 +
                 n_y * xdim1_update_halo_kernel2_xvel_minus_2_left * 1 * 1 +
                 n_z * xdim1_update_halo_kernel2_xvel_minus_2_left *
-                    ydim1_update_halo_kernel2_xvel_minus_2_left * 1,
+                    ydim1_update_halo_kernel2_xvel_minus_2_left * 1 * 1,
             p_a2);
       }
     }

@@ -3,7 +3,6 @@
 //
 __constant__ int xdim0_calc_dt_kernel_min;
 int xdim0_calc_dt_kernel_min_h = -1;
-int ydim0_calc_dt_kernel_min_h = -1;
 
 #undef OPS_ACC0
 
@@ -135,7 +134,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[2];
 

@@ -58,11 +58,11 @@ void advec_mom_kernel_mass_flux_z_c_wrapper(double *p_a0, double *p_a1,
             p_a0 + n_x * 1 * 1 +
                 n_y * xdim0_advec_mom_kernel_mass_flux_z * 1 * 1 +
                 n_z * xdim0_advec_mom_kernel_mass_flux_z *
-                    ydim0_advec_mom_kernel_mass_flux_z * 1,
+                    ydim0_advec_mom_kernel_mass_flux_z * 1 * 1,
             p_a1 + n_x * 1 * 1 +
                 n_y * xdim1_advec_mom_kernel_mass_flux_z * 1 * 1 +
                 n_z * xdim1_advec_mom_kernel_mass_flux_z *
-                    ydim1_advec_mom_kernel_mass_flux_z * 1);
+                    ydim1_advec_mom_kernel_mass_flux_z * 1 * 1);
       }
     }
   }

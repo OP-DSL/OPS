@@ -189,33 +189,33 @@ void calc_dt_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         calc_dt_kernel(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel * 0 * 1 +
-                n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel * 0,
+                n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel * 0 * 1,
             p_a1 + n_x * 0 * 1 + n_y * xdim1_calc_dt_kernel * 1 * 1 +
-                n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel * 0,
+                n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel * 0 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_calc_dt_kernel * 1 * 1 +
-                n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel * 1,
+                n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel * 1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_calc_dt_kernel * 1 * 1 +
-                n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel * 1,
+                n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel * 1 * 1,
             p_a4 + n_x * 1 * 1 + n_y * xdim4_calc_dt_kernel * 1 * 1 +
-                n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel * 1,
+                n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel * 1 * 1,
             p_a5 + n_x * 1 * 1 + n_y * xdim5_calc_dt_kernel * 1 * 1 +
-                n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel * 1,
+                n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel * 1 * 1,
             p_a6 + n_x * 1 * 1 + n_y * xdim6_calc_dt_kernel * 1 * 1 +
-                n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel * 1,
+                n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel * 1 * 1,
             p_a7 + n_x * 1 * 1 + n_y * xdim7_calc_dt_kernel * 1 * 1 +
-                n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel * 1,
+                n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel * 1 * 1,
             p_a8 + n_x * 1 * 1 + n_y * xdim8_calc_dt_kernel * 1 * 1 +
-                n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel * 1,
+                n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel * 1 * 1,
             p_a9 + n_x * 1 * 1 + n_y * xdim9_calc_dt_kernel * 1 * 1 +
-                n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel * 1,
+                n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel * 1 * 1,
             p_a10 + n_x * 1 * 1 + n_y * xdim10_calc_dt_kernel * 1 * 1 +
-                n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel * 1,
+                n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel * 1 * 1,
             p_a11 + n_x * 0 * 1 + n_y * xdim11_calc_dt_kernel * 0 * 1 +
-                n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel * 1,
+                n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel * 1 * 1,
             p_a12 + n_x * 1 * 1 + n_y * xdim12_calc_dt_kernel * 1 * 1 +
-                n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel * 1,
+                n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel * 1 * 1,
             p_a13 + n_x * 1 * 1 + n_y * xdim13_calc_dt_kernel * 1 * 1 +
-                n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel * 1);
+                n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel * 1 * 1);
       }
     }
   }

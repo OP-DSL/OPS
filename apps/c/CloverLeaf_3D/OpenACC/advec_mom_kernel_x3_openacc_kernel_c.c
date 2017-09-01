@@ -67,14 +67,17 @@ void advec_mom_kernel_x3_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         advec_mom_kernel_x3(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_advec_mom_kernel_x3 * 1 * 1 +
-                n_z * xdim0_advec_mom_kernel_x3 * ydim0_advec_mom_kernel_x3 * 1,
+                n_z * xdim0_advec_mom_kernel_x3 * ydim0_advec_mom_kernel_x3 *
+                    1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_advec_mom_kernel_x3 * 1 * 1 +
-                n_z * xdim1_advec_mom_kernel_x3 * ydim1_advec_mom_kernel_x3 * 1,
+                n_z * xdim1_advec_mom_kernel_x3 * ydim1_advec_mom_kernel_x3 *
+                    1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_advec_mom_kernel_x3 * 1 * 1 +
-                n_z * xdim2_advec_mom_kernel_x3 * ydim2_advec_mom_kernel_x3 * 1,
+                n_z * xdim2_advec_mom_kernel_x3 * ydim2_advec_mom_kernel_x3 *
+                    1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_advec_mom_kernel_x3 * 1 * 1 +
                 n_z * xdim3_advec_mom_kernel_x3 * ydim3_advec_mom_kernel_x3 *
-                    1);
+                    1 * 1);
       }
     }
   }

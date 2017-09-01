@@ -79,19 +79,19 @@ void advec_cell_kernel1_ydir_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
         advec_cell_kernel1_ydir(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_advec_cell_kernel1_ydir * 1 * 1 +
                 n_z * xdim0_advec_cell_kernel1_ydir *
-                    ydim0_advec_cell_kernel1_ydir * 1,
+                    ydim0_advec_cell_kernel1_ydir * 1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_advec_cell_kernel1_ydir * 1 * 1 +
                 n_z * xdim1_advec_cell_kernel1_ydir *
-                    ydim1_advec_cell_kernel1_ydir * 1,
+                    ydim1_advec_cell_kernel1_ydir * 1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_advec_cell_kernel1_ydir * 1 * 1 +
                 n_z * xdim2_advec_cell_kernel1_ydir *
-                    ydim2_advec_cell_kernel1_ydir * 1,
+                    ydim2_advec_cell_kernel1_ydir * 1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_advec_cell_kernel1_ydir * 1 * 1 +
                 n_z * xdim3_advec_cell_kernel1_ydir *
-                    ydim3_advec_cell_kernel1_ydir * 1,
+                    ydim3_advec_cell_kernel1_ydir * 1 * 1,
             p_a4 + n_x * 1 * 1 + n_y * xdim4_advec_cell_kernel1_ydir * 1 * 1 +
                 n_z * xdim4_advec_cell_kernel1_ydir *
-                    ydim4_advec_cell_kernel1_ydir * 1);
+                    ydim4_advec_cell_kernel1_ydir * 1 * 1);
       }
     }
   }

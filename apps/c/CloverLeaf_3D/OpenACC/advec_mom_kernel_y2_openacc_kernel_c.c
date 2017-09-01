@@ -76,16 +76,20 @@ void advec_mom_kernel_y2_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
       for (int n_x = 0; n_x < x_size; n_x++) {
         advec_mom_kernel_y2(
             p_a0 + n_x * 1 * 1 + n_y * xdim0_advec_mom_kernel_y2 * 1 * 1 +
-                n_z * xdim0_advec_mom_kernel_y2 * ydim0_advec_mom_kernel_y2 * 1,
+                n_z * xdim0_advec_mom_kernel_y2 * ydim0_advec_mom_kernel_y2 *
+                    1 * 1,
             p_a1 + n_x * 1 * 1 + n_y * xdim1_advec_mom_kernel_y2 * 1 * 1 +
-                n_z * xdim1_advec_mom_kernel_y2 * ydim1_advec_mom_kernel_y2 * 1,
+                n_z * xdim1_advec_mom_kernel_y2 * ydim1_advec_mom_kernel_y2 *
+                    1 * 1,
             p_a2 + n_x * 1 * 1 + n_y * xdim2_advec_mom_kernel_y2 * 1 * 1 +
-                n_z * xdim2_advec_mom_kernel_y2 * ydim2_advec_mom_kernel_y2 * 1,
+                n_z * xdim2_advec_mom_kernel_y2 * ydim2_advec_mom_kernel_y2 *
+                    1 * 1,
             p_a3 + n_x * 1 * 1 + n_y * xdim3_advec_mom_kernel_y2 * 1 * 1 +
-                n_z * xdim3_advec_mom_kernel_y2 * ydim3_advec_mom_kernel_y2 * 1,
+                n_z * xdim3_advec_mom_kernel_y2 * ydim3_advec_mom_kernel_y2 *
+                    1 * 1,
             p_a4 + n_x * 1 * 1 + n_y * xdim4_advec_mom_kernel_y2 * 1 * 1 +
                 n_z * xdim4_advec_mom_kernel_y2 * ydim4_advec_mom_kernel_y2 *
-                    1);
+                    1 * 1);
       }
     }
   }
