@@ -3,22 +3,16 @@
 //
 __constant__ int xdim0_update_halo_kernel1_l2;
 int xdim0_update_halo_kernel1_l2_h = -1;
-int ydim0_update_halo_kernel1_l2_h = -1;
 __constant__ int xdim1_update_halo_kernel1_l2;
 int xdim1_update_halo_kernel1_l2_h = -1;
-int ydim1_update_halo_kernel1_l2_h = -1;
 __constant__ int xdim2_update_halo_kernel1_l2;
 int xdim2_update_halo_kernel1_l2_h = -1;
-int ydim2_update_halo_kernel1_l2_h = -1;
 __constant__ int xdim3_update_halo_kernel1_l2;
 int xdim3_update_halo_kernel1_l2_h = -1;
-int ydim3_update_halo_kernel1_l2_h = -1;
 __constant__ int xdim4_update_halo_kernel1_l2;
 int xdim4_update_halo_kernel1_l2_h = -1;
-int ydim4_update_halo_kernel1_l2_h = -1;
 __constant__ int xdim5_update_halo_kernel1_l2;
 int xdim5_update_halo_kernel1_l2_h = -1;
-int ydim5_update_halo_kernel1_l2_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -188,12 +182,12 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
     ((int *)arg6.data)[d] = arg6h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   char *p_a[7];
 

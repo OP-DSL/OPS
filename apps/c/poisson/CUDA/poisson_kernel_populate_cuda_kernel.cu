@@ -3,13 +3,10 @@
 //
 __constant__ int xdim3_poisson_kernel_populate;
 int xdim3_poisson_kernel_populate_h = -1;
-int ydim3_poisson_kernel_populate_h = -1;
 __constant__ int xdim4_poisson_kernel_populate;
 int xdim4_poisson_kernel_populate_h = -1;
-int ydim4_poisson_kernel_populate_h = -1;
 __constant__ int xdim5_poisson_kernel_populate;
 int xdim5_poisson_kernel_populate_h = -1;
-int ydim5_poisson_kernel_populate_h = -1;
 
 #undef OPS_ACC3
 #undef OPS_ACC4
@@ -146,9 +143,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
-  int dat5 = args[5].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   char *p_a[6];
 

@@ -81,10 +81,10 @@ void ops_par_loop_set_field_kernel(char const *name, ops_block block, int dim,
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 2);

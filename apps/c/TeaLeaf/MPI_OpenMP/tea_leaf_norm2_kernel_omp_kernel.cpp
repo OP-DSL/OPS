@@ -77,7 +77,7 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block,
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
 #ifdef OPS_MPI
   double *arg1h =

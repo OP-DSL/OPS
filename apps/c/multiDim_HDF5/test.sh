@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -e
+set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
 make
@@ -216,5 +216,5 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 
-echo "All Intel complied applications PASSED "
+echo "All PGI complied applications PASSED "
 echo "All Tests PASSED : Exiting Test Script "

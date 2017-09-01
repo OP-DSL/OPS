@@ -84,8 +84,8 @@ void ops_par_loop_tea_leaf_xpy_kernel(char const *name, ops_block block,
     xdim1_tea_leaf_xpy_kernel_h = xdim1;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];

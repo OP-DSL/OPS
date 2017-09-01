@@ -9,6 +9,8 @@
 #include "ops_cuda_reduction.h"
 #include "ops_cuda_rt_support.h"
 
+#include <cuComplex.h>
+
 #include "user_types.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"

@@ -18,8 +18,6 @@ __device__
     multidim_kernel_gpu(double *val, int *idx) {
   val[OPS_ACC_MD0(0, 0, 0)] = (double)(idx[0]);
   val[OPS_ACC_MD0(1, 0, 0)] = (double)(idx[1]);
-  printf("%d %d: %p %p\n", idx[0], idx[1], &val[OPS_ACC_MD0(0, 0, 0)],
-         &val[OPS_ACC_MD0(1, 0, 0)]);
 }
 
 #undef OPS_ACC_MD0

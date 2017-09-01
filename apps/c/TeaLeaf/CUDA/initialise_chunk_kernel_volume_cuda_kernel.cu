@@ -3,19 +3,14 @@
 //
 __constant__ int xdim0_initialise_chunk_kernel_volume;
 int xdim0_initialise_chunk_kernel_volume_h = -1;
-int ydim0_initialise_chunk_kernel_volume_h = -1;
 __constant__ int xdim1_initialise_chunk_kernel_volume;
 int xdim1_initialise_chunk_kernel_volume_h = -1;
-int ydim1_initialise_chunk_kernel_volume_h = -1;
 __constant__ int xdim2_initialise_chunk_kernel_volume;
 int xdim2_initialise_chunk_kernel_volume_h = -1;
-int ydim2_initialise_chunk_kernel_volume_h = -1;
 __constant__ int xdim3_initialise_chunk_kernel_volume;
 int xdim3_initialise_chunk_kernel_volume_h = -1;
-int ydim3_initialise_chunk_kernel_volume_h = -1;
 __constant__ int xdim4_initialise_chunk_kernel_volume;
 int xdim4_initialise_chunk_kernel_volume_h = -1;
-int ydim4_initialise_chunk_kernel_volume_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -163,11 +158,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
             (y_size - 1) / OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
 
   char *p_a[5];
 

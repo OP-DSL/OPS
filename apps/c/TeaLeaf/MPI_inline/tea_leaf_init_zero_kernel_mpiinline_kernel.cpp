@@ -76,7 +76,7 @@ void ops_par_loop_tea_leaf_init_zero_kernel(char const *name, ops_block block,
     xdim0_tea_leaf_init_zero_kernel_h = xdim0;
   }
 
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];
