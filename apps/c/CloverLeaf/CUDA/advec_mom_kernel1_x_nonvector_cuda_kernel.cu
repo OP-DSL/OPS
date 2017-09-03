@@ -18,20 +18,23 @@ int xdim4_advec_mom_kernel1_x_nonvector_h = -1;
 #undef OPS_ACC3
 #undef OPS_ACC4
 
-#define OPS_ACC0(x, y) (x + xdim0_advec_mom_kernel1_x_nonvector * (y))
-#define OPS_ACC1(x, y) (x + xdim1_advec_mom_kernel1_x_nonvector * (y))
-#define OPS_ACC2(x, y) (x + xdim2_advec_mom_kernel1_x_nonvector * (y))
-#define OPS_ACC3(x, y) (x + xdim3_advec_mom_kernel1_x_nonvector * (y))
-#define OPS_ACC4(x, y) (x + xdim4_advec_mom_kernel1_x_nonvector * (y))
 
-// user function
+#define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel1_x_nonvector*(y))
+#define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel1_x_nonvector*(y))
+#define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel1_x_nonvector*(y))
+#define OPS_ACC3(x,y) (x+xdim3_advec_mom_kernel1_x_nonvector*(y))
+#define OPS_ACC4(x,y) (x+xdim4_advec_mom_kernel1_x_nonvector*(y))
+
+//user function
 __device__
 
-    inline void
-    advec_mom_kernel1_x_nonvector_gpu(const double *node_flux,
-                                      const double *node_mass_pre,
-                                      double *mom_flux, const double *celldx,
-                                      const double *vel1) {
+inline void advec_mom_kernel1_x_nonvector_gpu( const double *node_flux, const double *node_mass_pre,
+                        double *mom_flux,
+                        const double *celldx, const double *vel1) {
+
+
+
+
 
   double sigma, wind, width;
   double vdiffuw, vdiffdw, auw, adw, limiter;
@@ -39,41 +42,40 @@ __device__
 
   double advec_vel_temp;
 
-  if ((node_flux[OPS_ACC0(0, 0)]) < 0.0) {
+  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
     upwind = 2;
-    donor = 1;
+    donor =1;
     downwind = 0;
     dif = donor;
-  } else {
-    upwind = -1;
-    donor = 0;
-    downwind = 1;
-    dif = upwind;
+  }
+  else {
+    upwind=-1;
+    donor=0;
+    downwind=1;
+    dif=upwind;
   }
 
-  sigma = fabs(node_flux[OPS_ACC0(0, 0)]) / node_mass_pre[OPS_ACC1(donor, 0)];
+  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(donor,0)];
 
-  width = celldx[OPS_ACC3(0, 0)];
-  vdiffuw = vel1[OPS_ACC4(donor, 0)] - vel1[OPS_ACC4(upwind, 0)];
-  vdiffdw = vel1[OPS_ACC4(downwind, 0)] - vel1[OPS_ACC4(donor, 0)];
-  limiter = 0.0;
+  width = celldx[OPS_ACC3(0,0)];
+  vdiffuw = vel1[OPS_ACC4(donor,0)] - vel1[OPS_ACC4(upwind,0)];
+  vdiffdw = vel1[OPS_ACC4(downwind,0)] - vel1[OPS_ACC4(donor,0)];
+  limiter=0.0;
 
-  if (vdiffuw * vdiffdw > 0.0) {
+  if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
-    if (vdiffdw <= 0.0)
-      wind = -1.0;
-    limiter =
-        wind * MIN(width * ((2.0 - sigma) * adw / width +
-                            (1.0 + sigma) * auw / celldx[OPS_ACC3(dif, 0)]) /
-                       6.0,
-                   MIN(auw, adw));
+    if(vdiffdw <= 0.0) wind = -1.0;
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldx[OPS_ACC3(dif,0)])/6.0, MIN(auw, adw));
   }
 
-  advec_vel_temp = vel1[OPS_ACC4(donor, 0)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC2(0, 0)] = advec_vel_temp * node_flux[OPS_ACC0(0, 0)];
+  advec_vel_temp = vel1[OPS_ACC4(donor,0)] + (1.0 - sigma) * limiter;
+  mom_flux[OPS_ACC2(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
+
 }
+
+
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -81,85 +83,97 @@ __device__
 #undef OPS_ACC3
 #undef OPS_ACC4
 
-__global__ void ops_advec_mom_kernel1_x_nonvector(const double *__restrict arg0,
-                                                  const double *__restrict arg1,
-                                                  double *__restrict arg2,
-                                                  const double *__restrict arg3,
-                                                  const double *__restrict arg4,
-                                                  int size0, int size1) {
+
+__global__ void ops_advec_mom_kernel1_x_nonvector(
+const double* __restrict arg0,
+const double* __restrict arg1,
+double* __restrict arg2,
+const double* __restrict arg3,
+const double* __restrict arg4,
+int size0,
+int size1 ){
+
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim0_advec_mom_kernel1_x_nonvector;
-  arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_advec_mom_kernel1_x_nonvector;
-  arg2 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_advec_mom_kernel1_x_nonvector;
-  arg3 += idx_x * 1 * 1 + idx_y * 0 * 1 * xdim3_advec_mom_kernel1_x_nonvector;
-  arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_advec_mom_kernel1_x_nonvector;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel1_x_nonvector;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel1_x_nonvector;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel1_x_nonvector;
+  arg3 += idx_x * 1*1 + idx_y * 0*1 * xdim3_advec_mom_kernel1_x_nonvector;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel1_x_nonvector;
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel1_x_nonvector_gpu(arg0, arg1, arg2, arg3, arg4);
+    advec_mom_kernel1_x_nonvector_gpu(arg0, arg1, arg2, arg3,
+                   arg4);
   }
+
 }
 
 // host stub function
-void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
-                                                ops_block block, int dim,
-                                                int *range, ops_arg arg0,
-                                                ops_arg arg1, ops_arg arg2,
-                                                ops_arg arg3, ops_arg arg4) {
+#ifndef OPS_LAZY
+void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
+ ops_arg arg4) {
+#else
+void ops_par_loop_advec_mom_kernel1_x_nonvector_execute(ops_kernel_descriptor *desc) {
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
+  ops_arg arg2 = desc->args[2];
+  ops_arg arg3 = desc->args[3];
+  ops_arg arg4 = desc->args[4];
+  #endif
 
-  // Timing
-  double t1, t2, c1, c2;
+  //Timing
+  double t1,t2,c1,c2;
 
-  ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
+  ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
 
-#ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 5, range, 21))
-    return;
-#endif
+
+  #if CHECKPOINTING && !OPS_LAZY
+  if (!ops_checkpointing_before(args,5,range,21)) return;
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(21, "advec_mom_kernel1_x_nonvector");
+    ops_timing_realloc(21,"advec_mom_kernel1_x_nonvector");
     OPS_kernels[21].count++;
-    ops_timers_core(&c1, &t1);
+    ops_timers_core(&c1,&t1);
   }
 
-  // compute locally allocated range for the sub-block
+  //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-#ifdef OPS_MPI
+  #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
+  if (!sb->owned) return;
+  for ( int n=0; n<2; n++ ){
+    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+    if (start[n] >= range[2*n]) {
       start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
     }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - sb->decomp_disp[n];
+    }
+    else {
       end[n] = sb->decomp_size[n];
     }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-#else
-  for (int n = 0; n < 2; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
+  #else
+  for ( int n=0; n<2; n++ ){
+    start[n] = range[2*n];end[n] = range[2*n+1];
   }
-#endif
+  #endif
 
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
+  int x_size = MAX(0,end[0]-start[0]);
+  int y_size = MAX(0,end[1]-start[1]);
 
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
@@ -167,31 +181,25 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
   int xdim3 = args[3].dat->size[0];
   int xdim4 = args[4].dat->size[0];
 
-  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h ||
-      xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h ||
-      xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h ||
-      xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h ||
-      xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h) {
-    cudaMemcpyToSymbol(xdim0_advec_mom_kernel1_x_nonvector, &xdim0,
-                       sizeof(int));
+  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h || xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h || xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h || xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h || xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h) {
+    cudaMemcpyToSymbol( xdim0_advec_mom_kernel1_x_nonvector, &xdim0, sizeof(int) );
     xdim0_advec_mom_kernel1_x_nonvector_h = xdim0;
-    cudaMemcpyToSymbol(xdim1_advec_mom_kernel1_x_nonvector, &xdim1,
-                       sizeof(int));
+    cudaMemcpyToSymbol( xdim1_advec_mom_kernel1_x_nonvector, &xdim1, sizeof(int) );
     xdim1_advec_mom_kernel1_x_nonvector_h = xdim1;
-    cudaMemcpyToSymbol(xdim2_advec_mom_kernel1_x_nonvector, &xdim2,
-                       sizeof(int));
+    cudaMemcpyToSymbol( xdim2_advec_mom_kernel1_x_nonvector, &xdim2, sizeof(int) );
     xdim2_advec_mom_kernel1_x_nonvector_h = xdim2;
-    cudaMemcpyToSymbol(xdim3_advec_mom_kernel1_x_nonvector, &xdim3,
-                       sizeof(int));
+    cudaMemcpyToSymbol( xdim3_advec_mom_kernel1_x_nonvector, &xdim3, sizeof(int) );
     xdim3_advec_mom_kernel1_x_nonvector_h = xdim3;
-    cudaMemcpyToSymbol(xdim4_advec_mom_kernel1_x_nonvector, &xdim4,
-                       sizeof(int));
+    cudaMemcpyToSymbol( xdim4_advec_mom_kernel1_x_nonvector, &xdim4, sizeof(int) );
     xdim4_advec_mom_kernel1_x_nonvector_h = xdim4;
   }
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+
+
+  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
+
+
 
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
@@ -201,109 +209,74 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
 
   char *p_a[5];
 
-  // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
+  //set up initial pointers
+  int base0 = args[0].dat->base_offset + 
+           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    (start[1] * args[0].stencil->stride[1]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1] -
-                                         args[1].dat->base[1] - d_m[1]);
+  int base1 = args[1].dat->base_offset + 
+           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  base1 = base1+ dat1 *
+    args[1].dat->size[0] *
+    (start[1] * args[1].stencil->stride[1]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[2].dat->d_m[d];
-#endif
-  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
-                          args[2].dat->base[0] - d_m[0]);
-  base2 = base2 +
-          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1] -
-                                         args[2].dat->base[1] - d_m[1]);
+  int base2 = args[2].dat->base_offset + 
+           dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
+  base2 = base2+ dat2 *
+    args[2].dat->size[0] *
+    (start[1] * args[2].stencil->stride[1]);
   p_a[2] = (char *)args[2].data_d + base2;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[3].dat->d_m[d];
-#endif
-  int base3 = dat3 * 1 * (start[0] * args[3].stencil->stride[0] -
-                          args[3].dat->base[0] - d_m[0]);
-  base3 = base3 +
-          dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1] -
-                                         args[3].dat->base[1] - d_m[1]);
+  int base3 = args[3].dat->base_offset + 
+           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  base3 = base3+ dat3 *
+    args[3].dat->size[0] *
+    (start[1] * args[3].stencil->stride[1]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[4].dat->d_m[d];
-#endif
-  int base4 = dat4 * 1 * (start[0] * args[4].stencil->stride[0] -
-                          args[4].dat->base[0] - d_m[0]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1] -
-                                         args[4].dat->base[1] - d_m[1]);
+  int base4 = args[4].dat->base_offset + 
+           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  base4 = base4+ dat4 *
+    args[4].dat->size[0] *
+    (start[1] * args[4].stencil->stride[1]);
   p_a[4] = (char *)args[4].data_d + base4;
 
+
+  #ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 5);
-  ops_halo_exchanges(args, 5, range);
+  ops_halo_exchanges(args,5,range);
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[21].mpi_time += t2 - t1;
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[21].mpi_time += t2-t1;
   }
 
-  // call kernel wrapper function, passing in pointers to data
-  ops_advec_mom_kernel1_x_nonvector<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], x_size, y_size);
 
-  if (OPS_diags > 1) {
+  //call kernel wrapper function, passing in pointers to data
+  ops_advec_mom_kernel1_x_nonvector<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],
+           (double *)p_a[2], (double *)p_a[3],
+           (double *)p_a[4],x_size, y_size);
+
+  if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1, &t1);
-    OPS_kernels[21].time += t1 - t2;
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[21].time += t1-t2;
   }
 
+  #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 5);
-  ops_set_halo_dirtybit3(&args[2], range);
+  ops_set_halo_dirtybit3(&args[2],range);
+  #endif
 
   if (OPS_diags > 1) {
-    // Update kernel record
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[21].mpi_time += t2 - t1;
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[21].mpi_time += t2-t1;
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -311,3 +284,39 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
+
+#ifdef OPS_LAZY
+void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4) {
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  desc->name = name;
+  desc->block = block;
+  desc->dim = dim;
+  desc->device = 1;
+  desc->index = 21;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 21;
+  for ( int i=0; i<4; i++ ){
+    desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+  }
+  desc->nargs = 5;
+  desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
+  desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
+  desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
+  desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
+  desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
+  desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
+  desc->function = ops_par_loop_advec_mom_kernel1_x_nonvector_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(21,"advec_mom_kernel1_x_nonvector");
+  }
+  ops_enqueue_kernel(desc);
+}
+#endif

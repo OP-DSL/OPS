@@ -259,6 +259,7 @@ typedef struct ops_kernel_descriptor {
   int nargs;                  /* number of arguments */
   int index;                  /* index of the loop */
   int dim;                    /* number of dimensions */
+  int device;                 /* flag to indicate if loop runs on device */
   int range[2 * OPS_MAX_DIM]; /* process local execution range */
   int orig_range[2 * OPS_MAX_DIM]; /* original execution range */
   ops_block block;            /* block to execute on */

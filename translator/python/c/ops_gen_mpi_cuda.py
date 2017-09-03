@@ -421,7 +421,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 ##########################################################################
     code('')
     comm(' host stub function')
-
+    code('#ifndef OPS_LAZY')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
@@ -434,7 +434,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
+    code('#else')
+    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
+    #code('char const *name = "'+name+'";')
+    code('int dim = desc->dim;')
+    code('int *range = desc->range;')
+
+    for n in range (0, nargs):
+      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+    code('#endif')
 
     code('')
     comm('Timing')
@@ -452,7 +461,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         text = text +'\n                    '
     code(text);
     code('')
-    code('#ifdef CHECKPOINTING')
+    code('#if CHECKPOINTING && !OPS_LAZY')
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
@@ -469,7 +478,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
 
-    code('#ifdef OPS_MPI')
+    code('#if OPS_MPI && !OPS_LAZY')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
     code('if (!sb->owned) return;')
     FOR('n','0',str(NDIM))
@@ -509,6 +518,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if arg_idx:
       code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
+      code('#ifdef OPS_LAZY')
+      code('ops_block block = desc->block;')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      code('#endif')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
       code('#else')
@@ -552,6 +565,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     #setup reduction variables
     code('')
+    if reduct and not arg_idx:
+      code('#ifdef OPS_LAZY')
+      code('ops_block block = desc->block;')
+      code('#endif')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
@@ -676,30 +693,25 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     comm('')
     comm('set up initial pointers')
-    code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('#ifdef OPS_MPI')
-        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
-        code('#else')
-        code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
-        code('#endif')
-        code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
-        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
+        code('         dat'+str(n)+' * 1 * (start[0] * args['+str(n)+'].stencil->stride[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+'/dat'+str(n)+',d_m[0]);')
+          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+']);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 
     #halo exchange
     code('')
+    code('#ifndef OPS_LAZY')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('#endif')
     code('')
     IF('OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
@@ -794,10 +806,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #   code('ops_timers_core(&c1,&t1);')
     #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
+    code('#ifndef OPS_LAZY')
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+    code('#endif')
 
     code('')
     IF('OPS_diags > 1')
@@ -810,6 +824,60 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ENDIF()
     config.depth = config.depth - 2
     code('}')
+    code('')
+    code('#ifdef OPS_LAZY')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    text = ''
+    for n in range (0, nargs):
+
+      text = text +' ops_arg arg'+str(n)
+      if nargs <> 1 and n != nargs-1:
+        text = text +','
+      else:
+        text = text +') {'
+      if n%n_per_line == 3 and n <> nargs-1:
+         text = text +'\n'
+    code(text);
+    config.depth = 2
+    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));')
+    #code('desc->name = (char *)malloc(strlen(name)+1);')
+    #code('strcpy(desc->name, name);')
+    code('desc->name = name;')
+    code('desc->block = block;')
+    code('desc->dim = dim;')
+    code('desc->device = 1;')
+    code('desc->index = '+str(nk)+';')
+    code('desc->hash = 5381;')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + '+str(nk)+';')
+    FOR('i','0',str(2*NDIM))
+    code('desc->range[i] = range[i];')
+    code('desc->orig_range[i] = range[i];')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + range[i];')
+    ENDFOR()
+
+    code('desc->nargs = '+str(nargs)+';')
+    code('desc->args = (ops_arg*)malloc('+str(nargs)+'*sizeof(ops_arg));')
+    declared = 0
+    for n in range (0, nargs):
+      code('desc->args['+str(n)+'] = arg'+str(n)+';')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        if declared == 0:
+          code('char *tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          declared = 1
+        else:
+          code('tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+        code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
+        code('desc->args['+str(n)+'].data = tmp;')
+    code('desc->function = ops_par_loop_'+name+'_execute;')
+    IF('OPS_diags > 1')
+    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    ENDIF()
+    code('ops_enqueue_kernel(desc);')
+    config.depth = 0
+    code('}')
+    code('#endif')
 
 
 ##########################################################################

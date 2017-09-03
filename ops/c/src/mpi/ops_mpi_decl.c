@@ -132,6 +132,17 @@ void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
   (void)args;
 }
 
+void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
+  (void)nargs;
+  (void)args;
+}
+
+void ops_set_dirtybit_device(ops_arg *args, int nargs) {
+  (void)nargs;
+  (void)args;
+}
+
+
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
   ops_checkpointing_reduction(handle);
