@@ -37,7 +37,7 @@ else
   #-DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
-  OMPFLAGS	= -qopenmp -openmp-report2
+  OMPFLAGS	= -qopenmp #-openmp-report2
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS	= $(CCFLAGS)
