@@ -150,7 +150,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_tiled tealeaf_cuda tealeaf_mpi_cuda tealeaf_opencl tealeaf_mpi_opencl tealeaf_mpi_tiled #tealeaf_openacc tealeaf_mpi_openacc
+TARGETS = tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_mpi_openmp tealeaf_openmp tealeaf_seq tealeaf_tiled tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled tealeaf_opencl tealeaf_mpi_opencl tealeaf_mpi_tiled #tealeaf_openacc tealeaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += tealeaf_openacc tealeaf_mpi_openacc
@@ -224,6 +224,11 @@ tealeaf_mpi_cuda: Makefile ./CUDA/tealeaf_kernels_mpi_cu.o $(PLAIN_FILES) $(OPS_
 		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
 				 ./CUDA/tealeaf_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_cuda
 
+tealeaf_mpi_cuda_tiled: Makefile ./CUDA/tealeaf_kernels_mpi_tiled_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
+				 ./CUDA/tealeaf_kernels_mpi_tiled_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_cuda_tiled
+
+./CUDA/tealeaf_kernels_cu.o:	./CUDA/tea_leaf_kernels.cu \
 ./CUDA/tealeaf_kernels_cu.o:	./CUDA/tea_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
@@ -233,6 +238,11 @@ tealeaf_mpi_cuda: Makefile ./CUDA/tealeaf_kernels_mpi_cu.o $(PLAIN_FILES) $(OPS_
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/tealeaf_kernels_mpi_cu.o ./CUDA/tea_leaf_kernels.cu
+
+./CUDA/tealeaf_kernels_mpi_tiled_cu.o:	./CUDA/tea_leaf_kernels.cu \
+				Makefile
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
+				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/tealeaf_kernels_mpi_tiled_cu.o ./CUDA/tea_leaf_kernels.cu
 
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
@@ -284,4 +294,4 @@ openacc_error:
 #
 
 clean:
-		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_mpi_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst
+		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_mpi_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst

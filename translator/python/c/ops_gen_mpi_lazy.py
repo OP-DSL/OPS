@@ -517,6 +517,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('desc->name = name;')
     code('desc->block = block;')
     code('desc->dim = dim;')
+    code('desc->device = 1;')
     code('desc->index = '+str(nk)+';')
     code('desc->hash = 5381;')
     code('desc->hash = ((desc->hash << 5) + desc->hash) + '+str(nk)+';')

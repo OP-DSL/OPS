@@ -149,11 +149,21 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     double t1,t2,c;
     if (OPS_diags > 1)
       ops_timers_core(&c,&t1);
+
+    //Halo exchanges
+    if (desc->device) ops_H_D_exchanges_device(desc->args,desc->nargs);
+    else ops_H_D_exchanges_host(desc->args,desc->nargs);
     ops_halo_exchanges(desc->args,desc->nargs,desc->orig_range);
+    if (!desc->device) ops_H_D_exchanges_host(desc->args,desc->nargs);
+
     if (OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
     desc->function(desc);
+
+    //Dirtybits
+    if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
+    else ops_set_dirtybit_host(desc->args,desc->nargs);
     for (int arg = 0; arg < desc->nargs; arg++) {
       if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ)
         ops_set_halo_dirtybit3(&desc->args[arg], desc->orig_range);
@@ -792,6 +802,7 @@ void ops_execute() {
       }
     }
   }
+
   // If not found, construct one
   if (match == -1)
     match = ops_construct_tile_plan();
@@ -807,6 +818,7 @@ void ops_execute() {
   ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
                              tiling_plans[match].dats_to_exchange.size(),
                              &tiling_plans[match].depths_to_exchange[0]);
+
   if (OPS_diags>1) {
     ops_timers_core(&c,&t2);
     ops_tiled_halo_exchange_time += t2-t1;
@@ -835,7 +847,7 @@ void ops_execute() {
       memcpy(&ops_kernel_list[i]->range[0],
              &tiled_ranges[i][OPS_MAX_DIM * 2 * tile],
              OPS_MAX_DIM * 2 * sizeof(int));
-      if (OPS_diags > 5)
+      if (OPS_diags > 4)
         printf("Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), ops_kernel_list[i]->name,
                ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
