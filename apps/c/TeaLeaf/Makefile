@@ -229,7 +229,6 @@ tealeaf_mpi_cuda_tiled: Makefile ./CUDA/tealeaf_kernels_mpi_tiled_cu.o $(PLAIN_F
 				 ./CUDA/tealeaf_kernels_mpi_tiled_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_cuda_tiled
 
 ./CUDA/tealeaf_kernels_cu.o:	./CUDA/tea_leaf_kernels.cu \
-./CUDA/tealeaf_kernels_cu.o:	./CUDA/tea_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
 				-c -o ./CUDA/tealeaf_kernels_cu.o ./CUDA/tea_leaf_kernels.cu
