@@ -92,7 +92,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 
 echo '============> Running MPI+CUDA with optimized MPI comms'
-T1=3000 T2=3000 T3=3000 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 grep "PASSED" clover.out
