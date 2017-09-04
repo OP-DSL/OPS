@@ -116,6 +116,7 @@ inline int intersection(int range1_beg, int range1_end, int range2_beg,
 
 //Queries L3 cache size
 size_t ops_internal_get_cache_size() {
+  if (OPS_hybrid_gpu) return 0;
   FILE *p = 0;
   p = fopen("/sys/devices/system/cpu/cpu0/cache/index3/size", "r");
   unsigned int i = 0;
