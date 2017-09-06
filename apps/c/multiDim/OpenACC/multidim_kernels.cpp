@@ -3,10 +3,10 @@
 
 #include "./OpenACC/multidim_common.h"
 
-void ops_decl_const_char(int dim, char const *type, int size, char *dat,
-                         char const *name) {
+
+void ops_decl_const_char(int dim, char const *type,
+int size, char *dat, char const *name){
   {
-    printf("error: unknown const name\n");
-    exit(1);
+    printf("error: unknown const name\n"); exit(1);
   }
 }
