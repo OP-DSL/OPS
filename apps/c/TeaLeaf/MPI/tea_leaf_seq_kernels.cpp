@@ -18,6 +18,9 @@ extern state_type *states;
 extern int g_circ;
 extern int g_point;
 extern int g_rect;
+
+void ops_init_backend() {}
+
 // user kernel files
 #include "field_summary_kernel_seq_kernel.cpp"
 #include "generate_chunk_kernel_seq_kernel.cpp"

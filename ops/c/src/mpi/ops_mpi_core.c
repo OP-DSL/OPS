@@ -146,16 +146,16 @@ int ops_is_root() {
   return (my_rank == MPI_ROOT);
 }
 
-int ops_proc_id() {
+int ops_get_proc() {
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   return my_rank;
 }
 
-int ops_get_proc() {
-  int my_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-  return my_rank;
+int ops_num_procs() {
+  int size;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  return size;
 }
 
 void ops_set_dirtybit_host(ops_arg *args, int nargs) {

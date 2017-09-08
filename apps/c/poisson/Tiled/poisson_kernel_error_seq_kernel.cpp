@@ -113,6 +113,7 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block,
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
+  desc->device = 1;
   desc->index = 4;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 4;

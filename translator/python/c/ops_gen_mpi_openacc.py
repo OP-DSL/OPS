@@ -877,7 +877,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   #code('#endif')
   if os.path.exists('./user_types.h'):
     code('#include "user_types.h"')
-  code('')
 
   comm(' global constants')
   for nc in range (0,len(consts)):
@@ -900,6 +899,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   config.file_text =''
   code('#include "./OpenACC/'+master.split('.')[0]+'_common.h"')
   code('')
+  code('')
+  code('#include <openacc.h>')
+  code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia);}')
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')

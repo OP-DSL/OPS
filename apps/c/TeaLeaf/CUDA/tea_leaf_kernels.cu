@@ -24,6 +24,8 @@ __constant__ int g_circ;
 __constant__ int g_point;
 __constant__ int g_rect;
 
+void ops_init_backend() {}
+
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   if (!strcmp(name, "field")) {

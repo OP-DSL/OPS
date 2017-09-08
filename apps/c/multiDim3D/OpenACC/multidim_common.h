@@ -12,5 +12,4 @@
 #include "ops_mpi_core.h"
 #endif
 #include "ops_cuda_rt_support.h"
-
 // global constants

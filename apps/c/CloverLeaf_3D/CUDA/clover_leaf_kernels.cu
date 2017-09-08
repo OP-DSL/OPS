@@ -32,6 +32,8 @@ __constant__ int g_point;
 __constant__ int g_cube;
 __constant__ double dt;
 
+void ops_init_backend() {}
+
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   if (!strcmp(name, "g_small")) {

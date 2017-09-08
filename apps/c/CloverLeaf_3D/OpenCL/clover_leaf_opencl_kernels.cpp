@@ -31,6 +31,8 @@ extern double dt;
 
 extern ops_opencl_core OPS_opencl_core;
 
+void ops_init_backend() {}
+
 // this needs to be a platform specific copy symbol to device function
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *dat,
                          char const *name) {

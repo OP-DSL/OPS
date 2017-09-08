@@ -23,6 +23,8 @@ extern int g_circ;
 extern int g_point;
 extern int g_rect;
 
+void ops_init_backend() {}
+
 // user kernel files
 #include "field_summary_kernel_omp_kernel.cpp"
 #include "generate_chunk_kernel_omp_kernel.cpp"

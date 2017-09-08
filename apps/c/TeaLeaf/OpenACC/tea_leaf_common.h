@@ -12,7 +12,6 @@
 #endif
 #include "ops_cuda_rt_support.h"
 #include "user_types.h"
-
 // global constants
 extern field_type field;
 extern grid_type grid;

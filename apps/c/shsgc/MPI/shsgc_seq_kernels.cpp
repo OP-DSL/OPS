@@ -34,6 +34,9 @@ extern double del2;
 extern double akap2;
 extern double tvdsmu;
 extern double con;
+
+void ops_init_backend() {}
+
 // user kernel files
 #include "Riemann_kernel_seq_kernel.cpp"
 #include "calupwindeff_kernel_seq_kernel.cpp"

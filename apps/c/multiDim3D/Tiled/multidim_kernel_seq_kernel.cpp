@@ -5,7 +5,7 @@
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   (n_x * 1 + n_y * xdim0_multidim_kernel * 1 +                                 \
    n_z * xdim0_multidim_kernel * ydim0_multidim_kernel * 1 + (x) +             \
-   (d)*xdim0_multidim_kernel * ydim0_multidim_kernelzdim0_multidim_kernel +    \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel * zdim0_multidim_kernel + \
    (xdim0_multidim_kernel * (y)) +                                             \
    (xdim0_multidim_kernel * ydim0_multidim_kernel * (z)))
 
@@ -112,6 +112,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim,
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
+  desc->device = 1;
   desc->index = 0;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 0;

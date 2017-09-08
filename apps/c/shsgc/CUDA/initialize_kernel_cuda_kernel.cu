@@ -3,19 +3,14 @@
 //
 __constant__ int xdim0_initialize_kernel;
 int xdim0_initialize_kernel_h = -1;
-int ydim0_initialize_kernel_h = -1;
 __constant__ int xdim1_initialize_kernel;
 int xdim1_initialize_kernel_h = -1;
-int ydim1_initialize_kernel_h = -1;
 __constant__ int xdim2_initialize_kernel;
 int xdim2_initialize_kernel_h = -1;
-int ydim2_initialize_kernel_h = -1;
 __constant__ int xdim3_initialize_kernel;
 int xdim3_initialize_kernel_h = -1;
-int ydim3_initialize_kernel_h = -1;
 __constant__ int xdim4_initialize_kernel;
 int xdim4_initialize_kernel_h = -1;
-int ydim4_initialize_kernel_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -83,17 +78,29 @@ ops_initialize_kernel(double *__restrict arg0, double *__restrict arg1,
 }
 
 // host stub function
+#ifndef OPS_LAZY
 void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
                                     int *range, ops_arg arg0, ops_arg arg1,
                                     ops_arg arg2, ops_arg arg3, ops_arg arg4,
                                     ops_arg arg5) {
+#else
+void ops_par_loop_initialize_kernel_execute(ops_kernel_descriptor *desc) {
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
+  ops_arg arg2 = desc->args[2];
+  ops_arg arg3 = desc->args[3];
+  ops_arg arg4 = desc->args[4];
+  ops_arg arg5 = desc->args[5];
+#endif
 
   // Timing
   double t1, t2, c1, c2;
 
   ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
 
-#ifdef CHECKPOINTING
+#if CHECKPOINTING && !OPS_LAZY
   if (!ops_checkpointing_before(args, 6, range, 0))
     return;
 #endif
@@ -107,7 +114,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
   // compute locally allocated range for the sub-block
   int start[1];
   int end[1];
-#ifdef OPS_MPI
+#if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned)
     return;
@@ -141,6 +148,10 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
 
   int arg_idx[1];
 #ifdef OPS_MPI
+#ifdef OPS_LAZY
+  ops_block block = desc->block;
+  sub_block_list sb = OPS_sub_block_list[block->index];
+#endif
   arg_idx[0] = sb->decomp_disp[0] + start[0];
 #else
   arg_idx[0] = start[0];
@@ -171,78 +182,39 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
   dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
   dim3 tblock(OPS_block_size_x, 1, 1);
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat2 = args[2].dat->elem_size;
-  int dat3 = args[3].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
 
   char *p_a[6];
 
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[1].dat->d_m[d];
-#endif
-  int base1 = dat1 * 1 * (start[0] * args[1].stencil->stride[0] -
-                          args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset +
+              dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[2].dat->d_m[d];
-#endif
-  int base2 = dat2 * 1 * (start[0] * args[2].stencil->stride[0] -
-                          args[2].dat->base[0] - d_m[0]);
+  int base2 = args[2].dat->base_offset +
+              dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
   p_a[2] = (char *)args[2].data_d + base2;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[3].dat->d_m[d];
-#endif
-  int base3 = dat3 * 1 * (start[0] * args[3].stencil->stride[0] -
-                          args[3].dat->base[0] - d_m[0]);
+  int base3 = args[3].dat->base_offset +
+              dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[4].dat->d_m[d];
-#endif
-  int base4 = dat4 * 1 * (start[0] * args[4].stencil->stride[0] -
-                          args[4].dat->base[0] - d_m[0]);
+  int base4 = args[4].dat->base_offset +
+              dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   p_a[4] = (char *)args[4].data_d + base4;
 
+#ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 6);
   ops_halo_exchanges(args, 6, range);
+#endif
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
@@ -260,12 +232,14 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].time += t1 - t2;
   }
 
+#ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 6);
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
   ops_set_halo_dirtybit3(&args[2], range);
   ops_set_halo_dirtybit3(&args[3], range);
   ops_set_halo_dirtybit3(&args[4], range);
+#endif
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -278,3 +252,43 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
+
+#ifdef OPS_LAZY
+void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
+                                    int *range, ops_arg arg0, ops_arg arg1,
+                                    ops_arg arg2, ops_arg arg3, ops_arg arg4,
+                                    ops_arg arg5) {
+  ops_kernel_descriptor *desc =
+      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  desc->name = name;
+  desc->block = block;
+  desc->dim = dim;
+  desc->device = 1;
+  desc->index = 0;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 0;
+  for (int i = 0; i < 2; i++) {
+    desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+  }
+  desc->nargs = 6;
+  desc->args = (ops_arg *)malloc(6 * sizeof(ops_arg));
+  desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
+  desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
+  desc->args[2] = arg2;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
+  desc->args[3] = arg3;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
+  desc->args[4] = arg4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
+  desc->args[5] = arg5;
+  desc->function = ops_par_loop_initialize_kernel_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(0, "initialize_kernel");
+  }
+  ops_enqueue_kernel(desc);
+}
+#endif
