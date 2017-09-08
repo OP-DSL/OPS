@@ -146,6 +146,12 @@ int ops_is_root() {
   return (my_rank == MPI_ROOT);
 }
 
+int ops_proc_id() {
+  int my_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  return my_rank;
+}
+
 int ops_get_proc() {
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
