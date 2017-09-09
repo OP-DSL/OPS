@@ -41,8 +41,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  #CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
@@ -71,7 +71,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS 	= -O0 -g -Minline -Kieee #-Minform=inform -Minfo=all
 else
-  CCFLAGS 	= -O2 -Kieee -nofma #-Minline #-fastsse -gopt -Mipa=fast -Mlist -Kieee #-Minline #-Minform=severe -Minfo=all
+  CCFLAGS 	= -O2 -Kieee -nofma -Minline #-fastsse -gopt -Mipa=fast -Mlist -Kieee #-Minline #-Minform=severe -Minfo=all
 endif
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
   CPPFLAGS 	= $(CCFLAGS)
