@@ -11,8 +11,8 @@ int zdim0_multidim_reduce_kernel;
   (n_x * 1 + n_y * xdim0_multidim_reduce_kernel * 1 +                          \
    n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel * 1 +     \
    (x) +                                                                       \
-   (d)*xdim0_multidim_reduce_kernel *                                          \
-       ydim0_multidim_reduce_kernelzdim0_multidim_reduce_kernel +              \
+   (d)*xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel *           \
+       zdim0_multidim_reduce_kernel +                                          \
    (xdim0_multidim_reduce_kernel * (y)) +                                      \
    (xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel * (z)))
 // user function

@@ -45,16 +45,24 @@ __global__ void ops_multidim_reduce_kernel(const double *__restrict arg0,
 }
 
 // host stub function
+#ifndef OPS_LAZY
 void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
                                          int dim, int *range, ops_arg arg0,
                                          ops_arg arg1) {
+#else
+void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
+#endif
 
   // Timing
   double t1, t2, c1, c2;
 
   ops_arg args[2] = {arg0, arg1};
 
-#ifdef CHECKPOINTING
+#if CHECKPOINTING && !OPS_LAZY
   if (!ops_checkpointing_before(args, 2, range, 2))
     return;
 #endif
@@ -68,7 +76,7 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
   // compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-#ifdef OPS_MPI
+#if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned)
     return;
@@ -112,6 +120,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
     ydim0_multidim_reduce_kernel_h = ydim0;
   }
 
+#ifdef OPS_LAZY
+  ops_block block = desc->block;
+#endif
 #ifdef OPS_MPI
   double *arg1h =
       (double *)(((ops_reduction)args[1].data)->data +
@@ -149,24 +160,16 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
   char *p_a[2];
 
   // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-#ifdef OPS_MPI
-  for (int d = 0; d < dim; d++)
-    d_m[d] =
-        args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-#else
-  for (int d = 0; d < dim; d++)
-    d_m[d] = args[0].dat->d_m[d];
-#endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
+  int base0 = args[0].dat->base_offset +
+              dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
+          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
   p_a[0] = (char *)args[0].data_d + base0;
 
+#ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args, 2, range);
+#endif
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
@@ -198,7 +201,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
     OPS_kernels[2].time += t1 - t2;
   }
 
+#ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 2);
+#endif
 
   if (OPS_diags > 1) {
     // Update kernel record
@@ -207,3 +212,34 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
     OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
+
+#ifdef OPS_LAZY
+void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
+                                         int dim, int *range, ops_arg arg0,
+                                         ops_arg arg1) {
+  ops_kernel_descriptor *desc =
+      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  desc->name = name;
+  desc->block = block;
+  desc->dim = dim;
+  desc->device = 1;
+  desc->index = 2;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 2;
+  for (int i = 0; i < 4; i++) {
+    desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+  }
+  desc->nargs = 2;
+  desc->args = (ops_arg *)malloc(2 * sizeof(ops_arg));
+  desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
+  desc->args[1] = arg1;
+  desc->function = ops_par_loop_multidim_reduce_kernel_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(2, "multidim_reduce_kernel");
+  }
+  ops_enqueue_kernel(desc);
+}
+#endif

@@ -10,5 +10,8 @@
 #endif
 
 // global constants
+
+void ops_init_backend() {}
+
 // user kernel files
 #include "mblock_populate_kernel_seq_kernel.cpp"

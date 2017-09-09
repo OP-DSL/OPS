@@ -12,7 +12,6 @@
 #endif
 #include "ops_cuda_rt_support.h"
 #include "user_types.h"
-
 // global constants
 extern double g_small;
 extern double g_big;

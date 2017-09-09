@@ -569,6 +569,9 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       else:
         code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
+  code('')
+  code('void ops_init_backend() {}')
+  code('')
   comm('user kernel files')
 
   kernel_name_list = []

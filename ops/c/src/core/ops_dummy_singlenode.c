@@ -135,6 +135,8 @@ void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 
 int ops_is_root() { return 1; }
 
+int ops_num_procs() { return 1; }
+
 void ops_set_halo_dirtybit(ops_arg *arg) { (void)arg; }
 
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {

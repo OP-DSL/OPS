@@ -26,6 +26,9 @@ extern int g_sphe;
 extern int g_point;
 extern int g_cube;
 extern double dt;
+
+void ops_init_backend() {}
+
 // user kernel files
 #include "PdV_kernel_nopredict_seq_kernel.cpp"
 #include "PdV_kernel_predict_seq_kernel.cpp"

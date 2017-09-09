@@ -934,6 +934,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
   code('')
+  code('void ops_init_backend() {}')
+  code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2

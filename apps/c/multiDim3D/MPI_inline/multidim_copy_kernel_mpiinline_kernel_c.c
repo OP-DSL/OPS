@@ -13,15 +13,15 @@ int zdim1_multidim_copy_kernel;
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   (n_x * 1 + n_y * xdim0_multidim_copy_kernel * 1 +                            \
    n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel * 1 + (x) +   \
-   (d)*xdim0_multidim_copy_kernel *                                            \
-       ydim0_multidim_copy_kernelzdim0_multidim_copy_kernel +                  \
+   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel *               \
+       zdim0_multidim_copy_kernel +                                            \
    (xdim0_multidim_copy_kernel * (y)) +                                        \
    (xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel * (z)))
 #define OPS_ACC_MD1(d, x, y, z)                                                \
   (n_x * 1 + n_y * xdim1_multidim_copy_kernel * 1 +                            \
    n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel * 1 + (x) +   \
-   (d)*xdim1_multidim_copy_kernel *                                            \
-       ydim1_multidim_copy_kernelzdim1_multidim_copy_kernel +                  \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel *               \
+       zdim1_multidim_copy_kernel +                                            \
    (xdim1_multidim_copy_kernel * (y)) +                                        \
    (xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel * (z)))
 // user function

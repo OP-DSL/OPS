@@ -10,7 +10,7 @@ int zdim0_multidim_kernel;
 #define OPS_ACC_MD0(d, x, y, z)                                                \
   (n_x * 1 + n_y * xdim0_multidim_kernel * 1 +                                 \
    n_z * xdim0_multidim_kernel * ydim0_multidim_kernel * 1 + (x) +             \
-   (d)*xdim0_multidim_kernel * ydim0_multidim_kernelzdim0_multidim_kernel +    \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel * zdim0_multidim_kernel + \
    (xdim0_multidim_kernel * (y)) +                                             \
    (xdim0_multidim_kernel * ydim0_multidim_kernel * (z)))
 // user function

@@ -748,6 +748,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   code('#include "./MPI_inline/'+master.split('.')[0]+'_common.h"')
   code('')
   code('')
+  code('void ops_init_backend() {}')
+  code('')
   code('void ops_decl_const_char2(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2

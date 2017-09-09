@@ -31,6 +31,8 @@ extern int g_point;
 extern int g_cube;
 extern double dt;
 
+void ops_init_backend() {}
+
 // user kernel files
 #include "PdV_kernel_nopredict_omp_kernel.cpp"
 #include "PdV_kernel_predict_omp_kernel.cpp"

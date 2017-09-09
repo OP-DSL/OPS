@@ -7,11 +7,12 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
   if (OPS_soa) {
     const char *__restrict src = dat->data + src_offset * dat->type_size;
-  #pragma omp parallel for shared(src,dest)
+  #pragma omp parallel for collapse(3) shared(src,dest)
     for (unsigned int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
-        memcpy(dest+i*halo->blocklength*dat->dim+d*dat->type_size,
-               src+i*halo->stride + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, halo->blocklength);
+        for (int v = 0; v < halo->blocklength/dat->type_size; v++)
+          memcpy(dest+i*halo->blocklength*dat->dim+ v*dat->type_size*dat->dim + d*dat->type_size,
+                 src+i*halo->stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, dat->type_size);
     }
   } else {
     const char *__restrict src = dat->data + src_offset * dat->elem_size;
@@ -27,11 +28,12 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo) {
   if (OPS_soa) {
   char *__restrict dest = dat->data + dest_offset * dat->type_size;
-  #pragma omp parallel for shared(src,dest)
+  #pragma omp parallel for collapse(3) shared(src,dest)
     for (unsigned int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
-        memcpy(dest+i*halo->stride + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
-          src+i*halo->blocklength*dat->dim + d*dat->type_size, halo->blocklength);
+        for (int v = 0; v < halo->blocklength/dat->type_size; v++)
+          memcpy(dest+i*halo->stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
+            src+i*halo->blocklength*dat->dim + v*dat->type_size*dat->dim + d*dat->type_size, dat->type_size);
     }
   } else {
     char *__restrict dest = dat->data + dest_offset * dat->elem_size;

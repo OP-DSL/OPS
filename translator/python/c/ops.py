@@ -307,6 +307,9 @@ def main(source_files):
       text = remove_trailing_w_space(comment_remover(text))
       #text = comment_remover(text)
 
+      text= re.sub('ops_init(.*);','ops_init\\1;\n  ops_init_backend();',text)
+      if text.find('ops_init') > -1:
+        text= re.sub('#include','void ops_init_backend();\n#include',text,1)
       #
       # check for ops_init, ops_exit calls
       #

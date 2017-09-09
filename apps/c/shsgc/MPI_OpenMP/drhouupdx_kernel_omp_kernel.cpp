@@ -103,13 +103,13 @@ void ops_par_loop_drhouupdx_kernel(char const *name, ops_block block, int dim,
   offs[3][0] = args[3].stencil->stride[0] * 1; // unit step in x dimension
 
   int off0_0 = offs[0][0];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int off2_0 = offs[2][0];
-  int dat2 = args[2].dat->elem_size;
+  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
   int off3_0 = offs[3][0];
-  int dat3 = args[3].dat->elem_size;
+  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 4);

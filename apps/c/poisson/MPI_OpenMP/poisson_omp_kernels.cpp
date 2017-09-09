@@ -17,6 +17,8 @@
 extern double dx;
 extern double dy;
 
+void ops_init_backend() {}
+
 // user kernel files
 #include "poisson_kernel_error_omp_kernel.cpp"
 #include "poisson_kernel_initialguess_omp_kernel.cpp"

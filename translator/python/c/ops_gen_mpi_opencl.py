@@ -1129,6 +1129,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
   code('extern ops_opencl_core OPS_opencl_core;')
   code('')
+  code('void ops_init_backend() {}')
+  code('')
   comm('this needs to be a platform specific copy symbol to device function')
   code('void ops_decl_const_char( int dim, char const * type, int typeSize, char * dat, char const * name ) {')
   config.depth =config.depth + 2

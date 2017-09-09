@@ -16,6 +16,8 @@
 #endif
 // global constants
 
+void ops_init_backend() {}
+
 // user kernel files
 #include "multidim_copy_kernel_omp_kernel.cpp"
 #include "multidim_kernel_omp_kernel.cpp"

@@ -18,6 +18,8 @@
 __constant__ double dx;
 __constant__ double dy;
 
+void ops_init_backend() {}
+
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   if (!strcmp(name, "dx")) {

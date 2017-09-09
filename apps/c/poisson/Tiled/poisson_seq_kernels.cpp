@@ -13,6 +13,9 @@
 // global constants
 extern double dx;
 extern double dy;
+
+void ops_init_backend() {}
+
 // user kernel files
 #include "poisson_kernel_error_seq_kernel.cpp"
 #include "poisson_kernel_initialguess_seq_kernel.cpp"

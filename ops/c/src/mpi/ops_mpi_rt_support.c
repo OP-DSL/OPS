@@ -211,6 +211,11 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
       actual_depth_recv = d;
 
+  if (actual_depth_recv > abs(d_m[dim])) {
+    printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, abs(d_m[dim]));
+    MPI_Abort(sb->comm, -1);
+  }
+
   // set up initial pointers
   int i2 = (-d_m[dim]) * prod[dim - 1];
   // int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
@@ -280,6 +285,11 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
       actual_depth_recv = d;
 
+  if (actual_depth_recv > d_p[dim]) {
+    printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, d_p[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+      
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *

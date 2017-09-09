@@ -110,9 +110,10 @@ void cutilDeviceInit(int argc, char **argv) {
   }*/
 
   float *test;
+  int my_id = ops_get_proc();
   OPS_hybrid_gpu = 0;
   for (int i = 0; i < deviceCount; i++) {
-    cudaError_t err = cudaSetDevice(i);
+    cudaError_t err = cudaSetDevice((i+my_id)%deviceCount);
     if (err == cudaSuccess) {
       cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
       if (err == cudaSuccess) {
