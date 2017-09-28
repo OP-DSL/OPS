@@ -61,19 +61,6 @@ extern double ops_gather_time;
 extern double ops_scatter_time;
 extern double ops_sendrecv_time;
 
-void ops_realloc_buffers(const ops_int_halo *halo1, const ops_int_halo *halo2) {
-  int size =
-      MAX(halo1->blocklength * halo1->count, halo2->blocklength * halo2->count);
-  if (size > ops_buffer_size) {
-    size = size * 2;
-    ops_comm_realloc(&ops_buffer_send_1, size * sizeof(char), ops_buffer_size);
-    ops_comm_realloc(&ops_buffer_recv_1, size * sizeof(char), ops_buffer_size);
-    ops_comm_realloc(&ops_buffer_send_2, size * sizeof(char), ops_buffer_size);
-    ops_comm_realloc(&ops_buffer_recv_2, size * sizeof(char), ops_buffer_size);
-    ops_buffer_size = size;
-  }
-}
-
 int intersection(int range1_beg, int range1_end, int range2_beg,
                  int range2_end) {
   int i_min = MAX(range1_beg, range2_beg);
@@ -552,7 +539,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
 
   // Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
-                  sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+                  sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   // Unpack data
   if (actual_depth_recv > 0)
@@ -579,7 +566,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
 
   // Compute size of packed data
   recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
-              sd->halos[MAX_DEPTH * dim + actual_depth_recv].count;
+              sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   // Unpack data
   if (actual_depth_recv > 0)

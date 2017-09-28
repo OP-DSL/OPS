@@ -114,8 +114,11 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
 }
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
-  if (OPS_sub_block_list[dat->block->index]->owned == 1)
-    ops_print_dat_to_txtfile_core(dat, file_name);
+  if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    char buf[50];
+    sprintf(buf,"%s.%d",file_name,ops_my_global_rank);
+    ops_print_dat_to_txtfile_core(dat, buf);
+  }
 }
 
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
