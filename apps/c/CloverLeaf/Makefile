@@ -41,8 +41,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
@@ -187,13 +187,16 @@ cloverleaf_dev_mpi: Makefile  $(OPS_FILES_PLAIN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  $(OPS_FILES_PLAIN) -lops_mpi $(HDF5_LIB) -o cloverleaf_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py clover_leaf.cpp revert.cpp reset_field.cpp ideal_gas.cpp PdV.cpp accelerate.cpp advec_cell.cpp accelerate.cpp advec_mom.cpp calc_dt.cpp field_summary.cpp flux_calc.cpp viscosity.cpp initialise_chunk.cpp generate.cpp update_halo.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 
-cloverleaf_mpi: Makefile $(OPS_FILES_GEN) \
+cloverleaf_mpi: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi
 
@@ -202,31 +205,31 @@ cloverleaf_mpi: Makefile $(OPS_FILES_GEN) \
 #
 OMP_KERNELS = clover_leaf_omp_kernels.cpp
 
-cloverleaf_mpi_openmp: Makefile $(OPS_FILES_GEN) \
+cloverleaf_mpi_openmp: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_openmp
 
 
-cloverleaf_openmp: Makefile $(OPS_FILES_GEN) \
+cloverleaf_openmp: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	        $(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_openmp
 
 #
 # Sequential version
 #
-cloverleaf_seq: Makefile $(OPS_FILES_GEN) \
+cloverleaf_seq: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_seq
 
 #
 # Tiled version
 #
-cloverleaf_tiled: Makefile $(OPS_FILES_GEN) \
+cloverleaf_tiled: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(MPIFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o cloverleaf_tiled
 
 
-cloverleaf_mpi_tiled: Makefile $(OPS_FILES_GEN) \
+cloverleaf_mpi_tiled: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(MPIFLAGS) -DOPS_MPI $(OMPFLAGS) -D$(OPS_COMPILER) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi_tiled
 
@@ -246,17 +249,17 @@ cloverleaf_mpi_cuda_tiled: Makefile ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o $(O
 		$(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_cuda_tiled
 
-./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
+./CUDA/cloverleaf_kernels_cu.o:	.ops_generated ./CUDA/clover_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
 				-c -o ./CUDA/cloverleaf_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
-./CUDA/cloverleaf_kernels_mpi_cu.o:	./CUDA/clover_leaf_kernels.cu \
+./CUDA/cloverleaf_kernels_mpi_cu.o:	.ops_generated ./CUDA/clover_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/cloverleaf_kernels_mpi_cu.o ./CUDA/clover_leaf_kernels.cu
 
-./CUDA/cloverleaf_kernels_mpi_tiled_cu.o:	./CUDA/clover_leaf_kernels.cu \
+./CUDA/cloverleaf_kernels_mpi_tiled_cu.o:	..ops_generated /CUDA/clover_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -I$(MPI_INSTALL_PATH)/include \
 				-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o ./CUDA/clover_leaf_kernels.cu
@@ -265,7 +268,7 @@ mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/
 mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
 
-./MPI_inline/clover_leaf_kernels.o: ./MPI_inline/clover_leaf_kernels.cpp ./MPI_inline/clover_leaf_common.h Makefile
+./MPI_inline/clover_leaf_kernels.o: .ops_generated ./MPI_inline/clover_leaf_kernels.cpp ./MPI_inline/clover_leaf_common.h Makefile
 				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC)  \
  			       -I. MPI_inline/clover_leaf_kernels.cpp -c -o MPI_inline/clover_leaf_kernels.o
 
@@ -276,7 +279,7 @@ mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/
 				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
 				-I. MPI_inline/$*.cpp -c -o MPI_inline/$*.o
 
-cloverleaf_mpi_inline: $(mpiinline_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+cloverleaf_mpi_inline: .ops_generated $(mpiinline_obj_list) clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
 	        initialise.cpp generate.cpp ideal_gas_ops.cpp \
                 update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
                 calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
@@ -297,7 +300,7 @@ cloverleaf_mpi_inline: $(mpiinline_obj_list) clover_leaf_ops.cpp start.cpp build
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
-./OpenACC/clover_leaf_kernels.o: ./OpenACC/clover_leaf_kernels.cpp ./OpenACC/clover_leaf_common.h Makefile
+./OpenACC/clover_leaf_kernels.o: .ops_generated ./OpenACC/clover_leaf_kernels.cpp ./OpenACC/clover_leaf_common.h Makefile
 		$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenACC/clover_leaf_kernels.cpp -c -o OpenACC/clover_leaf_kernels.o
 
@@ -308,12 +311,12 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 		$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-cloverleaf_openacc: $(openacc_obj_list) $(OPS_FILES_GEN) \
+cloverleaf_openacc: .ops_generated $(openacc_obj_list) $(OPS_FILES_GEN) \
                 $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
 		$(OPS_FILES_GEN) -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_openacc
 
-cloverleaf_mpi_openacc: $(openacc_obj_list) $(OPS_FILES_GEN) \
+cloverleaf_mpi_openacc: .ops_generated $(openacc_obj_list) $(OPS_FILES_GEN) \
                 $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
 		$(OPS_FILES_GEN) -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_openacc
@@ -322,7 +325,7 @@ cloverleaf_opencl: ./OpenCL/cloverleaf_opencl_kernels.o $(OPS_FILES_GEN) \
 		$(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 		$(CPP) $(MPIFLAGS) $(OCL_FLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) $(OPS_FILES_GEN) ./OpenCL/cloverleaf_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB) -o cloverleaf_opencl
 
-./OpenCL/cloverleaf_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
+./OpenCL/cloverleaf_opencl_kernels.o: .ops_generated ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
 		$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) $(HDF5_INC) -I. \
                 -c -o ./OpenCL/cloverleaf_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
@@ -330,7 +333,7 @@ cloverleaf_mpi_opencl: ./OpenCL/cloverleaf_mpi_opencl_kernels.o $(OPS_FILES_GEN)
                 $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OCL_FLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) $(OPS_FILES_GEN) ./OpenCL/cloverleaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl $(HDF5_LIB) -o cloverleaf_mpi_opencl
 
-./OpenCL/cloverleaf_mpi_opencl_kernels.o: ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
+./OpenCL/cloverleaf_mpi_opencl_kernels.o: .ops_generated ./OpenCL/clover_leaf_opencl_kernels.cpp Makefile
 		$(MPICPP) $(MPIFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) $(HDF5_INC) -I. -DOPS_MPI \
                 -c -o ./OpenCL/cloverleaf_mpi_opencl_kernels.o ./OpenCL/clover_leaf_opencl_kernels.cpp
 
@@ -347,4 +350,4 @@ openacc_error:
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled  cloverleaf_mpi_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt
+		rm -rf cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled  cloverleaf_mpi_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt .ops_generated *_ops.cpp MPI MPI_inline MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy

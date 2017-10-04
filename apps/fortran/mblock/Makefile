@@ -79,19 +79,23 @@ FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)
 
 all: $(TARGETS)
 
-mblock_seq: mblock_ops.F90 constants.F90
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../translator/python/fortran/ops_fortran.py mblock.F90
+	touch .ops_generated
+
+mblock_seq: .ops_generated mblock_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(FMODS) -c constants.F90 ./MPI/mblock_populate_kernel_seq_kernel.F90 \
 	mblock_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) mblock_ops.o constants.o mblock_populate_kernel_seq_kernel.o \
 	-o mblock_seq -lops_for_seq
 
-mblock_openmp: mblock_ops.F90 constants.F90
+mblock_openmp: .ops_generated mblock_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(FMODS) $(OMPFLAGS) -c constants.F90 ./MPI_OpenMP/mblock_populate_kernel_omp_kernel.F90 \
         mblock_ops.F90
 	$(FC) $(FFLAGS) $(FLINK) $(OMPFLAGS) mblock_ops.o constants.o mblock_populate_kernel_omp_kernel.o \
         -o mblock_openmp -lops_for_seq
 
-mblock_cuda: mblock_ops.F90 constants.F90
+mblock_cuda: .ops_generated mblock_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
 	$(FC) $(FFLAGS) $(FMODS) -DOPS_WITH_CUDAFOR -c constants.F90 ./CUDA/mblock_populate_kernel_cuda_kernel.CUF \
         mblock_ops.F90
@@ -101,19 +105,19 @@ else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
-mblock_mpi: mblock_ops.F90 constants.F90
+mblock_mpi: .ops_generated mblock_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) -c -DOPS_MPI constants.F90 ./MPI/mblock_populate_kernel_seq_kernel.F90 \
         mblock_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) -DOPS_MPI mblock_ops.o constants.o mblock_populate_kernel_seq_kernel.o \
         -o mblock_mpi -lops_for_mpi $(HDF5_LIB)
 
-mblock_mpi_openmp: mblock_ops.F90 constants.F90
+mblock_mpi_openmp: .ops_generated mblock_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OMPFLAGS) -c -DOPS_MPI constants.F90 ./MPI_OpenMP/mblock_populate_kernel_omp_kernel.F90 \
         mblock_ops.F90
 	$(MPIF90) $(FFLAGS) $(FLINK) $(OMPFLAGS) -DOPS_MPI mblock_ops.o constants.o mblock_populate_kernel_omp_kernel.o \
         -o mblock_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
-mblock_mpi_cuda: mblock_ops.F90 constants.F90
+mblock_mpi_cuda: .ops_generated mblock_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
 	$(MPIF90) $(FFLAGS) $(FMODS) -DOPS_WITH_CUDAFOR -DOPS_MPI -c constants.F90 ./CUDA/mblock_populate_kernel_cuda_kernel.CUF \
         mblock_ops.F90
@@ -134,3 +138,4 @@ clean:
 	rm -f mblock_mpi
 	rm -f mblock_mpi_openmp
 	rm -f mblock_mpi_cuda
+	rm -rf CUDA MPI MPI_OpenMP *_ops.F90 .ops_generated MPI_OpenACC 

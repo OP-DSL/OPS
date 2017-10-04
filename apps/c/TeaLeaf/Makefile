@@ -175,13 +175,16 @@ tealeaf_dev_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_NOGEN) $(HEADERS) \
 tealeaf_dev_mpi: Makefile $(PLAIN_FILES) $(OPS_FILES_NOGEN) $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_NOGEN) -lops_mpi $(HDF5_LIB) -o tealeaf_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py tea_leaf.cpp start.cpp field_summary.cpp generate.cpp initialise_chunk.cpp set_field.cpp tea_leaf_cg.cpp tea_leaf_cheby.cpp tea_leaf_common.cpp tea_leaf_jacobi.cpp tea_leaf_ppcg.cpp update_halo.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = tea_leaf_seq_kernels.cpp
 
-tealeaf_mpi: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+tealeaf_mpi: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o tealeaf_mpi
 
 #
@@ -189,26 +192,26 @@ tealeaf_mpi: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/li
 #
 OMP_KERNELS = tea_leaf_omp_kernels.cpp
 
-tealeaf_mpi_openmp: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+tealeaf_mpi_openmp: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o tealeaf_mpi_openmp
 
 
-tealeaf_openmp: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
+tealeaf_openmp: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	        $(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_openmp
 
 #
 # Sequential version
 #
-tealeaf_seq: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
+tealeaf_seq: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_seq
 
 #
 # Tiled version
 #
-tealeaf_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
+tealeaf_tiled: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_seq.a
 		$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o tealeaf_tiled
 
-tealeaf_mpi_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+tealeaf_mpi_tiled: Makefile .ops_generated $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 		$(CPP) $(OMPFLAGS) -DOPS_MPI $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o tealeaf_mpi_tiled
 
 #
@@ -216,15 +219,15 @@ tealeaf_mpi_tiled: Makefile $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/
 # CUDA version
 #
 
-tealeaf_cuda: Makefile ./CUDA/tealeaf_kernels_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+tealeaf_cuda: Makefile .ops_generated ./CUDA/tealeaf_kernels_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 		$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
 				 ./CUDA/tealeaf_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o tealeaf_cuda
 
-tealeaf_mpi_cuda: Makefile ./CUDA/tealeaf_kernels_mpi_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+tealeaf_mpi_cuda: Makefile .ops_generated ./CUDA/tealeaf_kernels_mpi_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
 				 ./CUDA/tealeaf_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_cuda
 
-tealeaf_mpi_cuda_tiled: Makefile ./CUDA/tealeaf_kernels_mpi_tiled_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+tealeaf_mpi_cuda_tiled: Makefile .ops_generated ./CUDA/tealeaf_kernels_mpi_tiled_cu.o $(PLAIN_FILES) $(OPS_FILES_GEN) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
 				 ./CUDA/tealeaf_kernels_mpi_tiled_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_cuda_tiled
 
@@ -257,11 +260,11 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 		$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) -DOPS_GPU -DOPS_MPI $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-tealeaf_openacc: $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+tealeaf_openacc: .ops_generated $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
 		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_openacc
 
-tealeaf_mpi_openacc: $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+tealeaf_mpi_openacc: .ops_generated $(openacc_obj_list) $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	        $(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
 		$(PLAIN_FILES) $(OPS_FILES_GEN) -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o tealeaf_mpi_openacc
 
@@ -272,7 +275,7 @@ tealeaf_opencl: ./OpenCL/tealeaf_opencl_kernels.o $(PLAIN_FILES) $(OPS_FILES_GEN
 		$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) $(HDF5_INC) -I. \
                 -c -o ./OpenCL/tealeaf_opencl_kernels.o ./OpenCL/tea_leaf_opencl_kernels.cpp
 
-tealeaf_mpi_opencl: ./OpenCL/tealeaf_mpi_opencl_kernels.o $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+tealeaf_mpi_opencl: .ops_generated ./OpenCL/tealeaf_mpi_opencl_kernels.o $(PLAIN_FILES) $(OPS_FILES_GEN) Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OCL_FLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) $(PLAIN_FILES) $(OPS_FILES_GEN) \
 					 ./OpenCL/tealeaf_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_mpi_opencl $(HDF5_LIB) -o tealeaf_mpi_opencl
 
@@ -293,4 +296,4 @@ openacc_error:
 #
 
 clean:
-		rm -f tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_mpi_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst
+		rm -rf tealeaf_dev_seq tealeaf_dev_mpi tealeaf_mpi tealeaf_seq tealeaf_tiled tealeaf_mpi_tiled tealeaf_openmp tealeaf_mpi_openmp tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled tealeaf_openacc tealeaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o tealeaf_opencl tealeaf_mpi_opencl ./OpenCL/*.o *.o *.lst .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy  MPI MPI_inline

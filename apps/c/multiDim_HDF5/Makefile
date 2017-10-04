@@ -45,7 +45,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = -qopenmp #-openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -152,15 +152,19 @@ write_dev_mpi: Makefile write.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_
 read_dev_mpi: Makefile read.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) read.cpp -lops_mpi $(HDF5_LIB) -o read_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py write.cpp
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py read.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = write_seq_kernels.cpp
 
-write_mpi: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+write_mpi: Makefile .ops_generated write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o write_mpi
-read_mpi: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+read_mpi: Makefile .ops_generated read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o read_mpi
 
 #
@@ -168,38 +172,38 @@ read_mpi: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 #
 OMP_KERNELS = write_omp_kernels.cpp
 
-write_mpi_openmp: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+write_mpi_openmp: Makefile .ops_generated write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o write_mpi_openmp
-read_mpi_openmp: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+read_mpi_openmp: Makefile .ops_generated read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o read_mpi_openmp
 
 
-write_openmp: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+write_openmp: Makefile .ops_generated  write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o write_openmp
-read_openmp: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
+read_openmp: Makefile .ops_generated read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o read_openmp
 
 #
 # Sequential version
 #
-write_seq: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+write_seq: Makefile .ops_generated  write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o write_seq
-read_seq: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
+read_seq: Makefile .ops_generated read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o read_seq
 
 #
 # CUDA version
 #
 
-write_cuda: Makefile ./CUDA/write_kernels_cu.o write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+write_cuda: Makefile .ops_generated ./CUDA/write_kernels_cu.o write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) write_ops.cpp ./CUDA/write_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o write_cuda
-read_cuda: Makefile ./CUDA/read_kernels_cu.o read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+read_cuda: Makefile .ops_generated ./CUDA/read_kernels_cu.o read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) read_ops.cpp ./CUDA/read_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o read_cuda
 
 
-write_mpi_cuda: Makefile ./CUDA/write_kernels_mpi_cu.o write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+write_mpi_cuda: Makefile .ops_generated ./CUDA/write_kernels_mpi_cu.o write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) write_ops.cpp ./CUDA/write_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o write_mpi_cuda
-read_mpi_cuda: Makefile ./CUDA/read_kernels_mpi_cu.o read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+read_mpi_cuda: Makefile .ops_generated ./CUDA/read_kernels_mpi_cu.o read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) read_ops.cpp ./CUDA/read_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o read_mpi_cuda
 
 
@@ -219,15 +223,15 @@ read_mpi_cuda: Makefile ./CUDA/read_kernels_mpi_cu.o read_ops.cpp $(OPS_INSTALL_
 #
 #OpenCL version
 #
-write_opencl: ./OpenCL/write_opencl_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+write_opencl: .ops_generated ./OpenCL/write_opencl_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) write_ops.cpp ./OpenCL/write_opencl_kernels.o  -lops_opencl $(HDF5_LIB) -o write_opencl
-read_opencl: ./OpenCL/read_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+read_opencl: .ops_generated ./OpenCL/read_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) read_ops.cpp ./OpenCL/read_opencl_kernels.o  -lops_opencl $(HDF5_LIB) -o read_opencl
 
 
-write_mpi_opencl: ./OpenCL/write_mpi_opencl_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+write_mpi_opencl: .ops_generated ./OpenCL/write_mpi_opencl_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) write_ops.cpp ./OpenCL/write_opencl_kernels.o -lops_mpi_opencl $(HDF5_LIB) -o write_mpi_opencl
-read_mpi_opencl: ./OpenCL/read_mpi_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+read_mpi_opencl: .ops_generated ./OpenCL/read_mpi_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) read_ops.cpp ./OpenCL/read_opencl_kernels.o -lops_mpi_opencl $(HDF5_LIB) -o read_mpi_opencl
 
 ./OpenCL/write_opencl_kernels.o: ./OpenCL/write_opencl_kernels.cpp Makefile
@@ -257,5 +261,5 @@ openacc_error:
 #
 
 clean:
-	rm -f write_dev_seq write_seq write_dev_seq write_mpi write_dev_mpi write_openmp write_mpi_openmp write_cuda write_mpi_cuda write_openacc write_mpi_openacc write_opencl write_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o write_opencl ./OpenCL/*.o *.o
-	rm -f read_dev_seq read_seq read_dev_seq read_mpi read_dev_mpi read_openmp read_mpi_openmp read_cuda read_mpi_cuda read_openacc read_mpi_openacc read_opencl read_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o read_opencl ./OpenCL/*.o *.o
+	rm -rf write_dev_seq write_seq write_dev_seq write_mpi write_dev_mpi write_openmp write_mpi_openmp write_cuda write_mpi_cuda write_openacc write_mpi_openacc write_opencl write_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o write_opencl ./OpenCL/*.o *.o
+	rm -rf read_dev_seq read_seq read_dev_seq read_mpi read_dev_mpi read_openmp read_mpi_openmp read_cuda read_mpi_cuda read_openacc read_mpi_openacc read_opencl read_mpi_opencl ./CUDA/*.o ./OpenACC/*.o *.o read_opencl ./OpenCL/*.o *.o .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy

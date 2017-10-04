@@ -31,13 +31,13 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP   = icpc
 ifdef DEBUG
-  CCFLAGS = -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS = -O0 -g -no-prec-div -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
   #CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = -qopenmp #-openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -144,13 +144,16 @@ poisson_dev_seq: Makefile poisson.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/l
 poisson_dev_mpi: Makefile poisson.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC)  $(OPS_LIB) poisson.cpp -lops_mpi $(HDF5_LIB) -o poisson_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py poisson.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = poisson_seq_kernels.cpp
 
-poisson_mpi: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+poisson_mpi: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC)  $(OPS_LIB) poisson_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o poisson_mpi
 
 #
@@ -158,26 +161,26 @@ poisson_mpi: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/l
 #
 OMP_KERNELS = poisson_omp_kernels.cpp
 
-poisson_mpi_openmp: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+poisson_mpi_openmp: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC)  $(OPS_LIB) poisson_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o poisson_mpi_openmp
 
 
-poisson_openmp: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+poisson_openmp: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) poisson_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_openmp
 
 #
 # Sequential version
 #
-poisson_seq: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+poisson_seq: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_seq
 
 #
 # Tiled version
 #
-poisson_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+poisson_tiled: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS) $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_tiled 
 
-poisson_mpi_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+poisson_mpi_tiled: Makefile .ops_generated poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o poisson_mpi_tiled 
 
 
@@ -185,10 +188,10 @@ poisson_mpi_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)
 # CUDA version
 #
 
-poisson_cuda: Makefile ./CUDA/poisson_kernels_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+poisson_cuda: Makefile .ops_generated ./CUDA/poisson_kernels_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) poisson_ops.cpp ./CUDA/poisson_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o poisson_cuda
 
-poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+poisson_mpi_cuda: Makefile .ops_generated ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) poisson_ops.cpp ./CUDA/poisson_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o poisson_mpi_cuda
 
 ./CUDA/poisson_kernels_cu.o: ./CUDA/poisson_kernels.cu Makefile
@@ -212,22 +215,22 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC)  $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-poisson_openacc: $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+poisson_openacc: .ops_generated $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
     poisson_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o poisson_openacc
 
-poisson_mpi_openacc: $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+poisson_mpi_openacc: .ops_generated $(openacc_obj_list) poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
     poisson_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o poisson_mpi_openacc
 
-poisson_opencl: ./OpenCL/poisson_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+poisson_opencl: .ops_generated ./OpenCL/poisson_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	$(CPP) $(CPPFLAGS) $(OPS_INC)  $(OPS_LIB) $(OPENCL_LIB) poisson_ops.cpp ./OpenCL/poisson_opencl_kernels.o -I. -lops_opencl $(HDF5_LIB) -o poisson_opencl
 
 ./OpenCL/poisson_opencl_kernels.o: ./OpenCL/poisson_opencl_kernels.cpp Makefile
 	$(MPICPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC)  -I. \
                 -c -o ./OpenCL/poisson_opencl_kernels.o ./OpenCL/poisson_opencl_kernels.cpp
 
-poisson_mpi_opencl: ./OpenCL/poisson_mpi_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+poisson_mpi_opencl: .ops_generated ./OpenCL/poisson_mpi_opencl_kernels.o poisson_ops.cpp poisson_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC)  $(OPS_LIB) $(OPENCL_LIB) -DOPS_MPI poisson_ops.cpp ./OpenCL/poisson_mpi_opencl_kernels.o -lops_mpi_opencl $(HDF5_LIB) -o poisson_mpi_opencl
 
 ./OpenCL/poisson_mpi_opencl_kernels.o: ./OpenCL/poisson_opencl_kernels.cpp Makefile
@@ -245,4 +248,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
+	rm -rf poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy MPI MPI_inline

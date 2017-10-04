@@ -4,7 +4,7 @@ cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/fortran/ops_fortran.py shsgc.F90
+#../../../translator/python/fortran/ops_fortran.py shsgc.F90
 make
 
 

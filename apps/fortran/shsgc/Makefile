@@ -16,7 +16,7 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35
+  PGI_CUDA_FORT_FLAGS=-Mcuda=cc35
 endif
 endif
 
@@ -83,7 +83,11 @@ FMODS_OPENACC = -I$(F_OPS_MOD)/openacc -I$(F_OPS_INC)
 
 all: $(TARGETS)
 
-shsgc_seq: shsgc_ops.F90 constants.F90
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../translator/python/fortran/ops_fortran.py shsgc.F90
+	touch .ops_generated
+
+shsgc_seq: .ops_generated shsgc_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) -c constants.F90 ./MPI/initialize_kernel_seq_kernel.F90 \
 	./MPI/drhouupdx_kernel_seq_kernel.F90 ./MPI/zerores_kernel_seq_kernel.F90 \
 	./MPI/drhoudx_kernel_seq_kernel.F90 ./MPI/save_kernel_seq_kernel.F90 \
@@ -100,7 +104,7 @@ shsgc_seq: shsgc_ops.F90 constants.F90
 	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
 	-o shsgc_seq -lops_for_seq -lops_hdf5 $(HDF5_LIB)
 
-shsgc_openmp: shsgc_ops.F90 constants.F90
+shsgc_openmp: .ops_generated shsgc_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS) $(OMPFLAGS) -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/drhouupdx_kernel_omp_kernel.F90 ./MPI_OpenMP/zerores_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/drhoudx_kernel_omp_kernel.F90 ./MPI_OpenMP/save_kernel_omp_kernel.F90 \
@@ -117,7 +121,7 @@ shsgc_openmp: shsgc_ops.F90 constants.F90
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
         -o shsgc_openmp -lops_for_seq -lops_hdf5 $(HDF5_LIB)
 
-shsgc_cuda: shsgc_ops.F90 constants.F90
+shsgc_cuda: .ops_generated shsgc_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
 	$(FC) $(OPT) $(FMODS) $(CUDAFOR) -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
         ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
@@ -138,7 +142,7 @@ else
 	@echo "cuda cannot be built with $(OPS_COMPILER) compilers .. requires a CUDA FORTRAN compiler (e.g. pgi)"
 endif
 
-shsgc_mpi: shsgc_ops.F90 constants.F90
+shsgc_mpi: .ops_generated shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI -c constants.F90 ./MPI/initialize_kernel_seq_kernel.F90 \
 	./MPI/drhouupdx_kernel_seq_kernel.F90 ./MPI/zerores_kernel_seq_kernel.F90 \
 	./MPI/drhoudx_kernel_seq_kernel.F90 ./MPI/save_kernel_seq_kernel.F90 \
@@ -155,7 +159,7 @@ shsgc_mpi: shsgc_ops.F90 constants.F90
 	fact_kernel_seq_kernel.o update_kernel_seq_kernel.o test_kernel_seq_kernel.o \
 	-o shsgc_mpi -lops_for_mpi $(HDF5_LIB)
 
-shsgc_mpi_openmp: shsgc_ops.F90 constants.F90
+shsgc_mpi_openmp: .ops_generated shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS) $(OMPFLAGS) -DOPS_MPI -c constants.F90 ./MPI_OpenMP/initialize_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/drhouupdx_kernel_omp_kernel.F90 ./MPI_OpenMP/zerores_kernel_omp_kernel.F90 \
         ./MPI_OpenMP/drhoudx_kernel_omp_kernel.F90 ./MPI_OpenMP/save_kernel_omp_kernel.F90 \
@@ -172,7 +176,7 @@ shsgc_mpi_openmp: shsgc_ops.F90 constants.F90
         fact_kernel_omp_kernel.o update_kernel_omp_kernel.o test_kernel_omp_kernel.o \
         -o shsgc_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
-shsgc_mpi_cuda: shsgc_ops.F90 constants.F90
+shsgc_mpi_cuda: .ops_generated shsgc_ops.F90 constants.F90
 ifeq ($(OPS_COMPILER),pgi)
 	$(MPIF90) $(OPT) $(FMODS) -DOPS_MPI $(CUDAFOR) -c constants.F90 ./CUDA/initialize_kernel_cuda_kernel.CUF \
         ./CUDA/drhouupdx_kernel_cuda_kernel.CUF ./CUDA/zerores_kernel_cuda_kernel.CUF \
@@ -194,7 +198,7 @@ else
 endif
 
 
-shsgc_openacc: shsgc_ops.F90 constants.F90
+shsgc_openacc: .ops_generated shsgc_ops.F90 constants.F90
 	$(FC) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhouupdx_kernel_openacc_kernel.F90 ./MPI_OpenACC/zerores_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhoudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/save_kernel_openacc_kernel.F90 \
@@ -211,7 +215,7 @@ shsgc_openacc: shsgc_ops.F90 constants.F90
         fact_kernel_openacc_kernel.o update_kernel_openacc_kernel.o test_kernel_openacc_kernel.o \
         -o shsgc_openacc -lops_for_cuda -lops_hdf5 $(HDF5_LIB)
 
-shsgc_mpi_openacc: shsgc_ops.F90 constants.F90
+shsgc_mpi_openacc: .ops_generated shsgc_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -DOPS_MPI -c constants.F90 ./MPI_OpenACC/initialize_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhouupdx_kernel_openacc_kernel.F90 ./MPI_OpenACC/zerores_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/drhoudx_kernel_openacc_kernel.F90 ./MPI_OpenACC/save_kernel_openacc_kernel.F90 \
@@ -241,3 +245,4 @@ clean:
 	rm -f shsgc_mpi_cuda
 	rm -f shsgc_openacc
 	rm -f shsgc_mpi_openacc
+	rm -rf CUDA MPI MPI_OpenMP *_ops.F90 .ops_generated MPI_OpenACC

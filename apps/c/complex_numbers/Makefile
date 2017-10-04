@@ -32,13 +32,13 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP   = icpc
 ifdef DEBUG
-  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
+  OMPFLAGS  = $(HDF5_LIB) -qopenmp $(HDF5_LIB) #-openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -52,7 +52,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
+  OMPFLAGS  = $(HDF5_LIB) -qopenmp $(HDF5_LIB) #-openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
@@ -146,13 +146,16 @@ complex_numbers_dev_seq: Makefile complex_numbers.cpp complex_numbers_block_0_ke
 complex_numbers_dev_mpi: Makefile complex_numbers.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) complex_numbers.cpp -lops_mpi $(HDF5_LIB) -o complex_numbers_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py complex_numbers.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = complex_numbers_seq_kernels.cpp
 
-complex_numbers_mpi: Makefile complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+complex_numbers_mpi: Makefile .ops_generated complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) complex_numbers_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o complex_numbers_mpi
 
 #
@@ -160,27 +163,27 @@ complex_numbers_mpi: Makefile complex_numbers_ops.cpp complex_numbers_block_0_ke
 #
 OMP_KERNELS = complex_numbers_omp_kernels.cpp
 
-complex_numbers_mpi_openmp: Makefile complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+complex_numbers_mpi_openmp: Makefile .ops_generated complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) complex_numbers_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o complex_numbers_mpi_openmp
 
 
-complex_numbers_openmp: Makefile complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+complex_numbers_openmp: Makefile .ops_generated complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) complex_numbers_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o complex_numbers_openmp
 
 #
 # Sequential version
 #
-complex_numbers_seq: clean Makefile complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+complex_numbers_seq: Makefile .ops_generated complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) complex_numbers_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o complex_numbers_seq
 
 #
 # CUDA version
 #
 
-complex_numbers_cuda: Makefile ./CUDA/complex_numbers_kernels_cu.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+complex_numbers_cuda: Makefile .ops_generated ./CUDA/complex_numbers_kernels_cu.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) complex_numbers_ops.cpp ./CUDA/complex_numbers_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o complex_numbers_cuda
 
-complex_numbers_mpi_cuda: Makefile ./CUDA/complex_numbers_kernels_mpi_cu.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+complex_numbers_mpi_cuda: Makefile .ops_generated ./CUDA/complex_numbers_kernels_mpi_cu.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) complex_numbers_ops.cpp ./CUDA/complex_numbers_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o complex_numbers_mpi_cuda
 
 ./CUDA/complex_numbers_kernels_cu.o: ./CUDA/complex_numbers_kernels.cu Makefile
@@ -204,22 +207,22 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-complex_numbers_openacc: $(openacc_obj_list) complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+complex_numbers_openacc: .ops_generated $(openacc_obj_list) complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
     complex_numbers_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o complex_numbers_openacc
 
-complex_numbers_mpi_openacc: $(openacc_obj_list) complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+complex_numbers_mpi_openacc: .ops_generated $(openacc_obj_list) complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
     complex_numbers_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o complex_numbers_mpi_openacc
 
-complex_numbers_opencl: ./OpenCL/complex_numbers_opencl_kernels.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
+complex_numbers_opencl: .ops_generated ./OpenCL/complex_numbers_opencl_kernels.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) complex_numbers_ops.cpp ./OpenCL/complex_numbers_opencl_kernels.o -I. -lops_opencl  $(HDF5_LIB) -o complex_numbers_opencl
 
 ./OpenCL/complex_numbers_opencl_kernels.o: ./OpenCL/complex_numbers_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/complex_numbers_opencl_kernels.o ./OpenCL/complex_numbers_opencl_kernels.cpp
 
-complex_numbers_mpi_opencl: ./OpenCL/complex_numbers_mpi_opencl_kernels.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+complex_numbers_mpi_opencl: .ops_generated ./OpenCL/complex_numbers_mpi_opencl_kernels.o complex_numbers_ops.cpp complex_numbers_block_0_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) complex_numbers_ops.cpp ./OpenCL/complex_numbers_mpi_opencl_kernels.o -I. -lops_mpi_opencl  $(HDF5_LIB) -o complex_numbers_mpi_opencl
 
 ./OpenCL/complex_numbers_mpi_opencl_kernels.o: ./OpenCL/complex_numbers_opencl_kernels.cpp Makefile
@@ -239,4 +242,4 @@ openacc_error:
 
 clean:
 	rm -f complex_numbers_dev_seq complex_numbers_dev_mpi complex_numbers_mpi complex_numbers_seq complex_numbers_openmp complex_numbers_mpi_openmp complex_numbers_cuda complex_numbers_mpi_cuda complex_numbers_openacc complex_numbers_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o complex_numbers_opencl complex_numbers_mpi_opencl ./OpenCL/*.o *.o
-	rm -f *.h5
+	rm -rf *.h5 .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy  MPI MPI_inline

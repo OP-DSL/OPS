@@ -4,7 +4,7 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/c/ops.py poisson.cpp
+#../../../translator/python/c/ops.py poisson.cpp
 make
 #============================ Test Poisson with Intel Compilers==========================================================
 echo '============> Running OpenMP'
