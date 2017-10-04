@@ -4,7 +4,7 @@ cd ../../../ops/fortran
 source ../source_intel
 make
 cd -
-../../../translator/python/fortran/ops_fortran.py multidim.F90
+#../../../translator/python/fortran/ops_fortran.py multidim.F90
 make
 #<<COMMENT
 echo '============================ Test MultiDim Intel Compilers=========================================================='

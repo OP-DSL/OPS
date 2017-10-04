@@ -4,7 +4,7 @@ cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/fortran/ops_fortran.py poisson.F90
+#../../../translator/python/fortran/ops_fortran.py poisson.F90
 make
 echo '============================ Test Poisson Intel Compilers=========================================================='
 echo '============> Running OpenMP'
