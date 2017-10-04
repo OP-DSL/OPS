@@ -146,13 +146,16 @@ mblock_dev_seq: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)
 mblock_dev_mpi: Makefile mblock.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock.cpp -lops_mpi $(HDF5_LIB) -o mblock_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py mblock.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = mblock_seq_kernels.cpp
 
-mblock_mpi: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+mblock_mpi: Makefile .ops_generated mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o mblock_mpi
 
 #
@@ -160,27 +163,27 @@ mblock_mpi: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)
 #
 OMP_KERNELS = mblock_omp_kernels.cpp
 
-mblock_mpi_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+mblock_mpi_openmp: Makefile .ops_generatedmblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o mblock_mpi_openmp
 
 
-mblock_openmp: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+mblock_openmp: Makefile .ops_generatedmblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(HDF5_LIB) -o mblock_openmp
 
 #
 # Sequential version
 #
-mblock_seq: Makefile mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
+mblock_seq: Makefile .ops_generatedmblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(CPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) mblock_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o mblock_seq
 
 #
 # CUDA version
 #
 
-mblock_cuda: Makefile ./CUDA/mblock_kernels_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+mblock_cuda: Makefile .ops_generated./CUDA/mblock_kernels_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_cu.o -lcudart -lops_cuda $(HDF5_LIB) -o mblock_cuda
 
-mblock_mpi_cuda: Makefile ./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+mblock_mpi_cuda: Makefile .ops_generated./CUDA/mblock_kernels_mpi_cu.o mblock_ops.cpp mblock_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mblock_ops.cpp ./CUDA/mblock_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_cuda
 
 ./CUDA/mblock_kernels_cu.o: ./CUDA/mblock_kernels.cu Makefile
@@ -204,11 +207,11 @@ openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | t
 	$(MPICPP) -acc -ta=tesla:cc35 -ta=tesla:maxregcount:64 $(MPIFLAGS) $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
         -I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
-mblock_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+mblock_openacc: .ops_generated$(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
     mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda $(HDF5_LIB) -o mblock_openacc
 
-mblock_mpi_openacc: $(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+mblock_mpi_openacc: .ops_generated$(openacc_obj_list) mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
     mblock_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mblock_mpi_openacc
 
@@ -219,7 +222,7 @@ mblock_opencl: ./OpenCL/mblock_opencl_kernels.o mblock_ops.cpp mblock_populate_k
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
                 -c -o ./OpenCL/mblock_opencl_kernels.o ./OpenCL/mblock_opencl_kernels.cpp
 
-mblock_mpi_opencl: ./OpenCL/mblock_mpi_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
+mblock_mpi_opencl: .ops_generated ./OpenCL/mblock_mpi_opencl_kernels.o mblock_ops.cpp mblock_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mblock_ops.cpp ./OpenCL/mblock_mpi_opencl_kernels.o -I. -lops_mpi_opencl  $(HDF5_LIB) -o mblock_mpi_opencl
 
 ./OpenCL/mblock_mpi_opencl_kernels.o: ./OpenCL/mblock_opencl_kernels.cpp Makefile
@@ -238,4 +241,4 @@ openacc_error:
 #
 
 clean:
-	rm -f mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_seq mblock_openmp mblock_mpi_openmp mblock_cuda mblock_mpi_cuda mblock_openacc mblock_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o mblock_opencl mblock_mpi_opencl ./OpenCL/*.o *.o
+	rm -rf mblock_dev_seq mblock_dev_mpi mblock_mpi mblock_seq mblock_openmp mblock_mpi_openmp mblock_cuda mblock_mpi_cuda mblock_openacc mblock_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o mblock_opencl mblock_mpi_opencl ./OpenCL/*.o *.o MPI MPI_inline .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy

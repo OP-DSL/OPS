@@ -4,7 +4,7 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/c/ops.py shsgc.cpp
+#../../../translator/python/c/ops.py shsgc.cpp
 make
 #============================ Test SHSGC With Intel Compilers==========================================================
 echo '============> Running OpenMP'

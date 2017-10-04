@@ -108,7 +108,11 @@ FMODS_OPENACC = -I$(F_OPS_MOD)/openacc -I$(F_OPS_INC)
 
 all: $(TARGETS)
 
-poisson_seq: poisson_ops.F90 constants.F90
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../translator/python/fortran/ops_fortran.py poisson.F90
+	touch .ops_generated
+
+poisson_seq: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) -c constants.F90 \
 	./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
 	./MPI/poisson_populate_kernel_seq_kernel.F90 \
@@ -124,7 +128,7 @@ poisson_seq: poisson_ops.F90 constants.F90
 	poisson_error_kernel_seq_kernel.o \
 	-o poisson_seq -lops_for_seq
 
-poisson_openmp: poisson_ops.F90 constants.F90
+poisson_openmp: .ops_generated  poisson_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(OMPFLAGS) $(FMODS) -c constants.F90 \
 	./MPI_OpenMP/poisson_initialguess_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_populate_kernel_omp_kernel.F90 \
@@ -140,7 +144,7 @@ poisson_openmp: poisson_ops.F90 constants.F90
 	poisson_error_kernel_omp_kernel.o \
         -o poisson_openmp -lops_for_seq
 
-poisson_cuda: poisson_ops.F90 constants.F90
+poisson_cuda: .ops_generated poisson_ops.F90 constants.F90
 	$(FC) $(FFLAGS) $(FMODS) $(CUDAFOR) -c constants.F90 \
         ./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
@@ -156,7 +160,7 @@ poisson_cuda: poisson_ops.F90 constants.F90
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_cuda -lops_for_cuda
 
-poisson_mpi: poisson_ops.F90 constants.F90
+poisson_mpi: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OPS_MPI) -c constants.F90 \
         ./MPI/poisson_initialguess_kernel_seq_kernel.F90 \
         ./MPI/poisson_populate_kernel_seq_kernel.F90 \
@@ -172,7 +176,7 @@ poisson_mpi: poisson_ops.F90 constants.F90
         poisson_error_kernel_seq_kernel.o \
 	-o poisson_mpi -lops_for_mpi $(HDF5_LIB)
 
-poisson_mpi_openmp: poisson_ops.F90 constants.F90
+poisson_mpi_openmp: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(OMPFLAGS) $(FMODS) $(OPS_MPI) -c constants.F90 \
 	./MPI_OpenMP/poisson_initialguess_kernel_omp_kernel.F90 \
 	./MPI_OpenMP/poisson_populate_kernel_omp_kernel.F90 \
@@ -188,7 +192,7 @@ poisson_mpi_openmp: poisson_ops.F90 constants.F90
 	poisson_error_kernel_omp_kernel.o \
         -o poisson_mpi_openmp -lops_for_mpi $(HDF5_LIB)
 
-poisson_mpi_cuda: poisson_ops.F90 constants.F90
+poisson_mpi_cuda: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(FFLAGS) $(FMODS) $(OPS_MPI) $(CUDAFOR) -c constants.F90 \
 	./CUDA/poisson_initialguess_kernel_cuda_kernel.CUF \
         ./CUDA/poisson_populate_kernel_cuda_kernel.CUF \
@@ -204,7 +208,7 @@ poisson_mpi_cuda: poisson_ops.F90 constants.F90
         poisson_error_kernel_cuda_kernel.o \
         -o poisson_mpi_cuda -lops_for_mpi_cuda $(HDF5_LIB)
 
-poisson_openacc: poisson_ops.F90 constants.F90
+poisson_openacc: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) -c constants.F90 \
         ./MPI_OpenACC/poisson_initialguess_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/poisson_populate_kernel_openacc_kernel.F90 \
@@ -220,7 +224,7 @@ poisson_openacc: poisson_ops.F90 constants.F90
         poisson_error_kernel_openacc_kernel.o \
         -o poisson_openacc -lops_for_cuda $(HDF5_LIB)
 
-poisson_mpi_openacc: poisson_ops.F90 constants.F90
+poisson_mpi_openacc: .ops_generated poisson_ops.F90 constants.F90
 	$(MPIF90) $(OPT) $(FMODS_OPENACC) $(OpenACCFLAGS) $(OPS_MPI) -c constants.F90 \
         ./MPI_OpenACC/poisson_initialguess_kernel_openacc_kernel.F90 \
         ./MPI_OpenACC/poisson_populate_kernel_openacc_kernel.F90 \
@@ -249,3 +253,4 @@ clean:
 	rm -f poisson_mpi_cuda
 	rm -f poisson_openacc
 	rm -f poisson_mpi_openacc
+	rm -rf CUDA MPI MPI_OpenMP *_ops.F90 .ops_generated MPI_OpenACC

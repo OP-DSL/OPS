@@ -239,4 +239,4 @@ openacc_error:
 
 clean:
 	rm -f complex_numbers_dev_seq complex_numbers_dev_mpi complex_numbers_mpi complex_numbers_seq complex_numbers_openmp complex_numbers_mpi_openmp complex_numbers_cuda complex_numbers_mpi_cuda complex_numbers_openacc complex_numbers_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o complex_numbers_opencl complex_numbers_mpi_opencl ./OpenCL/*.o *.o
-	rm -f *.h5
+	rm -f *.h5 .ops_generated *_ops.cpp MPI_OpenMP CUDA OpenCL OpenACC Tiled CUDA_Lazy  MPI MPI_inline
