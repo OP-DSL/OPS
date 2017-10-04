@@ -2,6 +2,17 @@ numawrap*
 *.out
 *_cu.o
 *.o
+*_ops.cpp
+*_openacc_kernel_c.c
+*_openacc_kernel.cpp
+*_seq_kernel.cpp
+*_mpiinline_kernel.cpp
+*_mpiinline_kernel_c.c
+*_omp_kernel.cpp
+*_cuda_kernel.cu
+*_opencl_kernel.cpp
+*.cl
+.ops_generated
 cloverleaf_seq
 cloverleaf_mpi
 cloverleaf_openmp

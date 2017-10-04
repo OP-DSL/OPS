@@ -41,8 +41,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
@@ -187,13 +187,16 @@ cloverleaf_dev_mpi: Makefile  $(OPS_FILES_PLAIN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  $(OPS_FILES_PLAIN) -lops_mpi $(HDF5_LIB) -o cloverleaf_dev_mpi
 
+.ops_generated:
+	$(OPS_INSTALL_PATH)/../../translator/python/c/ops.py clover_leaf.cpp revert.cpp reset_field.cpp ideal_gas.cpp PdV.cpp accelerate.cpp advec_cell.cpp accelerate.cpp advec_mom.cpp calc_dt.cpp field_summary.cpp flux_calc.cpp viscosity.cpp initialise_chunk.cpp generate.cpp update_halo.cpp
+	touch .ops_generated
 #
 # mpi version
 #
 
 SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 
-cloverleaf_mpi: Makefile $(OPS_FILES_GEN) \
+cloverleaf_mpi: Makefile .ops_generated $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi
 
