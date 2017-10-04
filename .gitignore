@@ -12,6 +12,8 @@ numawrap*
 *_cuda_kernel.cu
 *_opencl_kernel.cpp
 *.cl
+.DS_Store
+*.nvprof
 .ops_generated
 cloverleaf_seq
 cloverleaf_mpi
@@ -59,3 +61,10 @@ poisson_openacc
 *_mpi_opencl
 *_mpi_cuda
 *.lst
+Tiled
+MPI_inline
+MPI_OpenMP
+OpenACC
+OpenCL
+CUDA
+CUDA_Lazy
