@@ -187,7 +187,9 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
             #code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
             code('#define OPS_ACC'+str(n)+'(x,y) ( n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+ '+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+'+x+xdim'+str(n)+'_'+name+'*(y))')
           if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+            #code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+	    code('#define OPS_ACC'+str(n)+'(x,y,z) ( n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+'+ n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+'+n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2]) +'+ x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+    
     code('')
 
     for n in range (0, nargs):
@@ -333,11 +335,12 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
         line = line + str(consts[nc]['name']).replace('"','')+'[0:'+num+'],'
     line = line[:-1]+')'
     #code(line)
-
+    #code('int num_team=(y_size*x_size)/OPS_threads_for_block;\n')
     #line = '#pragma omp target teams \n'
     #line = '#pragma omp target teams distribute parallel for num_teams(OPS_threads)  thread_limit(OPS_threads_for_block)'
     #line = '#pragma omp target teams distribute parallel for num_teams(y_size)  thread_limit(x_size) schedule(static,1)'
-    line = '#pragma omp target teams distribute parallel for schedule(static,1)'
+    #line = '#pragma omp target teams distribute parallel for  num_teams(num_team) thread_limit(OPS_threads_for_block)'
+    line = '#pragma omp target teams distribute parallel for '
     #line = '#pragma omp target '
     #for n in range (0,nargs):
     #  if arg_typ[n] == 'ops_arg_dat':
@@ -422,7 +425,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       #code('#endif')
       FOR('i','0','y_size*x_size*z_size')
     if NDIM==2:
-      #FOR('n_y','0','y_size*x_size')
+      #FOR('n_y','0','y_size')
       FOR('i','0','y_size*x_size')
       #code('#ifdef OPS_GPU')
       #line = '#pragma omp target \n'
@@ -450,20 +453,15 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
       #code('#endif')
 
     #FOR('n_x','0','x_size')
+
+    
     #if arg_idx:
     #  if NDIM==1:
     #    code('int arg_idx[] = {arg_idx0+n_x};')
     #  elif NDIM==2:
-    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};')
+    #    code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size};')
     #  elif NDIM==3:
-    #    code('int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
-    if arg_idx:
-      if NDIM==1:
-        code('int arg_idx[] = {arg_idx0+n_x};')
-      elif NDIM==2:
-        code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+i/x_size};')
-      elif NDIM==3:
-        code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+ (i / x_size) % y_size, arg_idx2+i/(x_size*y_size)};')
+    #    code('int arg_idx[] = {arg_idx0+i%x_size, arg_idx1+ (i / x_size) % y_size, arg_idx2+i/(x_size*y_size)};')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -490,19 +488,33 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
     text = ''
 
     #text = text +' int n_x= module(i,x_size);'
-    #text = text+'int id = omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();'
+    #text = text+'const int blocksize =  omp_get_num_threads();\n'
+    text = text+'const int id = omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();\n'
+    #text = text+' int n_y = 0;\n'
+    #text = text+'int n_x = id % x_size;\n'
+    #text = text+'while(id >= x_size){ id -= x_size; ++n_y;}\n'
+    #text = text+'int n_x = id;\n'
+
     #text = text+'if(id < x_size*y_size) {'
     #text = text+'if( omp_get_team_num() < y_size && omp_get_thread_num()< x_size ) {'
-    #text = text +' int n_x= id%x_size;'
+    text = text +'const int n_x= id%x_size;'
     #text = text +' int n_x= omp_get_thread_num();'
-    text = text + 'int n_x = i%x_size;'
+    #text = text + 'int n_x = i%x_size;'
     if NDIM == 2:
-      #text = text +' int n_y= id/x_size;'
+      text = text +'const int n_y= id/x_size;'
       #text = text +' int n_y= omp_get_team_num();'
-      text = text +' int n_y= i/x_size;'# //omp_get_thread_num();'
+      #text = text +' int n_y= i/x_size;'# //omp_get_thread_num();'
     if NDIM == 3:
-      text = text +' int n_y= (i/x_size)%y_size;'
-      text = text +' int n_z= i/(x_size*y_size);'
+      text = text +'const int n_y= (id/x_size)%y_size;'
+      text = text +'const int n_z= id/(x_size*y_size);'
+    if arg_idx:
+      if NDIM==1:
+        text = text +'int arg_idx[] = {arg_idx0+n_x};'
+      elif NDIM==2:
+        text = text +'int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};'
+      elif NDIM==3:
+        text = text +'int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};'
+
     for n in range (0, nargs):
       text = text + kernel_params[n] + ' = '
       if arg_typ[n] == 'ops_arg_dat':
@@ -516,8 +528,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
           #' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         elif NDIM == 3:
           #text = text +' p_a'+str(n)+'+ base'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-          text = text +' p_a'+str(n) + 'n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-          text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          text = text +' p_a'+str(n) #+ 'n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          #text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
