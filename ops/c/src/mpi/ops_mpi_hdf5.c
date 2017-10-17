@@ -49,7 +49,11 @@
 #include <hdf5.h>
 #include <hdf5_hl.h>
 
-char *copy_str(char const *src);
+static char *copy_str(char const *src) {
+  const size_t len = strlen(src) + 1;
+  char *dest = (char *)calloc(len+16, sizeof(char));
+  return strncpy(dest, src, len);
+}
 
 //
 // MPI Communicator for parallel I/O
