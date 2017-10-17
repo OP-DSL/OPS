@@ -1454,7 +1454,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
       type_size /*size of(type)*/, type, dat_name);
 
   created_dat->is_hdf5 = 1;
-  created_dat->hdf5_file = file_name;
+  created_dat->hdf5_file = copy_str(file_name);
   created_dat->user_managed = 0;
 
   H5Pclose(plist_id);
