@@ -55,7 +55,11 @@
 * if the block does not exists in file creates block as HDF5 group
 *******************************************************************************/
 
-char *copy_str(char const *src);
+static char *copy_str(char const *src) {
+  const size_t len = strlen(src) + 1;
+  char *dest = (char *)calloc(len+16, sizeof(char));
+  return strncpy(dest, src, len);
+}
 
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
