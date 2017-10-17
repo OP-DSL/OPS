@@ -55,6 +55,8 @@
 * if the block does not exists in file creates block as HDF5 group
 *******************************************************************************/
 
+char *copy_str(char const *src);
+
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
   // HDF5 APIs definitions

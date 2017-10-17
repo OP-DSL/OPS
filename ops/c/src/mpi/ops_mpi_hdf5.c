@@ -49,6 +49,8 @@
 #include <hdf5.h>
 #include <hdf5_hl.h>
 
+char *copy_str(char const *src);
+
 //
 // MPI Communicator for parallel I/O
 //
