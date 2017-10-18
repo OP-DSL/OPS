@@ -77,16 +77,18 @@ void ops_par_loop_gridgen_kernel(char const *name, ops_block block, int dim,
 #endif
 
   int off0_0 = offs[0][0];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
   p_a[0] = (char *)args[0].data + base0;
 
   p_a[1] = (char *)arg_idx;
 
   // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
 
   // Halo Exchanges
   ops_H_D_exchanges_host(args, 2);

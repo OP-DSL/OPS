@@ -88,7 +88,8 @@ void ops_par_loop_gridgen_kernel(char const *name, ops_block block, int dim,
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
-              args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else

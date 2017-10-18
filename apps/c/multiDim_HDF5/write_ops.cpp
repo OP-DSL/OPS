@@ -3,6 +3,7 @@
 //
 
 #define OPS_3D
+void ops_init_backend();
 #include "ops_lib_cpp.h"
 
 //
@@ -23,6 +24,7 @@ void ops_par_loop_write_kernel(char const *, ops_block, int, int *, ops_arg,
 int main(int argc, char **argv) {
 
   ops_init(argc, argv, 5);
+  ops_init_backend();
   ops_printf("Initialize OPS\n\n");
 
   ops_block grid0 = ops_decl_block(3, "grid0");

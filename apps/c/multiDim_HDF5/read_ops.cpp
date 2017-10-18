@@ -3,6 +3,7 @@
 //
 
 #define OPS_3D
+void ops_init_backend();
 #include "ops_lib_cpp.h"
 
 #include <math.h>
@@ -14,6 +15,7 @@
 int main(int argc, char **argv) {
 
   ops_init(argc, argv, 5);
+  ops_init_backend();
   ops_printf("Hello world from OPS!\n\n");
 
   ops_block block = ops_decl_block_hdf5(3, "grid0", "write_data.h5");
