@@ -38,6 +38,8 @@ extern double Mach;
 extern double xt;
 extern int scale;
 
+void ops_init_backend() {}
+
 // user kernel files
 #include "Riemann_kernel_omp_kernel.cpp"
 #include "calupwindeff_kernel_omp_kernel.cpp"

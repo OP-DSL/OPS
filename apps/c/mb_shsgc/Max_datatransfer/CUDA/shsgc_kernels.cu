@@ -8,6 +8,8 @@
 #include "ops_cuda_reduction.h"
 #include "ops_cuda_rt_support.h"
 
+#include <cuComplex.h>
+
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
@@ -36,6 +38,8 @@ __constant__ double con;
 __constant__ double Mach;
 __constant__ double xt;
 __constant__ int scale;
+
+void ops_init_backend() {}
 
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {

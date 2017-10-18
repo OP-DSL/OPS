@@ -16,6 +16,8 @@
 #endif
 // global constants
 
+void ops_init_backend() {}
+
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   {
