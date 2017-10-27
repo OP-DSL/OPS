@@ -71,6 +71,8 @@ from ops_gen_mpi_opencl import ops_gen_mpi_opencl
 
 import util
 
+arithmetic_regex_pattern = r'^[ \(\)\+\-\*\\\.\%0-9]+$'
+
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
 
@@ -86,7 +88,99 @@ def ops_parse_calls(text):
 
     return (inits, exits)
 
-def ops_decl_const_parse(text):
+def ops_parse_macro_defs(text):
+    """Parsing for C macro definitions"""
+
+    defs = {}
+    macro_def_pattern = r'(\n|^)[ ]*(#define[ ]+)([A-Za-z0-9\_]+)[ ]+([0-9A-Za-z\_\.\+\-\*\/\(\) ]+)'
+    for match in re.findall(macro_def_pattern, text):
+        if len(match) < 4:
+            continue
+        elif len(match) > 4:
+            print("Unexpected format for macro definition: " + str(match))
+            continue
+        key = match[2]
+        value = match[3]
+        defs[key] = value
+        # print(key + " -> " + value)
+    return defs
+
+def self_evaluate_macro_defs(macro_defs):
+    """Recursively evaluate C macro definitions that refer to other detected macros"""
+
+    substitutions_performed = True
+    while substitutions_performed:
+        substitutions_performed = False
+        for k in macro_defs.keys():
+            k_val = macro_defs[k]
+            m = re.search(arithmetic_regex_pattern, k_val)
+            if m != None:
+                ## This macro definiton is numeric
+                continue
+
+            ## If value of key 'k' depends on value of other 
+            ## keys, then substitute in value:
+            for k2 in macro_defs.keys():
+                pattern = r'' + '(^|[^a-zA-Z0-9_])' + k2 + '($|[^a-zA-Z0-9_])'
+                m = re.search(pattern, k_val)
+
+                if m != None:
+                    ## The macro "k" refers to macro "k2"
+                    k2_val = macro_defs[k2]
+                    macro_defs[k] = re.sub(pattern, "\\g<1>"+k2_val+"\\g<2>", k_val)
+                    # print("Performing a substitution of '" + k2 + "'->'" + k2_val + "' into '" + k_val + "' to produce '" + macro_defs[k] + "'")
+                    substitutions_performed = True
+
+    ## Evaluate any mathematical expressions:
+    for k in macro_defs.keys():
+        val = macro_defs[k]
+        m = re.search(arithmetic_regex_pattern, val)
+        if m != None:
+            res = ""
+            try:
+                res = eval(val)
+            except:
+                pass
+            if type(res) != type(""):
+                if str(res) != val:
+                    # print("Replacing '" + val + "' with '" + str(res) + "'")
+                    macro_defs[k] = str(res)
+
+def evaluate_macro_defs_in_string(macro_defs, string):
+    """Recursively evaluate C macro definitions in 'string' """
+
+    resolved_string = string
+
+    substitutions_performed = True
+    while substitutions_performed:
+        substitutions_performed = False
+        for k in macro_defs.keys():
+            k_val = macro_defs[k]
+
+            k_pattern = r'' + r'' + '(^|[^a-zA-Z0-9_])' + k + '($|[^a-zA-Z0-9_])'
+            m = re.search(k_pattern, resolved_string)
+            if m != None:
+                ## "string" contains a reference to macro "k", so substitute 
+                ## in its definition:
+                resolved_string_new = re.sub(k_pattern, "\\g<1>"+k_val+"\\g<2>", resolved_string)
+                # print("Performing a substitution of '" + k + "'->'" + k_val + "' into '" + resolved_string + "'' to produce '" + resolved_string_new + "'")
+                resolved_string = resolved_string_new
+                substitutions_performed = True
+
+
+    if re.search(arithmetic_regex_pattern, resolved_string) != None:
+        res = ""
+        try:
+            res = eval(resolved_string)
+        except:
+            return resolved_string
+        else:
+            if type(res) != type(""):
+                resolved_string = str(res)
+
+    return resolved_string
+
+def ops_decl_const_parse(text, macro_defs):
   """Parsing for ops_decl_const calls"""
 
   consts = []
@@ -97,6 +191,7 @@ def ops_decl_const_parse(text):
     if len(args) != 4:
       print 'Error in ops_decl_const : must have four arguments'
       return
+    args[1] = evaluate_macro_defs_in_string(macro_defs, args[1])
 
     consts.append({
           'loc': m.start(),
@@ -125,7 +220,7 @@ def arg_parse(text, j):
                 return loc2
         loc2 = loc2 + 1
 
-def get_arg_dat(arg_string, j):
+def get_arg_dat(arg_string, j, macro_defs):
     loc = arg_parse(arg_string, j + 1)
     dat_args_string = arg_string[arg_string.find('(', j) + 1:loc]
 
@@ -145,7 +240,7 @@ def get_arg_dat(arg_string, j):
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat',
                   'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
+                  'dim': evaluate_macro_defs_in_string(macro_defs, dat_args_string.split(',')[1].strip()),
                   'sten': dat_args_string.split(',')[2].strip(),
                   'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[4].strip()}
@@ -154,7 +249,7 @@ def get_arg_dat(arg_string, j):
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat_opt',
                   'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
+                  'dim': evaluate_macro_defs_in_string(macro_defs, dat_args_string.split(',')[1].strip()),
                   'sten': dat_args_string.split(',')[2].strip(),
                   'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[4].strip(),
@@ -163,7 +258,7 @@ def get_arg_dat(arg_string, j):
 
     return temp_dat
 
-def get_arg_gbl(arg_string, k):
+def get_arg_gbl(arg_string, k, macro_defs):
     loc = arg_parse(arg_string, k + 1)
     gbl_args_string = arg_string[arg_string.find('(', k) + 1:loc]
 
@@ -180,7 +275,7 @@ def get_arg_gbl(arg_string, k):
     # and type as op_arg_gbl
     temp_gbl = {'type': 'ops_arg_gbl',
                 'data': gbl_args_string.split(',')[0].strip(),
-                'dim': gbl_args_string.split(',')[1].strip(),
+                'dim': evaluate_macro_defs_in_string(macro_defs, gbl_args_string.split(',')[1].strip()),
                 'typ': (gbl_args_string.split(',')[2].replace('"','')).strip(),
                 'acc': gbl_args_string.split(',')[3].strip()}
 
@@ -193,7 +288,7 @@ def get_arg_idx(arg_string, l):
 
     return temp_idx
 
-def ops_par_loop_parse(text):
+def ops_par_loop_parse(text, macro_defs):
   """Parsing for op_par_loop calls"""
 
   loop_args = []
@@ -220,14 +315,14 @@ def ops_par_loop_parse(text):
 
       while j > -1 or k > -1 or l > -1 or m>-1:
         if j>=0 and (j < k or k<=-1) and (j < l or l <=-1) and (j < m or m <=-1):
-            temp_dat = get_arg_dat(arg_string, j)
+            temp_dat = get_arg_dat(arg_string, j, macro_defs)
             # append this struct to a temporary list/array
             temp_args.append(temp_dat)
             num_args = num_args + 1
             j = arg_string.find(search2, j + 12)
 
         elif k>=0 and (k < j or j<=-1) and (k < l or l <=-1) and (k < m or m <=-1):
-            temp_gbl = get_arg_gbl(arg_string, k)
+            temp_gbl = get_arg_gbl(arg_string, k, macro_defs)
             # append this struct to a temporary list/array
             temp_args.append(temp_gbl)
             num_args = num_args + 1
@@ -241,7 +336,7 @@ def ops_par_loop_parse(text):
             l = arg_string.find(search4, l + 12)
 
         elif m>=0 and (m < j or j<=-1) and (m < l or l <=-1) and (m < k or k <=-1):
-            temp_gbl = get_arg_gbl(arg_string, m)
+            temp_gbl = get_arg_gbl(arg_string, m,  macro_defs)
             # append this struct to a temporary list/array
             temp_args.append(temp_gbl)
             num_args = num_args + 1
@@ -251,7 +346,7 @@ def ops_par_loop_parse(text):
             'name1': arg_string.split(',')[0].strip(),
             'name2': arg_string.split(',')[1].strip(),
             'block': arg_string.split(',')[2].strip(),
-            'dim': arg_string.split(',')[3].strip(),
+            'dim': evaluate_macro_defs_in_string(macro_defs, arg_string.split(',')[3].strip()),
             'range': arg_string.split(',')[4].strip(),
             'args': temp_args,
             'nargs': num_args}
@@ -277,6 +372,7 @@ def main(source_files):
   consts = []
   kernels = []
   kernels_in_files = []
+  macro_defs = {}
 
   OPS_GBL = 2
 
@@ -293,6 +389,23 @@ def main(source_files):
   #
   # loop over all input source files
   #
+  
+  # Find the macros defiend in the source files 
+  for a in range(0, len(source_files)):
+        src_file = str(source_files[a])
+        f = open(src_file, 'r')
+        text = f.read()
+        f.close()
+
+        defs = ops_parse_macro_defs(text)
+        for k in defs.keys():
+            if (k in macro_defs) and (defs[k] != macro_defs[k]):
+                raise ValueError("Multiple macros with same same %s", k)
+            else:
+                macro_defs[k] = defs[k]
+        defs = {}
+  self_evaluate_macro_defs(macro_defs)
+  
 
   kernels_in_files = [[] for _ in range(len(source_files))]
   for a in range(0, len(source_files)):
@@ -344,7 +457,7 @@ def main(source_files):
       # parse and process constants
       #
 
-      const_args = ops_decl_const_parse(text)
+      const_args = ops_decl_const_parse(text, macro_defs)
       print str(len(const_args))
 
       # cleanup '&' symbols from name and convert dim to integer
@@ -387,7 +500,7 @@ def main(source_files):
       # parse and process ops_par_loop calls
       #
 
-      loop_args = ops_par_loop_parse(text)
+      loop_args = ops_par_loop_parse(text, macro_defs)
 
       for i in range(0, len(loop_args)):
         name = loop_args[i]['name1']
