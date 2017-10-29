@@ -196,7 +196,7 @@ def ops_decl_const_parse(text, macro_defs):
     consts.append({
           'loc': m.start(),
           'name': args[0].strip(),
-          'dim': args[1].strip(),
+          'dim': evaluate_macro_defs_in_string(macro_defs, args[1].strip()),
           'type': (args[2].replace('"','')).strip(),
           'name2': args[3].strip()
     })
