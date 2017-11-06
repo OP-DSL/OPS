@@ -8,7 +8,7 @@ setup(name='ops',
       author='Mike Giles, Istvan Reguly, Gihan Mudalige, and others',
       url='http://www.oerc.ox.ac.uk/projects/ops',
       packages=['ops_translator', 'ops_translator.c', 'ops_translator.fortran'],
-      package_dir={'ops_translator': 'translator/python'},
+      package_dir={'': 'translator'},
       scripts=[],
       classifiers=[
       'Development Status :: 3 - Alpha',
