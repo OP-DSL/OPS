@@ -4,8 +4,8 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/c/ops.py write.cpp
-../../../translator/python/c/ops.py read.cpp
+../../../ops_translator/c/ops.py write.cpp
+../../../ops_translator/c/ops.py read.cpp
 make
 #============================ Test write with Intel Compilers==========================================================
 echo '============> Running OpenMP'
