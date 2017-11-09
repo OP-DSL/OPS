@@ -4,7 +4,7 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../translator/python/c/ops.py multidim.cpp
+../../../ops_translator/c/ops.py multidim.cpp
 make
 #============================ Test multidim with Intel Compilers ==========================================
 echo '============> Running OpenMP'

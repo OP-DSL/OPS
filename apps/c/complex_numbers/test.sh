@@ -5,7 +5,7 @@ source ../../scripts/source_intel
 make
 cd -
 
-../../../translator/python/c/ops.py complex_numbers.cpp
+../../../ops_translator/c/ops.py complex_numbers.cpp
 
 make clean
 make
