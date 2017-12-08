@@ -46,7 +46,7 @@ double dx,dy;
 // OPS header file
 #define OPS_2D
 #include "ops_seq.h"
-
+#include "user_types.h"
 #include "poisson_kernel.h"
 
 /******************************************************************************

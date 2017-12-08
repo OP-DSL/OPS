@@ -11,6 +11,7 @@
 #include "ops_mpi_core.h"
 #endif
 #include "ops_cuda_rt_support.h"
+#include "user_types.h"
 // global constants
 extern double dx;
 extern double dy;

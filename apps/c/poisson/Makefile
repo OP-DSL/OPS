@@ -26,6 +26,7 @@ else
 endif
   OMPFLAGS  = -fopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICC  = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),intel)
@@ -33,12 +34,13 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS = -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPICC  = $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPIFLAGS  = $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),mic)
@@ -53,6 +55,7 @@ endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -openmp -openmp-report2
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPICC  = $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS  = $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
@@ -127,7 +130,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_tiled poisson_mpi_tiled poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
+TARGETS = poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_mpi_openmp poisson_openmp poisson_seq poisson_mpi_inline poisson_tiled poisson_mpi_tiled poisson_cuda poisson_mpi_cuda poisson_opencl poisson_mpi_opencl #poisson_openacc poisson_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += poisson_openacc poisson_mpi_openacc
@@ -198,6 +201,27 @@ poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poiss
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC)  -I. -I$(MPI_INSTALL_PATH)/include \
 	-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/poisson_kernels_mpi_cu.o ./CUDA/poisson_kernels.cu
 
+mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+
+./MPI_inline/poisson_kernels.o: ./MPI_inline/poisson_kernels.cpp ./MPI_inline/poisson_common.h Makefile
+				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC)  \
+ 			       -I. MPI_inline/poisson_kernels.cpp -c -o MPI_inline/poisson_kernels.o
+
+./MPI_inline/%.o: ./MPI_inline/%.cpp ./MPI_inline/%_c.c ./MPI_inline/poisson_common.h Makefile
+				@echo "Compiling kernel" $*
+				$(MPICC) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+			        -I. MPI_inline/$*_c.c -c -o MPI_inline/$*_c.o
+				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  $(OPS_INC) $(HDF5_INC) \
+				-I. MPI_inline/$*.cpp -c -o MPI_inline/$*.o
+
+poisson_mpi_inline: $(mpiinline_obj_list) poisson_ops.cpp \
+                Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi.a
+	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB)  -DOPS_MPI \
+		poisson_ops.cpp -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -lops_mpi $(HDF5_LIB) -o poisson_mpi_inline
+
+
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
@@ -245,4 +269,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
+	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_mpi_inline poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
