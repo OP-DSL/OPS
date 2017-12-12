@@ -269,4 +269,4 @@ openacc_error:
 #
 
 clean:
-	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_mpi_inline poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o *.o
+	rm -f poisson_dev_seq poisson_dev_mpi poisson_mpi poisson_seq poisson_mpi_inline poisson_tiled poisson_mpi_tiled poisson_openmp poisson_mpi_openmp poisson_cuda poisson_mpi_cuda poisson_openacc poisson_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o poisson_opencl poisson_mpi_opencl ./OpenCL/*.o ./MPI_inline/*.o  *.o

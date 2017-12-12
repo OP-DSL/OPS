@@ -11,6 +11,7 @@
 
 #include <cuComplex.h>
 
+#define OPS_FUN_PREFIX __device__ __host__
 #include "user_types.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
