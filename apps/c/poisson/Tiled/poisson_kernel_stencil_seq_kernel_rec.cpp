@@ -84,6 +84,7 @@ void ops_par_loop_poisson_kernel_stencil_rec_execute(ops_kernel_descriptor *desc
   int start_0 = start[0];
   int end_1 = end[1];
   int end_0 = end[0];
+#warning Hardcoding args didn't happen
 #endif
 
 

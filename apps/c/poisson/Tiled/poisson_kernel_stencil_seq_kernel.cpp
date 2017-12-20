@@ -15,11 +15,28 @@ void (*function)(struct ops_kernel_descriptor *desc) = NULL;
 
 // host stub function
 void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
+  ops_block block = desc->block;
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
   if (recompile) {
     if (function == NULL) {
       void *handle;
       char *error;
-      int ret = system("/opt/intel/compilers_and_libraries_2018/linux/mpi/intel64/bin/mpicxx -O3 -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -qopenmp  -I/home/ireguly/OPS/ops/c/include -I/home/software/hdf5-impi/include -I. -c Tiled/poisson_kernel_stencil_seq_kernel_rec.cpp -o Tiled/poisson_kernel_stencil_seq_kernel_rec.o -fPIC");
+      char *compstr = "/opt/intel/compilers_and_libraries_2018/linux/mpi/intel64/bin/mpicxx -O3 -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -qopenmp  -I/home/ireguly/OPS/ops/c/include -I/home/software/hdf5-impi/include -I. -c Tiled/poisson_kernel_stencil_seq_kernel_rec.cpp -o Tiled/poisson_kernel_stencil_seq_kernel_rec.o -fPIC";
+      char buf[500];
+      // compute locally allocated range for the sub-block
+      int start[2];
+      int end[2];
+
+      for (int n = 0; n < 2; n++) {
+        start[n] = range[2 * n];
+        end[n] = range[2 * n + 1];
+      }
+
+      sprintf(buf,"%s -Dstart_0=%d -Dstart_1=%d -Dend_0=%d -Dend_1=%d",compstr, start[0], start[1], end[0], end[1]);
+      int ret = system(buf);
       ret = system("/opt/intel/compilers_and_libraries_2018/linux/mpi/intel64/bin/mpicxx Tiled/poisson_kernel_stencil_seq_kernel_rec.o -shared -o Tiled/poisson_kernel_stencil_seq_kernel_rec.so");
       handle = dlopen ("Tiled/poisson_kernel_stencil_seq_kernel_rec.so", RTLD_LAZY);
       if (!handle) {
@@ -36,11 +53,6 @@ void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
     (*function)(desc);
     return;
   }
-  ops_block block = desc->block;
-  int dim = desc->dim;
-  int *range = desc->range;
-  ops_arg arg0 = desc->args[0];
-  ops_arg arg1 = desc->args[1];
 
   // Timing
   double t1, t2, c1, c2;
