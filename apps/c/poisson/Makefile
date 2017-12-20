@@ -178,7 +178,7 @@ poisson_seq: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/l
 # Tiled version
 #
 poisson_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(CPP) $(MPIFLAGS) $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_tiled 
+	$(CPP) $(MPIFLAGS) $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_seq $(HDF5_LIB) -o poisson_tiled -rdynamic 
 
 poisson_mpi_tiled: Makefile poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
 	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OMPFLAGS)  $(OPS_INC) $(OPS_LIB) poisson_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o poisson_mpi_tiled 
