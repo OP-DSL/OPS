@@ -239,6 +239,7 @@ typedef ops_stencil_core *ops_stencil;
 typedef struct {
   ops_dat dat;          /**< dataset */
   ops_stencil stencil;  /**< the stencil */
+  int field;            /* field of multi-dimensional data accessed XXX*/
   int dim;              /**< dimension of data */
   char *data;           /**< data on host */
   char *data_d;         /**< data on device (for CUDA)*/
@@ -411,6 +412,8 @@ void ops_free_dat(ops_dat dat);
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
 
+ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc); //XXX
 /**
  * Passes an accessor to the value(s) at the current grid point to the user kernel if flag is true
  *

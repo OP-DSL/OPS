@@ -17,6 +17,7 @@ endif
 ifeq ($(OPS_COMPILER),xlp8)
   TARGETS       += f_cuda f_mpi_cuda
 endif
+endif
 
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
