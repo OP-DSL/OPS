@@ -41,7 +41,7 @@ endif
   CXXFLAGS 	= $(CCFLAGS)
   CXXLINK	= -lstdc++
   FC		= ifort
-  OMPFLAGS 	= -openmp -openmp-report2
+  OMPFLAGS 	= -qopenmp #-openmp-report2
   FFLAGS	= $(OPT)
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx

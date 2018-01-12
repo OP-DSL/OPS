@@ -38,6 +38,24 @@ endif
 MPI_INC = $(MPI_INSTALL_PATH)/include
 MPI_LIB = $(MPI_INSTALL_PATH)/lib
 
+ifeq ($(OPS_COMPILER),gnu)
+  CC 		= gcc -std=c99
+ifdef DEBUG
+  OPT	 	= -O0 -g
+else
+  OPT	 	= -O3 #vec-report -xAVX
+endif
+  CCFLAGS       = $(OPT) -Wall #-Werror -wd981
+  CXX 		= g++
+  CXXFLAGS 	= $(CCFLAGS)
+  F_INC_MOD	= $(F_OPS_MOD)/gnu
+  FC		= gfortran -ffree-form
+  FFLAGS	= $(OPT) -J$(F_INC_MOD)
+  MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIFLAGS 	= $(CXXFLAGS)
+  TARGETS	= clean core f_seq f_mpi
+else
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -102,6 +120,7 @@ endif
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

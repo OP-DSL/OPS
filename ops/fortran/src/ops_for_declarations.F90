@@ -112,6 +112,7 @@ module OPS_Fortran_Declarations
   type, BIND(C) :: ops_arg
     type(c_ptr)         :: dat          ! dat
     type(c_ptr)         :: stencil      ! the stencil
+    integer(kind=c_int) :: field        ! field of multi-dimensional data accessed
     integer(kind=c_int) :: dim          ! dimension of data
     type(c_ptr)         :: data         ! data on host
 #ifdef OPS_WITH_CUDAFOR
@@ -206,7 +207,8 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in)  :: name(*)
     end function ops_decl_block_c
 
-    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
+    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p,data, type_size, type, name ) &
+        & BIND(C,name='ops_decl_dat_char')
 
       use, intrinsic :: ISO_C_BINDING
 
@@ -224,7 +226,8 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_dat_c
 
-    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo_convert')
+    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) &
+        & BIND(C,name='ops_decl_halo_convert')
 
       use, intrinsic :: ISO_C_BINDING
 
@@ -312,6 +315,21 @@ module OPS_Fortran_Declarations
 
     end function ops_arg_dat_c
 
+    function ops_arg_dptr_c ( dat, data, field, dim, sten, type, acc ) BIND(C,name='ops_arg_dptr')
+
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_arg
+
+      type(ops_arg)                  :: ops_arg_dptr_c
+      type(c_ptr), value, intent(in) :: dat
+      type(c_ptr), value :: data
+      integer(kind=c_int), value     :: field
+      integer(kind=c_int), value     :: dim
+      type(c_ptr), value, intent(in) :: sten
+      character(kind=c_char,len=1)   :: type(*)
+      integer(kind=c_int), value     :: acc
+
+    end function ops_arg_dptr_c
 
     function ops_arg_dat_opt_c ( dat, dim, sten, type, acc, flag ) BIND(C,name='ops_arg_dat_opt')
 
@@ -424,7 +442,8 @@ module OPS_Fortran_Declarations
   !##################################################################
 
   interface ops_decl_dat
-    module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4
+    module procedure ops_decl_dat_real_8, ops_decl_dat_integer_4, &
+    &  ops_decl_dat_real_8_3d, ops_decl_dat_real_8_4d, ops_decl_dat_real_8_5d
   end interface ops_decl_dat
 
   interface ops_reduction_result
@@ -436,6 +455,9 @@ module OPS_Fortran_Declarations
     module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar, ops_arg_gbl_real_1dim
   end interface ops_arg_gbl
 
+  interface ops_arg_dptr
+    module procedure ops_arg_dptr_mdim_real_8, ops_arg_dptr_real_8
+  end interface ops_arg_dptr
 
   !###################################################################
   ! Fortran subroutines that gets called by an OPS Fortran application
@@ -504,7 +526,8 @@ module OPS_Fortran_Declarations
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*):: name
 
-    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), c_loc ( stride_data ), name//C_NULL_CHAR )
+    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), &
+     & c_loc ( stride_data ), name//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
     call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
@@ -529,7 +552,8 @@ module OPS_Fortran_Declarations
       base(d) = base(d)-1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), &
+     & c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1
@@ -539,6 +563,96 @@ module OPS_Fortran_Declarations
     call c_f_pointer ( dat%dataCptr, dat%dataPtr )
 
   end subroutine ops_decl_dat_real_8
+
+  subroutine ops_decl_dat_real_8_3d ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+
+    type(ops_block), intent(in)                  :: block
+    integer, intent(in)                          :: dim
+    integer(4), dimension(*), intent(in), target :: size
+    integer(4), dimension(*),             target :: base
+    integer(4), dimension(*), intent(in), target :: d_m
+    integer(4), dimension(*), intent(in), target :: d_p
+    real(8), dimension(:,:,:), intent(in), target    :: data
+    type(ops_dat)                                :: dat
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: typ
+
+    integer d;
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)-1
+    end DO
+
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), &
+     & c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)+1
+    end DO
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+
+  end subroutine ops_decl_dat_real_8_3d
+
+  subroutine ops_decl_dat_real_8_4d ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+
+    type(ops_block), intent(in)                  :: block
+    integer, intent(in)                          :: dim
+    integer(4), dimension(*), intent(in), target :: size
+    integer(4), dimension(*),             target :: base
+    integer(4), dimension(*), intent(in), target :: d_m
+    integer(4), dimension(*), intent(in), target :: d_p
+    real(8), dimension(:,:,:,:), intent(in), target    :: data
+    type(ops_dat)                                :: dat
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: typ
+
+    integer d;
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)-1
+    end DO
+
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), &
+     & c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)+1
+    end DO
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+
+  end subroutine ops_decl_dat_real_8_4d
+
+  subroutine ops_decl_dat_real_8_5d ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+
+    type(ops_block), intent(in)                  :: block
+    integer, intent(in)                          :: dim
+    integer(4), dimension(*), intent(in), target :: size
+    integer(4), dimension(*),             target :: base
+    integer(4), dimension(*), intent(in), target :: d_m
+    integer(4), dimension(*), intent(in), target :: d_p
+    real(8), dimension(:,:,:,:,:), intent(in), target    :: data
+    type(ops_dat)                                :: dat
+    character(kind=c_char,len=*)                 :: name
+    character(kind=c_char,len=*)                 :: typ
+
+    integer d;
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)-1
+    end DO
+
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), &
+     & c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+    DO d = 1, block%blockPtr%dims
+      base(d) = base(d)+1
+    end DO
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+
+  end subroutine ops_decl_dat_real_8_5d
 
   subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
 
@@ -558,7 +672,8 @@ module OPS_Fortran_Declarations
       base(d) = base(d)-1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), &
+      & c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1
@@ -683,6 +798,38 @@ module OPS_Fortran_Declarations
 
   end function ops_arg_gbl_real_1dim
 
+  type(ops_arg) function ops_arg_dptr_mdim_real_8(dat, data, field, dim, stencil, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    real(8), dimension(:,:,:,:), target :: data
+    integer(kind=c_int) :: field
+    integer(kind=c_int) :: dim
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_dptr_mdim_real_8 = ops_arg_dptr_c( dat%dataCptr, c_loc(data), field, dim, &
+      & stencil%stencilCptr, typ, access-1 )
+
+  end function ops_arg_dptr_mdim_real_8 
+
+  type(ops_arg) function ops_arg_dptr_real_8(dat, data, stencil, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    real(8), dimension(:,:,:), target :: data
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_dptr_real_8 = ops_arg_dptr_c( dat%dataCptr, c_loc(data), 1, 1, &
+      & stencil%stencilCptr, typ, access-1 )
+
+  end function ops_arg_dptr_real_8
+
   subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
 
     type(ops_dat)                                :: from
@@ -694,7 +841,8 @@ module OPS_Fortran_Declarations
     integer(4), dimension(*), intent(in), target :: to_dir
     type(ops_halo)                               :: halo
 
-    halo%haloCptr = ops_decl_halo_c (from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
+    halo%haloCptr = ops_decl_halo_c (from%dataCptr, to%dataCptr, c_loc(iter_size), &
+      & c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_decl_halo variable
     call c_f_pointer ( halo%haloCptr, halo%haloPtr )
@@ -779,7 +927,8 @@ module OPS_Fortran_Declarations
     type(ops_reduction) :: reduction_handle
     real(8), target    :: var
 
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    call ops_reduction_result_c (reduction_handle%reductionCptr, &
+      & reduction_handle%reductionPtr%size, c_loc(var))
 
   end subroutine ops_reduction_result_scalar_real_8
 
@@ -787,15 +936,17 @@ module OPS_Fortran_Declarations
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
     integer(4), target  :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    call ops_reduction_result_c (reduction_handle%reductionCptr, &
+      & reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_scalar_int_4
 
  subroutine ops_reduction_result_real_8 (reduction_handle, var)
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
-    real(8), dimension(:), target :: var
+    real(8), dimension(*), target :: var
 
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    call ops_reduction_result_c (reduction_handle%reductionCptr, &
+      & reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
 
 

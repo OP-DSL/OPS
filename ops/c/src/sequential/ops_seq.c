@@ -239,6 +239,16 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
   return temp;
 }
 
+ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.dim = dim;
+  temp.data = data;
+  temp.dat->data = data;
+  temp.field = field;
+  return temp;
+}
+
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);

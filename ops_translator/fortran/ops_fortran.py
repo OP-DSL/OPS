@@ -73,6 +73,8 @@ import util_fortran
 comment_remover = util_fortran.comment_remover
 remove_trailing_w_space = util_fortran.remove_trailing_w_space
 
+no_master_gen = 0
+
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
 
@@ -119,44 +121,96 @@ def arg_parse(text, j):
             depth = depth - 1
             if depth == 0:
                 return loc2
+
+        loc2 = loc2 + 1
+
+def arg_parse_list(text, j):
+    """Parsing arguments in op_par_loop to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    args = []
+    arg_begin = j
+    while 1:
+        if text[loc2] == '(':
+            depth = depth + 1
+            if depth == 1:
+                arg_begin = loc2 + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                args.append(text[arg_begin:loc2].strip())
+                return loc2, args
+
+        elif text[loc2] == ',' and depth == 1:
+            args.append(text[arg_begin:loc2].strip())
+            arg_begin = loc2 + 1
+
         loc2 = loc2 + 1
 
 def get_arg_dat(arg_string, j):
     loc = arg_parse(arg_string, j + 1)
-    dat_args_string = arg_string[arg_string.find('(', j) + 1:loc]
+    dat_type = arg_string[j:j+arg_string[j:].find('(')].strip()
+    dat_args_string = arg_string[arg_string.find('(', j):loc+1]
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
+    loc, argsl = arg_parse_list(dat_args_string,0)
     #print dat_args_string
     #num = len(dat_args_string.split(','))
     #print num
 
-    # check for syntax errors
-    if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
-      return
-
-    if len(dat_args_string.split(',')) == 5:
+    if dat_type == 'ops_arg_dat':
+      if len(argsl) <> 5:
+        print 'Error parsing op_arg_dat(%s): must have five arguments' % dat_args_string
+        return
       # split the dat_args_string into  5 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat',
-                  'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
-                  'sten': dat_args_string.split(',')[2].strip(),
-                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[4].strip()}
+                  'dat': argsl[0].strip(),
+                  'idx': '-1',
+                  'dim': argsl[1].strip(),
+                  'sten': argsl[2].strip(),
+                  'typ': (argsl[3].replace('"','')).strip(),
+                  'acc': argsl[4].strip()}
       print temp_dat
-    elif len(dat_args_string.split(',')) == 6:
+    if dat_type == 'ops_arg_dat_opt':
+      if len(argsl) <> 6:
+        print 'Error parsing op_arg_dat_opt(%s): must have six arguments' % dat_args_string
+        return
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat_opt',
-                  'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
-                  'sten': dat_args_string.split(',')[2].strip(),
-                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[4].strip(),
-                  'opt': dat_args_string.split(',')[5].strip()}
-
+                  'dat':  argsl[0].strip(),
+                  'idx':  '-1',
+                  'dim':  argsl[1].strip(),
+                  'sten': argsl[2].strip(),
+                  'typ': (argsl[3].replace('"','')).strip(),
+                  'acc':  argsl[4].strip(),
+                  'opt':  argsl[5].strip()}
+    if dat_type == 'ops_arg_dptr':
+      if len(argsl) <> 5 and len (argsl) <> 7:
+        print 'Error parsing op_arg_dptr(%s): must have five or seven arguments' % dat_args_string
+        return
+      # split the dat_args_string into  5 and create a struct with the elements
+      # and type as op_arg_dat
+      if len(argsl) == 5:
+        temp_dat = {'type': 'ops_arg_dat',
+                    'dat': argsl[0].strip(),
+                    'idx': '-1',
+                    'dim': '1',
+                    'sten': argsl[2].strip(),
+                    'typ': (argsl[3].replace('"','')).strip(),
+                    'acc': argsl[4].strip()}
+      else:
+        temp_dat = {'type': 'ops_arg_dat',
+                    'dat': argsl[0].strip(),
+                    'idx': argsl[2].strip(),
+                    'dim': argsl[3].strip(),
+                    'sten': argsl[4].strip(),
+                    'typ': (argsl[5].replace('"','')).strip(),
+                    'acc': argsl[6].strip()}
 
     return temp_dat
 
@@ -187,10 +241,10 @@ def get_arg_idx(arg_string, l):
     loc = arg_parse(arg_string, l + 1)
 
     temp_idx = {'type': 'ops_arg_idx'}
-    print temp_idx
     return temp_idx
 
 def ops_par_loop_parse(text):
+  global no_master_gen
   """Parsing for op_par_loop calls"""
 
   loop_args = []
@@ -199,60 +253,71 @@ def ops_par_loop_parse(text):
   search = "ops_par_loop"
   i = text.find(search)
   while i > -1:
-      arg_string = text[text.find('(',i)+1:arg_parse(text,i+11)]
+      arg_string = text[text.find('(',i):arg_parse(text,i+11)+1]
+      arg_string = arg_string.replace('&','')
+      arg_string = arg_string.replace(' ','')
+      arg_string = arg_string.replace('\n','')
+      loc, args = arg_parse_list(arg_string, 0)
 
+      parloop_suffix = text[i+12:text.find('(',i)].strip()
+      if len(parloop_suffix)>0:
+        if (no_master_gen == -1):
+          print 'Error: cannot have generic ops_par_loop calls in a single file and ops_par_loop_* calls'
+          sys.exit(-1) 
+        no_master_gen = 1
+      else:
+        if (no_master_gen == 1):
+          print 'Error: cannot have generic ops_par_loop calls in a single file and ops_par_loop_* calls'
+          sys.exit(-1) 
+        no_master_gen = -1
+
+
+      
+      j = 0
+      while j < len(args):
+        if "ops_arg" in args[j]:
+          break
+        j = j+1
 
       # parse arguments in par loop
       temp_args = []
       num_args = 0
 
-      # parse each op_arg_dat
-      search2 = "ops_arg_dat"
-      search3 = "ops_arg_gbl"
-      search4 = "ops_arg_idx"
-      search5 = "ops_arg_reduce"
-      j = arg_string.find(search2)
-      k = arg_string.find(search3)
-      l = arg_string.find(search4)
-      m = arg_string.find(search5)
+      for arg in range(j, len(args)):
+        if 'ops_arg_d' in args[arg]:
+          temp_dat =  get_arg_dat(args[arg],0)
+          temp_args.append(temp_dat)
+          num_args = num_args+1
+        elif 'ops_arg_gbl' in args[arg] or 'ops_arg_reduce' in args[arg]:
+          temp_gbl = get_arg_gbl(args[arg],0)
+          temp_args.append(temp_gbl)
+          num_args = num_args + 1
+        elif 'ops_arg_idx' in args[arg]:
+          temp_idx = get_arg_idx(args[arg],0)
+          temp_args.append(temp_idx)
+          num_args = num_args + 1
+        else:
+          print 'Error: unrecognised argument to ops_par_loop: ' + args[arg]
+          sys.exit(-1)
 
-      while j > -1 or k > -1 or l > -1 or m>-1:
-        if j>=0 and (j < k or k<=-1) and (j < l or l <=-1) and (j < m or m <=-1):
-            temp_dat = get_arg_dat(arg_string, j)
-            # append this struct to a temporary list/array
-            temp_args.append(temp_dat)
-            num_args = num_args + 1
-            j = arg_string.find(search2, j + 12)
-
-        elif k>=0 and (k < j or j<=-1) and (k < l or l <=-1) and (k < m or m <=-1):
-            temp_gbl = get_arg_gbl(arg_string, k)
-            # append this struct to a temporary list/array
-            temp_args.append(temp_gbl)
-            num_args = num_args + 1
-            k = arg_string.find(search3, k + 12)
-
-        elif l>=0 and (l < j or j<=-1) and (l < k or k <=-1) and (l < m or m <=-1):
-            temp_idx = get_arg_idx(arg_string, l)
-            # append this struct to a temporary list/array
-            temp_args.append(temp_idx)
-            num_args = num_args + 1
-            l = arg_string.find(search4, l + 12)
-
-        elif m>=0 and (m < j or j<=-1) and (m < l or l <=-1) and (m < k or k <=-1):
-            temp_gbl = get_arg_gbl(arg_string, m)
-            # append this struct to a temporary list/array
-            temp_args.append(temp_gbl)
-            num_args = num_args + 1
-            m = arg_string.find(search5, m + 15)
-
-      temp = {'loc': i,
-            'name1': arg_string.split(',')[0].strip(),
-            'name2': arg_string.split(',')[1].strip(),
-            'block': arg_string.split(',')[2].strip(),
-            'dim': arg_string.split(',')[3].strip(),
-            'range': arg_string.split(',')[4].strip(),
-            'args': temp_args,
-            'nargs': num_args}
+      if len(parloop_suffix)>0:
+        temp = {'loc': i,
+              'name1': (args[0].replace('"','')).strip(),
+              'name2': (args[0].replace('"','')).strip(),
+              'block': args[1],
+              'dim'  : args[2],
+              'range': args[3],
+              'args': temp_args,
+              'nargs': num_args}
+      else:
+        temp = {'loc': i,
+              'name1': args[0],
+              'name2': args[1],
+              'block': args[2],
+              'dim'  : args[3],
+              'range': args[4],
+              'args': temp_args,
+              'nargs': num_args}
 
       loop_args.append(temp)
 
@@ -287,7 +352,7 @@ def main(source_files):
   OPS_accs_labels = ['OPS_READ', 'OPS_WRITE', 'OPS_RW', 'OPS_INC',
                     'OPS_MAX', 'OPS_MIN']
 
-
+  no_master_gen = 0
   #
   # loop over all input source files
   #
@@ -327,7 +392,6 @@ def main(source_files):
       #
 
       const_args = ops_decl_const_parse(text)
-      print str(len(const_args))
 
 
       #
@@ -471,6 +535,8 @@ def main(source_files):
       # output new source file
       #
 
+      if no_master_gen == 1: #if the source file is not using generic ops_par_loop calls
+        continue
 
       #gen_fortran_source_file(str(source_files[0]), consts, kernels, src_file, text, loop_args)
       fid = open(src_file.split('.')[0] + '_ops.F90', 'w')
@@ -543,7 +609,7 @@ def main(source_files):
           endofcall = arg_parse(text,locs[loc]+11)
           curr_loop = loc_loops.index(locs[loc])
           name = loop_args[curr_loop]['name1']
-          line = str(' '+loop_args[curr_loop]['name1'] + '_host(' +
+          line = str(' ops_par_loop_'+loop_args[curr_loop]['name1'] + '(' +
                      loop_args[curr_loop]['name2'] + ', ' +
                      loop_args[curr_loop]['block'] + ', ' +
                      loop_args[curr_loop]['dim'] + ', ' +
@@ -613,8 +679,8 @@ def main(source_files):
 
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels)
   ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
+#  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
+#  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

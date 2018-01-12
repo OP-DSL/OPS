@@ -199,6 +199,7 @@ typedef ops_stencil_core *ops_stencil;
 typedef struct {
   ops_dat dat;          /* dataset */
   ops_stencil stencil;  /* the stencil */
+  int field;            /* field of multi-dimensional data accessed */
   int dim;              /* dimension of data */
   char *data;           /* data on host */
   char *data_d;         /* data on device (for CUDA)*/
@@ -338,6 +339,8 @@ ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
                               char const *name);
 
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag);
