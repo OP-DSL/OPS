@@ -41,6 +41,7 @@ utility functions for code generator
 
 import re
 import config
+import os
 
 def comm(line):
   prefix = ' '*config.depth
@@ -117,3 +118,28 @@ def comment_remover(text):
         re.DOTALL | re.MULTILINE
     )
     return re.sub(pattern, replacer, text)
+
+def find_subroutine(fun_name):
+    subr_file =  os.popen('grep -Rilw --include "*.F95" --include "*.F" --include "*.inc" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
+    if (len(subr_file) == 0) or (not os.path.exists(subr_file)):
+      print 'Error, subroutine '+fun_name+' implementation not found in files, check parser!'
+      exit(1)
+    #read the file and find the implementation
+    subr_fileh = open(subr_file,'r')
+    subr_fileh_text = subr_fileh.read()
+    subr_fileh_text = re.sub('\n*!.*\n','\n',subr_fileh_text)
+    subr_fileh_text = re.sub('!.*\n','\n',subr_fileh_text)
+    subr_begin = subr_fileh_text.lower().find('subroutine '+fun_name.lower())
+    #function name as spelled in the file
+    fun_name = subr_fileh_text[subr_begin+11:subr_begin+11+len(fun_name)]
+    subr_end = subr_fileh_text[subr_begin:].lower().find('end subroutine')
+    if subr_end<0:
+      print 'Error, could not find string "end subroutine" for implemenatation of '+fun_name+' in '+subr_file
+      exit(-1)
+    subr_end= subr_begin+subr_end
+    subr_text =  subr_fileh_text[subr_begin:subr_end+14]
+    if subr_text[10:len(subr_text)-20].lower().find('subroutine')>=0:
+      print 'Error, could not properly parse subroutine, more than one encompassed '+fun_name+' in '+subr_file
+      #print subr_text
+      exit(-1)
+    return subr_text
