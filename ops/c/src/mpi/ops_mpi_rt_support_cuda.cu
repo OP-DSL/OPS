@@ -212,26 +212,27 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   // cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void ops_comm_realloc(char **ptr, int size, int prev) {
+char* ops_realloc_fast(char *ptr, size_t olds, size_t news) {
   if (OPS_gpu_direct) {
-    if (*ptr == NULL) {
-      cutilSafeCall(cudaMalloc((void **)ptr, size));
+    if (ptr == NULL) {
+      cutilSafeCall(cudaMalloc((void **)&ptr, news));
+      return ptr;
     } else {
-      printf("Warning: cuda cache realloc\n");
+      if (OPS_diags>3) printf("Warning: cuda cache realloc\n");
       char *ptr2;
-      cutilSafeCall(cudaMalloc((void **)&ptr2, size));
-      cutilSafeCall(cudaMemcpy(ptr2, *ptr, prev, cudaMemcpyDeviceToDevice));
-      cutilSafeCall(cudaFree(*ptr));
-      *ptr = ptr2;
+      cutilSafeCall(cudaMalloc((void **)&ptr2, news));
+      cutilSafeCall(cudaMemcpy(ptr2, ptr, olds, cudaMemcpyDeviceToDevice));
+      cutilSafeCall(cudaFree(ptr));
+      return ptr2;
     }
   } else {
-    if (*ptr == NULL) {
-      *ptr = (char *)malloc(size);
-    } else {
-      *ptr = (char *)realloc(*ptr, size);
-    }
+    char *ptr2;
+    cutilSafeCall(cudaMallocHost((void**)&ptr2,news));
+    if (olds > 0)
+  	  memcpy(ptr2, ptr, olds);
+    if (ptr != NULL) cutilSafeCall(cudaFreeHost(ptr));
+    return ptr2;
   }
-  cutilSafeCall(cudaDeviceSynchronize());
 }
 
 __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,

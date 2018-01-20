@@ -131,7 +131,7 @@ void cutilDeviceInit(int argc, char **argv) {
     cudaGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
     cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-    printf("\n Using CUDA device: %d %s\n", deviceId, deviceProp.name);
+    if (OPS_diags>2) printf("\n Using CUDA device: %d %s\n", deviceId, deviceProp.name);
   } else {
     // printf ( "\n Using CPU on rank %d\n",rank );
   }

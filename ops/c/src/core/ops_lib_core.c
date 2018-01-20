@@ -774,7 +774,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
 }
 
 void ops_diagnostic_output() {
-  if (OPS_diags > 1) {
+  if (OPS_diags > 2) {
     printf("\n OPS diagnostic output\n");
     printf(" --------------------\n");
 
@@ -1106,6 +1106,7 @@ void ops_timing_output(FILE *stream) {
       strcat(buf, "-");
     ops_fprintf(stream, "%s\n", buf);
     double sumtime = 0.0f;
+    double sumtime_mpi = 0.0f;
     for (int k = 0; k < OPS_kern_max; k++) {
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
@@ -1133,11 +1134,17 @@ void ops_timing_output(FILE *stream) {
       //  OPS_kernels[k].mpi_time,
       //  OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
       ops_fprintf(stream, "%s%s\n", buf, buf2);
-      sumtime += OPS_kernels[k].time;
+      sumtime += moments_time[0];
+      sumtime_mpi += moments_mpi_time[0];
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
-    if (ops_tiled_halo_exchange_time > 0.0)
-      ops_fprintf(stream, "Total tiled halo exchange time: %g\n", ops_tiled_halo_exchange_time);
+    if (ops_tiled_halo_exchange_time > 0.0) {
+      double moments_time[2] = {0.0};
+      ops_compute_moment(ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+      ops_fprintf(stream, "Total tiled halo exchange time: %g\n", moments_time[0]);
+    } else if (sumtime_mpi > 0) {
+      ops_fprintf(stream, "Total halo exchange time: %g\n", sumtime_mpi);
+    }
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
     free(buf);

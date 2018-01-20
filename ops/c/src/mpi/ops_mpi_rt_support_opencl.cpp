@@ -751,12 +751,8 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
   dat->dirty_hd = 1;
 }
 
-void ops_comm_realloc(char **ptr, int size, int prev) {
-  if (*ptr == NULL) {
-    *ptr = (char *)xmalloc(size);
-  } else {
-    *ptr = (char *)xrealloc(*ptr, size);
-  }
+char *ops_realloc_fast(char *ptr, size_t olds, size_t news) {
+  return (char*)realloc(ptr, news);
 }
 
 cl_kernel *copy_tobuf_kernel = NULL;
