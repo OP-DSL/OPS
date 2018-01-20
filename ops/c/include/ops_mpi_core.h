@@ -179,7 +179,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo);
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo);
-void ops_comm_realloc(char **ptr, int size, int prev_size);
+char* ops_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 
 #ifdef __cplusplus
 }

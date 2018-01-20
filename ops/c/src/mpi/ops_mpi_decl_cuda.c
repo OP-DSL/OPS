@@ -77,7 +77,7 @@ void ops_init_cuda(int argc, char **argv, int diags) {
   cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 #endif
 
-  printf("\n 16/48 L1/shared \n");
+  ops_printf("\n 16/48 L1/shared \n");
 }
 
 void ops_init(int argc, char **argv, int diags) {
@@ -104,10 +104,10 @@ void ops_exit() {
     cutilSafeCall(cudaFree(ops_buffer_send_2));
     cutilSafeCall(cudaFree(ops_buffer_recv_2));
   } else {
-    free(ops_buffer_send_1);
-    free(ops_buffer_recv_1);
-    free(ops_buffer_send_2);
-    free(ops_buffer_recv_2);
+    cutilSafeCall(cudaFreeHost(ops_buffer_send_1));
+    cutilSafeCall(cudaFreeHost(ops_buffer_recv_1));
+    cutilSafeCall(cudaFreeHost(ops_buffer_send_2));
+    cutilSafeCall(cudaFreeHost(ops_buffer_recv_2));
   }
   int flag = 0;
   MPI_Finalized(&flag);

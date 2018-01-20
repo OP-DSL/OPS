@@ -137,10 +137,10 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       int ndim = block->dims;
       int pdims[OPS_MAX_DIM] = {0};
       for (int d = 0; d < ndim; d++) {
-        pdims[d] = ops_force_decomp[d]; printf("%d %d\n",d,pdims[d]);}
+        pdims[d] = ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
       MPI_Dims_create(nproc_each_block, ndim, pdims);
       for (int d = 0; d < ndim; d++)
-        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[d];
+        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[ndim-d-1];
       for (int d = ndim; d < OPS_MAX_DIM; d++)
         (*proc_dimsplit)[i * OPS_MAX_DIM + d] = 1;
 
@@ -792,8 +792,9 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
       }
     }
     if (ops_buffer_send_1_size < total_size)
-      ops_comm_realloc(&ops_buffer_send_1, total_size * sizeof(char),
-                       ops_buffer_send_1_size);
+      ops_buffer_send_1 = ops_realloc_fast(ops_buffer_send_1,
+                       ops_buffer_send_1_size,
+		       total_size * sizeof(char));
 
     k = 0;
     total_size = 0;
@@ -806,8 +807,9 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
       }
     }
     if (ops_buffer_recv_1_size < total_size)
-      ops_comm_realloc(&ops_buffer_recv_1, total_size * sizeof(char),
-                       ops_buffer_recv_1_size);
+      ops_buffer_recv_1 = ops_realloc_fast(ops_buffer_recv_1,
+                       ops_buffer_recv_1_size,
+		       total_size * sizeof(char));
   }
   mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
 }
@@ -838,7 +840,7 @@ void ops_partition(const char *routine) {
 
     // decompose dats defined on this block
     ops_decomp_dats(sb);
-    if (sb->owned) {
+    if (sb->owned && OPS_diags>2) {
       printf(" ================================================================"
              "===========\n");
       printf(" rank %d (", ops_my_global_rank);
@@ -863,10 +865,10 @@ void ops_partition(const char *routine) {
   int size_depth = ops_tiling_mpidepth>0 ? ops_tiling_mpidepth : 5;
   ops_buffer_size = 8 * 8 * size_depth *
                     pow(2 * size_depth + max_block_dim, max_block_dims - 1);
-  ops_comm_realloc(&ops_buffer_send_1, ops_buffer_size * sizeof(char), 0);
-  ops_comm_realloc(&ops_buffer_recv_1, ops_buffer_size * sizeof(char), 0);
-  ops_comm_realloc(&ops_buffer_send_2, ops_buffer_size * sizeof(char), 0);
-  ops_comm_realloc(&ops_buffer_recv_2, ops_buffer_size * sizeof(char), 0);
+  ops_buffer_send_1=ops_realloc_fast(ops_buffer_send_1, 0, ops_buffer_size * sizeof(char));
+  ops_buffer_recv_1=ops_realloc_fast(ops_buffer_recv_1, 0, ops_buffer_size * sizeof(char));
+  ops_buffer_send_2=ops_realloc_fast(ops_buffer_send_2, 0, ops_buffer_size * sizeof(char));
+  ops_buffer_recv_2=ops_realloc_fast(ops_buffer_recv_2, 0, ops_buffer_size * sizeof(char));
   ops_buffer_send_1_size = ops_buffer_size;
   ops_buffer_recv_1_size = ops_buffer_size;
   ops_buffer_send_2_size = ops_buffer_size;
