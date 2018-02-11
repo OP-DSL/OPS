@@ -89,6 +89,7 @@ xxx_openacc_kernel.F90 -- for OpenACC execution
 import sys
 import re
 import datetime
+import os
 
 """import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
 from ops_fortran_gen_mpi import ops_fortran_gen_mpi
@@ -328,7 +329,7 @@ def ops_par_loop_parse(text):
         else:
           print 'Error: unrecognised argument to ops_par_loop: ' + args[arg]
           sys.exit(-1)
-
+      print parloop_suffix
       if len(parloop_suffix)>0:
         temp = {'loc': i,
               'name1': (args[0].replace('"','')).strip(),
@@ -359,6 +360,7 @@ def main(source_files):
   if not source_files:
     raise ValueError("No source files specified.")
 
+  amr=os.getenv('OPS_AMR','0')
   # declare constants
 
   ninit = 0
@@ -706,8 +708,8 @@ def main(source_files):
   # finally, generate target-specific kernel files
   #
 
-  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
+  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, amr)
+  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, amr)
 #  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
 #  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
 

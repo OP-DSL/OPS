@@ -148,6 +148,15 @@ module OPS_Fortran_RT_Support
     integer(kind=c_int), value, intent(in)    :: dim
   end function
 
+  integer function getDatBaseFromOpsArg3DAMR (arg, start, dim, amrblock) BIND(C,name='getDatBaseFromOpsArg3DAMR')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+    integer(4), dimension(*), intent(in), target :: start
+    integer(kind=c_int), value, intent(in)    :: dim
+    integer(kind=c_int), value, intent(in)    :: amrblock
+  end function
+
   type(c_ptr) function getReductionPtrFromOpsArg_c (arg, block) BIND(C,name='getReductionPtrFromOpsArg')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
