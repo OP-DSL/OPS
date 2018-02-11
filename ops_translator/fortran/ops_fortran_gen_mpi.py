@@ -47,6 +47,7 @@ import config
 
 comment_remover = util_fortran.comment_remover
 remove_trailing_w_space = util_fortran.remove_trailing_w_space
+convert_freeform = util_fortran.convert_freeform
 comm = util_fortran.comm
 code = util_fortran.code
 
@@ -55,7 +56,7 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def ops_fortran_gen_mpi(master, date, consts, kernels):
+def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
   OPS_GBL   = 2;
 
@@ -178,6 +179,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     text = util_fortran.find_subroutine(name2)
     text = comment_remover(text)
     text = remove_trailing_w_space(text)
+    text = convert_freeform(text)
+
     i = text.find(name)
     if(i < 0):
       print "\n********"
@@ -325,20 +328,25 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 
     code('')
     comm('host subroutine')
-    code('subroutine ops_par_loop_'+name+'( userSubroutine, block, dim, range, &')
+    if amr:
+      code('subroutine ops_par_loop_'+name+'( userSubroutine, blockid, dim, range, &')
+    else:
+      code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
     for n in range (0, nargs):
       if n == nargs-1:
         code('& opsArg'+str(n+1)+')')
       else:
         code('& opsArg'+str(n+1)+', &')
 
-
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
-    code('type ( ops_block ), INTENT(IN) :: block')
+    if amr:
+      code('integer(kind=4), INTENT(IN) :: blockid')
+    else:
+      code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
     code('real(kind=8) t1,t2,t3')
     code('real(kind=4) transfer_total, transfer')
     code('')
@@ -437,9 +445,15 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
         if not(dims[n].isdigit()) or int(dims[n]) <> 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+          if amr:
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+',blockid)')
+          else:
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
+          if amr:
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,1,blockid)')
+          else:
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':

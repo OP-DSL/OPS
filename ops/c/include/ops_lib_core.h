@@ -162,6 +162,7 @@ typedef struct {
                memory held on a single MPI proc)*/
   long base_offset; /* computed quantity, giving offset in bytes to the base
                        index */
+  int amr; /* flag indicating wheter AMR dataset */
 } ops_dat_core;
 
 typedef ops_dat_core *ops_dat;
@@ -333,7 +334,13 @@ void ops_exit();
 
 ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, char *,
                           int, char const *, char const *);
+ops_dat ops_decl_amrdat_char(ops_block, int, int *, int *, int *, int *, char *,
+                          int, char const *, char const *);
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
+                              int *base, int *d_m, int *d_p, char *data,
+                              int type_size, char const *type,
+                              char const *name);
+ops_dat ops_decl_amrdat_mpi_char(ops_block block, int size, int *dat_size,
                               int *base, int *d_m, int *d_p, char *data,
                               int type_size, char const *type,
                               char const *name);

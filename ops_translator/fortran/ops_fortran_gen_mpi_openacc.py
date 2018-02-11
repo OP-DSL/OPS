@@ -356,7 +356,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
     code('real(kind=8) t1,t2,t3')
     code('real(kind=4) transfer_total, transfer')
     code('')
