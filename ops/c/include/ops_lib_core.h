@@ -168,6 +168,7 @@ typedef ops_block_core *ops_block;
 
 /** Storage for OPS datasets */
 typedef struct {
+<<<<<<< HEAD
   int index;             /**< index */
   ops_block block;       /**< block on which data is defined */
   int dim;               /**< number of elements per grid point */
@@ -198,6 +199,36 @@ typedef struct {
                           *   base index */
   int stride[OPS_MAX_DIM];/**< stride[*] > 1 if this dat is a coarse dat under
                            *   multi-grid*/
+=======
+  int index;             /* index */
+  ops_block block;       /* block on which data is defined */
+  int dim;               /* number of elements per grid point*/
+  int type_size;         /* bytes per primitive = elem_size/dim */
+  int elem_size;         /* number of bytes per grid point*/
+  int size[OPS_MAX_DIM]; /* size of the array in each block dimension --
+                            including halo*/
+  int base[OPS_MAX_DIM]; /* base offset to 0,0,... from the start of each
+                            dimension*/
+  int d_m[OPS_MAX_DIM];  /* halo depth in each dimension, negative direction (at
+                            0
+                            end)*/
+  int d_p[OPS_MAX_DIM];  /* halo depth in each dimension, positive direction (at
+                            size end)*/
+  char *data;            /* data on host */
+  char *data_d;          /* data on device */
+  char const *name;      /* name of dataset */
+  char const *type;      /* datatype */
+  int dirty_hd;          /* flag to indicate dirty status on host and device */
+  int user_managed;      /* indicates whether the user is managing memory */
+  int is_hdf5; /* indicates whether the data is to read from an hdf5 file*/
+  char const *hdf5_file; /* name of hdf5 file from which this dataset was read*/
+  int e_dat;             /* flag to indicate if this is an edge dat*/
+  long mem; /*memory in bytes allocated to this dat (under MPI, this will be
+               memory held on a single MPI proc)*/
+  long base_offset; /* computed quantity, giving offset in bytes to the base
+                       index */
+  int amr; /* flag indicating wheter AMR dataset */
+>>>>>>> 2cb93bb... Latest patches for AMR loops
 } ops_dat_core;
 
 typedef ops_dat_core *ops_dat;
@@ -379,6 +410,12 @@ void ops_init(const int argc, char **argv, const int diags_level);
  */
 void ops_exit();
 
+ops_dat ops_decl_amrdat_char(ops_block, int, int *, int *, int *, int *, char *,
+                          int, char const *, char const *);
+ops_dat ops_decl_amrdat_mpi_char(ops_block block, int size, int *dat_size,
+                              int *base, int *d_m, int *d_p, char *data,
+                              int type_size, char const *type,
+                              char const *name);
 
 /**
  * This routine defines a structured grid block.

@@ -143,3 +143,18 @@ def find_subroutine(fun_name):
       #print subr_text
       exit(-1)
     return subr_text
+
+def convert_freeform(text):
+    text = comment_remover(text)
+    loc = 0
+    textl = text.splitlines()
+    for i in range(0,len(textl)):
+        if i>0 and len(textl[i].strip()) > 0 and \
+                textl[i].strip()[0] == '&' and len(textl[i-1].strip()) > 0 and \
+                textl[i-1].strip()[:-1] <> '&':
+            textl[i-1] = textl[i-1] + ' &'
+    text = textl[0]
+    for i in range(1,len(textl)):
+        text = text + '\n' + textl[i]
+    return text
+
