@@ -319,6 +319,10 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_strided_stencil_c
 
+    subroutine ops_free_dat_c( dat ) BIND(C,name='ops_free_dat')
+      use, intrinsic :: ISO_C_BINDING
+      type(c_ptr), value, intent(in) :: dat
+    end subroutine
 
     function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
 
@@ -969,6 +973,11 @@ module OPS_Fortran_Declarations
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
     call c_f_pointer ( group%halogroupCptr, group%halogroupPtr )
   end subroutine ops_decl_halo_group
+
+  subroutine ops_free_dat(dat)
+    type(ops_dat) :: dat
+    call ops_free_dat_c(dat%dataCptr)
+  end subroutine ops_free_dat
 
   subroutine ops_halo_transfer (group)
       type(ops_halo_group)                :: group
