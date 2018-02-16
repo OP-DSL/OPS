@@ -6,7 +6,9 @@ my $numberofrowbetweenkernels=5;
 my $rnkernelname = 1;
 my $rnstackframeandco = 3;
 my $rnnumberofregisters = 4;
-my $file = './Tests/OMP4/outnumberofregistersforkernel';
+#my $file = './Tests/OMP4/outnumberofregistersforkernel';
+
+my $file = $ARGV[0];
 open my $info, $file or die "Could not open $file: $!";
 my $line = <$info>;
 while( my $line = <$info>)  {   

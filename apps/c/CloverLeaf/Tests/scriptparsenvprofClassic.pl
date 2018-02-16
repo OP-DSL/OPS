@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
-my $file = './Tests/OMP4/nvprofCloverleafOMP4Classic.csv';
+#my $file = './Tests/OMP4/nvprofCloverleafOMP4Classic.csv';
+
+my $file =  $ARGV[0];
 open my $info, $file or die "Could not open $file: $!";
 my $line = <$info>;
 
