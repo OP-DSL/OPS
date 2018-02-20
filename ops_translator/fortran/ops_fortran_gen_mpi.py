@@ -67,6 +67,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
+  hardcode_range = 0
 
 ##########################################################################
 #  create new kernel file
@@ -82,6 +83,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
+    ranges  = kernels[nk]['range']
+
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
@@ -246,31 +249,50 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       code('integer n_x, n_y, n_z')
     code('')
 
+    maxrange = ['','','']
+    if hardcode_range and ('r_int' in ranges or 'r_work' in ranges):
+        maxrangeV = [8,8,8]
+        if 'r_int_fxf' == ranges:
+          maxrangeV[0] = maxrangeV[0] + 1
+        if 'r_int_fyf' == ranges:
+          maxrangeV[1] = maxrangeV[1] + 1
+        if 'r_int_fzf' == ranges:
+          maxrangeV[2] = maxrangeV[2] + 1
+        if 'r_work' == ranges:
+          maxrangeV = [12,12,12]
+        maxrange[0] = str(maxrangeV[0])
+        maxrange[1] = str(maxrangeV[1])
+        maxrange[2] = str(maxrangeV[2])
+    else:
+        maxrange[0] = 'end(1)-start(1)+1'
+        maxrange[1] = 'end(2)-start(2)+1'
+        maxrange[2] = 'end(3)-start(3)+1'
+
     if NDIM==1:
       if reduction <> 1 and arg_idx <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','1','end(1)-start(1)+1')
+      DO('n_x','1',maxrange[0])
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
     elif NDIM==2:
-      DO('n_y','1','end(2)-start(2)+1')
+      DO('n_y','1',maxrange[1])
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','1','end(1)-start(1)+1')
+      DO('n_x','1',maxrange[0])
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
     elif NDIM==3:
-      DO('n_z','1','end(3)-start(3)+1')
+      DO('n_z','1',maxrange[2])
       if arg_idx == 1:
         code('idx_local(3) = idx(3) + n_z - 1')
-      DO('n_y','1','end(2)-start(2)+1')
+      DO('n_y','1',maxrange[1])
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
       if reduction <> 1:
         code('!DIR$ SIMD')
-      DO('n_x','1','end(1)-start(1)+1')
+      DO('n_x','1',maxrange[0])
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
 
