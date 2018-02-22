@@ -198,5 +198,14 @@ extern double ops_gather_time;
 extern double ops_scatter_time;
 extern double ops_sendrecv_time;
 
+/*******************************************************************************
+* Other External functions
+*******************************************************************************/
+int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
+
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
+#ifdef __cplusplus
+}
+#endif
 #endif /*__OPS_MPI_CORE_H*/
