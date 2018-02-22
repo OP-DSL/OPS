@@ -939,3 +939,50 @@ void ops_mpi_exit() {
   if (OPS_enable_checkpointing)
     free(OPS_checkpoiting_dup_buffer);
 }
+
+int compute_ranges(ops_arg* args, ops_block block, int* range, int* start, int* end, int* arg_idx) {
+  //determine the corect range to iterate over, based on the dats that are written to
+  int fine_grid_dat_idx = -1;
+  ops_dat dat;
+  for(int i = 0; i<2; i++){
+    if(args[i].acc == OPS_READ || args[i].acc == OPS_RW)
+      fine_grid_dat_idx = args[i].dat->index;
+    else if(args[i].acc == OPS_WRITE){
+      fine_grid_dat_idx = args[i].dat->index;
+      dat = args[i].dat;
+      break;
+    }
+  }
+
+  sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  int d_size[2];
+
+  if (!sb->owned) -1;
+  for ( int n=0; n<2; n++ ){
+    d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
+    start[n] = sd->decomp_disp[n] - dat->d_m[n];
+    end[n] = start[n] + d_size[n];
+
+    if (start[n] >= range[2*n]) {
+      start[n] = 0;
+    }
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->d_m[n]);
+    }
+    else {
+      end[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
+    }
+    if (sb->id_p[n]==MPI_PROC_NULL &&
+       (range[2*n+1] > (sd->decomp_disp[n] + d_size[n] - dat->d_m[n] )))
+      end[n] += (range[2*n+1] - sd->decomp_disp[n] - d_size[n]);
+
+    arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->d_m[n];
+  }
+  return 1;
+}
