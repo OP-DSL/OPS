@@ -1009,11 +1009,11 @@ void ops_mpi_exit() {
 
 }
 
-int compute_ranges(ops_arg* args, ops_block block, int* range, int* start, int* end, int* arg_idx) {
+int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
   //determine the corect range to iterate over, based on the dats that are written to
   int fine_grid_dat_idx = -1;
   ops_dat dat;
-  for(int i = 0; i<2; i++){
+  for(int i = 0; i<nargs; i++){
     if(args[i].acc == OPS_READ || args[i].acc == OPS_RW)
       fine_grid_dat_idx = args[i].dat->index;
     else if(args[i].acc == OPS_WRITE){

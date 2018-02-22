@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
 
   ops_timers_core(&ct1, &et1);
-  ops_timing_output();
+  ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
