@@ -166,6 +166,7 @@ typedef struct {
                memory held on a single MPI proc)*/
   long base_offset; /* computed quantity, giving offset in bytes to the base
                        index */
+  int stride[OPS_MAX_DIM];/* stride[*] > 1 if this dat is a coarse dat under multi-grid*/
 } ops_dat_core;
 
 typedef ops_dat_core *ops_dat;
@@ -196,6 +197,7 @@ typedef struct {
   char const *name; /* name of pointer */
   int *stencil;     /* elements in the stencil */
   int *stride;      /* stride of the stencil */
+  int *mgrid_stride;/* stride of the stencil under multi_grid*/
 } ops_stencil_core;
 
 typedef ops_stencil_core *ops_stencil;
@@ -334,11 +336,11 @@ extern double OPS_checkpointing_time;
 void ops_init(const int argc, const char **argv, const int diags_level);
 void ops_exit();
 
-ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, char *,
+ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, int *, char *,
                           int, char const *, char const *);
 void ops_free_dat(ops_dat dat); 
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
-                              int *base, int *d_m, int *d_p, char *data,
+                              int *base, int *d_m, int *d_p, int *stride, char *data,
                               int type_size, char const *type,
                               char const *name);
 
@@ -369,11 +371,11 @@ void ops_exit_core(void);
 ops_block ops_decl_block(int dims, const char *name);
 
 ops_dat ops_decl_dat_core(ops_block block, int data_size, int *block_size,
-                          int *base, int *d_m, int *d_p, char *data,
+                          int *base, int *d_m, int *d_p, int *stride, char *data,
                           int type_size, char const *type, char const *name);
 
 ops_dat ops_decl_dat_temp_core(ops_block block, int data_size, int *block_size,
-                               int *base, int *d_m, int *d_p, char *data,
+                               int *base, int *d_m, int *d_p, int *stride, char *data,
                                int type_size, char const *type,
                                char const *name);
 
@@ -384,6 +386,10 @@ ops_stencil ops_decl_stencil(int dims, int points, int *stencil,
                              char const *name);
 ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
                                      int *stride, char const *name);
+ops_stencil ops_decl_restrict_stencil( int dims, int points, int *sten,
+                                       int *stride, char const * name);
+ops_stencil ops_decl_prolong_stencil( int dims, int points, int *sten,
+                                      int *stride, char const * name);
 
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir);
