@@ -37,55 +37,27 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
+  int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
+  if (compute_ranges(args, block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_prolong_kernel");
   #endif
 
-  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start[0],
-      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
-
-  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
-  offs[1][1] = off2D(1, &start[0],
-      &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
-
-
-  int arg_idx[2];
   #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  int arg_idx_0 = arg_idx[0];
+  int arg_idx_1 = arg_idx[1];
   #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
+  int arg_idx_0 = start[0];
+  int arg_idx_1 = start[1];
   #endif //OPS_MPI
-
   int global_idx[2];
   #ifdef OPS_MPI
   global_idx[0] = arg_idx[0];
@@ -94,6 +66,24 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   global_idx[0] = start[0];
   global_idx[1] = start[1];
   #endif //OPS_MPI
+
+  //This arg has a prolong stencil - so create different ranges
+  sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
+  int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
+  for ( int n=0; n<2; n++ ){
+    stride_0[n] = args[0].stencil->mgrid_stride[n];
+    d_size_0[n] = args[0].dat->d_m[n] + sd0->decomp_size[n] - args[0].dat->d_p[n];
+    start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
+    end_0[n] = start_0[n] + d_size_0[n];
+  }
+  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
+  offs[0][1] = off2D(1, &start_0[0],
+      &end_0[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+
+  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
+  offs[1][1] = off2D(1, &start[0],
+      &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
+
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -110,10 +100,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 *
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -149,39 +139,40 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #pragma novector
-    for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
-      //call kernel function, passing in pointers to data -vectorised
-      for ( int i=0; i<SIMD_VEC; i++ ){
-        mgrid_prolong_kernel(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (int *)p_a[2] );
-
-        arg_idx[0]++;
-      }
-
-      //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
-      p_a[1]= p_a[1] + (dat1 * off1_0)*SIMD_VEC;
-    }
-
-    for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
-      //call kernel function, passing in pointers to data - remainder
+    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
+      //call kernel function, passing in pointers to data
       mgrid_prolong_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
 
 
       //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0);
+      p_a[0]= p_a[0] + (dat0 * off0_0) * (((global_idx[0]+1) % stride_0[0] == 0)?1:0);
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;
+      global_idx[0]++;
     }
 
     //shift pointers to data y direction
-    p_a[0]= p_a[0] + (dat0 * off0_1);
+    if ((global_idx[1]+1) % stride_0[1] == 0) {
+      p_a[0]= p_a[0] + (dat0 * off0_1);
+    }
+    else {
+      p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[0]-start_0[0]);
+    }
     p_a[1]= p_a[1] + (dat1 * off1_1);
+
     #ifdef OPS_MPI
     arg_idx[0] = sb->decomp_disp[0]+start[0];
     #else //OPS_MPI
     arg_idx[0] = start[0];
     #endif //OPS_MPI
     arg_idx[1]++;
+
+    #ifdef OPS_MPI
+    global_idx[0] = arg_idx_0;
+    #else //OPS_MPI
+    global_idx[0] = start[0];
+    #endif //OPS_MPI
+    global_idx[1]++;
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
