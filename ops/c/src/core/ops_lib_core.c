@@ -371,7 +371,7 @@ void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
 }
 
 ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
-                          int *base, int *d_m, int *d_p, char *data,
+                          int *base, int *d_m, int *d_p, int *stride, char *data,
                           int type_size, char const *type, char const *name) {
   if (block == NULL) {
     printf("Error: ops_decl_dat -- invalid block for data: %s\n", name);
@@ -414,6 +414,8 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     dat->d_m[n] = d_m[n];
   for (int n = 0; n < block->dims; n++)
     dat->d_p[n] = d_p[n];
+  for(int n=0;n<block->dims;n++)
+    dat->stride[n] = stride[n];
 
   // set the size of higher dimensions to 1
   for (int n = block->dims; n < OPS_MAX_DIM; n++) {
@@ -463,7 +465,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
 }
 
 ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
-                               int *base, int *d_m, int *d_p, char *data,
+                               int *base, int *d_m, int *d_p, int *stride, char *data,
                                int type_size, char const *type,
                                char const *name) {
   // Check if this dat already exists in the double linked list
@@ -475,7 +477,7 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
     exit(2);
   }
   // if not found ...
-  return ops_decl_dat_core(block, dim, dataset_size, base, d_m, d_p, data,
+  return ops_decl_dat_core(block, dim, dataset_size, base, d_m, d_p, stride, data,
                            type_size, type, name);
 }
 
@@ -536,6 +538,75 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
 
   stencil->stride = (int *)xmalloc(dims * sizeof(int));
   memcpy(stencil->stride, stride, sizeof(int) * dims);
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->mgrid_stride[i] = 1;
+
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  return stencil;
+}
+
+ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *stride, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);
+
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
+
+  stencil->stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
+
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  return stencil;
+}
+
+ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *stride, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);
+
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
+
+  stencil->stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
   return stencil;
