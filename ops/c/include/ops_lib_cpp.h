@@ -136,7 +136,7 @@ sizeof(T), type, name );
 
 template <class T>
 ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
-                     int *d_m, int *d_p, T *data, char const *type,
+                     int *d_m, int *d_p, int *stride, T *data, char const *type,
                      char const *name) {
 
   if (type_error(data, type)) {
@@ -145,7 +145,7 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
   }
 
   return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p,
-                           (char *)data, sizeof(T), type, name);
+                           stride, (char *)data, sizeof(T), type, name);
 }
 
 //
