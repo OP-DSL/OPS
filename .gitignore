@@ -42,9 +42,13 @@ poisson_openacc
 *_mpi
 *_openmp
 *_cuda
+*_cuda_tiled
+*_tiled
 *_openacc
 *_opencl
 *_mpi_openmp
+*_mpi_inline
 *_mpi_opencl
 *_mpi_cuda
 *.lst
+tea*.in
