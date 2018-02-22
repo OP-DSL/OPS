@@ -91,9 +91,12 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
+
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
+    restrict = [1] * nargs
+    prolong = [1] * nargs
 
     if NDIM == 2:
       for n in range (0, nargs):
@@ -119,6 +122,19 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
+
+    ### Determine if this is a MULTI_GRID LOOP with
+    ### either restrict or prolong
+    MULTI_GRID = 0
+    for n in range (0, nargs):
+      restrict[n] = 0
+      prolong[n] = 0
+      if str(stens[n]).find('RESTRICT') > 0:
+        restrict[n] = 1
+        MULTI_GRID = 1
+      if str(stens[n]).find('PROLONG') > 0 :
+        prolong[n] = 1
+        MULTI_GRID = 1
 
 
     reduction = 0
@@ -336,8 +352,17 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif')
+    code('')
 
-
+    if MULTI_GRID:
+      code('int global_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
     code('')
 
     for n in range (0, nargs):
