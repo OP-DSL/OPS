@@ -4,7 +4,7 @@
 
 //user function
 inline void mgrid_prolong_kernel(const double *coarse, double *fine, int *idx) {
-  fine[OPS_ACC1(0,0)] = coarse[OPS_ACC0(0,0)];
+  fine[OPS_ACC1(0,0)] = 10000*coarse[OPS_ACC0(-1,0)]+100*coarse[OPS_ACC0(0,0)]+coarse[OPS_ACC0(1,0)];
 }
 
 
@@ -168,7 +168,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[2].mpi_time += t1-t2;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

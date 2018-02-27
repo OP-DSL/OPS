@@ -933,9 +933,10 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     exit(-2);
   }
 
+  int stride[] = {1,1,1,1,1};
   ops_dat created_dat = ops_decl_dat_char(
       block, dat_dim, read_size /*global dat size in each dimension*/,
-      read_base, read_d_m, read_d_p, {1,1,1,1,1}, data, type_size /*size of(type)*/, type,
+      read_base, read_d_m, read_d_p, stride, data, type_size /*size of(type)*/, type,
       dat_name); //TODO: multigridgrid stride support
 
   created_dat->is_hdf5 = 1;

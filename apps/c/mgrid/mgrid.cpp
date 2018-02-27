@@ -41,9 +41,12 @@
 #include <math.h>
 
 // OPS header file
+#define OPS_2D
 #include "ops_seq.h"
 
 #include "mgrid_populate_kernel.h"
+#include "mgrid_restrict_kernel.h"
+#include "mgrid_prolong_kernel.h"
 
 /******************************************************************************
 * Main program
@@ -108,10 +111,10 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {1,12,1,12};
-  int iter_range_large[] = {1,24,1,24};
-  int iter_range_small[] = {1,6,1,6};
-  int iter_range_tiny[] = {1,4,1,4};
+  int iter_range[] = {0,12,0,12};
+  int iter_range_large[] = {0,24,0,24};
+  int iter_range_small[] = {0,6,0,6};
+  int iter_range_tiny[] = {0,4,0,4};
 
   ops_par_loop(mgrid_populate_kernel_1, "mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
