@@ -90,7 +90,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
   int bytes = size * type_size;
   for (int i = 0; i < block->dims; i++)
     bytes = bytes * dat->size[i];
@@ -105,10 +105,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   } else {
     // Allocate memory immediately
     dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
-  }
-  else {
-    //Allocate memory immediately
-    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
   }
