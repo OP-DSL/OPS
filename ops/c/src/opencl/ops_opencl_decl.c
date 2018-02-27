@@ -74,13 +74,13 @@ void ops_exit() {
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
-                          int *d_m, int *d_p, char *data, int type_size,
+                          int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
 
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
   int bytes = size * type_size;
   for (int i = 0; i < block->dims; i++)
     bytes = bytes * dat->size[i];
@@ -95,29 +95,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   } else {
     // Allocate memory immediately
     dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
-=======
-ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, int* d_m,
-                           int* d_p, int* stride, char* data,
-                           int type_size, char const * type, char const * name )
-{
-
-  /** ----             allocate an empty dat             ---- **/
-
-  ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, stride,
-    data, type_size, type, name );
-  int bytes = size*type_size;
-  for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
-
-  if(data != NULL) {
-     //printf("Data read in from HDF5 file or is allocated by the user\n");
-     dat->user_managed = 1; // will be reset to 0 if called from ops_decl_dat_hdf5()
-     dat->is_hdf5 = 0;
-     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from ops_decl_dat_hdf5()
-  }
-  else {
-    //Allocate memory immediately
-    dat->data = (char*) calloc(bytes, 1); //initialize data bits to 0
->>>>>>> 03cd674... tart converting other versions to be compatible with mgrid
     dat->user_managed = 0;
     dat->mem = bytes;
   }
