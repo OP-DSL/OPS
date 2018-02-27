@@ -102,9 +102,9 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {1,12,1,12};
-  int iter_range_large[] = {1,24,1,24};
-  int iter_range_small[] = {1,6,1,6};
+  int iter_range[] = {0,12,0,12};
+  int iter_range_large[] = {0,24,0,24};
+  int iter_range_small[] = {0,6,0,6};
   int iter_range_tiny[] = {1,4,1,4};
 
   ops_par_loop_mgrid_populate_kernel_1("mgrid_populate_kernel_1", grid0, 2, iter_range_small,

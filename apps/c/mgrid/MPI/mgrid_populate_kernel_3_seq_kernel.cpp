@@ -141,6 +141,6 @@ void ops_par_loop_mgrid_populate_kernel_3(char const *name, ops_block block, int
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[3].mpi_time += t1-t2;
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

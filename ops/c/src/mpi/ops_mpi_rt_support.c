@@ -866,11 +866,13 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
         }
       }
 
-      if (d_pos>0 || d_neg <0)
+      if (d_pos>0 || d_neg <0) {
         if(args[i].dat->stride[dim] > 1)
           ops_exchange_halo_packer(dat,d_pos,d_neg,range_new,dim,send_recv_offsets);
         else
           ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
+      }
+    }
     // early exit - if one of the args does not have an intersection in other dims
     // then none of the args will have an intersection - as all dats (except edge dats)
     // are defined on the whole domain
@@ -930,11 +932,12 @@ void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_
         }
       }
 
-      if (d_pos>0 || d_neg <0)
+      if (d_pos>0 || d_neg <0) {
         if(args[i].dat->stride[dim] > 1)
           ops_exchange_halo_unpacker(dat,d_pos,d_neg,range_new,dim,send_recv_offsets);
         else
           ops_exchange_halo_unpacker(dat,d_pos,d_neg,range,dim,send_recv_offsets);
+      }
     }
 
     MPI_Waitall(2,&request[0],&status[0]);

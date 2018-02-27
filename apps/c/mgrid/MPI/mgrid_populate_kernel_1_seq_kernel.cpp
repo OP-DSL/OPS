@@ -4,6 +4,7 @@
 
 //user function
 inline void mgrid_populate_kernel_1(double *val, int *idx) {
+  printf("%d,%d\n",idx[0],idx[1]);
   val[OPS_ACC0(0,0)] = (double)(idx[0]+6*idx[1]);
 }
 
@@ -141,6 +142,6 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
     //Update kernel record
     ops_timers_core(&c1,&t1);
     OPS_kernels[0].mpi_time += t1-t2;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
