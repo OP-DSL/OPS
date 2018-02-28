@@ -667,46 +667,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
       code('int global_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
         code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
       code('#else')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif')
-    code('')
-
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
-
-
-    condition = ''
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
-        if NDIM>2 or (NDIM==2 and soa_set):
-          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
-        if NDIM>3 or (NDIM==3 and soa_set):
-          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
-    condition = condition[:-4]
-    IF(condition)
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
-        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
-          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('zdim'+str(n)+'_'+name+' = zdim'+str(n)+';')
-          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
-    ENDIF()
     code('')
 
     for n in range (0, nargs):

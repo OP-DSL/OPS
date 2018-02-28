@@ -3,10 +3,8 @@
 //
 __constant__ int xdim0_mgrid_prolong_kernel;
 int xdim0_mgrid_prolong_kernel_h = -1;
-int ydim0_mgrid_prolong_kernel_h = -1;
 __constant__ int xdim1_mgrid_prolong_kernel;
 int xdim1_mgrid_prolong_kernel_h = -1;
-int ydim1_mgrid_prolong_kernel_h = -1;
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -18,7 +16,7 @@ int ydim1_mgrid_prolong_kernel_h = -1;
 //user function
 __device__
 
-void mgrid_prolong_kernel(const double *coarse, double *fine, int *idx) {
+void mgrid_prolong_kernel_gpu(const double *coarse, double *fine, int *idx) {
   fine[OPS_ACC1(0,0)] = coarse[OPS_ACC0(0,0)];
 }
 
@@ -48,14 +46,23 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_mgrid_prolong_kernel;
 
   if (idx_x < size0 && idx_y < size1) {
-    mgrid_prolong_kernel(arg0, arg1, arg_idx);
+    mgrid_prolong_kernel_gpu(arg0, arg1, arg_idx);
   }
 
 }
 
 // host stub function
+#ifndef OPS_LAZY
 void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+#else
+void ops_par_loop_mgrid_prolong_kernel_execute(ops_kernel_descriptor *desc) {
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
+  ops_arg arg2 = desc->args[2];
+  #endif
 
   //Timing
   double t1,t2,c1,c2;
@@ -63,7 +70,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  #ifdef CHECKPOINTING
+  #if CHECKPOINTING && !OPS_LAZY
   if (!ops_checkpointing_before(args,3,range,2)) return;
   #endif
 
@@ -76,7 +83,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-  #ifdef OPS_MPI
+  #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
   #endif //OPS_MPI
 
@@ -89,7 +96,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     start[n] = range[2*n];end[n] = range[2*n+1];
     arg_idx[n] = start[n];
   }
-  #endif //OPS_MPI
+  #endif
   for ( int n=0; n<2; n++ ){
     arg_idx_base[n] = arg_idx[n];
   }
@@ -97,10 +104,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   #ifdef OPS_MPI
   global_idx[0] = arg_idx[0];
   global_idx[1] = arg_idx[1];
-  #else //OPS_MPI
+  #else
   global_idx[0] = start[0];
   global_idx[1] = start[1];
-  #endif //OPS_MPI
+  #endif
 
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
@@ -122,8 +129,8 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
 
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
 
@@ -146,37 +153,26 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   }
   #endif
 
-  //set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-  (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
+  //set up initial pointers
+  int base0 = args[0].dat->base_offset + 
+           dat0 * 1 * (start_0[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    (start_0[1] * args[0].stencil->stride[1]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-  #endif //OPS_MPI
-  int base1 = dat1 * 1 *
-  (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-    (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
+  int base1 = args[1].dat->base_offset + 
+           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
+    (start[1] * args[1].stencil->stride[1]);
   p_a[1] = (char *)args[1].data_d + base1;
 
 
+  #ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 3);
   ops_halo_exchanges(args,3,range);
+  #endif
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
@@ -194,14 +190,47 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     OPS_kernels[2].time += t1-t2;
   }
 
+  #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
+  #endif
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[2].mpi_time += t2-t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
+
+#ifdef OPS_LAZY
+void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  desc->name = name;
+  desc->block = block;
+  desc->dim = dim;
+  desc->device = 1;
+  desc->index = 2;
+  desc->hash = 5381;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 2;
+  for ( int i=0; i<4; i++ ){
+    desc->range[i] = range[i];
+    desc->orig_range[i] = range[i];
+    desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+  }
+  desc->nargs = 3;
+  desc->args = (ops_arg*)malloc(3*sizeof(ops_arg));
+  desc->args[0] = arg0;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
+  desc->args[1] = arg1;
+  desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
+  desc->args[2] = arg2;
+  desc->function = ops_par_loop_mgrid_prolong_kernel_execute;
+  if (OPS_diags > 1) {
+    ops_timing_realloc(2,"mgrid_prolong_kernel");
+  }
+  ops_enqueue_kernel(desc);
+}
+#endif

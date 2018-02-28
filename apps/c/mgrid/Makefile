@@ -45,7 +45,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -182,7 +182,7 @@ mgrid_cuda: Makefile ./CUDA/mgrid_kernels_cu.o mgrid_ops.cpp mgrid_populate_kern
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mgrid_ops.cpp ./CUDA/mgrid_kernels_cu.o -lcudart -lops_cuda -o mgrid_cuda
 
 mgrid_mpi_cuda: Makefile ./CUDA/mgrid_kernels_mpi_cu.o mgrid_ops.cpp mgrid_populate_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mgrid_ops.cpp ./CUDA/mgrid_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -o mgrid_mpi_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) mgrid_ops.cpp ./CUDA/mgrid_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mgrid_mpi_cuda
 
 ./CUDA/mgrid_kernels_cu.o: ./CUDA/mgrid_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/mgrid_kernels_cu.o ./CUDA/mgrid_kernels.cu
