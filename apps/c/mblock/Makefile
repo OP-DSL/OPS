@@ -10,9 +10,6 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
-
-
-
 HEADERS=mblock_populate_kernel.h
 
 OPS_FILES=mblock.cpp
