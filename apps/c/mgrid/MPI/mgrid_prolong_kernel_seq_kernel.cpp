@@ -4,7 +4,7 @@
 
 //user function
 inline void mgrid_prolong_kernel(const double *coarse, double *fine, int *idx) {
-  fine[OPS_ACC1(0,0)] = 10000*coarse[OPS_ACC0(-1,0)]+100*coarse[OPS_ACC0(0,0)]+coarse[OPS_ACC0(1,0)];
+  fine[OPS_ACC1(0,0)] = coarse[OPS_ACC0(0,0)];
 }
 
 
@@ -98,35 +98,22 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
-  int dat1 = args[1].dat->elem_size;
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
-  base0 = base0+ dat0 *
+  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start_0[0] * args[0].stencil->stride[0];
+  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
-    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    start_0[1] * args[0].stencil->stride[1];
   p_a[0] = (char *)args[0].data + base0;
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-  #endif //OPS_MPI
-  int base1 = dat1 * 1 *
-    (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1+ dat1 *
+  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1+ (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
+    start[1] * args[1].stencil->stride[1];
   p_a[1] = (char *)args[1].data + base1;
 
   p_a[2] = (char *)arg_idx;
@@ -154,6 +141,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
       int arg_idx_l[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
       mgrid_prolong_kernel(  (double *)p_a[0] + (n_x+global_idx[0]%stride_0[0])/stride_0[0]*1*1 + (n_y+global_idx[1]%stride_0[1])/stride_0[1]*xdim0*1*1,
            (double *)p_a[1] + n_x*1*1 + n_y*xdim1*1*1,arg_idx_l );
+
 
     }
   }

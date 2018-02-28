@@ -553,16 +553,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
-      code('#ifdef OPS_LAZY')
-      code('ops_block block = desc->block;')
-      code('sub_block_list sb = OPS_sub_block_list[block->index];')
-      code('#endif')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
         code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
       code('#else')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif')
       code('')
@@ -774,7 +768,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         else:
           starttext = 'start'
         code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
-        code('         dat'+str(n)+' * 1 * ('+starrtext+'[0] * args['+str(n)+'].stencil->stride[0]);')
+        code('         dat'+str(n)+' * 1 * ('+starttext+'[0] * args['+str(n)+'].stencil->stride[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
