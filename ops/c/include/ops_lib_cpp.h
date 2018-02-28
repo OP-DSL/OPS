@@ -148,6 +148,17 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                            stride, (char *)data, sizeof(T), type, name);
 }
 
+template <class T>
+ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
+                     int *d_m, int *d_p, T *data, char const *type,
+                     char const *name) {
+
+  int stride[OPS_MAX_DIM];
+  for (int i = 0; i < OPS_MAX_DIM; i++) stride[i] = 1;
+  return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p,
+                           stride, (char *)data, sizeof(T), type, name);
+}
+
 //
 // wrapper functions to handle MPI global reductions
 //

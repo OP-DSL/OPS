@@ -70,7 +70,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS   = -O2 -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS   = -O3 -Kieee -Minline -Minform=severe -Minfo=all
+  CCFLAGS   = -O3 -Kieee -Minline -Minform=severe -Minfo=accel
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp
@@ -211,7 +211,7 @@ mgrid_openacc: $(openacc_obj_list) mgrid_ops.cpp mgrid_populate_kernel.h Makefil
 
 mgrid_mpi_openacc: $(openacc_obj_list) mgrid_ops.cpp mgrid_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    mgrid_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda -o mgrid_mpi_openacc
+    mgrid_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o mgrid_mpi_openacc
 
 mgrid_opencl: ./OpenCL/mgrid_opencl_kernels.o mgrid_ops.cpp mgrid_populate_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/libops_opencl.a
 	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) $(OPENCL_LIB) mgrid_ops.cpp ./OpenCL/mgrid_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl -o mgrid_opencl
