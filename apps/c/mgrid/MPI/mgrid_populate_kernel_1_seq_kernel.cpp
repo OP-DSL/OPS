@@ -4,7 +4,6 @@
 
 //user function
 inline void mgrid_populate_kernel_1(double *val, int *idx) {
-  printf("%d,%d\n",idx[0],idx[1]);
   val[OPS_ACC0(0,0)] = (double)(idx[0]+6*idx[1]);
 }
 
@@ -68,20 +67,13 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0+ dat0 *
+  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    start[1] * args[0].stencil->stride[1];
   p_a[0] = (char *)args[0].data + base0;
 
   p_a[1] = (char *)arg_idx;

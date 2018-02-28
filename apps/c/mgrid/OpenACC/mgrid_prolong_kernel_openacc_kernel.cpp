@@ -62,7 +62,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     start[n] = range[2*n];end[n] = range[2*n+1];
     arg_idx[n] = start[n];
   }
-  #endif //OPS_MPI
+  #endif
   for ( int n=0; n<2; n++ ){
     arg_idx_base[n] = arg_idx[n];
   }
@@ -70,10 +70,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   #ifdef OPS_MPI
   global_idx[0] = arg_idx[0];
   global_idx[1] = arg_idx[1];
-  #else //OPS_MPI
+  #else
   global_idx[0] = start[0];
   global_idx[1] = start[1];
-  #endif //OPS_MPI
+  #endif
 
   int dat0 = args[0].dat->elem_size;
   int dat1 = args[1].dat->elem_size;
@@ -97,34 +97,21 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   }
   #endif
 
-  //set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
-  base0 = base0+ dat0 *
+  //set up initial pointers
+  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start_0[0] * args[0].stencil->stride[0];
+  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
-    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    start_0[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-  #endif //OPS_MPI
-  int base1 = dat1 * 1 *
-    (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1+ dat1 *
+  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
+    start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
@@ -190,7 +177,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     //Update kernel record
     ops_timers_core(&c2,&t2);
     OPS_kernels[2].mpi_time += t2-t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
