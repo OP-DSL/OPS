@@ -225,7 +225,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
 bool ops_checkpointing_filename(const char *file_name, char *filename_out,
                                 char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
-  sprintf(filename_out2, "%s.%d.dup", file_name,
+  if (filename_out2) sprintf(filename_out2, "%s.%d.dup", file_name,
           (ops_my_global_rank + OPS_ranks_per_node) % ops_comm_global_size);
   return (OPS_enable_checkpointing > 1);
 }
@@ -527,3 +527,4 @@ char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
 }
 
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
+

@@ -232,7 +232,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
+      print 'Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -795,11 +795,6 @@ def main(source_files):
   #
   # finally, generate target-specific kernel files
   #
-
-
-  #ops_gen_seq_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi
-  #ops_gen_openmp_macro(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_openmp
-  #ops_gen_cuda(str(source_files[0]), date, consts, kernels) # deprecated .. use ops_gen_mpi_cuda
 
 
   ops_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
