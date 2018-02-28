@@ -434,7 +434,6 @@ void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
-void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_idx);
 
 void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
