@@ -958,7 +958,7 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
   sub_block_list sb = OPS_sub_block_list[block->index];
   int d_size[OPS_MAX_DIM];
 
-  if (!sb->owned) -1;
+  if (!sb->owned) return -1;
   for ( int n=0; n < block->dims; n++ ){
     d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
     start[n] = sd->decomp_disp[n] - dat->d_m[n];

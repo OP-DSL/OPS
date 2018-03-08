@@ -49,8 +49,10 @@ void ops_exit() { ops_exit_core(); }
 ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, char *data, int type_size,
                           char const *type, char const *name) {
+  int stride[OPS_MAX_DIM];
+  for (int i =0; i < OPS_MAX_DIM; i++) stride[i] = 1;
   ops_dat dat = ops_decl_dat_char(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
   dat->amr = 1;
   return dat;
 }
@@ -248,13 +250,29 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
   return temp;
 }
 
-ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
+ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  temp.dim = dim;
-  temp.data = data;
-  temp.dat->data = data;
-  temp.field = field;
+  temp.idx = idx;
+  temp.argtype = OPS_ARG_DAT2;
+  return temp;
+}
+
+ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_RESTRICT;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_restrict used, but stencil is not restrict stencil\n");exit(-1);}
+  return temp;
+}
+
+ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_PROLONG;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_prolong used, but stencil is not prolong stencil\n");exit(-1);}
   return temp;
 }
 

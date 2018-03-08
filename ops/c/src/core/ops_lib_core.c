@@ -818,6 +818,7 @@ ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc) {
   }
   arg.acc = acc;
   arg.opt = 1;
+  arg.idx = -1;
   return arg;
 }
 
@@ -830,6 +831,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.dim = dim;
   arg.data = data;
   arg.acc = acc;
+  arg.idx = -1;
   return arg;
 }
 
@@ -842,6 +844,7 @@ ops_arg ops_arg_idx() {
   arg.dim = 0;
   arg.data = NULL;
   arg.acc = 0;
+  arg.idx = -1;
   return arg;
 }
 

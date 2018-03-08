@@ -28,7 +28,27 @@ ifdef CHECKPOINTING
 endif
 endif
 
-
+ifeq ($(OPS_COMPILER),gnu)
+  CC 		= gcc -std=c99
+ifdef DEBUG
+  OPT	 	= -O0 -g
+else
+  OPT	 	= -O3 -g -mavx2
+endif
+  CCFLAGS       = $(OPT) -Wall -Werror
+  CXX 		= g++
+  CXXFLAGS 	= $(CCFLAGS)
+  CXXLINK	= -lstdc++
+  FC		= gfortran
+  OMPFLAGS 	= -fopenmp #-openmp-report2
+  FFLAGS	= $(OPT)
+  MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
+  MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPIF90 	= $(MPI_INSTALL_PATH)/bin/mpif90
+  MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+  TARGETS       = clean poisson_seq poisson_openmp poisson_mpi poisson_mpi_openmp
+  OPS_MPI	= -DOPS_MPI
+else
 ifeq ($(OPS_COMPILER),intel)
   CC 		= icc -std=c99
 ifdef DEBUG
@@ -98,6 +118,7 @@ else
 
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

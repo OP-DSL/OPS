@@ -75,6 +75,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
+    arg_typ2  = kernels[nk]['type2']
     name  = kernels[nk]['name']
     nargs = kernels[nk]['nargs']
     dim   = kernels[nk]['dim']
@@ -91,15 +92,23 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
 
 
+    restrict = [0] * nargs
+    prolong  = [0] * nargs
+    MULTI_GRID = 0
     reduction = 0
+    arg_idx = 0
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         reduction = 1
-
-    arg_idx = 0
-    for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
+      if arg_type2[n] == 'ops_arg_prolong':
+        prolong[n] = 1
+        MULTI_GRID=1
+      if arg_type2[n] == 'ops_arg_restrict':
+        restrict[n] = 1
+        MULTI_GRID=1
 
     config.file_text = ''
     config.depth = 0
@@ -218,6 +227,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
         code('& idx, &')
       else:
         code('& opsDat'+str(n+1)+'Local, &')
+        if restrict[n] == 1 or prolong[n] == 1:
+          code('& stride_'+str(n+1)+', &')
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
@@ -229,6 +240,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
         code(typs[n]+', INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
+        if restrict[n] == 1 or prolong[n] == 1:
+          code('integer(kind=4) :: stride_'+str(n+1)+'('+str(NDIM)+')')
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code(typs[n]+'opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -347,7 +360,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 ##########################################################################
 #  host subroutine
 ##########################################################################
-
     code('')
     comm('host subroutine')
     if amr:
@@ -465,15 +477,19 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
+        if amr and arg_type2[n] <> 'ops_arg_dat': #restrict, prolong or dat2
+          blockid = 'opsArg'+str(n+1)+'%idx'
+        else:
+          blockid = 'blockid'
         if not(dims[n].isdigit()) or int(dims[n]) <> 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           if amr:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+',blockid)')
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+','+blockid+')')
           else:
             code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
           if amr:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,1,blockid)')
+            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,1,'+blockid+')')
           else:
             code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
@@ -502,6 +518,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
         code('& idx, &')
       else:
         code('& opsDat'+str(n+1)+'Local, &')
+        if restrict[n] == 1 or prolong[n] == 1:
+          code(' & opsArg'+str(n+1)+'%mgrid_stride, &')
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')

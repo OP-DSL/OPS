@@ -67,6 +67,10 @@
 #define OPS_ARG_GBL 0
 #define OPS_ARG_DAT 1
 #define OPS_ARG_IDX 2
+//AMR
+#define OPS_ARG_DAT2 3
+#define OPS_ARG_PROLONG 4
+#define OPS_ARG_RESTRICT 5
 
 #ifdef MAX_DEPTH
 #undef MAX_DEPTH
@@ -203,7 +207,7 @@ typedef ops_stencil_core *ops_stencil;
 typedef struct {
   ops_dat dat;          /* dataset */
   ops_stencil stencil;  /* the stencil */
-  int field;            /* field of multi-dimensional data accessed */
+  int idx;              /* for AMR, idx of other block */
   int dim;              /* dimension of data */
   char *data;           /* data on host */
   char *data_d;         /* data on device (for CUDA)*/
@@ -350,8 +354,15 @@ ops_dat ops_decl_amrdat_mpi_char(ops_block block, int size, int *dat_size,
 
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
-ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
+
+ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
+ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+
+
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag);
 ops_arg ops_arg_idx();
