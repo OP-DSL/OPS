@@ -94,6 +94,8 @@ module OPS_Fortran_Declarations
     integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
     type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
 
+    type(c_ptr)         :: stride      ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+    integer(kind=c_int) :: amr         ! flag indicating whether AMR dataset
   end type ops_dat_core
 
   type :: ops_dat
@@ -105,12 +107,12 @@ module OPS_Fortran_Declarations
   type, BIND(C) :: ops_stencil_core
     integer(kind=c_int) :: index        ! index
     integer(kind=c_int) :: dims         ! dimensionality of the stencil
-    type(c_ptr)         :: name         ! name of stencil
     integer(kind=c_int) :: points       ! number of stencil elements
+    type(c_ptr)         :: name         ! name of stencil
     type(c_ptr)         :: stencil      ! elements in the stencil
     type(c_ptr)         :: stride       ! stride of the stencil
-    type(c_ptr)         :: mgrid_stride       ! stride of the stencil under multi-grid
-    integer(kind=c_int) :: type       ! 0 for regular, 1 for prolongate, 2 for restrict
+    type(c_ptr)         :: mgrid_stride ! stride of the stencil under multi-grid
+    integer(kind=c_int) :: type         ! 0 for regular, 1 for prolongate, 2 for restrict
   end type ops_stencil_core
 
   type :: ops_stencil
@@ -225,6 +227,7 @@ module OPS_Fortran_Declarations
       type(c_ptr), value, intent(in)           :: block
       integer(kind=c_int), value               :: dim, type_size
       character(kind=c_char,len=1), intent(in) :: type(*)
+      type(c_ptr), intent(in), value           :: stride
       type(c_ptr), intent(in), value           :: data
       type(c_ptr), intent(in), value           :: size
       type(c_ptr), intent(in), value           :: base
@@ -235,7 +238,7 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_dat_c
 
-    type(c_ptr) function ops_decl_amrdat_c ( block, dim, size, base, d_m, d_p,data, type_size, type, name ) &
+    type(c_ptr) function ops_decl_amrdat_c ( block, dim, size, base, d_m, d_p, data, type_size, type, name ) &
         & BIND(C,name='ops_decl_amrdat_char')
 
       use, intrinsic :: ISO_C_BINDING
@@ -317,6 +320,28 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_stencil_c
 
+    type(c_ptr) function ops_decl_restrict_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_restrict_stencil')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value               :: dims, points
+      type(c_ptr), intent(in), value           :: sten
+      type(c_ptr), intent(in), value           :: stride
+      character(kind=c_char,len=1), intent(in) :: name(*)
+
+    end function ops_decl_restrict_stencil_c
+
+    type(c_ptr) function ops_decl_prolong_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_prolong_stencil')
+
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int), value               :: dims, points
+      type(c_ptr), intent(in), value           :: sten
+      type(c_ptr), intent(in), value           :: stride
+      character(kind=c_char,len=1), intent(in) :: name(*)
+
+    end function ops_decl_prolong_stencil_c
+
     type(c_ptr) function ops_decl_strided_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_strided_stencil')
 
       use, intrinsic :: ISO_C_BINDING
@@ -347,21 +372,48 @@ module OPS_Fortran_Declarations
 
     end function ops_arg_dat_c
 
-    function ops_arg_dptr_c ( dat, data, field, dim, sten, type, acc ) BIND(C,name='ops_arg_dptr')
+    function ops_arg_restrict_c ( dat, idx, dim, sten, type, acc ) BIND(C,name='ops_arg_restrict')
 
       use, intrinsic :: ISO_C_BINDING
       import :: ops_arg
 
-      type(ops_arg)                  :: ops_arg_dptr_c
+      type(ops_arg)                  :: ops_arg_restrict_c
       type(c_ptr), value, intent(in) :: dat
-      type(c_ptr), value :: data
-      integer(kind=c_int), value     :: field
-      integer(kind=c_int), value     :: dim
+      integer(kind=c_int), value     :: idx, dim
       type(c_ptr), value, intent(in) :: sten
       character(kind=c_char,len=1)   :: type(*)
       integer(kind=c_int), value     :: acc
 
-    end function ops_arg_dptr_c
+    end function ops_arg_restrict_c
+
+    function ops_arg_prolong_c ( dat, idx, dim, sten, type, acc ) BIND(C,name='ops_arg_prolong')
+
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_arg
+
+      type(ops_arg)                  :: ops_arg_prolong_c
+      type(c_ptr), value, intent(in) :: dat
+      integer(kind=c_int), value     :: idx, dim
+      type(c_ptr), value, intent(in) :: sten
+      character(kind=c_char,len=1)   :: type(*)
+      integer(kind=c_int), value     :: acc
+
+    end function ops_arg_prolong_c
+
+    function ops_arg_dat2_c ( dat, idx, dim, sten, type, acc ) BIND(C,name='ops_arg_dat2')
+
+      use, intrinsic :: ISO_C_BINDING
+      import :: ops_arg
+
+      type(ops_arg)                  :: ops_arg_dat2_c
+      type(c_ptr), value, intent(in) :: dat
+      integer(kind=c_int), value     :: idx, dim
+      type(c_ptr), value, intent(in) :: sten
+      character(kind=c_char,len=1)   :: type(*)
+      integer(kind=c_int), value     :: acc
+
+    end function ops_arg_dat2_c
+
 
     function ops_arg_dat_opt_c ( dat, dim, sten, type, acc, flag ) BIND(C,name='ops_arg_dat_opt')
 
@@ -565,10 +617,6 @@ module OPS_Fortran_Declarations
     & ops_dat_set_data_integer_4_2d
   end interface ops_dat_set_data
 
-  interface ops_arg_dptr !XXX
-    module procedure ops_arg_dptr_mdim4_real_8, ops_arg_dptr_real_8, ops_arg_dptr_mdim3_real_8
-  end interface ops_arg_dptr
-
   !###################################################################
   ! Fortran subroutines that gets called by an OPS Fortran application
   ! - these calls the relevant *_c routine internally where the *_c
@@ -628,6 +676,38 @@ module OPS_Fortran_Declarations
 
   end subroutine ops_decl_stencil
 
+  subroutine ops_decl_restrict_stencil ( dims, points, stencil_data, stride_data, stencil, name )
+
+    integer, intent(in) :: dims, points
+    integer(4), dimension(*), intent(in), target :: stencil_data
+    integer(4), dimension(*), intent(in), target :: stride_data
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*):: name
+
+    stencil%stencilCPtr = ops_decl_restrict_stencil_c ( dims, points, c_loc ( stencil_data ), &
+     & c_loc ( stride_data ), name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
+
+  end subroutine ops_decl_restrict_stencil
+
+  subroutine ops_decl_prolong_stencil ( dims, points, stencil_data, stride_data, stencil, name )
+
+    integer, intent(in) :: dims, points
+    integer(4), dimension(*), intent(in), target :: stencil_data
+    integer(4), dimension(*), intent(in), target :: stride_data
+    type(ops_stencil) :: stencil
+    character(kind=c_char,len=*):: name
+
+    stencil%stencilCPtr = ops_decl_prolong_stencil_c ( dims, points, c_loc ( stencil_data ), &
+     & c_loc ( stride_data ), name//C_NULL_CHAR )
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
+
+  end subroutine ops_decl_prolong_stencil
+
   subroutine ops_decl_strided_stencil ( dims, points, stencil_data, stride_data, stencil, name )
 
     integer, intent(in) :: dims, points
@@ -656,8 +736,7 @@ module OPS_Fortran_Declarations
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
-    
-    integer(4), target :: stride(5)
+    integer(4), target                           :: stride(5)
 
     integer d;
     DO d = 1, block%blockPtr%dims
@@ -1116,55 +1195,50 @@ module OPS_Fortran_Declarations
 
   end function ops_arg_gbl_real_1dim
 
-  type(ops_arg) function ops_arg_dptr_mdim4_real_8(dat, data, field, dim, stencil, typ, access)
+  type(ops_arg) function ops_arg_restrict(dat, idx, dim, stencil, typ, access)
     use, intrinsic :: ISO_C_BINDING
     implicit none
     type(ops_dat) :: dat
-    real(8), dimension(:,:,:,:), target :: data
-    integer(kind=c_int) :: field
-    integer(kind=c_int) :: dim
+    integer(kind=c_int) :: idx, dim
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*) :: typ
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_dptr_mdim4_real_8 = ops_arg_dptr_c( dat%dataCptr, c_loc(data), field, dim, &
+    ops_arg_restrict = ops_arg_restrict_c( dat%dataCptr, idx, dim, &
       & stencil%stencilCptr, typ, access-1 )
 
-  end function ops_arg_dptr_mdim4_real_8 
+  end function ops_arg_restrict
 
-  type(ops_arg) function ops_arg_dptr_mdim3_real_8(dat, data, field, dim, stencil, typ, access)
+  type(ops_arg) function ops_arg_prolong(dat, idx, dim, stencil, typ, access)
     use, intrinsic :: ISO_C_BINDING
     implicit none
     type(ops_dat) :: dat
-    real(8), dimension(:,:,:), target :: data
-    integer(kind=c_int) :: field
-    integer(kind=c_int) :: dim
+    integer(kind=c_int) :: idx, dim
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*) :: typ
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_dptr_mdim3_real_8 = ops_arg_dptr_c( dat%dataCptr, c_loc(data), field, dim, &
+    ops_arg_prolong = ops_arg_prolong_c( dat%dataCptr, idx, dim, &
       & stencil%stencilCptr, typ, access-1 )
 
-  end function ops_arg_dptr_mdim3_real_8 
+  end function ops_arg_prolong
 
-
-  type(ops_arg) function ops_arg_dptr_real_8(dat, data, stencil, typ, access)
+  type(ops_arg) function ops_arg_dat2(dat, idx, dim, stencil, typ, access)
     use, intrinsic :: ISO_C_BINDING
     implicit none
     type(ops_dat) :: dat
-    real(8), dimension(:,:,:), target :: data
+    integer(kind=c_int) :: idx, dim
     type(ops_stencil) :: stencil
     character(kind=c_char,len=*) :: typ
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_dptr_real_8 = ops_arg_dptr_c( dat%dataCptr, c_loc(data), 1, 1, &
+    ops_arg_dat2 = ops_arg_dat2_c( dat%dataCptr, idx, dim, &
       & stencil%stencilCptr, typ, access-1 )
 
-  end function ops_arg_dptr_real_8
+  end function ops_arg_dat2
 
   subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
 
