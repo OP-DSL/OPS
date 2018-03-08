@@ -101,6 +101,10 @@
 #define OPS_ARG_GBL 0
 #define OPS_ARG_DAT 1
 #define OPS_ARG_IDX 2
+//AMR
+#define OPS_ARG_DAT2 3
+#define OPS_ARG_PROLONG 4
+#define OPS_ARG_RESTRICT 5
 
 
 
@@ -419,8 +423,6 @@ void ops_free_dat(ops_dat dat);
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
 
-ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil stencil, char const *type,
-                    ops_access acc); //XXX
 /**
  * Passes an accessor to the value(s) at the current grid point to the user kernel if flag is true
  *
@@ -434,6 +436,14 @@ ops_arg ops_arg_dptr(ops_dat dat, char* data, int field, int dim, ops_stencil st
  * @param flag     indicates whether the optional argument is enabled (non-0) or not (0)
  * @return
  */
+ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc);
+
+
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag);
 /**

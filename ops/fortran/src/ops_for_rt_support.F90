@@ -179,6 +179,18 @@ module OPS_Fortran_RT_Support
     type(c_ptr), intent(in), value           :: range
   end function getRange_c
 
+  integer function getRange2_c (args, nargs, block, start, end, range, arg_idx) BIND(C,name='getRange2')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg), dimension(*) :: args       ! array with ops_args
+    integer(kind=c_int), value :: nargs ! number of ops_dat arguments to ops_par_loop
+    type(c_ptr), value, intent(in)           :: block
+    type(c_ptr), value :: start
+    type(c_ptr), value :: end
+    type(c_ptr), intent(in), value           :: range
+    type(c_ptr), intent(in), value           :: arg_idx
+  end function getRange2_c
+
   subroutine getIdx_c (block, start, idx) BIND(C,name='getIdx')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
@@ -253,6 +265,21 @@ module OPS_Fortran_RT_Support
     integer(4), dimension(*), intent(in), target :: range
 
     getRange = getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
+  end function
+
+  integer function getRange2(args, nargs, block, start, end, range, arg_idx)
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+    type(ops_arg), dimension(nargs)  :: args
+    integer(kind=c_int), value  :: nargs
+    type(ops_block), intent(in)  :: block
+    integer(4), dimension(*),target :: start
+    integer(4), dimension(*),target :: end
+    integer(4), dimension(*), intent(in), target :: range
+    integer(4), dimension(*), intent(in), target :: arg_idx
+
+    getRange2 = getRange2_c ( args, nargs, block%blockCptr, c_loc(start), c_loc(end), c_loc(range), c_loc(arg_idx))
   end function
 
   subroutine getIdx(block, start, idx )

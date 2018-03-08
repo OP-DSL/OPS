@@ -155,6 +155,7 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   call ops_timers_core(t1)
 
 #ifdef OPS_MPI
+!  IF (getRange2(opsArgArray, 6, block, start, end, range, idx) < 0) THEN
   IF (getRange(block, start, end, range) < 0) THEN
     return
   ENDIF

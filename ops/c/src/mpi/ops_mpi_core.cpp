@@ -215,6 +215,33 @@ ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
   return temp;
 }
 
+ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.idx = idx;
+  temp.argtype = OPS_ARG_DAT2;
+  return temp;
+}
+
+ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_RESTRICT;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_restrict used, but stencil is not restrict stencil\n");exit(-1);}
+  return temp;
+}
+
+ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_PROLONG;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_prolong used, but stencil is not prolong stencil\n");exit(-1);}
+  return temp;
+}
+
+
 ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
   return ops_arg_gbl_core(data, dim, size, acc);
 }
@@ -369,8 +396,18 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getRange(ops_block block, int *start, int *end, int *range) {
+int getRange2(ops_arg* args, int nargs, ops_block block, int *start, int *end, int *range, int *arg_idx) {
+  for (int n = 0; n < block->dims; n++)
+    range[2 * n] -= 1;
+  int ret = compute_ranges(args, nargs, block, range, start, end, arg_idx);
+  for (int n = 0; n < block->dims; n++) {
+    range[2 * n] += 1;
+    start[n] += 1;
+  }
+  return ret;
+}
 
+int getRange(ops_block block, int *start, int *end, int *range) {
   int owned = -1;
   int block_dim = block->dims;
   /*convert to C indexing*/
@@ -430,93 +467,10 @@ int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
 // need differet routines for 1D, 2D 3D etc.
-int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
-
+int getDatBaseFromOpsArg(ops_arg *arg, int *start, int datdim, int dim, int amr, int amrblock) {
   /*convert to C indexing*/
-  start[0] -= 1;
-
-  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
-  int block_dim = arg->dat->block->dims;
-
-  // printf("start[0] = %d, base = %d, dim = %d, d_m[0] = %d dat = %d\n",
-  //      start[0],arg->dat->base[0],dim, arg->dat->d_m[0], dat);
-
-  // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-  for (int d = 0; d < block_dim; d++)
-    d_m[d] = arg->dat->d_m[d] + OPS_sub_dat_list[arg->dat->index]->d_im[d];
-  int base = dat * 1 *
-             (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-  // printf("base = %d\n",base/(dat/dim));
-  /*revert to Fortran indexing*/
-  start[0] += 1;
-  return base / (arg->dat->type_size) + 1;
-}
-
-int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
-  /*convert to C indexing*/
-  start[0] -= 1;
-  start[1] -= 1;
-
-  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
-  int block_dim = arg->dat->block->dims;
-
-  // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-  for (int d = 0; d < block_dim; d++)
-    d_m[d] = arg->dat->d_m[d] + OPS_sub_dat_list[arg->dat->index]->d_im[d];
-  int base = dat * 1 *
-             (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-  base = base +
-         dat * arg->dat->size[0] *
-             (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
-
-  // printf("base = %d\n",base/(dat/dim));
-  /*revert to Fortran indexing*/
-  start[0] += 1;
-  start[1] += 1;
-  return base / (arg->dat->type_size) + 1;
-}
-
-int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
-  /*convert to C indexing*/
-  start[0] -= 1;
-  start[1] -= 1;
-  start[2] -= 1;
-
-  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
-  int block_dim = arg->dat->block->dims;
-
-  // set up initial pointers
-  int d_m[OPS_MAX_DIM];
-  for (int d = 0; d < block_dim; d++)
-    d_m[d] = arg->dat->d_m[d] + OPS_sub_dat_list[arg->dat->index]->d_im[d];
-  int base = dat * 1 *
-             (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-  base = base +
-         dat * arg->dat->size[0] *
-             (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
-  base = base +
-         dat * arg->dat->size[0] * arg->dat->size[1] *
-             (start[2] * arg->stencil->stride[2] - arg->dat->base[2] - d_m[2]);
-
-  if (arg->dat->amr == 1) {
-    printf("Internal error: getDatBaseFromOpsArg3D called for an AMR dataset!\n");
-    exit(-1);
-  }
-  // printf("base = %d\n",base/(dat/dim));
-  /*revert to Fortran indexing*/
-  start[0] += 1;
-  start[1] += 1;
-  start[2] += 1;
-  return base / (arg->dat->type_size) + 1;
-}
-
-int getDatBaseFromOpsArg3DAMR(ops_arg *arg, int *start, int dim, int amrblock) {
-  /*convert to C indexing*/
-  start[0] -= 1;
-  start[1] -= 1;
-  start[2] -= 1;
+  for (int d = 0; d < dim; d++)
+    start[d] -= 1;
 
   int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
@@ -525,30 +479,50 @@ int getDatBaseFromOpsArg3DAMR(ops_arg *arg, int *start, int dim, int amrblock) {
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < block_dim; d++)
     d_m[d] = arg->dat->d_m[d];
-  int base = dat * 1 *
-             (start[0] * arg->stencil->stride[0] - arg->dat->base[0] - d_m[0]);
-  base = base +
-         dat * arg->dat->size[0] *
-             (start[1] * arg->stencil->stride[1] - arg->dat->base[1] - d_m[1]);
-  base = base +
-         dat * arg->dat->size[0] * arg->dat->size[1] *
-             (start[2] * arg->stencil->stride[2] - arg->dat->base[2] - d_m[2]);
-
-  if (arg->dat->amr == 1) {
-    int bsize = arg->dat->elem_size;
-    for (int d = 0; d < block_dim; d++) {
-      bsize *= arg->dat->size[d];
-    }
-    base += (amrblock - 1)*bsize;
+  int cumsize = 1;
+  int base = 0;
+  for (int d = 0; d < dim; d++) {
+    int startl = start[d];
+    if (arg->argtype == OPS_ARG_PROLONG) startl=start[d]/arg->stencil->mgrid_stride[d];
+    else if (arg->argtype == OPS_ARG_RESTRICT) startl=start[d]*arg->stencil->mgrid_stride[d];
+    base = base +
+           dat * cumsize * (startl * arg->stencil->stride[d] - arg->dat->base[d] - d_m[d]);
+    cumsize *= arg->dat->size[d];
   }
 
+  if (arg->dat->amr == 1) {
+    if (amr) {
+      printf("Internal error: getDatBaseFromOpsArg3D called for an AMR dataset!\n");
+      exit(-1);
+    } else {
+      int bsize = arg->dat->elem_size;
+      for (int d = 0; d < block_dim; d++) {
+        bsize *= arg->dat->size[d];
+      }
+      base += (amrblock - 1)*bsize;
+    }
+  }
 
   /*revert to Fortran indexing*/
-  start[0] += 1;
-  start[1] += 1;
-  start[2] += 1;
+  for (int d = 0; d < dim; d++)
+    start[d] += 1;
+
   return base / (arg->dat->type_size) + 1;
 }
+
+int getDatBaseFromOpsArg3DAMR(ops_arg *arg, int *start, int datdim, int amrblock) {
+  return getDatBaseFromOpsArg(arg, start, datdim, 3, 1, amrblock);
+}
+int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int datdim) {
+  return getDatBaseFromOpsArg(arg, start, datdim, 3, 0, 0);
+}
+int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int datdim) {
+  return getDatBaseFromOpsArg(arg, start, datdim, 2, 0, 0);
+}
+int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int datdim) {
+  return getDatBaseFromOpsArg(arg, start, datdim, 1, 0, 0);
+}
+
 char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
   // return (char *)((ops_reduction)arg->data)->data;
   // printf("block->index %d ((ops_reduction)arg->data)->size =

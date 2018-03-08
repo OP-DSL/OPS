@@ -198,6 +198,7 @@ def get_arg_dat(arg_string, j):
       # split the dat_args_string into  5 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat',
+                  'type2': 'ops_arg_dat',
                   'dat': argsl[0].strip(),
                   'idx': '-1',
                   'dim': argsl[1].strip(),
@@ -211,7 +212,8 @@ def get_arg_dat(arg_string, j):
         return
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
-      temp_dat = {'type': 'ops_arg_dat_opt',
+      temp_dat = {'type': 'ops_arg_dat',
+                  'type2' : 'ops_arg_dat_opt'
                   'dat':  argsl[0].strip(),
                   'idx':  '-1',
                   'dim':  argsl[1].strip(),
@@ -219,28 +221,20 @@ def get_arg_dat(arg_string, j):
                   'typ': (argsl[3].replace('"','')).strip(),
                   'acc':  argsl[4].strip(),
                   'opt':  argsl[5].strip()}
-    if dat_type == 'ops_arg_dptr':
-      if len(argsl) <> 5 and len (argsl) <> 7:
-        print 'Error parsing op_arg_dptr(%s): must have five or seven arguments' % dat_args_string
+    if dat_type == 'ops_arg_restrict' or dat_type == 'ops_arg_dat2' or dat_type == 'ops_arg_prolong':
+      if len(argsl) <> 6:
+        print 'Error parsing '+dat_type+'(%s): must have six arguments' % dat_args_string
         return
-      # split the dat_args_string into  5 and create a struct with the elements
+      # split the dat_args_string into 6 and create a struct with the elements
       # and type as op_arg_dat
-      if len(argsl) == 5:
-        temp_dat = {'type': 'ops_arg_dat',
-                    'dat': argsl[0].strip(),
-                    'idx': '-1',
-                    'dim': '1',
-                    'sten': argsl[2].strip(),
-                    'typ': (argsl[3].replace('"','')).strip(),
-                    'acc': argsl[4].strip()}
-      else:
-        temp_dat = {'type': 'ops_arg_dat',
-                    'dat': argsl[0].strip(),
-                    'idx': argsl[2].strip(),
-                    'dim': argsl[3].strip(),
-                    'sten': argsl[4].strip(),
-                    'typ': (argsl[5].replace('"','')).strip(),
-                    'acc': argsl[6].strip()}
+      temp_dat = {'type': 'ops_arg_dat',
+                  'type2': dat_type,
+                  'dat': argsl[0].strip(),
+                  'idx': argsl[1].strip(),
+                  'dim': argsl[2].strip(),
+                  'sten': argsl[3].strip(),
+                  'typ': (argsl[4].replace('"','')).strip(),
+                  'acc': argsl[5].strip()}
 
     return temp_dat
 
@@ -260,6 +254,7 @@ def get_arg_gbl(arg_string, k):
     # split the gbl_args_string into  4 and create a struct with the elements
     # and type as op_arg_gbl
     temp_gbl = {'type': 'ops_arg_gbl',
+                'type2' : 'ops_arg_gbl',
                 'data': gbl_args_string.split(',')[0].strip(),
                 'dim': gbl_args_string.split(',')[1].strip(),
                 'typ': (gbl_args_string.split(',')[2].replace('"','')).strip(),
@@ -270,7 +265,7 @@ def get_arg_gbl(arg_string, k):
 def get_arg_idx(arg_string, l):
     loc = arg_parse(arg_string, l + 1)
 
-    temp_idx = {'type': 'ops_arg_idx'}
+    temp_idx = {'type': 'ops_arg_idx','type2':'ops_arg_idx'}
     return temp_idx
 
 def ops_par_loop_parse(text):
@@ -444,6 +439,7 @@ def main(source_files):
         # process arguments
         #
         typ = [''] * nargs
+        type2 = [''] * nargs
         var = [''] * nargs
         stens = [0] * nargs
         accs = [0] * nargs
@@ -454,8 +450,9 @@ def main(source_files):
           arg_type = loop_args[i]['args'][m]['type']
           args = loop_args[i]['args'][m]
 
-          if arg_type.strip() == 'ops_arg_dat' or arg_type.strip() == 'ops_arg_dat_opt':
+          if arg_type.strip() == 'ops_arg_dat':
             var[m] = args['dat']
+            type2[m] = args['type2']
             dims[m] = args['dim']
             stens[m] = args['sten']
             typs[m] = args['typ']
@@ -477,6 +474,7 @@ def main(source_files):
           if arg_type.strip() == 'ops_arg_gbl':
             var[m] = args['data']
             dims[m] = args['dim']
+            type2[m] = args['type2']
             typs[m] = args['typ']
             typ[m] = 'ops_arg_gbl'
 
@@ -493,6 +491,7 @@ def main(source_files):
 
           if arg_type.strip() == 'ops_arg_idx':
             var[m] = ''
+            type2[m] = args['type2']
             dims[m] = 0
             typs[m] = 'int'
             typ[m] = 'ops_arg_idx'
@@ -541,6 +540,7 @@ def main(source_files):
         if not repeat:
               nkernels = nkernels + 1
               temp = { 'arg_type':typ,
+                       'type2': type2,
                        'name': name,
                       'nargs': nargs,
                       'dim': dim,
@@ -648,17 +648,21 @@ def main(source_files):
 
           for arguments in range(0, loop_args[curr_loop]['nargs']):
               elem = loop_args[curr_loop]['args'][arguments]
-              if elem['type'] == 'ops_arg_dat':
-                  line = line + '& '+elem['type'] + '(' + elem['dat'] + \
+              if elem['type2'] == 'ops_arg_dat':
+                  line = line + '& '+elem['type2'] + '(' + elem['dat'] + \
                       ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + '), &\n' + indent
-              if elem['type'] == 'ops_arg_dat_opt':
-                  line = line + '& '+elem['type'] + '(' + elem['dat'] + \
+              elif elem['type2'] == 'ops_arg_dat_opt':
+                  line = line + '& '+elem['type2'] + '(' + elem['dat'] + \
                       ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + \
-                      ', ' + elem['opt'] +'), &\n' + indent
+              elif elem['type2'] == 'ops_arg_dat2' or elem['type2'] == 'ops_arg_restrict' or elem['type2'] == 'ops_arg_prolong':
+                  line = line + '& '+elem['type2'] + '(' + elem['dat'] + ', ' + elem['idx'] + \
+                      ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
+                      '", ' + elem['acc'] + \
+                      ', ' + elem['opt'] +'), &\n' + indent                     ', ' + elem['opt'] +'), &\n' + indent
 
-              elif elem['type'] == 'ops_arg_gbl':
+              elif elem['type2'] == 'ops_arg_gbl':
                 if elem['acc'] == 'OPS_READ':
                   line = line + '& '+elem['type'] + '(' + elem['data'] + \
                       ', ' + elem['dim'] + ', "' +  elem['typ'] + \
@@ -667,7 +671,7 @@ def main(source_files):
                   line = line + '& ops_arg_reduce(' + elem['data'] + \
                         ', ' + elem['dim'] + ', "' +  elem['typ'] + \
                         '", ' +  elem['acc'] + '), &\n' + indent
-              elif elem['type'] == 'ops_arg_idx':
+              elif elem['type2'] == 'ops_arg_idx':
                   line = line + '& '+elem['type'] + '(), &\n' + indent
 
           fid.write(line[0:-len(indent) - 4] + ')')
