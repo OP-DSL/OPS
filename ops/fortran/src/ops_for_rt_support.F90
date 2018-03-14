@@ -170,6 +170,12 @@ module OPS_Fortran_RT_Support
     type(ops_arg) :: arg
   end function
 
+  type(c_ptr) function getMgridStrideFromArg (arg) BIND(C,name='getMgridStrideFromArg')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    type(ops_arg) :: arg
+  end function
+
   integer function getRange_c (block, start, end, range) BIND(C,name='getRange')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
