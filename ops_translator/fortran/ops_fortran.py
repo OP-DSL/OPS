@@ -213,7 +213,7 @@ def get_arg_dat(arg_string, j):
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat',
-                  'type2' : 'ops_arg_dat_opt'
+                  'type2' : 'ops_arg_dat_opt',
                   'dat':  argsl[0].strip(),
                   'idx':  '-1',
                   'dim':  argsl[1].strip(),
@@ -240,13 +240,14 @@ def get_arg_dat(arg_string, j):
 
 def get_arg_gbl(arg_string, k):
     loc = arg_parse(arg_string, k + 1)
-    gbl_args_string = arg_string[arg_string.find('(', k) + 1:loc]
+    gbl_args_string = arg_string[arg_string.find('(', k):loc+1]
 
     # remove comments
     gbl_args_string = comment_remover(gbl_args_string)
-
+    loc, argsl = arg_parse_list(gbl_args_string,0)
+    print argsl
     # check for syntax errors
-    if len(gbl_args_string.split(',')) != 4:
+    if len(argsl) != 4:
         print 'Error parsing op_arg_gbl(%s): must have four arguments' \
               % gbl_args_string
         return
@@ -255,10 +256,10 @@ def get_arg_gbl(arg_string, k):
     # and type as op_arg_gbl
     temp_gbl = {'type': 'ops_arg_gbl',
                 'type2' : 'ops_arg_gbl',
-                'data': gbl_args_string.split(',')[0].strip(),
-                'dim': gbl_args_string.split(',')[1].strip(),
-                'typ': (gbl_args_string.split(',')[2].replace('"','')).strip(),
-                'acc': gbl_args_string.split(',')[3].strip()}
+                'data': argsl[0].strip(),
+                'dim': argsl[1].strip(),
+                'typ': (argsl[2].replace('"','')).strip(),
+                'acc': argsl[3].strip()}
 
     return temp_gbl
 
@@ -656,11 +657,12 @@ def main(source_files):
                   line = line + '& '+elem['type2'] + '(' + elem['dat'] + \
                       ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + \
+                      ', ' + elem['opt'] +'), &\n' + indent                      
               elif elem['type2'] == 'ops_arg_dat2' or elem['type2'] == 'ops_arg_restrict' or elem['type2'] == 'ops_arg_prolong':
                   line = line + '& '+elem['type2'] + '(' + elem['dat'] + ', ' + elem['idx'] + \
                       ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                       '", ' + elem['acc'] + \
-                      ', ' + elem['opt'] +'), &\n' + indent                     ', ' + elem['opt'] +'), &\n' + indent
+                      ', ' + elem['opt'] +'), &\n' + indent
 
               elif elem['type2'] == 'ops_arg_gbl':
                 if elem['acc'] == 'OPS_READ':
