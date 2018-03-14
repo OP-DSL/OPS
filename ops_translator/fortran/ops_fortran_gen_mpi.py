@@ -334,15 +334,27 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     line = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        stride1 = ''
+        stride2 = ''
+        stride3 = ''
+        if arg_typ2[n] == 'ops_arg_restrict':
+          stride1 = '*stride_'+str(n+1)+'(1)'
+          stride2 = '*stride_'+str(n+1)+'(2)'
+          stride3 = '*stride_'+str(n+1)+'(3)'
+        elif arg_typ2[n] == 'ops_arg_prolong':
+          stride1 = '-1)/stride_'+str(n+1)+'(1)+(2'
+          stride2 = '-1)/stride_'+str(n+1)+'(2)+(2'
+          stride3 = '-1)/stride_'+str(n+1)+'(3)+(2'
+
         if NDIM==1:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+')'
         elif NDIM==2:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dimnames[n])+\
-             ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+\
+             ' + ((n_y'+stride2+')-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
         elif NDIM==3:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dimnames[n])+\
-             ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+''+\
-             ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+\
+             ' + ((n_y'+stride2+')-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+''+\
+             ' + ((n_z'+stride3+')-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
       elif arg_typ[n] == 'ops_arg_idx':
@@ -404,6 +416,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
+        if restrict[n] == 1 or prolong[n] == 1:
+          code('integer(kind=4) , POINTER, DIMENSION(:)  :: stride'+str(n+1))
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
@@ -489,20 +503,22 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
         if amr and arg_typ2[n] <> 'ops_arg_dat': #restrict, prolong or dat2
           blockid = 'opsArg'+str(n+1)+'%idx'
+          start = '(/1,1,1/)'
         else:
           blockid = 'blockid'
+          start = 'start'
         if not(dims[n].isdigit()) or int(dims[n]) <> 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
-          if amr:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+','+blockid+')')
-          else:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+          multid = 'multi_d'+str(n+1)
         else:
-          if amr:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+',start,1,'+blockid+')')
-          else:
-            code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
+          multid = '1'
+        if amr:
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'DAMR(opsArg'+str(n+1)+','+start+','+multid+','+blockid+')')
+        else:
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,'+multid+')')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
+        if restrict[n] == 1 or prolong[n] == 1:
+          code('call c_f_pointer(getMgridStrideFromArg(opsArg'+str(n+1)+'),stride'+str(n+1)+', (/2*'+str(NDIM)+'/))')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -529,7 +545,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
         if restrict[n] == 1 or prolong[n] == 1:
-          code(' & opsArg'+str(n+1)+'%mgrid_stride, &')
+          code('& stride'+str(n+1)+', &')
     for n in range (0, nargs):
       if arg_typ[n] <> 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
