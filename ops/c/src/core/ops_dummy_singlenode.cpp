@@ -338,6 +338,7 @@ char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
 
 int getRange(ops_block block, int *start, int *end, int *range) { return 1; }
+int getRange2(ops_arg *args, int nargs, ops_block block, int *start, int *end, int *range, int *arg_idx) { return 1; }
 
 void getIdx(ops_block block, int *start, int *idx) {
   int block_dim = block->dims;

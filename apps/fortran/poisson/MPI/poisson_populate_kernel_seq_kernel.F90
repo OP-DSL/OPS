@@ -104,7 +104,7 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
   type ( ops_block ), INTENT(IN) :: block
   integer(kind=4), INTENT(IN):: dim
-  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range
   real(kind=8) t1,t2,t3
   real(kind=4) transfer_total, transfer
 
@@ -168,6 +168,7 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
 
 #ifdef OPS_MPI
   call getIdx(block,start,idx)
+!  print *,range,start,end,idx
 #else
   idx(1) = start(1)
   idx(2) = start(2)

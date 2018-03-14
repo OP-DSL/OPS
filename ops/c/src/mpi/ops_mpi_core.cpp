@@ -398,11 +398,11 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 
 int getRange2(ops_arg* args, int nargs, ops_block block, int *start, int *end, int *range, int *arg_idx) {
   for (int n = 0; n < block->dims; n++)
-    range[2 * n] -= 1;
+    range[2 * n + 1] += 1;
   int ret = compute_ranges(args, nargs, block, range, start, end, arg_idx);
   for (int n = 0; n < block->dims; n++) {
-    range[2 * n] += 1;
-    start[n] += 1;
+    range[2 * n + 1] -= 1;
+//    start[n] += 1;
   }
   return ret;
 }
@@ -478,12 +478,12 @@ int getDatBaseFromOpsArg(ops_arg *arg, int *start, int datdim, int dim, int amr,
   // set up initial pointers
   int d_m[OPS_MAX_DIM];
   for (int d = 0; d < block_dim; d++)
-    d_m[d] = arg->dat->d_m[d];
+    d_m[d] = arg->dat->d_m[d] + OPS_sub_dat_list[arg->dat->index]->d_im[d];
   int cumsize = 1;
   int base = 0;
   for (int d = 0; d < dim; d++) {
     int startl = start[d];
-    if (arg->argtype == OPS_ARG_PROLONG) startl=start[d]/arg->stencil->mgrid_stride[d];
+    if (arg->argtype == OPS_ARG_PROLONG) {printf("Error, not accounting for global_idx!\n"); exit(-1); startl=start[d]/arg->stencil->mgrid_stride[d];}
     else if (arg->argtype == OPS_ARG_RESTRICT) startl=start[d]*arg->stencil->mgrid_stride[d];
     base = base +
            dat * cumsize * (startl * arg->stencil->stride[d] - arg->dat->base[d] - d_m[d]);
