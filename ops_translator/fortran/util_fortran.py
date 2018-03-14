@@ -114,7 +114,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 def find_subroutine(fun_name):
-    subr_file =  os.popen('grep -Rilw --include "*.F95" --include "*.F" --include "*.inc" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
+    subr_file =  os.popen('grep -Rilw --include "*.F95" --include "*.F90" --include "*.F" --include "*.inc" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
     if (len(subr_file) == 0) or (not os.path.exists(subr_file)):
       print 'Error, subroutine '+fun_name+' implementation not found in files, check parser!'
       exit(1)

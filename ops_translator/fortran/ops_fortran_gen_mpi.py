@@ -103,10 +103,10 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
         reduction = 1
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
-      if arg_type2[n] == 'ops_arg_prolong':
+      if arg_typ2[n] == 'ops_arg_prolong':
         prolong[n] = 1
         MULTI_GRID=1
-      if arg_type2[n] == 'ops_arg_restrict':
+      if arg_typ2[n] == 'ops_arg_restrict':
         restrict[n] = 1
         MULTI_GRID=1
 
@@ -477,7 +477,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if amr and arg_type2[n] <> 'ops_arg_dat': #restrict, prolong or dat2
+        if amr and arg_typ2[n] <> 'ops_arg_dat': #restrict, prolong or dat2
           blockid = 'opsArg'+str(n+1)+'%idx'
         else:
           blockid = 'blockid'
