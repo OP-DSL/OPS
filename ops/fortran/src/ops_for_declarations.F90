@@ -120,7 +120,7 @@ module OPS_Fortran_Declarations
   type, BIND(C) :: ops_arg
     type(c_ptr)         :: dat          ! dat
     type(c_ptr)         :: stencil      ! the stencil
-    integer(kind=c_int) :: field        ! field of multi-dimensional data accessed
+    integer(kind=c_int) :: idx          ! block index
     integer(kind=c_int) :: dim          ! dimension of data
     type(c_ptr)         :: data         ! data on host
 #ifdef OPS_WITH_CUDAFOR

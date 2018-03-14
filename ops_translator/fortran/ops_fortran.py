@@ -281,7 +281,7 @@ def ops_par_loop_parse(text):
       num_args = 0
 
       for arg in range(j, len(args)):
-        if 'ops_arg_d' in args[arg]:
+        if 'ops_arg_d' in args[arg] or 'ops_arg_restrict' in args[arg] or 'ops_arg_prolong' in args[arg]:
           temp_dat =  get_arg_dat(args[arg],0)
           temp_args.append(temp_dat)
           num_args = num_args+1
@@ -632,8 +632,7 @@ def main(source_files):
               elif elem['type2'] == 'ops_arg_dat2' or elem['type2'] == 'ops_arg_restrict' or elem['type2'] == 'ops_arg_prolong':
                   line = line + '& '+elem['type2'] + '(' + elem['dat'] + ', ' + elem['idx'] + \
                       ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
-                      '", ' + elem['acc'] + \
-                      ', ' + elem['opt'] +'), &\n' + indent
+                      '", ' + elem['acc'] + '), &\n' + indent
 
               elif elem['type2'] == 'ops_arg_gbl':
                 if elem['acc'] == 'OPS_READ':

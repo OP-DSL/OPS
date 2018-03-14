@@ -235,10 +235,11 @@ int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
 int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
-int getDatBaseFromOpsArg(ops_arg *arg, int *start, int datdim, int dim, int amr, int amrblock) {
+int getDatBaseFromOpsArg(ops_arg *arg, int *start2, int datdim, int dim, int amr, int amrblock) {
   /*convert to C indexing*/
+  int start[OPS_MAX_DIM];
   for (int d = 0; d < dim; d++)
-    start[d] -= 1;
+    start[d] = start2[d]-1;
 
   int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
@@ -270,10 +271,6 @@ int getDatBaseFromOpsArg(ops_arg *arg, int *start, int datdim, int dim, int amr,
     }
   }
 
-
-  /*revert to Fortran indexing*/
-  for (int d = 0; d < dim; d++)
-    start[d] += 1;
   return base / (arg->dat->type_size) + 1;
 }
 
@@ -295,6 +292,8 @@ char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
 }
 
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
+
+char *getMgridStrideFromArg(ops_arg *arg) { return (char *)(arg->stencil->mgrid_stride); }
 
 int getRange(ops_block block, int *start, int *end, int *range) { return 1; }
 int getRange2(ops_arg *args, int nargs, ops_block block, int *start, int *end, int *range, int *arg_idx) { return 1; }
