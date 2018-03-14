@@ -734,7 +734,7 @@ int ops_construct_tile_plan() {
 
   //Register halo depths needed
   depths_to_exchange.resize(OPS_MAX_DIM*4*dats_to_exchange.size()); //left send, left recv, right send, right recv
-  for (int i = 0; i < dats_to_exchange.size(); i++) {
+  for (int i = 0; i < (int)dats_to_exchange.size(); i++) {
     for (int d = 0; d < dims; d++) {
       if (data_read_deps_edge[dats_to_exchange[i]->index][2*d] == -INT_MAX)
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = 0;
