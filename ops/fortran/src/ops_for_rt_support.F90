@@ -271,8 +271,8 @@ module OPS_Fortran_RT_Support
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     implicit none
-    type(ops_arg), dimension(nargs)  :: args
     integer(kind=c_int), value  :: nargs
+    type(ops_arg), dimension(nargs)  :: args
     type(ops_block), intent(in)  :: block
     integer(4), dimension(*),target :: start
     integer(4), dimension(*),target :: end
