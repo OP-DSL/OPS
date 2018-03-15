@@ -332,19 +332,19 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           stride2 = '*stride_'+str(n+1)+'(2)'
           stride3 = '*stride_'+str(n+1)+'(3)'
         elif arg_typ2[n] == 'ops_arg_prolong':
-          stride1 = '-1)/stride_'+str(n+1)+'(1)+(2'
-          stride2 = '-1)/stride_'+str(n+1)+'(2)+(2'
-          stride3 = '-1)/stride_'+str(n+1)+'(3)+(2'
+          stride1 = '/stride_'+str(n+1)+'(1)'
+          stride2 = '/stride_'+str(n+1)+'(2)'
+          stride3 = '/stride_'+str(n+1)+'(3)'
 
         if NDIM==1:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+stride1+'*'+str(dimnames[n])+')'
         elif NDIM==2:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+\
-             ' + ((n_y'+stride2+')-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+stride1+'*'+str(dimnames[n])+\
+             ' + (n_y-1)'+stride2+'*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
         elif NDIM==3:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+((n_x'+stride1+')-1)*'+str(dimnames[n])+\
-             ' + ((n_y'+stride2+')-1)*xdim'+str(n+1)+'*'+str(dimnames[n])+''+\
-             ' + ((n_z'+stride3+')-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
+          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+stride1+'*'+str(dimnames[n])+\
+             ' + (n_y-1)'+stride2+'*xdim'+str(n+1)+'*'+str(dimnames[n])+''+\
+             ' + (n_z-1)'+stride3+'*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dimnames[n])+')'
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
       elif arg_typ[n] == 'ops_arg_idx':
