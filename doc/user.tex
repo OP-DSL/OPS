@@ -97,6 +97,42 @@ correspond to the $j,k$ face of another block.  This is awkward and hard to hand
 
 \noindent The latest proposal is to handle all of these different requirements through stencil definitions.
 
+\section{Key concepts and structure}
+
+An OPS applicaiton can generally be divided into two key parts: initialisation and parallel exeution. During the 
+initialisation phase, one or more blocks (ops\_block) are defined: these only have a dimensionality (i.e. 1D, 2D,
+etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be
+slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a
+ size of 1), or they can represent data associated with different multigrid levels (where their size if a multiple or
+a fraction of other datasets). Datasets can be declared with empty (NULL) pointers, then OPS will allocate the appropriate
+amount of memory, may be passed non-NULL pointers (currently only supported in non-MPI environments), in which case OPS will
+assume the memory is large enough for the data and the block halo, and there are HDF5 dataset declaration routines which
+allow the distributed reading of datasets from HDF5 files. The concept of blocks is necessary to group datasets together, 
+as in a multi-block problem, in a distributed memory environment, OPS needs to be able to determine how to decompose the problem.
+
+The initialisation phase usually also consists of defining the stencils to be used later on (though they can be defined later as well),
+which describe the data access patterns used in parallel loops. Stencils are always relative to the ``current'' point; e.g. if
+at iteration (i,j), we wish to access (i-1,j) and (i,j), then the stencil will have two points: (0, 0, -1, 0). To 
+support degenerate datasets (where in one of the dimensions the dataset's size if 1), as well as for multigrid, there are
+specifal strided, restriction, and prolongation stencils: they differ from normal stencils in that as one steps through a
+gird in a parallel loop, the stepping is done with a non-unit stride for these datasets. For example, in a 2D problem, if
+we have a degenerate dataset called xcoords, size (N,1), then we will need a stencil with stride (1,0) to access it in a
+regular 2D loop.
+
+Finally, the initialisation phase may declare a number of global constants - these are variables in global scope that can 
+be accessed from within user kernels, without having to pass them in explicitly. These may be scalars or small arrays, 
+generally for values that do not change during execution, though they may be updated during execution with repeated calls
+to ops\_decl\_const. 
+
+The initialisation phase is terminated by a call to ops\_partition.
+
+The bulk of the application consists of parallel loops, implemented using calls to ops\_par\_loop. These constructs work with datasets, passed through the opaque ops\_dat handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enfore this: the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations may be very different). Datasets are passed in using ops\_arg\_dat, and during execution, a pointer to the values at the current grid point will be passed to the user kernel. This pointer needs to be dereferenced using the OPS\_ACC macros, where the user may specify the relative offset to access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
+
+Other than datasets, one can pass in read-only scalars or small arrays that are iteration space invariant with ops\_arg\_gbl (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can also be passed in with ops\_arg\_idx, which will pass a globally consistent index to the user kernel (i.e. also under MPI).
+
+Reductions in loops are done using the ops\_arg\_reduce argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to ops\_reduction\_result. The semantics are the following: a reduction handle after it was declared is in an ``uninitialised'' state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately (0,$\inf$,$-\inf$), and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using ops\_reduction\_result, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively. 
+
+OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will re-organise data as well as execution (potentially across different loops), and therefore any data accesses or manipulation may only be done through the OPS API.
 
 \clearpage
 
@@ -176,9 +212,9 @@ the negative and positive directions of each dimension). \\\\
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_const}
 \begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
-{This routine defines a global constant. Global constants needs to be declared upfront so that they can be correctly 
-handled for different parallelizations. For e.g CUDA on GPUs. Once defined they remain unchanged throughout the 
-program, unless changed by a call to ops\_update\_const(..) }
+{This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
+ so that they can be correctly handled for different parallelizations. For e.g CUDA on GPUs. Once defined
+ they remain unchanged throughout the program, unless changed by a call to ops\_update\_const(..) }
 
 \item[name]          a name used to identify the constant
 \item[dim]           dimension of dataset (number of items per element)
@@ -412,7 +448,7 @@ for OPS datasets.
 \vspace{0.1in}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_gbl}
-\begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{}
+\begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{Passes a scalar or small array that is invariant of the iteration space (not to be confused with ops\_decl\_const, which facilitates global scope variables).}
 \item[data]       data array
 \item[dim]        array dimension
 \item[type]       string representing the type of data held in data
@@ -420,7 +456,7 @@ for OPS datasets.
 \end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_reduce}
-\begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{}
+\begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{Passes a pointer to a variable that needs to be incremented (or swapped for min/max reduction) by the user kernel.}
 \item[handle]       an {\tt ops\_reduction} handle
 \item[dim]        array dimension (according to {\tt type})
 \item[type]       string representing the type of data held in data
@@ -430,7 +466,7 @@ for OPS datasets.
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
-                 ops\_access acc)}{}
+                 ops\_access acc)}{Passes a pointer to the value(s) at the current grid point to the user kernel. the OPS\_ACC macro has to be used for dereferencing the pointer.}
 \item[dat]        dataset
 \item[stencil]    stencil for accessing data
 \item[type]       string representing the type of data held in dataset
@@ -482,9 +518,11 @@ used to generate initial geometry. }
 
 \vspace{0.2in}
 
-\noindent In the strided case, the indices for referencing the data used by point {\tt p} are defined as:\\
+\noindent In the strided case, the semantics for the index of data to be accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
 
-\noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]}\\
+\noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]},\\
+
+\noindent where \texttt{loop\_index[m]} is the iteration index (within the user-defined iteration space) in the different dimensions.
 
 \noindent If, for one or more dimensions, both {\tt stride[m]} and {\tt stencil[p*dims+m]} are zero, then one of the
 following must be true;
