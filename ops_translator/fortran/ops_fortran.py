@@ -415,6 +415,7 @@ def main(source_files):
         var = [''] * nargs
         stens = [0] * nargs
         accs = [0] * nargs
+        opt  = [0] * nargs
         dims = [''] * nargs #only for globals
         typs = [''] * nargs
 
@@ -429,6 +430,8 @@ def main(source_files):
             stens[m] = args['sten']
             typs[m] = args['typ']
             typ[m] = 'ops_arg_dat'
+            if (type2[m] == 'ops_arg_dat_opt'):
+              opt[m] = 1
 
             l = -1
             for l in range(0, len(OPS_accs_labels)):
@@ -520,6 +523,7 @@ def main(source_files):
                       'stens': stens,
                       'var': var,
                       'accs': accs,
+                      'opt': opt,
                       'typs': typs,
                       'range': _range
               }
