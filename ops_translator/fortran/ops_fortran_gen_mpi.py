@@ -95,6 +95,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
     ranges  = kernels[nk]['range']
+    opt  = kernels[nk]['opt']
 
     NDIM = int(dim)
     #parse stencil to locate strided access
@@ -488,6 +489,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if opt[n] :
+          IF('opsArg'+str(n+1)+'%opt.NE.0')
         code('call c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'),dat'+str(n+1)+'_size,(/dim/))')
         if NDIM==1:
           code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
@@ -520,6 +523,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
         if restrict[n] == 1 or prolong[n] == 1:
           code('call c_f_pointer(getMgridStrideFromArg(opsArg'+str(n+1)+'),stride'+str(n+1)+', (/2*'+str(NDIM)+'/))')
         code('')
+        if opt[n] :
+          ENDIF()
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           code('call c_f_pointer(getGblPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
@@ -564,8 +569,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     code('transfer_total = 0.0_4')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if opt[n] :
+          IF('opsArg'+str(n+1)+'%opt.NE.0')
         code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
+        if opt[n] :
+          ENDIF()
     code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
 
     config.depth = config.depth - 2
