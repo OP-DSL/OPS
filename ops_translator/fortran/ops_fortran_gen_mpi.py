@@ -238,6 +238,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
+    print arg_typ, accs
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
         code(typs[n]+', INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
