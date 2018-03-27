@@ -606,7 +606,8 @@ module OPS_Fortran_Declarations
   interface ops_arg_gbl
     module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar, ops_arg_gbl_real_1dim, &
     & ops_arg_gbl_real_2dim, ops_arg_gbl_real_3dim, ops_arg_gbl_real_4dim, ops_arg_gbl_int_1dim, &
-    & ops_arg_gbl_int_2dim, ops_arg_gbl_int_3dim, ops_arg_gbl_int_4dim, ops_arg_gbl_logical_scalar
+    & ops_arg_gbl_int_2dim, ops_arg_gbl_int_3dim, ops_arg_gbl_int_4dim, ops_arg_gbl_logical_scalar, &
+    & ops_arg_gbl_logical_1dim
   end interface ops_arg_gbl
 
   interface ops_dat_fetch_data
@@ -1205,6 +1206,18 @@ module OPS_Fortran_Declarations
 
   end function ops_arg_gbl_logical_scalar
 
+  type(ops_arg) function ops_arg_gbl_logical_1dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    logical, dimension(*), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    ops_arg_gbl_logical_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+
+  end function ops_arg_gbl_logical_1dim
 
   type(ops_arg) function ops_arg_gbl_real_1dim(data, dim, typ, access)
     use, intrinsic :: ISO_C_BINDING
