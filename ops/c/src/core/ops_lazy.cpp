@@ -478,7 +478,7 @@ int ops_construct_tile_plan() {
   //
   // Main tiling dependency analysis loop
   //
-  for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
+  for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
 

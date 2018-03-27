@@ -505,11 +505,13 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if amr and arg_typ2[n] <> 'ops_arg_dat': #restrict, prolong or dat2
+        if amr and arg_typ2[n] <> 'ops_arg_dat' and arg_typ2[n] <> 'ops_arg_dat2': #restrict, prolong
           blockid = 'opsArg'+str(n+1)+'%idx'
           start = '(/1,1,1/)'
         else:
           blockid = 'blockid'
+          if arg_typ2[n] == 'ops_arg_dat2':
+            blockid = 'opsArg'+str(n+1)+'%idx'
           start = 'start'
         if not(dims[n].isdigit()) or int(dims[n]) <> 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
