@@ -468,13 +468,13 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
 void ops_free_dat(ops_dat dat) {
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-    if ((item->dat)->index = dat->index) {
+    if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&OPS_dat_list, item, entries);
       break;
     }
   }
   TAILQ_FOREACH(item, &(OPS_block_list[dat->block->index].datasets), entries) {
-    if ((item->dat)->index = dat->index) {
+    if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&(OPS_block_list[dat->block->index].datasets), item, entries);
       break;
     }

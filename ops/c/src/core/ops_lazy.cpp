@@ -280,7 +280,7 @@ int ops_construct_tile_plan() {
   tiling_plans[tiling_plans.size() - 1].nloops = ops_kernel_list.size();
   tiling_plans[tiling_plans.size() - 1].loop_sequence.resize(
       ops_kernel_list.size());
-  for (int i = 0; i < ops_kernel_list.size(); i++)
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++)
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
         ops_kernel_list[i]->hash;
 
@@ -295,9 +295,9 @@ int ops_construct_tile_plan() {
   }
   // TODO: mixed dim blocks, currently it's just the last loop's block
   ops_dims_tiling_internal = dims;
-  for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    bool owned = ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+    ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
     // TODO: handling non-owned blocks
     for (int d = 0; d < dims; d++) {
       biggest_range[2 * d] =
@@ -351,7 +351,7 @@ int ops_construct_tile_plan() {
       ops_cache_size != 0) {
     // Figure out which datasets are being accessed in these loops
     std::vector<int> datasets_touched(OPS_dat_index, 0);
-    for (int i = 0; i < ops_kernel_list.size(); i++) {
+    for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
       for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
         if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT)
           datasets_touched[ops_kernel_list[i]->args[arg].dat->index] = 1;
@@ -431,7 +431,7 @@ int ops_construct_tile_plan() {
   //
 
   // Allocate room to store the range of each tile for each loop
-  for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
     tiled_ranges[i].resize(total_tiles * OPS_MAX_DIM * 2);
   }
 
@@ -458,9 +458,9 @@ int ops_construct_tile_plan() {
   //
   // Main tiling dependency analysis loop
   //
-  for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
+  for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    bool owned = ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
+    ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
 
     for (int d = 0; d < dims; d++) {
 
@@ -721,7 +721,7 @@ int ops_construct_tile_plan() {
 
   //Figure out which datasets need halo exchange - based on whether written or read first
   std::vector<int> datasets_accessed(OPS_dat_index, -1);
-  for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].opt == 1 && datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] == -1) {
         datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] = (ops_kernel_list[i]->args[arg].acc == OPS_WRITE ? 0 : 1);
@@ -773,7 +773,7 @@ int ops_construct_tile_plan() {
 
   ops_timers_core(&c2, &t2);
   if (OPS_diags > 2)
-    printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+    printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", (int)ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan
   return tiling_plans.size() - 1;
@@ -788,16 +788,16 @@ void ops_execute() {
 
   // Try to find an existing tiling plan for this sequence of loops
   int match = -1;
-  for (int i = 0; i < tiling_plans.size(); i++) {
-    if (ops_kernel_list.size() == tiling_plans[i].nloops) {
+  for (int i = 0; i < (int)tiling_plans.size(); i++) {
+    if ((int)ops_kernel_list.size() == tiling_plans[i].nloops) {
       int count = 0;
-      for (int j = 0; j < ops_kernel_list.size(); j++) {
+      for (int j = 0; j < (int)ops_kernel_list.size(); j++) {
         if (ops_kernel_list[j]->hash == tiling_plans[i].loop_sequence[j])
           count++;
         else
           break;
       }
-      if (count == ops_kernel_list.size()) {
+      if (count == (int)ops_kernel_list.size()) {
         match = i;
         break;
       }
@@ -830,7 +830,7 @@ void ops_execute() {
 
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
-    for (int i = 0; i < ops_kernel_list.size(); i++) {
+    for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
 
       if (tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 1] -
                   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 0] ==
@@ -858,14 +858,14 @@ void ops_execute() {
   }
 
   //Set dirtybits
-  for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
         ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
     }
   }
 
-  for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int i = 0; i < (int)ops_kernel_list.size(); i++) {
     // free(ops_kernel_list[i]->args);
     // free(ops_kernel_list[i]);
   }
