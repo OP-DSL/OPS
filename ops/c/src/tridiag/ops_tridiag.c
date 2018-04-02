@@ -61,6 +61,10 @@ void ops_tridMultiDimBatch(
     int *pads  // indicates padded sizes
 
     ) {
+  if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem) {
+    ops_printf("Tridsolver error: the a,b,c,d datasets all need to be the same size");
+    exit(-1);
+  }
   tridDmtsvStridedBatch((const double *)a->data, (const double *)b->data,
                         (const double *)c->data, (double *)d->data,
                         (double *)u->data, ndim, solvedim, dims, pads);
@@ -94,6 +98,10 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat u,
     int *pads  // indicates padded sizes
     ) {
+  if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem || d->mem != u->mem) {
+    ops_printf("Tridsolver error: the a,b,c,d,u datasets all need to be the same size");
+    exit(-1);
+  }
   tridDmtsvStridedBatchInc((const double *)a->data, (const double *)b->data,
                            (const double *)c->data, (double *)d->data,
                            (double *)u->data, ndim, solvedim, dims, pads);
