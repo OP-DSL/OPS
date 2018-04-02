@@ -66,6 +66,7 @@ int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
+int OPS_realloc = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -157,6 +158,13 @@ void ops_set_args(int argc, char *argv) {
     ops_cache_size = atoi(temp + 15);
     ops_printf("\n Cache size per process = %d \n", ops_cache_size);
   }
+  pch = strstr(argv, "OPS_REALLOC=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 20);
+    OPS_realloc = atoi(temp + 12);
+    ops_printf("\n Reallocating = %d \n", OPS_realloc);
+  }
+
   pch = strstr(argv, "OPS_TILING");
   if (pch != NULL) {
     ops_enable_tiling = 1;
