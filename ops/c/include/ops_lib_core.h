@@ -54,7 +54,7 @@
 #include "ops_util.h"
 
 #ifndef OPS_ALIGNMENT
-#define OPS_ALIGNMENT 32
+#define OPS_ALIGNMENT 64
 #endif
 
 /*
