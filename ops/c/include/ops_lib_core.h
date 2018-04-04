@@ -336,6 +336,7 @@ void ops_exit();
 
 ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, char *,
                           int, char const *, char const *);
+void ops_free_dat(ops_dat dat); 
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
                               int *base, int *d_m, int *d_p, char *data,
                               int type_size, char const *type,
