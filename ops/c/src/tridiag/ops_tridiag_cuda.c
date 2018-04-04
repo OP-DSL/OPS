@@ -55,9 +55,7 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u,
-    int *pads 
-
+    ops_dat u
     ) {
 
   int opts[3] = {0,0,0}; // indicates different algorithms to use
@@ -67,7 +65,7 @@ void ops_tridMultiDimBatch_Inc(
 
   tridDmtsvStridedBatchInc((const double *)a->data_d, (const double *)b->data_d,
                            (const double *)c->data_d, (double *)d->data_d,
-                           (double *)u->data_d, ndim, solvedim, dims, dims,
+                           (double *)u->data_d, ndim, solvedim, dims, a->size,
                            opts, sync);
   ops_set_dirtybit_device_dat(u);
 
@@ -82,8 +80,7 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u,
-    int *pads 
+    ops_dat u
     ) {
 
 
@@ -95,7 +92,7 @@ void ops_tridMultiDimBatch(
 
   tridDmtsvStridedBatch((const double *)a->data_d, (const double *)b->data_d,
                         (const double *)c->data_d, (double *)d->data_d,
-                        (double *)u->data_d, ndim, solvedim, dims, dims, opts,
+                        (double *)u->data_d, ndim, solvedim, dims, a->size, opts,
                         sync);
 
 
