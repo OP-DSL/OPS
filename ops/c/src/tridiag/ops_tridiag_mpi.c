@@ -78,8 +78,8 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u,
-    int *opts // indicates different algorithms to use -- not used for CPU
+    ops_dat u//,
+//    int *opts // indicates different algorithms to use -- not used for CPU
               // backends
     ) {
 
@@ -356,9 +356,9 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u,
-    int *opts // indicates different algorithms to use -- not used for CPU
-              // backends
+    ops_dat u//,
+//    int *opts // indicates different algorithms to use -- not used for CPU
+//              // backends
     ) {
 
   /*tridDmtsvStridedBatchInc((const double *)a->data,
