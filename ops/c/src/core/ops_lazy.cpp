@@ -58,6 +58,8 @@ inline int omp_get_max_threads() {
 using namespace std;
 
 
+extern int ops_loop_over_blocks;
+double ops_tiled_halo_exchange_time = 0.0;
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
@@ -151,7 +153,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (OPS_instance::getOPSInstance()->ops_enable_tiling && OPS_instance::getOPSInstance()->tiling_instance == NULL)
     OPS_instance::getOPSInstance()->tiling_instance = new OPS_instance_tiling();
 
-  if (OPS_instance::getOPSInstance()->ops_enable_tiling)
+  if (OPS_instance::getOPSInstance()->ops_enable_tiling || ops_loop_over_blocks)
     ops_kernel_list.push_back(desc);
   else {
     //Prepare the local execution ranges
@@ -175,7 +177,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
-    desc->function(desc->name, desc->block, 0, desc->dim, desc->range, desc->nargs, desc->args);
+    desc->function(desc->name, desc->block, desc->blockidx, desc->dim, desc->range, desc->nargs, desc->args);
 
     //Dirtybits
     if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
@@ -876,7 +878,7 @@ void ops_execute() {
                ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
-      ops_kernel_list[i]->function(ops_kernel_list[i]->name, ops_kernel_list[i]->block, 0, ops_kernel_list[i]->dim, ops_kernel_list[i]->range, ops_kernel_list[i]->nargs, ops_kernel_list[i]->args);
+      ops_kernel_list[i]->function(ops_kernel_list[i]->name, ops_kernel_list[i]->block, ops_kernel_list[i]->blockidx, ops_kernel_list[i]->dim, ops_kernel_list[i]->range, ops_kernel_list[i]->nargs, ops_kernel_list[i]->args);
     }
   }
 
@@ -905,10 +907,20 @@ extern "C" {
 ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
    desc->name = name;
-   desc->block = block;
+   if (block == NULL) {
+     desc->block = NULL;
+     for (int i = 0; i < nargs; i++)
+       if (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2) {
+         desc->block = args[i].dat->block;
+         break;
+       }
+
+   } else
+     desc->block = block;
    desc->dim = dim;
    desc->device = 0;
    desc->index = idx;
+   desc->blockidx = blockidx;
    desc->hash = 5381;
    desc->hash = ((desc->hash << 5) + desc->hash) + idx;
    for (int i = 0; i < dim*2; i++) {
