@@ -245,8 +245,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
     
+    #code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
     for n in range (0, nargs):
-      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+      code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
 
     code('#endif')
 
