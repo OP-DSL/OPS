@@ -473,6 +473,10 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), value, intent(in):: type_size
     end subroutine ops_reduction_result_c
 
+    
+    subroutine ops_par_loop_blocks_end ( ) BIND(C,name='ops_par_loop_blocks_end')
+      use, intrinsic      :: ISO_C_BINDING
+    end subroutine ops_par_loop_blocks_end
 
     subroutine ops_timers_core_f ( cpu, et ) BIND(C,name='ops_timers_core')
       use, intrinsic      :: ISO_C_BINDING
@@ -544,6 +548,26 @@ module OPS_Fortran_Declarations
     & ops_arg_gbl_int_2dim, ops_arg_gbl_int_3dim, ops_arg_gbl_int_4dim, ops_arg_gbl_logical_scalar, &
     & ops_arg_gbl_logical_1dim
   end interface ops_arg_gbl
+
+  interface ops_par_loop_blocks
+ 
+   !module procedure ops_par_loop_blocks_all_f, ops_par_loop_blocks_int_1cond_f
+
+  subroutine ops_par_loop_blocks_all_f(nblocks) bind(C,name='ops_par_loop_blocks_all') 
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(kind=c_int), value :: nblocks
+  end subroutine
+
+
+  subroutine ops_par_loop_blocks_int_1cond_f(arr, nblocks, val) bind(C,name='ops_par_loop_blocks_int_1cond') 
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(kind=c_int), value :: nblocks, val
+    integer(kind=c_int) :: arr(*)
+  end subroutine
+
+  end interface ops_par_loop_blocks
 
   !###################################################################
   ! Fortran subroutines that gets called by an OPS Fortran application

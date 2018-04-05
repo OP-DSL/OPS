@@ -426,8 +426,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     code('integer(kind=4) :: n')
     code('')
 
-
-    code('call c_f_pointer(blockPtr,block)')
+    if not amr:
+      code('call c_f_pointer(blockPtr,block)')
 
     for n in range (0, nargs):
       code('opsArg'+str(n+1)+' = opsArgArray('+str(n+1)+')')
@@ -594,16 +594,18 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
     code('type ( ops_arg ) opsArgArray('+str(nargs)+')')
     if amr:
-        funname = '_amr_'
+        funname = '_amr'
+        prefix = 'ops_par_loop_'
         blockstr = 'blockid'
     else:
         funname = ''
+        prefix = ''
         blockstr = 'c_loc(block)'
     code('')
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
-    code('call ops_enqueue'+funname+'_f(userSubroutine//char(0),'+blockstr+','+str(nk)+',dim,range,'+str(nargs)+',opsArgArray,'+name+'_run)')
+    code('call ops_enqueue'+funname+'_f(userSubroutine//char(0),'+blockstr+','+str(nk)+',dim,range,'+str(nargs)+',opsArgArray,'+prefix+name+'_run)')
     code('end subroutine')
 
     code('END MODULE')
