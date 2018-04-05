@@ -8,16 +8,18 @@ USE OPS_FORTRAN_RT_SUPPORT
 USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
-INTEGER(KIND=4) xdim4
+INTEGER(KIND=4), private :: xdim4
 #define OPS_ACC4(x,y) (x+xdim4*(y)+1)
-INTEGER(KIND=4) ydim4
-INTEGER(KIND=4) xdim5
+INTEGER(KIND=4), private :: ydim4
+INTEGER(KIND=4), private :: xdim5
 #define OPS_ACC5(x,y) (x+xdim5*(y)+1)
-INTEGER(KIND=4) ydim5
-INTEGER(KIND=4) xdim6
+INTEGER(KIND=4), private :: ydim5
+INTEGER(KIND=4), private :: xdim6
 #define OPS_ACC6(x,y) (x+xdim6*(y)+1)
-INTEGER(KIND=4) ydim6
+INTEGER(KIND=4), private :: ydim6
 
+
+private :: poisson_populate, poisson_populate_kernel_wrap
 
 contains
 
@@ -38,7 +40,6 @@ subroutine poisson_populate_kernel(dispx, dispy, idx, u, f, ref)
   ref(OPS_ACC6(0,0)) = dsin(M_PI*x)*dcos(2.0_8*M_PI*y)
 
 end subroutine
-
 
 #undef OPS_ACC4
 #undef OPS_ACC5
@@ -93,44 +94,42 @@ subroutine poisson_populate_kernel_wrap( &
 end subroutine
 
 !host subroutine
-subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
-& opsArg1, &
-& opsArg2, &
-& opsArg3, &
-& opsArg4, &
-& opsArg5, &
-& opsArg6)
+subroutine poisson_populate_kernel_run( userSubroutine, blockPtr, blockid, dim, range, nargs, opsArgArray)
   IMPLICIT NONE
-  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
-  type ( ops_block ), INTENT(IN) :: block
-  integer(kind=4), INTENT(IN):: dim
-  integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range
+  character(kind=c_char), INTENT(IN) :: userSubroutine(*)
+  integer(kind=4), value :: blockid
+  type ( c_ptr ), VALUE, INTENT(IN) :: blockPtr
+  type ( ops_block ), POINTER :: block
+  integer(kind=4), value :: dim
+  integer(kind=4), value :: nargs
+  integer(kind=4)   , DIMENSION(*), INTENT(IN), TARGET :: range
+  type( ops_arg ) opsArgArray(*)
   real(kind=8) t1,t2,t3
   real(kind=4) transfer_total, transfer
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  type ( ops_arg ) :: opsArg1
   integer(4), POINTER, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: dat1_base
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg2
+  type ( ops_arg ) :: opsArg2
   integer(4), POINTER, DIMENSION(:) :: opsDat2Local
   integer(kind=4) :: dat2_base
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg3
+  type ( ops_arg ) :: opsArg3
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg4
+  type ( ops_arg ) :: opsArg4
   real(8), POINTER, DIMENSION(:) :: opsDat4Local
   integer(kind=4) :: opsDat4Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat4_size
   integer(kind=4) :: dat4_base
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg5
+  type ( ops_arg ) :: opsArg5
   real(8), POINTER, DIMENSION(:) :: opsDat5Local
   integer(kind=4) :: opsDat5Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat5_size
   integer(kind=4) :: dat5_base
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg6
+  type ( ops_arg ) :: opsArg6
   real(8), POINTER, DIMENSION(:) :: opsDat6Local
   integer(kind=4) :: opsDat6Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat6_size
@@ -142,20 +141,18 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   integer idx(2)
   integer(kind=4) :: n
 
-  type ( ops_arg ) , DIMENSION(6) :: opsArgArray
+  call c_f_pointer(blockPtr,block)
+  opsArg1 = opsArgArray(1)
+  opsArg2 = opsArgArray(2)
+  opsArg3 = opsArgArray(3)
+  opsArg4 = opsArgArray(4)
+  opsArg5 = opsArgArray(5)
+  opsArg6 = opsArgArray(6)
 
-  opsArgArray(1) = opsArg1
-  opsArgArray(2) = opsArg2
-  opsArgArray(3) = opsArg3
-  opsArgArray(4) = opsArg4
-  opsArgArray(5) = opsArg5
-  opsArgArray(6) = opsArg6
-
-  call setKernelTime(0,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call setKernelTime(0,userSubroutine,0.0_8,0.0_8,0.0_4,0)
   call ops_timers_core(t1)
 
 #ifdef OPS_MPI
-!  IF (getRange2(opsArgArray, 6, block, start, end, range, idx) < 0) THEN
   IF (getRange(block, start, end, range) < 0) THEN
     return
   ENDIF
@@ -168,7 +165,6 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
 
 #ifdef OPS_MPI
   call getIdx(block,start,idx)
-!  print *,range,start,end,idx
 #else
   idx(1) = start(1)
   idx(2) = start(2)
@@ -238,4 +234,34 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   transfer_total = transfer_total + transfer
   call setKernelTime(0,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
-END MODULE
+subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1, &
+& opsArg2, &
+& opsArg3, &
+& opsArg4, &
+& opsArg5, &
+& opsArg6)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), TARGET, INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  type ( ops_arg )  , INTENT(IN) :: opsArg2
+  type ( ops_arg )  , INTENT(IN) :: opsArg3
+  type ( ops_arg )  , INTENT(IN) :: opsArg4
+  type ( ops_arg )  , INTENT(IN) :: opsArg5
+  type ( ops_arg )  , INTENT(IN) :: opsArg6
+  type ( ops_arg ) opsArgArray(6)
+
+  opsArgArray(1) = opsArg1
+  opsArgArray(2) = opsArg2
+  opsArgArray(3) = opsArg3
+  opsArgArray(4) = opsArg4
+  opsArgArray(5) = opsArg5
+  opsArgArray(6) = opsArg6
+
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,6,opsArgArray,poisson_populate_kernel_run)
+  end subroutine
+  END MODULE

@@ -8,10 +8,12 @@ USE OPS_FORTRAN_RT_SUPPORT
 USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
-INTEGER(KIND=4) xdim1
+INTEGER(KIND=4), private :: xdim1
 #define OPS_ACC1(x,y) (x+xdim1*(y)+1)
-INTEGER(KIND=4) ydim1
+INTEGER(KIND=4), private :: ydim1
 
+
+private :: poisson_initialguess, poisson_initialguess_kernel_wrap
 
 contains
 
@@ -50,17 +52,20 @@ subroutine poisson_initialguess_kernel_wrap( &
 end subroutine
 
 !host subroutine
-subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, &
-& opsArg1)
+subroutine poisson_initialguess_kernel_run( userSubroutine, blockPtr, blockid, dim, range, nargs, opsArgArray)
   IMPLICIT NONE
-  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
-  type ( ops_block ), INTENT(IN) :: block
-  integer(kind=4), INTENT(IN):: dim
-  integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range
+  character(kind=c_char), INTENT(IN) :: userSubroutine(*)
+  integer(kind=4), value :: blockid
+  type ( c_ptr ), VALUE, INTENT(IN) :: blockPtr
+  type ( ops_block ), POINTER :: block
+  integer(kind=4), value :: dim
+  integer(kind=4), value :: nargs
+  integer(kind=4)   , DIMENSION(*), INTENT(IN), TARGET :: range
+  type( ops_arg ) opsArgArray(*)
   real(kind=8) t1,t2,t3
   real(kind=4) transfer_total, transfer
 
-  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  type ( ops_arg ) :: opsArg1
   real(8), POINTER, DIMENSION(:) :: opsDat1Local
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4) , POINTER, DIMENSION(:)  :: dat1_size
@@ -71,11 +76,10 @@ subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, 
   integer end(2)
   integer(kind=4) :: n
 
-  type ( ops_arg ) , DIMENSION(1) :: opsArgArray
+  call c_f_pointer(blockPtr,block)
+  opsArg1 = opsArgArray(1)
 
-  opsArgArray(1) = opsArg1
-
-  call setKernelTime(1,userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)
+  call setKernelTime(1,userSubroutine,0.0_8,0.0_8,0.0_4,0)
   call ops_timers_core(t1)
 
 #ifdef OPS_MPI
@@ -118,4 +122,19 @@ subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, 
   transfer_total = transfer_total + transfer
   call setKernelTime(1,userSubroutine,t3-t2,t2-t1,transfer_total,1)
 end subroutine
-END MODULE
+subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, &
+& opsArg1)
+  IMPLICIT NONE
+  character(kind=c_char,len=*), INTENT(IN) :: userSubroutine
+  type ( ops_block ), TARGET, INTENT(IN) :: block
+  integer(kind=4), INTENT(IN):: dim
+  integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range
+
+  type ( ops_arg )  , INTENT(IN) :: opsArg1
+  type ( ops_arg ) opsArgArray(1)
+
+  opsArgArray(1) = opsArg1
+
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,1,opsArgArray,poisson_initialguess_kernel_run)
+  end subroutine
+  END MODULE

@@ -44,6 +44,19 @@ module OPS_Fortran_RT_Support
   use cudafor
 #endif
 
+  abstract interface
+    subroutine kernel_fun(name, block, blockidx, dim, range, nargs, args) bind(C)
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      character(kind=c_char), INTENT(IN) :: name(*) 
+      type(c_ptr), value, intent(in)           :: block
+      integer(kind=c_int), value :: dim, nargs, blockidx
+      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+    end subroutine
+  end interface
+
+
   !#################################################
   ! Fortran interfaces for ops declaration routines
   ! - binds *_c routines to ops C backend routines
@@ -83,6 +96,27 @@ module OPS_Fortran_RT_Support
       integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop
       type(ops_arg), dimension(*) :: args       ! array with ops_args
   end subroutine
+
+  subroutine ops_enqueue_f(name, block, dim, range, nargs, args, fun) BIND(C,name='ops_enqueue_f')
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      character(kind=c_char), INTENT(IN) :: name(*)
+      type(c_ptr), value, intent(in)           :: block
+      integer(kind=c_int), value :: dim, nargs       ! number of ops_dat arguments to ops_par_loop
+      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+      procedure(kernel_fun), bind(C) :: fun
+  end subroutine 
+
+  subroutine ops_enqueue_amr_f(name, blockidx, dim, range, nargs, args, fun) BIND(C,name='ops_enqueue_amr_f')
+      use, intrinsic :: ISO_C_BINDING
+      use OPS_Fortran_Declarations
+      character(kind=c_char), INTENT(IN) :: name(*)
+      integer(kind=c_int), value :: dim, nargs,blockidx
+      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
+      type(ops_arg), dimension(*) :: args       ! array with ops_args
+      procedure(kernel_fun), bind(C) :: fun
+  end subroutine 
 
   subroutine ops_set_dirtybit_host (args, argsNumber) BIND(C,name='ops_set_dirtybit_host')
       use, intrinsic :: ISO_C_BINDING

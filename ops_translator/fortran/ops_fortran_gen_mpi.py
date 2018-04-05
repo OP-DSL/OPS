@@ -189,7 +189,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 ##########################################################################
     comm('user function')
     code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
-    text = util_fortran.find_subroutine(name2)
+    text = util_fortran.find_subroutine(name)
     text = comment_remover(text)
     text = remove_trailing_w_space(text)
     text = convert_freeform(text)
@@ -377,33 +377,30 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     code('')
     comm('host subroutine')
     if amr:
-      code('subroutine ops_par_loop_'+name+'( userSubroutine, blockid, dim, range, &')
+      code('subroutine ops_par_loop_'+name+'_run( userSubroutine, blockPtr, blockid, dim, range, nargs, opsArgArray)')
     else:
-      code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
-    for n in range (0, nargs):
-      if n == nargs-1:
-        code('& opsArg'+str(n+1)+')')
-      else:
-        code('& opsArg'+str(n+1)+', &')
+      code('subroutine '+name+'_run( userSubroutine, blockPtr, blockid, dim, range, nargs, opsArgArray)')
 
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
-    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
-    if amr:
-      code('integer(kind=4), INTENT(IN) :: blockid')
-    else:
-      code('type ( ops_block ), INTENT(IN) :: block')
-    code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
+    code('character(kind=c_char), INTENT(IN) :: userSubroutine(*)')
+    code('integer(kind=4), value :: blockid')
+    code('type ( c_ptr ), VALUE, INTENT(IN) :: blockPtr')
+    if not amr:
+      code('type ( ops_block ), POINTER :: block')
+    code('integer(kind=4), value :: dim')
+    code('integer(kind=4), value :: nargs')
+    code('integer(kind=4)   , DIMENSION(*), INTENT(IN), TARGET :: range')
+    code('type( ops_arg ) opsArgArray(*)')
+
     code('real(kind=8) t1,t2,t3')
     code('real(kind=4) transfer_total, transfer')
     code('')
     for n in range (0, nargs):
+      code('type ( ops_arg ) :: opsArg'+str(n+1))
       if arg_typ[n] == 'ops_arg_idx':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code('')
       if arg_typ[n] == 'ops_arg_dat':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
@@ -412,7 +409,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
           code('integer(kind=4) , POINTER, DIMENSION(:)  :: stride'+str(n+1))
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('')
@@ -430,14 +426,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     code('integer(kind=4) :: n')
     code('')
 
-    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
-    code('')
+
+    code('call c_f_pointer(blockPtr,block)')
 
     for n in range (0, nargs):
-      code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+      code('opsArg'+str(n+1)+' = opsArgArray('+str(n+1)+')')
     code('')
 
-    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call setKernelTime('+str(nk)+',userSubroutine,0.0_8,0.0_8,0.0_4,0)')
     code('call ops_timers_core(t1)')
     code('')
 
@@ -572,6 +568,44 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
 
     config.depth = config.depth - 2
     code('end subroutine')
+
+    if amr:
+      code('subroutine ops_par_loop_'+name+'( userSubroutine, blockid, dim, range, &')
+    else:
+      code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
+    for n in range (0, nargs):
+      if n == nargs-1:
+        code('& opsArg'+str(n+1)+')')
+      else:
+        code('& opsArg'+str(n+1)+', &')
+
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
+    if amr:
+      code('integer(kind=4), INTENT(IN) :: blockid')
+    else:
+      code('type ( ops_block ), TARGET, INTENT(IN) :: block')
+    code('integer(kind=4), INTENT(IN):: dim')
+    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
+    code('')
+    for n in range (0, nargs):
+      code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+
+    code('type ( ops_arg ) opsArgArray('+str(nargs)+')')
+    if amr:
+        funname = '_amr_'
+        blockstr = 'blockid'
+    else:
+        funname = ''
+        blockstr = 'c_loc(block)'
+    code('')
+    for n in range (0, nargs):
+      code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+    code('')
+    code('call ops_enqueue'+funname+'_f(userSubroutine//char(0),'+blockstr+',dim,range,'+str(nargs)+',opsArgArray,'+name+'_run)')
+    code('end subroutine')
+
     code('END MODULE')
 
 ##########################################################################

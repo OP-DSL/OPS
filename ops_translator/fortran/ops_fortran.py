@@ -328,6 +328,10 @@ def main(source_files):
     raise ValueError("No source files specified.")
 
   amr=os.getenv('OPS_AMR','0')
+  if amr == '0':
+    amr = 0
+  else:
+    amr = 1
   # declare constants
 
   ninit = 0
@@ -616,8 +620,12 @@ def main(source_files):
           endofcall = arg_parse(text,locs[loc]+11)
           curr_loop = loc_loops.index(locs[loc])
           name = loop_args[curr_loop]['name1']
-          line = str(' ops_par_loop_'+loop_args[curr_loop]['name1'] + '(' +
-                     loop_args[curr_loop]['name2'] + ', ' +
+          line = ''
+          if amr:
+            line = str(' ops_par_loop_'+loop_args[curr_loop]['name1'] + '(')
+          else:
+            line = str(' '+loop_args[curr_loop]['name1'] + '_host(')
+          line = line + str(loop_args[curr_loop]['name2'] + ', ' +
                      loop_args[curr_loop]['block'] + ', ' +
                      loop_args[curr_loop]['dim'] + ', ' +
                      loop_args[curr_loop]['range'] + ', &\n' + indent)
@@ -689,7 +697,7 @@ def main(source_files):
   #
 
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, amr)
-  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, amr)
+  #ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, amr)
 #  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
 #  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
 
