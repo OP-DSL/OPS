@@ -135,6 +135,6 @@ subroutine poisson_initialguess_kernel_host( userSubroutine, block, dim, range, 
 
   opsArgArray(1) = opsArg1
 
-  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,1,opsArgArray,poisson_initialguess_kernel_run)
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),1,dim,range,1,opsArgArray,poisson_initialguess_kernel_run)
   end subroutine
   END MODULE

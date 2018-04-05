@@ -184,6 +184,6 @@ subroutine poisson_error_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(2) = opsArg2
   opsArgArray(3) = opsArg3
 
-  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,3,opsArgArray,poisson_error_kernel_run)
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),4,dim,range,3,opsArgArray,poisson_error_kernel_run)
   end subroutine
   END MODULE

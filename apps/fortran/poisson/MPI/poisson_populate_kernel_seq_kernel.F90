@@ -262,6 +262,6 @@ subroutine poisson_populate_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(5) = opsArg5
   opsArgArray(6) = opsArg6
 
-  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,6,opsArgArray,poisson_populate_kernel_run)
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),0,dim,range,6,opsArgArray,poisson_populate_kernel_run)
   end subroutine
   END MODULE

@@ -613,7 +613,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
-    code('call ops_enqueue'+funname+'_f(userSubroutine//char(0),'+blockstr+',dim,range,'+str(nargs)+',opsArgArray,'+name+'_run)')
+    code('call ops_enqueue'+funname+'_f(userSubroutine//char(0),'+blockstr+','+str(nk)+',dim,range,'+str(nargs)+',opsArgArray,'+name+'_run)')
     code('end subroutine')
 
     code('END MODULE')
