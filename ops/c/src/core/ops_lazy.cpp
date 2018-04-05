@@ -175,7 +175,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
-    desc->function(desc);
+    desc->function(desc->name, desc->block, 0, desc->dim, desc->range, desc->nargs, desc->args);
 
     //Dirtybits
     if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
@@ -870,7 +870,7 @@ void ops_execute() {
                ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
-      ops_kernel_list[i]->function(ops_kernel_list[i]);
+      ops_kernel_list[i]->function(ops_kernel_list[i]->name, ops_kernel_list[i]->block, 0, ops_kernel_list[i]->dim, ops_kernel_list[i]->range, ops_kernel_list[i]->nargs, ops_kernel_list[i]->args);
     }
   }
 

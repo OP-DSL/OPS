@@ -466,7 +466,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     code('#else')
-    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
@@ -476,7 +476,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#endif')
 
     for n in range (0, nargs):
-      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+      code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
     code('#endif')
 
     code('')
