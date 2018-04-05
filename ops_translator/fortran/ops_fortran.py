@@ -279,6 +279,9 @@ def ops_par_loop_parse(text):
   search = "ops_par_loop"
   i = text.find(search)
   while i > -1:
+      if text[i:i+18] == 'ops_par_loop_block':
+        i = text.find(search, i + 15)
+        continue
       arg_string = text[text.find('(',i):arg_parse(text,i+11)+1]
       arg_string = arg_string.replace('&','')
       arg_string = arg_string.replace(' ','')
