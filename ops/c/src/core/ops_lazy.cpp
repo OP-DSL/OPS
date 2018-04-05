@@ -900,7 +900,7 @@ ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block
    if (block == NULL) {
      desc->block = NULL;
      for (int i = 0; i < nargs; i++)
-       if (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2) {
+       if (args[i].opt == 1 && (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2)) {
          desc->block = args[i].dat->block;
          break;
        }
@@ -923,7 +923,7 @@ ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block
    char *tmp;
    for (int i = 0; i < nargs; i++) {
      desc->args[i] = args[i];
-     if (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2) 
+     if (args[i].opt && (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2)) 
        desc->hash = ((desc->hash << 5) + desc->hash) + args[i].dat->index;
      else if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ) {
        tmp = (char*)malloc(args[i].dim * args[i].typesize);

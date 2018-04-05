@@ -276,6 +276,8 @@ int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
 int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
+int ops_amr_lazy_offset(ops_dat dat);
+
 int getDatBaseFromOpsArg(ops_arg *arg, int *start2, int datdim, int dim, int amr, int amrblock) {
   /*convert to C indexing*/
   int start[OPS_MAX_DIM];
@@ -299,16 +301,18 @@ int getDatBaseFromOpsArg(ops_arg *arg, int *start2, int datdim, int dim, int amr
     cumsize *= arg->dat->size[d];
   }
 
-  if (arg->dat->amr == 1) {
+  if (arg->dat->amr == 1 || amr) {
+    int bsize = arg->dat->elem_size;
+    for (int d = 0; d < block_dim; d++) {
+      bsize *= arg->dat->size[d];
+    }
     if (!amr) {
       printf("Internal error: getDatBaseFromOpsArg called for an AMR dataset!\n");
       exit(-1);
-    } else {
-      int bsize = arg->dat->elem_size;
-      for (int d = 0; d < block_dim; d++) {
-        bsize *= arg->dat->size[d];
-      }
+    } else if (arg->dat->amr) {
       base += (amrblock - 1)*bsize;
+    } else {
+      base += bsize * ops_amr_lazy_offset(arg->dat);
     }
   }
 
