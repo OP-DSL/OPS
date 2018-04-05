@@ -151,7 +151,7 @@ def convert_freeform(text):
     for i in range(0,len(textl)):
         if i>0 and len(textl[i].strip()) > 0 and \
                 textl[i].strip()[0] == '&' and len(textl[i-1].strip()) > 0 and \
-                textl[i-1].strip()[:-1] <> '&':
+                textl[i-1].strip()[-1] <> '&':
             textl[i-1] = textl[i-1] + ' &'
     text = textl[0]
     for i in range(1,len(textl)):
