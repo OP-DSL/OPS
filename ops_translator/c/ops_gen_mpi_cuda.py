@@ -479,14 +479,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     code('#else')
-    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
     config.depth = 2
-    #code('char const *name = "'+name+'";')
-    code('int dim = desc->dim;')
-    code('int *range = desc->range;')
-
     for n in range (0, nargs):
-      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+      code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
     code('#endif')
 
     code('')
@@ -590,10 +586,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     #setup reduction variables
     code('')
-    if reduct and not arg_idx:
-      code('#ifdef OPS_LAZY')
-      code('ops_block block = desc->block;')
-      code('#endif')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):

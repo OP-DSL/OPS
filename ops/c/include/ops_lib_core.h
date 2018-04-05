@@ -272,8 +272,8 @@ typedef struct ops_kernel_descriptor {
   int range[2 * OPS_MAX_DIM]; /* process local execution range */
   int orig_range[2 * OPS_MAX_DIM]; /* original execution range */
   ops_block block;            /* block to execute on */
-  void (*function)(struct ops_kernel_descriptor
-                       *desc); /* Function pointer to a wrapper to be called */
+  void (*function)(const char *, ops_block, int, int, int *, int, ops_arg*);
+                              /* Function pointer to a wrapper to be called */
 } ops_kernel_descriptor;
 
 /*
