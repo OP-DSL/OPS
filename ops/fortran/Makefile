@@ -41,9 +41,9 @@ MPI_LIB = $(MPI_INSTALL_PATH)/lib
 ifeq ($(OPS_COMPILER),gnu)
   CC 		= gcc -std=c99
 ifdef DEBUG
-  OPT	 	= -O0 -g
+  OPT	 	= -O0 -g -fopenmp
 else
-  OPT	 	= -O3 #vec-report -xAVX
+  OPT	 	= -O3 -fopenmp #vec-report -xAVX
 endif
   CCFLAGS       = $(OPT) -Wall #-Werror -wd981
   CXX 		= g++
