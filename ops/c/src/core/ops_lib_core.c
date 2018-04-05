@@ -832,6 +832,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.data = data;
   arg.acc = acc;
   arg.idx = -1;
+  arg.typesize = size;
   return arg;
 }
 

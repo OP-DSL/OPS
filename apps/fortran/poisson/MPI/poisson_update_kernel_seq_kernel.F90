@@ -167,6 +167,6 @@ subroutine poisson_update_kernel_host( userSubroutine, block, dim, range, &
   opsArgArray(1) = opsArg1
   opsArgArray(2) = opsArg2
 
-  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),dim,range,2,opsArgArray,poisson_update_kernel_run)
+  call ops_enqueue_f(userSubroutine//char(0),c_loc(block),3,dim,range,2,opsArgArray,poisson_update_kernel_run)
   end subroutine
   END MODULE

@@ -873,12 +873,46 @@ void ops_execute() {
 }
 
 extern "C" {
-void ops_enqueue_f(const char *name, ops_block block, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
-fun(name, block, 0, dim, range, nargs, args);
+ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+   ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+   desc->name = name;
+   desc->block = block;
+   desc->dim = dim;
+   desc->device = 0;
+   desc->index = idx;
+   desc->hash = 5381;
+   desc->hash = ((desc->hash << 5) + desc->hash) + idx;
+   for (int i = 0; i < dim*2; i++) {
+     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+     desc->range[i] = range[i];
+     desc->orig_range[i] = range[i];
+   }
+   desc->nargs = nargs;
+   desc->args = (ops_arg*)malloc(nargs*sizeof(ops_arg));
+   char *tmp;
+   for (int i = 0; i < nargs; i++) {
+     desc->args[i] = args[i];
+     if (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2) 
+       desc->hash = ((desc->hash << 5) + desc->hash) + args[i].dat->index;
+     else if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ) {
+       tmp = (char*)malloc(args[i].dim * args[i].typesize);
+       memcpy(tmp, args[i].data, args[i].dim * args[i].typesize);
+       args[i].data = tmp;
+     }
+   }
+   desc->function = fun;
+   return desc;
 }
 
-void ops_enqueue_amr_f(const char *name, int blockidx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
-fun(name, NULL, blockidx, dim, range, nargs, args);
+void ops_enqueue_f(const char *name, ops_block block, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+  ops_kernel_descriptor * desc = ops_create_kernel_descriptor(name, block, 0, idx, dim, range, nargs, args, fun);
+  ops_enqueue_kernel(desc);
+  //fun(name, block, 0, dim, range, nargs, args);
 }
 
+void ops_enqueue_amr_f(const char *name, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+  ops_kernel_descriptor * desc = ops_create_kernel_descriptor(name, NULL, blockidx, idx, dim, range, nargs, args, fun);
+  ops_enqueue_kernel(desc);
+  //fun(name, NULL, blockidx, dim, range, nargs, args);
+}
 }

@@ -209,6 +209,7 @@ typedef struct {
   ops_stencil stencil;  /* the stencil */
   int idx;              /* for AMR, idx of other block */
   int dim;              /* dimension of data */
+  int typesize;         /* size of the type in bytes for arg_gbl */
   char *data;           /* data on host */
   char *data_d;         /* data on device (for CUDA)*/
   ops_access acc;       /* access type */
@@ -486,6 +487,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z);
 
 /* lazy execution */
+ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range,     int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*));
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute();
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
