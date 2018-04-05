@@ -125,6 +125,7 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: stencil      ! the stencil
     integer(kind=c_int) :: idx          ! block index
     integer(kind=c_int) :: dim          ! dimension of data
+    integer(kind=c_int) :: typesize     ! size of datatype in bytes for arg_gbl
     type(c_ptr)         :: data         ! data on host
 #ifdef OPS_WITH_CUDAFOR
     type(c_devptr)      :: data_d       ! data on device (for CUDA)
@@ -1280,7 +1281,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
 
   end function ops_arg_gbl_int_1dim
 
@@ -1293,7 +1294,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_2dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    ops_arg_gbl_int_2dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
 
   end function ops_arg_gbl_int_2dim
 
@@ -1306,7 +1307,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_3dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    ops_arg_gbl_int_3dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
 
   end function ops_arg_gbl_int_3dim
 
@@ -1319,7 +1320,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_4dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    ops_arg_gbl_int_4dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
 
   end function ops_arg_gbl_int_4dim
 
