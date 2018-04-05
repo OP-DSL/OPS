@@ -890,3 +890,14 @@ void ops_execute() {
   }
   ops_kernel_list.clear();
 }
+
+extern "C" {
+void ops_enqueue_f(const char *name, ops_block block, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+fun(name, block, 0, dim, range, nargs, args);
+}
+
+void ops_enqueue_amr_f(const char *name, int blockidx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+fun(name, NULL, blockidx, dim, range, nargs, args);
+}
+
+}
