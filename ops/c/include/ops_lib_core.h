@@ -409,6 +409,9 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
 void ops_get_data(ops_dat dat);
 
+int* ops_fetch_data_size(ops_dat dat);
+void ops_fetch_data_ptr(ops_dat dat, char *ptr);
+
 void ops_timing_realloc(int, const char *);
 void ops_timers_core(double *cpu, double *et);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
