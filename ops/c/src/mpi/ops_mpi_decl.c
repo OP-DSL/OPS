@@ -38,11 +38,11 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-    MPI_Init(&argc, &argv);
+    MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);

@@ -331,7 +331,7 @@ extern double OPS_checkpointing_time;
 * Core lib function prototypes
 *******************************************************************************/
 
-void ops_init(int argc, char **argv, int diags_level);
+void ops_init(const int argc, const char **argv, const int diags_level);
 void ops_exit();
 
 ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, char *,
@@ -362,7 +362,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc);
 void ops_decl_const_char(int, char const *, int, char *, char const *);
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr);
 
-void ops_init_core(int argc, char **argv, int diags_level);
+void ops_init_core(const int argc, const char **argv, const int diags_level);
 
 void ops_exit_core(void);
 

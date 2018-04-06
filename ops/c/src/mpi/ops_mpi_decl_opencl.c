@@ -47,7 +47,7 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_opencl(int argc, char **argv, int diags) {
+void ops_init_opencl(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
@@ -65,11 +65,11 @@ void ops_init_opencl(int argc, char **argv, int diags) {
   openclDeviceInit(argc, argv);
 }
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-    MPI_Init(&argc, &argv);
+    MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);

@@ -77,7 +77,7 @@ extern int OPS_block_size_z;
 #define cutilSafeCall(err) __cudaSafeCall(err, __FILE__, __LINE__)
 #define cutilCheckMsg(msg) __cutilCheckMsg(msg, __FILE__, __LINE__)
 
-void cutilDeviceInit(int argc, char **argv);
+void cutilDeviceInit(const int argc, const char **argv);
 void __cudaSafeCall(cudaError_t err, const char *file, const int line);
 void ops_cuda_get_data(ops_dat dat);
 void reallocConstArrays(int consts_bytes);

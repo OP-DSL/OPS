@@ -76,7 +76,7 @@ void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
   }
 }
 
-void cutilDeviceInit(int argc, char **argv) {
+void cutilDeviceInit(const int argc, const char **argv) {
   (void)argc;
   (void)argv;
   int deviceCount;
