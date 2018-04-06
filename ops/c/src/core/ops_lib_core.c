@@ -125,7 +125,7 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int *offset,
 commandline arguments as argv is not easy to pass through from
 frotran to C
 */
-void ops_set_args(int argc, char *argv) {
+void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
   char *pch;
@@ -220,7 +220,7 @@ void ops_set_args(int argc, char *argv) {
 /*
 * OPS core functions
 */
-void ops_init_core(int argc, char **argv, int diags) {
+void ops_init_core(const int argc, const char **argv, const int diags) {
   OPS_diags = diags;
   for (int d = 0; d < OPS_MAX_DIM; d++) ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {

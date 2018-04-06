@@ -41,7 +41,7 @@ int ops_halo_buffer_size = 0;
 int posix_memalign(void **memptr, size_t alignment, size_t size);
 extern int OPS_realloc;
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 }
 

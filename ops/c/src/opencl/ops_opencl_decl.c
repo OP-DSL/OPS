@@ -50,7 +50,7 @@ int ops_halo_buffer_size = 0;
 
 extern ops_opencl_core OPS_opencl_core;
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_block_size_x * OPS_block_size_y) > 1024) {
