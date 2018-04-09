@@ -146,7 +146,22 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs) {
 
 ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
                        ops_access acc) {
-  return ops_arg_reduce_core(handle, dim, type, acc);
+  int was_initialized = handle->initialized;
+  ops_arg temp = ops_arg_reduce_core(handle, dim, type, acc);
+  if (!was_initialized && handle->multithreaded) {
+    char *old_data = handle->data;
+    int count, stride;
+    ops_amr_reduction_size(&count, &stride, handle->size);
+    handle->data = (char*)malloc(count*stride);
+    for (int i = 1; i < count; i++) {
+      memcpy(handle->data + i * stride, old_data, handle->size);
+    }
+    free(old_data);
+  } else if (handle->multithreaded) {
+    ops_printf("Error, reduction handle %s first used outside of a block-parallel loop, then inside one. You must get its value in-between\n",handle->name);
+    exit(-1);
+  }
+  return temp;
 }
 
 ops_reduction ops_decl_reduction_handle(int size, const char *type,
@@ -333,7 +348,12 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
 }
 
 char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
-  return (char *)((ops_reduction)arg->data)->data;
+  if (ops_loop_over_blocks) {
+    int count, stride;
+    ops_amr_reduction_size(&count, &stride, ((ops_reduction)arg->data)->size);
+    return (char *)((ops_reduction)arg->data)->data + stride * ops_amr_lazy_offset_idx();  
+  } else 
+    return (char *)((ops_reduction)arg->data)->data;
 }
 
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }

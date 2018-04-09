@@ -203,15 +203,15 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs) {
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
+  temp.dim = dim;
   return temp;
 }
 
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
-  (&temp)->opt = flag;
+  temp.dim = dim;
+  temp.opt = flag;
   return temp;
 }
 
@@ -219,6 +219,7 @@ ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char co
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   temp.idx = idx;
+  temp.dim = dim;
   temp.argtype = OPS_ARG_DAT2;
   return temp;
 }
@@ -228,6 +229,7 @@ ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, cha
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   temp.argtype = OPS_ARG_RESTRICT;
   temp.idx = idx;
+  temp.dim = dim;
   if (stencil->type != 2) {ops_printf("Error, ops_arg_restrict used, but stencil is not restrict stencil\n");exit(-1);}
   return temp;
 }
@@ -237,6 +239,7 @@ ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   temp.argtype = OPS_ARG_PROLONG;
   temp.idx = idx;
+  temp.dim = dim;
   if (stencil->type != 2) {ops_printf("Error, ops_arg_prolong used, but stencil is not prolong stencil\n");exit(-1);}
   return temp;
 }

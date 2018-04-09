@@ -386,14 +386,14 @@ void ops_decomp_dats(sub_block *sb) {
       continue;
     }
 
+    dat->mem =
+      prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
     // Allocate datasets
     if (dat->data == NULL)
       if (dat->is_hdf5 == 0) {
         dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
         //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
         dat->hdf5_file = "none";
-        dat->mem =
-            prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
       } else {
         dat->data = (char *)ops_calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
