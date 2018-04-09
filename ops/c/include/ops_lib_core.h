@@ -207,14 +207,14 @@ typedef ops_stencil_core *ops_stencil;
 typedef struct {
   ops_dat dat;          /* dataset */
   ops_stencil stencil;  /* the stencil */
-  int idx;              /* for AMR, idx of other block */
+  int idx;              /* for AMR (dat2,restrict,prolong), idx of other block, for arg_block used as a flag */
   int dim;              /* dimension of data */
   int typesize;         /* size of the type in bytes for arg_gbl */
   char *data;           /* data on host */
   char *data_d;         /* data on device (for CUDA)*/
   ops_access acc;       /* access type */
   ops_arg_type argtype; /* arg type */
-  int opt; /*falg to indicate whether this is an optional arg, 0 - optional, 1 -
+  int opt; /*flag to indicate whether this is an optional arg, 0 - optional, 1 -
               not optional*/
 } ops_arg;
 
@@ -223,6 +223,7 @@ typedef struct {
   int size;         /* size of data in bytes */
   int initialized;  /* flag indicating whether data has been initialized*/
   int index;        /* unique identifier */
+  int multithreaded;/* flag to indicate whether multiple threads use the same handle */
   ops_access acc;   /* Type of reduction it was used for last time */
   const char *type; /* Type */
   const char *name; /* Name */
@@ -397,7 +398,7 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int data_size, int *block_size,
                                int *base, int *d_m, int *d_p, int *stride, char *data,
                                int type_size, char const *type,
                                char const *name);
-
+void ops_free_dat(ops_dat dat);
 void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
                          char const *name);
 
@@ -494,6 +495,10 @@ void ops_execute();
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int ops_get_proc();
 int ops_num_procs();
+extern int ops_loop_over_blocks;
+void ops_amr_reduction_size(int *count, int *stride, int size);
+void ops_amr_reduction_result(ops_reduction handle);
+int ops_amr_lazy_offset_idx();
 
 #ifdef __cplusplus
 }

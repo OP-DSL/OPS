@@ -549,6 +549,13 @@ module OPS_Fortran_Declarations
     & ops_arg_gbl_logical_1dim
   end interface ops_arg_gbl
 
+  interface ops_arg_block
+    module procedure  ops_arg_block_real_1dim, &
+    & ops_arg_block_real_2dim, ops_arg_block_real_3dim, ops_arg_block_real_4dim, ops_arg_block_int_1dim, &
+    & ops_arg_block_int_2dim, ops_arg_block_int_3dim, ops_arg_block_int_4dim, &
+    & ops_arg_block_logical_1dim
+  end interface ops_arg_block
+
   interface ops_par_loop_blocks
  
    !module procedure ops_par_loop_blocks_all_f, ops_par_loop_blocks_int_1cond_f
@@ -1117,6 +1124,149 @@ module OPS_Fortran_Declarations
 
   end function ops_arg_gbl_int_4dim
 
+  type(ops_arg) function ops_arg_block_logical_1dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    logical, dimension(*), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    arg%idx=1
+    ops_arg_block_logical_1dim = arg
+
+  end function ops_arg_block_logical_1dim
+
+  type(ops_arg) function ops_arg_block_real_1dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), dimension(*), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    arg%idx=1
+    ops_arg_block_real_1dim = arg
+
+  end function ops_arg_block_real_1dim
+
+  type(ops_arg) function ops_arg_block_real_2dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), dimension(:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    arg%idx=1
+    ops_arg_block_real_2dim = arg
+
+  end function ops_arg_block_real_2dim
+
+  type(ops_arg) function ops_arg_block_real_3dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), dimension(:,:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    arg%idx=1
+    ops_arg_block_real_3dim = arg
+
+  end function ops_arg_block_real_3dim
+
+  type(ops_arg) function ops_arg_block_real_4dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    real(8), dimension(:,:,:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    arg%idx=1
+    ops_arg_block_real_4dim = arg
+
+  end function ops_arg_block_real_4dim
+
+  type(ops_arg) function ops_arg_block_int_1dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(4), dimension(*), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    arg%idx=1
+    ops_arg_block_int_1dim = arg
+
+  end function ops_arg_block_int_1dim
+
+  type(ops_arg) function ops_arg_block_int_2dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(4), dimension(:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    arg%idx=1
+    ops_arg_block_int_2dim = arg
+
+  end function ops_arg_block_int_2dim
+
+  type(ops_arg) function ops_arg_block_int_3dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(4), dimension(:,:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    arg%idx=1
+    ops_arg_block_int_3dim = arg
+
+  end function ops_arg_block_int_3dim
+
+  type(ops_arg) function ops_arg_block_int_4dim(data, dim, typ, access)
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    integer(4), dimension(:,:,:,:), target :: data
+    integer(kind=c_int) :: dim
+    character(kind=c_char,len=*) :: typ
+    integer(kind=c_int) :: access
+    type(ops_arg) :: arg
+
+    ! warning: access is in FORTRAN style, while the C style is required here
+    arg = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    arg%idx=1
+    ops_arg_block_int_4dim = arg
+
+  end function ops_arg_block_int_4dim
 
   type(ops_arg) function ops_arg_restrict(dat, idx, dim, stencil, typ, access)
     use, intrinsic :: ISO_C_BINDING

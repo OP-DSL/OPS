@@ -465,7 +465,13 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   return dat;
 }
 
+extern int ops_loop_over_blocks;
+void ops_queue_free_dat(ops_dat dat);
 void ops_free_dat(ops_dat dat) {
+  if (ops_loop_over_blocks) {
+    ops_queue_free_dat(dat);
+    return;
+  }
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
@@ -647,9 +653,12 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   arg.dim = dim;
   arg.data = (char *)handle;
   arg.acc = acc;
+  arg.opt = 1;
   if (handle->initialized == 0) {
     handle->initialized = 1;
     handle->acc = acc;
+    if (ops_loop_over_blocks) handle->multithreaded = 1;
+    else handle->multithreaded = 0;
     if (acc == OPS_INC)
       memset(handle->data, 0, handle->size);
     if (strcmp(type, "double") == 0 ||
@@ -833,6 +842,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.acc = acc;
   arg.idx = -1;
   arg.typesize = size;
+  arg.opt = 1;
   return arg;
 }
 
@@ -846,6 +856,7 @@ ops_arg ops_arg_idx() {
   arg.data = NULL;
   arg.acc = 0;
   arg.idx = -1;
+  arg.opt = 1;
   return arg;
 }
 
@@ -868,6 +879,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
   red->data = (char *)malloc(size * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
+  red->multithreaded = 0;
   OPS_reduction_list[OPS_reduction_index] = red;
   red->index = OPS_reduction_index++;
   return red;

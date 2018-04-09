@@ -211,6 +211,7 @@ def get_arg_dat(arg_string, j):
 
 def get_arg_gbl(arg_string, k):
     loc = arg_parse(arg_string, k + 1)
+    gbl_type = arg_string[k:k+arg_string[k:].find('(')].strip()
     gbl_args_string = arg_string[arg_string.find('(', k):loc+1]
 
     # remove comments
@@ -219,14 +220,14 @@ def get_arg_gbl(arg_string, k):
     print argsl
     # check for syntax errors
     if len(argsl) != 4:
-        print 'Error parsing op_arg_gbl(%s): must have four arguments' \
+        print 'Error parsing '+gbl_type+'(%s): must have four arguments' \
               % gbl_args_string
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
     # and type as op_arg_gbl
     temp_gbl = {'type': 'ops_arg_gbl',
-                'type2' : 'ops_arg_gbl',
+                'type2' : gbl_type,
                 'data': argsl[0].strip(),
                 'dim': argsl[1].strip(),
                 'typ': (argsl[2].replace('"','')).strip(),
@@ -288,7 +289,7 @@ def ops_par_loop_parse(text):
           temp_dat =  get_arg_dat(args[arg],0)
           temp_args.append(temp_dat)
           num_args = num_args+1
-        elif 'ops_arg_gbl' in args[arg] or 'ops_arg_reduce' in args[arg]:
+        elif 'ops_arg_gbl' in args[arg] or 'ops_arg_reduce' in args[arg] or 'ops_arg_block' in args[arg]:
           temp_gbl = get_arg_gbl(args[arg],0)
           temp_args.append(temp_gbl)
           num_args = num_args + 1
