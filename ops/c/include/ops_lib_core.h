@@ -242,6 +242,7 @@ typedef ops_stencil_core *ops_stencil;
 
 /** Storage for OPS parallel loop arguments */
 typedef struct {
+<<<<<<< HEAD
   ops_dat dat;          /**< dataset */
   ops_stencil stencil;  /**< the stencil */
   int idx;              /**< for AMR, idx of other block */
@@ -252,10 +253,24 @@ typedef struct {
   ops_arg_type argtype; /**< arg type */
   int opt;              /**< falg to indicate whether this is an optional arg,
                          *   0 - optional, 1 - not optional */
+=======
+  ops_dat dat;          /* dataset */
+  ops_stencil stencil;  /* the stencil */
+  int idx;              /* for AMR (dat2,restrict,prolong), idx of other block, for arg_block used as a flag */
+  int dim;              /* dimension of data */
+  int typesize;         /* size of the type in bytes for arg_gbl */
+  char *data;           /* data on host */
+  char *data_d;         /* data on device (for CUDA)*/
+  ops_access acc;       /* access type */
+  ops_arg_type argtype; /* arg type */
+  int opt; /*flag to indicate whether this is an optional arg, 0 - optional, 1 -
+              not optional*/
+>>>>>>> 27b18f6... Loop over blocks
 } ops_arg;
 
 /** Storage for OPS reduction handles */
 typedef struct {
+<<<<<<< HEAD
   char *data;       /**< The data */
   int size;         /**< size of data in bytes */
   int initialized;  /**< flag indicating whether data has been initialized */
@@ -263,6 +278,16 @@ typedef struct {
   ops_access acc;   /**< Type of reduction it was used for last time */
   const char *type; /**< Type */
   const char *name; /**< Name */
+=======
+  char *data;       /* The data */
+  int size;         /* size of data in bytes */
+  int initialized;  /* flag indicating whether data has been initialized*/
+  int index;        /* unique identifier */
+  int multithreaded;/* flag to indicate whether multiple threads use the same handle */
+  ops_access acc;   /* Type of reduction it was used for last time */
+  const char *type; /* Type */
+  const char *name; /* Name */
+>>>>>>> 27b18f6... Loop over blocks
 } ops_reduction_core;
 typedef ops_reduction_core *ops_reduction;
 
@@ -900,6 +925,10 @@ void* ops_realloc (void *ptr, size_t size);
 void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 
+extern int ops_loop_over_blocks;
+void ops_amr_reduction_size(int *count, int *stride, int size);
+void ops_amr_reduction_result(ops_reduction handle);
+int ops_amr_lazy_offset_idx();
 #ifdef __cplusplus
 }
 #endif

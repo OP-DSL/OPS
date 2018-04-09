@@ -57,6 +57,8 @@ ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base
   return dat;
 }
 
+extern int ops_loop_over_blocks;
+
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
@@ -66,7 +68,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  if (data != NULL) {
+  if (data != NULL && ops_loop_over_blocks == 0) {
     // printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
@@ -97,7 +99,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
 #endif
     dat->user_managed = 0;
-    dat->mem = bytes;
   }
 
   // Compute offset in bytes to the base index
@@ -109,6 +110,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
+  dat->mem = cumsize * size * type_size;
 
   return dat;
 }
@@ -253,6 +255,7 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
 ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.dim = dim;
   temp.idx = idx;
   temp.argtype = OPS_ARG_DAT2;
   return temp;
@@ -262,6 +265,7 @@ ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, cha
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   temp.argtype = OPS_ARG_RESTRICT;
+  temp.dim = dim;
   temp.idx = idx;
   if (stencil->type != 2) {ops_printf("Error, ops_arg_restrict used, but stencil is not restrict stencil\n");exit(-1);}
   return temp;
@@ -271,6 +275,7 @@ ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   temp.argtype = OPS_ARG_PROLONG;
+  temp.dim = dim;
   temp.idx = idx;
   if (stencil->type != 2) {ops_printf("Error, ops_arg_prolong used, but stencil is not prolong stencil\n");exit(-1);}
   return temp;
@@ -291,6 +296,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
   ops_checkpointing_reduction(handle);
+  ops_amr_reduction_result(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
 }

@@ -139,7 +139,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
     code('USE OPS_FORTRAN_DECLARATIONS')
     code('USE OPS_FORTRAN_RT_SUPPORT')
     code('')
-    code('USE OPS_CONSTANTS')
     code('USE ISO_C_BINDING')
     code('')
 
@@ -431,6 +430,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       code('subroutine '+name+'_run( userSubroutine, blockPtr, blockid, dim, range, nargs, opsArgArray)')
 
     config.depth = config.depth + 2
+    code('use ops_constants')
     code('IMPLICIT NONE')
     code('character(kind=c_char), INTENT(IN) :: userSubroutine(*)')
     code('integer(kind=4), value :: blockid')
@@ -450,7 +450,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       if arg_typ[n] == 'ops_arg_idx':
         code('')
       if arg_typ[n] == 'ops_arg_dat':
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local => NULL()')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
@@ -569,7 +569,10 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           code('call c_f_pointer(getGblPtrFromOpsArg(opsArg'+str(n+1)+'),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')
-          code('dat'+str(n+1)+'_base = 1')
+          if arg_typ2[n] == 'ops_arg_block' and amr:
+            code('dat'+str(n+1)+'_base = 1+(blockid-1)*opsArg'+str(n+1)+'%dim')
+          else:
+            code('dat'+str(n+1)+'_base = 1')
           code('')
         else:
           code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Local, (/opsArg'+str(n+1)+'%dim/))')

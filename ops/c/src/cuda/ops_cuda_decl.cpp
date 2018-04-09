@@ -112,7 +112,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
-    dat->mem = bytes;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
     ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
             ( void ** ) &( dat->data ), bytes );
@@ -121,11 +120,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     dat->data = (char*) ops_calloc(bytes, 1); //initialize data bits to 0
     dat->user_managed = 0;
-    dat->mem = bytes;
     dat->data_d = NULL;
     ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
             ( void ** ) NULL, bytes );
   }
+
+  dat->mem = bytes;
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;

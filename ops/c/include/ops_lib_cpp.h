@@ -95,6 +95,12 @@ ops_arg ops_arg_gbl(T *data, int dim, char const *type, ops_access acc) {
 }
 
 template <class T>
+ops_arg ops_arg_block(T *data, int dim, char const *type, ops_access acc) {
+  ops_arg arg = ops_arg_gbl_char((char *)data, dim, sizeof(T), acc);
+  arg.idx = 1;
+}
+
+template <class T>
 void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
   if (type_error(data, type)) {
     OPSException ex(OPS_HDF5_ERROR);

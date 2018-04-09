@@ -904,9 +904,16 @@ void ops_execute() {
 }
 
 extern "C" {
+
+static char *copy_str(char const *src) {
+  const size_t len = strlen(src) + 1;
+  char *dest = (char *)calloc(len+16, sizeof(char));
+  return strncpy(dest, src, len);
+}
+
 ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
-   desc->name = name;
+   desc->name = copy_str(name);
    if (block == NULL) {
      desc->block = NULL;
      for (int i = 0; i < nargs; i++)
