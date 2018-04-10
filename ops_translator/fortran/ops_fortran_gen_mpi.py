@@ -440,7 +440,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, amr):
       if arg_typ[n] == 'ops_arg_idx':
         code('')
       if arg_typ[n] == 'ops_arg_dat':
-        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local => NULL()')
+        code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')# => NULL()') #this causes segfaults with gcc7
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
