@@ -87,7 +87,7 @@ void replicate_dats() {
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     ops_dat dat = item->dat;
     if (replicated[dat->index] == 1) {
-      printf("replicating %s\n",dat->name);
+      if (OPS_diags>5) printf("replicating %s\n",dat->name);
       char *tmp = (char*)malloc(dat->mem*omp_get_max_threads());
       #pragma omp parallel for
       for (int t = 0; t < omp_get_max_threads(); t++)
