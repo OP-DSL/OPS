@@ -212,15 +212,16 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
       exit(2)
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
+    if i < 0:
+      i = 0
     j = text[i:].find('{')
-    print name, text[i2:i+j]
     k = para_parse(text, i+j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
     check_accs(name, arg_list, arg_typ, text[i+j:k])
     l = text[i:m].find('inline')
     if(l<0):
-      code('inline'+text[i:k+2])
+      code('inline '+text[i:k+2])
     else:
       code(text[i:k+2])
     code('')

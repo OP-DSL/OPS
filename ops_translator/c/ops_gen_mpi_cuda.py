@@ -245,6 +245,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     i2 = i
     i = text[0:i].rfind('\n') #reverse find
+    if i < 0:
+      i = 0
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     arg_list = parse_signature(text[i2+len(name):i+j])
