@@ -125,6 +125,10 @@ else
   NVCC_FLAGS = -O3
 endif
 
+ifdef CUDA_HOST_COMPILER
+	NVCC_FLAGS += -ccbin=$(CUDA_HOST_COMPILER)
+endif
+
 
 #
 # master to make all versions

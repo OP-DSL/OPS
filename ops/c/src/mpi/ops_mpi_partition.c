@@ -58,7 +58,7 @@ extern int ops_force_decomp[OPS_MAX_DIM];
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
 ops_mpi_halo_group *OPS_mpi_halo_group_list = NULL;
-
+void (*ops_read_dat_hdf5_dynamic)(ops_dat dat) = NULL;
 /*
 * Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI
 * backends
@@ -375,7 +375,7 @@ void ops_decomp_dats(sub_block *sb) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
-        ops_read_dat_hdf5(dat);
+        ops_read_dat_hdf5_dynamic(dat);
       }
     else {
       dat->user_managed = 1;

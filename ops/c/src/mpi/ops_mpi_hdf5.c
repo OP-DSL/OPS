@@ -67,6 +67,7 @@ sub_block_list *OPS_sub_block_list; // pointer to list holding sub-block
 sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
                                 // details
 
+extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
 /*******************************************************************************
 * Routine to remove the intra-block halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 1
@@ -1481,6 +1482,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 * only used with the MPI backends
 *******************************************************************************/
 void ops_read_dat_hdf5(ops_dat dat) {
+
+  ops_read_dat_hdf5_dynamic = ops_read_dat_hdf5;
 
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
