@@ -21,9 +21,9 @@ endif
 endif
 
 ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
   HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
-ifdef CHECKPOINTING
   HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
 endif
 endif
@@ -41,7 +41,7 @@ endif
   CXXFLAGS 	= $(CCFLAGS)
   CXXLINK	= -lstdc++
   FC		= ifort
-  OMPFLAGS 	= -openmp -openmp-report2
+  OMPFLAGS 	= -qopenmp
   FFLAGS	= $(OPT)
   MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx

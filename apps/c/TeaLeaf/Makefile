@@ -18,9 +18,9 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL
 
 ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
-ifdef CHECKPOINTING
   HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
 endif
 endif
@@ -60,7 +60,7 @@ else
   CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
-  OMPFLAGS	= -openmp -openmp-report2
+  OMPFLAGS	= -qopenmp
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS	= $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi

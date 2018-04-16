@@ -96,11 +96,13 @@ endif
 endif
 
 ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
   HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
   CC = $(MPICC)
   CPP = $(MPICPP)
   OPS_INC += $(HDF5_INC)
+endif
 endif
 
 

@@ -37,7 +37,7 @@ ifdef DEBUG
 else
   OPT	 	:= -O3 -xAVX -qopt-report #-xAVX
 endif
-  OMPFLAGS  	= -openmp -openmp-report2
+  OMPFLAGS  	= -qopenmp
   CCFLAGS       := $(OPT) #-Wall -Werror -wd981
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
