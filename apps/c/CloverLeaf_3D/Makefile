@@ -24,7 +24,8 @@ else
   CPPFLAGS	= -O3 -fPIC -DUNIX -Wall
 endif
   OMPFLAGS	= -fopenmp
-  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpiCC
+  MPICPP	= $(MPI_INSTALL_PATH)/bin/mpic++
+  MPICC	= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS	= $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),intel)
@@ -112,12 +113,12 @@ endif
 
 
 ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
   HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
   CC = $(MPICC)
   CPP = $(MPICPP)
   OPS_INC += $(HDF5_INC)
-ifdef CHECKPOINTING
   HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
 endif
 endif
@@ -260,8 +261,8 @@ cloverleaf_mpi_cuda_tiled: ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o $(OPS_FILES_
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) $(OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK -I$(MPI_INSTALL_PATH)/include \
 				-c -o ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o ./CUDA/clover_leaf_kernels.cu
 
-mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
-mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+mpiinline_obj_list = $(shell find MPI_inline -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+mpiinline_c_obj_list = $(shell find MPI_inline -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
 
 
 ./MPI_inline/clover_leaf_kernels.o: ./MPI_inline/clover_leaf_kernels.cpp ./MPI_inline/clover_leaf_common.h Makefile
