@@ -32,13 +32,13 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP   = icpc
 ifdef DEBUG
-  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
+  OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -52,7 +52,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -mmic -vec-report -DSIMD_VEC=32 -DMPICH_IGNORE_CXX_SEEK -finline#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = $(HDF5_LIB) -openmp $(HDF5_LIB) -openmp-report2
+  OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
@@ -94,11 +94,13 @@ endif
 endif
 
 ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
   HDF5_INC 	  	:= -DCHECKPOINTING -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB 	  	:= -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
   CC = $(MPICC)
   CPP = $(MPICPP)
   OPS_INC += $(HDF5_INC)
+endif
 endif
 
 # flags for nvcc
