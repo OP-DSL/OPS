@@ -192,6 +192,8 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     for (int i = 0; i < desc->nargs; i++)
       if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ)
         free(desc->args[i].data);
+    //Free up memory
+    if (desc->name != NULL) free((char*)desc->name);
     free(desc->args);
     free(desc);
   }
@@ -937,15 +939,15 @@ ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block
    }
    desc->nargs = nargs;
    desc->args = (ops_arg*)malloc(nargs*sizeof(ops_arg));
-   char *tmp;
    for (int i = 0; i < nargs; i++) {
      desc->args[i] = args[i];
      if (args[i].opt && (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2)) 
        desc->hash = ((desc->hash << 5) + desc->hash) + args[i].dat->index;
      else if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ) {
+       /*char *tmp;
        tmp = (char*)malloc(args[i].dim * args[i].typesize);
        memcpy(tmp, args[i].data, args[i].dim * args[i].typesize);
-       args[i].data = tmp;
+       args[i].data = tmp;*/
      }
    }
    desc->function = fun;

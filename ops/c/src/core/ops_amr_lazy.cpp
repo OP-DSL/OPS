@@ -135,6 +135,16 @@ void ops_execute_amr() {
           ops_kernel_list[k]->dim, ops_kernel_list[k]->range, ops_kernel_list[k]->nargs, ops_kernel_list[k]->args);
     }
   }
+  for (unsigned int k = 0; k < ops_kernel_list.size(); k++) {
+    if (ops_kernel_list[k]->name != NULL) free((char*)ops_kernel_list[k]->name);
+    /*for (int i = 0; i < ops_kernel_list[k]->nargs; i++) {
+     ops_arg* args = ops_kernel_list[k]->args;
+     if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ)
+       free(args[i].data);
+    }*/
+    free(ops_kernel_list[k]->args);
+    free(ops_kernel_list[k]);
+  }
   ops_kernel_list.clear();
   restore_dat_ptrs();
 }
