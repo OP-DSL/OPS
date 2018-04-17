@@ -179,11 +179,11 @@ Our example application is a simple 2D iterative Laplace equation solver.
 
 \begin{lstlisting}
   //Size along y
-  int jmax = 1022;
+  int jmax = 4094;
   //Size along x
-  int imax = 1022;
+  int imax = 4094;
   
-  int iter_max = 1000;
+  int iter_max = 100;
   double pi  = 2.0 * asin(1.0);
   const double tol = 1.0e-6;
   double error     = 1.0;
@@ -246,7 +246,7 @@ while ( error > tol && iter < iter_max ) {
         A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];
       }
     }
-    if(iter % 100 == 0) printf("%5d, %0.6f\n", iter, error);
+    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);
     iter++;
   }
     \end{lstlisting}
@@ -497,6 +497,22 @@ $OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
 \item For more, see the user guide...
 \end{itemize}
 \end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Code generated versions}
+\begin{itemize}
+\item OPS will generate and compile a large number of different versions
+\begin{itemize}
+  \item \texttt{laplace2d\_dev\_seq} and \texttt{laplace2d\_dev\_mpi}: these versions do not use code generation, they are intended for development only
+  \item \texttt{laplace2d\_seq} and \texttt{laplace2d\_mpi}: baseline sequential and MPI implementations
+  \item \texttt{laplace2d\_openmp}: baseline OpenMP implementation
+  \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}, \texttt{laplace2d\_openacc}: implementations targeting GPUs
+  \item \texttt{laplace2d\_mpi\_inline}: optimised implementaition with MPI+OpenMP
+  \item \texttt{laplace2d\_tiled}: optimised implementaition with OpenMP that improves spatial and temporal locality
+\end{itemize}
+\end{itemize}
+\end{frame}
+
 
 
 \end{document}

@@ -860,8 +860,9 @@ void ops_partition(const char *routine) {
   ops_printf("Finished block decomposition\n");
 
   // allocate send/recv buffer (double, 8 args, maximum depth)
-  ops_buffer_size = 8 * 8 * MAX_DEPTH *
-                    pow(2 * MAX_DEPTH + max_block_dim, max_block_dims - 1);
+  int size_depth = ops_tiling_mpidepth>0 ? ops_tiling_mpidepth : 5;
+  ops_buffer_size = 8 * 8 * size_depth *
+                    pow(2 * size_depth + max_block_dim, max_block_dims - 1);
   ops_comm_realloc(&ops_buffer_send_1, ops_buffer_size * sizeof(char), 0);
   ops_comm_realloc(&ops_buffer_recv_1, ops_buffer_size * sizeof(char), 0);
   ops_comm_realloc(&ops_buffer_send_2, ops_buffer_size * sizeof(char), 0);
