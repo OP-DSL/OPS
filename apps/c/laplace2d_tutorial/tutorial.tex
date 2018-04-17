@@ -299,9 +299,7 @@ First off, we need to include the appropriate header files, then initialise OPS,
 \begin{itemize}
 \item Now we can declare a block, and the datasets
 \begin{lstlisting}
-  //The 2D block
   ops_block block = ops_decl_block(2, "my_grid");
-  //The two datasets
   int size[] = {imax, jmax};
   int base[] = {0,0};
   int d_m[] = {-1,-1};
@@ -311,7 +309,8 @@ First off, we need to include the appropriate header files, then initialise OPS,
   ops_dat d_Anew = ops_decl_dat(block, 1, size, base,
                       d_m, d_p, Anew, "double", "Anew");
   \end{lstlisting}
-  \item datasets have a size (number of grid points in each dimension). There is padding for halos or boundaries in the positive (\texttt{d\_p}) and negative directions (\texttt{d\_p}); here we use a 1 think boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran)
+  \item datasets have a size (number of grid points in each dimension). There is padding for halos or boundaries in the positive (\texttt{d\_p}) and negative directions (\texttt{d\_m}); here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). 
+  \item item these with a $0$ base index and a $1$ wide halo, these datasets can be indexed from $-1$ to $size+1$
 \end{itemize}
 \end{frame}
 
@@ -348,11 +347,11 @@ First off, we need to include the appropriate header files, then initialise OPS,
   for (int i = 0; i < imax+2; i++)
     A[(0)*(imax+2)+i]   = 0.0;
 \end{lstlisting}
-  \item This is a loop on the bottom boundary of the domain, which is at the $-1$ index for our dataset, therefore our iteration range will be over the entire domain, including halos in the $X$ direction, and the bottom boundary in the $Y$ direction.
+  \item This is a loop on the bottom boundary of the domain, which is at the $-1$ index for our dataset, therefore our iteration range will be over the entire domain, including halos in the $X$ direction, and the bottom boundary in the $Y$ direction. The iteration range is given as beginning (inclusive) and end (exclusive) indices in the x, y, etc. directions.
   \begin{lstlisting}
   int bottom_range[] = {-1, imax+1, -1, 0};
 \end{lstlisting}
-\item Next, we need to outline the ``user kernel'' into \texttt{laplace\_kernels.h}, and place the appropriate access macro - $OPS\_ACCN(i,j)$, where $N$ is the index of the argument, and $(i,j)$ are the stencil offsets in the X and Y directions respectively.
+\item Next, we need to outline the ``user kernel'' into \texttt{laplace\_kernels.h}, and place the appropriate access macro - $OPS\_ACCN(i,j)$, where $N$ is the index of the argument in the kernel's formal parameter list, and $(i,j)$ are the stencil offsets in the X and Y directions respectively.
 \begin{lstlisting}
 void set_zero(double *A) {
   A[OPS_ACC0(0,0)] = 0.0;
@@ -490,7 +489,7 @@ ops_reduction_result(h_err, &error);
 \begin{lstlisting}[language=bash,basicstyle=\tiny]
 $OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
 \end{lstlisting}
-\item We have provided a makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own applicaiton
+\item We have provided a makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own application
 \item Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code
 \item You can take a look at the generated kernels for different parallelisations under the appropriate subfolders
 \item If you add the $-OPS\_DIAGS=2$ runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels
@@ -507,12 +506,23 @@ $OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
   \item \texttt{laplace2d\_seq} and \texttt{laplace2d\_mpi}: baseline sequential and MPI implementations
   \item \texttt{laplace2d\_openmp}: baseline OpenMP implementation
   \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}, \texttt{laplace2d\_openacc}: implementations targeting GPUs
-  \item \texttt{laplace2d\_mpi\_inline}: optimised implementaition with MPI+OpenMP
-  \item \texttt{laplace2d\_tiled}: optimised implementaition with OpenMP that improves spatial and temporal locality
+  \item \texttt{laplace2d\_mpi\_inline}: optimised implementation with MPI+OpenMP
+  \item \texttt{laplace2d\_tiled}: optimised implementation with OpenMP that improves spatial and temporal locality
 \end{itemize}
 \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Optimisations}
+\begin{itemize}
+\item Try the following performance tuning options
+\begin{itemize}
+  \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}: you can set the \texttt{OPS\_BLOCK\_SIZE\_X} and \texttt{OPS\_BLOCK\_SIZE\_Y} runtime arguments to control thread block or work group sizes
+  \item \texttt{laplace2d\_mpi\_cuda}, \texttt{laplace2d\_mpi\_openacc}: add the \texttt{-gpudirect} runtime flag to enable GPU Direct communications
+  \item \texttt{laplace2d\_tiled}, \texttt{laplace2d\_mpi\_tiled}: add the \texttt{OPS\_TILING} runtime flag, and move \texttt{-OPS\_DIAGS=3}: see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting \texttt{OPS\_CACHE\_SIZE} to a lower value (in MB, for L3 size). Thread affinity control and using 1 process per socket is strongly recommended. E.g. \texttt{OMP\_NUM\_THREADS=20 numactl --cpunodebind=0 ./laplace2d\_tiled -OPS\_DIAGS=3 OPS\_TILING OPS\_CACHE\_SIZE=5}. Over MPI, you will have to set \texttt{OPS\_TILING\_MAXDEPTH} to extend halo regions.
+\end{itemize}
+\end{itemize}
+\end{frame}
 
 
 \end{document}
