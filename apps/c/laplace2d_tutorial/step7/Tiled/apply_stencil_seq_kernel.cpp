@@ -73,12 +73,7 @@ void ops_par_loop_apply_stencil_execute(ops_kernel_descriptor *desc) {
   double p_a2_0 = p_a2[0];
   #pragma omp parallel for reduction(max:p_a2_0)
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #ifdef intel
-    #pragma loop_count(10000)
-    #pragma omp simd reduction(max:p_a2_0) aligned(A,Anew)
-    #else
-    #pragma simd reduction(max:p_a2_0)
-    #endif
+    //#pragma omp simd reduction(max:p_a2_0)// aligned(A,Anew)
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       double *error = &p_a2_0;
       

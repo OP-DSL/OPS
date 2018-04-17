@@ -18,10 +18,10 @@ int main(int argc, char** argv)
   ops_init(argc, argv,1);
 
   //Size along y
-  jmax = 1022;
+  jmax = 4094;
   //Size along x
-  imax = 1022;
-  int iter_max = 1000;
+  imax = 4094;
+  int iter_max = 100;
 
   const double tol = 1.0e-6;
   double error     = 1.0;
@@ -116,13 +116,13 @@ int main(int argc, char** argv)
         ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ));
 
-    if(iter % 100 == 0) printf("%5d, %0.6f\n", iter, error);        
+    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
 
   printf("%5d, %0.6f\n", iter, error);        
 
-  double err_diff = fabs((100.0*(error/2.413562747621e-04))-100.0);
+  double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
     printf("This run is considered PASSED\n");
