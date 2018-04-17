@@ -524,5 +524,18 @@ $OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
 \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Optimisations - tiling}
+\begin{itemize}
+\item Tiling uses lazy execution: as parallel loops follow one another, they are not executed, but put in a queue, and only once some data needs to be returned to the user (e.g. result of a reduction) do these loops have to be executed
+\item With a chain of loops queued, OPS can analyse them together and come up with a tiled execution schedule
+\item Works over MPI too: OPS extends the halo regions, and does one big halo exchange instead of several smaller ones
+\item In the current laplace2d code, every stencil application loop is also doing a reduction, therefore only two loops are queued. Try modifying the code so the reduction only happens every 10 iterations!
+\begin{itemize}
+\item On A Xeon E5-2650, one can get a 2.5x speedup
+\end{itemize}
+\end{itemize}
+\end{frame}
+
 
 \end{document}
