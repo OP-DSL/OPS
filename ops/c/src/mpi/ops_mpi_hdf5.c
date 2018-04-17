@@ -1290,6 +1290,8 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
                           char const *dat_name, char const *file_name) {
 
+  ops_read_dat_hdf5_dynamic = ops_read_dat_hdf5;
+
   // create new communicator
   int my_rank, comm_size;
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
@@ -1482,8 +1484,6 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 * only used with the MPI backends
 *******************************************************************************/
 void ops_read_dat_hdf5(ops_dat dat) {
-
-  ops_read_dat_hdf5_dynamic = ops_read_dat_hdf5;
 
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
