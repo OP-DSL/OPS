@@ -129,10 +129,25 @@ endif
 
 NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 ifndef DEBUG
-    NVCCFLAGS := -O3 -arch=sm_60 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-    #NVCCFLAGS := -O3 -arch=sm_21 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+    NVCCFLAGS := -O3 -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
     NVCCFLAGS := -O0 -g -G -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+endif
+
+ifndef NV_ARCH
+  MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
+  NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+        NVCCFLAGS+=-gencode arch=compute_20,code=sm_21
+else
+ifeq ($(NV_ARCH),Kepler)
+        NVCCFLAGS+=-gencode arch=compute_35,code=sm_35
+else
+ifeq ($(NV_ARCH),Pascal)
+        NVCCFLAGS+=-gencode arch=compute_60,code=sm_60
+endif
+endif
 endif
 
 ifdef CUDA_HOST_COMPILER

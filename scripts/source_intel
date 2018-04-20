@@ -39,3 +39,5 @@ export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 #export HDF5_INSTALL_PATH=/opt/hdf5-intel/
 export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel
 export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel/lib:$LD_LIBRARY_PATH
+
+export NV_ARCH=Kepler
