@@ -138,14 +138,21 @@ void update_halo(int* fields, int depth)
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
   int rangexy_r1a[] = {x_max,x_max+1,y_min-depth,y_max+depth,z_min-depth,z_max+depth};
-  ops_par_loop(update_halo_kernel1_r1, "update_halo_kernel", clover_grid, 3, rangexy_r1a,
-               ops_arg_dat_opt(density0, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_DENSITY0]),
-               ops_arg_dat_opt(density1, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_DENSITY1]),
-               ops_arg_dat_opt(energy0, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_ENERGY1]),
-               ops_arg_dat_opt(energy1, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_DENSITY0]),
-               ops_arg_dat_opt(pressure, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_PRESSURE]),
-               ops_arg_dat_opt(viscosity, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_VISCOSITY]),
-               ops_arg_dat_opt(soundspeed, 1, S3D_000_M100, "double", OPS_RW, fields[FIELD_SOUNDSPEED]),
+  ops_par_loop(update_halo_kernel1_r1, "update_halo_kernel", clover_grid, 3,
+               rangexy_r1a, ops_arg_dat_opt(density0, 1, S3D_000_M100, "double",
+                                            OPS_RW, fields[FIELD_DENSITY0]),
+               ops_arg_dat_opt(density1, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_DENSITY1]),
+               ops_arg_dat_opt(energy0, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_ENERGY0]),
+               ops_arg_dat_opt(energy1, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_ENERGY1]),
+               ops_arg_dat_opt(pressure, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_PRESSURE]),
+               ops_arg_dat_opt(viscosity, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_VISCOSITY]),
+               ops_arg_dat_opt(soundspeed, 1, S3D_000_M100, "double", OPS_RW,
+                               fields[FIELD_SOUNDSPEED]),
                ops_arg_gbl(fields, NUM_FIELDS, "int", OPS_READ));
 
   int rangexy_ba2a[] = {x_min-depth,x_max+depth,y_min-depth,y_max+depth,z_min-2,z_min-1};
