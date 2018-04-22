@@ -2,18 +2,28 @@
 set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
-make
+#make
 cd -
-./generate.sh
-make clean
-make
+#./generate.sh
+#make clean
+#make
+
 
 #============================ Generate HDF5 file ==========================================================
 echo '============> Generate HDF5 file'
 rm *.h5
 ./generate_file
-rm *.h5
+mv cloverdata.h5 cloverdata_seq.h5
 $MPI_INSTALL_PATH/bin/mpirun -np 10 ./generate_file_mpi
+$HDF5_INSTALL_PATH/bin/h5diff cloverdata.h5 cloverdata_seq.h5 > diff_out
+
+if [ -s ./diff_out ]
+then
+     echo "File not empty - Solution Not Valid";exit 1;
+else
+     echo "Seq and MPI files match"
+fi
+rm cloverdata_seq.h5
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 #<<COMMENT
