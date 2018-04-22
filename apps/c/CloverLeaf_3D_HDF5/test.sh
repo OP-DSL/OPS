@@ -2,11 +2,11 @@
 set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
-#make
+make
 cd -
-#./generate.sh
-#make clean
-#make
+./generate.sh
+make clean
+make
 
 
 #============================ Generate HDF5 file ==========================================================
