@@ -375,6 +375,10 @@ void ops_decomp_dats(sub_block *sb) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
+	if (ops_read_dat_hdf5_dynamic == NULL) {
+          printf("Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked\n");
+          exit(-1);
+	}
         ops_read_dat_hdf5_dynamic(dat);
       }
     else {
