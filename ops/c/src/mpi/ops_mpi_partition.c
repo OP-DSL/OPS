@@ -140,7 +140,8 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
         pdims[d] = ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
       MPI_Dims_create(nproc_each_block, ndim, pdims);
       for (int d = 0; d < ndim; d++)
-        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[ndim-d-1];
+        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[d];
+//        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[ndim-d-1];
       for (int d = ndim; d < OPS_MAX_DIM; d++)
         (*proc_dimsplit)[i * OPS_MAX_DIM + d] = 1;
 
