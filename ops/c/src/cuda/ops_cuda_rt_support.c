@@ -71,6 +71,7 @@ void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
   if (cudaSuccess != err) {
     fprintf(stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
             line, cudaGetErrorString(err));
+    if (err == cudaErrorNoKernelImageForDevice) fprintf(stderr, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU\n");
     exit(-1);
   }
 }

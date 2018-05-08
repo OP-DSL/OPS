@@ -139,6 +139,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     ops_cuda_packer_1_soa<<<num_blocks, num_threads>>>(
         src, device_buf, halo->count, halo->blocklength, halo->stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+    cutilSafeCall(cudaGetLastError());
 
   } else if (halo->blocklength % 4 == 0) {
     int num_threads = 128;
@@ -147,11 +148,13 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     ops_cuda_packer_4<<<num_blocks, num_threads>>>(
         (const int *)src, (int *)device_buf, halo->count, halo->blocklength*dat->dim / 4,
         halo->stride*dat->dim / 4);
+    cutilSafeCall(cudaGetLastError());
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo->blocklength * halo->count) - 1) / num_threads + 1;
     ops_cuda_packer_1<<<num_blocks, num_threads>>>(
         src, device_buf, halo->count, halo->blocklength*dat->dim, halo->stride*dat->dim);
+    cutilSafeCall(cudaGetLastError());
   }
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d,
@@ -193,6 +196,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     ops_cuda_unpacker_1_soa<<<num_blocks, num_threads>>>(
         device_buf, dest, halo->count, halo->blocklength, halo->stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+    cutilSafeCall(cudaGetLastError());
   } else if (halo->blocklength % 4 == 0) {
     int num_threads = 128;
     int num_blocks =
@@ -200,16 +204,16 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     ops_cuda_unpacker_4<<<num_blocks, num_threads>>>(
         (const int *)device_buf, (int *)dest, halo->count,
         halo->blocklength*dat->dim / 4, halo->stride*dat->dim / 4);
+    cutilSafeCall(cudaGetLastError());
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo->blocklength * halo->count) - 1) / num_threads + 1;
     ops_cuda_unpacker_1<<<num_blocks, num_threads>>>(
         device_buf, dest, halo->count, halo->blocklength*dat->dim, halo->stride*dat->dim);
+    cutilSafeCall(cudaGetLastError());
   }
 
   dat->dirty_hd = 2;
-
-  // cutilSafeCall(cudaDeviceSynchronize());
 }
 
 char* ops_realloc_fast(char *ptr, size_t olds, size_t news) {
@@ -344,6 +348,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
       gpu_ptr, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_soa);
+  cutilSafeCall(cudaGetLastError());
 
   if (!OPS_gpu_direct)
     cutilSafeCall(cudaMemcpy(dest, halo_buffer_d, size * sizeof(char),
@@ -404,6 +409,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
       dest->data_d, gpu_ptr, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_soa);
+  cutilSafeCall(cudaGetLastError());
   dest->dirty_hd = 2;
 }
 
