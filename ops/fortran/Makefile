@@ -5,106 +5,21 @@
 # OPS_COMPILER      - Compiler toolchain: gnu (gcc, gfortran) or pgi (pgc++, pgfortran)
 # OPS_INSTALL_PATH  - OPS base directory
 #
-OPS = $(OPS_INSTALL_PATH)
-C_OPS = $(OPS)/c
-C_OPS_INC = $(C_OPS)/include
-C_OPS_SRC = $(C_OPS)/src
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 
-F_OPS = $(OPS)/fortran
-F_OPS_INC = $(F_OPS)/include
-F_OPS_SRC = $(F_OPS)/src
-F_OPS_OBJ = $(F_OPS)/obj
-F_OPS_LIB = $(F_OPS)/lib
-F_OPS_MOD = $(F_OPS)/mod
+TARGETS	= clean core f_seq f_mpi
 
-CUDA_INC = $(CUDA_INSTALL_PATH)/include
-
-# flags for nvcc
-# set NV_ARCH to select the correct one
-ifndef NV_ARCH
-  MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
-  NV_ARCH=Kepler
-endif
-ifeq ($(NV_ARCH),Fermi)
-  CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.0,cc20
-else
-ifeq ($(NV_ARCH),Kepler)
-  CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
-  PGI_CUDA_FORT_FLAGS=-Mcuda=cuda7.5,cc35
-endif
-endif
-
-MPI_INC = $(MPI_INSTALL_PATH)/include
-MPI_LIB = $(MPI_INSTALL_PATH)/lib
-
-ifeq ($(OPS_COMPILER),intel)
-  CC 		= icc -std=c99
-ifdef DEBUG
-  OPT	 	= -O0 -g
-else
-  OPT	 	= -O3 -xAVX #vec-report -xAVX
-endif
-  CCFLAGS       = $(OPT) -Wall #-Werror -wd981
-  CXX 		= icpc
-  CXXFLAGS 	= $(CCFLAGS)
-  F_INC_MOD	= $(F_OPS_MOD)/intel
-  FC		= ifort
-  FFLAGS	= $(OPT) -module $(F_INC_MOD)
-  MPICC 	= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
-  MPICXX 	= $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS 	= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
-  TARGETS	= clean core f_seq f_mpi
-else
 ifeq ($(OPS_COMPILER),pgi)
-  CC            = pgcc
-ifdef DEBUG
-  OPT           = -O0 -g
-else
-  OPT           = -O3
+  TARGETS       += f_cuda f_mpi_cuda f_openacc
 endif
-  CCFLAGS       = $(OPT)
-  NVCC		= nvcc $(CODE_GEN_CUDA)
-  NVCCFLAGS	= -Xcompiler="-std=c99 -Wall -fPIC -pipe"
-  CUDA_ALIGNE_FLAG = -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-  CXX           = pgc++
-  CXXFLAGS      = $(CCFLAGS)
-  F_INC_MOD     = $(F_OPS_MOD)/pgi
-  FC            = pgfortran
-  FFLAGS        = $(OPT) -module $(F_INC_MOD)
-  OPENACCFLAGS	= $(OPT) -module $(F_INC_MOD)/openacc #$(PGI_CUDA_FORT_FLAGS) -Minform=inform -Mvect –Mvect=cachesize:12288 -DOPS_WITH_CUDAFOR
-  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
-  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS      = $(CXXFLAGS)
-  TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda f_openacc
-else
+
 ifeq ($(OPS_COMPILER),xlp8)
-  CC            = xlc_r
-ifdef DEBUG
-  OPT           = -O0 -g
-else
-  OPT           = -O3 -qarch=pwr8 -qtune=pwr8
+  TARGETS       += f_cuda f_mpi_cuda
 endif
-  CCFLAGS       = $(OPT)
-  NVCC          = nvcc $(CODE_GEN_CUDA)
-  NVCCFLAGS     = -O3 -Xcompiler="-std=c99 -fPIC -pipe"
-  CUDA_ALIGNE_FLAG =
-  CXX           = xlc++_r
-  CXXFLAGS      = $(CCFLAGS)
-  F_INC_MOD     = $(F_OPS_MOD)/xlp8
-  FC            = xlf_r #-qcuda -WF,-DOPS_WITH_CUDAFOR
-  FFLAGS        = $(OPT) -qmoddir=$(F_INC_MOD)
-  MPICC         = $(MPI_INSTALL_PATH)/bin/mpicc
-  MPICXX        = $(MPI_INSTALL_PATH)/bin/mpicxx
-  MPIFLAGS      = $(CXXFLAGS)
-  CUDAFOR       = -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded
-  TARGETS       = clean core f_seq f_mpi f_cuda f_mpi_cuda
-else
-print:
-	@echo "unrecognised value for OPS_COMPILER"
-endif
-endif
-endif
+
+
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 
 ifdef HDF5_INSTALL_PATH
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
@@ -192,7 +107,7 @@ f_mpi_cuda: mkdir core
 f_openacc: mkdir core
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_lib_core.c -o $(F_OPS_OBJ)/ops_lib_core.o
 	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.c -o $(F_OPS_OBJ)/ops_cuda_rt_support.o
-	$(NVCC) $(NVCCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
+	$(NVCC) $(NVCCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_decl.c -o $(F_OPS_OBJ)/ops_cuda_decl.o
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -I$(CUDA_INC) -c $(C_OPS_SRC)/cuda/ops_cuda_rt_support.cu -o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o
 	$(CC) $(CXXFLAGS) -I$(C_OPS_INC) -c $(C_OPS_SRC)/core/ops_dummy_singlenode.c -o $(F_OPS_OBJ)/ops_dummy_singlenode.o
 	$(FC) $(OPENACCFLAGS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o

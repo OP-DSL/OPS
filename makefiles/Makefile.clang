@@ -1,0 +1,9 @@
+CC      ?= clang
+CXX     ?= clang++
+ifdef DEBUG
+	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
+	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g #-ffloat-store
+else
+	CCFLAGS   := -O3 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
+	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g
+endif
