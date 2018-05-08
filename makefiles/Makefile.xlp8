@@ -1,0 +1,7 @@
+CC        := xlc_r
+CXX        := xlc++_r
+FC	:= xlf_r
+CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O5 -qaltivec=le
+CXXFLAGS  := $(CCFLAGS)
+FFLAGS := $(CCFLAGS) -qmoddir=$(F_INC_MOD)
+CUDAFOR := -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded

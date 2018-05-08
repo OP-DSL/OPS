@@ -1,0 +1,36 @@
+NVCC  ?= $(CUDA_INSTALL_PATH)/bin/nvcc
+CUDA_INC ?= $(CUDA_INSTALL_PATH)/include
+NVCCFLAGS := -Xcompiler="-std=c99"
+ifndef DEBUG
+    NVCCFLAGS += -O3
+else
+    NVCCFLAGS += -O0 -g -G
+endif
+
+ifndef NV_ARCH
+  @echo "select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=Kepler"
+  NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+        NVCCFLAGS+=-gencode arch=compute_20,code=sm_21
+				PGI_CUDA_FORT_FLAGS=-Mcuda=cc20
+else
+ifeq ($(NV_ARCH),Kepler)
+        NVCCFLAGS+=-gencode arch=compute_35,code=sm_35
+				PGI_CUDA_FORT_FLAGS=-Mcuda=cc35
+else
+ifeq ($(NV_ARCH),Pascal)
+        NVCCFLAGS+=-gencode arch=compute_60,code=sm_60
+				PGI_CUDA_FORT_FLAGS=-Mcuda=cc60
+else
+ifeq ($(NV_ARCH),Volta)
+        NVCCFLAGS+=-gencode arch=compute_70,code=sm_70
+				PGI_CUDA_FORT_FLAGS=-Mcuda=cc70
+endif
+endif
+endif
+endif
+
+ifdef CUDA_HOST_COMPILER
+  NVCCFLAGS += -ccbin=$(CUDA_HOST_COMPILER)
+endif
