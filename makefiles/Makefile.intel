@@ -1,10 +1,12 @@
-CC    := icc -std=c99
+CC    := icc
 CXX     := icpc
 FC		:= ifort
 ifdef DEBUG
-	CCFLAGS   := -O0 -g
+	CCFLAGS   := -O0 -g -std=c99
+	CXXFLAGS   := -O0 -g
 else
-	CCFLAGS   := -O3 -xHost #-qopenmp #vec-report -xAVX
+	CCFLAGS   := -O3 -xHost -std=c99 #-qopenmp #vec-report -xAVX
+	CXXFLAGS   := -O3 -xHost #-qopenmp #vec-report -xAVX
 endif
-CXXFLAGS  := $(CCFLAGS)
-FFLAGS  = $(CCFLAGS) -module $(F_INC_MOD)
+FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+OMPFLAGS := -qopenmp
