@@ -9,4 +9,9 @@ endif
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 CXXFLAGS  := $(CCFLAGS)
 OPENACCFLAGS = $(CCFLAGS) -module $(F_INC_MOD)/openacc
+FMODS_OPENACC := -module $(F_INC_MOD)/openacc
 FFLAGS = $(CCFLAGS) -module $(F_INC_MOD)
+OMPFLAGS := -mp
+CUDAFOR	= -DOPS_WITH_CUDAFOR
+OpenACCFLAGS = -acc -ta=nvidia -Minline
+CXXLINK := -pgc++libs

@@ -11,6 +11,8 @@ F_OPS_LIB = $(F_OPS)/lib
 F_OPS_MOD = $(F_OPS)/mod
 F_INC_MOD = $(F_OPS_MOD)/$(OPS_COMPILER)
 
+OPS_MPI	= -DOPS_MPI
+
 ifeq ($(OPS_COMPILER),clang)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.clang
 else
@@ -45,3 +47,6 @@ endif
 endif
 endif
 endif
+
+FLINK = -L$(F_OPS_LIB) $(CXXLINK)
+FMODS = -I$(F_OPS_MOD) -I$(F_OPS_INC)

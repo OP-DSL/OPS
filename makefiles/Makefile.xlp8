@@ -5,3 +5,6 @@ CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O5 -qaltivec=le
 CXXFLAGS  := $(CCFLAGS)
 FFLAGS := $(CCFLAGS) -qmoddir=$(F_INC_MOD)
 CUDAFOR := -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded
+OMPFLAGS := -qsmp=omp -qthreaded
+OPS_MPI	= -WF,-DOPS_MPI
+CUDAFOR	= -WF,-DOPS_WITH_CUDAFOR -qcuda #-qthreaded
