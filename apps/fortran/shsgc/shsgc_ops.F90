@@ -320,7 +320,7 @@ program SHSGC
 
     validate_rms = sqrt(local_rms)/nxp
     rms_diff=ABS((100.0_8*(validate_rms/0.233688543536201_8))-100.0_8)
-    write (*,'(a,f)'), "RMS = " , validate_rms;
+    write (*,'(a,f16.7)'), "RMS = " , validate_rms;
     write(*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
 
     IF(rms_diff.LT.0.001) THEN

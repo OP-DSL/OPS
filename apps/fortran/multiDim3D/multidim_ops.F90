@@ -121,10 +121,10 @@ program MULTIDIM
   call ops_print_dat_to_txtfile(dat0, "multidim.dat")
 
   if (ops_is_root() .eq. 1) then
-    write (*,'(a,f,a)') 'Max total runtime =', endTime - startTime,' seconds'
+    write (*,'(a,f16.7,a)') 'Max total runtime =', endTime - startTime,' seconds'
 
     qa_diff=ABS((100.0_8*((reduct_result(1)+reduct_result(2)+reduct_result(3))/(3*160.00000_8)))-100.0_8)
-    write(*,'(a,f,f,f)') "Reduction result = ", reduct_result
+    write(*,'(a,f16.7,f16.7,f16.7)') "Reduction result = ", reduct_result
     write(*,'(a,e16.7,a)') "Reduction result is within ",qa_diff,"% of the expected result"
 
     IF(qa_diff.LT.0.0000000000001) THEN
