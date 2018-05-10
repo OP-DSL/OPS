@@ -10,3 +10,4 @@ else
 endif
 FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
 OMPFLAGS := -qopenmp
+CXXLINK := -lstdc++
