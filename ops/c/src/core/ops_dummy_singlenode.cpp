@@ -153,7 +153,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
     int count, stride;
     ops_amr_reduction_size(&count, &stride, handle->size);
     handle->data = (char*)malloc(count*stride);
-    for (int i = 1; i < count; i++) {
+    for (int i = 0; i < count; i++) {
       memcpy(handle->data + i * stride, old_data, handle->size);
     }
     free(old_data);
