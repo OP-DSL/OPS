@@ -692,6 +692,10 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
            "access type\n",
            handle->name);
     exit(-1);
+  } else if (ops_loop_over_blocks && handle->multithreaded == 0) {
+    printf("Error: ops_reduction handle %s was aleady used but not queried outside of an ops_par_loop_blocks region\n",
+           handle->name);
+    exit(-1);
   }
   return arg;
 }
