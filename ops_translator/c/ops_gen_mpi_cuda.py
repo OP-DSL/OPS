@@ -437,7 +437,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     code('#else')
+    code('#ifdef OPS_HYBRID')
+    code('void ops_par_loop_'+name+'_execute_gpu(ops_kernel_descriptor *desc) {')
+    code('#else')
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code('#endif')
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
@@ -826,6 +830,21 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ENDIF()
     config.depth = config.depth - 2
     code('}')
+    code('')
+    code('#ifdef OPS_HYBRID')
+    code('void ops_par_loop_'+name+'_execute_cpu(ops_kernel_descriptor *desc);')
+    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    config.depth = config.depth + 2
+    IF('desc->device == 1')
+    code('ops_par_loop_'+name+'_execute_gpu(desc);')
+    ENDIF()
+    ELSE()
+    code('ops_par_loop_'+name+'_execute_cpu(desc);')
+    ENDIF()
+    config.depth = config.depth - 2
+    code('}')
+    code('#endif')
+    code('')
     code('')
     code('#ifdef OPS_LAZY')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')

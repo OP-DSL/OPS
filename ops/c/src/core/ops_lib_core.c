@@ -65,6 +65,7 @@ int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
+int ops_hybrid = 0;
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -205,6 +206,11 @@ void ops_set_args(int argc, char *argv) {
   } else if (strstr(argv, "OPS_CHECKPOINT") != NULL) {
     OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");
+  }
+  pch = strstr(argv, "OPS_HYBRID");
+  if (pch != NULL) {
+    ops_hybrid = 1;
+    ops_printf("\n Hybrid execution enabled\n");
   }
 }
 

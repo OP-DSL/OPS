@@ -286,3 +286,30 @@ void ops_cuda_exit() {
 
 //  cudaDeviceReset();
 }
+
+
+//
+// Functions related to hybrid execution
+//
+size_t ops_calc_cumsize(ops_dat, int to_dim) {
+  long bytes = dat->elem_size;
+  //Product of sizes in lower dimensions
+  for (int i = 0; i < to_dim; i++)
+    bytes = bytes * dat->size[i];
+  //bytes is now the size of an to_dim dimensional slice
+}
+void ops_download_dat_range(ops_dat dat, int from, int to) {
+  if (from >= to) return;
+  long slice = ops_calc_cumsize(dat, dat->block->dims);
+  cutilSafeCall(cudaMemcpy(dat->data + slice * from,
+                           dat->data_d + slice * from,
+                           slice * (to-from), cudaMemcpyDeviceToHost));
+}
+
+void ops_upload_dat_range(ops_dat dat, int from, int to) {
+  if (from >= to) return;
+  long slice = ops_calc_cumsize(dat, dat->block->dims);
+  cutilSafeCall(cudaMemcpy(dat->data_d + slice * from,
+                           dat->data + slice * from,
+                           slice * (to-from), cudaMemcpyHostToDevice));
+}

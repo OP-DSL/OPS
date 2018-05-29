@@ -235,7 +235,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     comm('')
     comm(' host stub function')
+    code('#ifdef OPS_HYBRID')
+    code('void ops_par_loop_'+name+'_execute_cpu(ops_kernel_descriptor *desc) {')
+    code('#else')
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code('#endif')
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('ops_block block = desc->block;')
@@ -498,6 +502,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     code('')
+    code('#ifndef OPS_HYBRID')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
@@ -549,6 +554,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('ops_enqueue_kernel(desc);')
     depth = 0
     code('}')
+    code('#endif')
 
 ##########################################################################
 #  output individual kernel file
@@ -597,7 +603,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
   code('')
+  code('#ifndef OPS_HYBRID')
   code('void ops_init_backend() {}')
+  code('#endif')
   code('')
   comm('user kernel files')
 

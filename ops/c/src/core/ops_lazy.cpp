@@ -63,6 +63,8 @@ extern int ops_cache_size;
 
 double ops_tiled_halo_exchange_time = 0.0;
 
+extern int ops_hybrid;
+void ops_hybrid_execute(ops_kernel_descriptor *desc);
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -160,7 +162,8 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
-    desc->function(desc);
+    if (ops_hybrid) ops_hybrid_execute(desc);
+    else desc->function(desc);
 
     //Dirtybits
     if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
