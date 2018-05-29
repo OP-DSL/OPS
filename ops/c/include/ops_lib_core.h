@@ -455,6 +455,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int x_step, int y_step, int z_step, int buf_strides_x,
                          int buf_strides_y, int buf_strides_z);
 
+long ops_get_base_offset(ops_dat dat);
+
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute();

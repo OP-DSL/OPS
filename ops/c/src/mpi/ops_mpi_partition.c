@@ -388,15 +388,7 @@ void ops_decomp_dats(sub_block *sb) {
       dat->hdf5_file = "none";
     }
 
-    // Compute offset in bytes to the base index
-    dat->base_offset = 0;
-    long cumsize = 1;
-    for (int i = 0; i < block->dims; i++) {
-      dat->base_offset += (OPS_soa ? dat->type_size : dat->elem_size)
-                          * cumsize *
-                          (-dat->base[i] - dat->d_m[i] - sd->d_im[i]);
-      cumsize *= dat->size[i];
-    }
+    dat->base_offset = ops_get_base_offset(dat);
 
     ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data),
                        prod[sb->ndim - 1] * dat->elem_size);

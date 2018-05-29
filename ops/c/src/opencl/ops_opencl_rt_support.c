@@ -72,6 +72,9 @@ char *OPS_gbl_prev = NULL;
 ops_opencl_core OPS_opencl_core;
 int OPS_cl_device = 0; // select CPU by default
 
+
+extern int ops_hybrid;
+
 //
 // Get return (error) messages from OpenCL run-time
 //
@@ -382,6 +385,7 @@ void ops_upload_dat(ops_dat dat) {
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
+  if (ops_hybrid) return;
   // printf("in ops_H_D_exchanges\n");
   for (int n = 0; n < nargs; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
@@ -392,6 +396,7 @@ void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
 }
 
 void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
+  if (ops_hybrid) return;
   for (int n = 0; n < nargs; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       ops_upload_dat(args[n].dat);

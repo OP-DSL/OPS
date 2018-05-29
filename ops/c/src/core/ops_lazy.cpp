@@ -107,7 +107,7 @@ int ops_dims_tiling_internal = 1;
 /////////////////////////////////////////////////////////////////////////
 
 //Computes intersection of two ranges
-inline int intersection(int range1_beg, int range1_end, int range2_beg,
+extern "C" int intersection(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *intersect_begin) {
   if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
   int i_min = MAX(range1_beg, range2_beg);
@@ -115,6 +115,17 @@ inline int intersection(int range1_beg, int range1_end, int range2_beg,
   *intersect_begin = i_min;
   return i_max > i_min ? i_max - i_min : 0;
 }
+
+extern "C" int union_range(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *union_begin) {
+  if (range1_beg > range1_end || range2_beg > range2_end) return 0;
+
+  int i_min = MIN(range1_beg, range2_beg);
+  int i_max = MAX(range1_end, range2_end);
+  *union_begin = i_min;
+  return i_max > i_min ? i_max - i_min : 0;
+}
+
 
 //Queries L3 cache size
 size_t ops_internal_get_cache_size() {

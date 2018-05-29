@@ -63,6 +63,8 @@ char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
 
+extern int ops_hybrid;
+
 //
 // CUDA utility functions
 //
@@ -167,6 +169,7 @@ void ops_upload_dat(ops_dat dat) {
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
+  if (ops_hybrid) return;
   // printf("in ops_H_D_exchanges\n");
   for (int n = 0; n < nargs; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
@@ -177,6 +180,7 @@ void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
 }
 
 void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
+  if (ops_hybrid) return;
   for (int n = 0; n < nargs; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       ops_upload_dat(args[n].dat);
@@ -291,16 +295,11 @@ void ops_cuda_exit() {
 //
 // Functions related to hybrid execution
 //
-size_t ops_calc_cumsize(ops_dat, int to_dim) {
-  long bytes = dat->elem_size;
-  //Product of sizes in lower dimensions
-  for (int i = 0; i < to_dim; i++)
-    bytes = bytes * dat->size[i];
-  //bytes is now the size of an to_dim dimensional slice
-}
+size_t ops_calc_cumsize(ops_dat, int);
+
 void ops_download_dat_range(ops_dat dat, int from, int to) {
   if (from >= to) return;
-  long slice = ops_calc_cumsize(dat, dat->block->dims);
+  long slice = ops_calc_cumsize(dat, dat->block->dims-1);
   cutilSafeCall(cudaMemcpy(dat->data + slice * from,
                            dat->data_d + slice * from,
                            slice * (to-from), cudaMemcpyDeviceToHost));
@@ -308,7 +307,7 @@ void ops_download_dat_range(ops_dat dat, int from, int to) {
 
 void ops_upload_dat_range(ops_dat dat, int from, int to) {
   if (from >= to) return;
-  long slice = ops_calc_cumsize(dat, dat->block->dims);
+  long slice = ops_calc_cumsize(dat, dat->block->dims-1);
   cutilSafeCall(cudaMemcpy(dat->data_d + slice * from,
                            dat->data + slice * from,
                            slice * (to-from), cudaMemcpyHostToDevice));

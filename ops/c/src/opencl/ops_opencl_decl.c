@@ -99,15 +99,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->mem = bytes;
   }
 
-  // Compute offset in bytes to the base index
-  dat->base_offset = 0;
-  long cumsize = 1;
-  for (int i = 0; i < block->dims; i++) {
-    dat->base_offset +=
-        (OPS_soa ? dat->type_size : dat->elem_size)
-        * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= dat->size[i];
-  }
+  dat->base_offset = ops_get_base_offset(dat);;
 
   ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data), bytes);
 

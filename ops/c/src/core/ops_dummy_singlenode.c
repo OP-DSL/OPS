@@ -131,6 +131,32 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
   return ops_decl_reduction_handle_core(size, type, name);
 }
 
+long ops_get_base_index_dim(ops_dat dat, int dim) {
+  return (-dat->base[dim] - dat->d_m[dim]);
+}
+
+long ops_get_base_offset(ops_dat dat) {
+  // Compute offset in bytes to the base index
+  long base_offset = 0;
+  long cumsize = 1;
+  for (int i = 0; i < dat->block->dims; i++) {
+    base_offset +=
+        (OPS_soa ? dat->type_size : dat->elem_size)
+        * cumsize * (-dat->base[i] - dat->d_m[i]);
+    cumsize *= dat->size[i];
+  }
+  return base_offset;
+}
+
+size_t ops_calc_cumsize(ops_dat dat, int to_dim) {
+  long bytes = dat->elem_size;
+  //Product of sizes in lower dimensions
+  for (int i = 0; i < to_dim; i++)
+    bytes = bytes * dat->size[i];
+  //bytes is now the size of an to_dim dimensional slice
+  return bytes;
+}
+
 void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 
 int ops_is_root() { return 1; }

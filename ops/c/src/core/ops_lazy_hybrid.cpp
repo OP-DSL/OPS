@@ -38,6 +38,10 @@
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
 
+#ifdef OPS_NVTX
+#include <nvToolsExt.h>
+#endif
+
 #if defined(_OPENMP)
 #include <omp.h>
 #else
@@ -50,6 +54,16 @@ inline int omp_get_max_threads() {
 }
 #endif
 
+extern "C" {
+long ops_get_base_index_dim(ops_dat dat, int dim);
+int intersection(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *intersect_begin);
+int union_range(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *union_begin);
+void ops_download_dat_range(ops_dat, int, int);
+void ops_upload_dat_range(ops_dat, int, int);
+}
+
 #include <vector>
 using namespace std;
 
@@ -59,13 +73,14 @@ struct ops_hybrid_dirty {
   int dirty_from_h;
   int dirty_to_d;
   int dirty_to_h;
+  long index_offset;
 };
 
 vector<ops_hybrid_dirty> dirtyflags(0);
 
-bool ops_hybrid_initalised = false;
+bool ops_hybrid_initialised = false;
 
-void ops_init_hybrid() {
+void ops_hybrid_initialise() {
   dirtyflags.resize(OPS_dat_index);
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
@@ -77,6 +92,9 @@ void ops_init_hybrid() {
     //Host is initially dirty
     dirtyflags[i].dirty_from_h = 0;
     dirtyflags[i].dirty_to_h = item->dat->size[item->dat->block->dims-1];
+    //how mnay bytes into the array is 0 along last dimension
+    //   -- this is similar to base_offset, except it's 0 only along last dim
+    dirtyflags[i].index_offset = ops_get_base_index_dim(item->dat, item->dat->block->dims-1); 
   }
   ops_hybrid_initialised = true;
 }
@@ -114,7 +132,7 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
     }
   }
 
-  int len = intersection(from, to, 0, split, &start);
+  len = intersection(from, to, 0, split, &start);
   //Intersection of the dependency range of CPU's execution with CPU dirty region
   if (len > 0) {
     len = intersection(start+max_neg, start+len+max_pos,
@@ -138,31 +156,83 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
 void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
   ops_dat dat = arg->dat;
 
-  //If the GPU is executing anything
-  if (to > split) {
-    dirtyflags[dat->index].dirty_to_h = max(dirtyflags[dat->index].dirty_to_h, to);
-    dirtyflags[dat->index].dirty_from_h = min(dirtyflags[dat->index].dirty_from_h, max(split,from));
+  //Intersection of full execution range with the CPU's execution range
+  int cpu_start;
+  int cpu_len = intersection(from, to, 0, split, &cpu_start);
+  if (cpu_len > 0) {
+    //Intersection of CPU execution range with CPU dirty region
+    int cpu_clean_start;
+    int cpu_clean_len = intersection(cpu_start, cpu_start + cpu_len, 
+        dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, &cpu_clean_start);
+    
+    //If there is a remainder on the left, clean it
+    if (cpu_clean_len > 0 && cpu_clean_start > dirtyflags[dat->index].dirty_from_h) 
+      ops_download_dat_range(arg->dat, dirtyflags[dat->index].dirty_from_h, cpu_clean_start);
+
+    //Start of dirty region is end of CPU execution region
+    dirtyflags[dat->index].dirty_from_h = cpu_start + cpu_len;
+    if (dirtyflags[dat->index].dirty_from_h > dirtyflags[dat->index].dirty_to_h)
+      dirtyflags[dat->index].dirty_to_h = dirtyflags[dat->index].dirty_from_h;
+
   }
 
-  //If the CPU is executing anything
-  if (from < split) {
-    dirtyflags[dat->index].dirty_from_d = min(dirtyflags[dat->index].dirty_from_d, from);
-    dirtyflags[dat->index].dirty_to_d = max(dirtyflags[dat->index].dirty_to_d, min(split,to));
+  //Intersection of full execution range with the GPU's execution range
+  int gpu_start;
+  int gpu_len = intersection(from, to, split, INT_MAX, &gpu_start);
+  if (gpu_len > 0) {
+    //CPU dirty region is the union of the gpu execution range with the previous dirty region
+    int dirty_cpu_start;
+    int dirty_cpu_len = union_range(dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h,
+                                    gpu_start, gpu_start+gpu_len, &dirty_cpu_start);
+    if (dirty_cpu_len > 0) {
+      dirtyflags[dat->index].dirty_from_h = dirty_cpu_start;
+      dirtyflags[dat->index].dirty_to_h   = dirty_cpu_start + dirty_cpu_len;
+    }
+
+    //Intersection of GPU execution range with GPU dirty region
+    int gpu_clean_start;
+    int gpu_clean_len = intersection(gpu_start, gpu_start + gpu_len, 
+        dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d, &gpu_clean_start);
+    
+    //If there is a remainder on the right, clean it
+    if (gpu_clean_len > 0 && gpu_clean_start + gpu_clean_len < dirtyflags[dat->index].dirty_to_d) 
+      ops_upload_dat_range(arg->dat, gpu_clean_start + gpu_clean_len, dirtyflags[dat->index].dirty_to_d);
+
+    //End of dirty region is the start of GPU execution region
+    dirtyflags[dat->index].dirty_to_d = gpu_start;
+    if (dirtyflags[dat->index].dirty_from_d > dirtyflags[dat->index].dirty_to_d)
+      dirtyflags[dat->index].dirty_from_d = dirtyflags[dat->index].dirty_to_d;
+
+
+  }
+  if (cpu_len > 0) {
+    //GPU dirty region is the union of the cpu execution range with the previous dirty region
+    int dirty_gpu_start;
+    int dirty_gpu_len = union_range(dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d,
+                                    cpu_start, cpu_start+cpu_len, &dirty_gpu_start);
+    if (dirty_gpu_len > 0) {
+      dirtyflags[dat->index].dirty_from_d = dirty_gpu_start;
+      dirtyflags[dat->index].dirty_to_d   = dirty_gpu_start + dirty_gpu_len;
+    }
   }
 }
 
 void ops_hybrid_clean(ops_kernel_descriptor * desc) {
   int *range = desc->range;
-  for (int i = 0; i < desc->nargs; i++) {
+  int split = 500;
+  for (int arg = 0; arg < desc->nargs; arg++) {
     if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc == OPS_READ) {
+      int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
+      int range_to = range[2*(desc->args[arg].dat->block->dims-1)+1];
       int from_d, to_d, from_h, to_h;
-      int split = 500;
       //TODO: calculate range->index into array
+      int this_from  = range_from + dirtyflags[desc->args[arg].dat->index].index_offset;
+      int this_to    = range_to   + dirtyflags[desc->args[arg].dat->index].index_offset;
+      int this_split = split      + dirtyflags[desc->args[arg].dat->index].index_offset; 
       from_d = to_d = from_h = to_h = 0;
       ops_hybrid_calc_clean(&(desc->args[arg]),
-          range[2*(desc->args[arg].dat->block->dims-1)],
-          range[2*(desc->args[arg].dat->block->dims-1)+1],
-          split, from_d, to_d, from_h, to_h);
+          this_from, this_to, this_split,
+          from_d, to_d, from_h, to_h);
       ops_download_dat_range(desc->args[arg].dat, from_h, to_h);
       ops_upload_dat_range(desc->args[arg].dat, from_d, to_d);
     }
@@ -171,12 +241,16 @@ void ops_hybrid_clean(ops_kernel_descriptor * desc) {
 
 void ops_hybrid_after(ops_kernel_descriptor * desc) {
   int *range = desc->range;
-  for (int i = 0; i < desc->nargs; i++) {
+  int split = 500;
+  for (int arg = 0; arg < desc->nargs; arg++) {
     if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ) {
+      int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
+      int range_to = range[2*(desc->args[arg].dat->block->dims-1)+1];
+      int this_from  = range_from + dirtyflags[desc->args[arg].dat->index].index_offset;
+      int this_to    = range_to   + dirtyflags[desc->args[arg].dat->index].index_offset;
+      int this_split = split      + dirtyflags[desc->args[arg].dat->index].index_offset; 
       ops_hybrid_report_dirty(&(desc->args[arg]),
-          range[2*(desc->args[arg].dat->block->dims-1)],
-          range[2*(desc->args[arg].dat->block->dims-1)+1],
-          split);
+          this_from, this_to, this_split);
     }
   }
 }
@@ -186,6 +260,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   ops_hybrid_clean(desc);
   int from = desc->range[2*(desc->dim-1)];
   int to = desc->range[2*(desc->dim-1)+1];
+  int split = 500;
   //Launch GPU bit
   if (split<to) {
     desc->range[2*(desc->dim-1)] = max(desc->range[2*(desc->dim-1)],split);
@@ -197,7 +272,13 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
     desc->range[2*(desc->dim-1)] = from;
     desc->range[2*(desc->dim-1)+1] = min(desc->range[2*(desc->dim-1)+1],split);
     desc->device = 0;
+#ifdef OPS_NVTX
+    nvtxRangePushA(desc->name);
+#endif
     desc->function(desc);
+#ifdef OPS_NVTX
+    nvtxRangePop();
+#endif
   }
   desc->range[2*(desc->dim-1)]   = from;
   desc->range[2*(desc->dim-1)+1] = to;

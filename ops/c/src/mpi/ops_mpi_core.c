@@ -336,6 +336,25 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
   return true;
 }
 
+long ops_get_base_index_dim(ops_dat dat, int dim) {
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  return (-dat->base[dim] - dat->d_m[dim] - sd->d_im[dim]);
+}
+
+long ops_get_base_offset(ops_dat dat) {
+  // Compute offset in bytes to the base index
+  long base_offset = 0;
+  long cumsize = 1;
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  for (int i = 0; i < dat->block->dims; i++) {
+    base_offset += (OPS_soa ? dat->type_size : dat->elem_size)
+      * cumsize *
+      (-dat->base[i] - dat->d_m[i] - sd->d_im[i]);
+    cumsize *= dat->size[i];
+  }
+  return base_offset;
+}
+
 /************* Functions only use in the Fortran Backend ************/
 
 int getRange(ops_block block, int *start, int *end, int *range) {
