@@ -38,6 +38,9 @@
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
 
+#include <cuda_runtime.h>
+#include <ops_cuda_rt_support.h>
+
 #ifdef OPS_NVTX
 #include <nvToolsExt.h>
 #endif
@@ -54,14 +57,17 @@ inline int omp_get_max_threads() {
 }
 #endif
 
+cudaStream_t cpu_stream, gpu_stream;
+cudaEvent_t ev1, ev2;
+
 extern "C" {
 long ops_get_base_index_dim(ops_dat dat, int dim);
 int intersection(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *intersect_begin);
 int union_range(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *union_begin);
-void ops_download_dat_range(ops_dat, int, int);
-void ops_upload_dat_range(ops_dat, int, int);
+void ops_download_dat_range(ops_dat, int, int, cudaStream_t);
+void ops_upload_dat_range(ops_dat, int, int, cudaStream_t);
 }
 
 #include <vector>
@@ -97,6 +103,10 @@ void ops_hybrid_initialise() {
     dirtyflags[i].index_offset = ops_get_base_index_dim(item->dat, item->dat->block->dims-1); 
   }
   ops_hybrid_initialised = true;
+  cutilSafeCall(cudaStreamCreateWithFlags(&cpu_stream, cudaStreamNonBlocking));
+  cutilSafeCall(cudaStreamCreate(&gpu_stream));
+  cutilSafeCall(cudaEventCreate(&ev1));
+  cutilSafeCall(cudaEventCreate(&ev2));
 }
 
 //Assume arg is dat, and OPS_READ
@@ -167,7 +177,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     
     //If there is a remainder on the left, clean it
     if (cpu_clean_len > 0 && cpu_clean_start > dirtyflags[dat->index].dirty_from_h) 
-      ops_download_dat_range(arg->dat, dirtyflags[dat->index].dirty_from_h, cpu_clean_start);
+      ops_download_dat_range(arg->dat, dirtyflags[dat->index].dirty_from_h, cpu_clean_start, cpu_stream);
 
     //Start of dirty region is end of CPU execution region
     dirtyflags[dat->index].dirty_from_h = cpu_start + cpu_len;
@@ -196,7 +206,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     
     //If there is a remainder on the right, clean it
     if (gpu_clean_len > 0 && gpu_clean_start + gpu_clean_len < dirtyflags[dat->index].dirty_to_d) 
-      ops_upload_dat_range(arg->dat, gpu_clean_start + gpu_clean_len, dirtyflags[dat->index].dirty_to_d);
+      ops_upload_dat_range(arg->dat, gpu_clean_start + gpu_clean_len, dirtyflags[dat->index].dirty_to_d, gpu_stream);
 
     //End of dirty region is the start of GPU execution region
     dirtyflags[dat->index].dirty_to_d = gpu_start;
@@ -233,8 +243,8 @@ void ops_hybrid_clean(ops_kernel_descriptor * desc) {
       ops_hybrid_calc_clean(&(desc->args[arg]),
           this_from, this_to, this_split,
           from_d, to_d, from_h, to_h);
-      ops_download_dat_range(desc->args[arg].dat, from_h, to_h);
-      ops_upload_dat_range(desc->args[arg].dat, from_d, to_d);
+      ops_download_dat_range(desc->args[arg].dat, from_h, to_h, cpu_stream);
+      ops_upload_dat_range(desc->args[arg].dat, from_d, to_d, gpu_stream);
     }
   }
 }
@@ -257,7 +267,7 @@ void ops_hybrid_after(ops_kernel_descriptor * desc) {
 
 extern "C" void ops_download_dat_hybrid(ops_dat dat) {
   ops_download_dat_range(dat, dirtyflags[dat->index].dirty_from_h,
-                               dirtyflags[dat->index].dirty_to_h);
+                               dirtyflags[dat->index].dirty_to_h, 0);
 }
 
 void ops_hybrid_execute(ops_kernel_descriptor *desc) {
@@ -266,11 +276,16 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   int from = desc->range[2*(desc->dim-1)];
   int to = desc->range[2*(desc->dim-1)+1];
   int split = 200;
+  double c,t1=0,t2=0;
+
+  cudaDeviceSynchronize();
   //Launch GPU bit
   if (split<to) {
     desc->range[2*(desc->dim-1)] = max(desc->range[2*(desc->dim-1)],split);
     desc->device = 1;
+    cudaEventRecord(ev1,0);
     desc->function(desc);
+    cudaEventRecord(ev2,0);
   }
   //Launch CPU bit
   if (from < split) {
@@ -280,11 +295,17 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_NVTX
     nvtxRangePushA(desc->name);
 #endif
+    ops_timers_core(&c,&t1);
     desc->function(desc);
+    ops_timers_core(&c,&t2);
 #ifdef OPS_NVTX
     nvtxRangePop();
 #endif
   }
+  cudaEventSynchronize(ev2);
+  float gpu_elapsed=0;
+  if (split < to) cudaEventElapsedTime(&gpu_elapsed, ev1, ev2);
+  printf("%s GPU time %g CPU time %g wait %g\n", desc->name, gpu_elapsed, (t2-t1)*1000.0, gpu_elapsed-(t2-t1)*1000.0);
   desc->range[2*(desc->dim-1)]   = from;
   desc->range[2*(desc->dim-1)+1] = to;
   ops_hybrid_after(desc);
