@@ -156,11 +156,6 @@ int main(int argc, char **argv)
       field_summary();
       ops_fprintf(g_out,"\n\n Calculation complete\n");
       ops_fprintf(g_out,"\n Clover is finishing\n");
-      ops_print_dat_to_txtfile(density1, "data.txt");
-      ops_print_dat_to_txtfile(energy1, "data.txt");
-      ops_print_dat_to_txtfile(xvel1, "data.txt");
-      ops_print_dat_to_txtfile(yvel1, "data.txt");
-      exit(-1);
       break;
     }
 

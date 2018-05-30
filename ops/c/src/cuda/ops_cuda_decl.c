@@ -45,6 +45,7 @@
 char *ops_halo_buffer = NULL;
 char *ops_halo_buffer_d = NULL;
 int ops_halo_buffer_size = 0;
+extern int ops_hybrid;
 
 void ops_init(int argc, char **argv, int diags) {
   ops_init_core(argc, argv, diags);
@@ -109,6 +110,9 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
   }
+
+  if (ops_hybrid)
+    cutilSafeCall(cudaHostRegister(dat->data, dat->mem, cudaHostRegisterDefault));
 
   dat->base_offset = ops_get_base_offset(dat);;
 

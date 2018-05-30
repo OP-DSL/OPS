@@ -292,6 +292,8 @@ void ops_cuda_exit() {
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
+    if (ops_hybrid)
+      cutilSafeCall(cudaHostUnregister(item->dat->data));
   }
 
 //  cudaDeviceReset();
@@ -306,15 +308,15 @@ size_t ops_calc_cumsize(ops_dat, int);
 void ops_download_dat_range(ops_dat dat, int from, int to) {
   if (from >= to) return;
   long slice = ops_calc_cumsize(dat, dat->block->dims-1);
-  cutilSafeCall(cudaMemcpy(dat->data + slice * from,
+  cutilSafeCall(cudaMemcpyAsync(dat->data + slice * from,
                            dat->data_d + slice * from,
-                           slice * (to-from), cudaMemcpyDeviceToHost));
+                           slice * (to-from), cudaMemcpyDeviceToHost,0));
 }
 
 void ops_upload_dat_range(ops_dat dat, int from, int to) {
   if (from >= to) return;
   long slice = ops_calc_cumsize(dat, dat->block->dims-1);
-  cutilSafeCall(cudaMemcpy(dat->data_d + slice * from,
+  cutilSafeCall(cudaMemcpyAsync(dat->data_d + slice * from,
                            dat->data + slice * from,
-                           slice * (to-from), cudaMemcpyHostToDevice));
+                           slice * (to-from), cudaMemcpyHostToDevice,0));
 }
