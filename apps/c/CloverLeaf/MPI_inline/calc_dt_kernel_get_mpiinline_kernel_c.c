@@ -6,30 +6,31 @@
 int xdim0_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_calc_dt_kernel_get * 0 + x +                          \
-   xdim0_calc_dt_kernel_get * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_calc_dt_kernel_get * 1 + x +                          \
-   xdim1_calc_dt_kernel_get * (y))
 
-// user function
+#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_calc_dt_kernel_get*0+x+xdim0_calc_dt_kernel_get*(y))
+#define OPS_ACC1(x,y) (n_x*0+n_y*xdim1_calc_dt_kernel_get*1+x+xdim1_calc_dt_kernel_get*(y))
 
-void calc_dt_kernel_get_c_wrapper(const double *restrict cellx,
-                                  const double *restrict celly,
-                                  double *restrict xl_pos_g,
-                                  double *restrict yl_pos_g, int x_size,
-                                  int y_size) {
+//user function
+
+
+
+void calc_dt_kernel_get_c_wrapper(
+  const double * restrict cellx,
+  const double * restrict celly,
+  double * restrict xl_pos_g,
+  double * restrict yl_pos_g,
+  int x_size, int y_size) {
   double xl_pos_v = *xl_pos_g;
   double yl_pos_v = *yl_pos_g;
-#pragma omp parallel for reduction(+ : xl_pos_v) reduction(+ : yl_pos_v)
-  for (int n_y = 0; n_y < y_size; n_y++) {
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double *restrict xl_pos = &xl_pos_v;
-      double *restrict yl_pos = &yl_pos_v;
+  #pragma omp parallel for reduction(+:xl_pos_v) reduction(+:yl_pos_v)
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      double * restrict xl_pos = &xl_pos_v;
+      double * restrict yl_pos = &yl_pos_v;
+      
+  *xl_pos = cellx[OPS_ACC0(0,0)];
+  *yl_pos = celly[OPS_ACC1(0,0)];
 
-      *xl_pos = cellx[OPS_ACC0(0, 0)];
-      *yl_pos = celly[OPS_ACC1(0, 0)];
     }
   }
   *xl_pos_g = xl_pos_v;
@@ -37,3 +38,4 @@ void calc_dt_kernel_get_c_wrapper(const double *restrict cellx,
 }
 #undef OPS_ACC0
 #undef OPS_ACC1
+

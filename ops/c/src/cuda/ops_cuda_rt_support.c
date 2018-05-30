@@ -202,7 +202,13 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
 
+void ops_download_dat_hybrid(ops_dat dat);
+
 void ops_cuda_get_data(ops_dat dat) {
+  if (ops_hybrid) {
+    ops_download_dat_hybrid(dat);
+    return;
+  }
   if (dat->dirty_hd == 2)
     dat->dirty_hd = 0;
   else

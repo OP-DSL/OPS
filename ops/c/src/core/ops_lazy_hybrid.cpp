@@ -219,7 +219,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
 
 void ops_hybrid_clean(ops_kernel_descriptor * desc) {
   int *range = desc->range;
-  int split = 500;
+  int split = 200;
   for (int arg = 0; arg < desc->nargs; arg++) {
     if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc == OPS_READ) {
       int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
@@ -241,7 +241,7 @@ void ops_hybrid_clean(ops_kernel_descriptor * desc) {
 
 void ops_hybrid_after(ops_kernel_descriptor * desc) {
   int *range = desc->range;
-  int split = 500;
+  int split = 200;
   for (int arg = 0; arg < desc->nargs; arg++) {
     if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ) {
       int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
@@ -255,12 +255,17 @@ void ops_hybrid_after(ops_kernel_descriptor * desc) {
   }
 }
 
+extern "C" void ops_download_dat_hybrid(ops_dat dat) {
+  ops_download_dat_range(dat, dirtyflags[dat->index].dirty_from_h,
+                               dirtyflags[dat->index].dirty_to_h);
+}
+
 void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   if (!ops_hybrid_initialised) ops_hybrid_initialise();
   ops_hybrid_clean(desc);
   int from = desc->range[2*(desc->dim-1)];
   int to = desc->range[2*(desc->dim-1)+1];
-  int split = 500;
+  int split = 200;
   //Launch GPU bit
   if (split<to) {
     desc->range[2*(desc->dim-1)] = max(desc->range[2*(desc->dim-1)],split);
