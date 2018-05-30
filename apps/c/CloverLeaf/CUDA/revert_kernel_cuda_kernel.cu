@@ -135,13 +135,13 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   int xdim3 = args[3].dat->size[0];
 
   if (xdim0 != xdim0_revert_kernel_h || xdim1 != xdim1_revert_kernel_h || xdim2 != xdim2_revert_kernel_h || xdim3 != xdim3_revert_kernel_h) {
-    cudaMemcpyToSymbol( xdim0_revert_kernel, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_revert_kernel, &xdim0, sizeof(int),0 );
     xdim0_revert_kernel_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_revert_kernel, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_revert_kernel, &xdim1, sizeof(int),0 );
     xdim1_revert_kernel_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_revert_kernel, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_revert_kernel, &xdim2, sizeof(int),0 );
     xdim2_revert_kernel_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_revert_kernel, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_revert_kernel, &xdim3, sizeof(int),0 );
     xdim3_revert_kernel_h = xdim3;
   }
 

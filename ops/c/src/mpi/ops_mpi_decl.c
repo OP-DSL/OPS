@@ -148,6 +148,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
+  ops_reduction_result_hybrid(handle);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;

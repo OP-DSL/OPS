@@ -117,9 +117,9 @@ void ops_par_loop_update_halo_kernel3_plus_2_b_execute(ops_kernel_descriptor *de
   int xdim1 = args[1].dat->size[0];
 
   if (xdim0 != xdim0_update_halo_kernel3_plus_2_b_h || xdim1 != xdim1_update_halo_kernel3_plus_2_b_h) {
-    cudaMemcpyToSymbol( xdim0_update_halo_kernel3_plus_2_b, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_update_halo_kernel3_plus_2_b, &xdim0, sizeof(int),0 );
     xdim0_update_halo_kernel3_plus_2_b_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_update_halo_kernel3_plus_2_b, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_update_halo_kernel3_plus_2_b, &xdim1, sizeof(int),0 );
     xdim1_update_halo_kernel3_plus_2_b_h = xdim1;
   }
 

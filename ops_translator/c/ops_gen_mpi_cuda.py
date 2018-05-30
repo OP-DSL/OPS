@@ -417,6 +417,34 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     config.depth = config.depth - 2
     code('}')
 
+    if (reduct):
+      code('void CUDART_CB '+name+'_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {')
+      config.depth = config.depth + 2
+      code('char *buf = (char*)data;')
+      code('int maxblocks = *(int*)buf;');
+      nreduct = 0
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+          code(typs[n]+'*arg'+str(n)+'h = *('+typs[n]+'**)(&buf[sizeof(int)+'+str(nreduct)+'*2*(sizeof(int*))]);')
+          code(typs[n]+'*arg'+str(n)+'data = *('+typs[n]+'**)(&buf[sizeof(int)+'+str(nreduct)+'*2*(sizeof(int*))+sizeof(int*)]);')
+          nreduct = nreduct + 1
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+          FOR('b','0','maxblocks')
+          FOR('d','0',str(dims[n]))
+          if accs[n] == OPS_INC:
+            code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + arg'+str(n)+'data[d+b*'+str(dims[n])+'];')
+          elif accs[n] == OPS_MAX:
+            code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],arg'+str(n)+'data[d+b*'+str(dims[n])+']);')
+          elif accs[n] == OPS_MIN:
+            code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],arg'+str(n)+'data[d+b*'+str(dims[n])+']);')
+          ENDFOR()
+          ENDFOR()
+          code('')
+ 
+      code('free(buf);')
+      config.depth = config.depth - 2
+      code('}')
 
 ##########################################################################
 #  now host stub
@@ -557,13 +585,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
+        code('cudaMemcpyToSymbolAsync( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int),0 );')
         code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('cudaMemcpyToSymbol( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
+          code('cudaMemcpyToSymbolAsync( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int),0 );')
           code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('cudaMemcpyToSymbol( zdim'+str(n)+'_'+name+', &zdim'+str(n)+', sizeof(int) );')
+          code('cudaMemcpyToSymbolAsync( zdim'+str(n)+'_'+name+', &zdim'+str(n)+', sizeof(int),0 );')
           code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
     ENDIF()
 
@@ -582,8 +610,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           else:
             code('#ifdef OPS_MPI')
             code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code('if (ops_hybrid) arg'+str(n)+'h =  ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * (2*block->index+1));')
             code('#else')
             code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code('if (ops_hybrid) arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size);')
             code('#endif')
 
     code('')
@@ -781,6 +811,24 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToHost(reduct_bytes);')
+      IF('ops_hybrid')
+      nreduct = 0
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+          nreduct = nreduct + 1
+      code('char *buf = (char*)malloc(sizeof(int)+2*'+str(nreduct)+'*sizeof(int*));')
+      code('*(int*)buf = maxblocks;');
+      nreduct = 0
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+          code('*('+typs[n]+'**)(&buf[sizeof(int)+'+str(nreduct)+'*2*(sizeof(int*))]) = arg'+str(n)+'h;')
+          code('*(char**)(&buf[sizeof(int)+'+str(nreduct)+'*2*(sizeof(int*))+sizeof(int*)]) = arg'+str(n)+'.data;')
+          nreduct = nreduct + 1
+          code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
+      code('cudaStreamAddCallback(0, '+name+'_reduce_callback, buf, 0);')
+      ENDIF()
+      ELSE()
+      code('cudaStreamSynchronize(0);')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
@@ -796,6 +844,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         ENDFOR()
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
+
+    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+        ENDIF()
 
     IF('OPS_diags>1')
     code('cutilSafeCall(cudaDeviceSynchronize());')

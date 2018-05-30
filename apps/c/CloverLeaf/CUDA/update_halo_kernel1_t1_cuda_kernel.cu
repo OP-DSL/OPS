@@ -173,19 +173,19 @@ void ops_par_loop_update_halo_kernel1_t1_execute(ops_kernel_descriptor *desc) {
   int xdim6 = args[6].dat->size[0];
 
   if (xdim0 != xdim0_update_halo_kernel1_t1_h || xdim1 != xdim1_update_halo_kernel1_t1_h || xdim2 != xdim2_update_halo_kernel1_t1_h || xdim3 != xdim3_update_halo_kernel1_t1_h || xdim4 != xdim4_update_halo_kernel1_t1_h || xdim5 != xdim5_update_halo_kernel1_t1_h || xdim6 != xdim6_update_halo_kernel1_t1_h) {
-    cudaMemcpyToSymbol( xdim0_update_halo_kernel1_t1, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_update_halo_kernel1_t1, &xdim0, sizeof(int),0 );
     xdim0_update_halo_kernel1_t1_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_update_halo_kernel1_t1, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_update_halo_kernel1_t1, &xdim1, sizeof(int),0 );
     xdim1_update_halo_kernel1_t1_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_update_halo_kernel1_t1, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_update_halo_kernel1_t1, &xdim2, sizeof(int),0 );
     xdim2_update_halo_kernel1_t1_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_update_halo_kernel1_t1, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_update_halo_kernel1_t1, &xdim3, sizeof(int),0 );
     xdim3_update_halo_kernel1_t1_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_update_halo_kernel1_t1, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_update_halo_kernel1_t1, &xdim4, sizeof(int),0 );
     xdim4_update_halo_kernel1_t1_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_update_halo_kernel1_t1, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim5_update_halo_kernel1_t1, &xdim5, sizeof(int),0 );
     xdim5_update_halo_kernel1_t1_h = xdim5;
-    cudaMemcpyToSymbol( xdim6_update_halo_kernel1_t1, &xdim6, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim6_update_halo_kernel1_t1, &xdim6, sizeof(int),0 );
     xdim6_update_halo_kernel1_t1_h = xdim6;
   }
 

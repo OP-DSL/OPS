@@ -139,7 +139,6 @@ int main(int argc, char **argv)
 
     advection(step);
 
-
     reset_field();
 
     if (advect_x == TRUE) advect_x = FALSE;

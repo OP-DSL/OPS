@@ -136,13 +136,13 @@ void ops_par_loop_advec_mom_kernel2_x_execute(ops_kernel_descriptor *desc) {
   int xdim3 = args[3].dat->size[0];
 
   if (xdim0 != xdim0_advec_mom_kernel2_x_h || xdim1 != xdim1_advec_mom_kernel2_x_h || xdim2 != xdim2_advec_mom_kernel2_x_h || xdim3 != xdim3_advec_mom_kernel2_x_h) {
-    cudaMemcpyToSymbol( xdim0_advec_mom_kernel2_x, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_advec_mom_kernel2_x, &xdim0, sizeof(int),0 );
     xdim0_advec_mom_kernel2_x_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_advec_mom_kernel2_x, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_advec_mom_kernel2_x, &xdim1, sizeof(int),0 );
     xdim1_advec_mom_kernel2_x_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_advec_mom_kernel2_x, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_advec_mom_kernel2_x, &xdim2, sizeof(int),0 );
     xdim2_advec_mom_kernel2_x_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_advec_mom_kernel2_x, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_advec_mom_kernel2_x, &xdim3, sizeof(int),0 );
     xdim3_advec_mom_kernel2_x_h = xdim3;
   }
 

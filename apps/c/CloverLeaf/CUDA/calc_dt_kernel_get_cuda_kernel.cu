@@ -55,6 +55,27 @@ int size1 ){
     ops_reduction_cuda<OPS_INC>(&arg3[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg3_l[d]);
 
 }
+void CUDART_CB calc_dt_kernel_get_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg2h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg2data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg3h = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]);
+  double*arg3data = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg2h[d] = arg2h[d] + arg2data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg3h[d] = arg3h[d] + arg3data[d+b*1];
+    }
+  }
+
+  free(buf);
+}
 
 // host stub function
 #ifndef OPS_LAZY
@@ -127,9 +148,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   int xdim1 = args[1].dat->size[0];
 
   if (xdim0 != xdim0_calc_dt_kernel_get_h || xdim1 != xdim1_calc_dt_kernel_get_h) {
-    cudaMemcpyToSymbol( xdim0_calc_dt_kernel_get, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_calc_dt_kernel_get, &xdim0, sizeof(int),0 );
     xdim0_calc_dt_kernel_get_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_calc_dt_kernel_get, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_calc_dt_kernel_get, &xdim1, sizeof(int),0 );
     xdim1_calc_dt_kernel_get_h = xdim1;
   }
 
@@ -139,13 +160,17 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   #endif
   #ifdef OPS_MPI
   double *arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
+  if (ops_hybrid) arg2h =  (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * (2*block->index+1));
   #else
   double *arg2h = (double *)(((ops_reduction)args[2].data)->data);
+  if (ops_hybrid) arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size);
   #endif
   #ifdef OPS_MPI
   double *arg3h = (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size * block->index);
+  if (ops_hybrid) arg3h =  (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size * (2*block->index+1));
   #else
   double *arg3h = (double *)(((ops_reduction)args[3].data)->data);
+  if (ops_hybrid) arg3h = (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size);
   #endif
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
@@ -222,20 +247,34 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
            (double *)arg2.data_d, (double *)arg3.data_d,x_size, y_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1];
-    }
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*2*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg2h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg2.data;
+    arg2.data = (char *)arg2h;
+    *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]) = arg3h;
+    *(char**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]) = arg3.data;
+    arg3.data = (char *)arg3h;
+    cudaStreamAddCallback(0, calc_dt_kernel_get_reduce_callback, buf, 0);
   }
-  arg2.data = (char *)arg2h;
-
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1];
+      }
     }
-  }
-  arg3.data = (char *)arg3h;
+    arg2.data = (char *)arg2h;
 
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
+      }
+    }
+    arg3.data = (char *)arg3h;
+
+  }
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);

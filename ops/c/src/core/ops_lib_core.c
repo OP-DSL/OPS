@@ -560,6 +560,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   if (handle->initialized == 0) {
     handle->initialized = 1;
     handle->acc = acc;
+    if (ops_hybrid) handle->size *=2; //double size, so there is room CPU and GPU partial results
     if (acc == OPS_INC)
       memset(handle->data, 0, handle->size);
     if (strcmp(type, "double") == 0 ||
@@ -588,6 +589,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
       printf("Warning: reduction type not recognised, please add in "
              "ops_lib_core.c !\n");
     }
+    if (ops_hybrid) handle->size /=2; //half it back
   } else if (handle->acc != acc) {
     printf("Error: ops_reduction handle %s was aleady used with a different "
            "access type\n",
@@ -771,7 +773,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
   ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;
-  red->data = (char *)malloc(size * sizeof(char));
+  red->data = (char *)malloc(size * (ops_hybrid ? 2 : 1) * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
   OPS_reduction_list[OPS_reduction_index] = red;

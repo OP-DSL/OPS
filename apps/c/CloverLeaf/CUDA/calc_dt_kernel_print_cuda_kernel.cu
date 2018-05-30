@@ -92,6 +92,19 @@ int size1 ){
     ops_reduction_cuda<OPS_INC>(&arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*12],arg6_l[d]);
 
 }
+void CUDART_CB calc_dt_kernel_print_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg6h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg6data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<12; d++ ){
+      arg6h[d] = arg6h[d] + arg6data[d+b*12];
+    }
+  }
+
+  free(buf);
+}
 
 // host stub function
 #ifndef OPS_LAZY
@@ -172,17 +185,17 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   int xdim5 = args[5].dat->size[0];
 
   if (xdim0 != xdim0_calc_dt_kernel_print_h || xdim1 != xdim1_calc_dt_kernel_print_h || xdim2 != xdim2_calc_dt_kernel_print_h || xdim3 != xdim3_calc_dt_kernel_print_h || xdim4 != xdim4_calc_dt_kernel_print_h || xdim5 != xdim5_calc_dt_kernel_print_h) {
-    cudaMemcpyToSymbol( xdim0_calc_dt_kernel_print, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_calc_dt_kernel_print, &xdim0, sizeof(int),0 );
     xdim0_calc_dt_kernel_print_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_calc_dt_kernel_print, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_calc_dt_kernel_print, &xdim1, sizeof(int),0 );
     xdim1_calc_dt_kernel_print_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_calc_dt_kernel_print, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_calc_dt_kernel_print, &xdim2, sizeof(int),0 );
     xdim2_calc_dt_kernel_print_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_calc_dt_kernel_print, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_calc_dt_kernel_print, &xdim3, sizeof(int),0 );
     xdim3_calc_dt_kernel_print_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_calc_dt_kernel_print, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_calc_dt_kernel_print, &xdim4, sizeof(int),0 );
     xdim4_calc_dt_kernel_print_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_calc_dt_kernel_print, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim5_calc_dt_kernel_print, &xdim5, sizeof(int),0 );
     xdim5_calc_dt_kernel_print_h = xdim5;
   }
 
@@ -192,8 +205,10 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   #endif
   #ifdef OPS_MPI
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
+  if (ops_hybrid) arg6h =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index+1));
   #else
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
+  if (ops_hybrid) arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size);
   #endif
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
@@ -295,13 +310,24 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
            (double *)arg6.data_d,x_size, y_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<12; d++ ){
-      arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*12];
-    }
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*1*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg6h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg6.data;
+    arg6.data = (char *)arg6h;
+    cudaStreamAddCallback(0, calc_dt_kernel_print_reduce_callback, buf, 0);
   }
-  arg6.data = (char *)arg6h;
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<12; d++ ){
+        arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*12];
+      }
+    }
+    arg6.data = (char *)arg6h;
 
+  }
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);

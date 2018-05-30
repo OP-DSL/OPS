@@ -44,6 +44,19 @@ int size1 ){
     ops_reduction_cuda<OPS_MIN>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg1_l[d]);
 
 }
+void CUDART_CB calc_dt_kernel_min_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg1h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg1data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg1h[d] = MIN(arg1h[d],arg1data[d+b*1]);
+    }
+  }
+
+  free(buf);
+}
 
 // host stub function
 #ifndef OPS_LAZY
@@ -113,7 +126,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   int xdim0 = args[0].dat->size[0];
 
   if (xdim0 != xdim0_calc_dt_kernel_min_h) {
-    cudaMemcpyToSymbol( xdim0_calc_dt_kernel_min, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_calc_dt_kernel_min, &xdim0, sizeof(int),0 );
     xdim0_calc_dt_kernel_min_h = xdim0;
   }
 
@@ -123,8 +136,10 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   #endif
   #ifdef OPS_MPI
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
+  if (ops_hybrid) arg1h =  (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * (2*block->index+1));
   #else
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
+  if (ops_hybrid) arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size);
   #endif
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
@@ -183,13 +198,24 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   ops_calc_dt_kernel_min<<<grid, tblock, nshared >>> (  (double *)p_a[0], (double *)arg1.data_d,x_size, y_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg1h[d] = MIN(arg1h[d],((double *)arg1.data)[d+b*1]);
-    }
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*1*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg1h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg1.data;
+    arg1.data = (char *)arg1h;
+    cudaStreamAddCallback(0, calc_dt_kernel_min_reduce_callback, buf, 0);
   }
-  arg1.data = (char *)arg1h;
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg1h[d] = MIN(arg1h[d],((double *)arg1.data)[d+b*1]);
+      }
+    }
+    arg1.data = (char *)arg1h;
 
+  }
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);

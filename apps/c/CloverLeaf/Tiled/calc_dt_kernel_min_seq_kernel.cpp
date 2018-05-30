@@ -54,6 +54,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a1 = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
+  if (ops_hybrid) arg1h =  (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a1 = (double *)((ops_reduction)args[1].data)->data;
   #endif //OPS_MPI

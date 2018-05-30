@@ -142,6 +142,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
+  ops_reduction_result_hybrid(handle);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;

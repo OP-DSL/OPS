@@ -331,6 +331,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         else:
           code('#ifdef OPS_MPI')
           code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+          code('if (ops_hybrid) arg'+str(n)+'h =  ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * (2*block->index));')
           code('#else //OPS_MPI')
           code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)((ops_reduction)args['+str(n)+'].data)->data;')
           code('#endif //OPS_MPI')

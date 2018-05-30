@@ -130,11 +130,11 @@ void ops_par_loop_initialise_chunk_kernel_celly_execute(ops_kernel_descriptor *d
   int xdim2 = args[2].dat->size[0];
 
   if (xdim0 != xdim0_initialise_chunk_kernel_celly_h || xdim1 != xdim1_initialise_chunk_kernel_celly_h || xdim2 != xdim2_initialise_chunk_kernel_celly_h) {
-    cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_celly, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_initialise_chunk_kernel_celly, &xdim0, sizeof(int),0 );
     xdim0_initialise_chunk_kernel_celly_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_initialise_chunk_kernel_celly, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_initialise_chunk_kernel_celly, &xdim1, sizeof(int),0 );
     xdim1_initialise_chunk_kernel_celly_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_initialise_chunk_kernel_celly, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_initialise_chunk_kernel_celly, &xdim2, sizeof(int),0 );
     xdim2_initialise_chunk_kernel_celly_h = xdim2;
   }
 

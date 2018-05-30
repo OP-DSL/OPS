@@ -209,19 +209,19 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
   int xdim6 = args[6].dat->size[0];
 
   if (xdim0 != xdim0_viscosity_kernel_h || xdim1 != xdim1_viscosity_kernel_h || xdim2 != xdim2_viscosity_kernel_h || xdim3 != xdim3_viscosity_kernel_h || xdim4 != xdim4_viscosity_kernel_h || xdim5 != xdim5_viscosity_kernel_h || xdim6 != xdim6_viscosity_kernel_h) {
-    cudaMemcpyToSymbol( xdim0_viscosity_kernel, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_viscosity_kernel, &xdim0, sizeof(int),0 );
     xdim0_viscosity_kernel_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_viscosity_kernel, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_viscosity_kernel, &xdim1, sizeof(int),0 );
     xdim1_viscosity_kernel_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_viscosity_kernel, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_viscosity_kernel, &xdim2, sizeof(int),0 );
     xdim2_viscosity_kernel_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_viscosity_kernel, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_viscosity_kernel, &xdim3, sizeof(int),0 );
     xdim3_viscosity_kernel_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_viscosity_kernel, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_viscosity_kernel, &xdim4, sizeof(int),0 );
     xdim4_viscosity_kernel_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_viscosity_kernel, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim5_viscosity_kernel, &xdim5, sizeof(int),0 );
     xdim5_viscosity_kernel_h = xdim5;
-    cudaMemcpyToSymbol( xdim6_viscosity_kernel, &xdim6, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim6_viscosity_kernel, &xdim6, sizeof(int),0 );
     xdim6_viscosity_kernel_h = xdim6;
   }
 

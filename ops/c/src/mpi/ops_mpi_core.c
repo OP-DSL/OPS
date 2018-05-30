@@ -192,7 +192,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
   int was_initialized = handle->initialized;
   ops_arg temp = ops_arg_reduce_core(handle, dim, type, acc);
   if (!was_initialized) {
-    for (int i = 1; i < OPS_block_index; i++) {
+    for (int i = 1; i < OPS_block_index * (ops_hybrid ? 2:1); i++) {
       memcpy(handle->data + i * handle->size, handle->data, handle->size);
     }
   }
@@ -218,7 +218,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
     MPI_Abort(OPS_MPI_GLOBAL, 2);
   }
   red->data =
-      (char *)realloc(red->data, red->size * (OPS_block_index) * sizeof(char));
+      (char *)realloc(red->data, red->size * (OPS_block_index *(ops_hybrid ? 2:1)) * sizeof(char));
   return red;
 }
 

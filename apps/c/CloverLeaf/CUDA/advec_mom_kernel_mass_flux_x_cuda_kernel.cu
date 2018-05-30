@@ -117,9 +117,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   int xdim1 = args[1].dat->size[0];
 
   if (xdim0 != xdim0_advec_mom_kernel_mass_flux_x_h || xdim1 != xdim1_advec_mom_kernel_mass_flux_x_h) {
-    cudaMemcpyToSymbol( xdim0_advec_mom_kernel_mass_flux_x, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_advec_mom_kernel_mass_flux_x, &xdim0, sizeof(int),0 );
     xdim0_advec_mom_kernel_mass_flux_x_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_advec_mom_kernel_mass_flux_x, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_advec_mom_kernel_mass_flux_x, &xdim1, sizeof(int),0 );
     xdim1_advec_mom_kernel_mass_flux_x_h = xdim1;
   }
 

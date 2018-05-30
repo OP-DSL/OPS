@@ -122,7 +122,7 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
   int xdim0 = args[0].dat->size[0];
 
   if (xdim0 != xdim0_initialise_chunk_kernel_xx_h) {
-    cudaMemcpyToSymbol( xdim0_initialise_chunk_kernel_xx, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_initialise_chunk_kernel_xx, &xdim0, sizeof(int),0 );
     xdim0_initialise_chunk_kernel_xx_h = xdim0;
   }
 

@@ -125,6 +125,51 @@ int size1 ){
     ops_reduction_cuda<OPS_INC>(&arg10[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg10_l[d]);
 
 }
+void CUDART_CB field_summary_kernel_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg6h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg6data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg7h = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]);
+  double*arg7data = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg8h = *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))]);
+  double*arg8data = *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg9h = *(double**)(&buf[sizeof(int)+3*2*(sizeof(int*))]);
+  double*arg9data = *(double**)(&buf[sizeof(int)+3*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg10h = *(double**)(&buf[sizeof(int)+4*2*(sizeof(int*))]);
+  double*arg10data = *(double**)(&buf[sizeof(int)+4*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg6h[d] = arg6h[d] + arg6data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg7h[d] = arg7h[d] + arg7data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg8h[d] = arg8h[d] + arg8data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg9h[d] = arg9h[d] + arg9data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg10h[d] = arg10h[d] + arg10data[d+b*1];
+    }
+  }
+
+  free(buf);
+}
 
 // host stub function
 #ifndef OPS_LAZY
@@ -210,17 +255,17 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   int xdim5 = args[5].dat->size[0];
 
   if (xdim0 != xdim0_field_summary_kernel_h || xdim1 != xdim1_field_summary_kernel_h || xdim2 != xdim2_field_summary_kernel_h || xdim3 != xdim3_field_summary_kernel_h || xdim4 != xdim4_field_summary_kernel_h || xdim5 != xdim5_field_summary_kernel_h) {
-    cudaMemcpyToSymbol( xdim0_field_summary_kernel, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_field_summary_kernel, &xdim0, sizeof(int),0 );
     xdim0_field_summary_kernel_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_field_summary_kernel, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_field_summary_kernel, &xdim1, sizeof(int),0 );
     xdim1_field_summary_kernel_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_field_summary_kernel, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_field_summary_kernel, &xdim2, sizeof(int),0 );
     xdim2_field_summary_kernel_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_field_summary_kernel, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_field_summary_kernel, &xdim3, sizeof(int),0 );
     xdim3_field_summary_kernel_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_field_summary_kernel, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_field_summary_kernel, &xdim4, sizeof(int),0 );
     xdim4_field_summary_kernel_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_field_summary_kernel, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim5_field_summary_kernel, &xdim5, sizeof(int),0 );
     xdim5_field_summary_kernel_h = xdim5;
   }
 
@@ -230,28 +275,38 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   #endif
   #ifdef OPS_MPI
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
+  if (ops_hybrid) arg6h =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index+1));
   #else
   double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
+  if (ops_hybrid) arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size);
   #endif
   #ifdef OPS_MPI
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
+  if (ops_hybrid) arg7h =  (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * (2*block->index+1));
   #else
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
+  if (ops_hybrid) arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size);
   #endif
   #ifdef OPS_MPI
   double *arg8h = (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * block->index);
+  if (ops_hybrid) arg8h =  (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * (2*block->index+1));
   #else
   double *arg8h = (double *)(((ops_reduction)args[8].data)->data);
+  if (ops_hybrid) arg8h = (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size);
   #endif
   #ifdef OPS_MPI
   double *arg9h = (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * block->index);
+  if (ops_hybrid) arg9h =  (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * (2*block->index+1));
   #else
   double *arg9h = (double *)(((ops_reduction)args[9].data)->data);
+  if (ops_hybrid) arg9h = (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size);
   #endif
   #ifdef OPS_MPI
   double *arg10h = (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * block->index);
+  if (ops_hybrid) arg10h =  (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * (2*block->index+1));
   #else
   double *arg10h = (double *)(((ops_reduction)args[10].data)->data);
+  if (ops_hybrid) arg10h = (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size);
   #endif
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
@@ -391,41 +446,64 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
            (double *)arg10.data_d,x_size, y_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*1];
-    }
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*5*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg6h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg6.data;
+    arg6.data = (char *)arg6h;
+    *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]) = arg7h;
+    *(char**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]) = arg7.data;
+    arg7.data = (char *)arg7h;
+    *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))]) = arg8h;
+    *(char**)(&buf[sizeof(int)+2*2*(sizeof(int*))+sizeof(int*)]) = arg8.data;
+    arg8.data = (char *)arg8h;
+    *(double**)(&buf[sizeof(int)+3*2*(sizeof(int*))]) = arg9h;
+    *(char**)(&buf[sizeof(int)+3*2*(sizeof(int*))+sizeof(int*)]) = arg9.data;
+    arg9.data = (char *)arg9h;
+    *(double**)(&buf[sizeof(int)+4*2*(sizeof(int*))]) = arg10h;
+    *(char**)(&buf[sizeof(int)+4*2*(sizeof(int*))+sizeof(int*)]) = arg10.data;
+    arg10.data = (char *)arg10h;
+    cudaStreamAddCallback(0, field_summary_kernel_reduce_callback, buf, 0);
   }
-  arg6.data = (char *)arg6h;
-
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg7h[d] = arg7h[d] + ((double *)arg7.data)[d+b*1];
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*1];
+      }
     }
-  }
-  arg7.data = (char *)arg7h;
+    arg6.data = (char *)arg6h;
 
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg8h[d] = arg8h[d] + ((double *)arg8.data)[d+b*1];
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg7h[d] = arg7h[d] + ((double *)arg7.data)[d+b*1];
+      }
     }
-  }
-  arg8.data = (char *)arg8h;
+    arg7.data = (char *)arg7h;
 
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg9h[d] = arg9h[d] + ((double *)arg9.data)[d+b*1];
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg8h[d] = arg8h[d] + ((double *)arg8.data)[d+b*1];
+      }
     }
-  }
-  arg9.data = (char *)arg9h;
+    arg8.data = (char *)arg8h;
 
-  for ( int b=0; b<maxblocks; b++ ){
-    for ( int d=0; d<1; d++ ){
-      arg10h[d] = arg10h[d] + ((double *)arg10.data)[d+b*1];
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg9h[d] = arg9h[d] + ((double *)arg9.data)[d+b*1];
+      }
     }
-  }
-  arg10.data = (char *)arg10h;
+    arg9.data = (char *)arg9h;
 
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg10h[d] = arg10h[d] + ((double *)arg10.data)[d+b*1];
+      }
+    }
+    arg10.data = (char *)arg10h;
+
+  }
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);

@@ -148,15 +148,15 @@ void ops_par_loop_advec_cell_kernel1_xdir_execute(ops_kernel_descriptor *desc) {
   int xdim4 = args[4].dat->size[0];
 
   if (xdim0 != xdim0_advec_cell_kernel1_xdir_h || xdim1 != xdim1_advec_cell_kernel1_xdir_h || xdim2 != xdim2_advec_cell_kernel1_xdir_h || xdim3 != xdim3_advec_cell_kernel1_xdir_h || xdim4 != xdim4_advec_cell_kernel1_xdir_h) {
-    cudaMemcpyToSymbol( xdim0_advec_cell_kernel1_xdir, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_advec_cell_kernel1_xdir, &xdim0, sizeof(int),0 );
     xdim0_advec_cell_kernel1_xdir_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_advec_cell_kernel1_xdir, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_advec_cell_kernel1_xdir, &xdim1, sizeof(int),0 );
     xdim1_advec_cell_kernel1_xdir_h = xdim1;
-    cudaMemcpyToSymbol( xdim2_advec_cell_kernel1_xdir, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim2_advec_cell_kernel1_xdir, &xdim2, sizeof(int),0 );
     xdim2_advec_cell_kernel1_xdir_h = xdim2;
-    cudaMemcpyToSymbol( xdim3_advec_cell_kernel1_xdir, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_advec_cell_kernel1_xdir, &xdim3, sizeof(int),0 );
     xdim3_advec_cell_kernel1_xdir_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_advec_cell_kernel1_xdir, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_advec_cell_kernel1_xdir, &xdim4, sizeof(int),0 );
     xdim4_advec_cell_kernel1_xdir_h = xdim4;
   }
 

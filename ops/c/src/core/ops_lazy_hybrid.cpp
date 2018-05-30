@@ -311,3 +311,38 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   ops_hybrid_after(desc);
 }
 
+
+template <typename T>
+T ops_red_op(T a, T b, int op) {
+  if (op == OPS_INC)
+    return a+b;
+  else if (op == OPS_MIN)
+    return a<b?a:b;
+  else if (op == OPS_MAX)
+    return a>b?a:b;
+  else return a;
+}
+
+extern "C" void ops_reduction_result_hybrid(ops_reduction handle) {
+  if (ops_hybrid) {
+    char *v0 = handle->data;
+    for (int i = 1; i < 2; i++) {
+      char *val = handle->data + i * handle->size;
+      if (!strcmp(handle->type,"double")) {
+        int dim = handle->size/sizeof(double);
+        for (int d = 0; d < dim; d++)
+          ((double*)v0)[d] = ops_red_op(((double*)val)[d], ((double*)v0)[d],handle->acc);
+      }
+      if (!strcmp(handle->type,"float")) {
+        int dim = handle->size/sizeof(float);
+        for (int d = 0; d < dim; d++)
+          ((float*)v0)[d] = ops_red_op(((float*)val)[d], ((float*)v0)[d],handle->acc);
+      }
+      if (!strcmp(handle->type,"int")) {
+        int dim = handle->size/sizeof(int);
+        for (int d = 0; d < dim; d++)
+          ((int*)v0)[d] = ops_red_op(((int*)val)[d], ((int*)v0)[d],handle->acc);
+      }
+    }
+  }
+}
