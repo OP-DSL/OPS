@@ -128,7 +128,7 @@ void ops_hybrid_record_kernel_stats(int index, double cpu_time, double gpu_time)
 }
 
 int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
-  if (desc->index > stats.size()) {
+  if (desc->index >= stats.size()) {
     int old_size = stats.size();
     stats.resize(desc->index+10);
     for (int i = old_size; i < desc->index+10; i++) {
@@ -137,7 +137,6 @@ int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
       stats[i].prev_balance = 0.25;
     }
   }
-  return desc->index == 2 ? 300 : 300;
   //If 1 line or not seen before, then first guess
   if (to-from == 1 || stats[desc->index].gpu_time == -1) {
     return ops_hybrid_gbl_split;
@@ -208,6 +207,7 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
       }
     }
   }
+  //printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
 }
 
 //Assume arg is dat, and OPS_WRITE
@@ -227,8 +227,8 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     if (cpu_clean_len > 0 && cpu_clean_start > dirtyflags[dat->index].dirty_from_h) 
       ops_download_dat_range(arg->dat, dirtyflags[dat->index].dirty_from_h, cpu_clean_start, cpu_stream);
 
-    //Start of dirty region is end of CPU execution region
-    dirtyflags[dat->index].dirty_from_h = cpu_start + cpu_len;
+    //Start of dirty region is at least end of CPU execution region
+    dirtyflags[dat->index].dirty_from_h = max(dirtyflags[dat->index].dirty_from_h, cpu_start + cpu_len);
     if (dirtyflags[dat->index].dirty_from_h > dirtyflags[dat->index].dirty_to_h)
       dirtyflags[dat->index].dirty_to_h = dirtyflags[dat->index].dirty_from_h;
 
@@ -264,8 +264,8 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     if (gpu_clean_len > 0 && gpu_clean_start + gpu_clean_len < dirtyflags[dat->index].dirty_to_d) 
       ops_upload_dat_range(arg->dat, gpu_clean_start + gpu_clean_len, dirtyflags[dat->index].dirty_to_d, gpu_stream);
 
-    //End of dirty region is the start of GPU execution region
-    dirtyflags[dat->index].dirty_to_d = gpu_start;
+    //End of dirty region is iat most the start of GPU execution region
+    dirtyflags[dat->index].dirty_to_d = min(dirtyflags[dat->index].dirty_to_d, gpu_start);
     if (dirtyflags[dat->index].dirty_from_d > dirtyflags[dat->index].dirty_to_d)
       dirtyflags[dat->index].dirty_from_d = dirtyflags[dat->index].dirty_to_d;
 
@@ -286,16 +286,18 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
       dirtyflags[dat->index].dirty_to_d   = dirty_gpu_start + dirty_gpu_len;
     }
   }
+
+  //printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
 }
 
 void ops_hybrid_clean(ops_kernel_descriptor * desc, int split) {
   int *range = desc->range;
   for (int arg = 0; arg < desc->nargs; arg++) {
-    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc == OPS_READ) {
+    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_WRITE) {
       int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
       int range_to = range[2*(desc->args[arg].dat->block->dims-1)+1];
       int from_d, to_d, from_h, to_h;
-      //TODO: calculate range->index into array
+      //calculate range->index into array
       int this_from  = range_from + dirtyflags[desc->args[arg].dat->index].index_offset;
       int this_to    = range_to   + dirtyflags[desc->args[arg].dat->index].index_offset;
       int this_split = split      + dirtyflags[desc->args[arg].dat->index].index_offset; 
@@ -334,6 +336,10 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   int from = desc->range[2*(desc->dim-1)];
   int to = desc->range[2*(desc->dim-1)+1];
   int split = ops_hybrid_get_split(desc, from, to);
+/*  if (desc->index == 2) {
+    split = 305;
+  }*/
+//  printf("%s with split %d\n", desc->name, split);
   ops_hybrid_clean(desc, split);
 
   double c,t1=0,t2=0;
@@ -365,7 +371,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   cudaEventSynchronize(ev2);
   float gpu_elapsed=0;
   if (split < to) cudaEventElapsedTime(&gpu_elapsed, ev1, ev2);
-  printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (t2-t1)*1000.0, gpu_elapsed-(t2-t1)*1000.0);
+  //printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (t2-t1)*1000.0, gpu_elapsed-(t2-t1)*1000.0);
   ops_hybrid_record_kernel_stats(desc->index, (t2-t1)*1000.0, gpu_elapsed);
   desc->range[2*(desc->dim-1)]   = from;
   desc->range[2*(desc->dim-1)+1] = to;
