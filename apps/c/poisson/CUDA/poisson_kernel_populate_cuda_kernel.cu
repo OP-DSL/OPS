@@ -152,11 +152,11 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   int xdim5 = args[5].dat->size[0];
 
   if (xdim3 != xdim3_poisson_kernel_populate_h || xdim4 != xdim4_poisson_kernel_populate_h || xdim5 != xdim5_poisson_kernel_populate_h) {
-    cudaMemcpyToSymbol( xdim3_poisson_kernel_populate, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim3_poisson_kernel_populate, &xdim3, sizeof(int),0 );
     xdim3_poisson_kernel_populate_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_poisson_kernel_populate, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim4_poisson_kernel_populate, &xdim4, sizeof(int),0 );
     xdim4_poisson_kernel_populate_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_poisson_kernel_populate, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim5_poisson_kernel_populate, &xdim5, sizeof(int),0 );
     xdim5_poisson_kernel_populate_h = xdim5;
   }
 

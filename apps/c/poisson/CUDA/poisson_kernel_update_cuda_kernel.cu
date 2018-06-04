@@ -114,9 +114,9 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
   int xdim1 = args[1].dat->size[0];
 
   if (xdim0 != xdim0_poisson_kernel_update_h || xdim1 != xdim1_poisson_kernel_update_h) {
-    cudaMemcpyToSymbol( xdim0_poisson_kernel_update, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_poisson_kernel_update, &xdim0, sizeof(int),0 );
     xdim0_poisson_kernel_update_h = xdim0;
-    cudaMemcpyToSymbol( xdim1_poisson_kernel_update, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim1_poisson_kernel_update, &xdim1, sizeof(int),0 );
     xdim1_poisson_kernel_update_h = xdim1;
   }
 

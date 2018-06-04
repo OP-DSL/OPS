@@ -105,7 +105,7 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
   int xdim0 = args[0].dat->size[0];
 
   if (xdim0 != xdim0_poisson_kernel_initialguess_h) {
-    cudaMemcpyToSymbol( xdim0_poisson_kernel_initialguess, &xdim0, sizeof(int) );
+    cudaMemcpyToSymbolAsync( xdim0_poisson_kernel_initialguess, &xdim0, sizeof(int),0 );
     xdim0_poisson_kernel_initialguess_h = xdim0;
   }
 
