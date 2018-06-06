@@ -137,7 +137,7 @@ int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
       stats[i].prev_balance = 0.25;
     }
   }
-  return 700;
+//  return 700;
   //If 1 line or not seen before, then first guess
   if (to-from == 1 || stats[desc->index].gpu_time == -1) {
     return ops_hybrid_gbl_split;
