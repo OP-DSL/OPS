@@ -65,6 +65,8 @@ sub_block_list *OPS_sub_block_list; // pointer to list holding sub-block
                                     // geometries
 hid_t file_id_in;      //file identifier
 
+sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
+                                 // details
 sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
                                 // details
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
@@ -302,8 +304,6 @@ void ops_fetch_block_hdf5_file_internal(ops_block block, char const *file_name, 
         file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         H5Fclose(file_id);
       }
-    }
-
       file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
     }
 
