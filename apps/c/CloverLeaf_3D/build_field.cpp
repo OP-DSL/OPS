@@ -33,6 +33,7 @@
 #include "data.h"
 #include "definitions.h"
 
+extern bool restoring;
 
 void test_kernel(double *volume, double *xarea, double *yarea) {
 
@@ -316,7 +317,7 @@ void build_field()
   red_output = ops_decl_reduction_handle(28*sizeof(double), "double", "output");
 
   ops_partition("3D_BLOCK_DECOMPOSE");
-  ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); // 
+  restoring = ops_checkpointing_init("check.h5",5.0, OPS_CHECKPOINT_INITPHASE | OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL ); // 
   //ops_checkpointing_init("check.h5",10.0, OPS_CHECKPOINT_INITPHASE ); // 
   //print ops blocks and dats details
   ops_diagnostic_output();

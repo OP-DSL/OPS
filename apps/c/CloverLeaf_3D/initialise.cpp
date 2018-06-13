@@ -48,7 +48,6 @@ void initialise()
   if ((g_out = fopen(out_file,"w")) == NULL) {
     ops_printf("can't open file %s\n",out_file); exit(-1);
   }
-  printf("1\n");
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out,"Clover version %f\n", g_version);
   ops_printf("Output file %s opened. All output will go there\n", out_file);
@@ -56,7 +55,6 @@ void initialise()
   ops_fprintf(g_out," Clover will run from the following input:-\n");
   ops_fprintf(g_out,"\n");
 
-  printf("2\n");
   if ((g_in = fopen(in_file,"r")) == NULL) {
     g_in = fopen(in_file,"w+");
     ops_fprintf(g_in,"*clover\n");
@@ -90,10 +88,8 @@ void initialise()
   ops_fprintf(g_out,"\n");
   ops_fprintf(g_out," Initialising and generating\n");
   ops_fprintf(g_out,"\n");
-	printf("3\n");
   read_input();
 
-	printf("4\n");
   ops_fprintf(g_out," Starting the calculation\n");
   fclose(g_in);
 }

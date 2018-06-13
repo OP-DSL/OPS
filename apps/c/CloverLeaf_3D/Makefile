@@ -116,6 +116,8 @@ ifdef HDF5_INSTALL_PATH
 ifdef CHECKPOINTING
   HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+	OPS_HDF5_PAR := -lops_hdf5_mpi
+	OPS_HDF5_SEQ := -lops_hdf5_seq
   CC = $(MPICC)
   CPP = $(MPICPP)
   OPS_INC += $(HDF5_INC)
@@ -195,7 +197,7 @@ SEQ_KERNELS = clover_leaf_seq_kernels.cpp
 
 cloverleaf_mpi: Makefile $(OPS_FILES_GEN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(HDF5_LIB) -o cloverleaf_mpi
+	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) -lops_mpi $(OPS_HDF5_PAR) $(HDF5_LIB) -o cloverleaf_mpi
 
 #
 # OpenMP version

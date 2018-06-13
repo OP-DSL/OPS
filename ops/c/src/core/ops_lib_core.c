@@ -204,6 +204,12 @@ void ops_set_args(int argc, char *argv) {
     OPS_ranks_per_node = atoi(temp + 15);
     ops_printf("\n OPS Checkpointing with mirroring offset %d\n",
                OPS_ranks_per_node);
+  } else if ( strncmp ( argv, "OPS_CHECKPOINT_MPI", 18 ) == 0 ) {
+    ops_checkpoint_mpi = 1;
+    ops_printf ( "\n OPS Checkpointing using MPI I/O\n");
+  } else if ( strncmp ( argv, "OPS_CHECKPOINT_KEEPFILE", 23 ) == 0 ) {
+      ops_keepfile = 1;
+      ops_printf ( "\n OPS Checkpointing not deleting files upon exit\n");
   } else if (strstr(argv, "OPS_CHECKPOINT") != NULL) {
     OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");

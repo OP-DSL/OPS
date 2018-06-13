@@ -117,7 +117,7 @@ void ops_checkpoint_mpi_save_full(ops_dat dat, hid_t outfile, int size, char *da
   ops_fetch_dat_hdf5_file_internal(dat_cpy, "", 1);
 }
 
-ops_checkpoint_mpi_restore_ctrl(int *ops_backup_point, int *ops_best_backup_point, char **OPS_chk_red_storage) {
+void ops_checkpoint_mpi_restore_ctrl(int *ops_backup_point, int *ops_best_backup_point, char **OPS_chk_red_storage) {
 
   hid_t group_id;      //group identifier
   if(H5Lexists(file_id_in, "ctrlvars", H5P_DEFAULT) == 0) {

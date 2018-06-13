@@ -127,6 +127,7 @@ int checkpoint_frequency;
 int use_vector_loops;
 
 int jdt, kdt, ldt;
+bool restoring = false;
 
 void start();
 
@@ -197,12 +198,13 @@ int main(int argc, char **argv)
     double tosave[4] = {clover_time, dt, (double)step, (double)advect_x};
     //if(ops_checkpointing_fastfw(4*sizeof(double), (char*)tosave)) {
     //if(ops_checkpointing_manual_datlist_fastfw(5, list, 4*sizeof(double), (char*)tosave)) {
-    if (step%checkpoint_frequency==0) {
-      if(ops_checkpointing_manual_datlist_fastfw_trigger(5, list, 4*sizeof(double), (char*)tosave)) {
+    if (step%checkpoint_frequency==0 || restoring) {
+      if (ops_checkpointing_manual_datlist_fastfw_trigger(5, list, 4*sizeof(double), (char*)tosave)) {
         clover_time = tosave[0];
         dt = tosave[1];
         step = (int)tosave[2];
         advect_x = (int)tosave[3];
+        restoring = false;
       }
     }
 

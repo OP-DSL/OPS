@@ -73,7 +73,6 @@ extern "C" {
 // Internal function definitions
 void ops_download_dat(ops_dat dat);
 void ops_upload_dat(ops_dat dat);
-<<<<<<< HEAD
 bool ops_checkpointing_filename(const char *file_name, char *filename_out,
                                 char *filename_out2);
 void ops_checkpointing_calc_range(ops_dat dat, const int *range,
@@ -819,7 +818,6 @@ typedef struct {
 ops_checkpoint_inmemory_control ops_inm_ctrl;
 
 void ops_ctrldump(hid_t file_out) {
-<<<<<<< HEAD
   if (ops_checkpoint_inmemory)
     return;
   if (ops_checkpoint_mpi)
@@ -957,6 +955,7 @@ bool ops_checkpointing_initstate() {
         OPS_checkpointing_time += t2 - t1;
       }
       return true;
+    }
   }
 }
 
@@ -1219,8 +1218,9 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
       check_hdf5_error(H5LTread_dataset(file, "OPS_checkpointing_payload",
             H5T_NATIVE_CHAR, payload));
       check_hdf5_error(H5Fclose(file));
-    } else
+    } else {
       ops_checkpoint_mpi_close();
+    }
     ops_timers_core(&cpu, &t2);
     OPS_checkpointing_time += t2 - now;
     if (OPS_diags > 1)
@@ -1251,7 +1251,30 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist,
       ops_checkpointing_manual_datlist(ndats, datlist);
     }
   } else if (backup_state == OPS_BACKUP_LEADIN) {
-    ops_checkpointing_fastfw(nbytes, payload);
+    backup_state = OPS_BACKUP_GATHER;
+    double cpu, now, t2;
+    ops_timers_core(&cpu, &now);
+    ops_last_checkpoint = now;
+    ops_dat_entry *item, *tmp_item;
+    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+      tmp_item = TAILQ_NEXT(item, entries);
+      OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
+    }
+    for (int i = 0; i < ndats; i++)
+      ops_restore_dataset(datlist[i]);
+    if (!ops_checkpoint_mpi) {
+      check_hdf5_error(H5LTread_dataset(file, "OPS_checkpointing_payload",
+            H5T_NATIVE_CHAR, payload));
+      check_hdf5_error(H5Fclose(file));
+    } else {
+      ops_checkpoint_mpi_close();
+    }
+    ops_timers_core(&cpu, &t2);
+    OPS_checkpointing_time += t2 - now;
+    if (OPS_diags > 1)
+      ops_printf("\nRestored at fast-forward point (in %g seconds), continuing "
+                 "normal execution...\n",
+                 t2 - now);
     return true;
   }
   return false;
@@ -1278,8 +1301,7 @@ bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats,
     ops_checkpointing_manual_datlist(ndats, datlist);
     ops_pre_backup_phase = false;
   } else if (backup_state == OPS_BACKUP_LEADIN) {
-    ops_checkpointing_fastfw(nbytes, payload);
-    return true;
+    return ops_checkpointing_manual_datlist_fastfw(ndats, datlist, nbytes, payload);
   }
   return false;
 }
