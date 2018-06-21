@@ -673,7 +673,7 @@ void ops_fetch_dat_hdf5_file_internal(ops_dat dat, char const *file_name, int cr
           dat->name, block->name);
 
       // transpose global size as on hdf5 file the dims are written transposed
-      hsize_t GBL_SIZE[block->dims];
+      hsize_t GBL_SIZE[OPS_MAX_DIM];
       if (block->dims == 1) {
         GBL_SIZE[0] = gbl_size[0];
       } else if (block->dims == 2) {
@@ -689,9 +689,15 @@ void ops_fetch_dat_hdf5_file_internal(ops_dat dat, char const *file_name, int cr
       filespace =
         H5Screate_simple(block->dims, GBL_SIZE, NULL); // space in file
 
+      //Create a reasonable chunk size
+      int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM], cart_coords[OPS_MAX_DIM];
+      MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods, cart_coords);
+      hsize_t CHUNK_SIZE[OPS_MAX_DIM];
+      for (int i = 0; i < block->dims; i++)
+        CHUNK_SIZE[i] = MAX(GBL_SIZE[i]/(cart_dims[i]*2),1);
       // Create chunked dataset
       plist_id = H5Pcreate(H5P_DATASET_CREATE);
-      H5Pset_chunk(plist_id, block->dims, GBL_SIZE); // chunk data set need
+      H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
       // to be the same size
       // on each proc
 
