@@ -113,7 +113,7 @@ int OPS_checkpointing_payload_nbytes = 0;
 char *OPS_checkpointing_payload = NULL;
 
 int ops_reduction_counter = 0;
-int ops_sync_frequency = 50;
+int ops_sync_frequency = 2;
 double ops_reduction_avg_time = 0.0;
 
 int ops_checkpointing_options = 0;
