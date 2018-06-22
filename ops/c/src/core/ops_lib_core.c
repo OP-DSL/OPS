@@ -899,185 +899,93 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
     exit(2);
   }
 
-  if (dat->block->dims == 3) {
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, " %3.10lf",
-                          ((double *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, "%e ",
-                          ((float *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, "%d ",
-                          ((int *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
-  } else if (dat->block->dims == 2) {
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(fp, " %3.10lf",
-                        ((double *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) <
-                0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(fp, " %e",
-                        ((float *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) < 0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(
-                    fp, "%d ",
-                    ((int *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) <
-                0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
-  } else if (dat->block->dims == 1) {
-
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%3.10lf", ((double *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) <
-              0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-          if (d < dat->dim - 1)
-            fprintf(fp, " ");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%e\n", ((float *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) < 0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-        }
-      }
-      fprintf(fp, "\n");
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%d\n", ((int *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) < 0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-        }
-      }
-      fprintf(fp, "\n");
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
+  size_t prod[OPS_MAX_DIM];
+  prod[0] = dat->size[0];
+  for (int d = 1; d < OPS_MAX_DIM; d++) {
+    prod[d] = prod[d-1] * dat->size[d];
   }
+
+#if OPS_MAX_DIM > 5
+  for (int n = 0; n < dat->size[5]; n++) {
+#else
+  {
+  int n = 0;
+#endif
+  #if OPS_MAX_DIM > 4
+    for (int m = 0; m < dat->size[4]; m++) {
+  #else
+    {
+    int m = 0;
+  #endif
+    #if OPS_MAX_DIM > 3
+      for (int l = 0; l < dat->size[3]; l++) {
+    #else
+      {
+      int l = 0;
+    #endif
+      #if OPS_MAX_DIM > 2
+        for (int k = 0; k < dat->size[2]; k++) {
+      #else
+        {
+        int k = 0;
+      #endif
+        #if OPS_MAX_DIM > 1
+          for (int j = 0; j < dat->size[1]; j++) {
+        #else
+          {
+          int j = 0;
+        #endif
+          #if OPS_MAX_DIM > 0
+            for (int i = 0; i < dat->size[0]; i++) {
+          #else
+            {
+            int i = 0;
+          #endif
+
+              for (int d = 0; d < dat->dim; d++) {
+
+                size_t offset = OPS_soa ?
+                        n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5]
+                      :(n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d;
+                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+                  if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "float") == 0 ||
+                           strcmp(dat->type, "real") == 0) {
+                  if (fprintf(fp, "%e ", ((float *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "int") == 0 ||
+                           strcmp(dat->type, "integer") == 0 ||
+                           strcmp(dat->type, "integer(4)") == 0 ||
+                          strcmp(dat->type, "int(4)") == 0) {
+                  if (fprintf(fp, "%d ", ((int *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else {
+                  printf("Error: Unknown type %s, cannot be written to file %s\n",
+                         dat->type, file_name);
+                  exit(2);
+                }
+              } //d
+            } //i
+            if (dat->size[0] > 1) fprintf(fp, "\n");
+          }//j
+          if (dat->size[1] > 1) fprintf(fp, "\n");
+        }//k
+        if (dat->size[2] > 1) fprintf(fp, "\n");
+      }//l
+      if (dat->size[3] > 1) fprintf(fp, "\n");
+    }//m
+    if (dat->size[4] > 1) fprintf(fp, "\n");
+  }//n
+  if (dat->size[5] > 1) fprintf(fp, "\n");
+
   fclose(fp);
 }
 
@@ -1196,17 +1104,6 @@ void ops_timing_realloc(int kernel, const char *name) {
   }
 }
 
-/*float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
-  float size = 1.0f;
-  for (int i = 0; i < dims; i++) {
-    if (arg->stencil->stride[i] != 0)
-      size *= (range[2*i+1]-range[2*i]);
-  }
-  size *= arg->dat->elem_size*((arg->argtype==OPS_READ ||
-arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
-  return size;
-}*/
-
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg) {
   float size = 1.0f;
   for (int i = 0; i < dims; i++) {
@@ -1311,6 +1208,56 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
   }
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2);
 }
+
+int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int dim0,
+                         int dim1, int dim2) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[4 * i] == idx0 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 1] == idx1 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 2] == idx2 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 3] == idx3) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d,%d,%d,%d) not found in declaration %s in "
+             "loop %s arg %d\n",
+             idx0, idx1, idx2, idx3, OPS_curr_args[arg_idx].stencil->name,
+             OPS_curr_name, arg_idx);
+      exit(-1);
+    }
+  }
+  return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3;
+}
+
+int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int idx4, int dim0,
+                         int dim1, int dim2, int dim3) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[5 * i] == idx0 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 1] == idx1 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 2] == idx2 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 3] == idx3 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 4] == idx4) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d,%d,%d,%d,%d) not found in declaration %s in "
+             "loop %s arg %d\n",
+             idx0, idx1, idx2, idx3, idx4, OPS_curr_args[arg_idx].stencil->name,
+             OPS_curr_name, arg_idx);
+      exit(-1);
+    }
+  }
+  return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
+}
+
 
 /* Called from Fortran to set the indices to C*/
 ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size,
