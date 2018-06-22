@@ -137,9 +137,9 @@ void ops_halo_transfer(ops_halo_group group) {
     }
 
     // copy to linear buffer from source
-    int ranges[OPS_MAX_DIM * 2];
-    int step[OPS_MAX_DIM];
-    int buf_strides[OPS_MAX_DIM];
+    int ranges[OPS_MAX_DIM * 2] = {0};
+    int step[OPS_MAX_DIM] = {0};
+    int buf_strides[OPS_MAX_DIM] = {0};
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->from_dir[i] > 0) {
         ranges[2 * i] =
@@ -158,28 +158,114 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->from_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-#pragma omp parallel for collapse(3)
-    for (int k = MIN(ranges[4], ranges[5] + 1);
-         k < MAX(ranges[4] + 1, ranges[5]); k++) {
-      for (int j = MIN(ranges[2], ranges[3] + 1);
-           j < MAX(ranges[2] + 1, ranges[3]); j++) {
-        for (int i = MIN(ranges[0], ranges[1] + 1);
-             i < MAX(ranges[0] + 1, ranges[1]); i++) {
-          for (int d = 0; d < halo->from->dim; d++) {
-            memcpy(ops_halo_buffer +
-                     ((k - ranges[4]) * step[2] * buf_strides[2] +
-                      (j - ranges[2]) * step[1] * buf_strides[1] +
-                      (i - ranges[0]) * step[0] * buf_strides[0]) *
-                         halo->from->elem_size + d * halo->from->type_size,
-                 halo->from->data +
-                     (OPS_soa ? 
-                       ((k * halo->from->size[0] * halo->from->size[1] +
-                         j * halo->from->size[0] + i) +
-                       d * halo->from->size[0] * halo->from->size[1] * halo->from->size[2]) * halo->from->type_size
-                     : (k * halo->from->size[0] * halo->from->size[1] +
-                         j * halo->from->size[0] + i) *
-                         halo->from->elem_size + d * halo->from->type_size),
-                 halo->from->type_size);
+  #if OPS_MAX_DIM>4
+    #if OPS_MAX_DIM == 5
+    #pragma omp parallel for collapse(5)
+    #endif
+    for (int m = MIN(ranges[8], ranges[9] + 1);
+         m < MAX(ranges[8] + 1, ranges[9]); m++) {
+  #else
+    int m = 0;
+    {
+  #endif
+    #if OPS_MAX_DIM>3
+      #if OPS_MAX_DIM == 4
+      #pragma omp parallel for collapse(4)
+      #endif
+      for (int l = MIN(ranges[6], ranges[7] + 1);
+           l < MAX(ranges[6] + 1, ranges[7]); l++) {
+    #else
+      int l = 0;
+      {
+    #endif
+      #if OPS_MAX_DIM>2
+        #if OPS_MAX_DIM == 3
+        #pragma omp parallel for collapse(3)
+        #endif
+        for (int k = MIN(ranges[4], ranges[5] + 1);
+             k < MAX(ranges[4] + 1, ranges[5]); k++) {
+      #else
+        int k = 0;
+        {
+      #endif
+        #if OPS_MAX_DIM>1
+          #if OPS_MAX_DIM == 2
+          #pragma omp parallel for collapse(2)
+          #endif
+          for (int j = MIN(ranges[2], ranges[3] + 1);
+               j < MAX(ranges[2] + 1, ranges[3]); j++) {
+        #else
+          int j = 0;
+          {
+        #endif
+            for (int i = MIN(ranges[0], ranges[1] + 1);
+                 i < MAX(ranges[0] + 1, ranges[1]); i++) {
+              for (int d = 0; d < halo->from->dim; d++) {
+                memcpy(ops_halo_buffer +
+                         (
+                        #if OPS_MAX_DIM > 4
+                          (m - ranges[8]) * step[4] * buf_strides[4] +
+                        #endif
+                        #if OPS_MAX_DIM > 3
+                          (l - ranges[6]) * step[3] * buf_strides[3] +
+                        #endif
+                        #if OPS_MAX_DIM > 2
+                          (k - ranges[4]) * step[2] * buf_strides[2] +
+                        #endif
+                        #if OPS_MAX_DIM > 1
+                          (j - ranges[2]) * step[1] * buf_strides[1] +
+                        #endif
+                          (i - ranges[0]) * step[0] * buf_strides[0]) *
+                             halo->from->elem_size + d * halo->from->type_size,
+                     halo->from->data +
+                         (OPS_soa ? 
+                           ((
+                            #if OPS_MAX_DIM > 4
+                            m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
+                            #endif
+                            #if OPS_MAX_DIM > 3
+                            l * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] +
+                            #endif
+                            #if OPS_MAX_DIM > 2
+                            k * halo->from->size[0] * halo->from->size[1] +
+                            #endif
+                            #if OPS_MAX_DIM > 1
+                            j * halo->from->size[0] +
+                            #endif
+                            i) +
+                             d * halo->from->size[0]
+                              #if OPS_MAX_DIM > 4
+                              * halo->from->size[4]
+                              #endif
+                              #if OPS_MAX_DIM > 3
+                              * halo->from->size[3]
+                              #endif
+                              #if OPS_MAX_DIM > 2
+                              * halo->from->size[2]
+                              #endif
+                              #if OPS_MAX_DIM > 1
+                              * halo->from->size[1]
+                              #endif
+                            ) * halo->from->type_size
+
+                         : (
+                            #if OPS_MAX_DIM > 4
+                            m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
+                            #endif
+                            #if OPS_MAX_DIM > 3
+                            l * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] +
+                            #endif
+                            #if OPS_MAX_DIM > 2
+                            k * halo->from->size[0] * halo->from->size[1] +
+                            #endif
+                            #if OPS_MAX_DIM > 1
+                            j * halo->from->size[0] +
+                            #endif
+                            i) *
+                            halo->from->elem_size + d * halo->from->type_size),
+                     halo->from->type_size);
+              }
+            }
           }
         }
       }
@@ -203,28 +289,113 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->to_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-#pragma omp parallel for collapse(3)
-    for (int k = MIN(ranges[4], ranges[5] + 1);
-         k < MAX(ranges[4] + 1, ranges[5]); k++) {
-      for (int j = MIN(ranges[2], ranges[3] + 1);
-           j < MAX(ranges[2] + 1, ranges[3]); j++) {
-        for (int i = MIN(ranges[0], ranges[1] + 1);
-             i < MAX(ranges[0] + 1, ranges[1]); i++) {
-          for (int d = 0; d < halo->to->dim; d++) {
-            memcpy(halo->to->data +
-                   (OPS_soa ?
-                     (k * halo->to->size[0] * halo->to->size[1] +
-                      j * halo->to->size[0] + i +
-                         d * halo->to->size[0] * halo->to->size[1] * halo->to->size[2]) * halo->to->type_size
-                    :(k * halo->to->size[0] * halo->to->size[1] +
-                      j * halo->to->size[0] + i) *
-                         halo->to->elem_size + d * halo->to->type_size),
-                 ops_halo_buffer +
-                     ((k - ranges[4]) * step[2] * buf_strides[2] +
-                      (j - ranges[2]) * step[1] * buf_strides[1] +
-                      (i - ranges[0]) * step[0] * buf_strides[0]) *
-                         halo->to->elem_size + d * halo->to->type_size,
-                 halo->to->type_size);
+  #if OPS_MAX_DIM>4
+    #if OPS_MAX_DIM == 5
+    #pragma omp parallel for collapse(5)
+    #endif
+    for (int m = MIN(ranges[8], ranges[9] + 1);
+         m < MAX(ranges[8] + 1, ranges[9]); m++) {
+  #else
+    int m = 0;
+    {
+  #endif
+    #if OPS_MAX_DIM>3
+      #if OPS_MAX_DIM == 4
+      #pragma omp parallel for collapse(4)
+      #endif
+      for (int l = MIN(ranges[6], ranges[7] + 1);
+           l < MAX(ranges[6] + 1, ranges[7]); l++) {
+    #else
+      int l = 0;
+      {
+    #endif
+      #if OPS_MAX_DIM>2
+        #if OPS_MAX_DIM == 3
+        #pragma omp parallel for collapse(3)
+        #endif
+        for (int k = MIN(ranges[4], ranges[5] + 1);
+             k < MAX(ranges[4] + 1, ranges[5]); k++) {
+      #else
+        int k = 0;
+        {
+      #endif
+        #if OPS_MAX_DIM>1
+          #if OPS_MAX_DIM == 2
+          #pragma omp parallel for collapse(2)
+          #endif
+          for (int j = MIN(ranges[2], ranges[3] + 1);
+               j < MAX(ranges[2] + 1, ranges[3]); j++) {
+        #else
+          int j = 0;
+          {
+        #endif
+            for (int i = MIN(ranges[0], ranges[1] + 1);
+                 i < MAX(ranges[0] + 1, ranges[1]); i++) {
+              for (int d = 0; d < halo->to->dim; d++) {
+                memcpy(halo->to->data +
+                       (OPS_soa ?
+                         (
+                          #if OPS_MAX_DIM > 4
+                          m * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] * halo->to->size[3] +
+                          #endif
+                          #if OPS_MAX_DIM > 3
+                          l * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] +
+                          #endif
+                          #if OPS_MAX_DIM > 2
+                          k * halo->to->size[0] * halo->to->size[1] +
+                          #endif
+                          #if OPS_MAX_DIM > 1
+                          j * halo->to->size[0] +
+                          #endif
+                          i +
+                          d * halo->to->size[0]
+                            #if OPS_MAX_DIM > 4
+                            * halo->to->size[4]
+                            #endif
+                            #if OPS_MAX_DIM > 3
+                            * halo->to->size[3]
+                            #endif
+                            #if OPS_MAX_DIM > 2
+                            * halo->to->size[2]
+                            #endif
+                            #if OPS_MAX_DIM > 1
+                            * halo->to->size[1]
+                            #endif
+                          ) * halo->to->type_size
+                        :(
+                          #if OPS_MAX_DIM > 4
+                          m * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] * halo->to->size[3] +
+                          #endif
+                          #if OPS_MAX_DIM > 3
+                          l * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] +
+                          #endif
+                          #if OPS_MAX_DIM > 2
+                          k * halo->to->size[0] * halo->to->size[1] +
+                          #endif
+                          #if OPS_MAX_DIM > 1
+                          j * halo->to->size[0] +
+                          #endif
+                          i) *
+                             halo->to->elem_size + d * halo->to->type_size),
+                     ops_halo_buffer +
+                         (
+                        #if OPS_MAX_DIM > 4
+                          (m - ranges[8]) * step[4] * buf_strides[4] +
+                        #endif
+                        #if OPS_MAX_DIM > 3
+                          (l - ranges[6]) * step[3] * buf_strides[3] +
+                        #endif
+                        #if OPS_MAX_DIM > 2
+                          (k - ranges[4]) * step[2] * buf_strides[2] +
+                        #endif
+                        #if OPS_MAX_DIM > 1
+                          (j - ranges[2]) * step[1] * buf_strides[1] +
+                        #endif
+                          (i - ranges[0]) * step[0] * buf_strides[0]) *
+                             halo->to->elem_size + d * halo->to->type_size,
+                     halo->to->type_size);
+              }
+            }
           }
         }
       }
