@@ -71,9 +71,9 @@
 #ifdef MAX_DEPTH
 #undef MAX_DEPTH
 #endif
-#define MAX_DEPTH 80
+#define MAX_DEPTH 10
 
-#define OPS_MAX_DIM 3
+#define OPS_MAX_DIM 5
 
 /*
  * * zero constants
