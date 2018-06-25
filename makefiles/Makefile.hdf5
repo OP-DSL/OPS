@@ -1,0 +1,15 @@
+ifdef HDF5_INSTALL_PATH
+ifdef CHECKPOINTING
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+	HDF5_LIB_SEQ          := $(HDF5_LIB) -lops_hdf5_seq
+	HDF5_LIB_MPI          := $(HDF5_LIB) -lops_hdf5_mpi
+  HDF5_INC              := $(HDF5_INC) -DCHECKPOINTING
+endif
+ifdef USE_HDF5
+  HDF5_INC              := -I$(HDF5_INSTALL_PATH)/include
+  HDF5_LIB              := -L$(HDF5_INSTALL_PATH)/lib -lhdf5_hl -lhdf5 -lz
+	HDF5_LIB_SEQ          := $(HDF5_LIB) -lops_hdf5_seq
+	HDF5_LIB_MPI          := $(HDF5_LIB) -lops_hdf5_mpi
+endif
+endif

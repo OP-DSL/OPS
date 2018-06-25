@@ -41,7 +41,7 @@
 #include <CL/cl.h>
 #endif
 
-#include <ops_lib_cpp.h>
+#include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
 
 char *ops_halo_buffer = NULL;
