@@ -1,5 +1,6 @@
 NVCC  ?= $(CUDA_INSTALL_PATH)/bin/nvcc
 CUDA_INC ?= $(CUDA_INSTALL_PATH)/include
+CUDA_LIB ?= $(CUDA_INSTALL_PATH)/lib64
 NVCCFLAGS := -Xcompiler="-std=c99"
 ifndef DEBUG
     NVCCFLAGS += -O3
@@ -32,6 +33,13 @@ endif
 endif
 endif
 
+ifdef IEEE
+	NVCCFLAGS += --fmad false
+endif
+ifdef FAST
+	NVCCFLAGS += --use_fast_math
+endif
+
 ifdef CUDA_HOST_COMPILER
   NVCCFLAGS += -ccbin=$(CUDA_HOST_COMPILER)
 endif
@@ -39,3 +47,7 @@ endif
 ifeq ($(OPS_COMPILER),pgi)
 	CUDAFOR += $(PGI_CUDA_FORT_FLAGS)
 endif
+
+OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
+OPENCL_INC ?= $(CUDA_INSTALL_PATH)/include
+OPENCL_LIB ?= $(OPENCL_INSTALL_PATH)/lib64
