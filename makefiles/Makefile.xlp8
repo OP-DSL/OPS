@@ -1,9 +1,20 @@
 CC        := xlc_r
 CXX        := xlc++_r
 FC	:= xlf_r
-CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O5 -qaltivec=le
+ifdef DEBUG
+CCFLAGS   := -O0 -g
+else
+CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O3 -qaltivec=le
+endif
+
+ifdef IEEE
+CCFLAGS += -qstrict=ieeefp
+endif
+
 CXXFLAGS  := $(CCFLAGS)
-FFLAGS := $(CCFLAGS) -qmoddir=$(F_INC_MOD)
+FFLAGS := $(CCFLAGS)
+FMODS :=-qmoddir=$(F_INC_MOD)
+FMODS_CUDA :=-qmoddir=$(F_INC_MOD)/cuda
 CUDAFOR := -qcuda -WF,-DOPS_WITH_CUDAFOR -qthreaded
 OMPFLAGS := -qsmp=omp -qthreaded
 OPS_MPI	= -WF,-DOPS_MPI
