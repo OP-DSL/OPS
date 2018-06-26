@@ -78,7 +78,7 @@ module OPS_Fortran_hdf5_Declarations
 
     end function ops_decl_stencil_hdf5_c
 
-  type(c_ptr) function ops_decl_strided_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_stencil_hdf5')
+  type(c_ptr) function ops_decl_strided_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_strided_stencil_hdf5')
     !check if bind C name is implemented .. need to implement ops_decl_strided_stencil_hdf5
       use, intrinsic :: ISO_C_BINDING
 
