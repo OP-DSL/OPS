@@ -4,17 +4,24 @@ FC	:= pgfortran
 ifdef DEBUG
 	CCFLAGS   := -O0 -g
 else
-	CCFLAGS   := -O2 -fastsse -gopt -Mipa=fast #-Mlist #-mp=nonuma -Kieee
+	CCFLAGS   := -O3 -fast -gopt -Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 CXXFLAGS  := $(CCFLAGS)
 OPENACCFLAGS = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 FMODS_OPENACC := -module $(F_INC_MOD)/openacc
-FFLAGS = $(CCFLAGS) -module $(F_INC_MOD)
+FMODS := -module $(F_INC_MOD)
+FMODS_CUDA := -module $(F_INC_MOD)/cuda
+FFLAGS = $(CCFLAGS)
 OMPFLAGS := -mp
 CUDAFOR	= -DOPS_WITH_CUDAFOR
-OpenACCFLAGS = -acc -Minline
+OpenACCFLAGS = -acc
 CXXLINK := -pgc++libs
+
+ifdef IEEE
+	CCFLAGS += -Kieee -nofma
+	CXXFLAGS += -Kieee -nofma
+endif
 
 ifndef NV_ARCH
 print:
@@ -23,15 +30,19 @@ print:
 endif
 ifeq ($(NV_ARCH),Fermi)
 	OpenACCFLAGS+= -ta=nvidia,cc20
+	CXXLINK+= -Mcuda=cc20
 else
 ifeq ($(NV_ARCH),Kepler)
 	OpenACCFLAGS+= -ta=nvidia,cc35
+	CXXLINK+= -Mcuda=cc35
 else
 ifeq ($(NV_ARCH),Pascal)
 	OpenACCFLAGS+= -ta=nvidia,cc60
+	CXXLINK+= -Mcuda=cc60
 else
 ifeq ($(NV_ARCH),Volta)
 	OpenACCFLAGS+= -ta=nvidia,cc70
+	CXXLINK+= -Mcuda=cc70
 endif
 endif
 endif
