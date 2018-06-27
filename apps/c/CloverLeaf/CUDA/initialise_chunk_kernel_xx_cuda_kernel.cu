@@ -149,6 +149,8 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(
   ops_initialise_chunk_kernel_xx<<<grid, tblock>>>((int *)p_a[0], arg_idx[0],
                                                    arg_idx[1], x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

@@ -379,6 +379,8 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(
       (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], x_size, y_size,
       z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

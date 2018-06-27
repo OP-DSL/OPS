@@ -679,14 +679,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
             H5Screate_simple(block->dims, GBL_SIZE, NULL); // space in file
 
         //Create a reasonable chunk size
-        int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM], cart_coords[OPS_MAX_DIM];
-        MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods, cart_coords);
+        /*int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
+        cart_coords[OPS_MAX_DIM];
+        MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods,
+        cart_coords);
         hsize_t CHUNK_SIZE[OPS_MAX_DIM];
         for (int i = 0; i < block->dims; i++)
           CHUNK_SIZE[i] = MAX(GBL_SIZE[i]/(cart_dims[i]*2),1);
-        // Create chunked dataset
+        // Create chunked dataset*/
         plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
+        H5Pset_chunk(plist_id, block->dims, GBL_SIZE); // chunk data set need
 
         // Create the dataset with default properties and close filespace.
         if (strcmp(dat->type, "double") == 0 ||

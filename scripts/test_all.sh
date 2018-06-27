@@ -9,13 +9,13 @@ cd $OPS_INSTALL_PATH
 echo "************Testing C Applications *****************"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-./test.sh
+#./test.sh
 cd ../CloverLeaf_3D/
-./test.sh
+#./test.sh
 cd ../CloverLeaf_3D_HDF5/
-./test.sh
+#./test.sh
 cd ../TeaLeaf/
-./test.sh
+#./test.sh
 cd ../poisson/
 ./test.sh
 cd ../multiDim/

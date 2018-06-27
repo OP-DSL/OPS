@@ -172,6 +172,8 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
                                         arg_idx[1], arg_idx[2], x_size, y_size,
                                         z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

@@ -143,6 +143,8 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
   // call kernel wrapper function, passing in pointers to data
   ops_fact_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1], x_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
