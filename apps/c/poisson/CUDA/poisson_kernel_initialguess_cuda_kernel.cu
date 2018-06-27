@@ -132,6 +132,8 @@ void ops_par_loop_poisson_kernel_initialguess_execute(
   ops_poisson_kernel_initialguess<<<grid, tblock>>>((double *)p_a[0], x_size,
                                                     y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

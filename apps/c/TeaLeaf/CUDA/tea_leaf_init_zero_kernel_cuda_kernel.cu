@@ -131,6 +131,8 @@ void ops_par_loop_tea_leaf_init_zero_kernel_execute(
   ops_tea_leaf_init_zero_kernel<<<grid, tblock>>>((double *)p_a[0], x_size,
                                                   y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

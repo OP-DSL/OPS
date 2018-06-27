@@ -208,6 +208,8 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_front_execute(
       (double *)p_a[0], (double *)p_a[1], (int *)arg2.data_d, x_size, y_size,
       z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

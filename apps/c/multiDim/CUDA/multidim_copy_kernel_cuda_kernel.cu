@@ -166,6 +166,8 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   ops_multidim_copy_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
                                              x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

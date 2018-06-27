@@ -425,6 +425,8 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[8], (double *)p_a[9], (double *)p_a[10], (double *)p_a[11],
       (double *)p_a[12], (double *)p_a[13], x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

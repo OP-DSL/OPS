@@ -167,6 +167,8 @@ void ops_par_loop_limiter_kernel_execute(ops_kernel_descriptor *desc) {
   ops_limiter_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
                                        (double *)p_a[2], x_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

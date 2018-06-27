@@ -261,6 +261,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(
       *(double *)arg4.data, *(double *)arg5.data, (double *)arg6.data_d, x_size,
       y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   mvReductArraysToHost(reduct_bytes);
   for (int b = 0; b < maxblocks; b++) {
     for (int d = 0; d < 1; d++) {

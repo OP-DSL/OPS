@@ -374,6 +374,8 @@ void ops_par_loop_update_halo_kernel1_ba1_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (int *)arg7.data_d,
       x_size, y_size, z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
