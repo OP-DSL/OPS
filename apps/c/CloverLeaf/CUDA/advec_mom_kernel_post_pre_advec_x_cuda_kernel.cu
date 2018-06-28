@@ -230,6 +230,8 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(
       (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
       (double *)p_a[4], x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

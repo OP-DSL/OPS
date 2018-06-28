@@ -320,6 +320,8 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
       (double *)arg3.data_d, (double *)p_a[4], (double *)arg5.data_d, x_size,
       y_size, z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   mvReductArraysToHost(reduct_bytes);
   for (int b = 0; b < maxblocks; b++) {
     for (int d = 0; d < 1; d++) {

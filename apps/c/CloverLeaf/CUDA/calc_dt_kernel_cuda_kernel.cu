@@ -360,6 +360,8 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
       (double *)p_a[8], (double *)p_a[9], (double *)p_a[10], x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

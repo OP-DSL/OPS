@@ -231,6 +231,8 @@ void ops_par_loop_write_kernel_execute(ops_kernel_descriptor *desc) {
                                      (int *)p_a[2], arg_idx[0], arg_idx[1],
                                      arg_idx[2], x_size, y_size, z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

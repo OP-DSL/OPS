@@ -157,6 +157,8 @@ void ops_par_loop_tea_leaf_axpby_kernel_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[0], (double *)p_a[1], *(double *)arg2.data,
       *(double *)arg3.data, x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

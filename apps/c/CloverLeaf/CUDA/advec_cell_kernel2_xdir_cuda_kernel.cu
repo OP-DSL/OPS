@@ -196,6 +196,8 @@ void ops_par_loop_advec_cell_kernel2_xdir_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
       x_size, y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);

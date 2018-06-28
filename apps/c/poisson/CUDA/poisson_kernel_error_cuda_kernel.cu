@@ -200,6 +200,8 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
       (double *)p_a[0], (double *)p_a[1], (double *)arg2.data_d, x_size,
       y_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   mvReductArraysToHost(reduct_bytes);
   for (int b = 0; b < maxblocks; b++) {
     for (int d = 0; d < 1; d++) {

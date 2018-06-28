@@ -770,6 +770,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code(text);
 
     code('')
+    code('cutilSafeCall(cudaGetLastError());')
+    code('')
 
     #
     # Complete Reduction Operation by moving data onto host

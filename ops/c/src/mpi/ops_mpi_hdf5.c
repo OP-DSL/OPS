@@ -538,8 +538,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     for (int d = 0; d < block->dims; d++) {
       // remove left MPI halo to get start disp from begining of dat
       // include left block halo
-      disp[d] = sd->decomp_disp[d] - sd->d_im[d] -
-                dat->d_m[d];        // global displacements of the data set
+      disp[d] = sd->decomp_disp[d] - sd->gbl_d_m[d]; // global displacements of the data set
       l_disp[d] = 0 - sd->d_im[d];  // local displacements of the data set (i.e.
                                     // per MPI proc)
       size[d] = sd->decomp_size[d]; // local size to compute the chunk data set
@@ -1515,8 +1514,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     for (int d = 0; d < block->dims; d++) {
       // remove left MPI halo to get start disp from begining of dat
       // include left block halo
-      disp[d] = sd->decomp_disp[d] - sd->d_im[d] -
-                dat->d_m[d];        // global displacements of the data set
+      disp[d] = sd->decomp_disp[d] - sd->gbl_d_m[d]; // global displacements of the data set
       l_disp[d] = 0 - sd->d_im[d];  // local displacements of the data set (i.e.
                                     // per MPI proc)
       size[d] = sd->decomp_size[d]; // local size to compute the chunk data set

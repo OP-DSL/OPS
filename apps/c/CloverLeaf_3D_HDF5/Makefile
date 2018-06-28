@@ -149,7 +149,7 @@ OCL_FLAGS=#-DOCL_FMA_SWITCH_ON
 # master to make all versions
 #
 
-TARGETS =  clean generate_file generate_file_mpi cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
+TARGETS =  clean generate_file generate_file_mpi cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_tiled cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_mpi_opencl
 #cloverleaf_openacc cloverleaf_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
@@ -224,6 +224,20 @@ cloverleaf_mpi: clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp ini
                 viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
                 flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
 		advec_mom_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o cloverleaf_mpi
+
+
+
+cloverleaf_mpi_tiled: $(OPS_FILES_GEN) \
+                $(HEADERS)
+	$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) $(OPS_INC) $(OPS_LIB) $(OPS_FILES_GEN) \
+	clover_leaf_ops.cpp start.cpp build_field.cpp read_input.cpp \
+        initialise_chunk_ops.cpp initialise.cpp generate_ops.cpp \
+        ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+        viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+        flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+        advec_mom_ops.cpp -I. ./Tiled/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o cloverleaf_mpi_tiled
+
+
 
 #
 # OpenMP version

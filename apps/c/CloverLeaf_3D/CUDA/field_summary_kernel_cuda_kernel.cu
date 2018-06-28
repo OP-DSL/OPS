@@ -541,6 +541,8 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
       (double *)arg7.data_d, (double *)arg8.data_d, (double *)arg9.data_d,
       (double *)arg10.data_d, (double *)arg11.data_d, x_size, y_size, z_size);
 
+  cutilSafeCall(cudaGetLastError());
+
   mvReductArraysToHost(reduct_bytes);
   for (int b = 0; b < maxblocks; b++) {
     for (int d = 0; d < 1; d++) {
