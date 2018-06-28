@@ -738,6 +738,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
    #kernel call
     comm('call kernel wrapper function, passing in pointers to data')
+    if NDIM==1:
+      code('if (x_size > 0)')
+    if NDIM==2:
+      code('if (x_size > 0 && y_size > 0)')
+    if NDIM==3:
+      code('if (x_size > 0 && y_size > 0 && z_size > 0)')
+    config.depth = config.depth + 2
     n_per_line = 2
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       text = 'ops_'+name+'<<<grid, tblock, nshared >>> ( '
@@ -768,6 +775,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     elif NDIM==3:
       text = text +'x_size, y_size, z_size);'
     code(text);
+    config.depth = config.depth - 2
 
     code('')
     code('cutilSafeCall(cudaGetLastError());')
