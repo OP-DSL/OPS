@@ -33,7 +33,7 @@ ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS       = -O3      -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt
+  CCFLAGS       = -O2      -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt
   #-DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
@@ -124,7 +124,7 @@ NVCC  := $(CUDA_INSTALL_PATH)/bin/nvcc
 # set NV_ARCH to select the correct one
 ifndef NV_ARCH
   MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
-  NV_ARCH=Kepler
+  NV_ARCH=Pascal
 endif
 ifeq ($(NV_ARCH),Fermi)
 	CODE_GEN_CUDA=-gencode arch=compute_20,code=sm_21

@@ -136,7 +136,7 @@ endif
 
 ifndef NV_ARCH
   MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
-  NV_ARCH=Pascal
+  NV_ARCH=Volta
 endif
 ifeq ($(NV_ARCH),Fermi)
         NVCCFLAGS+=-gencode arch=compute_20,code=sm_21
@@ -146,6 +146,10 @@ ifeq ($(NV_ARCH),Kepler)
 else
 ifeq ($(NV_ARCH),Pascal)
         NVCCFLAGS+=-gencode arch=compute_60,code=sm_60
+else
+ifeq ($(NV_ARCH),Volta)
+        NVCCFLAGS+=-gencode arch=compute_70,code=sm_70
+endif
 endif
 endif
 endif

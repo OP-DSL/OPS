@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-source ../../scripts/source_intel
+source ../../scripts/source_intel_18_update
 make
 cd -
 ./generate.sh
