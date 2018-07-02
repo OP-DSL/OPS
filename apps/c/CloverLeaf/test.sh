@@ -4,9 +4,9 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-./generate.sh
 make clean
-make
+rm -f .generated
+make IEEE=1
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
 #<<COMMENT
