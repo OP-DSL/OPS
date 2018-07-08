@@ -104,7 +104,7 @@ void buildOpenCLKernels_update_halo_kernel4_minus_4_b(int xdim0, int xdim1) {
     printf("compiling update_halo_kernel4_minus_4_b -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[77] = clCreateKernel(
+    OPS_opencl_core.kernel[43] = clCreateKernel(
         OPS_opencl_core.program, "ops_update_halo_kernel4_minus_4_b", &ret);
     clSafeCall(ret);
 
@@ -124,13 +124,13 @@ void ops_par_loop_update_halo_kernel4_minus_4_b(char const *name,
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 77))
+  if (!ops_checkpointing_before(args, 3, range, 43))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(77, "update_halo_kernel4_minus_4_b");
-    OPS_kernels[77].count++;
+    ops_timing_realloc(43, "update_halo_kernel4_minus_4_b");
+    OPS_kernels[43].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -235,27 +235,27 @@ void ops_par_loop_update_halo_kernel4_minus_4_b(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[77].mpi_time += t2 - t1;
+    OPS_kernels[43].mpi_time += t2 - t1;
   }
 
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 0, sizeof(cl_mem),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 0, sizeof(cl_mem),
                             (void *)&arg0.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 1, sizeof(cl_mem),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 1, sizeof(cl_mem),
                             (void *)&arg1.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 2, sizeof(cl_mem),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 2, sizeof(cl_mem),
                             (void *)&arg2.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 3, sizeof(cl_int),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 3, sizeof(cl_int),
                             (void *)&base0));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 4, sizeof(cl_int),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 4, sizeof(cl_int),
                             (void *)&base1));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 5, sizeof(cl_int),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 5, sizeof(cl_int),
                             (void *)&x_size));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[77], 6, sizeof(cl_int),
+  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[43], 6, sizeof(cl_int),
                             (void *)&y_size));
 
   // call/enque opencl kernel wrapper function
   clSafeCall(clEnqueueNDRangeKernel(
-      OPS_opencl_core.command_queue, OPS_opencl_core.kernel[77], 3, NULL,
+      OPS_opencl_core.command_queue, OPS_opencl_core.kernel[43], 3, NULL,
       globalWorkSize, localWorkSize, 0, NULL, NULL));
   if (OPS_diags > 1) {
     clSafeCall(clFinish(OPS_opencl_core.command_queue));
@@ -263,7 +263,7 @@ void ops_par_loop_update_halo_kernel4_minus_4_b(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[77].time += t1 - t2;
+    OPS_kernels[43].time += t1 - t2;
   }
 
   ops_set_dirtybit_device(args, 3);
@@ -273,8 +273,8 @@ void ops_par_loop_update_halo_kernel4_minus_4_b(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[77].mpi_time += t2 - t1;
-    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[43].mpi_time += t2 - t1;
+    OPS_kernels[43].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[43].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

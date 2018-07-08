@@ -27,13 +27,13 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_front(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 92))
+  if (!ops_checkpointing_before(args, 3, range, 47))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(92, "update_halo_kernel2_yvel_plus_2_front");
-    OPS_kernels[92].count++;
+    ops_timing_realloc(47, "update_halo_kernel2_yvel_plus_2_front");
+    OPS_kernels[47].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -117,7 +117,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_front(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[92].mpi_time += t2 - t1;
+    OPS_kernels[47].mpi_time += t2 - t1;
   }
 
 #pragma omp parallel for
@@ -217,7 +217,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_front(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[92].time += t1 - t2;
+    OPS_kernels[47].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -228,8 +228,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_front(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[92].mpi_time += t2 - t1;
-    OPS_kernels[92].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[92].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[47].mpi_time += t2 - t1;
+    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

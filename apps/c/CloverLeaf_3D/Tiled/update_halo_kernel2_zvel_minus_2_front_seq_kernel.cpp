@@ -34,12 +34,12 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front_execute(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 104))
+  if (!ops_checkpointing_before(args, 3, range, 59))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[104].count++;
+    OPS_kernels[59].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -73,7 +73,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front_execute(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[104].mpi_time += t1 - t2;
+    OPS_kernels[59].mpi_time += t1 - t2;
   }
 
 #pragma omp parallel for collapse(2)
@@ -96,15 +96,15 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front_execute(
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[104].time += t2 - t1;
+    OPS_kernels[59].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[104].mpi_time += t1 - t2;
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[59].mpi_time += t1 - t2;
+    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -119,9 +119,9 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 104;
+  desc->index = 59;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 104;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 59;
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -139,7 +139,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_zvel_minus_2_front_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(104, "update_halo_kernel2_zvel_minus_2_front");
+    ops_timing_realloc(59, "update_halo_kernel2_zvel_minus_2_front");
   }
   ops_enqueue_kernel(desc);
 }

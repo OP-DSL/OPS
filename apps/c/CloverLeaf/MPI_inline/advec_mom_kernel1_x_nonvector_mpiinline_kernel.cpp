@@ -36,12 +36,12 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
   ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 5, range, 21))
+  if (!ops_checkpointing_before(args, 5, range, 75))
     return;
 #endif
 
-  ops_timing_realloc(21, "advec_mom_kernel1_x_nonvector");
-  OPS_kernels[21].count++;
+  ops_timing_realloc(75, "advec_mom_kernel1_x_nonvector");
+  OPS_kernels[75].count++;
 
   // compute localy allocated range for the sub-block
   int start[2];
@@ -193,20 +193,20 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
   ops_halo_exchanges(args, 5, range);
 
   ops_timers_core(&c1, &t1);
-  OPS_kernels[21].mpi_time += t1 - t2;
+  OPS_kernels[75].mpi_time += t1 - t2;
 
   advec_mom_kernel1_x_nonvector_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, x_size,
                                           y_size);
 
   ops_timers_core(&c2, &t2);
-  OPS_kernels[21].time += t2 - t1;
+  OPS_kernels[75].time += t2 - t1;
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[2], range);
 
   // Update kernel record
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg1);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg2);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg3);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg4);
+  OPS_kernels[75].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[75].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[75].transfer += ops_compute_transfer(dim, start, end, &arg2);
+  OPS_kernels[75].transfer += ops_compute_transfer(dim, start, end, &arg3);
+  OPS_kernels[75].transfer += ops_compute_transfer(dim, start, end, &arg4);
 }

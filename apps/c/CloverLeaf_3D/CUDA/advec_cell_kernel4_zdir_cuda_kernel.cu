@@ -214,13 +214,13 @@ void ops_par_loop_advec_cell_kernel4_zdir_execute(ops_kernel_descriptor *desc) {
                       arg6, arg7, arg8, arg9, arg10};
 
 #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 11, range, 18))
+  if (!ops_checkpointing_before(args, 11, range, 120))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(18, "advec_cell_kernel4_zdir");
-    OPS_kernels[18].count++;
+    ops_timing_realloc(120, "advec_cell_kernel4_zdir");
+    OPS_kernels[120].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -478,7 +478,7 @@ void ops_par_loop_advec_cell_kernel4_zdir_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[18].mpi_time += t2 - t1;
+    OPS_kernels[120].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -493,7 +493,7 @@ void ops_par_loop_advec_cell_kernel4_zdir_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[18].time += t1 - t2;
+    OPS_kernels[120].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -509,18 +509,18 @@ void ops_par_loop_advec_cell_kernel4_zdir_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[18].mpi_time += t2 - t1;
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_kernels[120].mpi_time += t2 - t1;
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg10);
   }
 }
 
@@ -535,9 +535,9 @@ void ops_par_loop_advec_cell_kernel4_zdir(
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 18;
+  desc->index = 120;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 18;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 120;
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -569,7 +569,7 @@ void ops_par_loop_advec_cell_kernel4_zdir(
   desc->hash = ((desc->hash << 5) + desc->hash) + arg10.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel4_zdir_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(18, "advec_cell_kernel4_zdir");
+    ops_timing_realloc(120, "advec_cell_kernel4_zdir");
   }
   ops_enqueue_kernel(desc);
 }
