@@ -36,13 +36,13 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(
   ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 5, range, 24))
+  if (!ops_checkpointing_before(args, 5, range, 78))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(24, "advec_mom_kernel_post_pre_advec_y");
-    OPS_kernels[24].count++;
+    ops_timing_realloc(78, "advec_mom_kernel_post_pre_advec_y");
+    OPS_kernels[78].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -143,7 +143,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[24].mpi_time += t2 - t1;
+    OPS_kernels[78].mpi_time += t2 - t1;
   }
 
 #pragma omp parallel for
@@ -283,7 +283,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[24].time += t1 - t2;
+    OPS_kernels[78].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 5);
@@ -294,11 +294,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[24].mpi_time += t2 - t1;
-    OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[78].mpi_time += t2 - t1;
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
@@ -9,7 +10,6 @@ rm -f .generated
 make IEEE=1
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
-#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out
@@ -67,7 +67,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 grep "PASSED" clover.out
@@ -141,14 +141,14 @@ rm perf_out
 echo "All Intel complied applications PASSED : Exiting Test Script "
 #exit
 
-#COMMENT
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_16.9
 
 make clean
 make
 cd -
-make
+make clean
+make IEEE=1
 
 
 #============================ Test Cloverleaf 2D With PGI Compilers==========================================================
@@ -162,6 +162,14 @@ rm -f clover.out
 
 echo '============> Running MPI+OpenMP'
 export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./cloverleaf_mpi_openmp > perf_out
+grep "Total Wall time" clover.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+grep "PASSED" clover.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f clover.out
+
+echo '============> Running OpenMP with Tiling'
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_tiled OPS_TILING > perf_out
 grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 grep "PASSED" clover.out
@@ -183,9 +191,11 @@ grep "Total Wall time" clover.out
 grep "PASSED" clover.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
+#COMMENT
+
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 grep "PASSED" clover.out

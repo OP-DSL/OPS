@@ -48,12 +48,12 @@ void ops_par_loop_advec_mom_kernel_x1(char const *name, ops_block block,
   ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 6, range, 19))
+  if (!ops_checkpointing_before(args, 6, range, 121))
     return;
 #endif
 
-  ops_timing_realloc(19, "advec_mom_kernel_x1");
-  OPS_kernels[19].count++;
+  ops_timing_realloc(121, "advec_mom_kernel_x1");
+  OPS_kernels[121].count++;
 
   // compute localy allocated range for the sub-block
   int start[3];
@@ -274,22 +274,22 @@ void ops_par_loop_advec_mom_kernel_x1(char const *name, ops_block block,
   ops_halo_exchanges(args, 6, range);
 
   ops_timers_core(&c1, &t1);
-  OPS_kernels[19].mpi_time += t1 - t2;
+  OPS_kernels[121].mpi_time += t1 - t2;
 
   advec_mom_kernel_x1_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, x_size,
                                 y_size, z_size);
 
   ops_timers_core(&c2, &t2);
-  OPS_kernels[19].time += t2 - t1;
+  OPS_kernels[121].time += t2 - t1;
   ops_set_dirtybit_host(args, 6);
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
 
   // Update kernel record
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg2);
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg3);
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg4);
-  OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg5);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg2);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg3);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg4);
+  OPS_kernels[121].transfer += ops_compute_transfer(dim, start, end, &arg5);
 }

@@ -29,13 +29,13 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name,
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 81))
+  if (!ops_checkpointing_before(args, 3, range, 36))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(81, "update_halo_kernel2_yvel_minus_4_bot");
-    OPS_kernels[81].count++;
+    ops_timing_realloc(36, "update_halo_kernel2_yvel_minus_4_bot");
+    OPS_kernels[36].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -119,7 +119,7 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[81].mpi_time += t2 - t1;
+    OPS_kernels[36].mpi_time += t2 - t1;
   }
 
 #pragma omp parallel for
@@ -219,7 +219,7 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[81].time += t1 - t2;
+    OPS_kernels[36].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -230,8 +230,8 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_bot(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[81].mpi_time += t2 - t1;
-    OPS_kernels[81].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[81].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[36].mpi_time += t2 - t1;
+    OPS_kernels[36].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[36].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

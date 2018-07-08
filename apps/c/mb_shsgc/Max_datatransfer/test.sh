@@ -127,6 +127,7 @@ source ../../scripts/source_pgi_15.10
 make clean
 make
 cd -
+make clean
 make
 
 #============================ Test SHSGC with PGI Compilers==========================================================

@@ -21,6 +21,7 @@ export OPENCL_INSTALL_PATH=/usr/local/cuda/
 
 #PGI based MPI and Compilers
 export MPI_INSTALL_PATH=/opt/pgi/linux86-64/15.10/mpi/mpich/
+export MPICPP=mpicxx
 export PATH=/opt/pgi/linux86-64/15.10/bin/:$PATH
 export PATH=/opt/pgi/linux86-64/15.10/mpi/mpich/bin/:$PATH
 

@@ -31,12 +31,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_front(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 79))
+  if (!ops_checkpointing_before(args, 3, range, 34))
     return;
 #endif
 
-  ops_timing_realloc(79, "update_halo_kernel2_xvel_plus_4_front");
-  OPS_kernels[79].count++;
+  ops_timing_realloc(34, "update_halo_kernel2_xvel_plus_4_front");
+  OPS_kernels[34].count++;
 
   // compute localy allocated range for the sub-block
   int start[3];
@@ -149,18 +149,18 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_front(
   ops_halo_exchanges(args, 3, range);
 
   ops_timers_core(&c1, &t1);
-  OPS_kernels[79].mpi_time += t1 - t2;
+  OPS_kernels[34].mpi_time += t1 - t2;
 
   update_halo_kernel2_xvel_plus_4_front_c_wrapper(p_a0, p_a1, p_a2, x_size,
                                                   y_size, z_size);
 
   ops_timers_core(&c2, &t2);
-  OPS_kernels[79].time += t2 - t1;
+  OPS_kernels[34].time += t2 - t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0], range);
   ops_set_halo_dirtybit3(&args[1], range);
 
   // Update kernel record
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg1);
 }

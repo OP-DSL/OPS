@@ -106,7 +106,9 @@ source ../../scripts/source_pgi_15.10
 make clean
 make
 cd -
+make clean
 make
+
 #============================ Test multidim with PGI Compilers ==========================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out

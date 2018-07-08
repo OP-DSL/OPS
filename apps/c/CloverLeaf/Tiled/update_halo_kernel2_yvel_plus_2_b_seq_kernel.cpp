@@ -26,12 +26,12 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_b_execute(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 66))
+  if (!ops_checkpointing_before(args, 3, range, 32))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[66].count++;
+    OPS_kernels[32].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -63,7 +63,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_b_execute(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[66].mpi_time += t1 - t2;
+    OPS_kernels[32].mpi_time += t1 - t2;
   }
 
 #pragma omp parallel for
@@ -84,15 +84,15 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_b_execute(
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[66].time += t2 - t1;
+    OPS_kernels[32].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[66].mpi_time += t1 - t2;
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[32].mpi_time += t1 - t2;
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -109,9 +109,9 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_b(char const *name,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 66;
+  desc->index = 32;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 66;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 32;
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -129,7 +129,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_b(char const *name,
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_yvel_plus_2_b_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(66, "update_halo_kernel2_yvel_plus_2_b");
+    ops_timing_realloc(32, "update_halo_kernel2_yvel_plus_2_b");
   }
   ops_enqueue_kernel(desc);
 }
