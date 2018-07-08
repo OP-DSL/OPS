@@ -80,13 +80,13 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back_execute(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 3, range, 101))
+  if (!ops_checkpointing_before(args, 3, range, 56))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(101, "update_halo_kernel2_zvel_minus_2_back");
-    OPS_kernels[101].count++;
+    ops_timing_realloc(56, "update_halo_kernel2_zvel_minus_2_back");
+    OPS_kernels[56].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -200,7 +200,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back_execute(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[101].mpi_time += t2 - t1;
+    OPS_kernels[56].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -213,7 +213,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back_execute(
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[101].time += t1 - t2;
+    OPS_kernels[56].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -225,9 +225,9 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back_execute(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[101].mpi_time += t2 - t1;
-    OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[56].mpi_time += t2 - t1;
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -241,9 +241,9 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 101;
+  desc->index = 56;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 101;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 56;
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -261,7 +261,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_zvel_minus_2_back_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(101, "update_halo_kernel2_zvel_minus_2_back");
+    ops_timing_realloc(56, "update_halo_kernel2_zvel_minus_2_back");
   }
   ops_enqueue_kernel(desc);
 }

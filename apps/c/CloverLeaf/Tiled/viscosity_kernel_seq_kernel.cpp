@@ -158,7 +158,6 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
         viscosity[OPS_ACC6(0, 0)] =
             2.0 * (density0[OPS_ACC5(0, 0)]) * grad2 * limiter * limiter;
       }
-
     }
   }
   if (OPS_diags > 1) {
