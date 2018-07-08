@@ -3,7 +3,8 @@
 #unset and set defaults
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 unset LD_LIBRARY_PATH
-. ~/.bashrc
+export PATH=/home/mgiles/mudalige/numawrap:$PATH
+.  ~/.bashrc
 
 #OPS specifics
 export OPS_COMPILER=intel

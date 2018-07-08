@@ -37,13 +37,13 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(
   ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 5, range, 34))
+  if (!ops_checkpointing_before(args, 5, range, 135))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(34, "advec_mom_kernel_post_pre_advec_z");
-    OPS_kernels[34].count++;
+    ops_timing_realloc(135, "advec_mom_kernel_post_pre_advec_z");
+    OPS_kernels[135].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -225,7 +225,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[34].mpi_time += t1 - t2;
+    OPS_kernels[135].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -283,7 +283,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[34].time += t2 - t1;
+    OPS_kernels[135].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0], range);
@@ -292,11 +292,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_z(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[34].mpi_time += t1 - t2;
-    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[135].mpi_time += t1 - t2;
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
