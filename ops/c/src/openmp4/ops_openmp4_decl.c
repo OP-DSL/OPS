@@ -102,9 +102,17 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   //ops_mvHostToDevice ( ( void ** ) &( dat->data ), bytes );
   //double *p_a0 = (double *)((char *)dat->data);
   int tot0 = 1;
-  for (int i = 0; i < dat->block->dims; i++)
+  for (int i = 0; i < block->dims; i++)
     tot0 = tot0 * dat->size[i];
-  #pragma omp target enter data map(to: dat->data[0:tot0*type_size]) 
+  printf("tot0 = %d -- bytes = %d \n", tot0*type_size,bytes);
+  printf("name = %s  \n", name);
+
+  dat->data_d = (char*)malloc(sizeof(char)*bytes);
+  memcpy(dat->data_d, dat->data, size);
+  char *tmp = (char *)dat->data_d;
+  
+  #pragma omp target enter data map(to: tmp[0:bytes]) 
+  //#pragma omp target update to(tmp[0:bytes])
   return dat;
 }
 

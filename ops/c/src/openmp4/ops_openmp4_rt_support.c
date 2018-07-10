@@ -87,7 +87,7 @@ void ops_mvHostToDevice(void **map, int size) {
 void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   if (!OPS_hybrid_gpu)
     return;
-  //TODO jo igy? decl miatt kell az enter data elm.
+
   #pragma omp target enter data map(to: data_d[:size])
   #pragma omp target update to(data_d[:size])
 }
@@ -99,7 +99,7 @@ void ops_download_dat(ops_dat dat) {
   for (int i = 0; i < dat->block->dims; i++)
     tot = tot * dat->size[i];
   
-  #pragma omp target update from(dat->data[:tot])
+  #pragma omp target update from(dat->data_d[:tot])
 
   // printf("downloading to host from device %d bytes\n",bytes);
 
@@ -110,7 +110,7 @@ void ops_upload_dat(ops_dat dat) {
   int tot = 1;
   for (int i = 0; i < dat->block->dims; i++)
     tot = tot * dat->size[i];
-  #pragma omp target update to(dat->data[:tot])
+  #pragma omp target update to(dat->data_d[:tot])
 
 }
 
@@ -119,7 +119,7 @@ void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
   for (int n = 0; n < nargs; n++)
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       ops_download_dat(args[n].dat);
-      // printf("halo exchanges on host\n");
+      printf("halo exchanges on host\n");
       args[n].dat->dirty_hd = 0;
     }
 }
@@ -154,7 +154,7 @@ void ops_cuda_get_data(ops_dat dat) {
   int tot = 1;
   for (int i = 0; i < dat->block->dims; i++)
     tot = tot * dat->size[i];
-  #pragma omp target update from(dat->data[:tot])
+  #pragma omp target update from(dat->data_d[:tot])
 }
 
 //
@@ -183,7 +183,7 @@ void mvConstArraysToDevice(int consts_bytes) {
   else {
     OPS_gbl_changed = 0;
     OPS_gbl_prev = (char *)malloc(consts_bytes);
-    #pragma omp target enter data map(to: OPS_consts_h[0:consts_bytes]);
+    #pragma omp target enter data map(to: OPS_consts_h[0:consts_bytes])
     memcpy(OPS_gbl_prev, OPS_consts_h, consts_bytes);
   } 
 		
@@ -215,7 +215,7 @@ void ops_cuda_exit() {
     return;
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-    #pragma omp target exit data map(from: (item->dat)->data)
+    #pragma omp target exit data map(from: (item->dat)->data_d)
     (item->dat)->user_managed =1;
     free((item->dat)->data);
     free((char *)(item->dat)->name);

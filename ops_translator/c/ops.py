@@ -68,7 +68,7 @@ from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
-from ops_gen_mpi_openmp4_nocollapse import ops_gen_mpi_openmp4
+from ops_gen_mpi_openmp4_nocollapse_merged import ops_gen_mpi_openmp4
 
 import util
 
