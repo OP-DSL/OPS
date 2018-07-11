@@ -98,6 +98,9 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 echo "All Intel complied applications PASSED"
 
+#cleanup
+rm integers.txt*
+
 cd -
 source ../../scripts/source_pgi_15.10
 
@@ -216,6 +219,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
+#cleanup
+rm integers.txt*
 
 echo "All PGI complied applications PASSED "
 echo "All Tests PASSED : Exiting Test Script "

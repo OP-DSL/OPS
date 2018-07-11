@@ -138,7 +138,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 rm perf_out
 
-echo "All Intel complied applications PASSED : Exiting Test Script "
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 #exit
 
 cd -

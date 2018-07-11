@@ -5,7 +5,9 @@ source ../../scripts/source_intel
 make
 cd -
 ../../../ops_translator/c/ops.py multidim.cpp
+make clean
 make
+
 #============================ Test multidim with Intel Compilers ==========================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
@@ -98,6 +100,10 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+#cleanup
+rm multidim.dat*
+
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 
 cd -
@@ -216,3 +222,9 @@ grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+#cleanup
+rm multidim.dat*
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
+
