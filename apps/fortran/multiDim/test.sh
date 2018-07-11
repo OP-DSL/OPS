@@ -1,10 +1,14 @@
 #!/bin/bash
-
+set -e
 cd ../../../ops/fortran
-source ../source_intel
+source ../../scripts/source_intel
+make clean
 make
 cd -
-../../../ops_translator/fortran/ops_fortran.py multidim.F90
+pwd
+make clean
+rm -f .generated
+make
 make
 #<<COMMENT
 echo '============================ Test MultiDim Intel Compilers=========================================================='
@@ -33,12 +37,16 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 #COMMENT
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/source_pgi_15.10
 make
 cd -
+make clean
 make
+make
+
 echo '============================ Test MultiDim PGI Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
@@ -87,3 +95,6 @@ grep "Max total runtime" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
+
