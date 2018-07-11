@@ -1,11 +1,15 @@
 #!/bin/bash
-
+set -e
 cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/fortran/ops_fortran.py poisson.F90
-make
+#../../../ops_translator/fortran/ops_fortran.py poisson.F90
+make clean
+rm -f .generated
+make 
+make 
+
 echo '============================ Test Poisson Intel Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
@@ -71,7 +75,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./numawrap2 ./poisson_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./poisson_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out
