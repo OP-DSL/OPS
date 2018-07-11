@@ -121,6 +121,9 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+
 cd -
 source ../../scripts/source_pgi_15.10
 
@@ -261,3 +264,7 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+
