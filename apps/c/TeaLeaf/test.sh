@@ -6,7 +6,7 @@ make
 cd -
 ./generate.sh
 make clean
-make
+make IEEE=1
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
 #<<COMMENT
@@ -140,7 +140,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
 
-echo "All Intel complied applications PASSED : Exiting Test Script "
+echo "All Intel complied applications PASSED : Moving on to PGI compiler tests "
 #exit
 
 #COMMENT
@@ -151,7 +151,7 @@ make clean
 make
 cd -
 make clean
-make
+make IEEE=1
 
 
 #============================ Test Cloverleaf 2D With PGI Compilers==========================================================
