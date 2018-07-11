@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
