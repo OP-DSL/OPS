@@ -327,3 +327,54 @@ void getIdx(ops_block block, int *start, int *idx) {
     idx[n] = start[n];
   }
 }
+
+
+int ops_dat_get_local_npartitions(ops_dat dat) {
+  return 1;
+}
+
+void ops_dat_get_local_extents(ops_dat dat, int part, int *sizes) {
+  for (int d = 0; d < dat->block->dims; d++)
+    sizes[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+}
+
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
+  ops_get_data(dat);
+  if (stride != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      stride[d] = dat->size[d];
+  return dat->data + dat->base_offset;
+}
+void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
+  dat->dirty_hd = 1;
+}
+
+void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
+  ops_get_data(dat);
+  int lsize[OPS_MAX_DIM] = {0};
+  ops_dat_get_local_extents(dat, part, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             &dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
+             lsize[0]);
+}
+void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  int lsize[OPS_MAX_DIM] = {0};
+  ops_dat_get_local_extents(dat, part, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
+             &data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             lsize[0]);
+
+  dat->dirty_hd = 1;
+}
