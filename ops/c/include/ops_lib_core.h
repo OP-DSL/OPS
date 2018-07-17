@@ -462,6 +462,16 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 int ops_get_proc();
 int ops_num_procs();
 
+/*******************************************************************************
+* External access support
+*******************************************************************************/
+int ops_dat_get_local_npartitions(ops_dat dat);
+void ops_dat_get_local_extents(ops_dat dat, int part, int *sizes);
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride);
+void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
+void ops_dat_fetch_data(ops_dat dat, int part, char *data);
+void ops_dat_set_data(ops_dat dat, int part, char *data);
+
 #ifdef __cplusplus
 }
 #endif
