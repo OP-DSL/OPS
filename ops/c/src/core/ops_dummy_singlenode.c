@@ -346,7 +346,8 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *s
   return dat->data + dat->base_offset;
 }
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
-  dat->dirty_hd = 1;
+  if (acc != OPS_READ)
+    dat->dirty_hd = 1;
 }
 
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
