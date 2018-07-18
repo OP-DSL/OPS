@@ -296,3 +296,62 @@ void ops_halo_transfer(ops_halo_group group) {
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
+
+#include <curand.h>
+curandGenerator_t ops_rand_gen;
+int curand_initialised = 0;
+#define CURAND_SAFE_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
+    printf("Error at %s:%d\n",__FILE__,__LINE__);\
+    exit(EXIT_FAILURE);}} while(0)
+
+// Random number generation
+void ops_random_init(unsigned int seed, int options) {
+  /* Create pseudo-random number generator */
+  CURAND_SAFE_CALL(curandCreateGenerator(&ops_rand_gen, CURAND_RNG_PSEUDO_DEFAULT));
+  /* Set seed */
+  CURAND_SAFE_CALL(curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed));
+  curand_initialised = 1;
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  size_t cumsize = dat->dim;
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize*= dat->size[d];
+  }
+
+  if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+      strcmp(dat->type, "double precision") == 0) {
+    CURAND_SAFE_CALL(curandGenerateUniformDouble(ops_rand_gen, (double *)dat->data_d, cumsize));
+  } else if (strcmp(dat->type, "float") == 0 ||
+      strcmp(dat->type, "real") == 0) {
+    CURAND_SAFE_CALL(curandGenerateUniform(ops_rand_gen, (float *)dat->data_d, cumsize));
+  } else if (strcmp(dat->type, "int") == 0 ||
+      strcmp(dat->type, "integer") == 0 ||
+      strcmp(dat->type, "integer(4)") == 0 ||
+      strcmp(dat->type, "int(4)") == 0) {
+    CURAND_SAFE_CALL(curandGenerate(ops_rand_gen, (unsigned int *)dat->data_d, cumsize));
+  } else {
+    printf("Error: uniform random generation unimplemented fo type %s in CUDA\n", dat->type);
+    exit(2);
+  }
+  dat->dirty_hd = 2;
+}
+void ops_fill_random_normal(ops_dat dat) {
+  size_t cumsize = 1;
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize*= dat->size[d];
+  }
+  for (int i =0 ; i < cumsize; i++) {
+    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+        strcmp(dat->type, "double precision") == 0) {
+      CURAND_SAFE_CALL(curandGenerateNormalDouble(ops_rand_gen, (double *)dat->data_d, cumsize, 0.0, 1.0));
+    } else if (strcmp(dat->type, "float") == 0 ||
+        strcmp(dat->type, "real") == 0) {
+      CURAND_SAFE_CALL(curandGenerateNormal(ops_rand_gen, (float *)dat->data_d, cumsize, 0.0f, 1.0f));
+    } else {
+      printf("Error: normal random generation unimplemented fo type %s in CUDA\n", dat->type);
+      exit(2);
+    }
+  }
+  dat->dirty_hd = 2;
+}

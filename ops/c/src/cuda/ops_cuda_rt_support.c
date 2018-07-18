@@ -277,6 +277,12 @@ void mvReductArraysToHost(int reduct_bytes) {
   cutilSafeCall(cudaDeviceSynchronize());
 }
 
+#include <curand.h>
+#define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
+    printf("Error at %s:%d\n",__FILE__,__LINE__);\
+    exit(EXIT_FAILURE);}} while(0)
+extern curandGenerator_t ops_rand_gen;
+extern int curand_initialised;
 void ops_cuda_exit() {
   if (!OPS_hybrid_gpu)
     return;
@@ -284,6 +290,8 @@ void ops_cuda_exit() {
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
-
+  if (curand_initialised) {
+        CURAND_CALL(curandDestroyGenerator(ops_rand_gen));
+  }
 //  cudaDeviceReset();
 }

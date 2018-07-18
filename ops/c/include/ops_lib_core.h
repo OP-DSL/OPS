@@ -462,6 +462,12 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 int ops_get_proc();
 int ops_num_procs();
 
+
+// Random number generation
+void ops_random_init(unsigned int seed, int options);
+void ops_fill_random_uniform(ops_dat dat);
+void ops_fill_random_normal(ops_dat dat);
+
 #ifdef __cplusplus
 }
 #endif

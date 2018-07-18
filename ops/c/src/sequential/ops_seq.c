@@ -307,3 +307,39 @@ void ops_download_dat(ops_dat dat) { (void)dat; }
 void ops_upload_dat(ops_dat dat) { (void)dat; }
 
 void ops_timers(double *cpu, double *et) { ops_timers_core(cpu, et); }
+
+
+void ops_random_init(unsigned int seed, int options) {
+  srand(seed);
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  size_t cumsize = dat->dim;
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize*= dat->size[d];
+  }
+
+  for (int i =0 ; i < cumsize; i++) {
+    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+        strcmp(dat->type, "double precision") == 0) {
+      ((double *)dat->data)[i] = (double)rand()/(double)RAND_MAX;
+    } else if (strcmp(dat->type, "float") == 0 ||
+        strcmp(dat->type, "real") == 0) {
+      ((float *)dat->data)[i] = (float)rand()/(float)RAND_MAX;
+    } else if (strcmp(dat->type, "int") == 0 ||
+        strcmp(dat->type, "integer") == 0 ||
+        strcmp(dat->type, "integer(4)") == 0 ||
+        strcmp(dat->type, "int(4)") == 0) {
+      ((int *)dat->data)[i] = rand();
+    } else {
+      printf("Error: uniform random generation unimplemented fo type %s in sequential backend\n", dat->type);
+      exit(2);
+    }
+  }
+  dat->dirty_hd = 1;
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  printf("Error, normal distribution random generation is not supported in the sequential backend without c++11\n");
+  exit(-1);
+}
