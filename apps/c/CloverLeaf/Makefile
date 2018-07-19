@@ -26,7 +26,7 @@ endif
 endif
 
 HDF5_INC             := -I/usr/include/hdf5/openmpi/
-HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5_hl -lhdf5 -lz
+HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5_hl -lhdf5 -lz
 
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++
@@ -115,11 +115,14 @@ endif
 else
 ifeq ($(OPS_COMPILER),clang)
 CPP           = clang++
+#OPENMP4       = -ffast-math -fopenmp=libomp -Rpass-analysis -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-nonaliased-maps -ffp-contract=fast #-Xcuda-ptxas -maxrregcount=43
 ifdef DEBUG
 CPPFLAGS      = -O0 -g -DUNIX -Wall
 else
-CPPFLAGS      = -O3 -DUNIX -Wall #-O0 -g -DUNIX -Wall
+CPPFLAGS      = -O3 -DUNIX -Wall -Xptxas -v # -save-temps #-O0 -g -DUNIX -Wall
 endif
+OMPFLAGS      = -I$(OMPTARGET_LIBS)/../tools/openmp/runtime/src/ -fopenmp=libomp -Rpass-analysis
+OMPOFFLOAD    = -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-nonaliased-maps -ffp-contract=fast -Xcuda-ptxas -v #-Xclang -target-feature -Xclang +ptx35
 MPICPP        = $(MPI_INSTALL_PATH)/bin/mpiCC
 MPIFLAGS      = $(CPPFLAGS)
 else
@@ -333,21 +336,20 @@ openmp4_c_obj_list = $(shell find ./OpenMP4/ -name "*_c.c" | sed s/\\.c/\\.o/g |
 		-I. OpenACC/$*.cpp -c -o OpenACC/$*.o
 
 ./OpenMP4/clover_leaf_kernels.o: ./OpenMP4/clover_leaf_kernels.cpp ./OpenMP4/clover_leaf_common.h Makefile
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_MPI -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) $(CPPFLAGS) $(OMPFLAGS) $(OMPOFFLOAD) $(OMP4_REG_COUNT) -DOPS_MPI -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
 		-I. OpenMP4/clover_leaf_kernels.cpp -c -o OpenMP4/clover_leaf_kernels.o
 
 ./OpenMP4/%.o: ./OpenMP4/%.cpp ./OpenMP4/%_c.c ./OpenMP4/clover_leaf_common.h Makefile
 		@echo "Compiling kernel" $*
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
-		-I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
-		$(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(HDF5_INC) $(CUDA_INC) \
+		$(MPICPP) $(CPPFLAGS) $(OMPFLAGS) $(OMPOFFLOAD) $(OMP4_REG_COUNT) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
+                -I. OpenMP4/$*_c.c -c -o OpenMP4/$*_c.o
+		$(MPICPP) $(CPPFLAGS) $(OMPFLAGS) $(OMPOFFLOAD) $(OMP4_REG_COUNT) -DOPS_GPU $(CUDA_ALIGN_FLAG) $(OPS_INC) $(CUDA_INC) \
 		-I. OpenMP4/$*.cpp -c -o OpenMP4/$*.o
 
 cloverleaf_openmp4: $(openmp4_obj_list) $(OPS_FILES_GEN) \
-                $(HEADERS) Makefile 
-	        $(MPICPP) -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda $(MPIFLAGS) -DOMPTARGET_DEBUG  -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) \
-		$(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcudart -lops_openmp4 $(HDF5_LIB) -o cloverleaf_openmp4
-
+		$(HEADERS) Makefile
+		$(MPICPP) $(OMPFLAGS) $(OMPOFFLOAD) $(OMP4_REG_COUNT) -DOPS_GPU $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB)\
+		$(OPS_FILES_GEN) -I. $(openmp4_obj_list) -lcuda  -lcudart -lops_openmp4 -o cloverleaf_openmp4
 
 cloverleaf_openacc: $(openacc_obj_list) $(OPS_FILES_GEN) \
                 $(HEADERS) Makefile $(OPS_INSTALL_PATH)/lib/libops_cuda.a
@@ -388,4 +390,4 @@ openacc_error:
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled  cloverleaf_mpi_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_openmp4 cloverleaf_mpi_openmp cloverleaf_mpi_inline cloverleaf_tiled  cloverleaf_mpi_tiled cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenMP4/*.o ./OpenACC/*.o *.o ./MPI_inline/*.o cloverleaf_opencl cloverleaf_mpi_opencl ./OpenCL/*.o *.lst *.optrpt

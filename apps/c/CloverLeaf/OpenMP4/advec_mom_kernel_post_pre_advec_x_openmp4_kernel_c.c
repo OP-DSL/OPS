@@ -41,11 +41,13 @@ void advec_mom_kernel_post_pre_advec_x_c_wrapper(double *p_a0, double *p_a1,
                                                  int y_size) {
 #ifdef OPS_GPU
 
-#pragma omp target teams distribute parallel for schedule(static, 1)
+#pragma omp target teams distribute parallel for
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-    int n_x = i % x_size;
-    int n_y = i / x_size;
+    const int id =
+        omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();
+    const int n_x = id % x_size;
+    const int n_y = id / x_size;
     double *node_mass_post = p_a0;
 
     const double *post_vol = p_a1;

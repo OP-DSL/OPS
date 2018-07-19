@@ -101,9 +101,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data);
+  double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
-  double *p_a0 = (double *)((char *)args[0].data + base0);
+  double *p_a0 = (double *)((char *)args[0].data);
 #endif
 
   int base1 = args[1].dat->base_offset +
@@ -112,9 +112,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data);
+  double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
-  double *p_a1 = (double *)((char *)args[1].data + base1);
+  double *p_a1 = (double *)((char *)args[1].data);
 #endif
 
   int base2 = args[2].dat->base_offset +
@@ -123,9 +123,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
           args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
               args[2].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data);
+  double *p_a2 = (double *)((char *)args[2].data_d + base2);
 #else
-  double *p_a2 = (double *)((char *)args[2].data + base2);
+  double *p_a2 = (double *)((char *)args[2].data);
 #endif
 
 #ifdef OPS_GPU
@@ -133,8 +133,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 3);
@@ -143,8 +142,7 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 3);
@@ -152,19 +150,16 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name,
   ops_halo_exchanges(args, 3, range);
 
 #ifdef OPS_GPU
-// ops_H_D_exchanges_device(args, 3);
+  ops_H_D_exchanges_device(args, 3);
 #else
-// ops_H_D_exchanges_host(args, 3);
+  ops_H_D_exchanges_host(args, 3);
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[13].mpi_time += t2 - t1;
   }
 
-  initialise_chunk_kernel_celly_c_wrapper(
-      p_a0, base0 / args[0].dat->elem_size, tot0, p_a1,
-      base1 / args[1].dat->elem_size, tot1, p_a2,
-      base2 / args[2].dat->elem_size, tot2, x_size, y_size);
+  initialise_chunk_kernel_celly_c_wrapper(p_a0, p_a1, p_a2, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

@@ -20,12 +20,14 @@ void initialise_chunk_kernel_yy_c_wrapper(int *p_a0, int *p_a1, int arg_idx0,
                                           int y_size) {
 #ifdef OPS_GPU
 
-#pragma omp target teams distribute parallel for schedule(static, 1)
+#pragma omp target teams distribute parallel for
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-    int arg_idx[] = {arg_idx0 + i % x_size, arg_idx1 + i / x_size};
-    int n_x = i % x_size;
-    int n_y = i / x_size;
+    const int id =
+        omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();
+    const int n_x = id % x_size;
+    const int n_y = id / x_size;
+    int arg_idx[] = {arg_idx0 + n_x, arg_idx1 + n_y};
     int *yy = p_a0;
 
     int *idx = arg_idx;

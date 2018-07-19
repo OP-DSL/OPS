@@ -20,12 +20,14 @@ void calc_dt_kernel_min_c_wrapper(double *p_a0, double *p_a1, int x_size,
   double p_a1_0 = p_a1[0];
 #ifdef OPS_GPU
 
-#pragma omp target teams distribute parallel for schedule(static, 1) map(      \
-    tofrom : p_a1_0) reduction(min : p_a1_0)
+#pragma omp target teams distribute parallel for map(tofrom : p_a1_0)          \
+    reduction(min : p_a1_0)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-    int n_x = i % x_size;
-    int n_y = i / x_size;
+    const int id =
+        omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();
+    const int n_x = id % x_size;
+    const int n_y = id / x_size;
     const double *dt_min = p_a0;
 
     double *dt_min_val = &p_a1_0;

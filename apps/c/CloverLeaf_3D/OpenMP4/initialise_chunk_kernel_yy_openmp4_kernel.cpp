@@ -103,9 +103,9 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block,
           args[0].dat->elem_size * args[0].dat->size[0] * args[0].dat->size[1] *
               start[2] * args[0].stencil->stride[2];
 #ifdef OPS_GPU
-  int *p_a0 = (int *)((char *)args[0].data);
+  int *p_a0 = (int *)((char *)args[0].data_d + base0);
 #else
-  int *p_a0 = (int *)((char *)args[0].data + base0);
+  int *p_a0 = (int *)((char *)args[0].data);
 #endif
 
   int *p_a1 = NULL;
@@ -115,8 +115,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 2);
@@ -125,8 +124,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 2);
@@ -134,17 +132,16 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block,
   ops_halo_exchanges(args, 2, range);
 
 #ifdef OPS_GPU
-// ops_H_D_exchanges_device(args, 2);
+  ops_H_D_exchanges_device(args, 2);
 #else
-// ops_H_D_exchanges_host(args, 2);
+  ops_H_D_exchanges_host(args, 2);
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
     OPS_kernels[47].mpi_time += t2 - t1;
   }
 
-  initialise_chunk_kernel_yy_c_wrapper(p_a0, base0 / args[0].dat->elem_size,
-                                       tot0, p_a1, arg_idx[0], arg_idx[1],
+  initialise_chunk_kernel_yy_c_wrapper(p_a0, p_a1, arg_idx[0], arg_idx[1],
                                        arg_idx[2], x_size, y_size, z_size);
 
   if (OPS_diags > 1) {

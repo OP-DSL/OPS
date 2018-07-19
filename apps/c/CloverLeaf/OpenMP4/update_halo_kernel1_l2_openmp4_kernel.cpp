@@ -147,7 +147,7 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
   for (int d = 0; d < NUM_FIELDS; d++)
     ((int *)args[7].data)[d] = arg7h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS * sizeof(int));
-  mvConstArraysToDevice(consts_bytes);
+  mvConstArraysToDevice(OPS_consts_bytes);
 #endif // OPS_GPU
 
   // set up initial pointers
@@ -157,9 +157,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[0].dat->elem_size * args[0].dat->size[0] * start[1] *
               args[0].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a0 = (double *)((char *)args[0].data + base0);
+  double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else
-  double *p_a0 = (double *)((char *)args[0].data + base0);
+  double *p_a0 = (double *)((char *)args[0].data);
 #endif
 
   int base1 = args[1].dat->base_offset +
@@ -168,9 +168,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[1].dat->elem_size * args[1].dat->size[0] * start[1] *
               args[1].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a1 = (double *)((char *)args[1].data + base1);
+  double *p_a1 = (double *)((char *)args[1].data_d + base1);
 #else
-  double *p_a1 = (double *)((char *)args[1].data + base1);
+  double *p_a1 = (double *)((char *)args[1].data);
 #endif
 
   int base2 = args[2].dat->base_offset +
@@ -179,9 +179,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[2].dat->elem_size * args[2].dat->size[0] * start[1] *
               args[2].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a2 = (double *)((char *)args[2].data + base2);
+  double *p_a2 = (double *)((char *)args[2].data_d + base2);
 #else
-  double *p_a2 = (double *)((char *)args[2].data + base2);
+  double *p_a2 = (double *)((char *)args[2].data);
 #endif
 
   int base3 = args[3].dat->base_offset +
@@ -190,9 +190,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[3].dat->elem_size * args[3].dat->size[0] * start[1] *
               args[3].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a3 = (double *)((char *)args[3].data + base3);
+  double *p_a3 = (double *)((char *)args[3].data_d + base3);
 #else
-  double *p_a3 = (double *)((char *)args[3].data + base3);
+  double *p_a3 = (double *)((char *)args[3].data);
 #endif
 
   int base4 = args[4].dat->base_offset +
@@ -201,9 +201,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[4].dat->elem_size * args[4].dat->size[0] * start[1] *
               args[4].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a4 = (double *)((char *)args[4].data + base4);
+  double *p_a4 = (double *)((char *)args[4].data_d + base4);
 #else
-  double *p_a4 = (double *)((char *)args[4].data + base4);
+  double *p_a4 = (double *)((char *)args[4].data);
 #endif
 
   int base5 = args[5].dat->base_offset +
@@ -212,9 +212,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[5].dat->elem_size * args[5].dat->size[0] * start[1] *
               args[5].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a5 = (double *)((char *)args[5].data + base5);
+  double *p_a5 = (double *)((char *)args[5].data_d + base5);
 #else
-  double *p_a5 = (double *)((char *)args[5].data + base5);
+  double *p_a5 = (double *)((char *)args[5].data);
 #endif
 
   int base6 = args[6].dat->base_offset +
@@ -223,9 +223,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
           args[6].dat->elem_size * args[6].dat->size[0] * start[1] *
               args[6].stencil->stride[1];
 #ifdef OPS_GPU
-  double *p_a6 = (double *)((char *)args[6].data + base6);
+  double *p_a6 = (double *)((char *)args[6].data_d + base6);
 #else
-  double *p_a6 = (double *)((char *)args[6].data + base6);
+  double *p_a6 = (double *)((char *)args[6].data);
 #endif
 
 #ifdef OPS_GPU
@@ -239,8 +239,7 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update to(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_device(args, 8);
@@ -249,8 +248,7 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       int size = 1;
       for (int i = 0; i < args[n].dat->block->dims; i++)
-        size += size * args[n].dat->size[i];
-#pragma omp target update from(args[n].dat->data[0 : size])
+        size = size * args[n].dat->size[i];
       args[n].dat->dirty_hd = 0;
     }
 // ops_H_D_exchanges_host(args, 8);
@@ -258,9 +256,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
   ops_halo_exchanges(args, 8, range);
 
 #ifdef OPS_GPU
-// ops_H_D_exchanges_device(args, 8);
+  ops_H_D_exchanges_device(args, 8);
 #else
-// ops_H_D_exchanges_host(args, 8);
+  ops_H_D_exchanges_host(args, 8);
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
@@ -268,7 +266,7 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
   }
 
   update_halo_kernel1_l2_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6,
-                                   p_a7, x_size, y_size);
+                                   p_a7, NUM_FIELDS, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);

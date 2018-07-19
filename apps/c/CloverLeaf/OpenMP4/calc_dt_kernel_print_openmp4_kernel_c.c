@@ -55,12 +55,12 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
   double p_a6_11 = p_a6[11];
 #ifdef OPS_GPU
 
-#pragma omp target teams distribute parallel for schedule(static, 1) map(      \
-    tofrom : p_a6_11) reduction(+ : p_a6_0) reduction(+ : p_a6_1) reduction(   \
-    + : p_a6_2) reduction(+ : p_a6_3) reduction(+ : p_a6_4) reduction(         \
-        + : p_a6_5) reduction(+ : p_a6_6) reduction(+ : p_a6_7) reduction(     \
-            + : p_a6_8) reduction(+ : p_a6_9) reduction(                       \
-                + : p_a6_10) reduction(+ : p_a6_11)
+#pragma omp target teams distribute parallel for map(tofrom : p_a6_11)         \
+    reduction(+ : p_a6_0) reduction(+ : p_a6_1) reduction(                     \
+        + : p_a6_2) reduction(+ : p_a6_3) reduction(+ : p_a6_4) reduction(     \
+            + : p_a6_5) reduction(+ : p_a6_6) reduction(+ : p_a6_7) reduction( \
+                + : p_a6_8) reduction(+ : p_a6_9) reduction(                   \
+                    + : p_a6_10) reduction(+ : p_a6_11)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
     double p_a6_local[12];
@@ -76,8 +76,10 @@ void calc_dt_kernel_print_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
     p_a6_local[9] = ZERO_double;
     p_a6_local[10] = ZERO_double;
     p_a6_local[11] = ZERO_double;
-    int n_x = i % x_size;
-    int n_y = i / x_size;
+    const int id =
+        omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();
+    const int n_x = id % x_size;
+    const int n_y = id / x_size;
     const double *xvel0 = p_a0;
 
     const double *yvel0 = p_a1;

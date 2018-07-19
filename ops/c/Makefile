@@ -271,10 +271,10 @@ mpi_opencl: mklib opencl $(OBJ)/ops_opencl_rt_support.o
 openmp4: mklib core $(SRC)/openmp4/ops_openmp4_decl.c \
 	$(SRC)/openmp4/ops_openmp4_rt_support.c $(OBJ)/ops_lib_core.o
 
-	$(CXX) $(CCFLAGS) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(OMP4FLAGS) -I$(INC) \
+	$(CXX) $(CXXFLAGS) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(OMP4FLAGS) -I$(INC) \
 	-c $(SRC)/openmp4/ops_openmp4_decl.c -o $(OBJ)/ops_openmp4_decl.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
-	$(CXX) $(CCFLAGS) $(OMP4FLAGS) -I$(INC) -c $(SRC)/openmp4/ops_openmp4_rt_support.c \
+	$(CXX) $(CXXFLAGS) $(OMP4FLAGS) -I$(INC) -c $(SRC)/openmp4/ops_openmp4_rt_support.c \
 	-o $(OBJ)/ops_openmp4_rt_support.o
 #	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/op_rt_support.c -o $(OBJ)/op_rt_support.o
 #	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o $(OBJ)/ops_mpi_rt_support_cuda.o -I/usr/lib/openmpi/include

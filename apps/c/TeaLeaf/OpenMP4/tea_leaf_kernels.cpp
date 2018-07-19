@@ -3,22 +3,31 @@
 
 #include "./OpenMP4/tea_leaf_common.h"
 
+void ops_init_backend() {}
+
 void ops_decl_const_char(int dim, char const *type, int size, char *dat,
                          char const *name) {
   if (!strcmp(name, "field")) {
     field = *(field_type *)dat;
+#pragma omp target enter data map(to : field)
   } else if (!strcmp(name, "grid")) {
     grid = *(grid_type *)dat;
+#pragma omp target enter data map(to : grid)
   } else if (!strcmp(name, "number_of_states")) {
     number_of_states = *(int *)dat;
+#pragma omp target enter data map(to : number_of_states)
   } else if (!strcmp(name, "states")) {
     states = (state_type *)dat;
+#pragma omp target enter data map(to : states[0 : number_of_states])
   } else if (!strcmp(name, "g_circ")) {
     g_circ = *(int *)dat;
+#pragma omp target enter data map(to : g_circ)
   } else if (!strcmp(name, "g_point")) {
     g_point = *(int *)dat;
+#pragma omp target enter data map(to : g_point)
   } else if (!strcmp(name, "g_rect")) {
     g_rect = *(int *)dat;
+#pragma omp target enter data map(to : g_rect)
   } else {
     printf("error: unknown const name\n");
     exit(1);

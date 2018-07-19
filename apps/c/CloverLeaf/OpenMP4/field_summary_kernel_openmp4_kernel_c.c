@@ -52,15 +52,17 @@ void field_summary_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
   double p_a10_0 = p_a10[0];
 #ifdef OPS_GPU
 
-#pragma omp target teams distribute parallel for schedule(                     \
-    static, 1) map(tofrom : p_a6_0) map(tofrom : p_a7_0) map(tofrom : p_a8_0)  \
-        map(tofrom : p_a9_0) map(tofrom : p_a10_0)                             \
+#pragma omp target teams distribute parallel for map(tofrom : p_a6_0)          \
+    map(tofrom : p_a7_0) map(tofrom : p_a8_0) map(tofrom : p_a9_0)             \
+        map(tofrom : p_a10_0)                                                  \
             reduction(+ : p_a6_0) reduction(+ : p_a7_0) reduction(             \
                 + : p_a8_0) reduction(+ : p_a9_0) reduction(+ : p_a10_0)
 #endif
   for (int i = 0; i < y_size * x_size; i++) {
-    int n_x = i % x_size;
-    int n_y = i / x_size;
+    const int id =
+        omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();
+    const int n_x = id % x_size;
+    const int n_y = id / x_size;
     const double *volume = p_a0;
 
     const double *density0 = p_a1;
