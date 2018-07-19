@@ -25,8 +25,8 @@ ifdef CHECKPOINTING
 endif
 endif
 
-HDF5_INC             := -I/usr/include/hdf5/openmpi/
-HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5_hl -lhdf5 -lz
+#HDF5_INC             := -I/usr/include/hdf5/openmpi/
+#HDF5_LIB             := -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5_hl -lhdf5 -lz
 
 ifeq ($(OPS_COMPILER),gnu)
   CPP		= g++
