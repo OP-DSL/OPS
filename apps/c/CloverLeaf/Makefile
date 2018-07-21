@@ -113,10 +113,24 @@ endif
   MPICC     = mpixlc
   MPIFLAGS  = $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),xl)
+  CPP       = xlc++
+ifdef DEBUG
+  CCFLAGS   = -O2 -g
+else
+  CCFLAGS   = -O3 -qmaxmem=-1 -qnoxlcompatmacros  -qarch=pwr8 -qtune=pwr8 -qhot -qxflag=nrcptpo -qinline=level=10 -Wx,-nvvm-compile-options=-ftz=1 -Wx,-nvvm-compile-options=-prec-div=0 -Wx,-nvvm-compile-options=-prec-sqrt=0
+endif
+  CPPFLAGS  = $(CCFLAGS)
+  OMPFLAGS  = -qsmp=omp -qthreaded
+  OMPOFFLOAD = -qmaxmem=-1 -qoffload -Xptxas -v
+  MPICPP    = mpic++
+  MPICC     = mpicc
+  MPIFLAGS  = $(CPPFLAGS)
+else
 ifeq ($(OPS_COMPILER),clang)
 CPP           = clang++
 #OPENMP4       = -ffast-math -fopenmp=libomp -Rpass-analysis -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-nonaliased-maps -ffp-contract=fast #-Xcuda-ptxas -maxrregcount=43
-ifdef DEBUG
+ifdef DEBUGi
 CPPFLAGS      = -O0 -g -DUNIX -Wall
 else
 CPPFLAGS      = -O3 -DUNIX -Wall -Xptxas -v # -save-temps #-O0 -g -DUNIX -Wall
@@ -128,6 +142,7 @@ MPIFLAGS      = $(CPPFLAGS)
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

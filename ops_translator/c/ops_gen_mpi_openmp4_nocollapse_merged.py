@@ -288,7 +288,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
           code('int tot'+ str(n)+',')
         if compiler == "xl":
           if arg_typ[n] == 'ops_arg_dat':
-	    code('int base'+ str(n)+',')
+	    #code('int base'+ str(n)+',')
             code('int tot'+ str(n)+','+'int base'+ str(n)+',')
 
     if arg_idx:
@@ -566,7 +566,8 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 
     #text = text +' int n_x= module(i,x_size);'
     #text = text+'const int blocksize =  omp_get_num_threads();\n'
-    text = text+'const int id = omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();\n'
+    if compiler == "clang":
+      text = text+'const int id = omp_get_num_threads() * omp_get_team_num() + omp_get_thread_num();\n'
     #text = text+' int n_y = 0;\n'
     #text = text+'int n_x = id % x_size;\n'
     #text = text+'while(id >= x_size){ id -= x_size; ++n_y;}\n'
@@ -574,18 +575,28 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 
     #text = text+'if(id < x_size*y_size) {'
     #text = text+'if( omp_get_team_num() < y_size && omp_get_thread_num()< x_size ) {'
-    text = text +'const int n_x= id%x_size;'
+    if compiler == "clang":
+      text = text +'const int n_x= id%x_size;'
+    if compiler == "xl":
+      text = text +'const int n_x= i%x_size;'
     #text = text +'const int n_x= i%x_size;'
     #text = text +' int n_x= omp_get_thread_num();'
     #text = text + 'int n_x = i%x_size;'
     if NDIM == 2:
-      text = text +'const int n_y= id/x_size;'
+      if compiler == "clang":
+        text = text +'const int n_x= id%x_size;'
+      if compiler == "xl":
+        text = text +'const int n_y= i/x_size;'
       #text = text +'const int n_y= i/x_size;'
       #text = text +' int n_y= omp_get_team_num();'
       #text = text +' int n_y= i/x_size;'# //omp_get_thread_num();'
     if NDIM == 3:
-      text = text +'const int n_y= (id/x_size)%y_size;'
-      text = text +'const int n_z= id/(x_size*y_size);'
+      if compiler == "clang":
+        text = text +'const int n_y= (id/x_size)%y_size;'
+        text = text +'const int n_z= id/(x_size*y_size);'
+      if compiler == "xl":
+        text = text +'const int n_y= (i/x_size)%y_size;'
+        text = text +'const int n_z= i/(x_size*y_size);'
     if arg_idx:
       if NDIM==1:
         text = text +'int arg_idx[] = {arg_idx0+n_x};'
@@ -610,7 +621,11 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
           #' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         elif NDIM == 3:
           #text = text +' p_a'+str(n)+'+ base'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-          text = text +' p_a'+str(n) #+ 'n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          if compiler == "xl":
+            text = text +' p_a'+str(n) +'+ base'+str(n)#+'+ n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
+          if compiler == "clang":
+            text = text +' p_a'+str(n)
+          #text = text +' p_a'+str(n) #+ 'n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
           #text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -1075,7 +1090,7 @@ def ops_gen_mpi_openmp4(master, date, consts, kernels):
 	  code(str(dims[n])+',')
         if compiler == "xl": 
           if arg_typ[n] == 'ops_arg_dat':
-            code('base'+str(n)+'/args['+str(n)+'].dat->elem_size,')
+            #code('base'+str(n)+'/args['+str(n)+'].dat->elem_size,')
 	    code('tot'+str(n)+','+'base'+str(n)+'/args['+str(n)+'].dat->elem_size,')
     if arg_idx:
       if NDIM==1:

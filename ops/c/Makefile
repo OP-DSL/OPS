@@ -97,14 +97,15 @@ ifeq ($(OPS_COMPILER),cray) #Archer and Titan
   MPIFLAGS  := $(CXXFLAGS)
 else
 ifeq ($(OPS_COMPILER),xl) #for IBM BlueGene Q
-  CC        := mpixlc
+  CC        := xlc
   CUDA_ALIGNE_FLAG :=
-  CCFLAGS   := -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
-  CXX       := mpixlcxx
+  CCFLAGS   := -qarch=pwr8 -qtune=pwr8 -O3 -qhot #-O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
+  CXX       := xlc++
   CXXFLAGS  := $(CCFLAGS)
-  MPICXX    := mpixlcxx
-  MPICC     := mpixlc
+  MPICXX    := mpicxx
+  MPICC     := mpicc
   MPIFLAGS  := $(CXXFLAGS)
+  OMP4FLAGS := -qsmp=omp -qoffload
 else
 ifeq ($(OPS_COMPILER),xlp8) #for IBM Power8
   CC        := mpicc
