@@ -379,3 +379,14 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
 
   dat->dirty_hd = 1;
 }
+
+int ops_dat_get_global_npartitions(ops_dat dat) {
+  return 1;
+}
+
+void ops_dat_get_global_extents(ops_dat dat, int part, int *disp, int *size) {
+  for (int d = 0; d < dat->block->dims; d++) {
+    disp[d] = 0;
+    size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+  }
+}

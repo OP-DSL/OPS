@@ -1273,3 +1273,102 @@ void ops_halo_transfer(ops_halo_group group) {
   MPI_Waitall(mpi_group->num_neighbors_send, &mpi_group->requests[0],
               &mpi_group->statuses[0]);
 }
+
+void ops_force_halo_exchange(ops_dat dat, ops_stencil stencil) {
+  ops_arg arg = ops_arg_dat(dat, dat->dim, stencil, dat->type, OPS_READ);
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int range[2*OPS_MAX_DIM];
+  for (int i = 0; i < dat->block->dims; i++) {
+    range[2*i] = sd->gbl_base[i];
+    range[2*i+1] = sd->gbl_size[i];
+  }
+  ops_halo_exchanges(&arg, 1, range);
+}
+
+int ops_dat_get_local_npartitions(ops_dat dat) {
+  return 1;
+}
+
+void ops_dat_get_local_extents(ops_dat dat, int part, int *sizes) {
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  for (int d = 0; d < dat->block->dims; d++)
+    sizes[d] = dat->size[d] + dat->d_m[d] + sd->d_im[d] - dat->d_p[d] - sd->d_ip[d];
+}
+
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
+  ops_get_data(dat);
+  ops_force_halo_exchange(dat, stencil);
+  if (stride != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      stride[d] = dat->size[d];
+  return dat->data + dat->base_offset;
+}
+
+void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  if (acc != OPS_READ)
+  dat->dirty_hd = 1; 
+  sd->dirtybit = 1;
+  for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
+    sd->dirty_dir_send[i] = 1;
+    sd->dirty_dir_recv[i] = 1;
+  }
+}
+
+void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
+  ops_get_data(dat);
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int lsize[OPS_MAX_DIM] = {0};
+  ops_dat_get_local_extents(dat, part, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             &dat->data[((j-dat->d_m[1]-sd->d_im[1] + (k-dat->d_m[2]-sd->d_im[2])*dat->size[1])*dat->size[0] - dat->d_m[0] - sd->d_im[0])* dat->elem_size],
+             lsize[0]);
+}
+
+void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  int lsize[OPS_MAX_DIM] = {0};
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  ops_dat_get_local_extents(dat, part, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&dat->data[((j-dat->d_m[1]-sd->d_im[1] + (k-dat->d_m[2]-sd->d_im[2])*dat->size[1])*dat->size[0] - dat->d_m[0] - sd->d_im[0])* dat->elem_size],
+             &data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             lsize[0]);
+
+  dat->dirty_hd = 1;
+  sd->dirtybit = 1;
+  for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
+    sd->dirty_dir_send[i] = 1;
+    sd->dirty_dir_recv[i] = 1;
+  }
+}
+
+int ops_dat_get_global_npartitions(ops_dat dat) {
+  //TODO: lower-rank datasets?
+  int nranks = 0;
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  if (sb->owned)
+    MPI_Comm_size(sb->comm, &nranks);
+
+  return nranks;
+}
+
+void ops_dat_get_global_extents(ops_dat dat, int part, int *disp, int *size) {
+  //TODO: part?? local or global?
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  for (int d = 0; d < dat->block->dims; d++) {
+    disp[d] = sd->decomp_disp[d] - dat->d_m[d];
+    size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
+  }
+}
+
