@@ -1289,12 +1289,6 @@ int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }
 
-void ops_dat_get_local_extents(ops_dat dat, int part, int *sizes) {
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  for (int d = 0; d < dat->block->dims; d++)
-    sizes[d] = dat->size[d] + dat->d_m[d] + sd->d_im[d] - dat->d_p[d] - sd->d_ip[d];
-}
-
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
   ops_get_data(dat);
   ops_force_halo_exchange(dat, stencil);
@@ -1319,7 +1313,8 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {0};
-  ops_dat_get_local_extents(dat, part, lsize);
+  int ldisp[OPS_MAX_DIM] = {0};
+  ops_dat_get_extents(dat, part, ldisp, lsize);
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
@@ -1333,8 +1328,9 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
 
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
   int lsize[OPS_MAX_DIM] = {0};
+  int ldisp[OPS_MAX_DIM] = {0};
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  ops_dat_get_local_extents(dat, part, lsize);
+  ops_dat_get_extents(dat, part, ldisp, lsize);
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
@@ -1363,7 +1359,7 @@ int ops_dat_get_global_npartitions(ops_dat dat) {
   return nranks;
 }
 
-void ops_dat_get_global_extents(ops_dat dat, int part, int *disp, int *size) {
+void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   //TODO: part?? local or global?
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   for (int d = 0; d < dat->block->dims; d++) {
