@@ -466,13 +466,12 @@ int ops_num_procs();
 * External access support
 *******************************************************************************/
 int ops_dat_get_local_npartitions(ops_dat dat);
-void ops_dat_get_local_extents(ops_dat dat, int part, int *sizes);
+void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride);
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
 void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 void ops_dat_set_data(ops_dat dat, int part, char *data);
 int ops_dat_get_global_npartitions(ops_dat dat);
-void ops_dat_get_global_extents(ops_dat dat, int part, int *disp, int *size);
 
 #ifdef __cplusplus
 }

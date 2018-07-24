@@ -89,7 +89,7 @@ int main(int argc, char **argv)
                ops_arg_idx());
 
   int sizes[2], disp[2], strides[2];
-  ops_dat_get_global_extents(data0, 0, disp, sizes);
+  ops_dat_get_extents(data0, 0, disp, sizes);
   double *raw_data = (double*)ops_dat_get_raw_pointer(data0, 0, S2D_5pt, strides);
   //Insert some value at coordinates 10,10, reading neighbours
   if (10 >= disp[0] && 10 < disp[0]+sizes[0] &&
