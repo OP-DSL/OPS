@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
 ../../../ops_translator/c/ops.py poisson.cpp
 make clean
 make
+
 
 #============================ Test Poisson with Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -116,9 +118,10 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
-
 cd -
-source ../../scripts/source_pgi_15.10
+#COMMENT
+#source ../../scripts/source_pgi_18.4
+source ../../scripts/source_pgi_16.9
 
 make clean
 make
@@ -241,13 +244,13 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-#echo '============> Running MPI+OpenACC'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
+echo '============> Running MPI+OpenACC'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
 
 echo "All PGI complied applications PASSED : Exiting Test Script "
 
