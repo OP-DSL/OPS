@@ -15,7 +15,7 @@ FMODS_CUDA := -module $(F_INC_MOD)/cuda
 FFLAGS = $(CCFLAGS)
 OMPFLAGS := -mp
 CUDAFOR	= -DOPS_WITH_CUDAFOR
-OpenACCFLAGS = -acc
+OpenACCFLAGS = -acc -Minline
 CXXLINK := -pgc++libs
 
 ifdef IEEE
