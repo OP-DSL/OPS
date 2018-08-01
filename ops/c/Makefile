@@ -62,7 +62,7 @@ ifeq ($(OPS_COMPILER),mic)
 ifdef DEBUG
   CCFLAGS   := -O0 -g  -mmic
 else
-  CCFLAGS   := -O3 -vec-report -mmic -mcmodel=medium
+  CCFLAGS   := -O3 -xMIC-AVX512 #-mmic -mcmodel=medium
 endif
   CXX     := icpc
   CXXFLAGS  := $(CCFLAGS)
@@ -136,7 +136,7 @@ endif
 
 ifndef NV_ARCH
   MESSAGE=select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=KEPLER
-  NV_ARCH=Volta
+  NV_ARCH=Pascal
 endif
 ifeq ($(NV_ARCH),Fermi)
         NVCCFLAGS+=-gencode arch=compute_20,code=sm_21
