@@ -49,6 +49,8 @@
 #include <omp.h>
 #else
 
+  
+
 inline int omp_get_max_threads() {
   if (getenv("OMP_NUM_THREADS"))
     return atoi(getenv("OMP_NUM_THREADS"));
@@ -58,7 +60,8 @@ inline int omp_get_max_threads() {
 #endif
 
 cudaStream_t cpu_stream, gpu_stream;
-cudaEvent_t ev1, ev2;
+cudaEvent_t ev1, ev2, evKuki;
+cudaEvent_t indep_start_ev_d,indep_end_ev_d,dep_start_ev_d,dep_end_ev_d;
 
 extern "C" {
 long ops_get_base_index_dim(ops_dat dat, int dim);
@@ -117,9 +120,14 @@ void ops_hybrid_initialise() {
   ops_hybrid_gbl_split = max_size/4;
   ops_hybrid_initialised = true;
   cutilSafeCall(cudaStreamCreateWithFlags(&cpu_stream, cudaStreamNonBlocking));
-  cutilSafeCall(cudaStreamCreate(&gpu_stream));
+  cutilSafeCall(cudaStreamCreateWithFlags(&gpu_stream, cudaStreamNonBlocking));
   cutilSafeCall(cudaEventCreate(&ev1));
-  cutilSafeCall(cudaEventCreate(&ev2));
+  cutilSafeCall(cudaEventCreate(&ev2));  
+  cutilSafeCall(cudaEventCreate(&evKuki));  
+  cutilSafeCall(cudaEventCreate(&indep_start_ev_d));
+  cutilSafeCall(cudaEventCreate(&indep_end_ev_d));
+  cutilSafeCall(cudaEventCreate(&dep_start_ev_d));
+  cutilSafeCall(cudaEventCreate(&dep_end_ev_d));
 }
 
 void ops_hybrid_record_kernel_stats(int index, double cpu_time, double gpu_time) {
@@ -181,7 +189,7 @@ int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
 }
 
 //Assume arg is dat, and OPS_READ
-void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_d, int &to_d, int &from_h, int &to_h) {
+void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_d, int &to_d, int &from_h, int &to_h, int &pre_calc_to_h, int &pre_calc_from_d) {
   ops_dat dat = arg->dat;
   int d = dat->block->dims-1;
   //max stencil offset in positive and negative directions
@@ -191,7 +199,8 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
     max_pos = max(max_pos, arg->stencil->stencil[i*arg->stencil->dims+d]);
     max_neg = min(max_neg, arg->stencil->stencil[i*arg->stencil->dims+d]);
   }
-
+ 
+  
   //Intersection of full execution range with the GPU's execution range
   int start;
   int len = intersection(from, to, split, INT_MAX, &start);
@@ -231,7 +240,11 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
       }
     }
   }
+  pre_calc_to_h=min(pre_calc_to_h,int(from_h - max_pos - dirtyflags[dat->index].index_offset)); 
+  pre_calc_from_d=max(pre_calc_from_d,int(to_d - max_neg - dirtyflags[dat->index].index_offset));
+  
   printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
+  
 }
 
 //Assume arg is dat, and OPS_WRITE
@@ -314,12 +327,17 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
   printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
 }
 
-void ops_hybrid_clean(ops_kernel_descriptor * desc, int split) {
+void ops_hybrid_clean(ops_kernel_descriptor * desc, int split, int& pre_calc_to_h, int& pre_calc_from_d) {
   int *range = desc->range;
+  int range_from;
+  int range_to;
   for (int arg = 0; arg < desc->nargs; arg++) {
-    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_WRITE) {
-      int range_from = range[2*(desc->args[arg].dat->block->dims-1)];
-      int range_to = range[2*(desc->args[arg].dat->block->dims-1)+1];
+    if (desc->args[arg].argtype == OPS_ARG_DAT){
+      range_from = range[2*(desc->args[arg].dat->block->dims-1)];
+      range_to = range[2*(desc->args[arg].dat->block->dims-1)+1];
+      if (desc->args[arg].acc == OPS_WRITE && 
+          range_to-range_from == desc->args[arg].dat->size[desc->args[arg].dat->block->dims-1]) continue;
+	
       int from_d, to_d, from_h, to_h;
       //calculate range->index into array
       int this_from  = range_from + dirtyflags[desc->args[arg].dat->index].index_offset;
@@ -327,12 +345,19 @@ void ops_hybrid_clean(ops_kernel_descriptor * desc, int split) {
       int this_split = split      + dirtyflags[desc->args[arg].dat->index].index_offset; 
       from_d = to_d = from_h = to_h = 0;
       ops_hybrid_calc_clean(&(desc->args[arg]),
-          this_from, this_to, this_split,
-          from_d, to_d, from_h, to_h);
+		      this_from, this_to, this_split,
+		      from_d, to_d, from_h, to_h,pre_calc_to_h,pre_calc_from_d);
       ops_download_dat_range(desc->args[arg].dat, from_h, to_h, cpu_stream);
       ops_upload_dat_range(desc->args[arg].dat, from_d, to_d, gpu_stream);
     }
   }
+  
+  pre_calc_to_h=min(pre_calc_to_h,split);
+  pre_calc_from_d=max(pre_calc_from_d,split);
+  
+  //printf("pre_calc_to_h: %d, split: %d, pre_calc_from_d: %d, range_from: %d, range_to: %d\n",pre_calc_to_h,split,pre_calc_from_d,range_from,range_to);
+  
+  
 }
 
 void ops_hybrid_after(ops_kernel_descriptor * desc, int split) {
@@ -350,21 +375,168 @@ void ops_hybrid_after(ops_kernel_descriptor * desc, int split) {
   }
 }
 
+
 extern "C" void ops_download_dat_hybrid(ops_dat dat) {
   ops_download_dat_range(dat, dirtyflags[dat->index].dirty_from_h,
                                dirtyflags[dat->index].dirty_to_h, 0);
+  cudaStreamSynchronize(0);
 }
 
 void ops_hybrid_execute(ops_kernel_descriptor *desc) {
+  //printf("\n\n");
   if (!ops_hybrid_initialised) ops_hybrid_initialise();
   int from = desc->range[2*(desc->dim-1)];
   int to = desc->range[2*(desc->dim-1)+1];
   int split = ops_hybrid_get_split(desc, from, to);
-/*  if (desc->index == 2) {
-    split = 305;
-  }*/
 //  printf("%s with split %d\n", desc->name, split);
-  ops_hybrid_clean(desc, split);
+
+  int pre_calc_to_h=INT_MAX;
+  int pre_calc_from_d=0;
+  ops_hybrid_clean(desc, split, pre_calc_to_h, pre_calc_from_d);
+  int indep_from_h,indep_to_h,indep_from_d,indep_to_d;
+  int dep_from_h,dep_to_h,dep_from_d,dep_to_d;
+  int len;
+  
+  len=intersection(from, to, from, pre_calc_to_h, &indep_from_h);
+  if (len==0) {
+    indep_to_h=from;
+    indep_from_h=from;
+  }
+  else indep_to_h=indep_from_h+len;  
+  len=intersection(from, to, indep_to_h, split, &dep_from_h);
+  if (len==0) {
+    dep_from_h=indep_to_h;
+    dep_to_h=indep_to_h;
+  } else dep_to_h=dep_from_h+len;
+  
+  len=intersection(from, to, pre_calc_from_d, to, &indep_from_d);
+  if (len==0){
+    indep_from_d=to;
+    indep_to_d=to;
+  }
+  else indep_to_d=indep_from_d+len;  
+  len=intersection(from, to, split, indep_from_d, &dep_from_d);
+  if (len==0) {
+    dep_from_d=indep_from_d;
+    dep_to_d=indep_from_d;
+  } else {
+    dep_to_d=dep_from_d+len;  
+  }
+  int tmp;
+  int sumlen=intersection(indep_from_h, indep_to_h, dep_from_h, dep_to_h, &tmp)+intersection(dep_from_h, dep_to_h, dep_from_d,dep_to_d, &tmp)+intersection(dep_from_d,dep_to_d, indep_from_d,indep_to_d, &tmp);
+  
+  
+  
+  //printf("form: %8d, to: %8d, split: %8d, pre_calc_to_h: %8d, pre_calc_from_d: %8d ---- indep_from_h: %8d,indep_to_h: %8d,  dep_from_h: %8d,dep_to_h: %8d,dep_from_d: %8d,dep_to_d: %8d,indep_from_d: %8d,indep_to_d: %8d,sumlen: %8d, kernel_name: %s\n",from,to,split,pre_calc_to_h,pre_calc_from_d,indep_from_h,indep_to_h,dep_from_h,dep_to_h,dep_from_d,dep_to_d,indep_from_d,indep_to_d,sumlen,desc->name);
+    double t1=0,t2=0;
+  //cudaDeviceSynchronize();  
+  cudaEventRecord(ev1,gpu_stream);
+  cudaEventRecord(ev2,cpu_stream);
+  double c,indep_start_h=0,indep_end_h=0,dep_start_h=0,dep_end_h=0;
+  //cudaEventSynchronize(ev1);
+
+  //Launch independent  GPU bit  
+  if (indep_from_d < indep_to_d) {
+    desc->range[2*(desc->dim-1)] = indep_from_d;
+    desc->range[2*(desc->dim-1)+1] = indep_to_d;
+    desc->device = 1;
+    cudaEventRecord(indep_start_ev_d,0);
+    desc->function(desc);
+    cudaEventRecord(indep_end_ev_d,0);
+  } else printf("!WAT! - no independent region on GPU indep_from_d: %d, indep_to_d: %d\n",indep_from_d,indep_to_d);
+  
+
+  cudaStreamWaitEvent(0,ev1,0);
+  
+  //Launch dependent GPU bit
+  if (dep_from_d < dep_to_d) {
+    desc->range[2*(desc->dim-1)] = dep_from_d;
+    desc->range[2*(desc->dim-1)+1] = dep_to_d;
+    desc->device = 1;
+    cudaEventRecord(dep_start_ev_d,0);
+    desc->function(desc);
+    cudaEventRecord(dep_end_ev_d,0);
+  }  
+
+  //Launch independent CPU bit  
+  if (indep_from_h < indep_to_h) {
+    desc->range[2*(desc->dim-1)] = indep_from_h;
+    desc->range[2*(desc->dim-1)+1] = indep_to_h;
+    desc->device = 0;
+#ifdef OPS_NVTX
+//    nvtxRangePushA(desc->name + " Independent ");
+    nvtxRangePushA(" Independent ");
+#endif
+    ops_timers_core(&c,&indep_start_h);
+    desc->function(desc);
+    ops_timers_core(&c,&indep_end_h);
+#ifdef OPS_NVTX
+    nvtxRangePop();
+#endif
+  } else printf("!WAT! - no independent region on CPU indep_from_h: %d, indep_to_h: %d\n",indep_from_h,indep_to_h);
+  
+  cudaEventSynchronize(ev2);
+     
+     
+
+
+  
+  //Launch dependent CPU bit
+  if (dep_from_h < dep_to_h) {
+    desc->range[2*(desc->dim-1)] = dep_from_h;
+    desc->range[2*(desc->dim-1)+1] = dep_to_h;
+    desc->device = 0;
+#ifdef OPS_NVTX
+  //  nvtxRangePushA(desc->name + " dependent ");
+    nvtxRangePushA(" dependent ");
+#endif
+    ops_timers_core(&c,&dep_start_h);
+    desc->function(desc);
+    ops_timers_core(&c,&dep_end_h);
+#ifdef OPS_NVTX
+    nvtxRangePop();
+#endif
+  }
+
+  cudaEventSynchronize(dep_end_ev_d);
+  cudaEventSynchronize(indep_end_ev_d);
+
+  
+  float gpu_elapsed=0;
+  float gpu_elapsed2=0;
+  float cpu_elapsed=0;
+  
+  if (indep_from_d < indep_to_d) cudaEventElapsedTime(&gpu_elapsed, indep_start_ev_d, indep_end_ev_d);
+  if (dep_from_d < dep_to_d) cudaEventElapsedTime(&gpu_elapsed2, dep_start_ev_d, dep_end_ev_d);
+  gpu_elapsed+=gpu_elapsed2;
+  
+  
+  cpu_elapsed=(indep_end_h-indep_start_h)+(dep_end_h-dep_start_h);
+  
+  printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (cpu_elapsed)*1000.0, gpu_elapsed-(cpu_elapsed)*1000.0);
+  ops_hybrid_record_kernel_stats(desc->index, (cpu_elapsed)*1000.0, gpu_elapsed);
+  desc->range[2*(desc->dim-1)]   = from;
+  desc->range[2*(desc->dim-1)+1] = to;
+  ops_hybrid_after(desc, split);
+  
+  int intersectb;
+  int interGPU=intersection(pre_calc_from_d,to,max(desc->range[2*(desc->dim-1)],split),pre_calc_from_d,&intersectb);
+  int interCPU=intersection(from,pre_calc_to_h,pre_calc_to_h,min(desc->range[2*(desc->dim-1)+1],split),&intersectb);
+  
+  printf("pre_calc  GPU: %d, CPU: %d\n",interGPU,interCPU);
+
+}
+          
+
+void ops_hybrid_execute2(ops_kernel_descriptor *desc) {
+  if (!ops_hybrid_initialised) ops_hybrid_initialise();
+  int from = desc->range[2*(desc->dim-1)];
+  int to = desc->range[2*(desc->dim-1)+1];
+  int split = ops_hybrid_get_split(desc, from, to);
+  int pre_calc_to_h=INT_MAX;
+  int pre_calc_from_d=0;
+  ops_hybrid_clean(desc, split, pre_calc_to_h, pre_calc_from_d);
+  //ops_hybrid_clean(desc, split);
 
   double c,t1=0,t2=0;
 
@@ -416,6 +588,7 @@ T ops_red_op(T a, T b, int op) {
 
 extern "C" void ops_reduction_result_hybrid(ops_reduction handle) {
   if (ops_hybrid) {
+    cudaStreamSynchronize(0);
     char *v0 = handle->data;
     for (int i = 1; i < 2; i++) {
       char *val = handle->data + i * handle->size;

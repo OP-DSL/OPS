@@ -282,6 +282,8 @@ int main(int argc, char **argv)
   double err_diff=fabs((100.0*(err/20.727007094619303))-100.0);
   ops_printf("Total error: %3.15g\n",err);
   ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+  
+//  ops_print_dat_to_txtfile(u[0],"data_u.txt");
 
   if(err_diff < 0.001) {
     ops_printf("This run is considered PASSED\n");

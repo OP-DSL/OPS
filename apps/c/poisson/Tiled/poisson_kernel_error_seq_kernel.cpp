@@ -92,6 +92,9 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a2[0] = p_a2_0;
+  
+  printf("error cpu %g\n",p_a2[0]);
+  
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
     OPS_kernels[4].time += t2-t1;
