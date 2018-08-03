@@ -98,6 +98,8 @@ vector<ops_kernel_stats> stats(0);
 bool ops_hybrid_initialised = false;
 
 int ops_hybrid_gbl_split = 0;
+int ops_hybrid_gbl_max_size = 0;
+ops_kernel_stats ops_hybrid_tiled_stats;
 
 void ops_hybrid_initialise() {
   dirtyflags.resize(OPS_dat_index);
@@ -118,6 +120,14 @@ void ops_hybrid_initialise() {
     max_size = max(max_size, item->dat->size[item->dat->block->dims-1]);
   }
   ops_hybrid_gbl_split = max_size/4;
+
+  //For tiling
+  ops_hybrid_gbl_max_size = max_size;
+  ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_split;
+  ops_hybrid_tiled_stats.prev_balance = 1.0/4.0;
+  ops_hybrid_tiled_stats.gpu_time = 0.0;
+  ops_hybrid_tiled_stats.cpu_time = 0.0;
+
   ops_hybrid_initialised = true;
   cutilSafeCall(cudaStreamCreateWithFlags(&cpu_stream, cudaStreamNonBlocking));
   cutilSafeCall(cudaStreamCreateWithFlags(&gpu_stream, cudaStreamNonBlocking));
@@ -329,7 +339,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     }
   }
 
-  printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
+  if (OPS_diags>5) ops_printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
 }
 
 void ops_hybrid_clean(ops_kernel_descriptor * desc, int split, int& pre_calc_to_h, int& pre_calc_from_d) {
@@ -626,7 +636,7 @@ void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int 
   
 
   //get split
-  int split = 100;
+  int split = ops_hybrid_tiled_stats.prev_split;
 
   //check if split between start and end
   int d = block->dims-1;
@@ -653,7 +663,7 @@ void ops_hybrid_halo_exchanges_datlist(ops_dat *dats_cpu, int ndats_cpu, int *de
                                        ops_dat *dats_gpu, int ndats_gpu, int *depths_gpu) {
 
   //get split
-  int split = 100;
+  int split = ops_hybrid_tiled_stats.prev_split;
 
   //Sanity check
   if (ndats_gpu != ndats_cpu) {ops_printf("Error, hybrid halo exchange: number of dats mismatch %d != %d\n", ndats_cpu, ndats_gpu); exit(-1);}
@@ -708,4 +718,60 @@ void ops_hybrid_halo_exchanges_datlist(ops_dat *dats_cpu, int ndats_cpu, int *de
     ops_upload_dat_range(dat, from_d, to_d, gpu_stream);
   }
   cudaDeviceSynchronize();
+}
+
+int ops_hybrid_tiled_get_split() {
+  return ops_hybrid_tiled_stats.prev_split;
+}
+
+void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
+  ops_hybrid_tiled_stats.cpu_time = cpu_time;
+  ops_hybrid_tiled_stats.gpu_time = gpu_time;
+
+  double new_balance = ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time / 
+                  ((1.0 - ops_hybrid_tiled_stats.prev_balance) * ops_hybrid_tiled_stats.cpu_time +
+                  ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time);
+  double smoothed_balance = (1.0*ops_hybrid_tiled_stats.prev_balance + new_balance)/2.0;
+        ops_hybrid_tiled_stats.prev_balance = smoothed_balance;
+  if (abs(ops_hybrid_gbl_max_size*smoothed_balance - ops_hybrid_tiled_stats.prev_split) > ops_hybrid_gbl_max_size * 0.01)
+    ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*smoothed_balance;
+
+   //if (OPS_diags > 3) 
+ ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
+}
+
+void ops_hybrid_after_tiling(ops_kernel_descriptor * desc) {
+  ops_hybrid_after(desc, ops_hybrid_tiled_stats.prev_split);
+}
+
+double ops_hybrid_cpu_start, ops_hybrid_cpu_end;
+void ops_hybrid_execution_start(int cpugpu) {
+  if (cpugpu == 0) {
+    double c;
+    #ifdef OPS_NVTX
+    nvtxRangePushA("CPU tile");
+    #endif
+    ops_timers_core(&c, &ops_hybrid_cpu_start);
+  } else {
+    cudaEventRecord(ev1,0);
+  }
+}
+
+void ops_hybrid_execution_end(int cpugpu) {
+  if (cpugpu == 0) {
+    double c;
+    ops_timers_core(&c, &ops_hybrid_cpu_end);
+    #ifdef OPS_NVTX
+    nvtxRangePop();
+    #endif
+
+    cudaEventSynchronize(ev2);
+    float gpu_elapsed;
+    cudaEventElapsedTime(&gpu_elapsed, ev1, ev2);
+
+    ops_hybrid_record_tiled_stats((ops_hybrid_cpu_end-ops_hybrid_cpu_start)*1000.0, gpu_elapsed);
+
+  } else {
+    cudaEventRecord(ev2,0);
+  }
 }
