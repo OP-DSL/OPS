@@ -415,6 +415,7 @@ int ops_construct_tile_plan() {
   //
   // Get tile sizes
   //
+
   if (ops_hybrid_tiling_phase == 0 || !ops_hybrid) {
     if (getenv("T1"))
       TILE1D = atoi(getenv("T1"));
@@ -428,6 +429,10 @@ int ops_construct_tile_plan() {
       TILE3D = atoi(getenv("T3"));
     else
       TILE3D = -1;
+  } else {
+    TILE1D = 0;
+    TILE2D = 0;
+    TILE3D = 0;
   }
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
   // Initialise tiling datasets

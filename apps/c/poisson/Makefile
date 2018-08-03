@@ -87,8 +87,24 @@ endif
   MPICC     = cc
   MPIFLAGS  = $(CPPFLAGS)
 else
+ifeq ($(OPS_COMPILER),xlp8)
+  CPP       = xlc++
+  CUDA_ALIGN_FLAG :=
+ifdef DEBUG
+  CCFLAGS   = -O2 -g
+else
+  CCFLAGS   = -O5 -qarch=pwr8 -qtune=pwr8 -qreport -qinline=level=10
+endif
+  CPPFLAGS  = $(CCFLAGS)
+  OMPFLAGS  = -qsmp=omp  -qthreaded
+  MPICPP    = mpic++
+  MPICC     = mpicc
+  MPIFLAGS  = $(CPPFLAGS)
+
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
