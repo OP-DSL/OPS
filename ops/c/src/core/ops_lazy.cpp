@@ -281,7 +281,8 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
 }
 
 void ops_compute_tile_size(int *tile_sizes, int dims, int full_owned_size, int *biggest_range) {
-//
+  if (ops_hybrid_tiling_phase == 1) return;
+  //
   // If no tile sizes specified, compute it
   //
   if (ops_cache_size == 0)
@@ -414,18 +415,20 @@ int ops_construct_tile_plan() {
   //
   // Get tile sizes
   //
-  if (getenv("T1"))
-    TILE1D = atoi(getenv("T1"));
-  else
-    TILE1D = -1;
-  if (getenv("T2"))
-    TILE2D = atoi(getenv("T2"));
-  else
-    TILE2D = -1;
-  if (getenv("T3"))
-    TILE3D = atoi(getenv("T3"));
-  else
-    TILE3D = -1;
+  if (ops_hybrid_tiling_phase == 0 || !ops_hybrid) {
+    if (getenv("T1"))
+      TILE1D = atoi(getenv("T1"));
+    else
+      TILE1D = -1;
+    if (getenv("T2"))
+      TILE2D = atoi(getenv("T2"));
+    else
+      TILE2D = -1;
+    if (getenv("T3"))
+      TILE3D = atoi(getenv("T3"));
+    else
+      TILE3D = -1;
+  }
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
   // Initialise tiling datasets
   tiled_ranges.resize(ops_kernel_list.size());
@@ -829,7 +832,7 @@ int ops_construct_tile_plan() {
   }
 
   ops_timers_core(&c2, &t2);
-  if (OPS_diags > 2)
+  //if (OPS_diags > 2)
     printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan

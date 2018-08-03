@@ -59,7 +59,6 @@ void CUDART_CB poisson_kernel_error_reduce_callback(cudaStream_t stream, cudaErr
       arg2h[d] = arg2h[d] + arg2data[d+b*1];
     }
   }
-  printf("error gpu %g\n",arg2h[0]);
 
   free(buf);
 }
