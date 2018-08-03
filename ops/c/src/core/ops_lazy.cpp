@@ -197,11 +197,11 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
   //If loop range starts before my left boundary, my left neighbour's end index
   // is either my start index or the end index of the loop (whichever is smaller)
   int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
-  MIN(LOOPRANGE[2*d+1],start[d]) : -INT_MAX;
+                            MIN(LOOPRANGE[2*d+1],start[d]) : -INT_MAX;
   //If loop range ends after my right boundary, my right neighbour's start index
   // is either my end index or the start index of the loop (whichever is greater)
   int right_neighbour_start = LOOPRANGE[2*d+1] >= biggest_range[2*d+1] ? 
-  MAX(LOOPRANGE[2*d],end[d]) : INT_MAX;
+                                MAX(LOOPRANGE[2*d],end[d]) : INT_MAX;
 
   if (LOOPRANGE[2 * d + 0] != start[d]) {
     for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
@@ -269,6 +269,58 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
   }
 }
 
+void ops_compute_tile_size(int *tile_sizes, int dims, int full_owned_size, int *biggest_range) {
+//
+  // If no tile sizes specified, compute it
+  //
+  if (ops_cache_size == 0)
+    ops_cache_size = ops_internal_get_cache_size() / 1000;
+  // If tile sizes undefined, make an educated guess
+  if (tile_sizes[0] == -1 && tile_sizes[1] == -1 && tile_sizes[2] == -1 &&
+      ops_cache_size != 0) {
+    // Figure out which datasets are being accessed in these loops
+    std::vector<int> datasets_touched(OPS_dat_index, 0);
+    for (int i = 0; i < ops_kernel_list.size(); i++) {
+      for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
+        if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT)
+          datasets_touched[ops_kernel_list[i]->args[arg].dat->index] = 1;
+    }
+    size_t total_mem = 0;
+    ops_dat_entry *item;
+    TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+      if (datasets_touched[item->dat->index] == 1)
+        total_mem += item->dat->mem;
+    }
+
+    double data_per_point = (double)total_mem / (double)full_owned_size;
+    int points_per_tile = (double)ops_cache_size * 1000000.0 / data_per_point;
+    if (dims == 2) {
+      // aim for an X size twice as much as the Y size, and the Y size an
+      // integer multiple of the #of threads
+      int M = sqrt(points_per_tile /
+                   (3 * omp_get_max_threads() * omp_get_max_threads()));
+      tile_sizes[0] = 3 * M * omp_get_max_threads();
+      tile_sizes[1] = M * omp_get_max_threads();
+      // Sanity check
+      if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0)
+        tile_sizes[0] = tile_sizes[1] = -1;
+    } else if (dims == 3) {
+      // determine X size so at least 10*#of max threads is left for Y*Z
+      tile_sizes[0] = biggest_range[1] - biggest_range[0];
+      while ((double)points_per_tile / (double)tile_sizes[0] <
+             10.0 * omp_get_max_threads())
+        tile_sizes[0] = tile_sizes[0] / 2;
+      tile_sizes[2] = sqrt((double)points_per_tile / (double)tile_sizes[0]);
+      tile_sizes[1] = points_per_tile / (tile_sizes[0] * tile_sizes[2]);
+      // Sanity check
+      if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
+        tile_sizes[0] = tile_sizes[1] = tile_sizes[2] = -1;
+    }
+    if (OPS_diags > 3)
+      ops_printf("Defaulting to the following tile size: %dx%dx%d\n",
+                 tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////
 // Creating a new tiling plan
@@ -356,55 +408,10 @@ int ops_construct_tile_plan() {
   tiled_ranges.resize(ops_kernel_list.size());
 
   //
-  // If no tile sizes specified, compute it
+  //If tile sizes not defined, make an educated guess
   //
-  if (ops_cache_size == 0)
-    ops_cache_size = ops_internal_get_cache_size() / 1000;
-  // If tile sizes undefined, make an educated guess
-  if (tile_sizes[0] == -1 && tile_sizes[1] == -1 && tile_sizes[2] == -1 &&
-      ops_cache_size != 0) {
-    // Figure out which datasets are being accessed in these loops
-    std::vector<int> datasets_touched(OPS_dat_index, 0);
-    for (int i = 0; i < ops_kernel_list.size(); i++) {
-      for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
-        if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT)
-          datasets_touched[ops_kernel_list[i]->args[arg].dat->index] = 1;
-    }
-    size_t total_mem = 0;
-    ops_dat_entry *item;
-    TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-      if (datasets_touched[item->dat->index] == 1)
-        total_mem += item->dat->mem;
-    }
-
-    double data_per_point = (double)total_mem / (double)full_owned_size;
-    int points_per_tile = (double)ops_cache_size * 1000000.0 / data_per_point;
-    if (dims == 2) {
-      // aim for an X size twice as much as the Y size, and the Y size an
-      // integer multiple of the #of threads
-      int M = sqrt(points_per_tile /
-                   (3 * omp_get_max_threads() * omp_get_max_threads()));
-      tile_sizes[0] = 3 * M * omp_get_max_threads();
-      tile_sizes[1] = M * omp_get_max_threads();
-      // Sanity check
-      if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0)
-        tile_sizes[0] = tile_sizes[1] = -1;
-    } else if (dims == 3) {
-      // determine X size so at least 10*#of max threads is left for Y*Z
-      tile_sizes[0] = biggest_range[1] - biggest_range[0];
-      while ((double)points_per_tile / (double)tile_sizes[0] <
-             10.0 * omp_get_max_threads())
-        tile_sizes[0] = tile_sizes[0] / 2;
-      tile_sizes[2] = sqrt((double)points_per_tile / (double)tile_sizes[0]);
-      tile_sizes[1] = points_per_tile / (tile_sizes[0] * tile_sizes[2]);
-      // Sanity check
-      if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
-        tile_sizes[0] = tile_sizes[1] = tile_sizes[2] = -1;
-    }
-    if (OPS_diags > 3)
-      ops_printf("Defaulting to the following tile size: %dx%dx%d\n",
-                 tile_sizes[0], tile_sizes[1], tile_sizes[2]);
-  }
+  ops_compute_tile_size(tile_sizes, dims, full_owned_size, biggest_range);
+  
 
   //
   // Compute max number of tiles in each dimension
@@ -482,7 +489,10 @@ int ops_construct_tile_plan() {
 
       for (int tile = 0; tile < total_tiles; tile++) {
 
-        
+        //
+        // Start index
+        //
+
         // If this tile is the first on this process in this dimension
         if ((tile / tiles_prod[d]) % ntiles[d] == 0) {
           //If this is the leftmost process for this loop, then start index is the
@@ -514,7 +524,7 @@ int ops_construct_tile_plan() {
             //If no prior dependencies, set to normal start index
             if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] == INT_MAX) 
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
-                  MIN(LOOPRANGE[2*d+1],start[d]);
+                  MIN(LOOPRANGE[2*d+1],start[d]); //start is invalid if not overlapping
           }
         }
         else // Otherwise begin range is end of previous tile's
@@ -522,6 +532,9 @@ int ops_construct_tile_plan() {
               tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) +
                                  2 * d + 1];
 
+        //
+        // End index
+        //
         // End index, if last tile in the dimension and if
         // this is the rightmost process involved in the loop
         if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 &&
@@ -554,9 +567,10 @@ int ops_construct_tile_plan() {
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                   MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
             }
-          }
-        }
-        }
+          } //end for loop args
+        } //end else - not list tile
+      } //end for over tiles
+
         for (int tile = 0; tile < total_tiles; tile++) {
 
           //Keep tile begin indices consistent
@@ -633,8 +647,9 @@ int ops_construct_tile_plan() {
                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
       }
 
-
-
+      //
+      //Update R/W dependencies
+      //
       for (int tile = 0; tile < total_tiles; tile++) {
 
         int intersect_begin = 0;
@@ -733,11 +748,15 @@ int ops_construct_tile_plan() {
     }
   }
 
+  //
+  // Halo exchanges
+  //
   //Figure out which datasets need halo exchange - based on whether written or read first
   std::vector<int> datasets_accessed(OPS_dat_index, -1);
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
-      if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].opt == 1 && datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] == -1) {
+      if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].opt == 1 &&
+          datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] == -1) {
         datasets_accessed[ops_kernel_list[i]->args[arg].dat->index] = (ops_kernel_list[i]->args[arg].acc == OPS_WRITE ? 0 : 1);
         if (ops_kernel_list[i]->args[arg].acc != OPS_WRITE)
           dats_to_exchange.push_back(ops_kernel_list[i]->args[arg].dat);
