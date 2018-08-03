@@ -188,19 +188,8 @@ int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
    return stats[desc->index].prev_split;
 }
 
-//Assume arg is dat, and OPS_READ
-void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_d, int &to_d, int &from_h, int &to_h, int &pre_calc_to_h, int &pre_calc_from_d) {
-  ops_dat dat = arg->dat;
-  int d = dat->block->dims-1;
-  //max stencil offset in positive and negative directions
-  int max_pos = 0;
-  int max_neg = 0;
-  for (int i = 0; i < arg->stencil->points; i++) {
-    max_pos = max(max_pos, arg->stencil->stencil[i*arg->stencil->dims+d]);
-    max_neg = min(max_neg, arg->stencil->stencil[i*arg->stencil->dims+d]);
-  }
- 
-  
+void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &from_d, int &to_d,
+  int &from_h, int &to_h, int &pre_calc_to_h, int &pre_calc_from_d, int max_neg, int max_pos) {
   //Intersection of full execution range with the GPU's execution range
   int start;
   int len = intersection(from, to, split, INT_MAX, &start);
@@ -246,6 +235,22 @@ void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_
   printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
   
 }
+
+//Assume arg is dat, and OPS_READ
+void ops_hybrid_calc_clean(ops_arg *arg, int from, int to, int split, int &from_d, int &to_d, int &from_h, int &to_h, int &pre_calc_to_h, int &pre_calc_from_d) {
+  ops_dat dat = arg->dat;
+  int d = dat->block->dims-1;
+  //max stencil offset in positive and negative directions
+  int max_pos = 0;
+  int max_neg = 0;
+  for (int i = 0; i < arg->stencil->points; i++) {
+    max_pos = max(max_pos, arg->stencil->stencil[i*arg->stencil->dims+d]);
+    max_neg = min(max_neg, arg->stencil->stencil[i*arg->stencil->dims+d]);
+  }
+  ops_hybrid_calc_clean_depth(dat, from, to , split, from_d, to_d, from_h, to_h, pre_calc_to_h, pre_calc_from_d, max_neg, max_pos);
+}
+
+
 
 //Assume arg is dat, and OPS_WRITE
 void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
@@ -374,7 +379,6 @@ void ops_hybrid_after(ops_kernel_descriptor * desc, int split) {
     }
   }
 }
-
 
 extern "C" void ops_download_dat_hybrid(ops_dat dat) {
   ops_download_dat_range(dat, dirtyflags[dat->index].dirty_from_h,
@@ -609,4 +613,99 @@ extern "C" void ops_reduction_result_hybrid(ops_reduction handle) {
       }
     }
   }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+// Tiling version
+//////////////////////////////////////////////////////////////////////////////
+int ops_hybrid_tiling_phase = 0;
+void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+  if (!ops_hybrid) return;
+  if (!ops_hybrid_initialised) ops_hybrid_initialise();
+  
+
+  //get split
+  int split = 100;
+
+  //check if split between start and end
+  int d = block->dims-1;
+  if (end[d]-disp[d] >= split && start[d]-disp[d] <= split) {
+    //for CPUs, new end is split
+    if (ops_hybrid_tiling_phase == 0)
+      end[d] = split + disp[d];
+    //for GPUs, new start is split
+    else
+      start[d] = split +disp[d];
+  } 
+  //otherwise zero out for the target with no intersection
+  else {
+    int start2;
+    int len = intersection(start[d]-disp[d], end[d]-disp[d], split, INT_MAX, &start2);
+    if (len == 0 && ops_hybrid_tiling_phase == 1)
+      start[d] = end[d];
+    else if (len > 0 && ops_hybrid_tiling_phase == 0)
+      end[d] = start[d];
+  }
+}
+
+void ops_hybrid_halo_exchanges_datlist(ops_dat *dats_cpu, int ndats_cpu, int *depths_cpu,
+                                       ops_dat *dats_gpu, int ndats_gpu, int *depths_gpu) {
+
+  //get split
+  int split = 100;
+
+  //Sanity check
+  if (ndats_gpu != ndats_cpu) {ops_printf("Error, hybrid halo exchange: number of dats mismatch %d != %d\n", ndats_cpu, ndats_gpu); exit(-1);}
+
+  //external depths
+  int *mpi_depths = (int *)malloc(ndats_cpu * 4 * OPS_MAX_DIM * sizeof(int));
+
+  for (int i = 0 ; i < ndats_cpu; i++) {
+    if (dats_cpu[i]->index != dats_gpu[i]->index) {ops_printf("Error, hybrid halo exchange: dats mismatch %s != %s\n", dats_cpu[i]->name, dats_gpu[i]->name); exit(-1);}
+    //left send, left recv, right send, right recv
+    int d = dats_cpu[i]->block->dims-1;
+    //depths should match in lower dimensions
+    for (int d2 = 0; d2 < d; d2++) {
+      for (int j = 0; j < 4; j++) {
+        if (depths_cpu[i*OPS_MAX_DIM*4 + d2*4 + j] != depths_gpu[i*OPS_MAX_DIM*4 + d2*4 + j]) {
+          ops_printf("Error, hybrid halo exchange: depths mismatch %s index %d depths %d != %d\n", dats_cpu[i]->name, j, depths_cpu[i*OPS_MAX_DIM*4 + d2*4 + j], depths_gpu[i*OPS_MAX_DIM*4 + d2*4 + j]); exit(-1);
+        }
+        mpi_depths[i*OPS_MAX_DIM*4 + d2*4 + j] = depths_cpu[i*OPS_MAX_DIM*4 + d2*4 + j];
+      }
+    }
+    //for last dimension, left depths comes from CPU, right from GPU
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 0] = depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 0];
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 1] = depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 1];
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 0] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 2];
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 1] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 3];
+  }
+  ops_halo_exchanges_datlist(dats_cpu, ndats_cpu, mpi_depths);
+
+  //Now do the internal exchange
+  for (int i = 0 ; i < ndats_cpu; i++) {
+    int d = dats_cpu[i]->block->dims-1;
+    ops_dat dat = dats_cpu[i];
+
+    //make sure things match
+    if (depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 2] != depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 1] ||
+        depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 3] != depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 0])
+      ops_printf("Error, hybrid halo exchange: internal depths mismatch %d != %d || %d != %d\n",
+        depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 2], depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 1],
+        depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 3], depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 0]);
+    
+    int from_d, to_d, from_h, to_h, pre_calc_to_h, pre_calc_from_d;
+    //calculate range->index into array
+    int this_from  = 0;
+    int this_to    = dat->size[d];
+    int this_split = split + dirtyflags[dat->index].index_offset; 
+    from_d = to_d = from_h = to_h = 0;
+    ops_hybrid_calc_clean_depth(dat, this_from, this_to, this_split,
+        from_d, to_d, from_h, to_h,pre_calc_to_h,pre_calc_from_d, 
+        -1*depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 1],
+        depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 3]);
+    ops_download_dat_range(dat, from_h, to_h, cpu_stream);
+    ops_upload_dat_range(dat, from_d, to_d, gpu_stream);
+  }
+  cudaDeviceSynchronize();
 }

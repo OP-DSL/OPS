@@ -65,6 +65,12 @@ double ops_tiled_halo_exchange_time = 0.0;
 
 extern int ops_hybrid;
 void ops_hybrid_execute(ops_kernel_descriptor *desc);
+extern int ops_hybrid_tiling_phase;
+void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
+void ops_hybrid_halo_exchanges_datlist(ops_dat *dats_cpu, int ndats_cpu, int *depths_cpu,
+                                       ops_dat *dats_gpu, int ndats_gpu, int *depths_gpu);
+void ops_hybrid_after(ops_kernel_descriptor * desc, int split);
+
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -86,6 +92,7 @@ struct tiling_plan {
   std::vector<unsigned long> loop_sequence;
   int ntiles;
   std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
+  std::vector<int> original_ranges;
   std::vector<ops_dat> dats_to_exchange;
   std::vector<int> depths_to_exchange;
 };
@@ -331,6 +338,8 @@ int ops_construct_tile_plan() {
   double t1, t2, c1, c2;
   ops_timers_core(&c1, &t1);
 
+  int dims = ops_kernel_list[ops_kernel_list.size() - 1]->block->dims;
+
   //
   // Set up pointers
   //
@@ -350,10 +359,16 @@ int ops_construct_tile_plan() {
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
         ops_kernel_list[i]->hash;
 
+  //Save original ranges
+  tiling_plans[tiling_plans.size() - 1].original_ranges.resize(
+      ops_kernel_list.size() * 2 * dims);
+  for (int i = 0; i < ops_kernel_list.size(); i++)
+    memcpy(&tiling_plans[tiling_plans.size() - 1].original_ranges[i * 2 * dims],
+           &ops_kernel_list[i]->range[0], 2 * dims * sizeof(int));
+
   //
   // Compute biggest range
   //
-  int dims = ops_kernel_list[ops_kernel_list.size() - 1]->block->dims;
   int biggest_range[2 * OPS_MAX_DIM];
   for (int d = 0; d < dims; d++) {
     biggest_range[2*d+0] = INT_MAX;
@@ -363,7 +378,9 @@ int ops_construct_tile_plan() {
   ops_dims_tiling_internal = dims;
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    bool owned = ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+    ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+    ops_hybrid_modify_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+
     // TODO: handling non-owned blocks
     for (int d = 0; d < dims; d++) {
       biggest_range[2 * d] =
@@ -482,6 +499,7 @@ int ops_construct_tile_plan() {
   for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     bool owned = ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
+    ops_hybrid_modify_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
 
     for (int d = 0; d < dims; d++) {
 
@@ -838,20 +856,32 @@ void ops_execute() {
   }
 
   // If not found, construct one
-  if (match == -1)
+  if (match == -1) {
+    ops_hybrid_tiling_phase = 0;
     match = ops_construct_tile_plan();
-  std::vector<std::vector<int> > &tiled_ranges =
-      tiling_plans[match].tiled_ranges;
-  int total_tiles = tiling_plans[match].ntiles;
+    if (ops_hybrid) {
+      ops_hybrid_tiling_phase = 1;
+      match = ops_construct_tile_plan();
+      match--;
+    }
+  }
 
   //Do halo exchanges
   double c,t1,t2;
   if (OPS_diags>1)
     ops_timers_core(&c,&t1);
   
-  ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
-                             tiling_plans[match].dats_to_exchange.size(),
-                             &tiling_plans[match].depths_to_exchange[0]);
+  if (ops_hybrid) {
+    ops_hybrid_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
+                                      tiling_plans[match].dats_to_exchange.size(),
+                                      &tiling_plans[match].depths_to_exchange[0],
+                                      &tiling_plans[match+1].dats_to_exchange[0],
+                                      tiling_plans[match+1].dats_to_exchange.size(),
+                                      &tiling_plans[match+1].depths_to_exchange[0]);
+  } else 
+    ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
+                               tiling_plans[match].dats_to_exchange.size(),
+                               &tiling_plans[match].depths_to_exchange[0]);
 
   if (OPS_diags>1) {
     ops_timers_core(&c,&t2);
@@ -861,32 +891,46 @@ void ops_execute() {
   if (OPS_diags>3)
     ops_printf("Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
-  //Execute tiles
-  for (int tile = 0; tile < total_tiles; tile++) {
-    for (int i = 0; i < ops_kernel_list.size(); i++) {
+  for (int target = 0; target < 1 + ops_hybrid!=0; target++) {
+    //with hybrid target 0 is the GPU (async launches), target 1 is CPU
+    std::vector<std::vector<int> > &tiled_ranges = 
+                    (ops_hybrid && target == 0) ? 
+                        tiling_plans[match+1].tiled_ranges : 
+                        tiling_plans[match].tiled_ranges;
+    int total_tiles =
+                    (ops_hybrid && target == 0) ? 
+                        tiling_plans[match+1].ntiles : 
+                        tiling_plans[match].ntiles;
 
-      if (tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 1] -
-                  tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 0] ==
-              0 ||
-          (ops_dims_tiling_internal > 1 &&
-           tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 3] -
-                   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2] ==
-               0) ||
-          (ops_dims_tiling_internal > 2 &&
-           tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 5] -
-                   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 4] ==
-               0))
-        continue;
 
-      memcpy(&ops_kernel_list[i]->range[0],
-             &tiled_ranges[i][OPS_MAX_DIM * 2 * tile],
-             OPS_MAX_DIM * 2 * sizeof(int));
-      if (OPS_diags > 4)
-        printf("Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), ops_kernel_list[i]->name,
-               ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
-               ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
-               ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
-      ops_kernel_list[i]->function(ops_kernel_list[i]);
+    //Execute tiles
+    for (int tile = 0; tile < total_tiles; tile++) {
+      for (int i = 0; i < ops_kernel_list.size(); i++) {
+
+        if (tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 1] -
+                    tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 0] ==
+                0 ||
+            (ops_dims_tiling_internal > 1 &&
+             tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 3] -
+                     tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2] ==
+                 0) ||
+            (ops_dims_tiling_internal > 2 &&
+             tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 5] -
+                     tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 4] ==
+                 0))
+          continue;
+
+        memcpy(&ops_kernel_list[i]->range[0],
+               &tiled_ranges[i][OPS_MAX_DIM * 2 * tile],
+               OPS_MAX_DIM * 2 * sizeof(int));
+        if (OPS_diags > 4)
+          printf("Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), ops_kernel_list[i]->name,
+                 ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
+                 ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
+                 ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
+        ops_kernel_list[i]->device = (ops_hybrid && target == 0);
+        ops_kernel_list[i]->function(ops_kernel_list[i]);
+      }
     }
   }
 
@@ -895,6 +939,12 @@ void ops_execute() {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
         ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
+      if (ops_hybrid) {
+        memcpy(&ops_kernel_list[i]->range[0],
+               &tiling_plans[match].original_ranges[ops_kernel_list[i]->block->dims * 2 * i],
+               ops_kernel_list[i]->block->dims * 2 * sizeof(int));
+        ops_hybrid_after(ops_kernel_list[i], 100); //TODO split
+      }
     }
   }
 
