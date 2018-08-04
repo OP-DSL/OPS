@@ -1,22 +1,22 @@
 #ifndef USER_TYPES
 #define USER_TYPES
 
-#define FIELD_DENSITY0    0
-#define FIELD_DENSITY1    1
-#define FIELD_ENERGY0     2
-#define FIELD_ENERGY1     3
-#define FIELD_PRESSURE    4
-#define FIELD_VISCOSITY   5
-#define FIELD_SOUNDSPEED  6
-#define FIELD_XVEL0       7
-#define FIELD_XVEL1       8
-#define FIELD_YVEL0       9
-#define FIELD_YVEL1       10
-#define FIELD_VOL_FLUX_X  11
-#define FIELD_VOL_FLUX_Y  12
-#define FIELD_MASS_FLUX_X 13
-#define FIELD_MASS_FLUX_Y 14
-#define NUM_FIELDS        15
+#define FIELD_DENSITY0    (1<<0)
+#define FIELD_DENSITY1    (1<<1)
+#define FIELD_ENERGY0     (1<<2)
+#define FIELD_ENERGY1     (1<<3)
+#define FIELD_PRESSURE    (1<<4)
+#define FIELD_VISCOSITY   (1<<5)
+#define FIELD_SOUNDSPEED  (1<<6)
+#define FIELD_XVEL0       (1<<7)
+#define FIELD_XVEL1       (1<<8)
+#define FIELD_YVEL0       (1<<9)
+#define FIELD_YVEL1       (1<<10)
+#define FIELD_VOL_FLUX_X  (1<<11)
+#define FIELD_VOL_FLUX_Y  (1<<12)
+#define FIELD_MASS_FLUX_X (1<<13)
+#define FIELD_MASS_FLUX_Y (1<<14)
+#define NUM_FIELDS        16
 
 typedef struct
 {

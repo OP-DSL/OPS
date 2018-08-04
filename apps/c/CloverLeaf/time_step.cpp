@@ -34,7 +34,7 @@
 #include "definitions.h"
 
 void ideal_gas(int predict);
-void update_halo(int* fields, int depth);
+void update_halo(int fields, int depth);
 void viscosity_func();
 void calc_dt(double*, char*,
              double*, double*, int*, int*);
@@ -56,41 +56,41 @@ void timestep()
 
   ideal_gas(FALSE);
 
-  fields[FIELD_DENSITY0]  = 1;
-  fields[FIELD_ENERGY0]   = 1;
-  fields[FIELD_DENSITY1]  = 0;
-  fields[FIELD_ENERGY1]   = 0;
-  fields[FIELD_SOUNDSPEED] = 0;
-  fields[FIELD_PRESSURE]  = 1;
-  fields[FIELD_VISCOSITY] = 0;
-  fields[FIELD_XVEL0]     = 1;
-  fields[FIELD_YVEL0]     = 1;
-  fields[FIELD_XVEL1]     = 0;
-  fields[FIELD_YVEL1]     = 0;
-  fields[FIELD_VOL_FLUX_X] = 0;
-  fields[FIELD_VOL_FLUX_Y] = 0;
-  fields[FIELD_MASS_FLUX_X] = 0;
-  fields[FIELD_MASS_FLUX_Y] = 0;
+  fields |= FIELD_DENSITY0;
+  fields |= FIELD_ENERGY0;
+  fields &= ~FIELD_DENSITY1;
+  fields &= ~FIELD_ENERGY1;
+  fields &= ~FIELD_SOUNDSPEED;
+  fields |= FIELD_PRESSURE;
+  fields &= ~FIELD_VISCOSITY;
+  fields |= FIELD_XVEL0;
+  fields |= FIELD_YVEL0;
+  fields &= ~FIELD_XVEL1;
+  fields &= ~FIELD_YVEL1;
+  fields &= ~FIELD_VOL_FLUX_X;
+  fields &= ~FIELD_VOL_FLUX_Y;
+  fields &= ~FIELD_MASS_FLUX_X;
+  fields &= ~FIELD_MASS_FLUX_Y;
 
   update_halo(fields,1);
 
   viscosity_func();
 
-  fields[FIELD_DENSITY0]  = 0;
-  fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_DENSITY1]  = 0;
-  fields[FIELD_ENERGY1]   = 0;
-  fields[FIELD_SOUNDSPEED] = 0;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 1;
-  fields[FIELD_XVEL0]     = 0;
-  fields[FIELD_YVEL0]     = 0;
-  fields[FIELD_XVEL1]     = 0;
-  fields[FIELD_YVEL1]     = 0;
-  fields[FIELD_VOL_FLUX_X] = 0;
-  fields[FIELD_VOL_FLUX_Y] = 0;
-  fields[FIELD_MASS_FLUX_X] = 0;
-  fields[FIELD_MASS_FLUX_Y] = 0;
+  fields &= ~FIELD_DENSITY0;
+  fields &= ~FIELD_ENERGY0;
+  fields &= ~FIELD_DENSITY1;
+  fields &= ~FIELD_ENERGY1;
+  fields &= ~FIELD_SOUNDSPEED;
+  fields &= ~FIELD_PRESSURE;
+  fields |= FIELD_VISCOSITY;
+  fields &= ~FIELD_XVEL0;
+  fields &= ~FIELD_YVEL0;
+  fields &= ~FIELD_XVEL1;
+  fields &= ~FIELD_YVEL1;
+  fields &= ~FIELD_VOL_FLUX_X;
+  fields &= ~FIELD_VOL_FLUX_Y;
+  fields &= ~FIELD_MASS_FLUX_X;
+  fields &= ~FIELD_MASS_FLUX_Y;
 
   update_halo(fields,1);
 

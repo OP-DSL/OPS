@@ -112,7 +112,7 @@ int profiler_on;
 int state_max;
 int complete; //logical
 
-int fields[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int fields;
 
 double dtold, dt, clover_time, dtinit, dtmin, dtmax, dtrise, dtu_safe, dtv_safe, dtw_safe, dtc_safe,
        dtdiv_safe, dtc, dtu, dtv, dtdiv;

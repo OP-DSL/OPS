@@ -41,7 +41,7 @@ void initialise_chunk();
 void generate();
 void build_field();
 void ideal_gas(int predict);
-void update_halo(int* fields, int depth);
+void update_halo(int fields, int depth);
 void field_summary();
 
 
@@ -86,16 +86,16 @@ void start()
   /**-----------------------------update_halo--------------------------------**/
 
   //Prime all halo data for the first step
-  fields[FIELD_DENSITY0]  = 1;
-  fields[FIELD_ENERGY0]   = 1;
-  fields[FIELD_PRESSURE]  = 1;
-  fields[FIELD_VISCOSITY] = 1;
-  fields[FIELD_DENSITY1]  = 1;
-  fields[FIELD_ENERGY1]   = 1;
-  fields[FIELD_XVEL0]     = 1;
-  fields[FIELD_YVEL0]     = 1;
-  fields[FIELD_XVEL1]     = 1;
-  fields[FIELD_YVEL1]     = 1;
+  fields |= FIELD_DENSITY0;
+  fields |= FIELD_ENERGY0;
+  fields |= FIELD_PRESSURE;
+  fields |= FIELD_VISCOSITY;
+  fields |= FIELD_DENSITY1;
+  fields |= FIELD_ENERGY1;
+  fields |= FIELD_XVEL0;
+  fields |= FIELD_YVEL0;
+  fields |= FIELD_XVEL1;
+  fields |= FIELD_YVEL1;
 
   update_halo(fields, 2);
 

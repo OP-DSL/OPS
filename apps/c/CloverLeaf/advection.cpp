@@ -31,7 +31,7 @@
 #include "data.h"
 #include "definitions.h"
 
-void update_halo(int* fields, int depth);
+void update_halo(int fields, int depth);
 void advec_cell(int sweep_number, int direction);
 void advec_mom(int which_vel, int sweep_number, int dir);
 
@@ -47,44 +47,44 @@ void advection(int step)
   xvel = g_xdir;
   yvel = g_ydir;
 
-  fields[FIELD_DENSITY0]  = 0;
-  fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_DENSITY1]  = 1;
-  fields[FIELD_ENERGY1]   = 1;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 0;
-  fields[FIELD_SOUNDSPEED] = 0;
-  fields[FIELD_XVEL0]     = 0;
-  fields[FIELD_YVEL0]     = 0;
-  fields[FIELD_XVEL1]     = 0;
-  fields[FIELD_YVEL1]     = 0;
-  fields[FIELD_VOL_FLUX_X] = 1;
-  fields[FIELD_VOL_FLUX_Y] = 1;
-  fields[FIELD_MASS_FLUX_X] = 0;
-  fields[FIELD_MASS_FLUX_Y] = 0;
+  fields &= ~FIELD_DENSITY0;
+  fields &= ~FIELD_ENERGY0;
+  fields |= FIELD_DENSITY1;
+  fields |= FIELD_ENERGY1;
+  fields &= ~FIELD_PRESSURE;
+  fields &= ~FIELD_VISCOSITY;
+  fields &= ~FIELD_SOUNDSPEED;
+  fields &= ~FIELD_XVEL0;
+  fields &= ~FIELD_YVEL0;
+  fields &= ~FIELD_XVEL1;
+  fields &= ~FIELD_YVEL1;
+  fields |= FIELD_VOL_FLUX_X;
+  fields |= FIELD_VOL_FLUX_Y;
+  fields &= ~FIELD_MASS_FLUX_X;
+  fields &= ~FIELD_MASS_FLUX_Y;
   update_halo(fields,2);
 
   advec_cell(sweep_number, direction);
 
-  fields[FIELD_DENSITY0]  = 0;
-  fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_DENSITY1]  = 1;
-  fields[FIELD_ENERGY1]   = 1;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 0;
-  fields[FIELD_SOUNDSPEED] = 0;
-  fields[FIELD_XVEL0]     = 0;
-  fields[FIELD_YVEL0]     = 0;
-  fields[FIELD_XVEL1]     = 1;
-  fields[FIELD_YVEL1]     = 1;
-  fields[FIELD_VOL_FLUX_X] = 0;
-  fields[FIELD_VOL_FLUX_Y] = 0;
+  fields &= ~FIELD_DENSITY0;
+  fields &= ~FIELD_ENERGY0;
+  fields |= FIELD_DENSITY1;
+  fields |= FIELD_ENERGY1;
+  fields &= ~FIELD_PRESSURE;
+  fields &= ~FIELD_VISCOSITY;
+  fields &= ~FIELD_SOUNDSPEED;
+  fields &= ~FIELD_XVEL0;
+  fields &= ~FIELD_YVEL0;
+  fields |= FIELD_XVEL1;
+  fields |= FIELD_YVEL1;
+  fields &= ~FIELD_VOL_FLUX_X;
+  fields &= ~FIELD_VOL_FLUX_Y;
   if (direction == g_xdir) {
-    fields[FIELD_MASS_FLUX_X] = 1;
-    fields[FIELD_MASS_FLUX_Y] = 0;
+    fields |= FIELD_MASS_FLUX_X;
+    fields &= ~FIELD_MASS_FLUX_Y;
   } else {
-    fields[FIELD_MASS_FLUX_X] = 0;
-    fields[FIELD_MASS_FLUX_Y] = 1;
+    fields &= ~FIELD_MASS_FLUX_X;
+    fields |= FIELD_MASS_FLUX_Y;
   }
   update_halo(fields,2);
 
@@ -98,21 +98,21 @@ void advection(int step)
 
   advec_cell(sweep_number,direction);
 
-  fields[FIELD_DENSITY0]  = 0;
-  fields[FIELD_ENERGY0]   = 0;
-  fields[FIELD_PRESSURE]  = 0;
-  fields[FIELD_VISCOSITY] = 0;
-  fields[FIELD_DENSITY1]  = 1;
-  fields[FIELD_ENERGY1]   = 1;
-  fields[FIELD_SOUNDSPEED] = 0;
-  fields[FIELD_XVEL0]     = 0;
-  fields[FIELD_YVEL0]     = 0;
-  fields[FIELD_XVEL1]     = 1;
-  fields[FIELD_YVEL1]     = 1;
-  fields[FIELD_VOL_FLUX_X] = 0;
-  fields[FIELD_VOL_FLUX_Y] = 0;
-  fields[FIELD_MASS_FLUX_X] = 1;
-  fields[FIELD_MASS_FLUX_Y] = 1;
+  fields &= ~FIELD_DENSITY0;
+  fields &= ~FIELD_ENERGY0;
+  fields &= ~FIELD_PRESSURE;
+  fields &= ~FIELD_VISCOSITY;
+  fields |= FIELD_DENSITY1;
+  fields |= FIELD_ENERGY1;
+  fields &= ~FIELD_SOUNDSPEED;
+  fields &= ~FIELD_XVEL0;
+  fields &= ~FIELD_YVEL0;
+  fields |= FIELD_XVEL1;
+  fields |= FIELD_YVEL1;
+  fields &= ~FIELD_VOL_FLUX_X;
+  fields &= ~FIELD_VOL_FLUX_Y;
+  fields |= FIELD_MASS_FLUX_X;
+  fields |= FIELD_MASS_FLUX_Y;
   update_halo(fields,2);
 
   advec_mom(xvel, sweep_number, direction);

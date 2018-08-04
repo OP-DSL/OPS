@@ -55,7 +55,7 @@ extern FILE    *g_out, *g_in;  //Files for input and output
 extern int     g_rect, g_circ, g_point; //geometry of block
 
 extern int     number_of_states;
-extern int     fields[];
+extern int     fields;
 
 
 /**----------OPS Vars--------------**/
