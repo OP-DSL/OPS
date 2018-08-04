@@ -242,7 +242,8 @@ void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &
   pre_calc_to_h=min(pre_calc_to_h,int(from_h - max_pos - dirtyflags[dat->index].index_offset)); 
   pre_calc_from_d=max(pre_calc_from_d,int(to_d - max_neg - dirtyflags[dat->index].index_offset));
   
-  printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
+  if (OPS_diags > 5)
+    ops_printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
   
 }
 
@@ -653,9 +654,9 @@ void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int 
     int start2;
     int len = intersection(start[d]-disp[d], end[d]-disp[d], split, INT_MAX, &start2);
     if (len == 0 && ops_hybrid_tiling_phase == 1)
-      start[d] = end[d];
+      start[d] = end[d] = split;
     else if (len > 0 && ops_hybrid_tiling_phase == 0)
-      end[d] = start[d];
+      end[d] = start[d] = split;
   }
 }
 
