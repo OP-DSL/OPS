@@ -7,7 +7,7 @@ export PATH=/home/mgiles/mudalige/numawrap:$PATH
 
 #OPS specifics
 export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/home/mgiles/ireguly/OPS/ops
+export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
 
 #CUDA and NVIDIA OpenCL
 export PATH=/usr/local/cuda/bin:$PATH
@@ -21,12 +21,12 @@ export OPENCL_INSTALL_PATH=/usr/local/cuda/
 #export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 
 #PGI based MPI and Compilers
-export MPI_INSTALL_PATH=/opt/pgi/openmpi/
+export MPI_INSTALL_PATH=/opt/pgi/linux86-64/2018/mpi/openmpi/
 export MPICPP=mpicxx
 export PATH=/opt/pgi/linux86-64/2018/bin/:$PATH
-export PATH=/opt/pgi/openmpi/bin/:$PATH
+export PATH=/opt/pgi/linux86-64/2018/mpi/openmpi/bin/:$PATH
 
-export LD_LIBRARY_PATH=/opt/pgi/openmpi/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/pgi/linux86-64/2018/mpi/openmpi/lib/:$LD_LIBRARY_PATH
 
 export MPICH_CXX=/opt/pgi/linux86-64/2018/bin/pgc++
 export MPICH_CC=/opt/pgi/linux86-64/2018/bin/pgcc

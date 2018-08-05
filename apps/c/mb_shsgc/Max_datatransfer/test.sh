@@ -125,7 +125,7 @@ rm perf_out
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
 
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_16.9
 
 make clean
 make

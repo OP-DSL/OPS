@@ -120,7 +120,6 @@ rm perf_out
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 cd -
 #COMMENT
-#source ../../scripts/source_pgi_18.4
 source ../../scripts/source_pgi_16.9
 
 make clean
