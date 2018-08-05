@@ -81,7 +81,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out
@@ -89,7 +89,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA with GPU-Direct'
-MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./multidim_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out

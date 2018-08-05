@@ -143,8 +143,8 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 
 #COMMENT
 cd -
-#source ../../scripts/source_pgi_16.9
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_16.9
+#source ../../scripts/source_pgi_15.10
 
 make clean
 make

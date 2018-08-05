@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-<<COMMENT
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
@@ -89,9 +89,9 @@ rm -f perf_out
 echo "All Intel complied applications PASSED : Exiting Test Script "
 #exit
 
-COMMENT
-#cd -
-source ../../scripts/source_pgi_15.10
+#COMMENT
+cd -
+source ../../scripts/source_pgi_16.9
 
 make clean
 make
