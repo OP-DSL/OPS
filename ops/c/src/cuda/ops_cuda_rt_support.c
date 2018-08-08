@@ -205,6 +205,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 void ops_download_dat_hybrid(ops_dat dat);
 
 void ops_cuda_get_data(ops_dat dat) {
+  ops_execute();
   if (ops_hybrid) {
     ops_download_dat_hybrid(dat);
     return;
@@ -277,9 +278,9 @@ void mvConstArraysToDevice(int consts_bytes) {
 }
 
 void mvReductArraysToDevice(int reduct_bytes) {
-  cutilSafeCall(cudaMemcpy(OPS_reduct_d, OPS_reduct_h, reduct_bytes,
-                           cudaMemcpyHostToDevice));
-  cutilSafeCall(cudaDeviceSynchronize());
+  cutilSafeCall(cudaMemcpyAsync(OPS_reduct_d, OPS_reduct_h, reduct_bytes,
+                           cudaMemcpyHostToDevice,0));
+  //cutilSafeCall(cudaDeviceSynchronize());
 }
 
 void mvReductArraysToHost(int reduct_bytes) {

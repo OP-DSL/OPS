@@ -871,6 +871,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 *******************************************************************************/
 // --- This routine is identical to the sequential routine in ops_hdf5.c
 void ops_dump_to_hdf5(char const *file_name) {
+  ops_execute();
 
   ops_dat_entry *item;
   for (int n = 0; n < OPS_block_index; n++) {

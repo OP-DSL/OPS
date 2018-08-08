@@ -464,7 +464,6 @@ void ops_execute();
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int ops_get_proc();
 int ops_num_procs();
-void ops_reduction_result_hybrid(ops_reduction handle);
 
 #ifdef __cplusplus
 }

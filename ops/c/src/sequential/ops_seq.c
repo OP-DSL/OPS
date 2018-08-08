@@ -245,7 +245,6 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
-  ops_reduction_result_hybrid(handle);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;

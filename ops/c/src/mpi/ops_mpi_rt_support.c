@@ -62,11 +62,7 @@ extern double ops_scatter_time;
 extern double ops_sendrecv_time;
 
 int intersection(int range1_beg, int range1_end, int range2_beg,
-                 int range2_end) {
-  int i_min = MAX(range1_beg, range2_beg);
-  int i_max = MIN(range1_end, range2_end);
-  return i_max > i_min ? i_max - i_min : 0;
-}
+                 int range2_end);
 
 int contains(int point, int *range) {
   return (point >= range[0] && point < range[1]);

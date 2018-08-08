@@ -48,6 +48,8 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
+void ops_reduction_result_hybrid(ops_reduction handle);
+
 void ops_init_cuda(int argc, char **argv, int diags) {
   ops_init_core(argc, argv, diags);
 

@@ -100,6 +100,15 @@ int compare_blocks(ops_block block1, ops_block block2) {
     return 0;
 }
 
+size_t ops_calc_cumsize(ops_dat dat, int to_dim) {
+  long bytes = dat->elem_size;
+  //Product of sizes in lower dimensions
+  for (int i = 0; i < to_dim; i++)
+    bytes = bytes * dat->size[i];
+  //bytes is now the size of an to_dim dimensional slice
+  return bytes;
+}
+
 ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int *offset,
                    char const *type, char const *name) {
   ops_dat_entry *item;

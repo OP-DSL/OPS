@@ -394,23 +394,27 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code(text)
     ENDIF()
 
-    #reduction across blocks
-    if NDIM==1:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
-    if NDIM==2:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
-    elif NDIM==3:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_INC>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MIN>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MAX>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+    if (reduct):
+      #reduction across blocks
+      if NDIM==1:
+        cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
+      if NDIM==2:
+        cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
+      elif NDIM==3:
+        cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ and accs[n] <> OPS_WRITE:
+          code('for (int d=0; d<'+str(dims[n])+'; d++) {')
+          if accs[n] == OPS_INC:
+            code('  arg'+str(n)+'[d+'+cont+str(dims[n])+'] = ZERO_'+typs[n]+';')
+            code('  ops_reduction_cuda<OPS_INC>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+          if accs[n] == OPS_MIN:
+            code('  arg'+str(n)+'[d+'+cont+str(dims[n])+'] = INFINITY_'+typs[n]+';')
+            code('  ops_reduction_cuda<OPS_MIN>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+          if accs[n] == OPS_MAX:
+            code('  arg'+str(n)+'[d+'+cont+str(dims[n])+'] = -INFINITY_'+typs[n]+';')
+            code('  ops_reduction_cuda<OPS_MAX>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+          code('}')
 
 
     code('')
@@ -688,21 +692,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('reduct_bytes = 0;')
       code('')
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-        code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
-        code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
-        code('for (int b=0; b<maxblocks; b++)')
-        if accs[n] == OPS_INC:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+typs[n]+';')
-        if accs[n] == OPS_MAX:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = -INFINITY_'+typs[n]+';')
-        if accs[n] == OPS_MIN:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = INFINITY_'+typs[n]+';')
-        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
-        code('')
-
     code('')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] <> OPS_READ:
+          code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
+          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -714,9 +710,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(consts_bytes);')
-
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      code('mvReductArraysToDevice(reduct_bytes);')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':

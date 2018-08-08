@@ -392,6 +392,7 @@ void ops_hybrid_after(ops_kernel_descriptor * desc, int split) {
 }
 
 extern "C" void ops_download_dat_hybrid(ops_dat dat) {
+  cudaDeviceSynchronize();
   ops_download_dat_range(dat, dirtyflags[dat->index].dirty_from_h,
                                dirtyflags[dat->index].dirty_to_h, 0);
   cudaStreamSynchronize(0);
@@ -728,7 +729,7 @@ int ops_hybrid_tiled_get_split() {
 void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
   ops_hybrid_tiled_stats.cpu_time = cpu_time;
   ops_hybrid_tiled_stats.gpu_time = gpu_time;
-
+/*
   double new_balance = ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time / 
                   ((1.0 - ops_hybrid_tiled_stats.prev_balance) * ops_hybrid_tiled_stats.cpu_time +
                   ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time);
@@ -736,9 +737,9 @@ void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
         ops_hybrid_tiled_stats.prev_balance = smoothed_balance;
   if (abs(ops_hybrid_gbl_max_size*smoothed_balance - ops_hybrid_tiled_stats.prev_split) > ops_hybrid_gbl_max_size * 0.01)
     ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*smoothed_balance;
-
-   //if (OPS_diags > 3) 
- ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
+*/
+ if (OPS_diags > 3) 
+   ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
 }
 
 void ops_hybrid_after_tiling(ops_kernel_descriptor * desc) {

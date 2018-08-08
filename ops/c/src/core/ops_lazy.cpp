@@ -64,6 +64,8 @@ extern int ops_cache_size;
 double ops_tiled_halo_exchange_time = 0.0;
 
 extern int ops_hybrid;
+
+#ifdef OPS_HYBRID
 void ops_hybrid_execute(ops_kernel_descriptor *desc);
 extern int ops_hybrid_tiling_phase;
 void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
@@ -73,6 +75,7 @@ void ops_hybrid_after_tiling(ops_kernel_descriptor * desc);
 void ops_hybrid_execution_start(int cpugpu);
 void ops_hybrid_execution_end(int cpugpu);
 int ops_hybrid_tiled_get_split();
+#endif
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
@@ -140,7 +143,7 @@ extern "C" int union_range(int range1_beg, int range1_end, int range2_beg,
 
 //Queries L3 cache size
 size_t ops_internal_get_cache_size() {
-  if (OPS_hybrid_gpu) return 0;
+  if (OPS_hybrid_gpu && !ops_hybrid) return 0;
   FILE *p = 0;
   p = fopen("/sys/devices/system/cpu/cpu0/cache/index3/size", "r");
   unsigned int i = 0;
@@ -184,8 +187,11 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
+#ifdef OPS_HYBRID
     if (ops_hybrid) ops_hybrid_execute(desc);
-    else desc->function(desc);
+    else
+#endif
+      desc->function(desc);
 
     //Dirtybits
     if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
@@ -281,7 +287,9 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
 }
 
 void ops_compute_tile_size(int *tile_sizes, int dims, int full_owned_size, int *biggest_range) {
+#ifdef OPS_HYBRID
   if (ops_hybrid_tiling_phase == 1) return;
+#endif
   //
   // If no tile sizes specified, compute it
   //
@@ -357,8 +365,10 @@ int ops_construct_tile_plan() {
   std::vector<int> &depths_to_exchange = 
       tiling_plans[tiling_plans.size() - 1].depths_to_exchange;
 
+#ifdef OPS_HYBRID
   tiling_plans[tiling_plans.size() - 1].split = ops_hybrid ? ops_hybrid_tiled_get_split() : 0;
-  
+#endif
+
   tiling_plans[tiling_plans.size() - 1].nloops = ops_kernel_list.size();
   tiling_plans[tiling_plans.size() - 1].loop_sequence.resize(
       ops_kernel_list.size());
@@ -386,7 +396,9 @@ int ops_construct_tile_plan() {
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+#ifdef OPS_HYBRID
     ops_hybrid_modify_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+#endif
 
     // TODO: handling non-owned blocks
     for (int d = 0; d < dims; d++) {
@@ -416,7 +428,9 @@ int ops_construct_tile_plan() {
   // Get tile sizes
   //
 
+#ifdef OPS_HYBRID
   if (ops_hybrid_tiling_phase == 0 || !ops_hybrid) {
+#endif
     if (getenv("T1"))
       TILE1D = atoi(getenv("T1"));
     else
@@ -429,11 +443,13 @@ int ops_construct_tile_plan() {
       TILE3D = atoi(getenv("T3"));
     else
       TILE3D = -1;
+#ifdef OPS_HYBRID
   } else {
     TILE1D = 0;
     TILE2D = 0;
     TILE3D = 0;
   }
+#endif
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
   // Initialise tiling datasets
   tiled_ranges.resize(ops_kernel_list.size());
@@ -513,7 +529,9 @@ int ops_construct_tile_plan() {
   for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     bool owned = ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
+#ifdef OPS_HYBRID
     ops_hybrid_modify_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
+#endif
 
     for (int d = 0; d < dims; d++) {
 
@@ -837,7 +855,7 @@ int ops_construct_tile_plan() {
   }
 
   ops_timers_core(&c2, &t2);
-  //if (OPS_diags > 2)
+  if (OPS_diags > 2)
     printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan
@@ -854,8 +872,11 @@ void ops_execute() {
   // Try to find an existing tiling plan for this sequence of loops
   int match = -1;
   for (int i = 0; i < tiling_plans.size(); i++) {
-    if (ops_kernel_list.size() == tiling_plans[i].nloops && 
-        tiling_plans[i].split == (ops_hybrid ? ops_hybrid_tiled_get_split() : 0)) {
+    if (ops_kernel_list.size() == tiling_plans[i].nloops 
+#ifdef OPS_HYBRID
+        && tiling_plans[i].split == (ops_hybrid ? ops_hybrid_tiled_get_split() : 0)
+#endif
+        ) {
       int count = 0;
       for (int j = 0; j < ops_kernel_list.size(); j++) {
         if (ops_kernel_list[j]->hash == tiling_plans[i].loop_sequence[j])
@@ -872,13 +893,17 @@ void ops_execute() {
 
   // If not found, construct one
   if (match == -1) {
+#ifdef OPS_HYBRID
     ops_hybrid_tiling_phase = 0;
+#endif
     match = ops_construct_tile_plan();
+#ifdef OPS_HYBRID
     if (ops_hybrid) {
       ops_hybrid_tiling_phase = 1;
       match = ops_construct_tile_plan();
       match--;
     }
+#endif
   }
 
   //Do halo exchanges
@@ -886,6 +911,7 @@ void ops_execute() {
   if (OPS_diags>1)
     ops_timers_core(&c,&t1);
   
+#ifdef OPS_HYBRID
   if (ops_hybrid) {
     ops_hybrid_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
                                       tiling_plans[match].dats_to_exchange.size(),
@@ -893,7 +919,8 @@ void ops_execute() {
                                       &tiling_plans[match+1].dats_to_exchange[0],
                                       tiling_plans[match+1].dats_to_exchange.size(),
                                       &tiling_plans[match+1].depths_to_exchange[0]);
-  } else 
+  } else
+#endif 
     ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
                                tiling_plans[match].dats_to_exchange.size(),
                                &tiling_plans[match].depths_to_exchange[0]);
@@ -907,8 +934,10 @@ void ops_execute() {
     ops_printf("Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
   for (int target = 0; target < 1 + ops_hybrid!=0; target++) {
+#ifdef OPS_HYBRID
     if (ops_hybrid && target == 0) ops_hybrid_execution_start(1);
     if (ops_hybrid && target == 1) ops_hybrid_execution_start(0);
+#endif
 
     //with hybrid target 0 is the GPU (async launches), target 1 is CPU
     std::vector<std::vector<int> > &tiled_ranges = 
@@ -950,7 +979,9 @@ void ops_execute() {
         ops_kernel_list[i]->function(ops_kernel_list[i]);
       }
     }
+#ifdef OPS_HYBRID
     if (ops_hybrid && target == 0) ops_hybrid_execution_end(1);
+#endif
   }
 
   //Set dirtybits
@@ -958,16 +989,20 @@ void ops_execute() {
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
         ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
+#ifdef OPS_HYBRID
       if (ops_hybrid) {
         memcpy(&ops_kernel_list[i]->range[0],
                &tiling_plans[match].original_ranges[ops_kernel_list[i]->block->dims * 2 * i],
                ops_kernel_list[i]->block->dims * 2 * sizeof(int));
         ops_hybrid_after_tiling(ops_kernel_list[i]);
       }
+#endif
     }
   }
 
+#ifdef OPS_HYBRID
   if (ops_hybrid) ops_hybrid_execution_end(0); //Need to call this after updating the hybrid dirty flags, as this updates split
+#endif
 
   for (int i = 0; i < ops_kernel_list.size(); i++) {
     // free(ops_kernel_list[i]->args);

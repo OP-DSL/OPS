@@ -46,6 +46,7 @@ char *ops_halo_buffer = NULL;
 char *ops_halo_buffer_d = NULL;
 int ops_halo_buffer_size = 0;
 extern int ops_hybrid;
+void ops_reduction_result_hybrid(ops_reduction handle);
 
 void ops_init(int argc, char **argv, int diags) {
   ops_init_core(argc, argv, diags);
@@ -174,7 +175,7 @@ void ops_timers(double *cpu, double *et) {
 }
 
 // routine to fetch data from device
-void ops_get_data(ops_dat dat) { ops_cuda_get_data(dat); }
+void ops_get_data(ops_dat dat) { ops_execute(); ops_cuda_get_data(dat); }
 
 void ops_halo_transfer(ops_halo_group group) {
   // printf("In CUDA block halo transfer\n");

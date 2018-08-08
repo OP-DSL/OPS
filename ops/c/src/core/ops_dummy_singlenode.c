@@ -148,14 +148,7 @@ long ops_get_base_offset(ops_dat dat) {
   return base_offset;
 }
 
-size_t ops_calc_cumsize(ops_dat dat, int to_dim) {
-  long bytes = dat->elem_size;
-  //Product of sizes in lower dimensions
-  for (int i = 0; i < to_dim; i++)
-    bytes = bytes * dat->size[i];
-  //bytes is now the size of an to_dim dimensional slice
-  return bytes;
-}
+
 
 void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 
