@@ -50,11 +50,11 @@
 
 
 //user function
-inline void update_halo_kernel4_minus_2_b(__global double * restrict vol_flux_y,__global double * restrict mass_flux_y,const __global int* restrict  fields)
+inline void update_halo_kernel4_minus_2_b(__global double * restrict vol_flux_y,__global double * restrict mass_flux_y,const  int* restrict  fields)
 
  {
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-2)]);
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-2)]);
+  if((*fields) & FIELD_VOL_FLUX_Y) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-2)]);
+  if((*fields) & FIELD_MASS_FLUX_Y) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-2)]);
 }
 
 
@@ -62,7 +62,7 @@ inline void update_halo_kernel4_minus_2_b(__global double * restrict vol_flux_y,
 __kernel void ops_update_halo_kernel4_minus_2_b(
 __global double* restrict arg0,
 __global double* restrict arg1,
-__global const int* restrict arg2,
+const int arg2,
 const int base0,
 const int base1,
 const int size0,
@@ -75,7 +75,7 @@ const int size1 ){
   if (idx_x < size0 && idx_y < size1) {
     update_halo_kernel4_minus_2_b(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel4_minus_2_b],
                        &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel4_minus_2_b],
-                       arg2);
+                       &arg2);
   }
 
 }

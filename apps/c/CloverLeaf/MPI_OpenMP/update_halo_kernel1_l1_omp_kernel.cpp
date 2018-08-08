@@ -11,13 +11,13 @@ inline void update_halo_kernel1_l1(double *density0, double *density1,
                           double *energy0, double *energy1,
                           double *pressure, double *viscosity,
                           double *soundspeed , const int* fields) {
-  if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(1,0)];
-  if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(1,0)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(1,0)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(1,0)];
-  if(fields[FIELD_PRESSURE] == 1) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(1,0)];
-  if(fields[FIELD_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(1,0)];
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(1,0)];
+  if((*fields) & FIELD_DENSITY0) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(1,0)];
+  if((*fields) & FIELD_DENSITY1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(1,0)];
+  if((*fields) & FIELD_ENERGY0) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(1,0)];
+  if((*fields) & FIELD_ENERGY1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(1,0)];
+  if((*fields) & FIELD_PRESSURE) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(1,0)];
+  if((*fields) & FIELD_VISCOSITY) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(1,0)];
+  if((*fields) & FIELD_SOUNDSPEED) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(1,0)];
 
 }
 

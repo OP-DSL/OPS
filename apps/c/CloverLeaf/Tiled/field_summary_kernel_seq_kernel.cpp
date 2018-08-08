@@ -83,7 +83,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a6 = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
-  if (ops_hybrid) arg6h =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index));
+  if (ops_hybrid) p_a6 =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a6 = (double *)((ops_reduction)args[6].data)->data;
   #endif //OPS_MPI
@@ -91,7 +91,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a7 = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
-  if (ops_hybrid) arg7h =  (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * (2*block->index));
+  if (ops_hybrid) p_a7 =  (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a7 = (double *)((ops_reduction)args[7].data)->data;
   #endif //OPS_MPI
@@ -99,7 +99,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a8 = (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * block->index);
-  if (ops_hybrid) arg8h =  (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * (2*block->index));
+  if (ops_hybrid) p_a8 =  (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a8 = (double *)((ops_reduction)args[8].data)->data;
   #endif //OPS_MPI
@@ -107,7 +107,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a9 = (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * block->index);
-  if (ops_hybrid) arg9h =  (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * (2*block->index));
+  if (ops_hybrid) p_a9 =  (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a9 = (double *)((ops_reduction)args[9].data)->data;
   #endif //OPS_MPI
@@ -115,7 +115,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a10 = (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * block->index);
-  if (ops_hybrid) arg10h =  (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * (2*block->index));
+  if (ops_hybrid) p_a10 =  (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a10 = (double *)((ops_reduction)args[10].data)->data;
   #endif //OPS_MPI

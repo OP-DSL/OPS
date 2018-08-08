@@ -37,13 +37,13 @@ inline void update_halo_kernel1_r1(double *density0, double *density1,
                           double *energy0, double *energy1,
                           double *pressure, double *viscosity,
                           double *soundspeed , const int* fields) {
-  if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(-1,0)];
-  if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(-1,0)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(-1,0)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(-1,0)];
-  if(fields[FIELD_PRESSURE] == 1) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(-1,0)];
-  if(fields[FIELD_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(-1,0)];
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(-1,0)];
+  if((*fields) & FIELD_DENSITY0) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(-1,0)];
+  if((*fields) & FIELD_DENSITY1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(-1,0)];
+  if((*fields) & FIELD_ENERGY0) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(-1,0)];
+  if((*fields) & FIELD_ENERGY1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(-1,0)];
+  if((*fields) & FIELD_PRESSURE) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(-1,0)];
+  if((*fields) & FIELD_VISCOSITY) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(-1,0)];
+  if((*fields) & FIELD_SOUNDSPEED) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(-1,0)];
 
 }
 
@@ -66,10 +66,10 @@ void update_halo_kernel1_r1_c_wrapper(
   double *p_a4,
   double *p_a5,
   double *p_a6,
-  int *p_a7,
+  int p_a7,
   int x_size, int y_size) {
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6,p_a7)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6)
   #pragma acc loop
   #endif
   for ( int n_y=0; n_y<y_size; n_y++ ){
@@ -81,7 +81,7 @@ void update_halo_kernel1_r1_c_wrapper(
            p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel1_r1*1*1, p_a2 + n_x*1*1 + n_y*xdim2_update_halo_kernel1_r1*1*1,
            p_a3 + n_x*1*1 + n_y*xdim3_update_halo_kernel1_r1*1*1, p_a4 + n_x*1*1 + n_y*xdim4_update_halo_kernel1_r1*1*1,
            p_a5 + n_x*1*1 + n_y*xdim5_update_halo_kernel1_r1*1*1, p_a6 + n_x*1*1 + n_y*xdim6_update_halo_kernel1_r1*1*1,
-           p_a7 );
+           &p_a7 );
 
     }
   }

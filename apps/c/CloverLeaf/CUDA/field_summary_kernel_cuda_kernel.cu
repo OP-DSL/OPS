@@ -113,16 +113,26 @@ int size1 ){
                    arg4, arg5, arg6_l, arg7_l, arg8_l,
                    arg9_l, arg10_l);
   }
-  for (int d=0; d<1; d++)
+  for (int d=0; d<1; d++) {
+    arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg6_l[d]);
-  for (int d=0; d<1; d++)
+  }
+  for (int d=0; d<1; d++) {
+    arg7[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg7_l[d]);
-  for (int d=0; d<1; d++)
+  }
+  for (int d=0; d<1; d++) {
+    arg8[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg8[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg8_l[d]);
-  for (int d=0; d<1; d++)
+  }
+  for (int d=0; d<1; d++) {
+    arg9[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg9[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg9_l[d]);
-  for (int d=0; d<1; d++)
+  }
+  for (int d=0; d<1; d++) {
+    arg10[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg10[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg10_l[d]);
+  }
 
 }
 void CUDART_CB field_summary_kernel_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
@@ -331,38 +341,22 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
+
   arg6.data = OPS_reduct_h + reduct_bytes;
   arg6.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg6.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
   arg7.data = OPS_reduct_h + reduct_bytes;
   arg7.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg7.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
   arg8.data = OPS_reduct_h + reduct_bytes;
   arg8.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg8.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
   arg9.data = OPS_reduct_h + reduct_bytes;
   arg9.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg9.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
   arg10.data = OPS_reduct_h + reduct_bytes;
   arg10.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg10.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
-
-  mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);

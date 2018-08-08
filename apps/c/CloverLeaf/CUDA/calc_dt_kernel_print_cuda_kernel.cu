@@ -88,8 +88,10 @@ int size1 ){
     calc_dt_kernel_print_gpu(arg0, arg1, arg2, arg3,
                    arg4, arg5, arg6_l);
   }
-  for (int d=0; d<12; d++)
+  for (int d=0; d<12; d++) {
+    arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*12] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*12],arg6_l[d]);
+  }
 
 }
 void CUDART_CB calc_dt_kernel_print_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
@@ -225,14 +227,10 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
+
   arg6.data = OPS_reduct_h + reduct_bytes;
   arg6.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<12; d++) ((double *)arg6.data)[d+b*12] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*12*sizeof(double));
-
-
-  mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);

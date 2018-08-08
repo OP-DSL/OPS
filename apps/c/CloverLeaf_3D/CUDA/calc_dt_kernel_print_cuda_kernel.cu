@@ -38,65 +38,53 @@ int ydim6_calc_dt_kernel_print_h = -1;
 #undef OPS_ACC5
 #undef OPS_ACC6
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_calc_dt_kernel_print * (y) +                                      \
-   xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print * (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (x + xdim1_calc_dt_kernel_print * (y) +                                      \
-   xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print * (z))
-#define OPS_ACC2(x, y, z)                                                      \
-  (x + xdim2_calc_dt_kernel_print * (y) +                                      \
-   xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print * (z))
-#define OPS_ACC3(x, y, z)                                                      \
-  (x + xdim3_calc_dt_kernel_print * (y) +                                      \
-   xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print * (z))
-#define OPS_ACC4(x, y, z)                                                      \
-  (x + xdim4_calc_dt_kernel_print * (y) +                                      \
-   xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print * (z))
-#define OPS_ACC5(x, y, z)                                                      \
-  (x + xdim5_calc_dt_kernel_print * (y) +                                      \
-   xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print * (z))
-#define OPS_ACC6(x, y, z)                                                      \
-  (x + xdim6_calc_dt_kernel_print * (y) +                                      \
-   xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print * (z))
 
-// user function
+#define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_print*(y)+xdim0_calc_dt_kernel_print*ydim0_calc_dt_kernel_print*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1_calc_dt_kernel_print*(y)+xdim1_calc_dt_kernel_print*ydim1_calc_dt_kernel_print*(z))
+#define OPS_ACC2(x,y,z) (x+xdim2_calc_dt_kernel_print*(y)+xdim2_calc_dt_kernel_print*ydim2_calc_dt_kernel_print*(z))
+#define OPS_ACC3(x,y,z) (x+xdim3_calc_dt_kernel_print*(y)+xdim3_calc_dt_kernel_print*ydim3_calc_dt_kernel_print*(z))
+#define OPS_ACC4(x,y,z) (x+xdim4_calc_dt_kernel_print*(y)+xdim4_calc_dt_kernel_print*ydim4_calc_dt_kernel_print*(z))
+#define OPS_ACC5(x,y,z) (x+xdim5_calc_dt_kernel_print*(y)+xdim5_calc_dt_kernel_print*ydim5_calc_dt_kernel_print*(z))
+#define OPS_ACC6(x,y,z) (x+xdim6_calc_dt_kernel_print*(y)+xdim6_calc_dt_kernel_print*ydim6_calc_dt_kernel_print*(z))
+
+//user function
 __device__
 
-    void
-    calc_dt_kernel_print_gpu(const double *xvel0, const double *yvel0,
-                             const double *zvel0, const double *density0,
-                             const double *energy0, const double *pressure,
-                             const double *soundspeed, double *output) {
-  output[0] = xvel0[OPS_ACC0(0, 0, 0)];
-  output[1] = yvel0[OPS_ACC1(0, 0, 0)];
-  output[2] = zvel0[OPS_ACC2(0, 0, 0)];
-  output[3] = xvel0[OPS_ACC0(1, 0, 0)];
-  output[4] = yvel0[OPS_ACC1(1, 0, 0)];
-  output[5] = zvel0[OPS_ACC2(0, 0, 0)];
-  output[6] = xvel0[OPS_ACC0(1, 1, 0)];
-  output[7] = yvel0[OPS_ACC1(1, 1, 0)];
-  output[8] = zvel0[OPS_ACC2(0, 0, 0)];
-  output[9] = xvel0[OPS_ACC0(0, 1, 0)];
-  output[10] = yvel0[OPS_ACC1(0, 1, 0)];
-  output[11] = zvel0[OPS_ACC2(0, 0, 0)];
-  output[12] = xvel0[OPS_ACC0(0, 0, 1)];
-  output[13] = yvel0[OPS_ACC1(0, 0, 1)];
-  output[14] = zvel0[OPS_ACC2(0, 0, 1)];
-  output[15] = xvel0[OPS_ACC0(1, 0, 1)];
-  output[16] = yvel0[OPS_ACC1(1, 0, 1)];
-  output[17] = zvel0[OPS_ACC2(0, 0, 1)];
-  output[18] = xvel0[OPS_ACC0(1, 1, 1)];
-  output[19] = yvel0[OPS_ACC1(1, 1, 1)];
-  output[20] = zvel0[OPS_ACC2(0, 0, 1)];
-  output[21] = xvel0[OPS_ACC0(0, 1, 1)];
-  output[22] = yvel0[OPS_ACC1(0, 1, 1)];
-  output[23] = zvel0[OPS_ACC2(0, 0, 1)];
-  output[24] = density0[OPS_ACC3(0, 0, 0)];
-  output[25] = energy0[OPS_ACC4(0, 0, 0)];
-  output[26] = pressure[OPS_ACC5(0, 0, 0)];
-  output[27] = soundspeed[OPS_ACC6(0, 0, 0)];
+void calc_dt_kernel_print_gpu(const double *xvel0, const double *yvel0, const double *zvel0,
+                        const double *density0, const double *energy0,
+                        const double *pressure, const double *soundspeed, double *output) {
+  output[0] = xvel0[OPS_ACC0(0,0,0)];
+  output[1] = yvel0[OPS_ACC1(0,0,0)];
+  output[2] = zvel0[OPS_ACC2(0,0,0)];
+  output[3] = xvel0[OPS_ACC0(1,0,0)];
+  output[4] = yvel0[OPS_ACC1(1,0,0)];
+  output[5] = zvel0[OPS_ACC2(0,0,0)];
+  output[6] = xvel0[OPS_ACC0(1,1,0)];
+  output[7] = yvel0[OPS_ACC1(1,1,0)];
+  output[8] = zvel0[OPS_ACC2(0,0,0)];
+  output[9] = xvel0[OPS_ACC0(0,1,0)];
+  output[10] = yvel0[OPS_ACC1(0,1,0)];
+  output[11] = zvel0[OPS_ACC2(0,0,0)];
+  output[12] = xvel0[OPS_ACC0(0,0,1)];
+  output[13] = yvel0[OPS_ACC1(0,0,1)];
+  output[14] = zvel0[OPS_ACC2(0,0,1)];
+  output[15] = xvel0[OPS_ACC0(1,0,1)];
+  output[16] = yvel0[OPS_ACC1(1,0,1)];
+  output[17] = zvel0[OPS_ACC2(0,0,1)];
+  output[18] = xvel0[OPS_ACC0(1,1,1)];
+  output[19] = yvel0[OPS_ACC1(1,1,1)];
+  output[20] = zvel0[OPS_ACC2(0,0,1)];
+  output[21] = xvel0[OPS_ACC0(0,1,1)];
+  output[22] = yvel0[OPS_ACC1(0,1,1)];
+  output[23] = zvel0[OPS_ACC2(0,0,1)];
+  output[24] = density0[OPS_ACC3(0,0,0)];
+  output[25] = energy0[OPS_ACC4(0,0,0)];
+  output[26] = pressure[OPS_ACC5(0,0,0)];
+  output[27] = soundspeed[OPS_ACC6(0,0,0)];
+
 }
+
+
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -106,63 +94,68 @@ __device__
 #undef OPS_ACC5
 #undef OPS_ACC6
 
+
 __global__ void ops_calc_dt_kernel_print(
-    const double *__restrict arg0, const double *__restrict arg1,
-    const double *__restrict arg2, const double *__restrict arg3,
-    const double *__restrict arg4, const double *__restrict arg5,
-    const double *__restrict arg6, double *__restrict arg7, int size0,
-    int size1, int size2) {
+const double* __restrict arg0,
+const double* __restrict arg1,
+const double* __restrict arg2,
+const double* __restrict arg3,
+const double* __restrict arg4,
+const double* __restrict arg5,
+const double* __restrict arg6,
+double* __restrict arg7,
+int size0,
+int size1,
+int size2 ){
 
   double arg7_l[28];
-  for (int d = 0; d < 28; d++)
-    arg7_l[d] = ZERO_double;
+  for (int d=0; d<28; d++) arg7_l[d] = ZERO_double;
 
   int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim0_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print;
-  arg1 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print;
-  arg2 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print;
-  arg3 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print;
-  arg4 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print;
-  arg5 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim5_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print;
-  arg6 +=
-      idx_x * 1 * 1 + idx_y * 1 * 1 * xdim6_calc_dt_kernel_print +
-      idx_z * 1 * 1 * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_print + idx_z * 1*1 * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_print + idx_z * 1*1 * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel_print + idx_z * 1*1 * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel_print + idx_z * 1*1 * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel_print + idx_z * 1*1 * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel_print + idx_z * 1*1 * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print;
+  arg6 += idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel_print + idx_z * 1*1 * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_print_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7_l);
+    calc_dt_kernel_print_gpu(arg0, arg1, arg2, arg3,
+                   arg4, arg5, arg6, arg7_l);
   }
-  for (int d = 0; d < 28; d++)
-    ops_reduction_cuda<OPS_INC>(&arg7[d +
-                                      (blockIdx.x + blockIdx.y * gridDim.x +
-                                       blockIdx.z * gridDim.x * gridDim.y) *
-                                          28],
-                                arg7_l[d]);
+  for (int d=0; d<28; d++)
+    ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*28],arg7_l[d]);
+
+}
+void CUDART_CB calc_dt_kernel_print_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg7h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg7data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<28; d++ ){
+      arg7h[d] = arg7h[d] + arg7data[d+b*28];
+    }
+  }
+
+  free(buf);
 }
 
 // host stub function
 #ifndef OPS_LAZY
-void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
-                                       int dim, int *range, ops_arg arg0,
-                                       ops_arg arg1, ops_arg arg2, ops_arg arg3,
-                                       ops_arg arg4, ops_arg arg5, ops_arg arg6,
-                                       ops_arg arg7) {
+void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
+ ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
+#else
+#ifdef OPS_HYBRID
+void ops_par_loop_calc_dt_kernel_print_execute_gpu(ops_kernel_descriptor *desc) {
 #else
 void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
+#endif
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -173,60 +166,57 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   ops_arg arg5 = desc->args[5];
   ops_arg arg6 = desc->args[6];
   ops_arg arg7 = desc->args[7];
-#endif
+  #endif
 
-  // Timing
-  double t1, t2, c1, c2;
+  //Timing
+  double t1,t2,c1,c2;
 
-  ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
+  ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
-#if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 8, range, 40))
-    return;
-#endif
+
+  #if CHECKPOINTING && !OPS_LAZY
+  if (!ops_checkpointing_before(args,8,range,40)) return;
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(40, "calc_dt_kernel_print");
+    ops_timing_realloc(40,"calc_dt_kernel_print");
     OPS_kernels[40].count++;
-    ops_timers_core(&c1, &t1);
+    ops_timers_core(&c1,&t1);
   }
 
-  // compute locally allocated range for the sub-block
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
-#if OPS_MPI && !OPS_LAZY
+  #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
+  if (!sb->owned) return;
+  for ( int n=0; n<3; n++ ){
+    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+    if (start[n] >= range[2*n]) {
       start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
     }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - sb->decomp_disp[n];
+    }
+    else {
       end[n] = sb->decomp_size[n];
     }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-#else
-  for (int n = 0; n < 3; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
+  #else
+  for ( int n=0; n<3; n++ ){
+    start[n] = range[2*n];end[n] = range[2*n+1];
   }
-#endif
+  #endif
 
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
+  int x_size = MAX(0,end[0]-start[0]);
+  int y_size = MAX(0,end[1]-start[1]);
+  int z_size = MAX(0,end[2]-start[2]);
 
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
@@ -243,83 +233,69 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
 
-  if (xdim0 != xdim0_calc_dt_kernel_print_h ||
-      ydim0 != ydim0_calc_dt_kernel_print_h ||
-      xdim1 != xdim1_calc_dt_kernel_print_h ||
-      ydim1 != ydim1_calc_dt_kernel_print_h ||
-      xdim2 != xdim2_calc_dt_kernel_print_h ||
-      ydim2 != ydim2_calc_dt_kernel_print_h ||
-      xdim3 != xdim3_calc_dt_kernel_print_h ||
-      ydim3 != ydim3_calc_dt_kernel_print_h ||
-      xdim4 != xdim4_calc_dt_kernel_print_h ||
-      ydim4 != ydim4_calc_dt_kernel_print_h ||
-      xdim5 != xdim5_calc_dt_kernel_print_h ||
-      ydim5 != ydim5_calc_dt_kernel_print_h ||
-      xdim6 != xdim6_calc_dt_kernel_print_h ||
-      ydim6 != ydim6_calc_dt_kernel_print_h) {
-    cudaMemcpyToSymbol(xdim0_calc_dt_kernel_print, &xdim0, sizeof(int));
+  if (xdim0 != xdim0_calc_dt_kernel_print_h || ydim0 != ydim0_calc_dt_kernel_print_h || xdim1 != xdim1_calc_dt_kernel_print_h || ydim1 != ydim1_calc_dt_kernel_print_h || xdim2 != xdim2_calc_dt_kernel_print_h || ydim2 != ydim2_calc_dt_kernel_print_h || xdim3 != xdim3_calc_dt_kernel_print_h || ydim3 != ydim3_calc_dt_kernel_print_h || xdim4 != xdim4_calc_dt_kernel_print_h || ydim4 != ydim4_calc_dt_kernel_print_h || xdim5 != xdim5_calc_dt_kernel_print_h || ydim5 != ydim5_calc_dt_kernel_print_h || xdim6 != xdim6_calc_dt_kernel_print_h || ydim6 != ydim6_calc_dt_kernel_print_h) {
+    cudaMemcpyToSymbolAsync( xdim0_calc_dt_kernel_print, &xdim0, sizeof(int),0 );
     xdim0_calc_dt_kernel_print_h = xdim0;
-    cudaMemcpyToSymbol(ydim0_calc_dt_kernel_print, &ydim0, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim0_calc_dt_kernel_print, &ydim0, sizeof(int),0 );
     ydim0_calc_dt_kernel_print_h = ydim0;
-    cudaMemcpyToSymbol(xdim1_calc_dt_kernel_print, &xdim1, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim1_calc_dt_kernel_print, &xdim1, sizeof(int),0 );
     xdim1_calc_dt_kernel_print_h = xdim1;
-    cudaMemcpyToSymbol(ydim1_calc_dt_kernel_print, &ydim1, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim1_calc_dt_kernel_print, &ydim1, sizeof(int),0 );
     ydim1_calc_dt_kernel_print_h = ydim1;
-    cudaMemcpyToSymbol(xdim2_calc_dt_kernel_print, &xdim2, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim2_calc_dt_kernel_print, &xdim2, sizeof(int),0 );
     xdim2_calc_dt_kernel_print_h = xdim2;
-    cudaMemcpyToSymbol(ydim2_calc_dt_kernel_print, &ydim2, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim2_calc_dt_kernel_print, &ydim2, sizeof(int),0 );
     ydim2_calc_dt_kernel_print_h = ydim2;
-    cudaMemcpyToSymbol(xdim3_calc_dt_kernel_print, &xdim3, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim3_calc_dt_kernel_print, &xdim3, sizeof(int),0 );
     xdim3_calc_dt_kernel_print_h = xdim3;
-    cudaMemcpyToSymbol(ydim3_calc_dt_kernel_print, &ydim3, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim3_calc_dt_kernel_print, &ydim3, sizeof(int),0 );
     ydim3_calc_dt_kernel_print_h = ydim3;
-    cudaMemcpyToSymbol(xdim4_calc_dt_kernel_print, &xdim4, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim4_calc_dt_kernel_print, &xdim4, sizeof(int),0 );
     xdim4_calc_dt_kernel_print_h = xdim4;
-    cudaMemcpyToSymbol(ydim4_calc_dt_kernel_print, &ydim4, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim4_calc_dt_kernel_print, &ydim4, sizeof(int),0 );
     ydim4_calc_dt_kernel_print_h = ydim4;
-    cudaMemcpyToSymbol(xdim5_calc_dt_kernel_print, &xdim5, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim5_calc_dt_kernel_print, &xdim5, sizeof(int),0 );
     xdim5_calc_dt_kernel_print_h = xdim5;
-    cudaMemcpyToSymbol(ydim5_calc_dt_kernel_print, &ydim5, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim5_calc_dt_kernel_print, &ydim5, sizeof(int),0 );
     ydim5_calc_dt_kernel_print_h = ydim5;
-    cudaMemcpyToSymbol(xdim6_calc_dt_kernel_print, &xdim6, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim6_calc_dt_kernel_print, &xdim6, sizeof(int),0 );
     xdim6_calc_dt_kernel_print_h = xdim6;
-    cudaMemcpyToSymbol(ydim6_calc_dt_kernel_print, &ydim6, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim6_calc_dt_kernel_print, &ydim6, sizeof(int),0 );
     ydim6_calc_dt_kernel_print_h = ydim6;
   }
 
-#ifdef OPS_LAZY
+
+  #ifdef OPS_LAZY
   ops_block block = desc->block;
-#endif
-#ifdef OPS_MPI
-  double *arg7h =
-      (double *)(((ops_reduction)args[7].data)->data +
-                 ((ops_reduction)args[7].data)->size * block->index);
-#else
+  #endif
+  #ifdef OPS_MPI
+  double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
+  if (ops_hybrid) arg7h =  (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * (2*block->index+1));
+  #else
   double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
-#endif
+  if (ops_hybrid) arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size);
+  #endif
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, z_size);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);
+  dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
 
-  int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
-                ((y_size - 1) / OPS_block_size_y + 1) * z_size;
+  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;
   int maxblocks = nblocks;
   int reduct_bytes = 0;
   int reduct_size = 0;
 
-  reduct_bytes += ROUND_UP(maxblocks * 28 * sizeof(double));
-  reduct_size = MAX(reduct_size, sizeof(double) * 28);
+  reduct_bytes += ROUND_UP(maxblocks*28*sizeof(double));
+  reduct_size = MAX(reduct_size,sizeof(double)*28);
 
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
   arg7.data = OPS_reduct_h + reduct_bytes;
   arg7.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b = 0; b < maxblocks; b++)
-    for (int d = 0; d < 28; d++)
-      ((double *)arg7.data)[d + b * 28] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks * 28 * sizeof(double));
+  for (int b=0; b<maxblocks; b++)
+  for (int d=0; d<28; d++) ((double *)arg7.data)[d+b*28] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*28*sizeof(double));
+
 
   mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
@@ -332,115 +308,141 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   char *p_a[8];
 
-  // set up initial pointers
-  int base0 = args[0].dat->base_offset +
-              dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2]);
+  //set up initial pointers
+  int base0 = args[0].dat->base_offset + 
+           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    (start[1] * args[0].stencil->stride[1]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    args[0].dat->size[1] *
+    (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset +
-              dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-              (start[2] * args[1].stencil->stride[2]);
+  int base1 = args[1].dat->base_offset + 
+           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  base1 = base1+ dat1 *
+    args[1].dat->size[0] *
+    (start[1] * args[1].stencil->stride[1]);
+  base1 = base1+ dat1 *
+    args[1].dat->size[0] *
+    args[1].dat->size[1] *
+    (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  int base2 = args[2].dat->base_offset +
-              dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
-  base2 = base2 +
-          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1]);
-  base2 = base2 +
-          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
-              (start[2] * args[2].stencil->stride[2]);
+  int base2 = args[2].dat->base_offset + 
+           dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
+  base2 = base2+ dat2 *
+    args[2].dat->size[0] *
+    (start[1] * args[2].stencil->stride[1]);
+  base2 = base2+ dat2 *
+    args[2].dat->size[0] *
+    args[2].dat->size[1] *
+    (start[2] * args[2].stencil->stride[2]);
   p_a[2] = (char *)args[2].data_d + base2;
 
-  int base3 = args[3].dat->base_offset +
-              dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
-  base3 = base3 +
-          dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1]);
-  base3 = base3 +
-          dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
-              (start[2] * args[3].stencil->stride[2]);
+  int base3 = args[3].dat->base_offset + 
+           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  base3 = base3+ dat3 *
+    args[3].dat->size[0] *
+    (start[1] * args[3].stencil->stride[1]);
+  base3 = base3+ dat3 *
+    args[3].dat->size[0] *
+    args[3].dat->size[1] *
+    (start[2] * args[3].stencil->stride[2]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-  int base4 = args[4].dat->base_offset +
-              dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
-              (start[2] * args[4].stencil->stride[2]);
+  int base4 = args[4].dat->base_offset + 
+           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  base4 = base4+ dat4 *
+    args[4].dat->size[0] *
+    (start[1] * args[4].stencil->stride[1]);
+  base4 = base4+ dat4 *
+    args[4].dat->size[0] *
+    args[4].dat->size[1] *
+    (start[2] * args[4].stencil->stride[2]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-  int base5 = args[5].dat->base_offset +
-              dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
-  base5 = base5 +
-          dat5 * args[5].dat->size[0] * (start[1] * args[5].stencil->stride[1]);
-  base5 = base5 +
-          dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
-              (start[2] * args[5].stencil->stride[2]);
+  int base5 = args[5].dat->base_offset + 
+           dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
+  base5 = base5+ dat5 *
+    args[5].dat->size[0] *
+    (start[1] * args[5].stencil->stride[1]);
+  base5 = base5+ dat5 *
+    args[5].dat->size[0] *
+    args[5].dat->size[1] *
+    (start[2] * args[5].stencil->stride[2]);
   p_a[5] = (char *)args[5].data_d + base5;
 
-  int base6 = args[6].dat->base_offset +
-              dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
-  base6 = base6 +
-          dat6 * args[6].dat->size[0] * (start[1] * args[6].stencil->stride[1]);
-  base6 = base6 +
-          dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
-              (start[2] * args[6].stencil->stride[2]);
+  int base6 = args[6].dat->base_offset + 
+           dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
+  base6 = base6+ dat6 *
+    args[6].dat->size[0] *
+    (start[1] * args[6].stencil->stride[1]);
+  base6 = base6+ dat6 *
+    args[6].dat->size[0] *
+    args[6].dat->size[1] *
+    (start[2] * args[6].stencil->stride[2]);
   p_a[6] = (char *)args[6].data_d + base6;
 
-#ifndef OPS_LAZY
+
+  #ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 8);
-  ops_halo_exchanges(args, 8, range);
-#endif
+  ops_halo_exchanges(args,8,range);
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[40].mpi_time += t2 - t1;
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y;
+  int nthread = OPS_block_size_x*OPS_block_size_y;
 
-  nshared = MAX(nshared, sizeof(double) * 28);
+  nshared = MAX(nshared,sizeof(double)*28);
 
-  nshared = MAX(nshared * nthread, reduct_size * nthread);
+  nshared = MAX(nshared*nthread,reduct_size*nthread);
 
-  // call kernel wrapper function, passing in pointers to data
-  ops_calc_dt_kernel_print<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
-      (double *)arg7.data_d, x_size, y_size, z_size);
+  //call kernel wrapper function, passing in pointers to data
+  ops_calc_dt_kernel_print<<<grid, tblock, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
+           (double *)p_a[2], (double *)p_a[3],
+           (double *)p_a[4], (double *)p_a[5],
+           (double *)p_a[6], (double *)arg7.data_d,x_size, y_size, z_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for (int b = 0; b < maxblocks; b++) {
-    for (int d = 0; d < 28; d++) {
-      arg7h[d] = arg7h[d] + ((double *)arg7.data)[d + b * 28];
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*1*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg7h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg7.data;
+    arg7.data = (char *)arg7h;
+    cudaStreamAddCallback(0, calc_dt_kernel_print_reduce_callback, buf, 0);
+  }
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<28; d++ ){
+        arg7h[d] = arg7h[d] + ((double *)arg7.data)[d+b*28];
+      }
     }
-  }
-  arg7.data = (char *)arg7h;
+    arg7.data = (char *)arg7h;
 
-  if (OPS_diags > 1) {
+  }
+  if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1, &t1);
-    OPS_kernels[40].time += t1 - t2;
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[40].time += t1-t2;
   }
 
-#ifndef OPS_LAZY
+  #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 8);
-#endif
+  #endif
 
   if (OPS_diags > 1) {
-    // Update kernel record
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[40].mpi_time += t2 - t1;
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[40].mpi_time += t2-t1;
     OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -451,14 +453,23 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   }
 }
 
+#ifdef OPS_HYBRID
+void ops_par_loop_calc_dt_kernel_print_execute_cpu(ops_kernel_descriptor *desc);
+void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
+  if (desc->device == 1) {
+    ops_par_loop_calc_dt_kernel_print_execute_gpu(desc);
+  }
+  else {
+    ops_par_loop_calc_dt_kernel_print_execute_cpu(desc);
+  }
+}
+#endif
+
+
 #ifdef OPS_LAZY
-void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
-                                       int dim, int *range, ops_arg arg0,
-                                       ops_arg arg1, ops_arg arg2, ops_arg arg3,
-                                       ops_arg arg4, ops_arg arg5, ops_arg arg6,
-                                       ops_arg arg7) {
-  ops_kernel_descriptor *desc =
-      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -466,13 +477,13 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
   desc->index = 40;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 40;
-  for (int i = 0; i < 6; i++) {
+  for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 8;
-  desc->args = (ops_arg *)malloc(8 * sizeof(ops_arg));
+  desc->args = (ops_arg*)malloc(8*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -490,7 +501,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block,
   desc->args[7] = arg7;
   desc->function = ops_par_loop_calc_dt_kernel_print_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(40, "calc_dt_kernel_print");
+    ops_timing_realloc(40,"calc_dt_kernel_print");
   }
   ops_enqueue_kernel(desc);
 }

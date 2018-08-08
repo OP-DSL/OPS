@@ -79,7 +79,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   #ifdef OPS_MPI
   double * __restrict__ p_a6 = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
-  if (ops_hybrid) arg6h =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index));
+  if (ops_hybrid) p_a6 =  (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * (2*block->index));
   #else //OPS_MPI
   double * __restrict__ p_a6 = (double *)((ops_reduction)args[6].data)->data;
   #endif //OPS_MPI

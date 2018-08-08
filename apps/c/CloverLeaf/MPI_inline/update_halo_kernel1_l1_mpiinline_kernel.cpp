@@ -121,7 +121,6 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block, int 
   int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
   int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
 
-  int *arg7h = (int *)arg7.data;
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -209,7 +208,7 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block, int 
     (start[1] * args[6].stencil->stride[1] - args[6].dat->base[1] - d_m[1]);
   double *p_a6 = (double *)((char *)args[6].data + base6);
 
-  int *p_a7 = arg7h;
+  int *p_a7 = (int *)args[7].data;
 
   ops_H_D_exchanges_host(args, 8);
   ops_halo_exchanges(args,8,range);

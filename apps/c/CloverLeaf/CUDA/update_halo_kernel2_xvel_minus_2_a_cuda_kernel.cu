@@ -18,8 +18,8 @@ __device__
 
 inline void update_halo_kernel2_xvel_minus_2_a_gpu(double *xvel0, double *xvel1, const int* fields)
 {
-  if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(2,0)];
-  if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(2,0)];
+  if((*fields) & FIELD_XVEL0) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(2,0)];
+  if((*fields) & FIELD_XVEL1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(2,0)];
 }
 
 
@@ -31,7 +31,7 @@ inline void update_halo_kernel2_xvel_minus_2_a_gpu(double *xvel0, double *xvel1,
 __global__ void ops_update_halo_kernel2_xvel_minus_2_a(
 double* __restrict arg0,
 double* __restrict arg1,
-const int* __restrict arg2,
+const int arg2,
 int size0,
 int size1 ){
 
@@ -43,7 +43,7 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_xvel_minus_2_a;
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel2_xvel_minus_2_a_gpu(arg0, arg1, arg2);
+    update_halo_kernel2_xvel_minus_2_a_gpu(arg0, arg1, &arg2);
   }
 
 }
@@ -125,23 +125,12 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   }
 
 
-  int *arg2h = (int *)arg2.data;
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
 
-  int consts_bytes = 0;
 
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
 
-  reallocConstArrays(consts_bytes);
-
-  consts_bytes = 0;
-  arg2.data = OPS_consts_h + consts_bytes;
-  arg2.data_d = OPS_consts_d + consts_bytes;
-  for (int d=0; d<NUM_FIELDS; d++) ((int *)arg2.data)[d] = arg2h[d];
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  mvConstArraysToDevice(consts_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
@@ -176,7 +165,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
 
   //call kernel wrapper function, passing in pointers to data
   ops_update_halo_kernel2_xvel_minus_2_a<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],
-           (int *)arg2.data_d,x_size, y_size);
+           *(int *)arg2.data,x_size, y_size);
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
@@ -235,8 +224,8 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a(char const *name, ops_block
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
-  char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
-  memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
+  char *tmp = (char*)malloc(1*sizeof(int));
+  memcpy(tmp, arg2.data,1*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute;
   if (OPS_diags > 1) {

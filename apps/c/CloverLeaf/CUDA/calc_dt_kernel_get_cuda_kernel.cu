@@ -49,10 +49,14 @@ int size1 ){
   if (idx_x < size0 && idx_y < size1) {
     calc_dt_kernel_get_gpu(arg0, arg1, arg2_l, arg3_l);
   }
-  for (int d=0; d<1; d++)
+  for (int d=0; d<1; d++) {
+    arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg2_l[d]);
-  for (int d=0; d<1; d++)
+  }
+  for (int d=0; d<1; d++) {
+    arg3[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = ZERO_double;
     ops_reduction_cuda<OPS_INC>(&arg3[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg3_l[d]);
+  }
 
 }
 void CUDART_CB calc_dt_kernel_get_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
@@ -189,20 +193,13 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
+
   arg2.data = OPS_reduct_h + reduct_bytes;
   arg2.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
   arg3.data = OPS_reduct_h + reduct_bytes;
   arg3.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
-
-  mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 

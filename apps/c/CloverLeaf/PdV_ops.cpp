@@ -53,7 +53,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *, ops_block, int , int*,
 //#include "PdV_kernel.h"
 
 void ideal_gas(int predict);
-void update_halo(int* fields, int depth);
+void update_halo(int fields, int depth);
 void revert();
 
 void PdV(int predict)
@@ -108,20 +108,20 @@ void PdV(int predict)
   if(predict == TRUE) {
     ideal_gas(TRUE);
 
-    fields[FIELD_DENSITY0]  = 0;
-    fields[FIELD_ENERGY0]   = 0;
-    fields[FIELD_PRESSURE]  = 1;
-    fields[FIELD_VISCOSITY] = 0;
-    fields[FIELD_DENSITY1]  = 0;
-    fields[FIELD_ENERGY1]   = 0;
-    fields[FIELD_XVEL0]     = 0;
-    fields[FIELD_YVEL0]     = 0;
-    fields[FIELD_XVEL1]     = 0;
-    fields[FIELD_YVEL1]     = 0;
-    fields[FIELD_VOL_FLUX_X] = 0;
-    fields[FIELD_VOL_FLUX_Y] = 0;
-    fields[FIELD_MASS_FLUX_X] = 0;
-    fields[FIELD_MASS_FLUX_Y] = 0;
+    fields &= ~FIELD_DENSITY0;
+    fields &= ~FIELD_ENERGY0;
+    fields |= FIELD_PRESSURE;
+    fields &= ~FIELD_VISCOSITY;
+    fields &= ~FIELD_DENSITY1;
+    fields &= ~FIELD_ENERGY1;
+    fields &= ~FIELD_XVEL0;
+    fields &= ~FIELD_YVEL0;
+    fields &= ~FIELD_XVEL1;
+    fields &= ~FIELD_YVEL1;
+    fields &= ~FIELD_VOL_FLUX_X;
+    fields &= ~FIELD_VOL_FLUX_Y;
+    fields &= ~FIELD_MASS_FLUX_X;
+    fields &= ~FIELD_MASS_FLUX_Y;
     update_halo(fields,1);
 
   }

@@ -23,8 +23,8 @@ void update_halo_kernel2_xvel_minus_4_a_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
-  if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(4,0)];
-  if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(4,0)];
+  if((*fields) & FIELD_XVEL0) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(4,0)];
+  if((*fields) & FIELD_XVEL1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(4,0)];
 
     }
   }

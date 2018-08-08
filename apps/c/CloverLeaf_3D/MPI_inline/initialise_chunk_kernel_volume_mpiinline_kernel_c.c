@@ -18,81 +18,45 @@ int ydim5_initialise_chunk_kernel_volume;
 int xdim6_initialise_chunk_kernel_volume;
 int ydim6_initialise_chunk_kernel_volume;
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim0_initialise_chunk_kernel_volume * 1 +                  \
-   n_z * xdim0_initialise_chunk_kernel_volume *                                \
-       ydim0_initialise_chunk_kernel_volume * 1 +                              \
-   x + xdim0_initialise_chunk_kernel_volume * (y) +                            \
-   xdim0_initialise_chunk_kernel_volume *                                      \
-       ydim0_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (n_x * 0 + n_y * xdim1_initialise_chunk_kernel_volume * 1 +                  \
-   n_z * xdim1_initialise_chunk_kernel_volume *                                \
-       ydim1_initialise_chunk_kernel_volume * 0 +                              \
-   x + xdim1_initialise_chunk_kernel_volume * (y) +                            \
-   xdim1_initialise_chunk_kernel_volume *                                      \
-       ydim1_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC2(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim2_initialise_chunk_kernel_volume * 1 +                  \
-   n_z * xdim2_initialise_chunk_kernel_volume *                                \
-       ydim2_initialise_chunk_kernel_volume * 1 +                              \
-   x + xdim2_initialise_chunk_kernel_volume * (y) +                            \
-   xdim2_initialise_chunk_kernel_volume *                                      \
-       ydim2_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC3(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim3_initialise_chunk_kernel_volume * 0 +                  \
-   n_z * xdim3_initialise_chunk_kernel_volume *                                \
-       ydim3_initialise_chunk_kernel_volume * 0 +                              \
-   x + xdim3_initialise_chunk_kernel_volume * (y) +                            \
-   xdim3_initialise_chunk_kernel_volume *                                      \
-       ydim3_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC4(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim4_initialise_chunk_kernel_volume * 1 +                  \
-   n_z * xdim4_initialise_chunk_kernel_volume *                                \
-       ydim4_initialise_chunk_kernel_volume * 1 +                              \
-   x + xdim4_initialise_chunk_kernel_volume * (y) +                            \
-   xdim4_initialise_chunk_kernel_volume *                                      \
-       ydim4_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC5(x, y, z)                                                      \
-  (n_x * 0 + n_y * xdim5_initialise_chunk_kernel_volume * 0 +                  \
-   n_z * xdim5_initialise_chunk_kernel_volume *                                \
-       ydim5_initialise_chunk_kernel_volume * 1 +                              \
-   x + xdim5_initialise_chunk_kernel_volume * (y) +                            \
-   xdim5_initialise_chunk_kernel_volume *                                      \
-       ydim5_initialise_chunk_kernel_volume * (z))
-#define OPS_ACC6(x, y, z)                                                      \
-  (n_x * 1 + n_y * xdim6_initialise_chunk_kernel_volume * 1 +                  \
-   n_z * xdim6_initialise_chunk_kernel_volume *                                \
-       ydim6_initialise_chunk_kernel_volume * 1 +                              \
-   x + xdim6_initialise_chunk_kernel_volume * (y) +                            \
-   xdim6_initialise_chunk_kernel_volume *                                      \
-       ydim6_initialise_chunk_kernel_volume * (z))
 
-// user function
+#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_initialise_chunk_kernel_volume*1+n_z*xdim0_initialise_chunk_kernel_volume*ydim0_initialise_chunk_kernel_volume*1+x+xdim0_initialise_chunk_kernel_volume*(y)+xdim0_initialise_chunk_kernel_volume*ydim0_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC1(x,y,z) (n_x*0+n_y*xdim1_initialise_chunk_kernel_volume*1+n_z*xdim1_initialise_chunk_kernel_volume*ydim1_initialise_chunk_kernel_volume*0+x+xdim1_initialise_chunk_kernel_volume*(y)+xdim1_initialise_chunk_kernel_volume*ydim1_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_initialise_chunk_kernel_volume*1+n_z*xdim2_initialise_chunk_kernel_volume*ydim2_initialise_chunk_kernel_volume*1+x+xdim2_initialise_chunk_kernel_volume*(y)+xdim2_initialise_chunk_kernel_volume*ydim2_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_initialise_chunk_kernel_volume*0+n_z*xdim3_initialise_chunk_kernel_volume*ydim3_initialise_chunk_kernel_volume*0+x+xdim3_initialise_chunk_kernel_volume*(y)+xdim3_initialise_chunk_kernel_volume*ydim3_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_initialise_chunk_kernel_volume*1+n_z*xdim4_initialise_chunk_kernel_volume*ydim4_initialise_chunk_kernel_volume*1+x+xdim4_initialise_chunk_kernel_volume*(y)+xdim4_initialise_chunk_kernel_volume*ydim4_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC5(x,y,z) (n_x*0+n_y*xdim5_initialise_chunk_kernel_volume*0+n_z*xdim5_initialise_chunk_kernel_volume*ydim5_initialise_chunk_kernel_volume*1+x+xdim5_initialise_chunk_kernel_volume*(y)+xdim5_initialise_chunk_kernel_volume*ydim5_initialise_chunk_kernel_volume*(z))
+#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_initialise_chunk_kernel_volume*1+n_z*xdim6_initialise_chunk_kernel_volume*ydim6_initialise_chunk_kernel_volume*1+x+xdim6_initialise_chunk_kernel_volume*(y)+xdim6_initialise_chunk_kernel_volume*ydim6_initialise_chunk_kernel_volume*(z))
+
+//user function
+
+
 
 void initialise_chunk_kernel_volume_c_wrapper(
-    double *restrict volume, const double *restrict celldy,
-    double *restrict xarea, const double *restrict celldx,
-    double *restrict yarea, const double *restrict celldz,
-    double *restrict zarea, int x_size, int y_size, int z_size) {
-#pragma omp parallel for
-  for (int n_z = 0; n_z < z_size; n_z++) {
-    for (int n_y = 0; n_y < y_size; n_y++) {
-      for (int n_x = 0; n_x < x_size; n_x++) {
+  double * restrict volume,
+  const double * restrict celldy,
+  double * restrict xarea,
+  const double * restrict celldx,
+  double * restrict yarea,
+  const double * restrict celldz,
+  double * restrict zarea,
+  int x_size, int y_size, int z_size) {
+  #pragma omp parallel for
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        
 
-        double d_x, d_y, d_z;
+  double d_x, d_y, d_z;
 
-        d_x = (grid.xmax - grid.xmin) / (double)grid.x_cells;
-        d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
-        d_z = (grid.zmax - grid.zmin) / (double)grid.z_cells;
+  d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
+  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
+  d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;
 
-        volume[OPS_ACC0(0, 0, 0)] = d_x * d_y * d_z;
-        xarea[OPS_ACC2(0, 0, 0)] =
-            celldy[OPS_ACC1(0, 0, 0)] * celldz[OPS_ACC5(0, 0, 0)];
-        yarea[OPS_ACC4(0, 0, 0)] =
-            celldx[OPS_ACC3(0, 0, 0)] * celldz[OPS_ACC5(0, 0, 0)];
-        zarea[OPS_ACC6(0, 0, 0)] =
-            celldx[OPS_ACC3(0, 0, 0)] * celldy[OPS_ACC1(0, 0, 0)];
+  volume[OPS_ACC0(0,0,0)] = d_x*d_y*d_z;
+  xarea[OPS_ACC2(0,0,0)] = celldy[OPS_ACC1(0,0,0)]*celldz[OPS_ACC5(0,0,0)];
+  yarea[OPS_ACC4(0,0,0)] = celldx[OPS_ACC3(0,0,0)]*celldz[OPS_ACC5(0,0,0)];
+  zarea[OPS_ACC6(0,0,0)] = celldx[OPS_ACC3(0,0,0)]*celldy[OPS_ACC1(0,0,0)];
+
       }
     }
   }
@@ -104,3 +68,4 @@ void initialise_chunk_kernel_volume_c_wrapper(
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
+

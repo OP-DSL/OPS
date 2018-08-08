@@ -15,7 +15,7 @@
  timestep_rise=1.5
  max_timestep=0.04
  end_time=15.5
- end_step=5
+ end_step=29
  profiler_on=1
  test_problem 3
 

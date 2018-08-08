@@ -7,19 +7,19 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -44,48 +44,42 @@
 #undef OPS_ACC0
 #undef OPS_ACC1
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_advec_mom_kernel_mass_flux_x * (y) +                              \
-   xdim0_advec_mom_kernel_mass_flux_x * ydim0_advec_mom_kernel_mass_flux_x *   \
-       (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (x + xdim1_advec_mom_kernel_mass_flux_x * (y) +                              \
-   xdim1_advec_mom_kernel_mass_flux_x * ydim1_advec_mom_kernel_mass_flux_x *   \
-       (z))
 
-// user function
-inline void
-advec_mom_kernel_mass_flux_x(__global double *restrict node_flux,
-                             const __global double *restrict mass_flux_x)
+#define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_mass_flux_x*(y)+xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_mass_flux_x*(y)+xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*(z))
 
-{
 
-  node_flux[OPS_ACC0(0, 0, 0)] =
-      0.125 *
-      (mass_flux_x[OPS_ACC1(0, -1, 0)] + mass_flux_x[OPS_ACC1(0, 0, 0)] +
-       mass_flux_x[OPS_ACC1(1, -1, 0)] + mass_flux_x[OPS_ACC1(1, 0, 0)] +
-       mass_flux_x[OPS_ACC1(0, -1, -1)] + mass_flux_x[OPS_ACC1(0, 0, -1)] +
-       mass_flux_x[OPS_ACC1(1, -1, -1)] + mass_flux_x[OPS_ACC1(1, 0, -1)]);
+//user function
+inline void advec_mom_kernel_mass_flux_x( __global double * restrict node_flux,const __global double * restrict mass_flux_x)
+
+ {
+
+
+  node_flux[OPS_ACC0(0,0,0)] = 0.125 * ( mass_flux_x[OPS_ACC1(0,-1,0)] + mass_flux_x[OPS_ACC1(0,0,0)] +
+                                         mass_flux_x[OPS_ACC1(1,-1,0)] + mass_flux_x[OPS_ACC1(1,0,0)] +
+                                         mass_flux_x[OPS_ACC1(0,-1,-1)] + mass_flux_x[OPS_ACC1(0,0,-1)] +
+                                         mass_flux_x[OPS_ACC1(1,-1,-1)] + mass_flux_x[OPS_ACC1(1,0,-1)] );
 }
 
+
+
 __kernel void ops_advec_mom_kernel_mass_flux_x(
-    __global double *restrict arg0, __global const double *restrict arg1,
-    const int base0, const int base1, const int size0, const int size1,
-    const int size2) {
+__global double* restrict arg0,
+__global const double* restrict arg1,
+const int base0,
+const int base1,
+const int size0,
+const int size1,
+const int size2 ){
+
 
   int idx_y = get_global_id(1);
   int idx_z = get_global_id(2);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel_mass_flux_x(
-        &arg0[base0 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim0_advec_mom_kernel_mass_flux_x +
-              idx_z * 1 * 1 * xdim0_advec_mom_kernel_mass_flux_x *
-                  ydim0_advec_mom_kernel_mass_flux_x],
-        &arg1[base1 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim1_advec_mom_kernel_mass_flux_x +
-              idx_z * 1 * 1 * xdim1_advec_mom_kernel_mass_flux_x *
-                  ydim1_advec_mom_kernel_mass_flux_x]);
+    advec_mom_kernel_mass_flux_x(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_x + idx_z * 1*1 * xdim0_advec_mom_kernel_mass_flux_x * ydim0_advec_mom_kernel_mass_flux_x],
+                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_x + idx_z * 1*1 * xdim1_advec_mom_kernel_mass_flux_x * ydim1_advec_mom_kernel_mass_flux_x]);
   }
+
 }

@@ -80,8 +80,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_a_execute(ops_kernel_descripto
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       
-  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(4,0)];
-  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(4,0)];
+  if((*fields) & FIELD_YVEL0) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(4,0)];
+  if((*fields) & FIELD_YVEL1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(4,0)];
 
     }
   }
@@ -125,8 +125,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_a(char const *name, ops_block 
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
-  char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
-  memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
+  char *tmp = (char*)malloc(1*sizeof(int));
+  memcpy(tmp, arg2.data,1*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_yvel_plus_4_a_execute;
   if (OPS_diags > 1) {

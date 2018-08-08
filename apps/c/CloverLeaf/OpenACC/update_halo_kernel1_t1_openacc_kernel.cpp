@@ -31,7 +31,7 @@ void update_halo_kernel1_t1_c_wrapper(
   double *p_a4,
   double *p_a5,
   double *p_a6,
-  int *p_a7,
+  int p_a7,
   int x_size, int y_size);
 
 #ifdef __cplusplus
@@ -117,19 +117,6 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block block, int 
   }
 
 
-  int *arg7h = (int *)arg7.data;
-  //Upload large globals
-  #ifdef OPS_GPU
-  int consts_bytes = 0;
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  reallocConstArrays(consts_bytes);
-  consts_bytes = 0;
-  args[7].data = OPS_consts_h + consts_bytes;
-  args[7].data_d = OPS_consts_d + consts_bytes;
-  for (int d=0; d<NUM_FIELDS; d++) ((int *)args[7].data)[d] = arg7h[d];
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  mvConstArraysToDevice(consts_bytes);
-  #endif //OPS_GPU
 
   //set up initial pointers
   int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
@@ -202,11 +189,7 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block block, int 
   double *p_a6 = (double *)((char *)args[6].data + base6);
   #endif
 
-  #ifdef OPS_GPU
-  int *p_a7 = (int *)args[7].data_d;
-  #else
-  int *p_a7 = arg7h;
-  #endif
+  int *p_a7 = (int *)args[7].data;
 
   #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 8);
@@ -233,7 +216,7 @@ void ops_par_loop_update_halo_kernel1_t1(char const *name, ops_block block, int 
     p_a4,
     p_a5,
     p_a6,
-    p_a7,
+    *p_a7,
     x_size, y_size);
 
   if (OPS_diags > 1) {

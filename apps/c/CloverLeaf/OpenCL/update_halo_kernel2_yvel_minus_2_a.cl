@@ -50,11 +50,11 @@
 
 
 //user function
-inline void update_halo_kernel2_yvel_minus_2_a(__global double * restrict yvel0,__global double * restrict yvel1,const __global int* restrict  fields)
+inline void update_halo_kernel2_yvel_minus_2_a(__global double * restrict yvel0,__global double * restrict yvel1,const  int* restrict  fields)
 
  {
-  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,2)];
-  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,2)];
+  if((*fields) & FIELD_YVEL0) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,2)];
+  if((*fields) & FIELD_YVEL1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,2)];
 }
 
 
@@ -62,7 +62,7 @@ inline void update_halo_kernel2_yvel_minus_2_a(__global double * restrict yvel0,
 __kernel void ops_update_halo_kernel2_yvel_minus_2_a(
 __global double* restrict arg0,
 __global double* restrict arg1,
-__global const int* restrict arg2,
+const int arg2,
 const int base0,
 const int base1,
 const int size0,
@@ -75,7 +75,7 @@ const int size1 ){
   if (idx_x < size0 && idx_y < size1) {
     update_halo_kernel2_yvel_minus_2_a(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_yvel_minus_2_a],
                        &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_yvel_minus_2_a],
-                       arg2);
+                       &arg2);
   }
 
 }

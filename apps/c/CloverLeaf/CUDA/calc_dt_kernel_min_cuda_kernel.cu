@@ -40,8 +40,10 @@ int size1 ){
   if (idx_x < size0 && idx_y < size1) {
     calc_dt_kernel_min_gpu(arg0, arg1_l);
   }
-  for (int d=0; d<1; d++)
+  for (int d=0; d<1; d++) {
+    arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*1] = INFINITY_double;
     ops_reduction_cuda<OPS_MIN>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg1_l[d]);
+  }
 
 }
 void CUDART_CB calc_dt_kernel_min_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
@@ -156,14 +158,10 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
+
   arg1.data = OPS_reduct_h + reduct_bytes;
   arg1.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b=0; b<maxblocks; b++)
-  for (int d=0; d<1; d++) ((double *)arg1.data)[d+b*1] = INFINITY_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
-
-
-  mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[2];

@@ -18,92 +18,106 @@ int ydim4_calc_dt_kernel_get_h = -1;
 #undef OPS_ACC1
 #undef OPS_ACC4
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_calc_dt_kernel_get * (y) +                                        \
-   xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get * (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (x + xdim1_calc_dt_kernel_get * (y) +                                        \
-   xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get * (z))
-#define OPS_ACC4(x, y, z)                                                      \
-  (x + xdim4_calc_dt_kernel_get * (y) +                                        \
-   xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get * (z))
 
-// user function
+#define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_get*(y)+xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get*(z))
+#define OPS_ACC1(x,y,z) (x+xdim1_calc_dt_kernel_get*(y)+xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get*(z))
+#define OPS_ACC4(x,y,z) (x+xdim4_calc_dt_kernel_get*(y)+xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get*(z))
+
+//user function
 __device__
 
-    void
-    calc_dt_kernel_get_gpu(const double *cellx, const double *celly,
-                           double *xl_pos, double *yl_pos, const double *cellz,
-                           double *zl_pos) {
-  *xl_pos = cellx[OPS_ACC0(0, 0, 0)];
-  *yl_pos = celly[OPS_ACC1(0, 0, 0)];
-  *zl_pos = cellz[OPS_ACC4(0, 0, 0)];
+void calc_dt_kernel_get_gpu(const double* cellx, const double* celly, double* xl_pos, double* yl_pos, const double *cellz, double *zl_pos) {
+  *xl_pos = cellx[OPS_ACC0(0,0,0)];
+  *yl_pos = celly[OPS_ACC1(0,0,0)];
+  *zl_pos = cellz[OPS_ACC4(0,0,0)];
 }
+
+
 
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC4
 
-__global__ void ops_calc_dt_kernel_get(const double *__restrict arg0,
-                                       const double *__restrict arg1,
-                                       double *__restrict arg2,
-                                       double *__restrict arg3,
-                                       const double *__restrict arg4,
-                                       double *__restrict arg5, int size0,
-                                       int size1, int size2) {
+
+__global__ void ops_calc_dt_kernel_get(
+const double* __restrict arg0,
+const double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+const double* __restrict arg4,
+double* __restrict arg5,
+int size0,
+int size1,
+int size2 ){
 
   double arg2_l[1];
   double arg3_l[1];
   double arg5_l[1];
-  for (int d = 0; d < 1; d++)
-    arg2_l[d] = ZERO_double;
-  for (int d = 0; d < 1; d++)
-    arg3_l[d] = ZERO_double;
-  for (int d = 0; d < 1; d++)
-    arg5_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg2_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg3_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg5_l[d] = ZERO_double;
 
   int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 * 1 + idx_y * 0 * 1 * xdim0_calc_dt_kernel_get +
-          idx_z * 0 * 1 * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get;
-  arg1 += idx_x * 0 * 1 + idx_y * 1 * 1 * xdim1_calc_dt_kernel_get +
-          idx_z * 0 * 1 * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get;
-  arg4 += idx_x * 0 * 1 + idx_y * 0 * 1 * xdim4_calc_dt_kernel_get +
-          idx_z * 1 * 1 * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get;
+  arg0 += idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get + idx_z * 0*1 * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get;
+  arg1 += idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get + idx_z * 0*1 * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get;
+  arg4 += idx_x * 0*1 + idx_y * 0*1 * xdim4_calc_dt_kernel_get + idx_z * 1*1 * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_get_gpu(arg0, arg1, arg2_l, arg3_l, arg4, arg5_l);
+    calc_dt_kernel_get_gpu(arg0, arg1, arg2_l, arg3_l,
+                   arg4, arg5_l);
   }
-  for (int d = 0; d < 1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg2[d +
-                                      (blockIdx.x + blockIdx.y * gridDim.x +
-                                       blockIdx.z * gridDim.x * gridDim.y) *
-                                          1],
-                                arg2_l[d]);
-  for (int d = 0; d < 1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg3[d +
-                                      (blockIdx.x + blockIdx.y * gridDim.x +
-                                       blockIdx.z * gridDim.x * gridDim.y) *
-                                          1],
-                                arg3_l[d]);
-  for (int d = 0; d < 1; d++)
-    ops_reduction_cuda<OPS_INC>(&arg5[d +
-                                      (blockIdx.x + blockIdx.y * gridDim.x +
-                                       blockIdx.z * gridDim.x * gridDim.y) *
-                                          1],
-                                arg5_l[d]);
+  for (int d=0; d<1; d++)
+    ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg2_l[d]);
+  for (int d=0; d<1; d++)
+    ops_reduction_cuda<OPS_INC>(&arg3[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg3_l[d]);
+  for (int d=0; d<1; d++)
+    ops_reduction_cuda<OPS_INC>(&arg5[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg5_l[d]);
+
+}
+void CUDART_CB calc_dt_kernel_get_reduce_callback(cudaStream_t stream, cudaError_t status, void *data) {
+  char *buf = (char*)data;
+  int maxblocks = *(int*)buf;
+  double*arg2h = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]);
+  double*arg2data = *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg3h = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]);
+  double*arg3data = *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]);
+  double*arg5h = *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))]);
+  double*arg5data = *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))+sizeof(int*)]);
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg2h[d] = arg2h[d] + arg2data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg3h[d] = arg3h[d] + arg3data[d+b*1];
+    }
+  }
+
+  for ( int b=0; b<maxblocks; b++ ){
+    for ( int d=0; d<1; d++ ){
+      arg5h[d] = arg5h[d] + arg5data[d+b*1];
+    }
+  }
+
+  free(buf);
 }
 
 // host stub function
 #ifndef OPS_LAZY
-void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
-                                     int *range, ops_arg arg0, ops_arg arg1,
-                                     ops_arg arg2, ops_arg arg3, ops_arg arg4,
-                                     ops_arg arg5) {
+void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
+ ops_arg arg4, ops_arg arg5) {
+#else
+#ifdef OPS_HYBRID
+void ops_par_loop_calc_dt_kernel_get_execute_gpu(ops_kernel_descriptor *desc) {
 #else
 void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
+#endif
   int dim = desc->dim;
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
@@ -112,60 +126,57 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   ops_arg arg3 = desc->args[3];
   ops_arg arg4 = desc->args[4];
   ops_arg arg5 = desc->args[5];
-#endif
+  #endif
 
-  // Timing
-  double t1, t2, c1, c2;
+  //Timing
+  double t1,t2,c1,c2;
 
-  ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
+  ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
-#if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 6, range, 39))
-    return;
-#endif
+
+  #if CHECKPOINTING && !OPS_LAZY
+  if (!ops_checkpointing_before(args,6,range,39)) return;
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(39, "calc_dt_kernel_get");
+    ops_timing_realloc(39,"calc_dt_kernel_get");
     OPS_kernels[39].count++;
-    ops_timers_core(&c1, &t1);
+    ops_timers_core(&c1,&t1);
   }
 
-  // compute locally allocated range for the sub-block
+  //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
-#if OPS_MPI && !OPS_LAZY
+  #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
+  if (!sb->owned) return;
+  for ( int n=0; n<3; n++ ){
+    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+    if (start[n] >= range[2*n]) {
       start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
     }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - sb->decomp_disp[n];
+    }
+    else {
       end[n] = sb->decomp_size[n];
     }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
-#else
-  for (int n = 0; n < 3; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
+  #else
+  for ( int n=0; n<3; n++ ){
+    start[n] = range[2*n];end[n] = range[2*n+1];
   }
-#endif
+  #endif
 
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
+  int x_size = MAX(0,end[0]-start[0]);
+  int y_size = MAX(0,end[1]-start[1]);
+  int z_size = MAX(0,end[2]-start[2]);
 
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
@@ -174,91 +185,83 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
 
-  if (xdim0 != xdim0_calc_dt_kernel_get_h ||
-      ydim0 != ydim0_calc_dt_kernel_get_h ||
-      xdim1 != xdim1_calc_dt_kernel_get_h ||
-      ydim1 != ydim1_calc_dt_kernel_get_h ||
-      xdim4 != xdim4_calc_dt_kernel_get_h ||
-      ydim4 != ydim4_calc_dt_kernel_get_h) {
-    cudaMemcpyToSymbol(xdim0_calc_dt_kernel_get, &xdim0, sizeof(int));
+  if (xdim0 != xdim0_calc_dt_kernel_get_h || ydim0 != ydim0_calc_dt_kernel_get_h || xdim1 != xdim1_calc_dt_kernel_get_h || ydim1 != ydim1_calc_dt_kernel_get_h || xdim4 != xdim4_calc_dt_kernel_get_h || ydim4 != ydim4_calc_dt_kernel_get_h) {
+    cudaMemcpyToSymbolAsync( xdim0_calc_dt_kernel_get, &xdim0, sizeof(int),0 );
     xdim0_calc_dt_kernel_get_h = xdim0;
-    cudaMemcpyToSymbol(ydim0_calc_dt_kernel_get, &ydim0, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim0_calc_dt_kernel_get, &ydim0, sizeof(int),0 );
     ydim0_calc_dt_kernel_get_h = ydim0;
-    cudaMemcpyToSymbol(xdim1_calc_dt_kernel_get, &xdim1, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim1_calc_dt_kernel_get, &xdim1, sizeof(int),0 );
     xdim1_calc_dt_kernel_get_h = xdim1;
-    cudaMemcpyToSymbol(ydim1_calc_dt_kernel_get, &ydim1, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim1_calc_dt_kernel_get, &ydim1, sizeof(int),0 );
     ydim1_calc_dt_kernel_get_h = ydim1;
-    cudaMemcpyToSymbol(xdim4_calc_dt_kernel_get, &xdim4, sizeof(int));
+    cudaMemcpyToSymbolAsync( xdim4_calc_dt_kernel_get, &xdim4, sizeof(int),0 );
     xdim4_calc_dt_kernel_get_h = xdim4;
-    cudaMemcpyToSymbol(ydim4_calc_dt_kernel_get, &ydim4, sizeof(int));
+    cudaMemcpyToSymbolAsync( ydim4_calc_dt_kernel_get, &ydim4, sizeof(int),0 );
     ydim4_calc_dt_kernel_get_h = ydim4;
   }
 
-#ifdef OPS_LAZY
+
+  #ifdef OPS_LAZY
   ops_block block = desc->block;
-#endif
-#ifdef OPS_MPI
-  double *arg2h =
-      (double *)(((ops_reduction)args[2].data)->data +
-                 ((ops_reduction)args[2].data)->size * block->index);
-#else
+  #endif
+  #ifdef OPS_MPI
+  double *arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
+  if (ops_hybrid) arg2h =  (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * (2*block->index+1));
+  #else
   double *arg2h = (double *)(((ops_reduction)args[2].data)->data);
-#endif
-#ifdef OPS_MPI
-  double *arg3h =
-      (double *)(((ops_reduction)args[3].data)->data +
-                 ((ops_reduction)args[3].data)->size * block->index);
-#else
+  if (ops_hybrid) arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size);
+  #endif
+  #ifdef OPS_MPI
+  double *arg3h = (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size * block->index);
+  if (ops_hybrid) arg3h =  (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size * (2*block->index+1));
+  #else
   double *arg3h = (double *)(((ops_reduction)args[3].data)->data);
-#endif
-#ifdef OPS_MPI
-  double *arg5h =
-      (double *)(((ops_reduction)args[5].data)->data +
-                 ((ops_reduction)args[5].data)->size * block->index);
-#else
+  if (ops_hybrid) arg3h = (double *)(((ops_reduction)args[3].data)->data + ((ops_reduction)args[3].data)->size);
+  #endif
+  #ifdef OPS_MPI
+  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
+  if (ops_hybrid) arg5h =  (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * (2*block->index+1));
+  #else
   double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
-#endif
+  if (ops_hybrid) arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size);
+  #endif
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, z_size);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);
+  dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
 
-  int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
-                ((y_size - 1) / OPS_block_size_y + 1) * z_size;
+  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;
   int maxblocks = nblocks;
   int reduct_bytes = 0;
   int reduct_size = 0;
 
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
-  reduct_size = MAX(reduct_size, sizeof(double) * 1);
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
-  reduct_size = MAX(reduct_size, sizeof(double) * 1);
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
-  reduct_size = MAX(reduct_size, sizeof(double) * 1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+  reduct_size = MAX(reduct_size,sizeof(double)*1);
 
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
   arg2.data = OPS_reduct_h + reduct_bytes;
   arg2.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b = 0; b < maxblocks; b++)
-    for (int d = 0; d < 1; d++)
-      ((double *)arg2.data)[d + b * 1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
+  for (int b=0; b<maxblocks; b++)
+  for (int d=0; d<1; d++) ((double *)arg2.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
   arg3.data = OPS_reduct_h + reduct_bytes;
   arg3.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b = 0; b < maxblocks; b++)
-    for (int d = 0; d < 1; d++)
-      ((double *)arg3.data)[d + b * 1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
+  for (int b=0; b<maxblocks; b++)
+  for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
   arg5.data = OPS_reduct_h + reduct_bytes;
   arg5.data_d = OPS_reduct_d + reduct_bytes;
-  for (int b = 0; b < maxblocks; b++)
-    for (int d = 0; d < 1; d++)
-      ((double *)arg5.data)[d + b * 1] = ZERO_double;
-  reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
+  for (int b=0; b<maxblocks; b++)
+  for (int d=0; d<1; d++) ((double *)arg5.data)[d+b*1] = ZERO_double;
+  reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
+
 
   mvReductArraysToDevice(reduct_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
@@ -267,108 +270,141 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
   char *p_a[6];
 
-  // set up initial pointers
-  int base0 = args[0].dat->base_offset +
-              dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2]);
+  //set up initial pointers
+  int base0 = args[0].dat->base_offset + 
+           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    (start[1] * args[0].stencil->stride[1]);
+  base0 = base0+ dat0 *
+    args[0].dat->size[0] *
+    args[0].dat->size[1] *
+    (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset +
-              dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-              (start[2] * args[1].stencil->stride[2]);
+  int base1 = args[1].dat->base_offset + 
+           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  base1 = base1+ dat1 *
+    args[1].dat->size[0] *
+    (start[1] * args[1].stencil->stride[1]);
+  base1 = base1+ dat1 *
+    args[1].dat->size[0] *
+    args[1].dat->size[1] *
+    (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  int base4 = args[4].dat->base_offset +
-              dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
-              (start[2] * args[4].stencil->stride[2]);
+  int base4 = args[4].dat->base_offset + 
+           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  base4 = base4+ dat4 *
+    args[4].dat->size[0] *
+    (start[1] * args[4].stencil->stride[1]);
+  base4 = base4+ dat4 *
+    args[4].dat->size[0] *
+    args[4].dat->size[1] *
+    (start[2] * args[4].stencil->stride[2]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-#ifndef OPS_LAZY
+
+  #ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 6);
-  ops_halo_exchanges(args, 6, range);
-#endif
+  ops_halo_exchanges(args,6,range);
+  #endif
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[39].mpi_time += t2 - t1;
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[39].mpi_time += t2-t1;
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y;
+  int nthread = OPS_block_size_x*OPS_block_size_y;
 
-  nshared = MAX(nshared, sizeof(double) * 1);
-  nshared = MAX(nshared, sizeof(double) * 1);
-  nshared = MAX(nshared, sizeof(double) * 1);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
+  nshared = MAX(nshared,sizeof(double)*1);
 
-  nshared = MAX(nshared * nthread, reduct_size * nthread);
+  nshared = MAX(nshared*nthread,reduct_size*nthread);
 
-  // call kernel wrapper function, passing in pointers to data
-  ops_calc_dt_kernel_get<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)arg2.data_d,
-      (double *)arg3.data_d, (double *)p_a[4], (double *)arg5.data_d, x_size,
-      y_size, z_size);
+  //call kernel wrapper function, passing in pointers to data
+  ops_calc_dt_kernel_get<<<grid, tblock, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
+           (double *)arg2.data_d, (double *)arg3.data_d,
+           (double *)p_a[4], (double *)arg5.data_d,x_size, y_size, z_size);
 
   mvReductArraysToHost(reduct_bytes);
-  for (int b = 0; b < maxblocks; b++) {
-    for (int d = 0; d < 1; d++) {
-      arg2h[d] = arg2h[d] + ((double *)arg2.data)[d + b * 1];
-    }
+  if (ops_hybrid) {
+    char *buf = (char*)malloc(sizeof(int)+2*3*sizeof(int*));
+    *(int*)buf = maxblocks;
+    *(double**)(&buf[sizeof(int)+0*2*(sizeof(int*))]) = arg2h;
+    *(char**)(&buf[sizeof(int)+0*2*(sizeof(int*))+sizeof(int*)]) = arg2.data;
+    arg2.data = (char *)arg2h;
+    *(double**)(&buf[sizeof(int)+1*2*(sizeof(int*))]) = arg3h;
+    *(char**)(&buf[sizeof(int)+1*2*(sizeof(int*))+sizeof(int*)]) = arg3.data;
+    arg3.data = (char *)arg3h;
+    *(double**)(&buf[sizeof(int)+2*2*(sizeof(int*))]) = arg5h;
+    *(char**)(&buf[sizeof(int)+2*2*(sizeof(int*))+sizeof(int*)]) = arg5.data;
+    arg5.data = (char *)arg5h;
+    cudaStreamAddCallback(0, calc_dt_kernel_get_reduce_callback, buf, 0);
   }
-  arg2.data = (char *)arg2h;
-
-  for (int b = 0; b < maxblocks; b++) {
-    for (int d = 0; d < 1; d++) {
-      arg3h[d] = arg3h[d] + ((double *)arg3.data)[d + b * 1];
+  else {
+    cudaStreamSynchronize(0);
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg2h[d] = arg2h[d] + ((double *)arg2.data)[d+b*1];
+      }
     }
-  }
-  arg3.data = (char *)arg3h;
+    arg2.data = (char *)arg2h;
 
-  for (int b = 0; b < maxblocks; b++) {
-    for (int d = 0; d < 1; d++) {
-      arg5h[d] = arg5h[d] + ((double *)arg5.data)[d + b * 1];
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
+      }
     }
-  }
-  arg5.data = (char *)arg5h;
+    arg3.data = (char *)arg3h;
 
-  if (OPS_diags > 1) {
+    for ( int b=0; b<maxblocks; b++ ){
+      for ( int d=0; d<1; d++ ){
+        arg5h[d] = arg5h[d] + ((double *)arg5.data)[d+b*1];
+      }
+    }
+    arg5.data = (char *)arg5h;
+
+  }
+  if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1, &t1);
-    OPS_kernels[39].time += t1 - t2;
+    ops_timers_core(&c1,&t1);
+    OPS_kernels[39].time += t1-t2;
   }
 
-#ifndef OPS_LAZY
+  #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 6);
-#endif
+  #endif
 
   if (OPS_diags > 1) {
-    // Update kernel record
-    ops_timers_core(&c2, &t2);
-    OPS_kernels[39].mpi_time += t2 - t1;
+    //Update kernel record
+    ops_timers_core(&c2,&t2);
+    OPS_kernels[39].mpi_time += t2-t1;
     OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
+#ifdef OPS_HYBRID
+void ops_par_loop_calc_dt_kernel_get_execute_cpu(ops_kernel_descriptor *desc);
+void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
+  if (desc->device == 1) {
+    ops_par_loop_calc_dt_kernel_get_execute_gpu(desc);
+  }
+  else {
+    ops_par_loop_calc_dt_kernel_get_execute_cpu(desc);
+  }
+}
+#endif
+
+
 #ifdef OPS_LAZY
-void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
-                                     int *range, ops_arg arg0, ops_arg arg1,
-                                     ops_arg arg2, ops_arg arg3, ops_arg arg4,
-                                     ops_arg arg5) {
-  ops_kernel_descriptor *desc =
-      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5) {
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -376,13 +412,13 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->index = 39;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 39;
-  for (int i = 0; i < 6; i++) {
+  for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 6;
-  desc->args = (ops_arg *)malloc(6 * sizeof(ops_arg));
+  desc->args = (ops_arg*)malloc(6*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -394,7 +430,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->args[5] = arg5;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(39, "calc_dt_kernel_get");
+    ops_timing_realloc(39,"calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);
 }

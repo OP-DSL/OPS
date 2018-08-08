@@ -40,13 +40,13 @@ inline void update_halo_kernel1_t2_gpu(double *density0, double *density1,
                           double *energy0, double *energy1,
                           double *pressure, double *viscosity,
                           double *soundspeed , const int* fields) {
-  if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(0,-3)];
-  if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(0,-3)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(0,-3)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(0,-3)];
-  if(fields[FIELD_PRESSURE] == 1) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(0,-3)];
-  if(fields[FIELD_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(0,-3)];
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(0,-3)];
+  if((*fields) & FIELD_DENSITY0) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(0,-3)];
+  if((*fields) & FIELD_DENSITY1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(0,-3)];
+  if((*fields) & FIELD_ENERGY0) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(0,-3)];
+  if((*fields) & FIELD_ENERGY1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(0,-3)];
+  if((*fields) & FIELD_PRESSURE) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(0,-3)];
+  if((*fields) & FIELD_VISCOSITY) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(0,-3)];
+  if((*fields) & FIELD_SOUNDSPEED) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(0,-3)];
 
 }
 
@@ -69,7 +69,7 @@ double* __restrict arg3,
 double* __restrict arg4,
 double* __restrict arg5,
 double* __restrict arg6,
-const int* __restrict arg7,
+const int arg7,
 int size0,
 int size1 ){
 
@@ -87,7 +87,7 @@ int size1 ){
 
   if (idx_x < size0 && idx_y < size1) {
     update_halo_kernel1_t2_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7);
+                   arg4, arg5, arg6, &arg7);
   }
 
 }
@@ -190,23 +190,12 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
   }
 
 
-  int *arg7h = (int *)arg7.data;
 
   dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
   dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);
 
-  int consts_bytes = 0;
 
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
 
-  reallocConstArrays(consts_bytes);
-
-  consts_bytes = 0;
-  arg7.data = OPS_consts_h + consts_bytes;
-  arg7.data_d = OPS_consts_d + consts_bytes;
-  for (int d=0; d<NUM_FIELDS; d++) ((int *)arg7.data)[d] = arg7h[d];
-  consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  mvConstArraysToDevice(consts_bytes);
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
@@ -283,7 +272,7 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
   ops_update_halo_kernel1_t2<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],
            (double *)p_a[2], (double *)p_a[3],
            (double *)p_a[4], (double *)p_a[5],
-           (double *)p_a[6], (int *)arg7.data_d,x_size, y_size);
+           (double *)p_a[6], *(int *)arg7.data,x_size, y_size);
 
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
@@ -362,8 +351,8 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->args[7] = arg7;
-  char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
-  memcpy(tmp, arg7.data,NUM_FIELDS*sizeof(int));
+  char *tmp = (char*)malloc(1*sizeof(int));
+  memcpy(tmp, arg7.data,1*sizeof(int));
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_t2_execute;
   if (OPS_diags > 1) {
