@@ -121,7 +121,7 @@ int ops_dims_tiling_internal = 1;
 /////////////////////////////////////////////////////////////////////////
 
 //Computes intersection of two ranges
-extern "C" int intersection(int range1_beg, int range1_end, int range2_beg,
+extern "C" int intersection2(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *intersect_begin) {
   if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
   int i_min = MAX(range1_beg, range2_beg);
@@ -230,7 +230,7 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
         //Left neighbour's end index
         int intersect_begin = 0;
         //Take intersection of execution range with (my left boundary-1) and prior data dependency
-        int intersect_len = intersection(biggest_range[2*d]-1,data_read_deps_edge[LOOPARG.dat->index][2 * d],
+        int intersect_len = intersection2(biggest_range[2*d]-1,data_read_deps_edge[LOOPARG.dat->index][2 * d],
                                          LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
         if (intersect_len > 0)
           left_neighbour_end = MAX(left_neighbour_end,intersect_begin + intersect_len);
@@ -247,7 +247,7 @@ void ops_compute_mpi_dependencies(int loop, int d, int *start, int *end, int *bi
 
         int intersect_begin = 0;
   //Take intersection of execution range with (my right boundary+1) and prior data dependency
-        int intersect_len = intersection(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1], biggest_range[2*d+1]+1,
+        int intersect_len = intersection2(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1], biggest_range[2*d+1]+1,
           LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
         if (intersect_len > 0)
           right_neighbour_start = MIN(right_neighbour_start,intersect_begin);
@@ -562,7 +562,7 @@ int ops_construct_tile_plan() {
                 // no smaller than the loop range
                   int intersect_begin = 0;
                   //Take intersection of execution range with prior data dependency and my end range
-                  int intersect_len = intersection(data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 0], 
+                  int intersect_len = intersection2(data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 0], 
                                                    biggest_range[2*d+1],
                                                    LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                   if (intersect_len > 0)
@@ -610,7 +610,7 @@ int ops_construct_tile_plan() {
               // no greater than the loop range
               int intersect_begin = 0;
               //Take intersection of execution range with tile start index and prior data dependency
-              int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+              int intersect_len = intersection2(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                                data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1],
                                                LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
               if (intersect_len > 0)
@@ -657,7 +657,7 @@ int ops_construct_tile_plan() {
                 // no greater than the loop range
                 int intersect_begin = 0;
                 //Take intersection of execution range with tile start index and write data dependency + stencil width
-                int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                int intersect_len = intersection2(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                                  data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
                                                  LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                 if (intersect_len > 0) {
@@ -703,7 +703,7 @@ int ops_construct_tile_plan() {
       for (int tile = 0; tile < total_tiles; tile++) {
 
         int intersect_begin = 0;
-        int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+        int intersect_len = intersection2(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
                                          LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
 

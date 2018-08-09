@@ -65,7 +65,7 @@ cudaEvent_t indep_start_ev_d,indep_end_ev_d,dep_start_ev_d,dep_end_ev_d;
 
 extern "C" {
 long ops_get_base_index_dim(ops_dat dat, int dim);
-int intersection(int range1_beg, int range1_end, int range2_beg,
+int intersection2(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *intersect_begin);
 int union_range(int range1_beg, int range1_end, int range2_beg,
                  int range2_end, int *union_begin);
@@ -202,10 +202,10 @@ void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &
   int &from_h, int &to_h, int &pre_calc_to_h, int &pre_calc_from_d, int max_neg, int max_pos) {
   //Intersection of full execution range with the GPU's execution range
   int start;
-  int len = intersection(from, to, split, INT_MAX, &start);
+  int len = intersection2(from, to, split, INT_MAX, &start);
   //Intersection of the dependency range of GPU's execution with GPU dirty region
   if (len > 0) {
-    len = intersection(start+max_neg, start+len+max_pos,
+    len = intersection2(start+max_neg, start+len+max_pos,
                        dirtyflags[dat->index].dirty_from_d,dirtyflags[dat->index].dirty_to_d,
                        &start);
     if (len > 0) {
@@ -221,10 +221,10 @@ void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &
     }
   }
 
-  len = intersection(from, to, 0, split, &start);
+  len = intersection2(from, to, 0, split, &start);
   //Intersection of the dependency range of CPU's execution with CPU dirty region
   if (len > 0) {
-    len = intersection(start+max_neg, start+len+max_pos,
+    len = intersection2(start+max_neg, start+len+max_pos,
                        dirtyflags[dat->index].dirty_from_h,dirtyflags[dat->index].dirty_to_h,
                        &start);
     if (len > 0) {
@@ -269,11 +269,11 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
 
   //Intersection of full execution range with the CPU's execution range
   int cpu_start;
-  int cpu_len = intersection(from, to, 0, split, &cpu_start);
+  int cpu_len = intersection2(from, to, 0, split, &cpu_start);
   if (cpu_len > 0) {
     //Intersection of CPU execution range with CPU dirty region
     int cpu_clean_start;
-    int cpu_clean_len = intersection(cpu_start, cpu_start + cpu_len, 
+    int cpu_clean_len = intersection2(cpu_start, cpu_start + cpu_len, 
         dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, &cpu_clean_start);
     
     //If there is a remainder on the left, clean it
@@ -297,7 +297,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
 
   //Intersection of full execution range with the GPU's execution range
   int gpu_start;
-  int gpu_len = intersection(from, to, split, INT_MAX, &gpu_start);
+  int gpu_len = intersection2(from, to, split, INT_MAX, &gpu_start);
   if (gpu_len > 0) {
     //CPU dirty region is the union of the gpu execution range with the previous dirty region
     int dirty_cpu_start;
@@ -310,7 +310,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
 
     //Intersection of GPU execution range with GPU dirty region
     int gpu_clean_start;
-    int gpu_clean_len = intersection(gpu_start, gpu_start + gpu_len, 
+    int gpu_clean_len = intersection2(gpu_start, gpu_start + gpu_len, 
         dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d, &gpu_clean_start);
     
     //If there is a remainder on the right, clean it
@@ -413,25 +413,25 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   int dep_from_h,dep_to_h,dep_from_d,dep_to_d;
   int len;
   
-  len=intersection(from, to, from, pre_calc_to_h, &indep_from_h);
+  len=intersection2(from, to, from, pre_calc_to_h, &indep_from_h);
   if (len==0) {
     indep_to_h=from;
     indep_from_h=from;
   }
   else indep_to_h=indep_from_h+len;  
-  len=intersection(from, to, indep_to_h, split, &dep_from_h);
+  len=intersection2(from, to, indep_to_h, split, &dep_from_h);
   if (len==0) {
     dep_from_h=indep_to_h;
     dep_to_h=indep_to_h;
   } else dep_to_h=dep_from_h+len;
   
-  len=intersection(from, to, pre_calc_from_d, to, &indep_from_d);
+  len=intersection2(from, to, pre_calc_from_d, to, &indep_from_d);
   if (len==0){
     indep_from_d=to;
     indep_to_d=to;
   }
   else indep_to_d=indep_from_d+len;  
-  len=intersection(from, to, split, indep_from_d, &dep_from_d);
+  len=intersection2(from, to, split, indep_from_d, &dep_from_d);
   if (len==0) {
     dep_from_d=indep_from_d;
     dep_to_d=indep_from_d;
@@ -439,7 +439,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
     dep_to_d=dep_from_d+len;  
   }
   int tmp;
-  int sumlen=intersection(indep_from_h, indep_to_h, dep_from_h, dep_to_h, &tmp)+intersection(dep_from_h, dep_to_h, dep_from_d,dep_to_d, &tmp)+intersection(dep_from_d,dep_to_d, indep_from_d,indep_to_d, &tmp);
+  int sumlen=intersection2(indep_from_h, indep_to_h, dep_from_h, dep_to_h, &tmp)+intersection2(dep_from_h, dep_to_h, dep_from_d,dep_to_d, &tmp)+intersection2(dep_from_d,dep_to_d, indep_from_d,indep_to_d, &tmp);
   
   
   
@@ -536,8 +536,8 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   ops_hybrid_after(desc, split);
   
   int intersectb;
-  int interGPU=intersection(pre_calc_from_d,to,max(desc->range[2*(desc->dim-1)],split),pre_calc_from_d,&intersectb);
-  int interCPU=intersection(from,pre_calc_to_h,pre_calc_to_h,min(desc->range[2*(desc->dim-1)+1],split),&intersectb);
+  int interGPU=intersection2(pre_calc_from_d,to,max(desc->range[2*(desc->dim-1)],split),pre_calc_from_d,&intersectb);
+  int interCPU=intersection2(from,pre_calc_to_h,pre_calc_to_h,min(desc->range[2*(desc->dim-1)+1],split),&intersectb);
   
   printf("pre_calc  GPU: %d, CPU: %d\n",interGPU,interCPU);
 
@@ -653,7 +653,7 @@ void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int 
   //otherwise zero out for the target with no intersection
   else {
     int start2;
-    int len = intersection(start[d]-disp[d], end[d]-disp[d], split, INT_MAX, &start2);
+    int len = intersection2(start[d]-disp[d], end[d]-disp[d], split, INT_MAX, &start2);
     if (len == 0 && ops_hybrid_tiling_phase == 1)
       start[d] = end[d] = split;
     else if (len > 0 && ops_hybrid_tiling_phase == 0)
