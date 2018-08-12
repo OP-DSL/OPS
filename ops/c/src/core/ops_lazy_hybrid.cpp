@@ -49,6 +49,7 @@
 #include <omp.h>
 #else
 
+#define PRINT_HYBRID_INFO 0
   
 
 inline int omp_get_max_threads() {
@@ -185,7 +186,7 @@ int ops_hybrid_get_split(ops_kernel_descriptor *desc, int from, int to) {
   }
 
   if (stats[desc->index].gpu_time == 0 || stats[desc->index].cpu_time == 0) {
-    printf("!!!!WUT!!! %s\n", desc->name);
+    if (PRINT_HYBRID_INFO) printf("!!!!WUT!!! %s\n", desc->name);
     return ops_hybrid_gbl_split;
   }
 
@@ -216,7 +217,7 @@ void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &
         dirtyflags[dat->index].dirty_to_d = from_d;
       else {
         //This can happen if we have a really narrow iteration range
-        if (OPS_diags>4) ops_printf("Note: hybrid execution - cleaned region does not extend to end of dirty region\n");
+        if (OPS_diags>4 && PRINT_HYBRID_INFO) ops_printf("Note: hybrid execution - cleaned region does not extend to end of dirty region\n");
       }
     }
   }
@@ -235,14 +236,14 @@ void ops_hybrid_calc_clean_depth(ops_dat dat, int from, int to, int split, int &
         dirtyflags[dat->index].dirty_from_h = to_h;
       else {
         //This can happen if we have a really narrow iteration range
-        if (OPS_diags>4) ops_printf("Note: hybrid execution - cleaned region does not extend to beginning of dirty region\n");
+        if (OPS_diags>4 && PRINT_HYBRID_INFO) ops_printf("Note: hybrid execution - cleaned region does not extend to beginning of dirty region\n");
       }
     }
   }
   pre_calc_to_h=min(pre_calc_to_h,int(from_h - max_pos - dirtyflags[dat->index].index_offset)); 
   pre_calc_from_d=max(pre_calc_from_d,int(to_d - max_neg - dirtyflags[dat->index].index_offset));
   
-  if (OPS_diags > 5)
+  if (OPS_diags > 5 && PRINT_HYBRID_INFO)
     ops_printf("%s up/downloading from_h %d to_h %d, from_d %d, to_d %d, new dirty cpu %d-%d gpu %d-%d\n", dat->name, from_h, to_h, from_d, to_d, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
   
 }
@@ -340,7 +341,7 @@ void ops_hybrid_report_dirty(ops_arg *arg, int from, int to, int split) {
     }
   }
 
-  if (OPS_diags>5) ops_printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
+  if (OPS_diags>5 && PRINT_HYBRID_INFO) ops_printf("%s marking dirty cpu %d-%d gpu %d-%d\n", dat->name, dirtyflags[dat->index].dirty_from_h, dirtyflags[dat->index].dirty_to_h, dirtyflags[dat->index].dirty_from_d, dirtyflags[dat->index].dirty_to_d);
 }
 
 void ops_hybrid_clean(ops_kernel_descriptor * desc, int split, int& pre_calc_to_h, int& pre_calc_from_d) {
@@ -459,7 +460,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
     cudaEventRecord(indep_start_ev_d,0);
     desc->function(desc);
     cudaEventRecord(indep_end_ev_d,0);
-  } else printf("!WAT! - no independent region on GPU indep_from_d: %d, indep_to_d: %d\n",indep_from_d,indep_to_d);
+  } else if (PRINT_HYBRID_INFO) printf("!WAT! - no independent region on GPU indep_from_d: %d, indep_to_d: %d\n",indep_from_d,indep_to_d);
   
 
   cudaStreamWaitEvent(0,ev1,0);
@@ -489,7 +490,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_NVTX
     nvtxRangePop();
 #endif
-  } else printf("!WAT! - no independent region on CPU indep_from_h: %d, indep_to_h: %d\n",indep_from_h,indep_to_h);
+  } else if (PRINT_HYBRID_INFO) printf("!WAT! - no independent region on CPU indep_from_h: %d, indep_to_h: %d\n",indep_from_h,indep_to_h);
   
   cudaEventSynchronize(ev2);
      
@@ -529,7 +530,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   
   cpu_elapsed=(indep_end_h-indep_start_h)+(dep_end_h-dep_start_h);
   
-  printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (cpu_elapsed)*1000.0, gpu_elapsed-(cpu_elapsed)*1000.0);
+  if (PRINT_HYBRID_INFO) printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (cpu_elapsed)*1000.0, gpu_elapsed-(cpu_elapsed)*1000.0);
   ops_hybrid_record_kernel_stats(desc->index, (cpu_elapsed)*1000.0, gpu_elapsed);
   desc->range[2*(desc->dim-1)]   = from;
   desc->range[2*(desc->dim-1)+1] = to;
@@ -539,7 +540,7 @@ void ops_hybrid_execute(ops_kernel_descriptor *desc) {
   int interGPU=intersection2(pre_calc_from_d,to,max(desc->range[2*(desc->dim-1)],split),pre_calc_from_d,&intersectb);
   int interCPU=intersection2(from,pre_calc_to_h,pre_calc_to_h,min(desc->range[2*(desc->dim-1)+1],split),&intersectb);
   
-  printf("pre_calc  GPU: %d, CPU: %d\n",interGPU,interCPU);
+  if (PRINT_HYBRID_INFO) printf("pre_calc  GPU: %d, CPU: %d\n",interGPU,interCPU);
 
 }
           
@@ -583,7 +584,7 @@ void ops_hybrid_execute2(ops_kernel_descriptor *desc) {
   cudaEventSynchronize(ev2);
   float gpu_elapsed=0;
   if (split < to) cudaEventElapsedTime(&gpu_elapsed, ev1, ev2);
-  printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (t2-t1)*1000.0, gpu_elapsed-(t2-t1)*1000.0);
+  if (PRINT_HYBRID_INFO) printf("%s balance %g GPU time %g CPU time %g wait %g\n", stats[desc->index].prev_balance, desc->name, gpu_elapsed, (t2-t1)*1000.0, gpu_elapsed-(t2-t1)*1000.0);
   ops_hybrid_record_kernel_stats(desc->index, (t2-t1)*1000.0, gpu_elapsed);
   desc->range[2*(desc->dim-1)]   = from;
   desc->range[2*(desc->dim-1)+1] = to;
@@ -729,7 +730,7 @@ int ops_hybrid_tiled_get_split() {
 void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
   ops_hybrid_tiled_stats.cpu_time = cpu_time;
   ops_hybrid_tiled_stats.gpu_time = gpu_time;
-/*
+
   double new_balance = ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time / 
                   ((1.0 - ops_hybrid_tiled_stats.prev_balance) * ops_hybrid_tiled_stats.cpu_time +
                   ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time);
@@ -737,9 +738,10 @@ void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
         ops_hybrid_tiled_stats.prev_balance = smoothed_balance;
   if (abs(ops_hybrid_gbl_max_size*smoothed_balance - ops_hybrid_tiled_stats.prev_split) > ops_hybrid_gbl_max_size * 0.01)
     ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*smoothed_balance;
-*/
- if (OPS_diags > 3) 
-   ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
+
+
+  if (OPS_diags > 3) 
+ if (PRINT_HYBRID_INFO) ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
 }
 
 void ops_hybrid_after_tiling(ops_kernel_descriptor * desc) {
