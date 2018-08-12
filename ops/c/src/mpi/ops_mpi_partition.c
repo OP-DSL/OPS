@@ -1043,16 +1043,16 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 
     if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->d_m[n]);
+      end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->base[n] - dat->d_m[n]);
     }
     else {
       end[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
     }
     if (sb->id_p[n]==MPI_PROC_NULL &&
        (range[2*n+1] > (sd->decomp_disp[n] + d_size[n] - dat->d_m[n] )))
-      end[n] += (range[2*n+1] - sd->decomp_disp[n] - dat->d_m[n] - d_size[n]);
+      end[n] += (range[2*n+1] - sd->decomp_disp[n] - dat->base[n] - dat->d_m[n] - d_size[n]);
 
-    arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->d_m[n];
+    arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->base[n]-dat->d_m[n];
   }
   return 1;
 }
