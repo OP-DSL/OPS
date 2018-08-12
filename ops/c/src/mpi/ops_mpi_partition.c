@@ -1046,7 +1046,7 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
       end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->base[n] - dat->d_m[n]);
     }
     else {
-      end[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
+      end[n] = dat->d_m[n] + dat->base[n] + sd->decomp_size[n] - dat->d_p[n];
     }
     if (sb->id_p[n]==MPI_PROC_NULL &&
        (range[2*n+1] > (sd->decomp_disp[n] + d_size[n] - dat->d_m[n] )))
