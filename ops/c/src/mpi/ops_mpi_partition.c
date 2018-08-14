@@ -973,6 +973,16 @@ void ops_mpi_exit() {
     free(OPS_checkpoiting_dup_buffer);
 }
 
+static inline int intersection2(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *intersect_begin)
+{
+  if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
+  int i_min = MAX(range1_beg, range2_beg);
+  int i_max = MIN(range1_end, range2_end);
+  *intersect_begin = i_min;
+  return i_max > i_min ? i_max - i_min : 0;
+}
+
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
   //determine the correct range to iterate over, based on the dats that are written to
   int fine_grid_dat_idx = -1;
@@ -988,9 +998,20 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 
   sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
   sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) -1;
+
+  for ( int n=0; n < block->dims; n++ ){
+    int starti = sd->decomp_disp[n];
+    int length = intersection2(range[2*n], range[2*n+1], sd->decomp_disp[n], sd->decomp_disp[n]+sd->decomp_size[n], &starti);
+    arg_idx[n] = starti;
+    if (sb->id_m[n]!=MPI_PROC_NULL)
+      starti -= sd->decomp_disp[n];
+    start[n] = starti;
+    end[n] = starti + length;
+  }
+  /*
   int d_size[OPS_MAX_DIM];
 
-  if (!sb->owned) -1;
   for ( int n=0; n < block->dims; n++ ){
     d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
     start[n] = sd->decomp_disp[n] - dat->d_m[n];
@@ -1015,6 +1036,6 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
       end[n] += (range[2*n+1] - sd->decomp_disp[n] - dat->base[n] - dat->d_m[n] - d_size[n]);
 
     arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->base[n]-dat->d_m[n];
-  }
+  }*/
   return 1;
 }
