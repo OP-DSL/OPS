@@ -87,8 +87,11 @@ int main(int argc, char **argv)
   ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride1, "PROLONG_00");
   ops_stencil S2D_PROLONG_00_M10_P10 = ops_decl_prolong_stencil( 2, 3, s2D_00_M10_P10, stride1, "PROLONG_00_M10_P10");
   ops_stencil S2D_RESTRICT_00_M10_P10 = ops_decl_restrict_stencil( 2, 3, s2D_00_M10_P10, stride1, "RESTRICT_00_M10_P10");
-
+#ifdef ZEROBASE
   int base[2] = {0,0};
+#else
+  int base[2] = {-1,-1};
+#endif
   double* temp = NULL;
 
   ops_dat data0 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride1 , temp, "double", "data0");
@@ -106,11 +109,17 @@ int main(int argc, char **argv)
 
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
-
+#ifdef ZEROBASE
   int iter_range[] = {0,12,0,12};
   int iter_range_large[] = {0,24,0,24};
   int iter_range_small[] = {0,6,0,6};
   int iter_range_tiny[] = {0,4,0,4};
+#else
+  int iter_range[] = {-1,11,-1,11};
+  int iter_range_large[] = {-1,23,-1,23};
+  int iter_range_small[] = {-1,5,-1,5};
+  int iter_range_tiny[] = {-1,3,-1,3};
+#endif
 
   ops_par_loop_mgrid_populate_kernel_1("mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
