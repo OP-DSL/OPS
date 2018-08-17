@@ -358,7 +358,6 @@ void getIdx(ops_block block, int *start, int *idx) {
   }
 }
 
-
 int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }

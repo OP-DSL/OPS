@@ -444,30 +444,6 @@ void ops_get_data(ops_dat dat) {
   (void)dat;
 }
 
-int* ops_fetch_data_size(ops_dat dat) {
-  int *size = (int*)malloc(OPS_MAX_DIM*sizeof(int));
-  for (int d = 0; d < dat->block->dims; d++)
-    size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
-  for (int d= dat->block->dims; d < OPS_MAX_DIM; d++)
-    size[d] = 1;
-  size[0] *= dat->dim;
-  return size;
-}
-void ops_fetch_data_ptr(ops_dat dat, char *ptr) {
-  //TODO: SoA support
-  int* size_out = ops_fetch_data_size(dat);
-  size_out[0] *= dat->elem_size/dat->dim; //now in bytes
-
-  if (dat->block->dims>3) {ops_printf("Error, ops_fetch_data_ptr not implemented for dims>3\n"); exit(-1);}
-
-  for (int k = 0; k < size_out[2]; k++)
-    for (int j = 0; j < size_out[1]; j++)
-      memcpy(&ptr[k*size_out[0]*size_out[1]+j*size_out[0]],
-             &dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
-             size_out[0]);
-  free(size_out);
-}
-
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
                          char const *name) {
   (void)dim;
