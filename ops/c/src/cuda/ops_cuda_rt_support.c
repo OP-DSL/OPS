@@ -218,22 +218,6 @@ void ops_cuda_get_data(ops_dat dat) {
   cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void ops_fetch_data_ptr(ops_dat dat, char *ptr) {
-  ops_cuda_get_data(dat);
-  //TODO: SoA support
-  int* size_out = ops_fetch_data_size(dat);
-  size_out[0] *= dat->elem_size/dat->dim; //now in bytes
-
-  if (dat->block->dims>3) {ops_printf("Error, ops_fetch_data_ptr not implemented for dims>3\n"); exit(-1);}
-
-  for (int k = 0; k < size_out[2]; k++)
-    for (int j = 0; j < size_out[1]; j++)
-      memcpy(&ptr[k*size_out[0]*size_out[1]+j*size_out[0]],
-             &dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
-             size_out[0]);
-  free(size_out);
-}
-
 //
 // routines to resize constant/reduct arrays, if necessary
 //
