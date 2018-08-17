@@ -4,8 +4,11 @@ cd ../../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../../ops_translator/c/ops.py shsgc.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
+
 
 #============================ Test SHSGC with Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -125,7 +128,7 @@ rm perf_out
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
 
 cd -
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
 
 make clean
 make

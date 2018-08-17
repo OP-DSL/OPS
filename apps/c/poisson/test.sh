@@ -5,9 +5,10 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/c/ops.py poisson.cpp
 make clean
-make
+rm -f .generated
+make IEEE=1
+
 
 
 #============================ Test Poisson with Intel Compilers==========================================================
@@ -120,7 +121,7 @@ rm perf_out
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 cd -
 #COMMENT
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
 
 make clean
 make

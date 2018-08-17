@@ -145,7 +145,7 @@ echo "All Intel complied applications PASSED : Moving on to PGI compiler tests "
 
 #COMMENT
 cd -
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
 
 make clean
 make

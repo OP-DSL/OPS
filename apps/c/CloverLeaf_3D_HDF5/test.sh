@@ -7,6 +7,7 @@ cd -
 make clean
 rm -f .generated
 make IEEE=1
+make generate_file generate_file_mpi
 
 #============================ Generate HDF5 file ==========================================================
 echo '============> Generate HDF5 file'
@@ -143,7 +144,7 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 
 #COMMENT
 cd -
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
 #source ../../scripts/source_pgi_15.10
 
 make clean

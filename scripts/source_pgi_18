@@ -10,10 +10,10 @@ export OPS_COMPILER=pgi
 export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
 
 #CUDA and NVIDIA OpenCL
-export PATH=/usr/local/cuda-8.0/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:$LD_LIBRARY_PATH
-export CUDA_INSTALL_PATH=/usr/local/cuda-8.0
-export OPENCL_INSTALL_PATH=/usr/local/cuda-8.0
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda
+export OPENCL_INSTALL_PATH=/usr/local/cuda
 
 #export PATH=/usr/local/cuda-6.5.14/bin:$PATH
 #export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
