@@ -75,14 +75,15 @@ void calvar_kernel(const double *rho_new, const double *rhou_new, const double *
 #endif
 
 
+/*calculate error post shock, for this i need data of total time for the simulation
+assuming total time is constant i.e 9005 iterations*/
 
 #ifndef checkop_kernel_H
 #define checkop_kernel_H
 
-void checkop_kernel(const double *rho_new, const double *x, const double *rhoin, double *pre, double *post,
+void checkop_kernel(const double *rho_new, const double *x,
+  const double *rhoin, double *pre, double *post,
   int *num) {
-  /*calculate error post shock, for this i need data of total time for the simulation
-  assuming total time is constant i.e 9005 iterations*/
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
   if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
