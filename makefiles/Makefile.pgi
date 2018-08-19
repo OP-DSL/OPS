@@ -9,7 +9,7 @@ endif
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 CXXFLAGS  := $(CCFLAGS)
 OPENACCFLAGS = $(CCFLAGS) -module $(F_INC_MOD)/openacc
-FMODS_OPENACC := -module $(F_INC_MOD)/openacc
+FMODS_OPENACC := -module $(F_INC_MOD)/openacc -Minline
 FMODS := -module $(F_INC_MOD)
 FMODS_CUDA := -module $(F_INC_MOD)/cuda
 FFLAGS = $(CCFLAGS)
