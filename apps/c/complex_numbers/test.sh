@@ -5,11 +5,9 @@ cd ../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-
-../../../ops_translator/c/ops.py complex_numbers.cpp
-
 make clean
-make
+rm -f .generated
+make IEEE=1
 
 #============================ Test Complex Numbers 2D With Intel Compilers==========================================================
 echo '============> Running OpenMP'
