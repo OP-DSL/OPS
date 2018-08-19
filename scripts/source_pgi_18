@@ -35,6 +35,6 @@ export MPIF90_F90=/opt/pgi/linux86-64/2018/bin/pgfortran
 export MPICH_FC=/opt/pgi/linux86-64/2018/bin/pgfortran
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/opt/hdf5-pgi
-export LD_LIBRARY_PATH=/opt/hdf5-pgi/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/
+export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH
 export NV_ARCH=Kepler
