@@ -4,11 +4,9 @@ cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-#../../../ops_translator/fortran/ops_fortran.py poisson.F90
 make clean
 rm -f .generated
-make 
-make 
+make IEEE=1
 
 echo '============================ Test Poisson Intel Compilers=========================================================='
 echo '============> Running OpenMP'
@@ -37,10 +35,15 @@ rm perf_out
 
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
+
+make clean
 make
 cd -
+make clean
 make
+
+
 echo '============================ Test Poisson PGI Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out

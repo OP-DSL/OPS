@@ -40,11 +40,11 @@ rm perf_out
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
+make
 make
 cd -
 make clean
-make
 make
 
 echo '============================ Test MultiDim PGI Compilers=========================================================='
