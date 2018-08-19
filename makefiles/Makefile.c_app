@@ -113,7 +113,7 @@ mpiinline_c_obj_list = $(shell find MPI_inline -name "*_c.c" | sed s/\\.c/\\.o/g
 
 $(APP)_mpi_inline: .generated $(mpiinline_obj_list) $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
-		$(OPS_FILES_GEN) -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -lops_mpi $(HDF5_LIB_MPI) -o $(APP)_mpi_inline
+		$(OPS_FILES_GEN) -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -L$(MPI_LIB) -lops_mpi $(HDF5_LIB_MPI) -o $(APP)_mpi_inline
 
 openacc_obj_list = $(shell find OpenACC/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 openacc_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")

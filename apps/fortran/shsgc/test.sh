@@ -4,8 +4,10 @@ cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/fortran/ops_fortran.py shsgc.F90
-make
+make clean
+rm -f .generated
+make IEEE=1
+
 
 
 #============================ Test SHSGC Intel Compilers ==========================================================
@@ -36,11 +38,13 @@ rm perf_out
 
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
+source ../../scripts/source_pgi_18
+make clean
 make
 cd -
 make clean
 make
+
 #============================ Test SHSGC PGI Compilers ==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=10 ./shsgc_openmp > perf_out

@@ -4,7 +4,6 @@ cd ../../../ops/fortran
 source ../../scripts/source_intel
 make
 cd -
-#../../../ops_translator/fortran/ops_fortran.py multidim.F90
 make clean
 rm -f .generated
 make
@@ -34,13 +33,14 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
-
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
-make
+source ../../scripts/source_pgi_18
+make clean
+make 
 cd -
+make clean
 make
+
 echo '============================ Test MultiDim3D PGI Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
