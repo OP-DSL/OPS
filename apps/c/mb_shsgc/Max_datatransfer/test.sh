@@ -270,4 +270,4 @@ rm perf_out
 
 #cleanup
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
-Echo "All PGI Tests Passed. Exiting test script"
+echo "All PGI Tests Passed. Exiting test script"

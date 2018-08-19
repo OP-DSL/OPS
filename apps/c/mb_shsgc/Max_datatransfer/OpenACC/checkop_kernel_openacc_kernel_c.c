@@ -21,7 +21,6 @@ int xdim2_checkop_kernel;
 inline void checkop_kernel(const double *rho_new, const double *x,
                            const double *rhoin, double *pre, double *post,
                            int *num) {
-
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
   if (fabs(diff) < 0.01 && x[OPS_ACC1(0)] > -4.1) {
