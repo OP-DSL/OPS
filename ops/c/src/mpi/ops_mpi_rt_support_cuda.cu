@@ -48,8 +48,8 @@ char *halo_buffer_d = NULL;
 
 __global__ void ops_cuda_packer_1(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
-                                  int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+                                  int stride, int hybrid_offset) {
+  int idx = hybrid_offset + blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[idx] = src[stride * block + idx % len];
@@ -58,8 +58,8 @@ __global__ void ops_cuda_packer_1(const char *__restrict src,
 
 __global__ void ops_cuda_packer_1_soa(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
-                                  int stride, int dim, int size) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+                                  int stride, int hybrid_offset, int dim, int size) {
+  int idx = hybrid_offset + blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     for (int d=0; d<dim; d++) {   
@@ -93,8 +93,8 @@ __global__ void ops_cuda_unpacker_1_soa(const char *__restrict src,
 
 __global__ void ops_cuda_packer_4(const int *__restrict src,
                                   int *__restrict dest, int count, int len,
-                                  int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+                                  int stride, int hybrid_offset) {
+  int idx = hybrid_offset + blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[idx] = src[stride * block + idx % len];
@@ -111,12 +111,59 @@ __global__ void ops_cuda_unpacker_4(const int *__restrict src,
   }
 }
 
+extern "C" int ops_hybrid_get_clean_cpu(ops_dat dat);
+extern "C" void ops_pack_hybrid_cpu(ops_dat dat, const int src_offset, char *__restrict dest,
+               int halo_blocklength, int halo_stride, int new_count);
+extern "C" void ops_unpack_hybrid_cpu(ops_dat dat, const int dest_offset, const char *__restrict src,
+                 int halo_blocklength, int halo_stride, int new_count);
+
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
 
   if (dat->dirty_hd == 1) {
     ops_upload_dat(dat);
     dat->dirty_hd = 0;
+  }
+  printf("Halo exchange of %s: offset %d, count %d, blocklen %d stride %d\n",dat->name, src_offset, halo->count, halo->blocklength, halo->stride);
+
+  int hybrid_offset = 0; //if hybrid, where is the split betwen cpu and gpu. -1 if last dim 
+
+  //With hybrid, we need to split the halo gather based on who has what
+  //CPU has up to dirty_from_h. With overlapping clean regions, should we prefer CPU or GPU??
+  if (ops_hybrid) {
+    if (OPS_gpu_direct) {ops_printf("Error: hybrid execution and GPU Direct combination unsupported\n"); exit(-1);}
+    int cpu_clean = ops_hybrid_get_clean_cpu(dat);
+
+    //Find what dim we are working in, and what depth
+    int dim=-1;
+    sub_dat_list sd = OPS_sub_dat_list[dat->index];
+    for (int dim2 = 0; dim2 < dat->block->dims; dim2++) {
+      for (int depth2 = 0; depth2 < MAX_DEPTH; depth2++) {
+        if (halo == &sd->halos[MAX_DEPTH * dim2 + depth2]) {
+          dim = dim2;
+          break;
+        }
+      }
+      if (dim != -1) break;
+    }
+    if (dim == -1) {printf("Error, hybrid could not find halo depth/dim\n"); exit(-1);}
+
+    //if last dim, then left face on CPU, right face on GPU
+    if (dim == dat->block->dims-1) {
+      hybrid_offset = 0;
+
+      //Need to determine if left or right face
+      int d_m = dat->d_m[dim] + sd->d_im[dim];
+      if (src_offset == (-d_m) * sd->prod[dim - 1]) { //this is the formula for the left face offset in op_mpi_rt_support.c
+        ops_pack_hybrid_cpu(dat, src_offset, dest, halo->blocklength, halo->stride, halo->count);
+        return;
+      } // For the right face, do nothing, code below will work as usual
+
+    } else { //otherwise need to split based on cpu_clean
+      //number of halo blocks in lower dimensions
+      int lowdim_count = halo->count/dat->size[dat->block->dims-1];
+      hybrid_offset = lowdim_count * cpu_clean;
+    }
   }
 
   const char *__restrict src = dat->data_d + src_offset * (OPS_soa ? dat->type_size : dat->elem_size);
@@ -135,30 +182,36 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
 
   if (OPS_soa) {
     int num_threads = 128;
-    int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
+    int num_blocks = ((halo->blocklength * (halo->count-hybrid_offset)) - 1) / num_threads + 1;
     ops_cuda_packer_1_soa<<<num_blocks, num_threads>>>(
-        src, device_buf, halo->count, halo->blocklength, halo->stride,
+        src, device_buf, halo->count, halo->blocklength, halo->stride, hybrid_offset * halo->blocklength,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
 
   } else if (halo->blocklength % 4 == 0) {
     int num_threads = 128;
     int num_blocks =
-        (((dat->dim * halo->blocklength / 4) * halo->count) - 1) / num_threads + 1;
+        (((dat->dim * halo->blocklength / 4) * (halo->count-hybrid_offset)) - 1) / num_threads + 1;
     ops_cuda_packer_4<<<num_blocks, num_threads>>>(
         (const int *)src, (int *)device_buf, halo->count, halo->blocklength*dat->dim / 4,
-        halo->stride*dat->dim / 4);
+        halo->stride*dat->dim / 4, hybrid_offset * (dat->dim * halo->blocklength / 4));
   } else {
     int num_threads = 128;
-    int num_blocks = ((dat->dim * halo->blocklength * halo->count) - 1) / num_threads + 1;
+    int num_blocks = ((dat->dim * halo->blocklength * (halo->count-hybrid_offset)) - 1) / num_threads + 1;
     ops_cuda_packer_1<<<num_blocks, num_threads>>>(
-        src, device_buf, halo->count, halo->blocklength*dat->dim, halo->stride*dat->dim);
+        src, device_buf, halo->count, halo->blocklength*dat->dim,
+        halo->stride*dat->dim, hybrid_offset * dat->dim * halo->blocklength);
   }
+
   if (!OPS_gpu_direct)
-    cutilSafeCall(cudaMemcpy(dest, halo_buffer_d,
-                             halo->count * halo->blocklength * dat->dim,
-                             cudaMemcpyDeviceToHost));
-  else
-    cutilSafeCall(cudaDeviceSynchronize());
+    cutilSafeCall(cudaMemcpyAsync(dest + (hybrid_offset * halo->blocklength * dat->dim),
+                             halo_buffer_d + (hybrid_offset * halo->blocklength * dat->dim),
+                             (halo->count-hybrid_offset) * halo->blocklength * dat->dim,
+                             cudaMemcpyDeviceToHost, 0));
+
+  if (ops_hybrid && hybrid_offset != 0)
+    ops_pack_hybrid_cpu(dat, src_offset, dest, halo->blocklength, halo->stride, hybrid_offset);
+
+  cutilSafeCall(cudaDeviceSynchronize());
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
@@ -184,9 +237,11 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     device_buf = halo_buffer_d;
 
   if (!OPS_gpu_direct)
-    cutilSafeCall(cudaMemcpy(halo_buffer_d, src,
+    cutilSafeCall(cudaMemcpyAsync(halo_buffer_d, src,
                              halo->count * halo->blocklength * dat->dim,
-                             cudaMemcpyHostToDevice));
+                             cudaMemcpyHostToDevice,0));
+  if (!ops_hybrid) cutilSafeCall(cudaDeviceSynchronize());
+
   if (OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
@@ -209,7 +264,10 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
   dat->dirty_hd = 2;
 
-  // cutilSafeCall(cudaDeviceSynchronize());
+  if (ops_hybrid) {
+    ops_unpack_hybrid_cpu(dat, dest_offset, src, halo->blocklength, halo->stride, halo->count);
+    cutilSafeCall(cudaDeviceSynchronize());
+  }
 }
 
 char* ops_realloc_fast(char *ptr, size_t olds, size_t news) {

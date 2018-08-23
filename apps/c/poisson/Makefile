@@ -219,6 +219,10 @@ poisson_hyb_cuda: Makefile ./CUDA/poisson_hyb_kernels_cu.o poisson_ops.cpp poiss
 poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) poisson_ops.cpp ./CUDA/poisson_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o poisson_mpi_cuda
 
+poisson_mpi_hyb_cuda: Makefile ./CUDA/poisson_hyb_kernels_mpi_cu.o poisson_ops.cpp poisson_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) -DOPS_LAZY -DOPS_HYBRID poisson_ops.cpp ./CUDA/poisson_hyb_kernels_mpi_cu.o -I. ./Tiled/$(SEQ_KERNELS) -lcudart -lops_mpi_cuda $(HDF5_LIB) -o poisson_mpi_hyb_cuda -lnvToolsExt
+
+
 ./CUDA/poisson_kernels_cu.o: ./CUDA/poisson_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC)  -I. -c -o ./CUDA/poisson_kernels_cu.o ./CUDA/poisson_kernels.cu
 
@@ -228,6 +232,10 @@ poisson_mpi_cuda: Makefile ./CUDA/poisson_kernels_mpi_cu.o poisson_ops.cpp poiss
 ./CUDA/poisson_kernels_mpi_cu.o: ./CUDA/poisson_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC)  -I. -I$(MPI_INSTALL_PATH)/include \
 	-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/poisson_kernels_mpi_cu.o ./CUDA/poisson_kernels.cu
+
+./CUDA/poisson_hyb_kernels_mpi_cu.o: ./CUDA/poisson_kernels.cu Makefile
+	nvcc $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI -DOPS_LAZY -DOPS_HYBRID $(CODE_GEN_CUDA) $(OPS_INC)  -I. -I$(MPI_INSTALL_PATH)/include \
+	-DMPICH_IGNORE_CXX_SEEK -c -o ./CUDA/poisson_hyb_kernels_mpi_cu.o ./CUDA/poisson_kernels.cu
 
 mpiinline_obj_list = $(shell find MPI_inline/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
 mpiinline_c_obj_list = $(shell find MPI_inline/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")

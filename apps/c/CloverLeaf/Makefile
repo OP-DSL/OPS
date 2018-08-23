@@ -43,8 +43,8 @@ ifeq ($(OPS_COMPILER),intel)
 ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
-  CCFLAGS	= -O1 -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  #CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
+  #CCFLAGS	= -O1 -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -xHost -parallel #-DCOMM_PERF #-DDEBUG
+  CCFLAGS	= -qopenmp -O3 -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2 #-fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -qopt-report #-qopt-report=5 # -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
   MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99

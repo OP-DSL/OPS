@@ -45,13 +45,11 @@
 #include <nvToolsExt.h>
 #endif
 
+#define PRINT_HYBRID_INFO 0
+
 #if defined(_OPENMP)
 #include <omp.h>
 #else
-
-#define PRINT_HYBRID_INFO 0
-  
-
 inline int omp_get_max_threads() {
   if (getenv("OMP_NUM_THREADS"))
     return atoi(getenv("OMP_NUM_THREADS"));
@@ -649,16 +647,16 @@ void ops_hybrid_modify_owned_range(ops_block block, int *range, int *start, int 
       end[d] = split + disp[d];
     //for GPUs, new start is split
     else
-      start[d] = split +disp[d];
+      start[d] = split + disp[d];
   } 
   //otherwise zero out for the target with no intersection
   else {
     int start2;
     int len = intersection2(start[d]-disp[d], end[d]-disp[d], split, INT_MAX, &start2);
     if (len == 0 && ops_hybrid_tiling_phase == 1)
-      start[d] = end[d] = split;
+      start[d] = end[d] = disp[d]+split;
     else if (len > 0 && ops_hybrid_tiling_phase == 0)
-      end[d] = start[d] = split;
+      end[d] = start[d] = disp[d]+split;
   }
 }
 
@@ -690,8 +688,8 @@ void ops_hybrid_halo_exchanges_datlist(ops_dat *dats_cpu, int ndats_cpu, int *de
     //for last dimension, left depths comes from CPU, right from GPU
     mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 0] = depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 0];
     mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 1] = depths_cpu[i*OPS_MAX_DIM*4 + d*4 + 1];
-    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 0] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 2];
-    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 1] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 3];
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 2] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 2];
+    mpi_depths[i*OPS_MAX_DIM*4 + d*4 + 3] = depths_gpu[i*OPS_MAX_DIM*4 + d*4 + 3];
   }
   ops_halo_exchanges_datlist(dats_cpu, ndats_cpu, mpi_depths);
 
@@ -779,3 +777,49 @@ void ops_hybrid_execution_end(int cpugpu) {
     cudaEventRecord(ev2,0);
   }
 }
+
+extern "C" int ops_hybrid_get_clean_cpu(ops_dat dat) {
+  return dirtyflags[dat->index].dirty_from_h; 
+}
+
+extern "C" void ops_pack_hybrid_cpu(ops_dat dat, const int src_offset, char *__restrict dest,
+              int halo_blocklength, int halo_stride, int new_count) {
+  if (OPS_soa) {
+    const char *__restrict src = dat->data + src_offset * dat->type_size;
+  #pragma omp parallel for collapse(3) shared(src,dest)
+    for (unsigned int i = 0; i < new_count; i++) {
+      for (int d = 0; d < dat->dim; d++)
+        for (int v = 0; v < halo_blocklength/dat->type_size; v++)
+          memcpy(dest+i*halo_blocklength*dat->dim+ v*dat->type_size*dat->dim + d*dat->type_size,
+                 src+i*halo_stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, dat->type_size);
+    }
+  } else {
+    const char *__restrict src = dat->data + src_offset * dat->elem_size;
+  #pragma omp parallel for shared(src,dest)
+    for (unsigned int i = 0; i < new_count; i++) {
+      memcpy(dest+i*halo_blocklength*dat->dim, src+i*halo_stride*dat->dim, halo_blocklength*dat->dim);
+      
+    }
+  }
+}
+
+extern "C" void ops_unpack_hybrid_cpu(ops_dat dat, const int dest_offset, const char *__restrict src,
+                int halo_blocklength, int halo_stride, int new_count) {
+  if (OPS_soa) {
+  char *__restrict dest = dat->data + dest_offset * dat->type_size;
+  #pragma omp parallel for collapse(3) shared(src,dest)
+    for (unsigned int i = 0; i < new_count; i++) {
+      for (int d = 0; d < dat->dim; d++)
+        for (int v = 0; v < halo_blocklength/dat->type_size; v++)
+          memcpy(dest+i*halo_stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
+            src+i*halo_blocklength*dat->dim + v*dat->type_size*dat->dim + d*dat->type_size, dat->type_size);
+    }
+  } else {
+    char *__restrict dest = dat->data + dest_offset * dat->elem_size;
+  #pragma omp parallel for shared(src,dest)
+    for (unsigned int i = 0; i < new_count; i++) {
+      memcpy(dest+i*halo_stride*dat->dim, src+i*halo_blocklength*dat->dim, halo_blocklength*dat->dim);
+    }
+  }
+}
+
