@@ -250,7 +250,7 @@ cloverleaf_mpi_cuda_tiled: Makefile ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o $(O
 
 cloverleaf_mpi_hyb_cuda: Makefile ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o $(OPS_FILES_GEN) \
 		$(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
-		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI -DOPS_LAZY -DOPS_HYBRID $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(OPS_FILES_GEN) -I. ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o ./Tiled/$(SEQ_KERNELS)  -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_cuda_tiled
+		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI -DOPS_LAZY -DOPS_HYBRID $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(OPS_FILES_GEN) -I. ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o ./Tiled/$(SEQ_KERNELS)  -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_hyb_cud
 
 cloverleaf_hyb_cuda: Makefile ./CUDA/cloverleaf_hyb_kernels_cu.o $(OPS_FILES_GEN) $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) -DOPS_LAZY -DOPS_HYBRID $(OPS_FILES_GEN) ./CUDA/cloverleaf_hyb_kernels_cu.o -I. ./Tiled/$(SEQ_KERNELS) -lcudart -lops_cuda $(HDF5_LIB) -o cloverleaf_hyb_cuda
