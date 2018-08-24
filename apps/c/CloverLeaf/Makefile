@@ -97,17 +97,17 @@ endif
   MPIFLAGS  = $(CPPFLAGS)
 else
 ifeq ($(OPS_COMPILER),xlp8)
-  CPP       = mpixlc
+  CPP       = xlc++
   CUDA_ALIGN_FLAG :=
 ifdef DEBUG
   CCFLAGS   = -O2 -g
 else
-  CCFLAGS   = -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
+  CCFLAGS   = -O5 -qarch=pwr8 -qtune=pwr8 -qreport -qinline=level=10 #-O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qsmp=omp  -qthreaded
-  MPICPP    = mpixlcxx
-  MPICC     = mpixlc
+  MPICPP    = mpicxx
+  MPICC     = mpicc
   MPIFLAGS  = $(CPPFLAGS)
 else
 print:
@@ -248,8 +248,13 @@ cloverleaf_mpi_cuda_tiled: Makefile ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o $(O
 		$(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/cloverleaf_kernels_mpi_tiled_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_cuda_tiled
 
+cloverleaf_mpi_hyb_cuda: Makefile ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o $(OPS_FILES_GEN) \
+		$(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
+		$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI -DOPS_LAZY -DOPS_HYBRID $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) $(OPS_FILES_GEN) -I. ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o ./Tiled/$(SEQ_KERNELS)  -lcudart -lops_mpi_cuda $(HDF5_LIB) -o cloverleaf_mpi_cuda_tiled
+
 cloverleaf_hyb_cuda: Makefile ./CUDA/cloverleaf_hyb_kernels_cu.o $(OPS_FILES_GEN) $(HEADERS) $(OPS_INSTALL_PATH)/lib/libops_cuda.a
 	$(CPP) $(OMPFLAGS) $(CPPFLAGS) $(CUDA_INC) $(OPS_INC)  $(OPS_LIB) $(CUDA_LIB) -DOPS_LAZY -DOPS_HYBRID $(OPS_FILES_GEN) ./CUDA/cloverleaf_hyb_kernels_cu.o -I. ./Tiled/$(SEQ_KERNELS) -lcudart -lops_cuda $(HDF5_LIB) -o cloverleaf_hyb_cuda
+
 ./CUDA/cloverleaf_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. \
@@ -259,6 +264,11 @@ cloverleaf_hyb_cuda: Makefile ./CUDA/cloverleaf_hyb_kernels_cu.o $(OPS_FILES_GEN
 				Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -DOPS_LAZY -DOPS_HYBRID \
 				-c -o ./CUDA/cloverleaf_hyb_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
+
+./CUDA/cloverleaf_mpi_hyb_kernels_cu.o:	./CUDA/clover_leaf_kernels.cu \
+				Makefile
+				$(NVCC) $(VAR) $(INC) $(NVCC_FLAGS) -DOPS_MPI $(CODE_GEN_CUDA) $(OPS_INC) $(HDF5_INC) -I. -DOPS_LAZY -DOPS_HYBRID -I$(MPI_INSTALL_PATH)/include \
+				-c -o ./CUDA/cloverleaf_mpi_hyb_kernels_cu.o ./CUDA/clover_leaf_kernels.cu
 
 ./CUDA/cloverleaf_kernels_mpi_cu.o:	./CUDA/clover_leaf_kernels.cu \
 				Makefile

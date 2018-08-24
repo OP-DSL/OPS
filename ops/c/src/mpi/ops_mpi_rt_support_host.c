@@ -69,6 +69,8 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   (void)size;
 }
 
+void ops_hostRegister(char *ptr, size_t size) {}
+
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,

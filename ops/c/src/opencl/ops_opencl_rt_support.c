@@ -354,6 +354,8 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   clSafeCall(clFinish(OPS_opencl_core.command_queue));
 }
 
+void ops_hostRegister(char *ptr, size_t size) {}
+
 void ops_download_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;

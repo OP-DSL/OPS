@@ -294,6 +294,8 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   (void)size;
 }
 
+void ops_hostRegister(char *ptr, size_t size) {}
+
 void ops_download_dat(ops_dat dat) { (void)dat; }
 
 void ops_upload_dat(ops_dat dat) { (void)dat; }

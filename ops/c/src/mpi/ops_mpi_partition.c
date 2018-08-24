@@ -59,6 +59,8 @@ MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
 ops_mpi_halo_group *OPS_mpi_halo_group_list = NULL;
 void (*ops_read_dat_hdf5_dynamic)(ops_dat dat) = NULL;
+void ops_hostRegister(char *ptr, size_t size);
+
 /*
 * Lists of sub-blocks and sub-dats declared in an OPS programs -- for MPI
 * backends
@@ -390,6 +392,7 @@ void ops_decomp_dats(sub_block *sb) {
 
     dat->base_offset = ops_get_base_offset(dat);
 
+    if (ops_hybrid) ops_hostRegister(dat->data, prod[sb->ndim - 1] * dat->elem_size);
     ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data),
                        prod[sb->ndim - 1] * dat->elem_size);
 

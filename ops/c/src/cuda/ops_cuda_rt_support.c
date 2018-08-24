@@ -146,6 +146,11 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   cutilSafeCall(cudaDeviceSynchronize());
 }
 
+void ops_hostRegister(char *ptr, size_t size) {
+  cutilSafeCall(cudaHostRegister(ptr, size, cudaHostRegisterDefault));
+}
+
+
 void ops_download_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;

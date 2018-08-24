@@ -124,7 +124,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     ops_upload_dat(dat);
     dat->dirty_hd = 0;
   }
-  printf("Halo exchange of %s: offset %d, count %d, blocklen %d stride %d\n",dat->name, src_offset, halo->count, halo->blocklength, halo->stride);
+  //printf("Halo exchange of %s: offset %d, count %d, blocklen %d stride %d\n",dat->name, src_offset, halo->count, halo->blocklength, halo->stride);
 
   int hybrid_offset = 0; //if hybrid, where is the split betwen cpu and gpu. -1 if last dim 
 
