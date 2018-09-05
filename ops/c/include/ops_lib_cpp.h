@@ -148,11 +148,6 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                            (char *)data, sizeof(T), type, name);
 }
 
-template <class T> T *ops_fetch_dat(ops_dat dat, T *u_dat) {
-  u_dat = (T *)ops_fetch_dat_char(dat, (char *)u_dat);
-  return u_dat;
-}
-
 //
 // wrapper functions to handle MPI global reductions
 //
