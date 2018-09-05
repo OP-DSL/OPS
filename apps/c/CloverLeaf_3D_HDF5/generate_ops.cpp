@@ -24,10 +24,4 @@ void generate() {
   ops_fetch_dat_hdf5_file(yvel0, "test_cloverdata.h5");
   ops_fetch_dat_hdf5_file(zvel0, "test_cloverdata.h5");
 
-  double *u_density0 = NULL;
-  u_density0 = ops_fetch_dat(density0, u_density0);
-  if (u_density0 != NULL) {
-    ops_printf("Non NULL value returned from ops_fetch\n");
-  }
-  free(u_density0);
 }
