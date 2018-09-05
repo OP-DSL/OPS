@@ -123,6 +123,15 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
           assume_same=0
+        elif str(stens[n]).find('STRID3D_XY') > 0:
+          stride[NDIM*n+2] = 0
+          assume_same=0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[NDIM*n] = 0
+          assume_same=0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[NDIM*n+1] = 0
+          assume_same=0
 
     for n in range (1,nargs):
       if typs[0] <> typs[n]:

@@ -116,7 +116,12 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
-
+        elif str(stens[n]).find('STRID3D_XY') > 0:
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[NDIM*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[NDIM*n+1] = 0
 
     reduction = 0
     for n in range (0, nargs):
