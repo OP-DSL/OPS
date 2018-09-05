@@ -345,14 +345,6 @@ HDF5 file using MPI I/O)}
 \item[file]     hdf5 file to write to
 \end{routine}
 
-\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat}
-\begin{routine} {void ops\_fetch\_dat(ops\_dat dat, T *data)}
-{Makes a copy of the data held internally by an ops\_dat and returns a pointer to that block of data. The memory block
-will be a flat 1D block of memory (similar to how any multi-dimensional data is held internally by OPS. Over MPI the
-pointer will point to a block of memory that holds the data held only within that MPI proc.}
-\item[dat]      ops\_dat to fetch data from
-\item[data]     pointer of type T pointing to memory block holding data
-\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
 \begin{routine} {void ops\_print\_dat\_to\_txtfile(ops\_dat dat, chat *file)}
@@ -622,6 +614,70 @@ it combines the manual datlist and fastfw calls, and triggers the creation of a 
 \noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
 is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported 
 in a tech-report on checkpointing, to be published later. 
+
+
+
+\newpage
+\subsection{Access to OPS data}
+
+This section describes API that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_local\_npartitions}
+\begin{routine} {int ops\_dat\_get\_local\_npartitions(ops\_dat dat)}
+{This routine returns the number of chunks of the given dataset held by the current process.}
+\item[dat]         the dataset
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_global\_npartitions}
+\begin{routine} {int ops\_dat\_get\_global\_npartitions(ops\_dat dat)}
+{This routine returns the number of chunks of the given dataset held by all processes.}
+\item[dat]         the dataset
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_extents}
+\begin{routine} {void ops\_dat\_get\_extents(ops\_dat dat, int part, int *disp, int *sizes)}
+{This routine returns the MPI displacement and size of a given chunk of the given dataset on the current process.}
+\item[dat]         the dataset
+\item[part]        the chunk index
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[sizes]       an array populated with the spatial extents
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
+\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, int *stride)}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given}
+\item[dat]         the dataset
+\item[part]        the chunk index
+\item[stencil]     a stencil used to determine required MPI halo exchange depths 
+\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
+\begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
+{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed}
+\item[dat]         the dataset
+\item[part]        the chunk index
+\item[acc]     the kind of access that was used by the user (OPS\_READ if it was read only, OPS\_WRITE if it was overwritten, OPS\_RW if it was read and written)
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_fetch\_data}
+\begin{routine} {void ops\_dat\_fetch\_data(ops\_dat dat, int part, int *data)}
+{This routine copies the data held by OPS to the user-specified memory location, which needs to be at least as large as indicated by the sizes parameter of ops\_dat\_get\_extents.}
+\item[dat]         the dataset
+\item[part]        the chunk index
+\item[data]        pointer to memory which should be filled by OPS
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_set\_data}
+\begin{routine} {void ops\_dat\_set\_data(ops\_dat dat, int part, int *data)}
+{This routine copies the data given  by the user to the internal data structure used by OPS. User data needs to be laid out in column-major order and strided as indicated by the sizes parameter of ops\_dat\_get\_extents.}
+\item[dat]         the dataset
+\item[part]        the chunk index
+\item[data]        pointer to memory which should be copied to OPS
+\end{routine}
+
+\newpage
 
 \section{Tiling for Cache-blocking}
 OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling. Currently this is only supported on a single
