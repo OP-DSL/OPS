@@ -1,17 +1,15 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
-
-../../../ops_translator/c/ops.py complex_numbers.cpp
-
 make clean
-make
+rm -f .generated
+make IEEE=1
 
 #============================ Test Complex Numbers 2D With Intel Compilers==========================================================
-#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./complex_numbers_openmp > perf_out
 grep "Total Wall time" perf_out
@@ -91,12 +89,13 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 
 #COMMENT
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
-make
+make clean
+make IEEE=1
 
 
 #============================ Test Complex Numbers 2D With PGI Compilers==========================================================

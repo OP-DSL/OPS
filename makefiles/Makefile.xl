@@ -1,0 +1,6 @@
+#for Blue Gene
+CC        := mpixlc
+CUDA_ALIGNE_FLAG :=
+CCFLAGS   := -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
+CXX       := mpixlcxx
+CXXFLAGS  := $(CCFLAGS)

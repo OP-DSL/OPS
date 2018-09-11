@@ -32,7 +32,7 @@ cd ../../multiDim_HDF5
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 cd ../apps/fortran/shsgc
-#./test.sh
+./test.sh
 cd ../poisson
 ./test.sh
 cd ../multiDim

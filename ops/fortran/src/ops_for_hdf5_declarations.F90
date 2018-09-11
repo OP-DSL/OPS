@@ -78,17 +78,15 @@ module OPS_Fortran_hdf5_Declarations
 
     end function ops_decl_stencil_hdf5_c
 
-  type(c_ptr) function ops_decl_strided_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_stencil_hdf5')
-    !check if bind C name is implemented .. need to implement ops_decl_strided_stencil_hdf5
-      use, intrinsic :: ISO_C_BINDING
+  !type(c_ptr) function ops_decl_strided_stencil_hdf5_c (dims, points, stencilName, fileName) BIND(C,name='ops_decl_strided_stencil_hdf5')
+  !  !check if bind C name is implemented .. need to implement ops_decl_strided_stencil_hdf5
+  !    use, intrinsic :: ISO_C_BINDING
 
-      integer(kind=c_int), value :: dims
-      integer(kind=c_int), value :: points
-      character(kind=c_char,len=1), intent(in) :: stencilName
-      character(kind=c_char,len=1), intent(in) :: fileName
-
-
-    end function ops_decl_strided_stencil_hdf5_c
+  !    integer(kind=c_int), value :: dims
+  !    integer(kind=c_int), value :: points
+  !    character(kind=c_char,len=1), intent(in) :: stencilName
+  !    character(kind=c_char,len=1), intent(in) :: fileName
+  !end function ops_decl_strided_stencil_hdf5_c
 
 	subroutine ops_fetch_dat_hdf5_file_c (dat, fileName) BIND(C,name='ops_fetch_dat_hdf5_file')
       use, intrinsic :: ISO_C_BINDING
@@ -201,27 +199,27 @@ contains
     end if
   end subroutine ops_decl_stencil_hdf5
 
-  subroutine ops_decl_strided_stencil_hdf5 ( stencil, dims, points, stencilName, fileName, status )
+  !subroutine ops_decl_strided_stencil_hdf5 ( stencil, dims, points, stencilName, fileName, status )
 
-    type(ops_stencil) :: stencil
-    integer, intent(in) :: dims
-    integer, intent(in) :: points
-    character(kind=c_char,len=*) :: stencilName
-    character(kind=c_char,len=*) :: fileName
-    integer (kind=c_int) :: status
+  !  type(ops_stencil) :: stencil
+  !  integer, intent(in) :: dims
+  !  integer, intent(in) :: points
+  !  character(kind=c_char,len=*) :: stencilName
+  !  character(kind=c_char,len=*) :: fileName
+  !  integer (kind=c_int) :: status
 
-    status = -1
-    stencil%stencilPtr => null()
+  !  status = -1
+  !  stencil%stencilPtr => null()
 
     ! assume names are /0 terminated - will fix this if needed later
-    stencil%stencilCPtr = ops_decl_strided_stencil_hdf5_c ( dims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
+  !  stencil%stencilCPtr = ops_decl_strided_stencil_hdf5_c ( dims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the op_map variable
-    call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )
-    if (associated(stencil%stencilPtr)) then
-      status = 1
-    end if
-  end subroutine ops_decl_strided_stencil_hdf5
+  !  call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )
+  !  if (associated(stencil%stencilPtr)) then
+  !    status = 1
+  !  end if
+  !end subroutine ops_decl_strided_stencil_hdf5
 
 
   subroutine ops_fetch_dat_hdf5_file (dat, file_name)

@@ -1,11 +1,16 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/c/ops.py poisson.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
+
+
 #============================ Test Poisson with Intel Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
@@ -48,7 +53,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10101010101010101010 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -113,12 +118,15 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 cd -
-source ../../scripts/source_pgi_15.10
+#COMMENT
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
+make clean
 make
 
 #============================ Test Poisson with PGI Compilers==========================================================
@@ -163,7 +171,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -236,10 +244,13 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-#echo '============> Running MPI+OpenACC'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
+echo '============> Running MPI+OpenACC'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
+

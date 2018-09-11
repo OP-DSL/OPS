@@ -55,7 +55,6 @@ void checkop_kernel(const __global double *restrict rho_new,
                     double *restrict post, int *restrict num, const double rhol)
 
 {
-
   double diff;
   diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
   if (fabs(diff) < 0.01 && x[OPS_ACC1(0)] > -4.1) {

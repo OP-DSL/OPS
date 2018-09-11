@@ -1,11 +1,14 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/c/ops.py shsgc.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
 #============================ Test SHSGC With Intel Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=10 ./shsgc_openmp > perf_out
@@ -99,13 +102,15 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
+make clean
 make
 
 #============================ Test SHSGC With PGI Compilers==========================================================
@@ -213,3 +218,6 @@ grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo "All PGI complied applications PASSED : Exiting Test Script "
+

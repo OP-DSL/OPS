@@ -1,12 +1,18 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
 ../../../ops_translator/c/ops.py write.cpp
 ../../../ops_translator/c/ops.py read.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
+
+
 #============================ Test write with Intel Compilers==========================================================
 echo '============> Running OpenMP'
 rm -rf write_data.h5 read_data.h5;
@@ -98,12 +104,16 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 echo "All Intel complied applications PASSED"
 
+#cleanup
+rm integers.txt*
+
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
+make clean
 make
 
 #============================ Test write with PGI Compilers==========================================================
@@ -215,6 +225,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
+#cleanup
+rm integers.txt*
 
 echo "All PGI complied applications PASSED "
 echo "All Tests PASSED : Exiting Test Script "

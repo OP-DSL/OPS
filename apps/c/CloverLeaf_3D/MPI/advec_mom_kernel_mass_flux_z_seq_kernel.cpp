@@ -28,13 +28,13 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name,
   ops_arg args[2] = {arg0, arg1};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 33))
+  if (!ops_checkpointing_before(args, 2, range, 135))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(33, "advec_mom_kernel_mass_flux_z");
-    OPS_kernels[33].count++;
+    ops_timing_realloc(135, "advec_mom_kernel_mass_flux_z");
+    OPS_kernels[135].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -138,7 +138,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[33].mpi_time += t1 - t2;
+    OPS_kernels[135].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -180,7 +180,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name,
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[33].time += t2 - t1;
+    OPS_kernels[135].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0], range);
@@ -188,8 +188,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[33].mpi_time += t1 - t2;
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[135].mpi_time += t1 - t2;
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

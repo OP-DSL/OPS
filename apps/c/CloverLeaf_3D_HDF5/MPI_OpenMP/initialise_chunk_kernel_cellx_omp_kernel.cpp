@@ -27,13 +27,13 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name,
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 52))
+  if (!ops_checkpointing_before(args, 3, range, 6))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(52, "initialise_chunk_kernel_cellx");
-    OPS_kernels[52].count++;
+    ops_timing_realloc(6, "initialise_chunk_kernel_cellx");
+    OPS_kernels[6].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -131,7 +131,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[52].mpi_time += t2 - t1;
+    OPS_kernels[6].mpi_time += t2 - t1;
   }
 
 #pragma omp parallel for
@@ -252,7 +252,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[52].time += t1 - t2;
+    OPS_kernels[6].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -263,9 +263,9 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[52].mpi_time += t2 - t1;
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[6].mpi_time += t2 - t1;
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

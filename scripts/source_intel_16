@@ -4,6 +4,7 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 unset LD_LIBRARY_PATH
 . ~/.bashrc
+export PATH=/home/mgiles/mudalige/numawrap:$PATH
 
 #OPS specifics
 export OPS_COMPILER=intel
@@ -20,7 +21,7 @@ export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 export MPI_INSTALL_PATH=/opt/intel/impi/5.1.1.109/intel64
 source /opt/intel/compilers_and_libraries/linux/bin/compilervars.sh intel64
 source /opt/intel/compilers_and_libraries/linux/mpi/bin64/mpivars.sh intel64
-
+export MPICPP=mpicxx
 export INTEL_PATH=/opt/intel/compilers_and_libraries/linux/
 export MPICH_CXX=/opt/intel/compilers_and_libraries/linux/bin/intel64/icpc
 export MPICH_CC=/opt/intel/compilers_and_libraries/linux/bin/intel64/icc

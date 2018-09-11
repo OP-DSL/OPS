@@ -316,4 +316,5 @@ int main(int argc, char **argv) {
   ops_printf("%lf\n", it1 - it0);
 
   ops_exit();
+  return 0;
 }

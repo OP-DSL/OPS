@@ -182,6 +182,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     # for now no check is done
 
     #code('attributes (device) '+text)
+    #text = text.replace(')\n',')\n!$acc routine seq\n',1)
     code(text)
     code('')
 

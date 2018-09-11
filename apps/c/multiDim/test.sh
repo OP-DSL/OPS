@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+#<<COMMENT
 source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/c/ops.py multidim.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
+
 #============================ Test multidim with Intel Compilers ==========================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
@@ -98,15 +102,18 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
+make clean
 make
+
 #============================ Test multidim with PGI Compilers ==========================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
@@ -206,11 +213,13 @@ grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
-
+#COMMENT
 echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_openacc numawrap2 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+echo "All PGI complied applications PASSED : Exiting Test Script "
+

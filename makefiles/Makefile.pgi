@@ -1,0 +1,50 @@
+CC    := pgcc -c99
+CXX     := pgc++
+FC	:= pgfortran
+ifdef DEBUG
+	CCFLAGS   := -O0 -g
+else
+	CCFLAGS   := -O3 -fast -gopt #-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
+endif
+CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+CXXFLAGS  := $(CCFLAGS)
+OPENACCFLAGS = $(CCFLAGS) -module $(F_INC_MOD)/openacc
+FMODS_OPENACC := -module $(F_INC_MOD)/openacc -Minline
+FMODS := -module $(F_INC_MOD)
+FMODS_CUDA := -module $(F_INC_MOD)/cuda
+FFLAGS = $(CCFLAGS)
+OMPFLAGS := -mp
+CUDAFOR	= -DOPS_WITH_CUDAFOR
+OpenACCFLAGS = -acc #-Minline
+CXXLINK := -pgc++libs
+
+ifdef IEEE
+	CCFLAGS += -Kieee -nofma
+	CXXFLAGS += -Kieee -nofma
+endif
+
+ifndef NV_ARCH
+print:
+	@echo "select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=Kepler"
+	NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+	OpenACCFLAGS+= -ta=nvidia,cc20 -Mcuda=cc20
+	CUDAFOR+= -Mcuda=cc20
+else
+ifeq ($(NV_ARCH),Kepler)
+	OpenACCFLAGS+= -ta=nvidia,cc35 -Mcuda=cc35
+	CUDAFOR+= -Mcuda=cc35
+else
+ifeq ($(NV_ARCH),Pascal)
+	OpenACCFLAGS+= -ta=nvidia,cc60 -Mcuda=cc60
+	CUDAFOR+= -Mcuda=cc60
+else
+ifeq ($(NV_ARCH),Volta)
+	OpenACCFLAGS+= -ta=nvidia,cc70 -Mcuda=cc70
+	CUDAFOR+= -Mcuda=cc70
+endif
+endif
+endif
+endif
+

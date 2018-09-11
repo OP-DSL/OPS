@@ -1,10 +1,12 @@
 #!/bin/bash
-
+set -e
 cd ../../../ops/fortran
-source ../source_intel
+source ../../scripts/source_intel
 make
 cd -
-../../../ops_translator/fortran/ops_fortran.py multidim.F90
+make clean
+rm -f .generated
+make
 make
 echo '============================ Test MultiDim3D Intel Compilers=========================================================='
 echo '============> Running OpenMP'
@@ -31,13 +33,14 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
-
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_15.10
-make
+source ../../scripts/source_pgi_18
+make clean
+make 
 cd -
+make clean
 make
+
 echo '============================ Test MultiDim3D PGI Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
@@ -72,7 +75,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./numawrap2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out

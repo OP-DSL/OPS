@@ -396,16 +396,17 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
-    code('#ifdef intel')
+      code('#ifdef intel')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         line3 = line3 +arg_list[n]+','
-    code('#pragma loop_count(10000)')
-    code('#pragma omp simd'+line+' aligned('+line3[:-1]+')')
-    code('#else')
-    code('#pragma simd'+line)
-    code('#endif')
+    if NDIM>1:
+      code('#pragma loop_count(10000)')
+      code('#pragma omp simd'+line+' aligned('+line3[:-1]+')')
+      code('#else')
+      code('#pragma simd'+line)
+      code('#endif')
     FOR('n_x','start[0]','end[0]')
     if arg_idx <> -1:
       if NDIM==1:

@@ -4,8 +4,11 @@ cd ../../../../ops/c
 source ../../scripts/source_intel
 make
 cd -
-../../../../ops_translator/c/ops.py shsgc.cpp
-make
+make clean
+rm -f .generated
+make IEEE=1
+
+
 
 #============================ Test SHSGC with Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -121,12 +124,16 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+
 cd -
-source ../../scripts/source_pgi_15.10
+source ../../scripts/source_pgi_18
 
 make clean
 make
 cd -
+make clean
 make
 
 #============================ Test SHSGC with PGI Compilers==========================================================
@@ -252,7 +259,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -260,3 +267,7 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+echo "All PGI Tests Passed. Exiting test script"
