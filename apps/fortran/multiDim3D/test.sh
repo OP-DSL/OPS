@@ -89,3 +89,5 @@ grep "Max total runtime" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo "All PGI tests PASSED ... exiting script"
