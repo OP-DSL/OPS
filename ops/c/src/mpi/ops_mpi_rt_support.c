@@ -1312,8 +1312,8 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  int lsize[OPS_MAX_DIM] = {0};
-  int ldisp[OPS_MAX_DIM] = {0};
+  int lsize[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {1};
   ops_dat_get_extents(dat, part, ldisp, lsize);
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
@@ -1327,8 +1327,8 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
 }
 
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
-  int lsize[OPS_MAX_DIM] = {0};
-  int ldisp[OPS_MAX_DIM] = {0};
+  int lsize[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {1};
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   ops_dat_get_extents(dat, part, ldisp, lsize);
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
@@ -1366,5 +1366,7 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     disp[d] = sd->decomp_disp[d] - dat->d_m[d];
     size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
   }
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++)
+    size[d] = 1;
 }
 
