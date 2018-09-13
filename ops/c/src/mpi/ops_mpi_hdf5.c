@@ -1561,13 +1561,6 @@ void ops_read_dat_hdf5(ops_dat dat) {
       gbl_size[0] =
           gbl_size[0] * dat->dim; //**note that for 3D we are using [0] here !!
 
-    if(block->dims == 1)
-      gbl_size[0] = gbl_size[0]*dat->dim; //-- this needs to be tested for 1D
-    else if(block->dims == 2)
-      gbl_size[1] = gbl_size[1]*dat->dim; //**note we are using [1] instead of [0] here !!
-    else if(block->dims == 3)
-      gbl_size[0] = gbl_size[0]*dat->dim; //**note that for 3D we are using [0] here !!
-
     // create new communicator
     int my_rank, comm_size;
     // use the communicator for MPI procs holding this block
