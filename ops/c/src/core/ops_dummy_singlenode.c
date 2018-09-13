@@ -418,3 +418,4 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++)
     size[d] = 1;
 }
+

@@ -9,49 +9,53 @@ int xdim0_initialise_chunk_kernel_celly;
 int xdim1_initialise_chunk_kernel_celly;
 int xdim2_initialise_chunk_kernel_celly;
 
+
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 
-#define OPS_ACC0(x, y) (x + xdim0_initialise_chunk_kernel_celly * (y))
-#define OPS_ACC1(x, y) (x + xdim1_initialise_chunk_kernel_celly * (y))
-#define OPS_ACC2(x, y) (x + xdim2_initialise_chunk_kernel_celly * (y))
 
-// user function
-inline void initialise_chunk_kernel_celly(const double *vertexy, double *celly,
-                                          double *celldy) {
+#define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_celly*(y))
+#define OPS_ACC1(x,y) (x+xdim1_initialise_chunk_kernel_celly*(y))
+#define OPS_ACC2(x,y) (x+xdim2_initialise_chunk_kernel_celly*(y))
+
+//user function
+inline 
+void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
 
   double d_y;
-  d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
+  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-  celly[OPS_ACC1(0, 0)] =
-      0.5 * (vertexy[OPS_ACC0(0, 0)] + vertexy[OPS_ACC0(0, 1)]);
-  celldy[OPS_ACC2(0, 0)] = d_y;
+  celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
+  celldy[OPS_ACC2(0,0)] = d_y;
+
+
 }
+
 
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 
-void initialise_chunk_kernel_celly_c_wrapper(double *p_a0, double *p_a1,
-                                             double *p_a2, int x_size,
-                                             int y_size) {
-#ifdef OPS_GPU
-#pragma acc parallel deviceptr(p_a0, p_a1, p_a2)
-#pragma acc loop
-#endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#pragma acc loop
-#endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      initialise_chunk_kernel_celly(
-          p_a0 + n_x * 0 * 1 +
-              n_y * xdim0_initialise_chunk_kernel_celly * 1 * 1,
-          p_a1 + n_x * 0 * 1 +
-              n_y * xdim1_initialise_chunk_kernel_celly * 1 * 1,
-          p_a2 + n_x * 0 * 1 +
-              n_y * xdim2_initialise_chunk_kernel_celly * 1 * 1);
+
+
+void initialise_chunk_kernel_celly_c_wrapper(
+  double *p_a0,
+  double *p_a1,
+  double *p_a2,
+  int x_size, int y_size) {
+  #ifdef OPS_GPU
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2)
+  #pragma acc loop
+  #endif
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    #ifdef OPS_GPU
+    #pragma acc loop
+    #endif
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      initialise_chunk_kernel_celly(  p_a0 + n_x*0*1 + n_y*xdim0_initialise_chunk_kernel_celly*1*1,
+           p_a1 + n_x*0*1 + n_y*xdim1_initialise_chunk_kernel_celly*1*1, p_a2 + n_x*0*1 + n_y*xdim2_initialise_chunk_kernel_celly*1*1 );
+
     }
   }
 }

@@ -394,7 +394,7 @@ void ops_decomp_dats(sub_block *sb) {
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
       } else {
-        dat->data = (char *)op_calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
+        dat->data = (char *)ops_calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
 	if (ops_read_dat_hdf5_dynamic == NULL) {
