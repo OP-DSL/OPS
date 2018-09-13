@@ -297,7 +297,6 @@ module OPS_Fortran_Declarations
 
     end function ops_decl_strided_stencil_c
 
-
     function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
 
       use, intrinsic :: ISO_C_BINDING
@@ -417,6 +416,69 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in) :: file_name(*)
     end subroutine ops_print_dat_to_txtfile_core_c
 
+     integer(kind=c_int) function ops_dat_get_local_npartitions_c( dat ) BIND(C,name='ops_dat_get_local_npartitions')
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int) :: ops_dat_get_local_npartitions
+      type(c_ptr), value, intent(in) :: dat
+
+    end function ops_dat_get_local_npartitions_c
+
+     integer(kind=c_int) function ops_dat_get_global_npartitions_c( dat ) BIND(C,name='ops_dat_get_global_npartitions')
+      use, intrinsic :: ISO_C_BINDING
+
+      integer(kind=c_int) :: ops_dat_get_global_npartitions
+      type(c_ptr), value, intent(in) :: dat
+
+    end function ops_dat_get_global_npartitions_c
+
+    subroutine ops_dat_get_extents_c( dat, part, disp, size ) BIND(C,name='ops_dat_get_extents')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      integer(kind=c_int), value               :: part
+      type(c_ptr), intent(in), value           :: disp, size
+
+    end subroutine ops_dat_get_extents_c
+
+    type(c_ptr) function ops_dat_get_raw_pointer_c( dat, part, stencil, stride ) BIND(C,name='ops_dat_get_raw_pointer')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      integer(kind=c_int), value               :: part
+      type(c_ptr), value, intent(in)           :: stencil
+      type(c_ptr), intent(in), value           :: stride
+
+    end function ops_dat_get_raw_pointer_c
+
+    subroutine ops_dat_release_raw_data_c ( dat, part, acc ) BIND(C,name='ops_dat_release_raw_data')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      integer(kind=c_int), value               :: part
+      integer(kind=c_int), value               :: acc
+
+    end subroutine ops_dat_release_raw_data_c
+
+    subroutine ops_dat_fetch_data_c ( dat, part, data ) BIND(C,name='ops_dat_fetch_data')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      integer(kind=c_int), value               :: part
+      type(c_ptr), intent(in), value           :: data
+
+    end subroutine ops_dat_fetch_data_c
+
+    subroutine ops_dat_set_data_c ( dat, part, data ) BIND(C,name='ops_dat_set_data')
+      use, intrinsic :: ISO_C_BINDING
+
+      type(c_ptr), value, intent(in)           :: dat
+      integer(kind=c_int), value               :: part
+      type(c_ptr), intent(in), value           :: data
+
+    end subroutine ops_dat_set_data_c
+
+
   end interface
 
   !##################################################################
@@ -436,6 +498,15 @@ module OPS_Fortran_Declarations
     module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar, ops_arg_gbl_real_1dim
   end interface ops_arg_gbl
 
+  interface ops_dat_fetch_data
+    module procedure ops_dat_fetch_data_real_8, ops_dat_fetch_data_integer_4, ops_dat_fetch_data_real_8_2d, &
+    & ops_dat_fetch_data_integer_4_2d
+  end interface ops_dat_fetch_data
+  
+  interface ops_dat_set_data
+    module procedure ops_dat_set_data_real_8, ops_dat_set_data_integer_4, ops_dat_set_data_real_8_2d, &
+    & ops_dat_set_data_integer_4_2d
+  end interface ops_dat_set_data
 
   !###################################################################
   ! Fortran subroutines that gets called by an OPS Fortran application
@@ -582,6 +653,162 @@ module OPS_Fortran_Declarations
     call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
 
   end subroutine ops_decl_reduction_handle
+
+  integer(kind=c_int) function ops_dat_get_local_npartitions(dat) 
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+
+    ops_dat_get_local_npartitions = ops_dat_get_local_npartitions_c(dat%dataCptr)
+  end function ops_dat_get_local_npartitions
+
+  integer(kind=c_int) function ops_dat_get_global_npartitions(dat) 
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+
+    ops_dat_get_global_npartitions = ops_dat_get_global_npartitions_c(dat%dataCptr)
+  end function ops_dat_get_global_npartitions
+
+  subroutine ops_dat_get_extents( dat, part, disp, size )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(*), intent(in), target :: disp, size
+    integer d;
+
+    call ops_dat_get_extents_c( dat%dataCptr, part-1, c_loc(disp), c_loc(size))
+  end subroutine ops_dat_get_extents
+
+  type(c_ptr) function ops_dat_get_raw_pointer( dat, part, sten, stride )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    type(ops_stencil) :: sten
+    integer(4), dimension(*), intent(in), target :: stride
+
+    ops_dat_get_raw_pointer = ops_dat_get_raw_pointer_c(dat%dataCptr, part-1, sten%stencilCptr, c_loc(stride))
+  end function ops_dat_get_raw_pointer
+
+  subroutine ops_dat_release_raw_data( dat, part, acc )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(kind=c_int) :: acc
+
+    call ops_dat_release_raw_data_c( dat%dataCptr, part-1, acc )
+  end subroutine ops_dat_release_raw_data
+
+  subroutine ops_dat_fetch_data_real_8( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(*), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_real_8
+    
+  subroutine ops_dat_fetch_data_integer_4( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(*), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_integer_4
+
+  subroutine ops_dat_fetch_data_real_8_2d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_real_8_2d
+    
+  subroutine ops_dat_fetch_data_integer_4_2d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_integer_4_2d
+
+  subroutine ops_dat_fetch_data_real_8_3d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(:,:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_real_8_3d
+    
+  subroutine ops_dat_fetch_data_integer_4_3d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(:,:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_fetch_data_integer_4_3d
+
+  subroutine ops_dat_set_data_real_8( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(*), target :: data
+    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_real_8
+    
+  subroutine ops_dat_set_data_integer_4( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(*), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_integer_4
+
+  subroutine ops_dat_set_data_real_8_2d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(:,:), target :: data
+    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_real_8_2d
+    
+  subroutine ops_dat_set_data_integer_4_2d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_integer_4_2d
+
+  subroutine ops_dat_set_data_real_8_3d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    real(8), dimension(:,:,:), target :: data
+    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_real_8_3d
+    
+  subroutine ops_dat_set_data_integer_4_3d( dat, part, data )
+    use, intrinsic :: ISO_C_BINDING
+    implicit none
+    type(ops_dat) :: dat
+    integer(kind = c_int) :: part
+    integer(4), dimension(:,:,:), target :: data
+    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+  end subroutine ops_dat_set_data_integer_4_3d
 
 
   type(ops_arg) function ops_arg_dat(dat, dim, sten, type, access)
