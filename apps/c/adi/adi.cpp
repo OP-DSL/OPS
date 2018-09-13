@@ -221,19 +221,19 @@ int main(int argc, char **argv) {
 
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, pads);
+    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u, pads);
+    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, pads);
+    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
 
@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 #endif
 
   ldim = nx;  // non padded size along x.
-#include "print_array.c"
+              //#include "print_array.c"
   // dump the whole raw matrix
   dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
 

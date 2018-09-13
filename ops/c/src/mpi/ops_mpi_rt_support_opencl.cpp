@@ -764,6 +764,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
 
 char *ops_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
+}
 
 cl_kernel *copy_tobuf_kernel = NULL;
 cl_kernel *copy_frombuf_kernel = NULL;

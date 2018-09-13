@@ -36,12 +36,13 @@ void ops_par_loop_update_halo_kernel3_plus_4_front(char const *name, ops_block b
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,70)) return;
+  if (!ops_checkpointing_before(args, 3, range, 115))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(70,"update_halo_kernel3_plus_4_front");
-    OPS_kernels[70].count++;
+    ops_timing_realloc(115, "update_halo_kernel3_plus_4_front");
+    OPS_kernels[115].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -160,7 +161,7 @@ void ops_par_loop_update_halo_kernel3_plus_4_front(char const *name, ops_block b
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[70].mpi_time += t2-t1;
+    OPS_kernels[115].mpi_time += t2 - t1;
   }
 
   update_halo_kernel3_plus_4_front_c_wrapper(
@@ -171,7 +172,7 @@ void ops_par_loop_update_halo_kernel3_plus_4_front(char const *name, ops_block b
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[70].time += t1-t2;
+    OPS_kernels[115].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -184,8 +185,8 @@ void ops_par_loop_update_halo_kernel3_plus_4_front(char const *name, ops_block b
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[70].mpi_time += t2-t1;
-    OPS_kernels[70].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[70].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[115].mpi_time += t2 - t1;
+    OPS_kernels[115].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[115].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

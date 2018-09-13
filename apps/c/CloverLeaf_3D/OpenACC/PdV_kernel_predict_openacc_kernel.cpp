@@ -95,12 +95,13 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,14,range,102)) return;
+  if (!ops_checkpointing_before(args, 14, range, 4))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(102,"PdV_kernel_predict");
-    OPS_kernels[102].count++;
+    ops_timing_realloc(4, "PdV_kernel_predict");
+    OPS_kernels[4].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -441,7 +442,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[102].mpi_time += t2-t1;
+    OPS_kernels[4].mpi_time += t2 - t1;
   }
 
   PdV_kernel_predict_c_wrapper(
@@ -463,7 +464,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[102].time += t1-t2;
+    OPS_kernels[4].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 14);
@@ -477,20 +478,20 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[102].mpi_time += t2-t1;
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    OPS_kernels[4].mpi_time += t2 - t1;
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg13);
   }
 }

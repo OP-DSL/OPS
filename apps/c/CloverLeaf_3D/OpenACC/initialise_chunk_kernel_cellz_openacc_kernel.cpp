@@ -40,12 +40,13 @@ void ops_par_loop_initialise_chunk_kernel_cellz(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,8)) return;
+  if (!ops_checkpointing_before(args, 3, range, 54))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(8,"initialise_chunk_kernel_cellz");
-    OPS_kernels[8].count++;
+    ops_timing_realloc(54, "initialise_chunk_kernel_cellz");
+    OPS_kernels[54].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -166,7 +167,7 @@ void ops_par_loop_initialise_chunk_kernel_cellz(char const *name, ops_block bloc
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[8].mpi_time += t2-t1;
+    OPS_kernels[54].mpi_time += t2 - t1;
   }
 
   initialise_chunk_kernel_cellz_c_wrapper(
@@ -177,7 +178,7 @@ void ops_par_loop_initialise_chunk_kernel_cellz(char const *name, ops_block bloc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[8].time += t1-t2;
+    OPS_kernels[54].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -190,9 +191,9 @@ void ops_par_loop_initialise_chunk_kernel_cellz(char const *name, ops_block bloc
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[8].mpi_time += t2-t1;
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[54].mpi_time += t2 - t1;
+    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

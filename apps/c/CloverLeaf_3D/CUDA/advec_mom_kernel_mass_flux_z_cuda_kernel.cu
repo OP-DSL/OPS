@@ -75,12 +75,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
 
 
   #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,2,range,135)) return;
+  if (!ops_checkpointing_before(args,2,range,33)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(135,"advec_mom_kernel_mass_flux_z");
-    OPS_kernels[135].count++;
+    ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
+    OPS_kernels[33].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -177,7 +177,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[135].mpi_time += t2-t1;
+    OPS_kernels[33].mpi_time += t2-t1;
   }
 
 
@@ -190,7 +190,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[135].time += t1-t2;
+    OPS_kernels[33].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -201,9 +201,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[135].mpi_time += t2-t1;
-    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[33].mpi_time += t2-t1;
+    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -215,9 +215,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 135;
+  desc->index = 33;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 135;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 33;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -231,7 +231,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z(char const *name, ops_block block
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_mass_flux_z_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(135,"advec_mom_kernel_mass_flux_z");
+    ops_timing_realloc(33,"advec_mom_kernel_mass_flux_z");
   }
   ops_enqueue_kernel(desc);
 }

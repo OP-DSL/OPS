@@ -83,10 +83,11 @@ void buildOpenCLKernels_update_halo_kernel3_plus_2_a(int xdim0, int ydim0, int x
       printf("compiling update_halo_kernel3_plus_2_a -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[61] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel3_plus_2_a", &ret);
-    clSafeCall( ret );
+      OPS_opencl_core.kernel[106] = clCreateKernel(
+          OPS_opencl_core.program, "ops_update_halo_kernel3_plus_2_a", &ret);
+      clSafeCall(ret);
 
-    isbuilt_update_halo_kernel3_plus_2_a = true;
+      isbuilt_update_halo_kernel3_plus_2_a = true;
   }
 
 }
@@ -103,12 +104,13 @@ void ops_par_loop_update_halo_kernel3_plus_2_a(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,61)) return;
+  if (!ops_checkpointing_before(args, 3, range, 106))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(61,"update_halo_kernel3_plus_2_a");
-    OPS_kernels[61].count++;
+    ops_timing_realloc(106, "update_halo_kernel3_plus_2_a");
+    OPS_kernels[106].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -210,22 +212,32 @@ void ops_par_loop_update_halo_kernel3_plus_2_a(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[61].mpi_time += t2-t1;
+    OPS_kernels[106].mpi_time += t2 - t1;
   }
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 3, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 4, sizeof(cl_int), (void*) &base1 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 5, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 6, sizeof(cl_int), (void*) &y_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[61], 7, sizeof(cl_int), (void*) &z_size ));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 0, sizeof(cl_mem),
+                              (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 1, sizeof(cl_mem),
+                              (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 2, sizeof(cl_mem),
+                              (void *)&arg2.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 3, sizeof(cl_int),
+                              (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 4, sizeof(cl_int),
+                              (void *)&base1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 5, sizeof(cl_int),
+                              (void *)&x_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 6, sizeof(cl_int),
+                              (void *)&y_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[106], 7, sizeof(cl_int),
+                              (void *)&z_size));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[61], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall(clEnqueueNDRangeKernel(
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[106], 3, NULL,
+        globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
@@ -233,7 +245,7 @@ void ops_par_loop_update_halo_kernel3_plus_2_a(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[61].time += t1-t2;
+    OPS_kernels[106].time += t1 - t2;
   }
 
   ops_set_dirtybit_device(args, 3);
@@ -243,8 +255,8 @@ void ops_par_loop_update_halo_kernel3_plus_2_a(char const *name, ops_block block
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[61].mpi_time += t2-t1;
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[106].mpi_time += t2 - t1;
+    OPS_kernels[106].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[106].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

@@ -32,11 +32,12 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,88)) return;
+  if (!ops_checkpointing_before(args, 3, range, 133))
+    return;
   #endif
 
-  ops_timing_realloc(88,"update_halo_kernel5_plus_4_left");
-  OPS_kernels[88].count++;
+  ops_timing_realloc(133, "update_halo_kernel5_plus_4_left");
+  OPS_kernels[133].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -138,7 +139,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[88].mpi_time += t1-t2;
+  OPS_kernels[133].mpi_time += t1 - t2;
 
   update_halo_kernel5_plus_4_left_c_wrapper(
     p_a0,
@@ -147,12 +148,12 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[88].time += t2-t1;
+  OPS_kernels[133].time += t2 - t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[88].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[88].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[133].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[133].transfer += ops_compute_transfer(dim, start, end, &arg1);
 }

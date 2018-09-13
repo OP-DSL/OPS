@@ -29,12 +29,13 @@ void ops_par_loop_update_halo_kernel5_plus_4_right(char const *name, ops_block b
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,90)) return;
+  if (!ops_checkpointing_before(args, 3, range, 135))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(90,"update_halo_kernel5_plus_4_right");
-    OPS_kernels[90].count++;
+    ops_timing_realloc(135, "update_halo_kernel5_plus_4_right");
+    OPS_kernels[135].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -114,7 +115,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_right(char const *name, ops_block b
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[90].mpi_time += t2-t1;
+    OPS_kernels[135].mpi_time += t2 - t1;
   }
 
 
@@ -206,7 +207,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_right(char const *name, ops_block b
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[90].time += t1-t2;
+    OPS_kernels[135].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -217,8 +218,8 @@ void ops_par_loop_update_halo_kernel5_plus_4_right(char const *name, ops_block b
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[90].mpi_time += t2-t1;
-    OPS_kernels[90].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[90].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[135].mpi_time += t2 - t1;
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[135].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

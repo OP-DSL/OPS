@@ -75,7 +75,7 @@ hdf5_seq: mklib core $(OBJ)/ops_lib_core.o
 
 trid: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag.c -o $(OBJ)/ops_tridiag.o
-	$(MPICXX) $(MPIFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c -o $(OBJ)/ops_tridiag_cuda.o
+	$(MPICXX) $(MPIFLAGS) -I$(INC) -I$(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c -o $(OBJ)/ops_tridiag_cuda.o
 	$(MPICXX) $(MPIFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c -o $(OBJ)/ops_tridiag_mpi.o
 #	ar -r $(LIB)/libops_trid.a $(OBJ)/ops_tridiag.o
 

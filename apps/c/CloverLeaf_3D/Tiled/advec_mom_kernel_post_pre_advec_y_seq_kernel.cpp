@@ -29,11 +29,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute(ops_kernel_descripto
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,132)) return;
+  if (!ops_checkpointing_before(args, 5, range, 30))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[132].count++;
+    OPS_kernels[30].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -82,7 +83,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute(ops_kernel_descripto
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[132].mpi_time += t1-t2;
+    OPS_kernels[30].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -113,18 +114,18 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute(ops_kernel_descripto
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[132].time += t2-t1;
+    OPS_kernels[30].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[132].mpi_time += t1-t2;
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[30].mpi_time += t1 - t2;
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 #undef OPS_ACC0
@@ -142,9 +143,9 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 132;
+  desc->index = 30;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 132;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 30;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -164,7 +165,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(132,"advec_mom_kernel_post_pre_advec_y");
+    ops_timing_realloc(30, "advec_mom_kernel_post_pre_advec_y");
   }
   ops_enqueue_kernel(desc);
   }
