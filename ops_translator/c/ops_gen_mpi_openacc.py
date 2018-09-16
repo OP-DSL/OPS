@@ -737,32 +737,32 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     #some custom logic for multigrid
     if MULTI_GRID:
       for n in range (0, nargs):
-        if restrict[n]  == 1 :
-          code('int start_'+str(n)+'['+str(NDIM)+']; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];')
-          FOR('n','0',str(NDIM))
-          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
-          code('start_'+str(n)+'[n]  = start[n]*stride_'+str(n)+'[n];')
-          code('end_'+str(n)+'[n]    = end[n];')
-          ENDFOR()
-        elif prolong[n] == 1:
+        if prolong[n] == 1 or restrict[n] == 1:
           comm('This arg has a prolong stencil - so create different ranges')
-          code('int start_'+str(n)+'[2]; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];int d_size_'+str(n)+'['+str(NDIM)+'];')
+          code('int start_'+str(n)+'['+str(NDIM)+']; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];int d_size_'+str(n)+'['+str(NDIM)+'];')
           code('#ifdef OPS_MPI')
           FOR('n','0',str(NDIM))
           code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
           code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
-          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          if restrict[n] == 1:
+            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          else:
+            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
           code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
           ENDFOR()
           code('#else')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
           code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + args['+str(n)+'].dat->size[n] - args['+str(n)+'].dat->d_p[n];')
-          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
+          if restrict[n] == 1:
+            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n];')
+          else:
+            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
           code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
           ENDFOR()
           code('#endif')
+
 
     comm('')
     comm('set up initial pointers')
