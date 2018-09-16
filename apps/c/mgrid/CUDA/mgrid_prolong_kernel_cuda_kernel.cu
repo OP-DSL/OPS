@@ -133,7 +133,6 @@ void ops_par_loop_mgrid_prolong_kernel_execute(ops_kernel_descriptor *desc) {
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
-
   //This arg has a prolong stencil - so create different ranges
   int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
   #ifdef OPS_MPI
