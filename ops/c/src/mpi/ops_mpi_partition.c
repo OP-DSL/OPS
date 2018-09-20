@@ -469,8 +469,21 @@ void ops_decomp_dats(sub_block *sb) {
   }
 }
 
+void ops_calc_disp_size_for_dat_and_proc(ops_dat dat, int d, int proc, int *proc_disp, int *proc_size, int *proc_disps, int *proc_sizes) {
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int zerobase_gbl_size =
+    sd->gbl_size[d] + sd->gbl_d_m[d] - sd->gbl_d_p[d] + sd->gbl_base[d];
+
+  *proc_disp = proc_disps[proc * OPS_MAX_DIM + d]/dat->stride[d] + (proc_disps[proc * OPS_MAX_DIM + d]%dat->stride[d] == 0 ? 0:1);
+  int next_block = proc_disps[proc * OPS_MAX_DIM + d] + proc_sizes[proc * OPS_MAX_DIM + d];
+  next_block = next_block/dat->stride[d] + (next_block%dat->stride[d] == 0 ? 0:1);
+  *proc_size = MAX(0,MIN(next_block - *proc_disp, zerobase_gbl_size - *proc_disp));
+}
+
 void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                          int *proc_sizes, int *proc_dimsplit) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   for (int i = 0; i < OPS_halo_index; i++) {
     ops_halo halo = OPS_halo_list[i];
     OPS_mpi_halo_list[i].halo = halo;
@@ -547,21 +560,25 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
           int to_base[OPS_MAX_DIM], from_relative_base[OPS_MAX_DIM],
               owned_range_for_proc[OPS_MAX_DIM];
           for (int d = 0; d < sb_to->ndim; ++d) {
-            int proc_disp = proc_disps[j * OPS_MAX_DIM + d];
-            int proc_size = proc_sizes[j * OPS_MAX_DIM + d];
+            int proc_disp_j;// = proc_disps[j * OPS_MAX_DIM + d];
+            int proc_size_j;// = proc_sizes[j * OPS_MAX_DIM + d];
+            ops_calc_disp_size_for_dat_and_proc(halo->to, d, j, &proc_disp_j, &proc_size_j, proc_disps, proc_sizes);
             int left_pad =
-                (proc_disp == 0 ? (sd_to->gbl_base[d] + sd_to->gbl_d_m[d]) : 0);
+                (proc_disp_j == 0 ? (sd_to->gbl_base[d] + sd_to->gbl_d_m[d]) : 0);
             // determine if target partition is at the end in the current
             // dimension
             int is_last = 1;
             for (int k = proc_offsets[halo->to->block->index];
-                 k < proc_offsets[halo->to->block->index + 1]; ++k)
-              is_last = is_last && (proc_disps[k * OPS_MAX_DIM + d] <=
-                                    proc_disps[j * OPS_MAX_DIM + d]);
+                 k < proc_offsets[halo->to->block->index + 1]; ++k) {
+              int proc_disp_k, proc_size_k;
+              ops_calc_disp_size_for_dat_and_proc(halo->to, d, k, &proc_disp_k, &proc_size_k, proc_disps, proc_sizes);
+              is_last = is_last && (proc_disp_k/*proc_disps[k * OPS_MAX_DIM + d]*/ <=
+                                    proc_disp_j/*proc_disps[j * OPS_MAX_DIM + d]*/);
+            }
             int right_pad = is_last ? sd_to->gbl_d_p[d] : 0;
 
             int intersection_local = intersection(
-                proc_disp + left_pad, proc_disp + proc_size + right_pad,
+                proc_disp_j + left_pad, proc_disp_j + proc_size_j + right_pad,
                 halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1],
                 halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1] +
                     intersection_range[abs(halo->to_dir[d]) - 1]);
@@ -571,14 +588,14 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
             owned_range_for_proc[d2] = intersection_local;
             to_base[d] =
                 (halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1] -
-                 proc_disp) >= left_pad
+                 proc_disp_j) >= left_pad
                     ? (halo->to_base[d] +
-                       relative_base[abs(halo->to_dir[d]) - 1] - proc_disp)
+                       relative_base[abs(halo->to_dir[d]) - 1] - proc_disp_j)
                     : 0;
             from_relative_base[d2] =
-                (proc_disp + left_pad - halo->to_base[d] -
+                (proc_disp_j + left_pad - halo->to_base[d] -
                  relative_base[abs(halo->to_dir[d]) - 1]) > 0
-                    ? (proc_disp + left_pad - halo->to_base[d] -
+                    ? (proc_disp_j + left_pad - halo->to_base[d] -
                        relative_base[abs(halo->to_dir[d]) - 1])
                     : 0;
             all_dims = all_dims && (intersection_local > 0);
@@ -600,6 +617,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                               // (if both blocks on same proc)
             }
             OPS_mpi_halo_list[i].nproc_from++;
+            printf("Rank %d, halo %d new from part, sending to %d\n", rank, halo->index, processes[j]);
           }
         }
       }
@@ -676,18 +694,22 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
           int from_base[OPS_MAX_DIM], to_relative_base[OPS_MAX_DIM],
               owned_range_for_proc[OPS_MAX_DIM];
           for (int d = 0; d < sb_from->ndim; ++d) {
-            int proc_disp = proc_disps[j * OPS_MAX_DIM + d];
-            int proc_size = proc_sizes[j * OPS_MAX_DIM + d];
+            int proc_disp_j;// = proc_disps[j * OPS_MAX_DIM + d];
+            int proc_size_j;// = proc_sizes[j * OPS_MAX_DIM + d];
+            ops_calc_disp_size_for_dat_and_proc(halo->from, d, j, &proc_disp_j, &proc_size_j, proc_disps, proc_sizes);
             int left_pad =
-                (proc_disp == 0 ? sd_to->gbl_base[d] + sd_to->gbl_d_m[d] : 0);
+                (proc_disp_j == 0 ? sd_to->gbl_base[d] + sd_to->gbl_d_m[d] : 0);
             int is_last = 1;
             for (int k = proc_offsets[halo->from->block->index];
-                 k < proc_offsets[halo->from->block->index + 1]; ++k)
-              is_last = is_last && (proc_disps[k * OPS_MAX_DIM + d] <=
-                                    proc_disps[j * OPS_MAX_DIM + d]);
+                 k < proc_offsets[halo->from->block->index + 1]; ++k) {
+              int proc_disp_k, proc_size_k;
+              ops_calc_disp_size_for_dat_and_proc(halo->from, d, k, &proc_disp_k, &proc_size_k, proc_disps, proc_sizes);
+              is_last = is_last && (proc_disp_k /*proc_disps[k * OPS_MAX_DIM + d]*/ <=
+                                    proc_disp_j /*proc_disps[j * OPS_MAX_DIM + d]*/);
+            }
             int right_pad = is_last ? sd_from->gbl_d_p[d] : 0;
             int intersection_local = intersection(
-                proc_disp + left_pad, proc_disp + proc_size + right_pad,
+                proc_disp_j + left_pad, proc_disp_j + proc_size_j + right_pad,
                 halo->from_base[d] + relative_base[abs(halo->from_dir[d]) - 1],
                 halo->from_base[d] + relative_base[abs(halo->from_dir[d]) - 1] +
                     intersection_range[abs(halo->from_dir[d]) - 1]);
@@ -697,15 +719,15 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
             owned_range_for_proc[d2] = intersection_local;
             from_base[d] =
                 (halo->from_base[d] +
-                 relative_base[abs(halo->from_dir[d]) - 1] - proc_disp) >=
+                 relative_base[abs(halo->from_dir[d]) - 1] - proc_disp_j) >=
                         left_pad
                     ? (halo->from_base[d] +
-                       relative_base[abs(halo->from_dir[d]) - 1] - proc_disp)
+                       relative_base[abs(halo->from_dir[d]) - 1] - proc_disp_j)
                     : 0;
             to_relative_base[d2] =
-                (proc_disp + left_pad - halo->from_base[d] -
+                (proc_disp_j + left_pad - halo->from_base[d] -
                  relative_base[abs(halo->from_dir[d]) - 1]) > 0
-                    ? (proc_disp + left_pad - halo->from_base[d] -
+                    ? (proc_disp_j + left_pad - halo->from_base[d] -
                        relative_base[abs(halo->from_dir[d]) - 1])
                     : 0;
             all_dims = all_dims && (intersection_local > 0);
