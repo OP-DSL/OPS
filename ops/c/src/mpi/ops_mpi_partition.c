@@ -612,7 +612,6 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                               // (if both blocks on same proc)
             }
             OPS_mpi_halo_list[i].nproc_from++;
-            printf("Rank %d, halo %d new from part, sending to %d\n", rank, halo->index, processes[j]);
           }
         }
       }
