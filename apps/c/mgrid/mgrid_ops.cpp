@@ -87,6 +87,7 @@ int main(int argc, char **argv)
   ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride1, "PROLONG_00");
   ops_stencil S2D_PROLONG_00_M10_P10 = ops_decl_prolong_stencil( 2, 3, s2D_00_M10_P10, stride1, "PROLONG_00_M10_P10");
   ops_stencil S2D_RESTRICT_00_M10_P10 = ops_decl_restrict_stencil( 2, 3, s2D_00_M10_P10, stride1, "RESTRICT_00_M10_P10");
+#define ZEROBASE
 #ifdef ZEROBASE
   int base[2] = {0,0};
 #else
@@ -103,6 +104,39 @@ int main(int argc, char **argv)
   ops_dat data3 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3 , temp, "double", "data3");
 
 
+  ops_halo_group halos[3];
+  {
+    int halo_iter[] = {2, size4[1]+4};
+    int from_base[] = {0,-2};
+    int to_base[] = {size4[0],-2};
+    int dir[] = {1,2};
+    ops_halo halo1 = ops_decl_halo(data5, data5, halo_iter, from_base, to_base, dir, dir);
+    from_base[0] = size4[0]-2;
+    to_base[0] = -2;
+    ops_halo halo2 = ops_decl_halo(data5, data5, halo_iter, from_base, to_base, dir, dir);
+    ops_halo halog1[] = {halo1,halo2};
+    halos[0] = ops_decl_halo_group(2,halog1);
+
+    halo_iter[1] = size0[1]+4;
+    from_base[0] = 0;
+    to_base[0] = size0[1];
+    ops_halo halo3 = ops_decl_halo(data0, data0, halo_iter, from_base, to_base, dir, dir);
+    from_base[0] = size0[0]-2;
+    to_base[0] = -2;
+    ops_halo halo4 = ops_decl_halo(data0, data0, halo_iter, from_base, to_base, dir, dir);
+    ops_halo halog2[] = {halo3,halo4};
+    halos[1] = ops_decl_halo_group(2,halog2);
+
+    halo_iter[1] = size1[1]+4;
+    from_base[0] = 0;
+    to_base[0] = size1[1];
+    ops_halo halo5 = ops_decl_halo(data1, data1, halo_iter, from_base, to_base, dir, dir);
+    from_base[0] = size1[0]-2;
+    to_base[0] = -2;
+    ops_halo halo6 = ops_decl_halo(data1, data1, halo_iter, from_base, to_base, dir, dir);
+    ops_halo halog3[] = {halo5,halo6};
+    halos[2] = ops_decl_halo_group(2,halog3);
+  }
   ops_partition("");
 
 
@@ -124,7 +158,7 @@ int main(int argc, char **argv)
   ops_par_loop_mgrid_populate_kernel_1("mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-
+  ops_halo_transfer(halos[2]);
   ops_print_dat_to_txtfile(data1, "data.txt");
 
 
@@ -132,11 +166,13 @@ int main(int argc, char **argv)
                ops_arg_dat(data1, 1, S2D_PROLONG_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
+  ops_halo_transfer(halos[1]);
 
   ops_par_loop_mgrid_prolong_kernel("mgrid_prolong_kernel", grid0, 2, iter_range_large,
                ops_arg_dat(data0, 1, S2D_PROLONG_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
+  ops_halo_transfer(halos[0]);
 
   ops_print_dat_to_txtfile(data0, "data.txt");
   ops_print_dat_to_txtfile(data5, "data.txt");
