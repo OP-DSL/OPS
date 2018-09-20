@@ -104,7 +104,13 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     if NDIM == 3:
       for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_X') > 0:
+        if str(stens[n]).find('STRID3D_XY') > 0:
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[NDIM*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID3D_X') > 0:
           stride[NDIM*n+1] = 0
           stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Y') > 0:
@@ -112,12 +118,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
           stride[NDIM*n+1] = 0
 
     reduct = 0

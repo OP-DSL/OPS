@@ -85,9 +85,9 @@ void calc_c_wrapper(
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
         calc(  p_a0 + n_x*1*1 + n_y*xdim0_calc*1*1 + n_z*xdim0_calc*ydim0_calc*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_calc*0*1 + n_z*xdim1_calc*ydim1_calc*0*1,
-           p_a2 + n_x*0*1 + n_y*xdim2_calc*1*1 + n_z*xdim2_calc*ydim2_calc*0*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_calc*0*1 + n_z*xdim3_calc*ydim3_calc*0*1,
+           p_a1 + n_x*1*1 + n_y*xdim1_calc*1*1 + n_z*xdim1_calc*ydim1_calc*0*1,
+           p_a2 + n_x*0*1 + n_y*xdim2_calc*1*1 + n_z*xdim2_calc*ydim2_calc*1*1,
+           p_a3 + n_x*1*1 + n_y*xdim3_calc*0*1 + n_z*xdim3_calc*ydim3_calc*1*1,
            p_a4 + n_x*1*1 + n_y*xdim4_calc*0*1 + n_z*xdim4_calc*ydim4_calc*0*1,
            p_a5 + n_x*0*1 + n_y*xdim5_calc*1*1 + n_z*xdim5_calc*ydim5_calc*0*1,
            p_a6 + n_x*0*1 + n_y*xdim6_calc*0*1 + n_z*xdim6_calc*ydim6_calc*1*1 );

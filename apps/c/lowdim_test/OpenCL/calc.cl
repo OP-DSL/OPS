@@ -100,9 +100,9 @@ const int size2 ){
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     calc(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc + idx_z * 1*1 * xdim0_calc * ydim0_calc],
-              &arg1[base1 + idx_x * 1*1 + idx_y * 0*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc],
-              &arg2[base2 + idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 0*1 * xdim2_calc * ydim2_calc],
-              &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 0*1 * xdim3_calc * ydim3_calc],
+              &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc],
+              &arg2[base2 + idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 1*1 * xdim2_calc * ydim2_calc],
+              &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 1*1 * xdim3_calc * ydim3_calc],
               &arg4[base4 + idx_x * 1*1 + idx_y * 0*1 * xdim4_calc + idx_z * 0*1 * xdim4_calc * ydim4_calc],
               &arg5[base5 + idx_x * 0*1 + idx_y * 1*1 * xdim5_calc + idx_z * 0*1 * xdim5_calc * ydim5_calc],
               &arg6[base6 + idx_x * 0*1 + idx_y * 0*1 * xdim6_calc + idx_z * 1*1 * xdim6_calc * ydim6_calc]);

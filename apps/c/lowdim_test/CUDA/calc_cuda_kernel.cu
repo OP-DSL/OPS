@@ -90,9 +90,9 @@ int size2 ){
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
   arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_calc + idx_z * 1*1 * xdim0_calc * ydim0_calc;
-  arg1 += idx_x * 1*1 + idx_y * 0*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc;
-  arg2 += idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 0*1 * xdim2_calc * ydim2_calc;
-  arg3 += idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 0*1 * xdim3_calc * ydim3_calc;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc;
+  arg2 += idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 1*1 * xdim2_calc * ydim2_calc;
+  arg3 += idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 1*1 * xdim3_calc * ydim3_calc;
   arg4 += idx_x * 1*1 + idx_y * 0*1 * xdim4_calc + idx_z * 0*1 * xdim4_calc * ydim4_calc;
   arg5 += idx_x * 0*1 + idx_y * 1*1 * xdim5_calc + idx_z * 0*1 * xdim5_calc * ydim5_calc;
   arg6 += idx_x * 0*1 + idx_y * 0*1 * xdim6_calc + idx_z * 1*1 * xdim6_calc * ydim6_calc;
