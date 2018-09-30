@@ -2,8 +2,8 @@ CC    := icc
 CXX     := icpc
 FC		:= ifort
 ifdef DEBUG
-	CCFLAGS   := -O0 -g -std=c99
-	CXXFLAGS   := -O0 -g
+	CCFLAGS   := -O0 -g -std=c99 -xHost
+	CXXFLAGS   := -O0 -g -xHost
 else
 	CCFLAGS   := -O3 -g -xHost -std=c99 #-qopenmp #vec-report -xAVX
 	CXXFLAGS   := -O3 -g -xHost #-qopenmp #vec-report -xAVX

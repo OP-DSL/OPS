@@ -450,6 +450,9 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
     code('')
 
     if arg_idx:
+      code('#ifdef OPS_MPI')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      code('#endif')
       code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):

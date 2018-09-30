@@ -491,6 +491,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
+    code('#ifdef OPS_MPI')
+    code('ops_block block = desc->block;')
+    code('#endif')
 
     for n in range (0, nargs):
       code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
@@ -529,18 +532,22 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
 
-    code('#if OPS_MPI && !OPS_LAZY')
-    code('sub_block_list sb = OPS_sub_block_list[block->index];')
-    code('#endif //OPS_MPI')
-
     code('')
     code('int arg_idx['+str(NDIM)+'];')
     code('int arg_idx_base['+str(NDIM)+'];')
 
 
     code('#ifdef OPS_MPI')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
+    code('#ifdef OPS_LAZY')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    code('arg_idx[n] = sb->decomp_disp[n]+start[n];')
+    ENDFOR()
+    code('#else')
     code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
-    code('#else //OPS_MPI')
+    code('#endif')
+    code('#else')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
     code('arg_idx[n] = start[n];')
@@ -598,10 +605,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #setup reduction variables
     code('')
     if reduct and not arg_idx:
-      code('#ifdef OPS_LAZY')
-      code('ops_block block = desc->block;')
-      code('#endif')
-    for n in range (0, nargs):
+      for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
             code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')

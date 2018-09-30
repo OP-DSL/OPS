@@ -53,6 +53,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block,
 void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   int dim = desc->dim;
   int *range = desc->range;
+#ifdef OPS_MPI
+  ops_block block = desc->block;
+#endif
   ops_arg arg0 = desc->args[0];
   ops_arg arg1 = desc->args[1];
 #endif
@@ -76,39 +79,31 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   // compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-#if OPS_MPI && !OPS_LAZY
+
+  int arg_idx[2];
+  int arg_idx_base[2];
+#ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
+#ifdef OPS_LAZY
   for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = sb->decomp_disp[n] + start[n];
   }
+#else
+  if (compute_ranges(args, 2, block, range, start, end, arg_idx) < 0)
+    return;
+#endif
 #else
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
@@ -120,9 +115,6 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
     ydim0_multidim_reduce_kernel_h = ydim0;
   }
 
-#ifdef OPS_LAZY
-  ops_block block = desc->block;
-#endif
 #ifdef OPS_MPI
   double *arg1h =
       (double *)(((ops_reduction)args[1].data)->data +
@@ -130,6 +122,9 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
 #else
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
@@ -184,8 +179,9 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   nshared = MAX(nshared * nthread, reduct_size * nthread);
 
   // call kernel wrapper function, passing in pointers to data
-  ops_multidim_reduce_kernel<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)arg1.data_d, x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_multidim_reduce_kernel<<<grid, tblock, nshared>>>(
+        (double *)p_a[0], (double *)arg1.data_d, x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
