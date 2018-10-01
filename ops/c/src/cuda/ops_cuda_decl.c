@@ -49,8 +49,8 @@ int ops_halo_buffer_size = 0;
 void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y should be less than 1024 "
+  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
+    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
            "-- error OPS_block_size_*\n");
     exit(-1);
   }
@@ -296,3 +296,4 @@ void ops_halo_transfer(ops_halo_group group) {
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_block_size_z; }

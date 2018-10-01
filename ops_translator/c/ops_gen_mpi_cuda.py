@@ -632,10 +632,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if NDIM==2:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
     if NDIM==3:
-      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);')
+      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);')
 
     if NDIM>1:
-      code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);')
+      code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);')
     else:
       code('dim3 tblock(OPS_block_size_x,1,1);')
 
@@ -670,7 +670,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*((z_size-1)/OPS_block_size_z +1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('int reduct_size = 0;')
@@ -800,7 +800,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
        code('int nshared = 0;')
-       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
