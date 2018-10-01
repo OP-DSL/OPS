@@ -51,8 +51,8 @@ extern char *ops_buffer_recv_2;
 void ops_init_cuda(int argc, char **argv, int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y should be less than 1024 "
+  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
+    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
            "-- error OPS_block_size_*\n");
     exit(-1);
   }
@@ -188,3 +188,4 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_block_size_z; }
