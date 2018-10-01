@@ -81,11 +81,14 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
 #pragma simd reduction(+ : p_a2_0)
 #endif
     for (int n_x = start[0]; n_x < end[0]; n_x++) {
-      double *err = &p_a2_0;
+      double err[1];
+      err[0] = ZERO_double;
 
       *err = *err +
              (u[OPS_ACC0(0, 0)] - ref[OPS_ACC1(0, 0)]) *
                  (u[OPS_ACC0(0, 0)] - ref[OPS_ACC1(0, 0)]);
+
+      p_a2_0 += err[0];
     }
   }
   p_a2[0] = p_a2_0;

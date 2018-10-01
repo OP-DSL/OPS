@@ -5,27 +5,22 @@
 
 int xdim0_initialise_chunk_kernel_yy;
 
+#define OPS_ACC0(x, y)                                                         \
+  (n_x * 0 + n_y * xdim0_initialise_chunk_kernel_yy * 1 + x +                  \
+   xdim0_initialise_chunk_kernel_yy * (y))
 
-#define OPS_ACC0(x,y) (n_x*0+n_y*xdim0_initialise_chunk_kernel_yy*1+x+xdim0_initialise_chunk_kernel_yy*(y))
+// user function
 
-//user function
+void initialise_chunk_kernel_yy_c_wrapper(int *restrict yy, int *restrict idx,
+                                          int arg_idx0, int arg_idx1,
+                                          int x_size, int y_size) {
+#pragma omp parallel for
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      int idx[] = {arg_idx0 + n_x, arg_idx1 + n_y};
 
-
-
-void initialise_chunk_kernel_yy_c_wrapper(
-  int * restrict yy,
-  int * restrict idx,
-  int arg_idx0, int arg_idx1,
-  int x_size, int y_size) {
-  #pragma omp parallel for
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      int idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      
-  yy[OPS_ACC0(0,0)] = idx[1]-2;
-
+      yy[OPS_ACC0(0, 0)] = idx[1] - 2;
     }
   }
 }
 #undef OPS_ACC0
-

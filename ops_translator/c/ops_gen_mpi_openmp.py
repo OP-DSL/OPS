@@ -296,7 +296,7 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
     code('')
 
     code('#ifdef OPS_MPI')
-    code('if (compute_ranges(args, '+str(NDIM)+',block, range, start, end, arg_idx) < 0) return;')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
     code('#else')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')

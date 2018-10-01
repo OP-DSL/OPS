@@ -52,59 +52,27 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
   int end[2];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[2];
+  int arg_idx_base[2];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 6, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-
-  int arg_idx[2];
-#ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0] + start[0];
-  arg_idx[1] = sb->decomp_disp[1] + start[1];
-#else
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-#endif
-
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  if (xdim3 != xdim3_poisson_kernel_populate_h ||
-      xdim4 != xdim4_poisson_kernel_populate_h ||
-      xdim5 != xdim5_poisson_kernel_populate_h) {
-    xdim3_poisson_kernel_populate = xdim3;
-    xdim3_poisson_kernel_populate_h = xdim3;
-    xdim4_poisson_kernel_populate = xdim4;
-    xdim4_poisson_kernel_populate_h = xdim4;
-    xdim5_poisson_kernel_populate = xdim5;
-    xdim5_poisson_kernel_populate_h = xdim5;
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat3 = args[3].dat->elem_size;
+  int dat4 = args[4].dat->elem_size;
+  int dat5 = args[5].dat->elem_size;
 
   // set up initial pointers
   int *p_a0 = (int *)args[0].data;
@@ -146,6 +114,26 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
 #else
   double *p_a5 = (double *)((char *)args[5].data + base5);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+
+  // initialize global variable with the dimension of dats
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  if (xdim3 != xdim3_poisson_kernel_populate_h ||
+      xdim4 != xdim4_poisson_kernel_populate_h ||
+      xdim5 != xdim5_poisson_kernel_populate_h) {
+    xdim3_poisson_kernel_populate = xdim3;
+    xdim3_poisson_kernel_populate_h = xdim3;
+    xdim4_poisson_kernel_populate = xdim4;
+    xdim4_poisson_kernel_populate_h = xdim4;
+    xdim5_poisson_kernel_populate = xdim5;
+    xdim5_poisson_kernel_populate_h = xdim5;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 6);

@@ -533,13 +533,17 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('int end['+str(NDIM)+'];')
 
     code('')
+    if not arg_idx:
+      code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    code('int arg_idx_base['+str(NDIM)+'];')
+    if not arg_idx:
+      code('#endif')
+
 
 
     code('#ifdef OPS_MPI')
-    code('sub_block_list sb = OPS_sub_block_list[block->index];')
     code('#ifdef OPS_LAZY')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
     code('arg_idx[n] = sb->decomp_disp[n]+start[n];')
@@ -550,12 +554,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#else')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    code('arg_idx[n] = start[n];')
+    if arg_idx:
+      code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
-    FOR('n','0',str(NDIM))
-    code('arg_idx_base[n] = arg_idx[n];')
-    ENDFOR()
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
@@ -604,17 +606,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     #setup reduction variables
     code('')
-    if reduct and not arg_idx:
-      for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
-          if (accs[n] == OPS_READ):
-            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
-          else:
-            code('#ifdef OPS_MPI')
-            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
-            code('#else')
-            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
-            code('#endif')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+        if (accs[n] == OPS_READ):
+          code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+        else:
+          code('#ifdef OPS_MPI')
+          code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+          code('#else')
+          code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+          code('#endif')
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
