@@ -537,8 +537,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#endif //OPS_MPI')
 
     code('')
+    if not arg_idx:
+      code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    code('int arg_idx_base['+str(NDIM)+'];')
+    if not arg_idx:
+      code('#endif')
+
 
 
     code('#ifdef OPS_MPI')
@@ -546,12 +550,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    code('arg_idx[n] = start[n];')
+    if arg_idx:
+      code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
-    FOR('n','0',str(NDIM))
-    code('arg_idx_base[n] = arg_idx[n];')
-    ENDFOR()
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
