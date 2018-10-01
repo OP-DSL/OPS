@@ -145,11 +145,11 @@ endif
 all: clean $(TARGETS)
 
 adi_dev_seq: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp -lops_seq $(TRID_LIB) -ltridcpu $(HDF5_LIB) -o adi_dev_seq
+	$(MPICPP) $(CPPFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp -lops_seq -lops_trid_seq $(TRID_LIB) -ltridcpu $(HDF5_LIB) -o adi_dev_seq
 
 
 adi_dev_mpi: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp $(TRID_LIB) -ltridcpu -lops_mpi $(HDF5_LIB) -o adi_dev_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp $(TRID_LIB) -ltridcpu -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_dev_mpi
 
 #
 # mpi version
@@ -158,7 +158,7 @@ adi_dev_mpi: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)
 SEQ_KERNELS = adi_seq_kernels.cpp
 
 adi_mpi: Makefile adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_mpi $(HDF5_LIB) -o adi_mpi
+	$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi
 
 #
 # OpenMP version
@@ -166,24 +166,24 @@ adi_mpi: Makefile adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)
 OMP_KERNELS = adi_omp_kernels.cpp
 
 adi_mpi_openmp: Makefile adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi $(HDF5_LIB) -o adi_mpi_openmp
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi_openmp
 
 adi_openmp: Makefile adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq $(TRID_LIB) -ltridcpu $(INTEL_LIB) \
+	$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -lops_trid_seq $(TRID_LIB) -ltridcpu $(INTEL_LIB) \
  $(HDF5_LIB) -o adi_openmp
 
 #
 # Sequential version
 #
 adi_seq: Makefile adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq $(TRID_LIB) -ltridcpu  $(HDF5_LIB) -o adi_seq
+	$(MPICPP) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -lops_trid_seq $(TRID_LIB) -ltridcpu  $(HDF5_LIB) -o adi_seq
 
 #
 # CUDA version
 #
 
 adi_cuda: Makefile ./CUDA/adi_kernels_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_cuda.a
-	$(MPICPP) $(MPIFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lops_cuda $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
+	$(MPICPP) $(MPIFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lops_cuda -lops_trid_cuda $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
 
 adi_mpi_cuda: Makefile ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi_cuda.a
 	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lcudart -lops_mpi_cuda $(HDF5_LIB) -o adi_mpi_cuda
