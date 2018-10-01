@@ -690,7 +690,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       int range[2*OPS_MAX_DIM];
       for (int d2 = 0; d2 < dat_ndim; d2++) {
-        if (args[i].stencil->type ==2) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
           range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
           range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
         } else {
@@ -779,7 +782,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       int range[2*OPS_MAX_DIM];
       for (int d2 = 0; d2 < dat_ndim; d2++) {
-        if (args[i].stencil->type ==2) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
           range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
           range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
         } else {
