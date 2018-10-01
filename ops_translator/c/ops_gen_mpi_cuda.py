@@ -173,16 +173,22 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('__constant__ int xdim'+str(n)+'_'+name+';')
-        code('int xdim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('__constant__ int ydim'+str(n)+'_'+name+';')
-          code('int ydim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('__constant__ int zdim'+str(n)+'_'+name+';')
-          code('int zdim'+str(n)+'_'+name+'_h = -1;')
+
+#    for n in range (0, nargs):
+#      if arg_typ[n] == 'ops_arg_dat':
+#        code('__constant__ int xdim'+str(n)+'_'+name+';')
+#        code('int xdim'+str(n)+'_'+name+'_h = -1;')
+#        if NDIM>2 or (NDIM==2 and soa_set):
+#          code('__constant__ int ydim'+str(n)+'_'+name+';')
+#          code('int ydim'+str(n)+'_'+name+'_h = -1;')
+#        if NDIM>3 or (NDIM==3 and soa_set):
+#          code('__constant__ int zdim'+str(n)+'_'+name+';')
+#          code('int zdim'+str(n)+'_'+name+'_h = -1;')
+    num_dims = max(1, NDIM -1)
+    if NDIM > 1 and soa_set:
+        nim_dims += 1;
+    code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
+    code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
     code('')
 
     for n in range (0, nargs):
@@ -203,9 +209,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           if NDIM==1:
             code('#define OPS_ACC'+str(n)+'(x) (x)')
           if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+dims_'+name+'['+str(n)+'][0]'+'*(y))')
           if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+dims_'+name+'['+str(n)+'][0]'+'*(y)+dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))')
     code('')
 
     for n in range (0, nargs):
@@ -213,19 +219,19 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         if int(dims[n]) > 1:
           if NDIM==1:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*dims_'+name+'['+str(n)+'][0]'+')')
             else:
               code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+'))')
           if NDIM==3:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*dims_'+name+'['+str(n)+'][2]'+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+')+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z)*'+dims[n]+'))')
 
 ##########################################################################
 #  generate header
@@ -399,14 +405,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
         elif NDIM == 2:
           if soa_set:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * dims_'+name+'['+str(n)+'][0]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+';')
         elif NDIM==3:
           if soa_set:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* xdim'+str(n)+'_'+name+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
 
     code('')
     n_per_line = 5
@@ -582,24 +588,32 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
+        condition = condition + 'xdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][0] || '
         if NDIM>2 or (NDIM==2 and soa_set):
-          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+          condition = condition + 'ydim'+str(n)+' != dims_'+name+'_h['+str(n)+'][1] || '
         if NDIM>3 or (NDIM==3 and soa_set):
-          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
+          condition = condition + 'zdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][2] || '
     condition = condition[:-4]
     IF(condition)
 
+#    for n in range (0, nargs):
+#      if arg_typ[n] == 'ops_arg_dat':
+#        code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][0]'+', &xdim'+str(n)+', sizeof(int) );')
+#        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
+#        if NDIM>2 or (NDIM==2 and soa_set):
+#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][1]'+', &ydim'+str(n)+', sizeof(int) );')
+#          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
+#        if NDIM>3 or (NDIM==3 and soa_set):
+#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][2]'+', &zdim'+str(n)+', sizeof(int) );')
+#          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
-        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
+        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('cudaMemcpyToSymbol( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
-          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
+          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('cudaMemcpyToSymbol( zdim'+str(n)+'_'+name+', &zdim'+str(n)+', sizeof(int) );')
-          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
+          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
+    code('cutilSafeCall(cudaMemcpyToSymbol( dims_'+name+', dims_'+name+'_h, sizeof(dims_'+name+')));')
     ENDIF()
 
     code('')
