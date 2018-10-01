@@ -427,40 +427,38 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN and int(dims[n])>1:
+        if accs[n] == OPS_MIN:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need +INFINITY_ change to
-        if accs[n] == OPS_MAX and int(dims[n])>1:
+        if accs[n] == OPS_MAX:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need -INFINITY_ change to
-        if accs[n] == OPS_INC and int(dims[n])>1:
+        if accs[n] == OPS_INC:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
-        if accs[n] == OPS_WRITE and int(dims[n])>1: #this may not be correct
+        if accs[n] == OPS_WRITE: #this may not be correct
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
-        if accs[n] != OPS_READ and int(dims[n])==1:
-          code(typs[n]+' *'+arg_list[n]+' = &p_a'+str(n)+'_0;')
 
     #insert user kernel
     code(kernel_text);
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN and int(dims[n])>1:
+        if accs[n] == OPS_MIN:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' = MIN(p_a'+str(n)+'_'+str(d)+','+arg_list[n]+'['+str(d)+']);')
-        if accs[n] == OPS_MAX and int(dims[n])>1:
+        if accs[n] == OPS_MAX:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' = MAX(p_a'+str(n)+'_'+str(d)+''+arg_list[n]+'['+str(d)+']);')
-        if accs[n] == OPS_INC and int(dims[n])>1:
+        if accs[n] == OPS_INC:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
-        if accs[n] == OPS_WRITE and int(dims[n])>1: #this may not be correct
+        if accs[n] == OPS_WRITE: #this may not be correct
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
 
