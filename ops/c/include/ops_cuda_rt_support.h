@@ -68,6 +68,7 @@ extern void __syncthreads();
 
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
+extern int OPS_block_size_z;
 
 /*
 * personal stripped-down version of cutil_inline.h
