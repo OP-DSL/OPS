@@ -56,17 +56,17 @@ __inline__ __device__ void ops_reduction_cuda(volatile T *dat_g, T dat_l) {
 
   __syncthreads(); /* important to finish all previous activity */
 
-  int tid = threadIdx.x + threadIdx.y * blockDim.x;
+  int tid = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
   temp[tid] = dat_l;
 
   // first, cope with blockDim.x perhaps not being a power of 2
 
   __syncthreads();
 
-  int d = 1 << (31 - __clz(((int)(blockDim.x * blockDim.y) - 1)));
+  int d = 1 << (31 - __clz(((int)(blockDim.x * blockDim.y * blockDim.z) - 1)));
   // d = blockDim.x/2 rounded up to nearest power of 2
 
-  if (tid + d < blockDim.x * blockDim.y) {
+  if (tid + d < blockDim.x * blockDim.y * blockDim.z) {
     dat_t = temp[tid + d];
 
     switch (reduction) {
@@ -172,7 +172,7 @@ __inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
 
   __syncthreads(); /* important to finish all previous activity */
 
-  int tid = threadIdx.x + threadIdx.y * blockDim.x;
+  int tid = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
   temp[tid] = dat_l;
 
   __syncthreads();
@@ -181,15 +181,15 @@ __inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
 
   int d = warpSize;
 
-  if (blockDim.x < warpSize)
-    d = 1 << (31 - __clz((int)blockDim.x));
+  if (blockDim.x*blockDim.y*blockDim.z < warpSize)
+    d = 1 << (31 - __clz((int)(blockDim.x * blockDim.y * blockDim.z)));
   // this gives blockDim.x rounded down to nearest power of 2
 
   if (tid < d) {
 
     // first, do reductions for each thread
 
-    for (int t = tid + d; t < blockDim.x * blockDim.y; t += d) {
+    for (int t = tid + d; t < blockDim.x * blockDim.y * blockDim.z; t += d) {
       dat_t = temp[t];
 
       switch (reduction) {
