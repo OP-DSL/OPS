@@ -798,10 +798,10 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, ((z_size-1)/OPS_block_size_z+ 1)*OPS_block_size_z};')
 
     if NDIM>1:
-      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};')
     else:
       code('size_t localWorkSize[3] =  {OPS_block_size_x,1,1};')
     code('')
@@ -850,7 +850,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*((z_size-1)/OPS_block_size_z + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('')
@@ -955,7 +955,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
        code('')
 
 

@@ -83,6 +83,7 @@ extern char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
+extern int OPS_block_size_z;
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
 
