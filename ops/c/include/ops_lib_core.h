@@ -74,6 +74,15 @@
  */
 #define OPS_MAX_DIM 5
 
+/**
+ * maximum number of simulataneous OPS instances 
+ * in a shared memory environment
+ */
+#ifndef OPS_MAX_INSTANCES
+#define OPS_MAX_INSTANCES 64
+#endif 
+
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include "ops_macros.h"
@@ -334,32 +343,6 @@ typedef struct ops_kernel_descriptor {
 #define ROUND_UP(bytes) (((bytes) + 15) & ~15)
 #define ROUND_UP_64(bytes) (((bytes) + 63) & ~63)
 
-/*******************************************************************************
-* Global constants
-*******************************************************************************/
-
-extern int OPS_hybrid_gpu, OPS_gpu_direct;
-extern int OPS_kern_max, OPS_kern_curr;
-extern ops_kernel *OPS_kernels;
-extern int OPS_soa;
-
-extern int ops_current_kernel;
-
-extern int OPS_diags;
-
-extern int OPS_block_index, OPS_block_max, OPS_dat_index, OPS_dat_max,
-    OPS_halo_group_index, OPS_halo_group_max, OPS_halo_index, OPS_halo_max,
-    OPS_reduction_index, OPS_reduction_max, OPS_stencil_index;
-extern ops_reduction *OPS_reduction_list;
-
-extern ops_block_descriptor *OPS_block_list;
-extern ops_stencil *OPS_stencil_list;
-extern ops_halo *OPS_halo_list;
-extern ops_halo_group *OPS_halo_group_list;
-extern Double_linked_list OPS_dat_list; // Head of the double linked list
-extern ops_arg *OPS_curr_args;
-extern int OPS_enable_checkpointing;
-extern double OPS_checkpointing_time;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -889,14 +872,18 @@ void* ops_realloc (void *ptr, size_t size);
 void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 #ifdef __cplusplus
 }
 #endif
 
+class OPS_instance;
+extern OPS_instance *ops_instances[];
+
 #include "ops_checkpointing.h"
 #include "ops_hdf5.h"
 #include "ops_tridiag.h"
+#include "ops_instance.h"
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_LIB_CORE_H */

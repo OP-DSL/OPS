@@ -28,9 +28,9 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,0)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(0,"multidim_kernel");
-    OPS_kernels[0].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -52,9 +52,10 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
   #endif
 
   #ifdef OPS_MPI
-  arg_idx[0] -= start[0];
-  arg_idx[1] -= start[1];
-  #else
+  sub_dat_list sd = OPS_sub_dat_list[args[0].dat->index];
+  arg_idx[0] = MAX(0,sd->decomp_disp[0]);
+  arg_idx[1] = MAX(0,sd->decomp_disp[1]);
+  #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
   #endif //OPS_MPI
@@ -77,13 +78,14 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[0].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    int idx[] = {0, arg_idx[1]+n_y};
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
     #pragma omp simd
@@ -96,7 +98,7 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      int idx[] = {arg_idx[0] + n_x, arg_idx[1] + n_y};
+      idx[0] = arg_idx[0]+n_x;
       #ifdef OPS_SOA
       ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + n_x*1 + n_y * xdim0_multidim_kernel*1);
       #else
@@ -110,22 +112,23 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
 
     }
   }
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[0].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[0].mpi_time += __t1-__t2;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
+#undef OPS_ACC_MD0
 
 
 #ifdef OPS_LAZY
@@ -150,7 +153,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_multidim_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(0,"multidim_kernel");
   }
   ops_enqueue_kernel(desc);

@@ -42,10 +42,12 @@
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
-  if (OPS_soa) {
+  if (OPS_instance::getOPSInstance()->OPS_soa) {
     const char *__restrict src = dat->data + src_offset * dat->type_size;
+  #ifdef _OPENMP
   #pragma omp parallel for collapse(3) shared(src,dest)
-    for (unsigned int i = 0; i < halo->count; i++) {
+  #endif
+    for (int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
         for (int v = 0; v < halo->blocklength/dat->type_size; v++)
           memcpy(dest+i*halo->blocklength*dat->dim+ v*dat->type_size*dat->dim + d*dat->type_size,
@@ -53,8 +55,10 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     }
   } else {
     const char *__restrict src = dat->data + src_offset * dat->elem_size;
+  #ifdef _OPENMP
   #pragma omp parallel for shared(src,dest)
-    for (unsigned int i = 0; i < halo->count; i++) {
+  #endif
+    for (int i = 0; i < halo->count; i++) {
       memcpy(dest+i*halo->blocklength*dat->dim, src+i*halo->stride*dat->dim, halo->blocklength*dat->dim);
       
     }
@@ -63,10 +67,12 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo) {
-  if (OPS_soa) {
+  if (OPS_instance::getOPSInstance()->OPS_soa) {
   char *__restrict dest = dat->data + dest_offset * dat->type_size;
+  #ifdef _OPENMP
   #pragma omp parallel for collapse(3) shared(src,dest)
-    for (unsigned int i = 0; i < halo->count; i++) {
+#endif
+    for (int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
         for (int v = 0; v < halo->blocklength/dat->type_size; v++)
           memcpy(dest+i*halo->stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
@@ -74,14 +80,16 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     }
   } else {
     char *__restrict dest = dat->data + dest_offset * dat->elem_size;
+  #ifdef _OPENMP
   #pragma omp parallel for shared(src,dest)
-    for (unsigned int i = 0; i < halo->count; i++) {
+  #endif
+    for (int i = 0; i < halo->count; i++) {
       memcpy(dest+i*halo->stride*dat->dim, src+i*halo->blocklength*dat->dim, halo->blocklength*dat->dim);
     }
   }
 }
 
-char *ops_realloc_fast(char *ptr, size_t olds, size_t news) {
+char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
 }
 
@@ -110,7 +118,10 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
                          int buf_strides_y, int buf_strides_z) {
+  int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+#ifdef _OPENMP
 #pragma omp parallel for collapse(3)
+#endif
   for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
       for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
@@ -136,7 +147,10 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
                            int buf_strides_z) {
+  int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+#ifdef _OPENMP
 #pragma omp parallel for collapse(3)
+#endif
   for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
       for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {

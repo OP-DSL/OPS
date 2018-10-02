@@ -4,7 +4,8 @@
 //header
 #define OPS_2D
 #define OPS_SOA
-#define OPS_API 2
+#define OPS_ACC_MACROS
+#define OPS_ACC_MD_MACROS
 #include "ops_lib_cpp.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"

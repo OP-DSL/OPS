@@ -44,33 +44,33 @@
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
-
-char *ops_halo_buffer = NULL;
-cl_mem ops_halo_buffer_d = NULL;
-int ops_halo_buffer_size = 0;
-
-extern ops_opencl_core OPS_opencl_core;
+#include <ops_exceptions.h>
 
 void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
-           "-- error OPS_block_size_*\n");
-    exit(-1);
+  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   for (int n = 1; n < argc; n++) {
     if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
-      OPS_cl_device = atoi(argv[n] + 14);
-      printf("\n OPS_cl_device = %d \n", OPS_cl_device);
+      OPS_instance::getOPSInstance()->OPS_cl_device = atoi(argv[n] + 14);
+      printf("\n OPS_cl_device = %d \n", OPS_instance::getOPSInstance()->OPS_cl_device);
     }
   }
+
+  OPS_instance::getOPSInstance()->opencl_instance = new OPS_instance_opencl();
+  OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel = NULL;
+  OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = NULL;
+  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_tobuf_kernel = false;
+  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_frombuf_kernel = false;
 
   openclDeviceInit(argc, argv);
 }
 
 void ops_exit() {
   ops_opencl_exit(); // frees dat_d memory
+  delete OPS_instance::getOPSInstance()->opencl_instance;
   ops_exit_core();   // frees lib core variables
 }
 
@@ -91,6 +91,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
      dat->user_managed = 1; // will be reset to 0 if called from ops_decl_dat_hdf5()
      dat->is_hdf5 = 0;
      dat->hdf5_file = "none"; // will be set to an hdf5 file if called from ops_decl_dat_hdf5()
+     dat->mem = bytes;
   }
   else {
     //Allocate memory immediately
@@ -104,7 +105,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
   long cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        (OPS_soa ? dat->type_size : dat->elem_size)
+        (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
@@ -171,14 +172,14 @@ void ops_halo_transfer(ops_halo_group group) {
     int size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
-    if (size > ops_halo_buffer_size) {
-      if (ops_halo_buffer_d != NULL)
-        clSafeCall(clReleaseMemObject(ops_halo_buffer_d));
-      ops_halo_buffer_d = clCreateBuffer(OPS_opencl_core.context,
+    if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
+      if (OPS_instance::getOPSInstance()->ops_halo_buffer_d != NULL)
+        clSafeCall(clReleaseMemObject((cl_mem)OPS_instance::getOPSInstance()->ops_halo_buffer_d));
+      OPS_instance::getOPSInstance()->ops_halo_buffer_d = (char*)clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context,
                                          CL_MEM_READ_WRITE, size, NULL, &ret);
-      clSafeCall(clFinish(OPS_opencl_core.command_queue));
+      clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
       clSafeCall(ret);
-      ops_halo_buffer_size = size;
+      OPS_instance::getOPSInstance()->ops_halo_buffer_size = size;
     }
 
     // copy to linear buffer from source
@@ -210,7 +211,7 @@ void ops_halo_transfer(ops_halo_group group) {
     step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i
     += step[0]) {
-          ops_cuda_halo_copy(ops_halo_buffer_d +
+          ops_cuda_halo_copy(OPS_instance::getOPSInstance()->ops_halo_buffer_d +
     ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1]
     + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
                  halo->from->data_d +
@@ -220,13 +221,13 @@ void ops_halo_transfer(ops_halo_group group) {
       }
     }*/
 
-    ops_halo_copy_tobuf((char *)ops_halo_buffer_d, 0, halo->from, ranges[0],
+    ops_halo_copy_tobuf((char *)OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, halo->from, ranges[0],
                         ranges[1], ranges[2], ranges[3], ranges[4], ranges[5],
                         step[0], step[1], step[2], buf_strides[0],
                         buf_strides[1], buf_strides[2]);
 
     // cutilSafeCall ( cudaDeviceSynchronize ( ) );
-    clSafeCall(clFinish(OPS_opencl_core.command_queue));
+    clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
 
     // copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
@@ -255,7 +256,7 @@ void ops_halo_transfer(ops_halo_group group) {
     += step[0]) {
           ops_cuda_halo_copy(halo->to->data_d +
     (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-               ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
+               OPS_instance::getOPSInstance()->ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
     (j-ranges[2])*step[1]*buf_strides[1] +
     (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size,
     halo->to->elem_size);
@@ -263,18 +264,18 @@ void ops_halo_transfer(ops_halo_group group) {
       }
     }*/
 
-    ops_halo_copy_frombuf(halo->to, (char *)ops_halo_buffer_d, 0, ranges[0],
+    ops_halo_copy_frombuf(halo->to, (char *)OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, ranges[0],
                           ranges[1], ranges[2], ranges[3], ranges[4], ranges[5],
                           step[0], step[1], step[2], buf_strides[0],
                           buf_strides[1], buf_strides[2]);
 
     // cutilSafeCall ( cudaDeviceSynchronize ( ) );
-    clSafeCall(clFinish(OPS_opencl_core.command_queue));
+    clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
     halo->to->dirty_hd = 2;
   }
 }
 
 void ops_timers(double *cpu, double *et) {
-  clSafeCall(clFinish(OPS_opencl_core.command_queue));
+  clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
   ops_timers_core(cpu, et);
 }

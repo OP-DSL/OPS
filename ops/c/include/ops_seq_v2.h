@@ -175,7 +175,7 @@ template <typename T> struct param_handler<ACC<T>> {
 #else
       return (char *) ((arg.dat->data //TODO
 #endif
-      + address(ndim, OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
+      + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO
     } 
@@ -193,7 +193,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 #endif
 {
   if (arg.argtype == OPS_ARG_DAT) {
-    int offset = (OPS_soa ? 1 : arg.dat->dim) * offs[m];
+    int offset = (OPS_instance::getOPSInstance()->OPS_soa ? 1 : arg.dat->dim) * offs[m];
     //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
     ((ACC<T>*)p)->next(offset); // T must be ACC<type> we need to set to the next element
   } 
