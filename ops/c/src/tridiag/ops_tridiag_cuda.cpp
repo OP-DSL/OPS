@@ -61,7 +61,7 @@ void ops_tridMultiDimBatch_Inc(
 
   int opts[3] = {0,0,0}; // indicates different algorithms to use
   int sync = 0;
-  if (OPS_diags > 1)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1)
     sync = 1;
 
   tridDmtsvStridedBatchInc((const double *)a->data_d, (const double *)b->data_d,
@@ -88,7 +88,7 @@ void ops_tridMultiDimBatch(
   int opts[3] = {0,0,0}; // indicates different algorithms to use
 
   int sync = 0;
-  if (OPS_diags > 1)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1)
     sync = 1;
 
   tridDmtsvStridedBatch((const double *)a->data_d, (const double *)b->data_d,

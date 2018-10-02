@@ -10,7 +10,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #define OPS_2D
-#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,8 +45,7 @@
 
 //user function
 
-void multidim_copy_kernel(const ptrm_double src,
-  ptrm_double dest){
+void multidim_copy_kernel(const ptrm_double src, ptrm_double dest){
   OPS_ACCM(dest, 0,0,0) = OPS_ACCM(src, 0,0,0);
   OPS_ACCM(dest, 1,0,0) = OPS_ACCM(src, 1,0,0);
 }

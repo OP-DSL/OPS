@@ -10,7 +10,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #define OPS_2D
-#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,8 +45,7 @@
 
 //user function
 
-void multidim_kernel(ptrm_double val,
-  int *idx){
+void multidim_kernel(ptrm_double val, int *idx){
   OPS_ACCM(val, 0,0,0) = (double)(idx[0]);
   OPS_ACCM(val, 1,0,0) = (double)(idx[1]);
 

@@ -157,9 +157,29 @@ typedef struct {
   MPI_Status *statuses;
 } ops_mpi_halo_group;
 
-///
-/// MPI Communicator for halo creation and exchange
-///
+void ops_mpi_exit();
+
+/*******************************************************************************
+* External functions defined in ops_mpi_(cuda)_rt_support.c
+*******************************************************************************/
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo);
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo);
+char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
+
+/*******************************************************************************
+* Other External functions
+*******************************************************************************/
+
+
+#ifdef __cplusplus
+}
+#endif
+
+//
+// MPI Communicator for halo creation and exchange
+//
 
 extern MPI_Comm OPS_MPI_GLOBAL;
 extern int ops_comm_global_size;
@@ -173,24 +193,10 @@ extern sub_dat_list *OPS_sub_dat_list;
 extern ops_mpi_halo *OPS_mpi_halo_list;
 extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
 
-void ops_mpi_exit();
+  
+extern double ops_gather_time;
+extern double ops_scatter_time;
+extern double ops_sendrecv_time;
 
-/*******************************************************************************
-* External functions defined in ops_mpi_(cuda)_rt_support.c
-*******************************************************************************/
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
-              const ops_int_halo *__restrict halo);
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
-                const ops_int_halo *__restrict halo);
-char* ops_realloc_fast(char *ptr, size_t old_size, size_t new_size);
-
-/*******************************************************************************
-* Other External functions
-*******************************************************************************/
-
-
-#ifdef __cplusplus
-}
-#endif
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /*__OPS_MPI_CORE_H*/

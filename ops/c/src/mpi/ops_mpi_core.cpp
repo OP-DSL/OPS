@@ -40,6 +40,7 @@
 
 #include <mpi.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 #ifndef __XDIMS__ // perhaps put this into a separate headder file
 #define __XDIMS__
@@ -223,7 +224,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
   int was_initialized = handle->initialized;
   ops_arg temp = ops_arg_reduce_core(handle, dim, type, acc);
   if (!was_initialized) {
-    for (int i = 1; i < OPS_block_index; i++) {
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
       memcpy(handle->data + i * handle->size, handle->data, handle->size);
     }
   }
@@ -243,13 +244,12 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
     type = "int";
 
   ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
-  if (OPS_block_index < 1) {
-    printf("Error: ops_decl_reduction_handle() should only be called after \
-      declaring at least one ops_block\n -- Aborting\n");
-    MPI_Abort(OPS_MPI_GLOBAL, 2);
-  }
+  if (OPS_instance::getOPSInstance()->OPS_block_index < 1)
+    throw OPSException(OPS_RUNTIME_ERROR, "Error: ops_decl_reduction_handle() should only be called after \
+                                           declaring at least one ops_block");
+  
   red->data = (char *)ops_realloc(red->data,
-                                  red->size * (OPS_block_index) * sizeof(char));
+                                  red->size * (OPS_instance::getOPSInstance()->OPS_block_index) * sizeof(char));
   return red;
 }
 
@@ -257,8 +257,8 @@ bool ops_checkpointing_filename(const char *file_name, char *filename_out,
                                 char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
   if (filename_out2) sprintf(filename_out2, "%s.%d.dup", file_name,
-          (ops_my_global_rank + OPS_ranks_per_node) % ops_comm_global_size);
-  return (OPS_enable_checkpointing > 1);
+          (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size);
+  return (OPS_instance::getOPSInstance()->OPS_enable_checkpointing > 1);
 }
 
 void ops_checkpointing_calc_range(ops_dat dat, const int *range,
@@ -307,17 +307,17 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
   send_stats[1] = my_nelems;
   memcpy(&send_stats[2], my_range, 2 * OPS_MAX_DIM * sizeof(int));
   MPI_Isend(send_stats, 2 + 2 * OPS_MAX_DIM, MPI_INT,
-            (ops_my_global_rank + OPS_ranks_per_node) % ops_comm_global_size,
-            1000 + OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &requests[0]);
+            (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size,
+            1000 + OPS_instance::getOPSInstance()->OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &requests[0]);
   int bytesize = dat->elem_size / dat->dim;
   MPI_Isend(my_data, my_nelems * bytesize, MPI_CHAR,
-            (ops_my_global_rank + OPS_ranks_per_node) % ops_comm_global_size,
+            (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size,
             1000 + dat->index, OPS_MPI_GLOBAL, &requests[1]);
 
   MPI_Recv(recv_stats, 2 + 2 * OPS_MAX_DIM, MPI_INT,
-           (ops_comm_global_size + ops_my_global_rank - OPS_ranks_per_node) %
+           (ops_comm_global_size + ops_my_global_rank - OPS_instance::getOPSInstance()->OPS_ranks_per_node) %
                ops_comm_global_size,
-           1000 + OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &statuses[0]);
+           1000 + OPS_instance::getOPSInstance()->OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &statuses[0]);
   if (recv_stats[1] * bytesize > OPS_checkpoiting_dup_buffer_size) {
     OPS_checkpoiting_dup_buffer =
         (char *)ops_realloc(OPS_checkpoiting_dup_buffer,
@@ -326,7 +326,7 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
   }
   *rm_data = OPS_checkpoiting_dup_buffer;
   MPI_Recv(*rm_data, recv_stats[1] * bytesize, MPI_CHAR,
-           (ops_comm_global_size + ops_my_global_rank - OPS_ranks_per_node) %
+           (ops_comm_global_size + ops_my_global_rank - OPS_instance::getOPSInstance()->OPS_ranks_per_node) %
                ops_comm_global_size,
            1000 + dat->index, OPS_MPI_GLOBAL, &statuses[1]);
   *rm_type = recv_stats[0];
@@ -434,7 +434,7 @@ int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
   /*convert to C indexing*/
   start[0] -= 1;
 
-  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
+  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // printf("start[0] = %d, base = %d, dim = %d, d_m[0] = %d dat = %d\n",
@@ -457,7 +457,7 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   start[0] -= 1;
   start[1] -= 1;
 
-  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
+  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // set up initial pointers
@@ -483,7 +483,7 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   start[1] -= 1;
   start[2] -= 1;
 
-  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
+  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // set up initial pointers

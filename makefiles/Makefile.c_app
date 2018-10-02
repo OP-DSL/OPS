@@ -22,6 +22,9 @@ TARGETS += $(APP)_openacc $(APP)_mpi_openacc
 else
 TARGETS += openacc_error
 endif
+ifdef THREADED
+CXXFLAGS += $(THREADING_FLAGS)
+endif
 
 all: $(TARGETS)
 

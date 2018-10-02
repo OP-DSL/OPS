@@ -43,6 +43,8 @@
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
 #include <ops_cuda_rt_support.h>
+#include <ops_exceptions.h>
+
 extern char *halo_buffer_d;
 extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
@@ -52,10 +54,8 @@ extern char *ops_buffer_recv_2;
 void ops_init_cuda(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
-           "-- error OPS_block_size_*\n");
-    exit(-1);
+  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
 
 #if CUDART_VERSION < 3020
@@ -99,7 +99,7 @@ void ops_exit() {
   ops_mpi_exit();
   if (halo_buffer_d != NULL)
     cutilSafeCall(cudaFree(halo_buffer_d));
-  if (OPS_gpu_direct) {
+  if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     cutilSafeCall(cudaFree(ops_buffer_send_1));
     cutilSafeCall(cudaFree(ops_buffer_recv_1));
     cutilSafeCall(cudaFree(ops_buffer_send_2));
@@ -138,7 +138,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
-      OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
+      OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
@@ -198,14 +198,14 @@ void ops_NaNcheck(ops_dat dat) {
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getOPS_block_size_x() { return OPS_block_size_x; }
-int getOPS_block_size_y() { return OPS_block_size_y; }
-int getOPS_block_size_z() { return OPS_block_size_z; }
+int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
 
-void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
+extern "C" void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
               const int halo_blocklength, const int halo_stride, const int halo_count);
 
-void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
+extern "C" void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const int halo_blocklength, const int halo_stride, const int halo_count);
 
 

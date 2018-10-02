@@ -38,9 +38,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(1,"multidim_copy_kernel");
-    OPS_kernels[1].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -119,9 +119,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2-t1;
   }
 
   multidim_copy_kernel_c_wrapper(
@@ -129,9 +129,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
     p_a1,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -140,11 +140,11 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   #endif
   ops_set_halo_dirtybit3(&args[1],range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

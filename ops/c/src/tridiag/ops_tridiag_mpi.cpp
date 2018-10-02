@@ -39,36 +39,11 @@
 
 #include <ops_lib_core.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024
-void thomas_forward(
-    const FP *__restrict__ a,
-    const FP *__restrict__ b,
-    const FP *__restrict__ c,
-    const FP *__restrict__ d,
-    const FP *__restrict__ u,
-          FP *__restrict__ aa,
-          FP *__restrict__ cc,
-          FP *__restrict__ dd,
-    int N,
-    int stride);
-
-void thomas_backward(
-    const FP *__restrict__ aa, 
-    const FP *__restrict__ cc, 
-    const FP *__restrict__ dd, 
-          FP *__restrict__ d, 
-    int N, 
-    int stride); 
-
-void thomas_on_reduced(
-    const FP* __restrict__ aa_r,
-    const FP* __restrict__ cc_r,
-          FP* __restrict__ dd_r,
-    int N,
-    int stride);
-
+#include <trid_mpi_cpu.hpp>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -131,8 +106,7 @@ void ops_tridMultiDimBatch(
   for (int i = 0; i < 3; i++) {
     if (a_size[i] != b_size[i] || b_size[i] != c_size[i] ||
         c_size[i] != d_size[i] || u_size[i] != u_size[i]) {
-      ops_printf("Size Mistmatch: Abort\n");
-      exit(-2);
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
 

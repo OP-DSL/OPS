@@ -11,7 +11,6 @@
 
 #include "user_types.h"
 #define OPS_2D
-#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"

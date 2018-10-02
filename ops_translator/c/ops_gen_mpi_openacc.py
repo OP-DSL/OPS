@@ -252,6 +252,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     l = text[0:m].find('inline')
     if(l<0):
       text = 'inline '+text
+    code('#pragma acc routine')
     code(text)
     code('')
 
@@ -628,9 +629,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     code('#endif')
     code('')
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].count++;')
     code('ops_timers_core(&c1,&t1);')
     ENDIF()
 
@@ -727,8 +728,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
-          code('args['+str(n)+'].data_d = OPS_consts_d + consts_bytes;')
+          code('args['+str(n)+'].data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;')
+          code('args['+str(n)+'].data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
@@ -773,9 +774,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+' + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
+          line = 'base'+str(n)+' = base'+str(n)+' + (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
@@ -857,9 +858,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('#endif')
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     ENDIF()
     code('')
 
@@ -907,9 +908,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     #     if accs[n] <> OPS_READ:
     #       code('*('+typs[n]+' *)args['+str(n)+'].data = *p_a'+str(n)+';')
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].time += t1-t2;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += t1-t2;')
     ENDIF()
 
     # if reduction == 1 :
@@ -917,7 +918,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
     #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)args['+str(n)+'].data);')
     #   code('ops_timers_core(&c1,&t1);')
-    #   code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    #   code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('#ifdef OPS_GPU')
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
@@ -929,13 +930,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+        code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
     ENDIF()
     config.depth = config.depth - 2
     code('}')

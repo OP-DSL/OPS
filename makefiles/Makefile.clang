@@ -8,3 +8,6 @@ else
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g
 endif
 OMPFLAGS=-fopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -fopenmp
+endif

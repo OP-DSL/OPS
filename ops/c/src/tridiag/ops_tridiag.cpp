@@ -39,6 +39,7 @@
 
 #include <ops_lib_core.h>
 #include "trid_cpu.h"
+#include <ops_exceptions.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,8 +62,7 @@ void ops_tridMultiDimBatch(
     ops_dat u
     ) {
   if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem) {
-    ops_printf("Tridsolver error: the a,b,c,d datasets all need to be the same size");
-    exit(-1);
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
   }
   tridDmtsvStridedBatch((const double *)a->data, (const double *)b->data,
                         (const double *)c->data, (double *)d->data,
@@ -97,8 +97,7 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat u
     ) {
   if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem || d->mem != u->mem) {
-    ops_printf("Tridsolver error: the a,b,c,d,u datasets all need to be the same size");
-    exit(-1);
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
   }
   tridDmtsvStridedBatchInc((const double *)a->data, (const double *)b->data,
                            (const double *)c->data, (double *)d->data,

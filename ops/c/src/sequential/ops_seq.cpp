@@ -37,12 +37,7 @@
   */
 
 #include <ops_lib_core.h>
-char *ops_halo_buffer = NULL;
-int ops_halo_buffer_size = 0;
-#ifdef __unix__
 int posix_memalign(void **memptr, size_t alignment, size_t size);
-#endif
-extern int OPS_realloc;
 
 void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
@@ -59,13 +54,17 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  if (data != NULL && !OPS_realloc) {
+  if (data != NULL && !OPS_instance::getOPSInstance()->OPS_realloc) {
     // printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
                              // ops_decl_dat_hdf5()
+    int bytes = size * type_size;
+    for (int i = 0; i < block->dims; i++)
+      bytes = bytes * dat->size[i];
+    dat->mem = bytes;
   } else {
     // Allocate memory immediately
     int bytes = size * type_size;
@@ -84,8 +83,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
-    if (data != NULL && OPS_realloc) {
-      int sizeprod = 1;
+    if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
+      int sizeprod = 1; 
       for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
       int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
       for (int i = 0; i < sizeprod; i++) {
@@ -99,7 +98,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   long cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        (OPS_soa ? dat->type_size : dat->elem_size)
+        (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
@@ -136,9 +135,9 @@ void ops_halo_transfer(ops_halo_group group) {
     int size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
-    if (size > ops_halo_buffer_size) {
-      ops_halo_buffer = (char *)ops_realloc(ops_halo_buffer, size);
-      ops_halo_buffer_size = size;
+    if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
+      OPS_instance::getOPSInstance()->ops_halo_buffer = (char *)ops_realloc(OPS_instance::getOPSInstance()->ops_halo_buffer, size);
+      OPS_instance::getOPSInstance()->ops_halo_buffer_size = size;
     }
 
     // copy to linear buffer from source
@@ -163,9 +162,13 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->from_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
+    int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+    char *ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
+    #ifdef _OPENMP
     #pragma omp parallel for collapse(5)
+    #endif
     #endif
     for (int m = MIN(ranges[8], ranges[9] + 1);
          m < MAX(ranges[8] + 1, ranges[9]); m++) {
@@ -175,7 +178,9 @@ void ops_halo_transfer(ops_halo_group group) {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
+      #ifdef _OPENMP
       #pragma omp parallel for collapse(4)
+      #endif
       #endif
       for (int l = MIN(ranges[6], ranges[7] + 1);
            l < MAX(ranges[6] + 1, ranges[7]); l++) {
@@ -185,7 +190,9 @@ void ops_halo_transfer(ops_halo_group group) {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
+        #ifdef _OPENMP
         #pragma omp parallel for collapse(3)
+        #endif
         #endif
         for (int k = MIN(ranges[4], ranges[5] + 1);
              k < MAX(ranges[4] + 1, ranges[5]); k++) {
@@ -195,7 +202,9 @@ void ops_halo_transfer(ops_halo_group group) {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
+          #ifdef _OPENMP
           #pragma omp parallel for collapse(2)
+          #endif
           #endif
           for (int j = MIN(ranges[2], ranges[3] + 1);
                j < MAX(ranges[2] + 1, ranges[3]); j++) {
@@ -294,9 +303,13 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->to_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
+    OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+    ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
+    #ifdef _OPENMP
     #pragma omp parallel for collapse(5)
+    #endif
     #endif
     for (int m = MIN(ranges[8], ranges[9] + 1);
          m < MAX(ranges[8] + 1, ranges[9]); m++) {
@@ -306,7 +319,9 @@ void ops_halo_transfer(ops_halo_group group) {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
+      #ifdef _OPENMP
       #pragma omp parallel for collapse(4)
+      #endif
       #endif
       for (int l = MIN(ranges[6], ranges[7] + 1);
            l < MAX(ranges[6] + 1, ranges[7]); l++) {
@@ -316,7 +331,9 @@ void ops_halo_transfer(ops_halo_group group) {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
+        #ifdef _OPENMP
         #pragma omp parallel for collapse(3)
+        #endif
         #endif
         for (int k = MIN(ranges[4], ranges[5] + 1);
              k < MAX(ranges[4] + 1, ranges[5]); k++) {
@@ -326,7 +343,9 @@ void ops_halo_transfer(ops_halo_group group) {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
+          #ifdef _OPENMP
           #pragma omp parallel for collapse(2)
+          #endif
           #endif
           for (int j = MIN(ranges[2], ranges[3] + 1);
                j < MAX(ranges[2] + 1, ranges[3]); j++) {

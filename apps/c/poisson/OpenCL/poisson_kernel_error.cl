@@ -11,7 +11,6 @@
 
 #include "user_types.h"
 #define OPS_2D
-#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -47,9 +46,7 @@
 
 //user function
 
-void poisson_kernel_error(const ptr_double u,
-  const ptr_double ref,
-  double *err) {
+void poisson_kernel_error(const ptr_double u, const ptr_double ref, double *err) {
   *err = *err + (OPS_ACCS(u, 0,0)-OPS_ACCS(ref, 0,0))*(OPS_ACCS(u, 0,0)-OPS_ACCS(ref, 0,0));
 }
 
