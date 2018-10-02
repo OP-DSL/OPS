@@ -36,6 +36,8 @@ endif
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
+MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+
 .PHONY: clean mklib
 
 TARGETS = clean core seq mpi 
@@ -117,7 +119,7 @@ mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
 	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
 	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
-	$(NVCC) $(NVCCFLAGS) -I$(INC) $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir)) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o \
+	$(NVCC) $(NVCCFLAGS) -I$(INC) $(MPI_INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o \
 	$(OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
 	ar -r $(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda.o $(OBJ)/ops_mpi_rt_support.o \
