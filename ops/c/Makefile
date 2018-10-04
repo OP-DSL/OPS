@@ -18,6 +18,7 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 # compiler settings
 #
 
+OPS_INSTALL_PATH = $(subst /ops/c,/ops,$(shell pwd))
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
@@ -32,6 +33,9 @@ endif
 else
   CHKCC			:= $(CC)
 endif
+
+# This refers to the location of the submodule in the "master" pdetk repo
+TRID_INSTALL_PATH ?= ../../../tridsolver/scalar
 
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
