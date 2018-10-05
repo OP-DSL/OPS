@@ -61,6 +61,7 @@ inline int omp_get_max_threads() {
 cudaStream_t cpu_stream, gpu_stream;
 cudaEvent_t ev1, ev2, evKuki;
 cudaEvent_t indep_start_ev_d,indep_end_ev_d,dep_start_ev_d,dep_end_ev_d;
+extern double OPS_force_balance;
 
 extern "C" {
 long ops_get_base_index_dim(ops_dat dat, int dim);
@@ -126,6 +127,10 @@ void ops_hybrid_initialise() {
   ops_hybrid_tiled_stats.prev_balance = 1.0/4.0;
   ops_hybrid_tiled_stats.gpu_time = 0.0;
   ops_hybrid_tiled_stats.cpu_time = 0.0;
+  if (OPS_force_balance != 0.0) {
+    ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*OPS_force_balance;
+  ops_hybrid_tiled_stats.prev_balance = OPS_force_balance;
+  }
 
   ops_hybrid_initialised = true;
   cutilSafeCall(cudaStreamCreateWithFlags(&cpu_stream, cudaStreamNonBlocking));
@@ -733,13 +738,17 @@ void ops_hybrid_record_tiled_stats(double cpu_time, double gpu_time) {
                   ((1.0 - ops_hybrid_tiled_stats.prev_balance) * ops_hybrid_tiled_stats.cpu_time +
                   ops_hybrid_tiled_stats.prev_balance * ops_hybrid_tiled_stats.gpu_time);
   double smoothed_balance = (1.0*ops_hybrid_tiled_stats.prev_balance + new_balance)/2.0;
-        ops_hybrid_tiled_stats.prev_balance = smoothed_balance;
+  ops_hybrid_tiled_stats.prev_balance = smoothed_balance;
   if (abs(ops_hybrid_gbl_max_size*smoothed_balance - ops_hybrid_tiled_stats.prev_split) > ops_hybrid_gbl_max_size * 0.01)
     ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*smoothed_balance;
 
+  if (OPS_force_balance != 0.0) {
+    ops_hybrid_tiled_stats.prev_split = ops_hybrid_gbl_max_size*OPS_force_balance;
+    ops_hybrid_tiled_stats.prev_balance = OPS_force_balance;
+  }
 
   if (OPS_diags > 3) 
- if (PRINT_HYBRID_INFO) ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
+   ops_printf("Tiled hybrid execution CPU time %g GPU time %g, new split %d new balance %g\n", cpu_time, gpu_time, ops_hybrid_tiled_stats.prev_split, ops_hybrid_tiled_stats.prev_balance);
 }
 
 void ops_hybrid_after_tiling(ops_kernel_descriptor * desc) {

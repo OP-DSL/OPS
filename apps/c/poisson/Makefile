@@ -35,7 +35,7 @@ ifdef DEBUG
   CCFLAGS = -O0 -g -no-prec-div -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xHost -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  CCFLAGS = -xHost -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model fast=2 -fma -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qopenmp
@@ -133,6 +133,10 @@ ifeq ($(NV_ARCH),Fermi)
 else
 ifeq ($(NV_ARCH),Kepler)
   CODE_GEN_CUDA=-gencode arch=compute_35,code=sm_35
+else
+ifeq ($(NV_ARCH),Pascal)
+  CODE_GEN_CUDA=-gencode arch=compute_70,code=sm_70
+endif
 endif
 endif
 
