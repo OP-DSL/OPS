@@ -65,6 +65,13 @@ ELSEIF = util.ELSEIF
 ELSE = util.ELSE
 ENDIF = util.ENDIF
 
+
+def clean_type(arg):
+    for qual in ['__restrict__', 'RESTRICT', '__volatile__']:
+        arg = arg.replace(qual, '')
+    return arg
+
+
 def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
   global dims, stens
@@ -280,7 +287,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('');
     comm('Timing')
-    code('double t1,t2,c1,c2;')
+    code('double __t1,__t2,__c1,__c2;')
     code('');
 
     #code('ops_printf("In loop \%s\\n","'+name+'");')
@@ -305,7 +312,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if gen_full_code:
       IF('OPS_diags > 1')
       code('OPS_kernels['+str(nk)+'].count++;')
-      code('ops_timers_core(&c2,&t2);')
+      code('ops_timers_core(&__c2,&__t2);')
       ENDIF()
       code('')
 
@@ -374,33 +381,33 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if assume_same:
           code('base = args['+str(n)+'].dat->base_offset/sizeof('+typs[n]+');')
-          code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)(args['+str(n)+'].data );')
+          code(pre + typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)(args['+str(n)+'].data );')
           code('__assume_aligned('+arg_list[n]+',2*1024*1024);')
         else:
           code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset;')
-          code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
+<<<<<<< HEAD
+          code(pre + typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
             code('sub_dat_list sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
           if restrict[n] == 1:
-            code(arg_list[n]+' += arg_idx[0]*args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
+            code(clean_type(arg_list[n])+' += arg_idx[0]*args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(arg_list[n]+' += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
             if NDIM>2:
-              code(arg_list[n]+' += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
           if prolong[n] == 1:
-            code(arg_list[n]+' += arg_idx[0]/args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
+            code(clean_type(arg_list[n])+' += arg_idx[0]/args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(arg_list[n]+' += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
             if NDIM>2:
-              code(arg_list[n]+' += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
 
           if restrict[n] == 1 or prolong[n] == 1:
             code('#endif')
-
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code(pre + typs[n]+' * __restrict__ '+arg_list[n]+' = ('+typs[n]+' *)args['+str(n)+'].data;')
+          code(pre + typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
           code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
@@ -422,8 +429,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       # code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
       # code('')
       IF('OPS_diags > 1')
-      code('ops_timers_core(&c1,&t1);')
-      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+      code('ops_timers_core(&__c1,&__t1);')
+      code('OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
       ENDIF()
       code('')
 
@@ -457,25 +464,25 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
-      code('#ifdef intel')
+      code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         line3 = line3 +arg_list[n]+','
     if NDIM>1:
       code('#pragma loop_count(10000)')
-      code('#pragma omp simd'+line+' aligned('+line3[:-1]+')')
+      code('#pragma omp simd'+line+' aligned('+clean_type(line3[:-1])+')')
       code('#else')
-      code('#pragma simd'+line)
+      code('#pragma simd')
       code('#endif')
     FOR('n_x','start[0]','end[0]')
     if arg_idx != -1:
       if NDIM==1:
-        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x};')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x};')
       elif NDIM==2:
-        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
       elif NDIM==3:
-        code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -528,8 +535,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     if gen_full_code==1:
       IF('OPS_diags > 1')
-      code('ops_timers_core(&c2,&t2);')
-      code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+      code('ops_timers_core(&__c2,&__t2);')
+      code('OPS_kernels['+str(nk)+'].time += __t2-__t1;')
       ENDIF()
 
       # code('ops_set_dirtybit_host(args, '+str(nargs)+');')
@@ -541,8 +548,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('')
       IF('OPS_diags > 1')
       comm('Update kernel record')
-      code('ops_timers_core(&c1,&t1);')
-      code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+      code('ops_timers_core(&__c1,&__t1);')
+      code('OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_dat':
           code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
