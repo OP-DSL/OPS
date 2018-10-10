@@ -450,7 +450,6 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
 void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
 void ops_H_D_exchanges_device(ops_arg *args, int nargs);
-void ops_callocDevice(void **data_d, int size);
 void ops_cpHostToDevice(void **data_d, void **data_h, int size);
 void ops_cpConstToSymbol(void *data_d, void *data_h, int size);
 
