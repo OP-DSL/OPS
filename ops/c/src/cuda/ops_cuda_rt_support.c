@@ -141,19 +141,19 @@ void cutilDeviceInit(const int argc, const char **argv) {
   }
 }
 
-void ops_callocDevice(void **data_d, int size) {
-  cutilSafeCall(cudaMalloc(data_d, size));
-  cutilSafeCall(cudaMemset(*data_d, 0, size));
-  cutilSafeCall(cudaDeviceSynchronize());
-}
-
-
 void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   // if (!OPS_hybrid_gpu) return;
 
 
   if ( *data_d == NULL )
       cutilSafeCall(cudaMalloc(data_d, size));
+
+  if (data_h == NULL || *data_h == NULL) {
+    cutilSafeCall(cudaMalloc(data_d, size));
+    cutilSafeCall(cudaMemset(*data_d, 0, size));
+    cutilSafeCall(cudaDeviceSynchronize());
+    return;
+  }
 
   static void* stage = NULL;
   static size_t stage_size = 0;
