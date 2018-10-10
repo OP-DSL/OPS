@@ -113,7 +113,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     dat->data_d = NULL;
-    ops_callocDevice( ( void ** ) &( dat->data_d ), bytes);
+    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+            ( void ** ) NULL, bytes );
   }
 
   // Compute offset in bytes to the base index
