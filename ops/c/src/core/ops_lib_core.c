@@ -39,7 +39,7 @@
 #include "ops_lib_core.h"
 #include <float.h>
 #include <limits.h>
-#include <malloc.h>
+#include <stdlib.h>
 #ifdef __unix__
 #include <sys/time.h>
 #elif defined (_WIN32) || defined(WIN32)
@@ -1573,7 +1573,10 @@ void setKernelTime(int id, char name[], double kernelTime, double mpiTime,
 void *ops_malloc(size_t size) {
 //#ifdef __INTEL_COMPILER
   // return _mm_malloc(size, OPS_ALIGNMENT);
-  return memalign(OPS_ALIGNMENT, size);
+  void *ptr;
+  posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size);
+  return ptr;
+//memalign(OPS_ALIGNMENT, size);
 //#else
 //  return xmalloc(size);
 //#endif
@@ -1582,7 +1585,8 @@ void *ops_malloc(size_t size) {
 void *ops_calloc(size_t num, size_t size) {
 //#ifdef __INTEL_COMPILER
   // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
-  void *ptr = memalign(OPS_ALIGNMENT, num * size);
+  void *ptr;
+  posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size);
   memset(ptr, 0, num * size);
   return ptr;
 //#else
@@ -1594,7 +1598,8 @@ void *ops_realloc(void *ptr, size_t size) {
 //#ifdef __INTEL_COMPILER
   void *newptr = xrealloc(ptr, size);
   if (((unsigned long)newptr & (OPS_ALIGNMENT - 1)) != 0) {
-    void *newptr2 = memalign(OPS_ALIGNMENT, size);
+    void *newptr2;
+    posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size);
     // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);
     free(newptr);
