@@ -117,7 +117,7 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
 
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
     arg_idx = 0
@@ -181,7 +181,7 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -195,8 +195,8 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     i = p.search(text).start()
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = text[i:].find(name)
@@ -231,11 +231,11 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -251,11 +251,11 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -419,11 +419,11 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
           text = text +' ('+typs[n]+' *)p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
       else:
         text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text + ','
       else:
         text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
+      if n%n_per_line == 2 and n != nargs-1:
         text = text +'\n          '
     code(text);
     if arg_idx:
@@ -447,11 +447,11 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
       else:
         text = text +' ('+typs[n]+' *)p_a['+str(n)+']'
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text + ','
       else:
         text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
+      if n%n_per_line == 2 and n != nargs-1:
         text = text +'\n          '
     code(text);
 
