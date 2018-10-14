@@ -125,12 +125,12 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           assume_same=0
 
     for n in range (1,nargs):
-      if typs[0] <> typs[n]:
+      if typs[0] != typs[n]:
         assume_same=0
 
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
     arg_idx = -1
@@ -205,7 +205,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -219,8 +219,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     i = p.search(text).start()
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = text[i:].find(name)
@@ -256,11 +256,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -292,7 +292,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     code('')
-    if arg_idx<>-1:
+    if arg_idx!=-1:
       code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       code('sub_block_list sb = OPS_sub_block_list[block->index];')
@@ -368,7 +368,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           for d in range(0,int(dims[n])):
             code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
 
@@ -408,7 +408,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#pragma simd'+line)
       code('#endif')
     FOR('n_x','start[0]','end[0]')
-    if arg_idx <> -1:
+    if arg_idx != -1:
       if NDIM==1:
         code('int '+arg_list[arg_idx]+'[] = {arg_idx[0]+n_x};')
       elif NDIM==2:
@@ -434,7 +434,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
-        if accs[n] <> OPS_READ and int(dims[n])==1:
+        if accs[n] != OPS_READ and int(dims[n])==1:
           code(typs[n]+' *'+arg_list[n]+' = &p_a'+str(n)+'_0;')
 
     #insert user kernel
@@ -463,7 +463,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
 
@@ -504,11 +504,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2

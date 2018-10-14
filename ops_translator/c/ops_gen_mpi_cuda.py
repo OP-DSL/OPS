@@ -120,7 +120,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     reduct = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
     config.file_text = ''
@@ -135,7 +135,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ng_args = 0
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = True
       else:
         ng_args = ng_args + 1
@@ -223,7 +223,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -239,8 +239,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = i
@@ -311,7 +311,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #local variable to hold reductions on GPU
     code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code(typs[n]+' arg'+str(n)+'_l['+str(dims[n])+'];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
@@ -376,20 +376,20 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           text = text +'&arg'+str(n)
         else:
           text = text +'arg'+str(n)
-      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
 
-      if nargs <> 1 and n <> nargs-1:
-        if n%n_per_line <> 3:
+      if nargs != 1 and n != nargs-1:
+        if n%n_per_line != 3:
           text = text +', '
         else:
           text = text +','
       else:
         text = text +');'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n                   '
     code(text)
     ENDIF()
@@ -429,11 +429,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     code('#else')
@@ -455,11 +455,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -572,7 +572,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('ops_block block = desc->block;')
       code('#endif')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
             code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
           else:
@@ -642,7 +642,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
-        elif accs[n] <> OPS_READ:
+        elif accs[n] != OPS_READ:
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
           code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
@@ -655,7 +655,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
         code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
@@ -728,7 +728,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
        code('int nthread = OPS_block_size_x*OPS_block_size_y;')
        code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('nshared = MAX(nshared,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
@@ -766,7 +766,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         elif NDIM==3:
           text = text + ' arg_idx[0], arg_idx[1], arg_idx[2],'
 
-      if n%n_per_line == 1 and n <> nargs-1:
+      if n%n_per_line == 1 and n != nargs-1:
         text = text +'\n          '
     if NDIM==1:
       text = text +'x_size);'
@@ -789,7 +789,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('mvReductArraysToHost(reduct_bytes);')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         FOR('b','0','maxblocks')
         FOR('d','0',str(dims[n]))
         if accs[n] == OPS_INC:
@@ -843,11 +843,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2

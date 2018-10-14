@@ -97,7 +97,7 @@ def ops_parse_macro_defs(text):
         if len(match) < 4:
             continue
         elif len(match) > 4:
-            print("Unexpected format for macro definition: " + str(match))
+            print(("Unexpected format for macro definition: " + str(match)))
             continue
         key = match[2]
         value = match[3]
@@ -111,7 +111,7 @@ def self_evaluate_macro_defs(macro_defs):
     substitutions_performed = True
     while substitutions_performed:
         substitutions_performed = False
-        for k in macro_defs.keys():
+        for k in list(macro_defs.keys()):
             k_val = macro_defs[k]
             m = re.search(arithmetic_regex_pattern, k_val)
             if m != None:
@@ -120,7 +120,7 @@ def self_evaluate_macro_defs(macro_defs):
 
             ## If value of key 'k' depends on value of other 
             ## keys, then substitute in value:
-            for k2 in macro_defs.keys():
+            for k2 in list(macro_defs.keys()):
                 pattern = r'' + '(^|[^a-zA-Z0-9_])' + k2 + '($|[^a-zA-Z0-9_])'
                 m = re.search(pattern, k_val)
 
@@ -132,7 +132,7 @@ def self_evaluate_macro_defs(macro_defs):
                     substitutions_performed = True
 
     ## Evaluate any mathematical expressions:
-    for k in macro_defs.keys():
+    for k in list(macro_defs.keys()):
         val = macro_defs[k]
         m = re.search(arithmetic_regex_pattern, val)
         if m != None:
@@ -154,7 +154,7 @@ def evaluate_macro_defs_in_string(macro_defs, string):
     substitutions_performed = True
     while substitutions_performed:
         substitutions_performed = False
-        for k in macro_defs.keys():
+        for k in list(macro_defs.keys()):
             k_val = macro_defs[k]
 
             k_pattern = r'' + r'' + '(^|[^a-zA-Z0-9_])' + k + '($|[^a-zA-Z0-9_])'
@@ -189,7 +189,7 @@ def ops_decl_const_parse(text, macro_defs):
 
     # check for syntax errors
     if len(args) != 4:
-      print 'Error in ops_decl_const : must have four arguments'
+      print('Error in ops_decl_const : must have four arguments')
       return
     args[1] = evaluate_macro_defs_in_string(macro_defs, args[1])
 
@@ -232,7 +232,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
+      print('Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string)
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -267,8 +267,8 @@ def get_arg_gbl(arg_string, k, macro_defs):
 
     # check for syntax errors
     if len(gbl_args_string.split(',')) != 4:
-        print 'Error parsing op_arg_gbl(%s): must have four arguments' \
-              % gbl_args_string
+        print('Error parsing op_arg_gbl(%s): must have four arguments' \
+              % gbl_args_string)
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
@@ -354,7 +354,7 @@ def ops_par_loop_parse(text, macro_defs):
       loop_args.append(temp)
 
       i = text.find(search, i + 15)
-  print '\n\n'
+  print('\n\n')
   return (loop_args)
 
 def main(source_files):
@@ -398,7 +398,7 @@ def main(source_files):
         f.close()
 
         defs = ops_parse_macro_defs(text)
-        for k in defs.keys():
+        for k in list(defs.keys()):
             if (k in macro_defs) and (defs[k] != macro_defs[k]):
                 raise ValueError("Multiple macros with same same %s", k)
             else:
@@ -409,8 +409,8 @@ def main(source_files):
 
   kernels_in_files = [[] for _ in range(len(source_files))]
   for a in range(0, len(source_files)):
-      print 'processing file ' + str(a) + ' of ' + str(len(source_files)) + \
-            ' ' + str(source_files[a])
+      print('processing file ' + str(a) + ' of ' + str(len(source_files)) + \
+            ' ' + str(source_files[a]))
 
       src_file = str(source_files[a])
       f = open(src_file, 'r')
@@ -430,11 +430,11 @@ def main(source_files):
       inits, exits = ops_parse_calls(text)
 
       if inits + exits > 0:
-        print ' '
+        print(' ')
       if inits > 0:
-        print'contains ops_init call'
+        print('contains ops_init call')
       if exits > 0:
-        print'contains ops_exit call'
+        print('contains ops_exit call')
 
       ninit = ninit + inits
       nexit = nexit + exits
@@ -444,12 +444,12 @@ def main(source_files):
       #
       file_soa = len(re.findall('#define OPS_SOA', text))
       if a > 0 and soa_set == 1 and file_soa == 0:
-        print 'Error: all or no source files must include #define OPS_SOA'
+        print('Error: all or no source files must include #define OPS_SOA')
         sys.exit(1)
-      if file_soa <> 0:
+      if file_soa != 0:
         soa_set = file_soa
       if inits > 0 and file_soa and len(re.findall(r'\bOPS_soa\b\s*=\s*1', text))==0:
-        print 'Error: the source file with ops_init, must include the line OPS_soa = 1 immediately after ops_init'
+        print('Error: the source file with ops_init, must include the line OPS_soa = 1 immediately after ops_init')
         sys.exit(1)
       
 
@@ -458,7 +458,7 @@ def main(source_files):
       #
 
       const_args = ops_decl_const_parse(text, macro_defs)
-      print str(len(const_args))
+      print(str(len(const_args)))
 
       # cleanup '&' symbols from name and convert dim to integer
       if const_args:
@@ -478,15 +478,15 @@ def main(source_files):
                 if const_args[i]['name'] == consts[c]['name']:
                     repeat = 1
                     if const_args[i]['type'] != consts[c]['type']:
-                        print 'type mismatch in repeated ops_decl_const'
+                        print('type mismatch in repeated ops_decl_const')
                     if const_args[i]['dim'] != consts[c]['dim']:
-                        print 'size mismatch in repeated ops_decl_const'
+                        print('size mismatch in repeated ops_decl_const')
 
             if repeat > 0:
-                print 'repeated global constant ' + const_args[i]['name']
+                print('repeated global constant ' + const_args[i]['name'])
             else:
-                print '\nglobal constant (' + const_args[i]['name'].strip() \
-                      + ') of size ' + str(const_args[i]['dim'])
+                print('\nglobal constant (' + const_args[i]['name'].strip() \
+                      + ') of size ' + str(const_args[i]['dim']))
 
             # store away in master list
             if repeat == 0:
@@ -508,9 +508,9 @@ def main(source_files):
         dim   = loop_args[i]['dim']
         block = loop_args[i]['block']
         _range   = loop_args[i]['range']
-        print '\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'
-        print 'dim: '+dim
-        print 'range: '+str(_range)
+        print('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments')
+        print('dim: '+dim)
+        print('range: '+str(_range))
 
         #
         # process arguments
@@ -539,11 +539,11 @@ def main(source_files):
                   break
 
             if l == -1:
-                print 'unknown access type for argument ' + str(m)
+                print('unknown access type for argument ' + str(m))
             else:
                 accs[m] = l + 1
 
-            print var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])
+            print(var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m]))
 
 
           if arg_type.strip() == 'ops_arg_gbl':
@@ -557,18 +557,18 @@ def main(source_files):
                 if args['acc'].strip() == OPS_accs_labels[l].strip():
                     break
             if l == -1:
-                print 'unknown access type for argument ' + str(m)
+                print('unknown access type for argument ' + str(m))
             else:
                 accs[m] = l + 1
 
-            print var[m]+' '+ str(dims[m]) +' '+str(accs[m])
+            print(var[m]+' '+ str(dims[m]) +' '+str(accs[m]))
 
           if arg_type.strip() == 'ops_arg_idx':
             var[m] = ''
             dims[m] = 0
             typs[m] = 'int'
             typ[m] = 'ops_arg_idx'
-            print 'arg_idx'
+            print('arg_idx')
 
 
         #
@@ -593,12 +593,12 @@ def main(source_files):
                     kernels[nk]['accs'][arg] == accs[arg]
                     #kernels[nk]['var'][arg] == var[arg] and \
             if rep2:
-              print 'repeated kernel with compatible arguments: ' + \
-                    kernels[nk]['name'],
+              print('repeated kernel with compatible arguments: ' + \
+                    kernels[nk]['name'])
               repeat = True
               which_file = nk
             else:
-              print 'repeated kernel with incompatible arguments: ERROR'
+              print('repeated kernel with incompatible arguments: ERROR')
               break
 
 
@@ -780,16 +780,16 @@ def main(source_files):
   #
 
   if ninit == 0:
-      print' '
-      print'-----------------------------'
-      print'  ERROR: no call to ops_init  '
-      print'-----------------------------'
+      print(' ')
+      print('-----------------------------')
+      print('  ERROR: no call to ops_init  ')
+      print('-----------------------------')
 
   if nexit == 0:
-      print' '
-      print'-------------------------------'
-      print'  WARNING: no call to ops_exit  '
-      print'-------------------------------'
+      print(' ')
+      print('-------------------------------')
+      print('  WARNING: no call to ops_exit  ')
+      print('-------------------------------')
 
 
   #
@@ -815,13 +815,13 @@ def main(source_files):
   if retcode == 0:
     retcode = subprocess.call("$OPS_INSTALL_PATH/../ops_translator/c/format.sh", shell=True)
   else:
-    print 'Cannot find clang-format in PATH'
-    print 'Install and add clang-format to PATH to format generated code to conform to code formatting guidelines'
+    print('Cannot find clang-format in PATH')
+    print('Install and add clang-format to PATH to format generated code to conform to code formatting guidelines')
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         main(source_files=sys.argv[1:]) # [1:] ignores the ops.py file itself.
     # Print usage message if no arguments given
     else:
-        print __doc__
+        print(__doc__)
         sys.exit(1)

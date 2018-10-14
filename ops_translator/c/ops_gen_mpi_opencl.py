@@ -102,7 +102,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
 
     if ('initialise' in name) or ('generate' in name):
-      print 'WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host'
+      print('WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host')
       continue
 
     #reset dimension of the application
@@ -133,7 +133,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
 
@@ -256,7 +256,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -269,8 +269,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
     i = p.search(text).start()
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
 
@@ -476,7 +476,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
-      if n <> nargs-1 :
+      if n != nargs-1 :
         text = text+',\n  '+indent
       elif len(found_consts) > 0:
         text = text +',\n  '+indent
@@ -665,11 +665,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -683,11 +683,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -804,7 +804,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     #setup reduction variables
     code('')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
             code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
           else:
@@ -858,7 +858,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
             code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-        elif accs[n] <> OPS_READ:
+        elif accs[n] != OPS_READ:
           #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')

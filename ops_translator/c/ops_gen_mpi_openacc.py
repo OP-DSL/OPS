@@ -116,7 +116,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
     reduct = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
     config.file_text = ''
@@ -226,7 +226,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -239,8 +239,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     i = p.search(text).start()
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i = text[0:i].rfind('\n') #reverse find
@@ -297,7 +297,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           #if dims[n].isdigit() and int(dims[n]) == 1:
           #  code(typs[n]+' p_a'+str(n)+'_l = *p_a'+str(n)+';')
           #else:
@@ -426,11 +426,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text + ','
       else:
         text = text +' );\n'
-      if n%n_per_line == 0 and n <> nargs-1:
+      if n%n_per_line == 0 and n != nargs-1:
         text = text +'\n          '
     code(text);
 
@@ -459,7 +459,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           #if dims[n].isdigit() and int(dims[n]) == 1:
           #  code('*p_a'+str(n)+' = p_a'+str(n)+'_l;')
           #else:
@@ -539,11 +539,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -555,11 +555,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -686,7 +686,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1)):
+          if accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1)):
             #code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)args['+str(n)+'].data;')
             if (accs[n] == OPS_READ):
               code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')

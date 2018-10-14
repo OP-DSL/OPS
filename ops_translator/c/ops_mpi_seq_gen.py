@@ -214,21 +214,21 @@ for nargs in range (1,maxargs+1):
     f.write('template <')
     for n in range (0, nargs):
         f.write('class T'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('>\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n')
 
     f.write('void ops_par_loop(void (*kernel)(')
     for n in range (0, nargs):
         f.write('T'+str(n)+'*')
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('),\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n                           ')
         else:
           f.write(' ')
@@ -237,11 +237,11 @@ for nargs in range (1,maxargs+1):
     f.write('    char const * name, ops_block block, int dim, int *range,\n    ')
     for n in range (0, nargs):
         f.write(' ops_arg arg'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write(') {\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
          f.write('\n    ')
 
     f.write('\n  char *p_a['+str(nargs)+'];')
@@ -251,11 +251,11 @@ for nargs in range (1,maxargs+1):
     f.write('  ops_arg args['+str(nargs)+'] = {')
     for n in range (0, nargs):
         f.write(' arg'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('};\n\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n                    ')
 
     f.write('\n  #ifdef CHECKPOINTING\n')
@@ -397,11 +397,11 @@ for nargs in range (1,maxargs+1):
     f.write('\n    kernel( ')
     for n in range (0, nargs):
         f.write(' (T'+str(n)+' *)p_a['+str(n)+']')
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write(' );\n\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n          ')
 
     f.write('    count[0]--;   // decrement counter\n')
