@@ -12,6 +12,20 @@ $OPS_INSTALL_PATH/../ops_translator/c/ops.py poisson.cpp
 export OPS_COMPILER=gnu
 export MPI_INSTALL_PATH=`which mpicc | sed 's/\/bin\/mpicc//g'`
 
-g++ -O3 -fPIC -DUNIX -Wall -ffloat-store -g -I$OPS_INSTALL_PATH/c/include \
-    -L$OPS_INSTALL_PATH/c/lib poisson.cpp  -lops_seq  -o output_dev_seq \
-    && ./output_dev_seq && echo "Success"
+if g++ -O3 -fPIC -DUNIX -Wall -ffloat-store -g -I$OPS_INSTALL_PATH/c/include \
+    -L$OPS_INSTALL_PATH/c/lib poisson.cpp  -lops_seq  -o output_dev_seq 
+then
+    if ./output_dev_seq
+    then
+        echo "Success"
+        exit 0
+    else
+        echo "Failed to run poission program."
+        exit 1
+    fi
+else
+    echo "Compilation failed."
+    exit 2
+fi
+
+
