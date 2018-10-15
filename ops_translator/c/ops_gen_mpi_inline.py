@@ -93,7 +93,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
+    stride = [1] * (nargs+4) * NDIM
     restrict = [1] * nargs
     prolong = [1] * nargs
 
@@ -185,33 +185,51 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if restrict[n] == 1:
+          n_x = 'n_x*stride_'+str(n)+'[0]'
+          n_y = 'n_y*stride_'+str(n)+'[1]'
+          n_z = 'n_z*stride_'+str(n)+'[2]'
+        elif prolong[n] == 1:
+          n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
+          n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
+          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'            
+        else:
+          n_x = 'n_x*'+str(stride[NDIM*n])
+          n_y = 'n_y*'+str(stride[NDIM*n+1])
+          n_z = 'n_z*'+str(stride[NDIM*n+2])
+        s_y = 'xdim'+str(n)+'_'+name
+        s_z = 'xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name
+        s_u = 'xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name
+
         if int(dims[n]) == 1:
+          #DIM 1
           if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) (n_x*'+str(stride[NDIM*n])+'+x)')
+            code('#define OPS_ACC'+str(n)+'(x) ('+n_x+' + x)')
+          #DIM 2
           if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+x+xdim'+str(n)+'_'+name+'*(y))')
+            code('#define OPS_ACC'+str(n)+'(x,y) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+')')
+          #DIM 3
           if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (n_x*'+str(stride[NDIM*n])+'+n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'+n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'+x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
-    code('')
+            code('#define OPS_ACC'+str(n)+'(x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+s_z+')')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           if NDIM==1:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+ '+(x)+(d)*xdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ('+ n_x +'+(x)+(d)*'+s_y+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' +(x)*'+str(dims[n])+'+(d))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) (('+ n_x +' + x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y)))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + (d) * '+s_z+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (('+n_x+' + x + ('+n_y+'+(y))*'+s_y+')*'+str(dims[n])+' + (d))')
           if NDIM==3:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+' + (x)+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+'+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+s_z+'+(d)*'+s_u+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) (n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])+' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+'*'+str(dims[n])+' + (x)*'+str(dims[n])+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+str(dims[n])+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+str(dims[n])+'+(d))')
 
 
 ##########################################################################
@@ -298,6 +316,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
       else:
         code(pre+typs[n]+' * restrict '+arg_list[n]+',')
+    if MULTI_GRID:
+      code('const int * restrict global_idx,')
+    for n in range(0,nargs):
+      if restrict[n] == 1 or prolong[n] == 1:
+        code('const int * restrict stride_'+str(n)+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0, ')
@@ -473,6 +496,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     config.depth = config.depth+2
     for n in range (0, nargs):
       code(typs[n]+' *p_a'+str(n)+',')
+    if MULTI_GRID:
+      code('int *global_idx,')
+    for n in range(0,nargs):
+      if restrict[n] == 1 or prolong[n] == 1:
+        code('int *stride_'+str(n)+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0,')
@@ -725,6 +753,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     config.depth = config.depth+2
     for n in range (0, nargs):
       code('p_a'+str(n)+',')
+    if MULTI_GRID:
+      code('global_idx,')
+    for n in range(0,nargs):
+      if restrict[n] == 1 or prolong[n] == 1:
+        code('stride_'+str(n)+',')
     if arg_idx:
       if NDIM==1:
         code('arg_idx[0],')
