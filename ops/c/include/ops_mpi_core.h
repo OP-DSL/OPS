@@ -186,7 +186,6 @@ char* ops_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 /*******************************************************************************
 * Other External functions
 *******************************************************************************/
-int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 
 
 #ifdef __cplusplus

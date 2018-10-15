@@ -246,6 +246,15 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
   }
 }
 
+int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * start, int * end, int *arg_idx) {
+  for (int n = 0; n < block->dims; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = range[2 * n];
+  }
+  return true;
+}
+
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
   for (int n = 0; n < block->dims; n++) {
     start[n] = range[2 * n];
