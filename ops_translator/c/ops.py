@@ -232,7 +232,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string
+      print('Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string)
       return
 
     if len(dat_args_string.split(',')) == 5:
