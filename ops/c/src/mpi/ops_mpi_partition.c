@@ -1019,7 +1019,7 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 
   sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) -1;
+  if (!sb->owned) return -1;
 
   for ( int n=0; n < block->dims; n++ ){
     int starti = sd->decomp_disp[n];
@@ -1027,36 +1027,12 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
     arg_idx[n] = starti;
     if (sb->id_m[n]!=MPI_PROC_NULL)
       starti -= sd->decomp_disp[n];
+    if (sd->gbl_size[n] == 1) {
+      starti = sb->decomp_disp[n];
+      length = intersection2(range[2*n], range[2*n+1], sb->decomp_disp[n], sb->decomp_disp[n]+sb->decomp_size[n], &starti);
+    }
     start[n] = starti;
     end[n] = starti + length;
   }
-  /*
-  int d_size[OPS_MAX_DIM];
-
-  for ( int n=0; n < block->dims; n++ ){
-    d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
-    start[n] = sd->decomp_disp[n] - dat->d_m[n];
-    end[n] = start[n] + d_size[n];
-
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->base[n] - dat->d_m[n]);
-    }
-    else {
-      end[n] = dat->d_m[n] + dat->base[n] + sd->decomp_size[n] - dat->d_p[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL &&
-       (range[2*n+1] > (sd->decomp_disp[n] + d_size[n] - dat->d_m[n] )))
-      end[n] += (range[2*n+1] - sd->decomp_disp[n] - dat->base[n] - dat->d_m[n] - d_size[n]);
-
-    arg_idx[n] = sd->decomp_disp[n]+start[n]-dat->base[n]-dat->d_m[n];
-  }*/
   return 1;
 }

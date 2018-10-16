@@ -140,11 +140,11 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     ops_kernel_list.push_back(desc);
   else {
     //Prepare the local execution ranges
-    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    if (!ops_get_abs_owned_range(desc->block, desc->range, start, end, disp)) return;
+    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM], arg_idx[OPS_MAX_DIM];
+    if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
     for (int d = 0; d < desc->block->dims; d++){
-      desc->range[2*d+0] = start[d] - disp[d];
-      desc->range[2*d+1] = end[d] - disp[d];
+      desc->range[2*d+0] = start[d];
+      desc->range[2*d+1] = end[d];
     }
     //If not tiling, I have to do the halo exchanges here
     double t1,t2,c;
