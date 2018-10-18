@@ -33,7 +33,7 @@ OPS MPI_seq code generator
 
 This routine is called by ops.py which parses the input files
 
-It produces a file xxx_seq_kernel.cpp for each kernel,
+It produces a file xxx_cpu_kernel.cpp for each kernel,
 plus a master kernel file
 
 """
@@ -275,15 +275,30 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     comm('')
     comm(' host stub function')
+    code('#ifndef OPS_LAZY')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    text = ''
+    for n in range (0, nargs):
+      text = text +' ops_arg arg'+str(n)
+      if nargs <> 1 and n != nargs-1:
+        text = text +','
+      else:
+        text = text +') {'
+      if n%n_per_line == 3 and n <> nargs-1:
+         text = text +'\n'
+    code(text);
+    code('#else')
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('ops_block block = desc->block;')
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
-
+    
     for n in range (0, nargs):
       code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+
+    code('#endif')
 
     code('');
     comm('Timing')
@@ -304,27 +319,18 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         text = text +'\n                    '
     code(text);
     code('')
-    code('#ifdef CHECKPOINTING')
+    code('#if defined(CHECKPOINTING) && !defined(OPS_LAZY)')
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
 
     if gen_full_code:
       IF('OPS_diags > 1')
+      code('ops_timing_realloc('+str(nk)+',"'+name+'");')
       code('OPS_kernels['+str(nk)+'].count++;')
       code('ops_timers_core(&__c2,&__t2);')
       ENDIF()
       code('')
-
-
-    comm('compute locally allocated range for the sub-block')
-    code('int start['+str(NDIM)+'];')
-    code('int end['+str(NDIM)+'];')
-    code('')
-    FOR('n','0',str(NDIM))
-    code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    ENDFOR()
-    code('')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
@@ -332,8 +338,23 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     code('')
-    if arg_idx!=-1 or MULTI_GRID:
+
+    comm('compute locally allocated range for the sub-block')
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
+    if arg_idx<>-1 or MULTI_GRID:
       code('int arg_idx['+str(NDIM)+'];')
+
+    code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    ENDFOR()
+    code('#else')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+    code('#endif')
+
+    code('')
+    if arg_idx!=-1 or MULTI_GRID:
       code('#ifdef OPS_MPI')
       arg_write = -1
       for n in range(0,nargs):
@@ -352,6 +373,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = 0;')
       code('#endif //OPS_MPI')
+
 
     code('')
     comm("initialize global variable with the dimension of dats")
@@ -421,12 +443,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if assume_same:
       code('__assume(xdim0_'+name+'%16==0);')
 
+    code('#ifndef OPS_LAZY')
+    comm('Halo Exchanges')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('#endif')
+    code('')
     if gen_full_code==1:
-      # comm('Halo Exchanges')
-      # code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-      # code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-      # code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-      # code('')
       IF('OPS_diags > 1')
       code('ops_timers_core(&__c1,&__t1);')
       code('OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
@@ -538,12 +562,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('OPS_kernels['+str(nk)+'].time += __t2-__t1;')
       ENDIF()
 
-      # code('ops_set_dirtybit_host(args, '+str(nargs)+');')
-      # for n in range (0, nargs):
-      #   if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-      #     #code('ops_set_halo_dirtybit(&args['+str(n)+']);')
-      #     code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+    code('#ifndef OPS_LAZY')
+    code('ops_set_dirtybit_host(args, '+str(nargs)+');')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+    code('#endif')
 
+    if gen_full_code==1:
       code('')
       IF('OPS_diags > 1')
       comm('Update kernel record')
@@ -564,6 +590,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     code('')
+    code('#ifdef OPS_LAZY')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
@@ -613,15 +640,16 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
     ENDIF()
     code('ops_enqueue_kernel(desc);')
-    depth = 0
+    config.depth = 0
     code('}')
+    code('#endif')
 
 ##########################################################################
 #  output individual kernel file
 ##########################################################################
-    if not os.path.exists('./Tiled'):
-      os.makedirs('./Tiled')
-    fid = open('./Tiled/'+name+'_seq_kernel.cpp','w')
+    if not os.path.exists('./MPI_OpenMP'):
+      os.makedirs('./MPI_OpenMP')
+    fid = open('./MPI_OpenMP/'+name+'_cpu_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
     fid.write(config.file_text)
@@ -671,11 +699,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
-      code('#include "'+kernels[nk]['name']+'_seq_kernel.cpp"')
+      code('#include "'+kernels[nk]['name']+'_cpu_kernel.cpp"')
       kernel_name_list.append(kernels[nk]['name'])
 
   master = master.split('.')[0]
-  fid = open('./Tiled/'+master.split('.')[0]+'_seq_kernels.cpp','w')
+  fid = open('./MPI_OpenMP/'+master.split('.')[0]+'_cpu_kernels.cpp','w')
   fid.write('//\n// auto-generated by ops.py//\n\n')
   fid.write(config.file_text)
   fid.close()
