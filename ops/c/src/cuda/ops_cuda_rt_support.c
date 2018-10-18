@@ -44,6 +44,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/mman.h>
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
@@ -140,8 +142,36 @@ void cutilDeviceInit(const int argc, const char **argv) {
 
 void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   // if (!OPS_hybrid_gpu) return;
-  cutilSafeCall(cudaMalloc(data_d, size));
-  cutilSafeCall(cudaMemcpy(*data_d, *data_h, size, cudaMemcpyHostToDevice));
+
+
+  if ( *data_d == NULL )
+      cutilSafeCall(cudaMalloc(data_d, size));
+
+  if (data_h == NULL || *data_h == NULL) {
+    cutilSafeCall(cudaMalloc(data_d, size));
+    cutilSafeCall(cudaMemset(*data_d, 0, size));
+    cutilSafeCall(cudaDeviceSynchronize());
+    return;
+  }
+
+  static void* stage = NULL;
+  static size_t stage_size = 0;
+
+  void *src = NULL;
+  if ( size < 4*1024*1024 ) {
+      if ( size > stage_size ) {
+          if ( stage ) cudaFreeHost(stage);
+          stage_size = size;
+          cutilSafeCall(cudaMallocHost(&stage, stage_size));
+      }
+
+      memcpy(stage, *data_h, size);
+      src = stage;
+  } else {
+      src = *data_h;
+  }
+
+  cutilSafeCall(cudaMemcpy(*data_d, src, size, cudaMemcpyHostToDevice));
   cutilSafeCall(cudaDeviceSynchronize());
 }
 

@@ -502,62 +502,11 @@ def ops_gen_mpi_openmp(master, date, consts, kernels, soa_set):
     if NDIM==2:
       FOR('n_y','start_i','finish_i')
     if NDIM==1:
-      FOR('n_x','start_i','start_i+(finish_i-start_i)/SIMD_VEC')
+      FOR('n_x','start_i','finish_i')
 
     if NDIM > 1:
-      FOR('n_x','start[0]','start[0]+(end[0]-start[0])/SIMD_VEC')
+      FOR('n_x','start[0]','end[0]')
 
-
-    comm('call kernel function, passing in pointers to data -vectorised')
-    if reduction == 0 and arg_idx == 0:
-      code('#pragma simd')
-    FOR('i','0','SIMD_VEC')
-    text = name+'( '
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if accs[n] <> OPS_READ:
-          if soa_set:
-            text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
-          else:
-            text = text +' ('+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
-        else:
-          if soa_set:
-            text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])
-          else:
-            text = text +' (const '+typs[n]+' * )p_a['+str(n)+']+ i*'+str(stride[NDIM*n])+'*'+str(dims[n])
-      elif arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
-          text = text +' &arg_gbl'+str(n)+'[64*thr]'
-        else:
-          text = text +' ('+typs[n]+' * )p_a['+str(n)+']'
-      elif arg_typ[n] == 'ops_arg_idx':
-        text = text +' arg_idx'
-
-      if nargs <> 1 and n != nargs-1:
-        text = text + ','
-      else:
-        text = text +' );\n'
-      if n%n_per_line == 2 and n <> nargs-1:
-        text = text +'\n          '
-    code(text);
-    if arg_idx==1:
-      code('arg_idx[0]++;')
-    ENDFOR()
-    code('')
-
-
-    comm('shift pointers to data x direction')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-          code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0)*SIMD_VEC;')
-
-    ENDFOR()
-    code('')
-
-    if NDIM==1:
-      FOR('n_x','start_i+((finish_i-start_i)/SIMD_VEC)*SIMD_VEC','finish_i')
-    if NDIM > 1:
-      FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
 
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
