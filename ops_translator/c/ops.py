@@ -61,10 +61,8 @@ import re
 import datetime
 
 """import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
-from ops_gen_mpi import ops_gen_mpi
 from ops_gen_mpi_inline import ops_gen_mpi_inline
 from ops_gen_mpi_lazy import ops_gen_mpi_lazy
-from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
@@ -796,10 +794,8 @@ def main(source_files):
   #
 
 
-  ops_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)

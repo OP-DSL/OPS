@@ -3,6 +3,7 @@
 
 //header
 #define OPS_2D
+#define OPS_ACC_MACROS
 #define OPS_ACC_MD_MACROS
 #include "ops_lib_cpp.h"
 #ifdef OPS_MPI
@@ -14,7 +15,7 @@
 void ops_init_backend() {}
 
 //user kernel files
-#include "mgrid_populate_kernel_1_seq_kernel.cpp"
-#include "mgrid_prolong_kernel_seq_kernel.cpp"
-#include "mgrid_populate_kernel_3_seq_kernel.cpp"
-#include "mgrid_restrict_kernel_seq_kernel.cpp"
+#include "mgrid_populate_kernel_1_cpu_kernel.cpp"
+#include "mgrid_prolong_kernel_cpu_kernel.cpp"
+#include "mgrid_populate_kernel_3_cpu_kernel.cpp"
+#include "mgrid_restrict_kernel_cpu_kernel.cpp"
