@@ -958,7 +958,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
        code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
        code('')
 
-
+    IF('globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0')
     #upload gloabal constants to device
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
@@ -1037,6 +1037,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     code('')
     comm('call/enque opencl kernel wrapper function')
     code('clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
+    ENDIF()
     IF('OPS_diags>1')
     code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
     ENDIF()

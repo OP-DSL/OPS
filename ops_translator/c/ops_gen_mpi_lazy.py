@@ -342,8 +342,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
-    if arg_idx<>-1 or MULTI_GRID:
-      code('int arg_idx['+str(NDIM)+'];')
+    if not (arg_idx<>-1 or MULTI_GRID):
+      code('#ifdef OPS_MPI')
+    code('int arg_idx['+str(NDIM)+'];')
+    if not (arg_idx<>-1 or MULTI_GRID):
+      code('#endif')
 
     code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
     FOR('n','0',str(NDIM))
