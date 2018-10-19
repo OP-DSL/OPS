@@ -34,6 +34,9 @@ else
 endif
 
 TRID_INSTALL_PATH ?= /home/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
+# This refers to the location of the submodule in the "master" pdetk repo
+#TRID_INSTALL_PATH ?= ../../../tridsolver/scalar
+
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
