@@ -422,6 +422,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
+
+      if arg_idx <> -1:
+        if NDIM==1:
+          code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
+        elif NDIM==2:
+          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
+        elif NDIM==3:
+          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
       code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
@@ -429,18 +437,18 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         line3 = line3 +arg_list[n]+','
     if NDIM>1:
       code('#pragma loop_count(10000)')
-      code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
+      code('#pragma omp simd'+line+' aligned('+clean_type(line3[:-1])+')')
+      code('#elif defined(__clang__)')
+      code('#pragma clang loop vectorize(assume_safety)')
+      code('#elif defined(__GNUC__)')
+      code('#pragma simd')
+      code('#pragma GCC ivdep')
       code('#else')
       code('#pragma simd')
       code('#endif')
     FOR('n_x','start[0]','end[0]')
     if arg_idx <> -1:
-      if NDIM==1:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x};')
-      elif NDIM==2:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
-      elif NDIM==3:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+      code(clean_type(arg_list[arg_idx])+'[0] = arg_idx[0]+n_x;')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
