@@ -6,9 +6,9 @@
 int xdim0_set_val;
 int ydim0_set_val;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_set_val*1+n_z*xdim0_set_val*ydim0_set_val*1+x+xdim0_set_val*(y)+xdim0_set_val*ydim0_set_val*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_set_val +                             \
+   (n_z * 1 + (z)) * xdim0_set_val * ydim0_set_val)
 //user function
 
 

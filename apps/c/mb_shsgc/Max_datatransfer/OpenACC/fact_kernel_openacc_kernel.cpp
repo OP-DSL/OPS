@@ -44,44 +44,26 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim,
   int end[1];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[1];
+  int arg_idx_base[1];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 2, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 1; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 1; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  if (xdim0 != xdim0_fact_kernel_h || xdim1 != xdim1_fact_kernel_h) {
-    xdim0_fact_kernel = xdim0;
-    xdim0_fact_kernel_h = xdim0;
-    xdim1_fact_kernel = xdim1;
-    xdim1_fact_kernel_h = xdim1;
+  for (int n = 0; n < 1; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
@@ -101,6 +83,20 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim,
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  if (xdim0 != xdim0_fact_kernel_h || xdim1 != xdim1_fact_kernel_h) {
+    xdim0_fact_kernel = xdim0;
+    xdim0_fact_kernel_h = xdim0;
+    xdim1_fact_kernel = xdim1;
+    xdim1_fact_kernel_h = xdim1;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 2);
