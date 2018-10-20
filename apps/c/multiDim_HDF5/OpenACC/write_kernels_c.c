@@ -5,5 +5,5 @@
 
 #include <openacc.h>
 
-// user kernel files
+//user kernel files
 #include "write_kernel_openacc_kernel_c.c"
