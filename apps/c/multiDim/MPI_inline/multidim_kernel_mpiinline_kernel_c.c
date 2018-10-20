@@ -6,9 +6,9 @@
 int xdim0_multidim_kernel;
 int ydim0_multidim_kernel;
 
-
-
-#define OPS_ACC_MD0(d,x,y) (n_x*1 + n_y*xdim0_multidim_kernel*1 + (x)+(d)*xdim0_multidim_kernel*ydim0_multidim_kernel+(xdim0_multidim_kernel*(y)))
+#define OPS_ACC_MD0(d, x, y)                                                   \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_multidim_kernel +                     \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel)
 //user function
 
 
