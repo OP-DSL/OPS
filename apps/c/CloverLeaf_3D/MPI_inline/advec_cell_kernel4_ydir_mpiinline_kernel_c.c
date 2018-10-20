@@ -26,19 +26,50 @@ int ydim9_advec_cell_kernel4_ydir;
 int xdim10_advec_cell_kernel4_ydir;
 int ydim10_advec_cell_kernel4_ydir;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_advec_cell_kernel4_ydir*1+n_z*xdim0_advec_cell_kernel4_ydir*ydim0_advec_cell_kernel4_ydir*1+x+xdim0_advec_cell_kernel4_ydir*(y)+xdim0_advec_cell_kernel4_ydir*ydim0_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_advec_cell_kernel4_ydir*1+n_z*xdim1_advec_cell_kernel4_ydir*ydim1_advec_cell_kernel4_ydir*1+x+xdim1_advec_cell_kernel4_ydir*(y)+xdim1_advec_cell_kernel4_ydir*ydim1_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_advec_cell_kernel4_ydir*1+n_z*xdim2_advec_cell_kernel4_ydir*ydim2_advec_cell_kernel4_ydir*1+x+xdim2_advec_cell_kernel4_ydir*(y)+xdim2_advec_cell_kernel4_ydir*ydim2_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_advec_cell_kernel4_ydir*1+n_z*xdim3_advec_cell_kernel4_ydir*ydim3_advec_cell_kernel4_ydir*1+x+xdim3_advec_cell_kernel4_ydir*(y)+xdim3_advec_cell_kernel4_ydir*ydim3_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_advec_cell_kernel4_ydir*1+n_z*xdim4_advec_cell_kernel4_ydir*ydim4_advec_cell_kernel4_ydir*1+x+xdim4_advec_cell_kernel4_ydir*(y)+xdim4_advec_cell_kernel4_ydir*ydim4_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_advec_cell_kernel4_ydir*1+n_z*xdim5_advec_cell_kernel4_ydir*ydim5_advec_cell_kernel4_ydir*1+x+xdim5_advec_cell_kernel4_ydir*(y)+xdim5_advec_cell_kernel4_ydir*ydim5_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_advec_cell_kernel4_ydir*1+n_z*xdim6_advec_cell_kernel4_ydir*ydim6_advec_cell_kernel4_ydir*1+x+xdim6_advec_cell_kernel4_ydir*(y)+xdim6_advec_cell_kernel4_ydir*ydim6_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC7(x,y,z) (n_x*1+n_y*xdim7_advec_cell_kernel4_ydir*1+n_z*xdim7_advec_cell_kernel4_ydir*ydim7_advec_cell_kernel4_ydir*1+x+xdim7_advec_cell_kernel4_ydir*(y)+xdim7_advec_cell_kernel4_ydir*ydim7_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC8(x,y,z) (n_x*1+n_y*xdim8_advec_cell_kernel4_ydir*1+n_z*xdim8_advec_cell_kernel4_ydir*ydim8_advec_cell_kernel4_ydir*1+x+xdim8_advec_cell_kernel4_ydir*(y)+xdim8_advec_cell_kernel4_ydir*ydim8_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC9(x,y,z) (n_x*1+n_y*xdim9_advec_cell_kernel4_ydir*1+n_z*xdim9_advec_cell_kernel4_ydir*ydim9_advec_cell_kernel4_ydir*1+x+xdim9_advec_cell_kernel4_ydir*(y)+xdim9_advec_cell_kernel4_ydir*ydim9_advec_cell_kernel4_ydir*(z))
-#define OPS_ACC10(x,y,z) (n_x*1+n_y*xdim10_advec_cell_kernel4_ydir*1+n_z*xdim10_advec_cell_kernel4_ydir*ydim10_advec_cell_kernel4_ydir*1+x+xdim10_advec_cell_kernel4_ydir*(y)+xdim10_advec_cell_kernel4_ydir*ydim10_advec_cell_kernel4_ydir*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim0_advec_cell_kernel4_ydir *                           \
+       ydim0_advec_cell_kernel4_ydir)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim1_advec_cell_kernel4_ydir *                           \
+       ydim1_advec_cell_kernel4_ydir)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim2_advec_cell_kernel4_ydir *                           \
+       ydim2_advec_cell_kernel4_ydir)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim3_advec_cell_kernel4_ydir *                           \
+       ydim3_advec_cell_kernel4_ydir)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim4_advec_cell_kernel4_ydir *                           \
+       ydim4_advec_cell_kernel4_ydir)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim5_advec_cell_kernel4_ydir *                           \
+       ydim5_advec_cell_kernel4_ydir)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim6_advec_cell_kernel4_ydir *                           \
+       ydim6_advec_cell_kernel4_ydir)
+#define OPS_ACC7(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim7_advec_cell_kernel4_ydir *                           \
+       ydim7_advec_cell_kernel4_ydir)
+#define OPS_ACC8(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim8_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim8_advec_cell_kernel4_ydir *                           \
+       ydim8_advec_cell_kernel4_ydir)
+#define OPS_ACC9(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_advec_cell_kernel4_ydir +             \
+   (n_z * 1 + (z)) * xdim9_advec_cell_kernel4_ydir *                           \
+       ydim9_advec_cell_kernel4_ydir)
+#define OPS_ACC10(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_advec_cell_kernel4_ydir +            \
+   (n_z * 1 + (z)) * xdim10_advec_cell_kernel4_ydir *                          \
+       ydim10_advec_cell_kernel4_ydir)
 //user function
 
 

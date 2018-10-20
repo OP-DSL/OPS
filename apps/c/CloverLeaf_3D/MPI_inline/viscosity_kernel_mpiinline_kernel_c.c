@@ -28,20 +28,42 @@ int ydim10_viscosity_kernel;
 int xdim11_viscosity_kernel;
 int ydim11_viscosity_kernel;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_viscosity_kernel*1+n_z*xdim0_viscosity_kernel*ydim0_viscosity_kernel*1+x+xdim0_viscosity_kernel*(y)+xdim0_viscosity_kernel*ydim0_viscosity_kernel*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_viscosity_kernel*1+n_z*xdim1_viscosity_kernel*ydim1_viscosity_kernel*1+x+xdim1_viscosity_kernel*(y)+xdim1_viscosity_kernel*ydim1_viscosity_kernel*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_viscosity_kernel*0+n_z*xdim2_viscosity_kernel*ydim2_viscosity_kernel*0+x+xdim2_viscosity_kernel*(y)+xdim2_viscosity_kernel*ydim2_viscosity_kernel*(z))
-#define OPS_ACC3(x,y,z) (n_x*0+n_y*xdim3_viscosity_kernel*1+n_z*xdim3_viscosity_kernel*ydim3_viscosity_kernel*0+x+xdim3_viscosity_kernel*(y)+xdim3_viscosity_kernel*ydim3_viscosity_kernel*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_viscosity_kernel*1+n_z*xdim4_viscosity_kernel*ydim4_viscosity_kernel*1+x+xdim4_viscosity_kernel*(y)+xdim4_viscosity_kernel*ydim4_viscosity_kernel*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_viscosity_kernel*1+n_z*xdim5_viscosity_kernel*ydim5_viscosity_kernel*1+x+xdim5_viscosity_kernel*(y)+xdim5_viscosity_kernel*ydim5_viscosity_kernel*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_viscosity_kernel*1+n_z*xdim6_viscosity_kernel*ydim6_viscosity_kernel*1+x+xdim6_viscosity_kernel*(y)+xdim6_viscosity_kernel*ydim6_viscosity_kernel*(z))
-#define OPS_ACC7(x,y,z) (n_x*1+n_y*xdim7_viscosity_kernel*1+n_z*xdim7_viscosity_kernel*ydim7_viscosity_kernel*1+x+xdim7_viscosity_kernel*(y)+xdim7_viscosity_kernel*ydim7_viscosity_kernel*(z))
-#define OPS_ACC8(x,y,z) (n_x*0+n_y*xdim8_viscosity_kernel*0+n_z*xdim8_viscosity_kernel*ydim8_viscosity_kernel*1+x+xdim8_viscosity_kernel*(y)+xdim8_viscosity_kernel*ydim8_viscosity_kernel*(z))
-#define OPS_ACC9(x,y,z) (n_x*1+n_y*xdim9_viscosity_kernel*1+n_z*xdim9_viscosity_kernel*ydim9_viscosity_kernel*1+x+xdim9_viscosity_kernel*(y)+xdim9_viscosity_kernel*ydim9_viscosity_kernel*(z))
-#define OPS_ACC10(x,y,z) (n_x*1+n_y*xdim10_viscosity_kernel*1+n_z*xdim10_viscosity_kernel*ydim10_viscosity_kernel*1+x+xdim10_viscosity_kernel*(y)+xdim10_viscosity_kernel*ydim10_viscosity_kernel*(z))
-#define OPS_ACC11(x,y,z) (n_x*1+n_y*xdim11_viscosity_kernel*1+n_z*xdim11_viscosity_kernel*ydim11_viscosity_kernel*1+x+xdim11_viscosity_kernel*(y)+xdim11_viscosity_kernel*ydim11_viscosity_kernel*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim0_viscosity_kernel * ydim0_viscosity_kernel)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim1_viscosity_kernel * ydim1_viscosity_kernel)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim2_viscosity_kernel +                    \
+   (n_z * 0 + (z)) * xdim2_viscosity_kernel * ydim2_viscosity_kernel)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim3_viscosity_kernel +                    \
+   (n_z * 0 + (z)) * xdim3_viscosity_kernel * ydim3_viscosity_kernel)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim4_viscosity_kernel * ydim4_viscosity_kernel)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim5_viscosity_kernel * ydim5_viscosity_kernel)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim6_viscosity_kernel * ydim6_viscosity_kernel)
+#define OPS_ACC7(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim7_viscosity_kernel * ydim7_viscosity_kernel)
+#define OPS_ACC8(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 0 + (y)) * xdim8_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim8_viscosity_kernel * ydim8_viscosity_kernel)
+#define OPS_ACC9(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_viscosity_kernel +                    \
+   (n_z * 1 + (z)) * xdim9_viscosity_kernel * ydim9_viscosity_kernel)
+#define OPS_ACC10(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_viscosity_kernel +                   \
+   (n_z * 1 + (z)) * xdim10_viscosity_kernel * ydim10_viscosity_kernel)
+#define OPS_ACC11(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim11_viscosity_kernel +                   \
+   (n_z * 1 + (z)) * xdim11_viscosity_kernel * ydim11_viscosity_kernel)
 //user function
 
 

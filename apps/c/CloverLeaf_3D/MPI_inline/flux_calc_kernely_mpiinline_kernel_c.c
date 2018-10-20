@@ -12,12 +12,18 @@ int ydim2_flux_calc_kernely;
 int xdim3_flux_calc_kernely;
 int ydim3_flux_calc_kernely;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_flux_calc_kernely*1+n_z*xdim0_flux_calc_kernely*ydim0_flux_calc_kernely*1+x+xdim0_flux_calc_kernely*(y)+xdim0_flux_calc_kernely*ydim0_flux_calc_kernely*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_flux_calc_kernely*1+n_z*xdim1_flux_calc_kernely*ydim1_flux_calc_kernely*1+x+xdim1_flux_calc_kernely*(y)+xdim1_flux_calc_kernely*ydim1_flux_calc_kernely*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_flux_calc_kernely*1+n_z*xdim2_flux_calc_kernely*ydim2_flux_calc_kernely*1+x+xdim2_flux_calc_kernely*(y)+xdim2_flux_calc_kernely*ydim2_flux_calc_kernely*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_flux_calc_kernely*1+n_z*xdim3_flux_calc_kernely*ydim3_flux_calc_kernely*1+x+xdim3_flux_calc_kernely*(y)+xdim3_flux_calc_kernely*ydim3_flux_calc_kernely*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_flux_calc_kernely +                   \
+   (n_z * 1 + (z)) * xdim0_flux_calc_kernely * ydim0_flux_calc_kernely)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_flux_calc_kernely +                   \
+   (n_z * 1 + (z)) * xdim1_flux_calc_kernely * ydim1_flux_calc_kernely)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_flux_calc_kernely +                   \
+   (n_z * 1 + (z)) * xdim2_flux_calc_kernely * ydim2_flux_calc_kernely)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_flux_calc_kernely +                   \
+   (n_z * 1 + (z)) * xdim3_flux_calc_kernely * ydim3_flux_calc_kernely)
 //user function
 
 

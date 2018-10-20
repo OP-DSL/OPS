@@ -11,28 +11,13 @@ int xdim4_viscosity_kernel;
 int xdim5_viscosity_kernel;
 int xdim6_viscosity_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_viscosity_kernel * 1 + x +                            \
-   xdim0_viscosity_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_viscosity_kernel * 1 + x +                            \
-   xdim1_viscosity_kernel * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_viscosity_kernel * 0 + x +                            \
-   xdim2_viscosity_kernel * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 0 + n_y * xdim3_viscosity_kernel * 1 + x +                            \
-   xdim3_viscosity_kernel * (y))
-#define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_viscosity_kernel * 1 + x +                            \
-   xdim4_viscosity_kernel * (y))
-#define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_viscosity_kernel * 1 + x +                            \
-   xdim5_viscosity_kernel * (y))
-#define OPS_ACC6(x, y)                                                         \
-  (n_x * 1 + n_y * xdim6_viscosity_kernel * 1 + x +                            \
-   xdim6_viscosity_kernel * (y))
-
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_viscosity_kernel)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_viscosity_kernel)
+#define OPS_ACC2(x, y) (n_x * 1 + x + (n_y * 0 + (y)) * xdim2_viscosity_kernel)
+#define OPS_ACC3(x, y) (n_x * 0 + x + (n_y * 1 + (y)) * xdim3_viscosity_kernel)
+#define OPS_ACC4(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_viscosity_kernel)
+#define OPS_ACC5(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_viscosity_kernel)
+#define OPS_ACC6(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_viscosity_kernel)
 // user function
 
 void viscosity_kernel_c_wrapper(

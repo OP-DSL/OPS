@@ -8,15 +8,11 @@ int xdim1_initialise_chunk_kernel_y;
 int xdim2_initialise_chunk_kernel_y;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 0 + n_y * xdim0_initialise_chunk_kernel_y * 1 + x +                   \
-   xdim0_initialise_chunk_kernel_y * (y))
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim0_initialise_chunk_kernel_y)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_initialise_chunk_kernel_y * 1 + x +                   \
-   xdim1_initialise_chunk_kernel_y * (y))
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_initialise_chunk_kernel_y)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 0 + n_y * xdim2_initialise_chunk_kernel_y * 1 + x +                   \
-   xdim2_initialise_chunk_kernel_y * (y))
-
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim2_initialise_chunk_kernel_y)
 // user function
 
 void initialise_chunk_kernel_y_c_wrapper(double *restrict vertexy,

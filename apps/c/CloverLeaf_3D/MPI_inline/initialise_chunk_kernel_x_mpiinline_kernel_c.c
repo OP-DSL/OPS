@@ -10,11 +10,18 @@ int ydim1_initialise_chunk_kernel_x;
 int xdim2_initialise_chunk_kernel_x;
 int ydim2_initialise_chunk_kernel_x;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_initialise_chunk_kernel_x*0+n_z*xdim0_initialise_chunk_kernel_x*ydim0_initialise_chunk_kernel_x*0+x+xdim0_initialise_chunk_kernel_x*(y)+xdim0_initialise_chunk_kernel_x*ydim0_initialise_chunk_kernel_x*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_initialise_chunk_kernel_x*0+n_z*xdim1_initialise_chunk_kernel_x*ydim1_initialise_chunk_kernel_x*0+x+xdim1_initialise_chunk_kernel_x*(y)+xdim1_initialise_chunk_kernel_x*ydim1_initialise_chunk_kernel_x*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_initialise_chunk_kernel_x*0+n_z*xdim2_initialise_chunk_kernel_x*ydim2_initialise_chunk_kernel_x*0+x+xdim2_initialise_chunk_kernel_x*(y)+xdim2_initialise_chunk_kernel_x*ydim2_initialise_chunk_kernel_x*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_initialise_chunk_kernel_x +           \
+   (n_z * 0 + (z)) * xdim0_initialise_chunk_kernel_x *                         \
+       ydim0_initialise_chunk_kernel_x)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim1_initialise_chunk_kernel_x +           \
+   (n_z * 0 + (z)) * xdim1_initialise_chunk_kernel_x *                         \
+       ydim1_initialise_chunk_kernel_x)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim2_initialise_chunk_kernel_x +           \
+   (n_z * 0 + (z)) * xdim2_initialise_chunk_kernel_x *                         \
+       ydim2_initialise_chunk_kernel_x)
 //user function
 
 

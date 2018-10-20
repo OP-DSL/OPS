@@ -8,10 +8,14 @@ int ydim0_advec_mom_kernel_mass_flux_x;
 int xdim1_advec_mom_kernel_mass_flux_x;
 int ydim1_advec_mom_kernel_mass_flux_x;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_advec_mom_kernel_mass_flux_x*1+n_z*xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*1+x+xdim0_advec_mom_kernel_mass_flux_x*(y)+xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_advec_mom_kernel_mass_flux_x*1+n_z*xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*1+x+xdim1_advec_mom_kernel_mass_flux_x*(y)+xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_mom_kernel_mass_flux_x +        \
+   (n_z * 1 + (z)) * xdim0_advec_mom_kernel_mass_flux_x *                      \
+       ydim0_advec_mom_kernel_mass_flux_x)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_mom_kernel_mass_flux_x +        \
+   (n_z * 1 + (z)) * xdim1_advec_mom_kernel_mass_flux_x *                      \
+       ydim1_advec_mom_kernel_mass_flux_x)
 //user function
 
 

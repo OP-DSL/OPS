@@ -20,16 +20,38 @@ int ydim6_advec_cell_kernel3_xdir;
 int xdim7_advec_cell_kernel3_xdir;
 int ydim7_advec_cell_kernel3_xdir;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_advec_cell_kernel3_xdir*1+n_z*xdim0_advec_cell_kernel3_xdir*ydim0_advec_cell_kernel3_xdir*1+x+xdim0_advec_cell_kernel3_xdir*(y)+xdim0_advec_cell_kernel3_xdir*ydim0_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_advec_cell_kernel3_xdir*1+n_z*xdim1_advec_cell_kernel3_xdir*ydim1_advec_cell_kernel3_xdir*1+x+xdim1_advec_cell_kernel3_xdir*(y)+xdim1_advec_cell_kernel3_xdir*ydim1_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_advec_cell_kernel3_xdir*0+n_z*xdim2_advec_cell_kernel3_xdir*ydim2_advec_cell_kernel3_xdir*0+x+xdim2_advec_cell_kernel3_xdir*(y)+xdim2_advec_cell_kernel3_xdir*ydim2_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_advec_cell_kernel3_xdir*0+n_z*xdim3_advec_cell_kernel3_xdir*ydim3_advec_cell_kernel3_xdir*0+x+xdim3_advec_cell_kernel3_xdir*(y)+xdim3_advec_cell_kernel3_xdir*ydim3_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_advec_cell_kernel3_xdir*1+n_z*xdim4_advec_cell_kernel3_xdir*ydim4_advec_cell_kernel3_xdir*1+x+xdim4_advec_cell_kernel3_xdir*(y)+xdim4_advec_cell_kernel3_xdir*ydim4_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_advec_cell_kernel3_xdir*1+n_z*xdim5_advec_cell_kernel3_xdir*ydim5_advec_cell_kernel3_xdir*1+x+xdim5_advec_cell_kernel3_xdir*(y)+xdim5_advec_cell_kernel3_xdir*ydim5_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_advec_cell_kernel3_xdir*1+n_z*xdim6_advec_cell_kernel3_xdir*ydim6_advec_cell_kernel3_xdir*1+x+xdim6_advec_cell_kernel3_xdir*(y)+xdim6_advec_cell_kernel3_xdir*ydim6_advec_cell_kernel3_xdir*(z))
-#define OPS_ACC7(x,y,z) (n_x*1+n_y*xdim7_advec_cell_kernel3_xdir*1+n_z*xdim7_advec_cell_kernel3_xdir*ydim7_advec_cell_kernel3_xdir*1+x+xdim7_advec_cell_kernel3_xdir*(y)+xdim7_advec_cell_kernel3_xdir*ydim7_advec_cell_kernel3_xdir*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim0_advec_cell_kernel3_xdir *                           \
+       ydim0_advec_cell_kernel3_xdir)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim1_advec_cell_kernel3_xdir *                           \
+       ydim1_advec_cell_kernel3_xdir)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim2_advec_cell_kernel3_xdir +             \
+   (n_z * 0 + (z)) * xdim2_advec_cell_kernel3_xdir *                           \
+       ydim2_advec_cell_kernel3_xdir)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim3_advec_cell_kernel3_xdir +             \
+   (n_z * 0 + (z)) * xdim3_advec_cell_kernel3_xdir *                           \
+       ydim3_advec_cell_kernel3_xdir)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim4_advec_cell_kernel3_xdir *                           \
+       ydim4_advec_cell_kernel3_xdir)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim5_advec_cell_kernel3_xdir *                           \
+       ydim5_advec_cell_kernel3_xdir)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim6_advec_cell_kernel3_xdir *                           \
+       ydim6_advec_cell_kernel3_xdir)
+#define OPS_ACC7(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_advec_cell_kernel3_xdir +             \
+   (n_z * 1 + (z)) * xdim7_advec_cell_kernel3_xdir *                           \
+       ydim7_advec_cell_kernel3_xdir)
 //user function
 
 

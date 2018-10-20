@@ -15,29 +15,17 @@ int xdim8_calc_dt_kernel;
 int xdim9_calc_dt_kernel;
 int xdim10_calc_dt_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_calc_dt_kernel * 0 + x + xdim0_calc_dt_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_calc_dt_kernel * 1 + x + xdim1_calc_dt_kernel * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_calc_dt_kernel * 1 + x + xdim2_calc_dt_kernel * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_calc_dt_kernel * 1 + x + xdim3_calc_dt_kernel * (y))
-#define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_calc_dt_kernel * 1 + x + xdim4_calc_dt_kernel * (y))
-#define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_calc_dt_kernel * 1 + x + xdim5_calc_dt_kernel * (y))
-#define OPS_ACC6(x, y)                                                         \
-  (n_x * 1 + n_y * xdim6_calc_dt_kernel * 1 + x + xdim6_calc_dt_kernel * (y))
-#define OPS_ACC7(x, y)                                                         \
-  (n_x * 1 + n_y * xdim7_calc_dt_kernel * 1 + x + xdim7_calc_dt_kernel * (y))
-#define OPS_ACC8(x, y)                                                         \
-  (n_x * 1 + n_y * xdim8_calc_dt_kernel * 1 + x + xdim8_calc_dt_kernel * (y))
-#define OPS_ACC9(x, y)                                                         \
-  (n_x * 1 + n_y * xdim9_calc_dt_kernel * 1 + x + xdim9_calc_dt_kernel * (y))
-#define OPS_ACC10(x, y)                                                        \
-  (n_x * 1 + n_y * xdim10_calc_dt_kernel * 1 + x + xdim10_calc_dt_kernel * (y))
-
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_calc_dt_kernel)
+#define OPS_ACC1(x, y) (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_calc_dt_kernel)
+#define OPS_ACC2(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_calc_dt_kernel)
+#define OPS_ACC3(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_calc_dt_kernel)
+#define OPS_ACC4(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_calc_dt_kernel)
+#define OPS_ACC5(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_calc_dt_kernel)
+#define OPS_ACC6(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_calc_dt_kernel)
+#define OPS_ACC7(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_calc_dt_kernel)
+#define OPS_ACC8(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim8_calc_dt_kernel)
+#define OPS_ACC9(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_calc_dt_kernel)
+#define OPS_ACC10(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_calc_dt_kernel)
 // user function
 
 void calc_dt_kernel_c_wrapper(

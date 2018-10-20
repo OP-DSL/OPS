@@ -12,12 +12,18 @@ int ydim2_reset_field_kernel1;
 int xdim3_reset_field_kernel1;
 int ydim3_reset_field_kernel1;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_reset_field_kernel1*1+n_z*xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*1+x+xdim0_reset_field_kernel1*(y)+xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_reset_field_kernel1*1+n_z*xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*1+x+xdim1_reset_field_kernel1*(y)+xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_reset_field_kernel1*1+n_z*xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*1+x+xdim2_reset_field_kernel1*(y)+xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_reset_field_kernel1*1+n_z*xdim3_reset_field_kernel1*ydim3_reset_field_kernel1*1+x+xdim3_reset_field_kernel1*(y)+xdim3_reset_field_kernel1*ydim3_reset_field_kernel1*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_reset_field_kernel1 +                 \
+   (n_z * 1 + (z)) * xdim0_reset_field_kernel1 * ydim0_reset_field_kernel1)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_reset_field_kernel1 +                 \
+   (n_z * 1 + (z)) * xdim1_reset_field_kernel1 * ydim1_reset_field_kernel1)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_reset_field_kernel1 +                 \
+   (n_z * 1 + (z)) * xdim2_reset_field_kernel1 * ydim2_reset_field_kernel1)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_reset_field_kernel1 +                 \
+   (n_z * 1 + (z)) * xdim3_reset_field_kernel1 * ydim3_reset_field_kernel1)
 //user function
 
 

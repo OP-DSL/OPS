@@ -12,12 +12,18 @@ int ydim2_revert_kernel;
 int xdim3_revert_kernel;
 int ydim3_revert_kernel;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_revert_kernel*1+n_z*xdim0_revert_kernel*ydim0_revert_kernel*1+x+xdim0_revert_kernel*(y)+xdim0_revert_kernel*ydim0_revert_kernel*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_revert_kernel*1+n_z*xdim1_revert_kernel*ydim1_revert_kernel*1+x+xdim1_revert_kernel*(y)+xdim1_revert_kernel*ydim1_revert_kernel*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_revert_kernel*1+n_z*xdim2_revert_kernel*ydim2_revert_kernel*1+x+xdim2_revert_kernel*(y)+xdim2_revert_kernel*ydim2_revert_kernel*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_revert_kernel*1+n_z*xdim3_revert_kernel*ydim3_revert_kernel*1+x+xdim3_revert_kernel*(y)+xdim3_revert_kernel*ydim3_revert_kernel*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_revert_kernel +                       \
+   (n_z * 1 + (z)) * xdim0_revert_kernel * ydim0_revert_kernel)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_revert_kernel +                       \
+   (n_z * 1 + (z)) * xdim1_revert_kernel * ydim1_revert_kernel)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_revert_kernel +                       \
+   (n_z * 1 + (z)) * xdim2_revert_kernel * ydim2_revert_kernel)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_revert_kernel +                       \
+   (n_z * 1 + (z)) * xdim3_revert_kernel * ydim3_revert_kernel)
 //user function
 
 

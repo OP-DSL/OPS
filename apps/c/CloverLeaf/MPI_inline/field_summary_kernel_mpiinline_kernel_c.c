@@ -11,24 +11,17 @@ int xdim4_field_summary_kernel;
 int xdim5_field_summary_kernel;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_field_summary_kernel * 1 + x +                        \
-   xdim0_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_field_summary_kernel)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_field_summary_kernel * 1 + x +                        \
-   xdim1_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_field_summary_kernel)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_field_summary_kernel * 1 + x +                        \
-   xdim2_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_field_summary_kernel)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_field_summary_kernel * 1 + x +                        \
-   xdim3_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_field_summary_kernel)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_field_summary_kernel * 1 + x +                        \
-   xdim4_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_field_summary_kernel)
 #define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_field_summary_kernel * 1 + x +                        \
-   xdim5_field_summary_kernel * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_field_summary_kernel)
 // user function
 
 void field_summary_kernel_c_wrapper(

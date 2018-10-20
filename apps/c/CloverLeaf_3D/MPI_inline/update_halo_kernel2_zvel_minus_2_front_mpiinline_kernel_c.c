@@ -8,10 +8,16 @@ int ydim0_update_halo_kernel2_zvel_minus_2_front;
 int xdim1_update_halo_kernel2_zvel_minus_2_front;
 int ydim1_update_halo_kernel2_zvel_minus_2_front;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_update_halo_kernel2_zvel_minus_2_front*1+n_z*xdim0_update_halo_kernel2_zvel_minus_2_front*ydim0_update_halo_kernel2_zvel_minus_2_front*1+x+xdim0_update_halo_kernel2_zvel_minus_2_front*(y)+xdim0_update_halo_kernel2_zvel_minus_2_front*ydim0_update_halo_kernel2_zvel_minus_2_front*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_update_halo_kernel2_zvel_minus_2_front*1+n_z*xdim1_update_halo_kernel2_zvel_minus_2_front*ydim1_update_halo_kernel2_zvel_minus_2_front*1+x+xdim1_update_halo_kernel2_zvel_minus_2_front*(y)+xdim1_update_halo_kernel2_zvel_minus_2_front*ydim1_update_halo_kernel2_zvel_minus_2_front*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x +                                                               \
+   (n_y * 1 + (y)) * xdim0_update_halo_kernel2_zvel_minus_2_front +            \
+   (n_z * 1 + (z)) * xdim0_update_halo_kernel2_zvel_minus_2_front *            \
+       ydim0_update_halo_kernel2_zvel_minus_2_front)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x +                                                               \
+   (n_y * 1 + (y)) * xdim1_update_halo_kernel2_zvel_minus_2_front +            \
+   (n_z * 1 + (z)) * xdim1_update_halo_kernel2_zvel_minus_2_front *            \
+       ydim1_update_halo_kernel2_zvel_minus_2_front)
 //user function
 
 

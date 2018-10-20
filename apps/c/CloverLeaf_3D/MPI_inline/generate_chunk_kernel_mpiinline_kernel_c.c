@@ -26,19 +26,50 @@ int ydim9_generate_chunk_kernel;
 int xdim10_generate_chunk_kernel;
 int ydim10_generate_chunk_kernel;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_generate_chunk_kernel*0+n_z*xdim0_generate_chunk_kernel*ydim0_generate_chunk_kernel*0+x+xdim0_generate_chunk_kernel*(y)+xdim0_generate_chunk_kernel*ydim0_generate_chunk_kernel*(z))
-#define OPS_ACC1(x,y,z) (n_x*0+n_y*xdim1_generate_chunk_kernel*1+n_z*xdim1_generate_chunk_kernel*ydim1_generate_chunk_kernel*0+x+xdim1_generate_chunk_kernel*(y)+xdim1_generate_chunk_kernel*ydim1_generate_chunk_kernel*(z))
-#define OPS_ACC2(x,y,z) (n_x*0+n_y*xdim2_generate_chunk_kernel*0+n_z*xdim2_generate_chunk_kernel*ydim2_generate_chunk_kernel*1+x+xdim2_generate_chunk_kernel*(y)+xdim2_generate_chunk_kernel*ydim2_generate_chunk_kernel*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_generate_chunk_kernel*1+n_z*xdim3_generate_chunk_kernel*ydim3_generate_chunk_kernel*1+x+xdim3_generate_chunk_kernel*(y)+xdim3_generate_chunk_kernel*ydim3_generate_chunk_kernel*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_generate_chunk_kernel*1+n_z*xdim4_generate_chunk_kernel*ydim4_generate_chunk_kernel*1+x+xdim4_generate_chunk_kernel*(y)+xdim4_generate_chunk_kernel*ydim4_generate_chunk_kernel*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_generate_chunk_kernel*1+n_z*xdim5_generate_chunk_kernel*ydim5_generate_chunk_kernel*1+x+xdim5_generate_chunk_kernel*(y)+xdim5_generate_chunk_kernel*ydim5_generate_chunk_kernel*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_generate_chunk_kernel*1+n_z*xdim6_generate_chunk_kernel*ydim6_generate_chunk_kernel*1+x+xdim6_generate_chunk_kernel*(y)+xdim6_generate_chunk_kernel*ydim6_generate_chunk_kernel*(z))
-#define OPS_ACC7(x,y,z) (n_x*1+n_y*xdim7_generate_chunk_kernel*1+n_z*xdim7_generate_chunk_kernel*ydim7_generate_chunk_kernel*1+x+xdim7_generate_chunk_kernel*(y)+xdim7_generate_chunk_kernel*ydim7_generate_chunk_kernel*(z))
-#define OPS_ACC8(x,y,z) (n_x*1+n_y*xdim8_generate_chunk_kernel*0+n_z*xdim8_generate_chunk_kernel*ydim8_generate_chunk_kernel*0+x+xdim8_generate_chunk_kernel*(y)+xdim8_generate_chunk_kernel*ydim8_generate_chunk_kernel*(z))
-#define OPS_ACC9(x,y,z) (n_x*0+n_y*xdim9_generate_chunk_kernel*1+n_z*xdim9_generate_chunk_kernel*ydim9_generate_chunk_kernel*0+x+xdim9_generate_chunk_kernel*(y)+xdim9_generate_chunk_kernel*ydim9_generate_chunk_kernel*(z))
-#define OPS_ACC10(x,y,z) (n_x*0+n_y*xdim10_generate_chunk_kernel*0+n_z*xdim10_generate_chunk_kernel*ydim10_generate_chunk_kernel*1+x+xdim10_generate_chunk_kernel*(y)+xdim10_generate_chunk_kernel*ydim10_generate_chunk_kernel*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_generate_chunk_kernel +               \
+   (n_z * 0 + (z)) * xdim0_generate_chunk_kernel *                             \
+       ydim0_generate_chunk_kernel)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_generate_chunk_kernel +               \
+   (n_z * 0 + (z)) * xdim1_generate_chunk_kernel *                             \
+       ydim1_generate_chunk_kernel)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 0 + (y)) * xdim2_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim2_generate_chunk_kernel *                             \
+       ydim2_generate_chunk_kernel)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim3_generate_chunk_kernel *                             \
+       ydim3_generate_chunk_kernel)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim4_generate_chunk_kernel *                             \
+       ydim4_generate_chunk_kernel)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim5_generate_chunk_kernel *                             \
+       ydim5_generate_chunk_kernel)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim6_generate_chunk_kernel *                             \
+       ydim6_generate_chunk_kernel)
+#define OPS_ACC7(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_generate_chunk_kernel +               \
+   (n_z * 1 + (z)) * xdim7_generate_chunk_kernel *                             \
+       ydim7_generate_chunk_kernel)
+#define OPS_ACC8(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim8_generate_chunk_kernel +               \
+   (n_z * 0 + (z)) * xdim8_generate_chunk_kernel *                             \
+       ydim8_generate_chunk_kernel)
+#define OPS_ACC9(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim9_generate_chunk_kernel +               \
+   (n_z * 0 + (z)) * xdim9_generate_chunk_kernel *                             \
+       ydim9_generate_chunk_kernel)
+#define OPS_ACC10(x, y, z)                                                     \
+  (n_x * 0 + x + (n_y * 0 + (y)) * xdim10_generate_chunk_kernel +              \
+   (n_z * 1 + (z)) * xdim10_generate_chunk_kernel *                            \
+       ydim10_generate_chunk_kernel)
 //user function
 
 

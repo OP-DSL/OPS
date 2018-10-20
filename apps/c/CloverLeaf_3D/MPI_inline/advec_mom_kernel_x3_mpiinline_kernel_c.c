@@ -12,12 +12,18 @@ int ydim2_advec_mom_kernel_x3;
 int xdim3_advec_mom_kernel_x3;
 int ydim3_advec_mom_kernel_x3;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_advec_mom_kernel_x3*1+n_z*xdim0_advec_mom_kernel_x3*ydim0_advec_mom_kernel_x3*1+x+xdim0_advec_mom_kernel_x3*(y)+xdim0_advec_mom_kernel_x3*ydim0_advec_mom_kernel_x3*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_advec_mom_kernel_x3*1+n_z*xdim1_advec_mom_kernel_x3*ydim1_advec_mom_kernel_x3*1+x+xdim1_advec_mom_kernel_x3*(y)+xdim1_advec_mom_kernel_x3*ydim1_advec_mom_kernel_x3*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_advec_mom_kernel_x3*1+n_z*xdim2_advec_mom_kernel_x3*ydim2_advec_mom_kernel_x3*1+x+xdim2_advec_mom_kernel_x3*(y)+xdim2_advec_mom_kernel_x3*ydim2_advec_mom_kernel_x3*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_advec_mom_kernel_x3*1+n_z*xdim3_advec_mom_kernel_x3*ydim3_advec_mom_kernel_x3*1+x+xdim3_advec_mom_kernel_x3*(y)+xdim3_advec_mom_kernel_x3*ydim3_advec_mom_kernel_x3*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_mom_kernel_x3 +                 \
+   (n_z * 1 + (z)) * xdim0_advec_mom_kernel_x3 * ydim0_advec_mom_kernel_x3)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_mom_kernel_x3 +                 \
+   (n_z * 1 + (z)) * xdim1_advec_mom_kernel_x3 * ydim1_advec_mom_kernel_x3)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_advec_mom_kernel_x3 +                 \
+   (n_z * 1 + (z)) * xdim2_advec_mom_kernel_x3 * ydim2_advec_mom_kernel_x3)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_advec_mom_kernel_x3 +                 \
+   (n_z * 1 + (z)) * xdim3_advec_mom_kernel_x3 * ydim3_advec_mom_kernel_x3)
 //user function
 
 

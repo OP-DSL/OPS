@@ -6,9 +6,10 @@
 int xdim0_initialise_chunk_kernel_yy;
 int ydim0_initialise_chunk_kernel_yy;
 
-
-#define OPS_ACC0(x,y,z) (n_x*0+n_y*xdim0_initialise_chunk_kernel_yy*1+n_z*xdim0_initialise_chunk_kernel_yy*ydim0_initialise_chunk_kernel_yy*0+x+xdim0_initialise_chunk_kernel_yy*(y)+xdim0_initialise_chunk_kernel_yy*ydim0_initialise_chunk_kernel_yy*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim0_initialise_chunk_kernel_yy +          \
+   (n_z * 0 + (z)) * xdim0_initialise_chunk_kernel_yy *                        \
+       ydim0_initialise_chunk_kernel_yy)
 //user function
 
 

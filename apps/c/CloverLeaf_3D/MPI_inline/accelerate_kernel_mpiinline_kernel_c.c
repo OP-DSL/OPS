@@ -32,22 +32,48 @@ int ydim12_accelerate_kernel;
 int xdim13_accelerate_kernel;
 int ydim13_accelerate_kernel;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_accelerate_kernel*1+n_z*xdim0_accelerate_kernel*ydim0_accelerate_kernel*1+x+xdim0_accelerate_kernel*(y)+xdim0_accelerate_kernel*ydim0_accelerate_kernel*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_accelerate_kernel*1+n_z*xdim1_accelerate_kernel*ydim1_accelerate_kernel*1+x+xdim1_accelerate_kernel*(y)+xdim1_accelerate_kernel*ydim1_accelerate_kernel*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_accelerate_kernel*1+n_z*xdim2_accelerate_kernel*ydim2_accelerate_kernel*1+x+xdim2_accelerate_kernel*(y)+xdim2_accelerate_kernel*ydim2_accelerate_kernel*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_accelerate_kernel*1+n_z*xdim3_accelerate_kernel*ydim3_accelerate_kernel*1+x+xdim3_accelerate_kernel*(y)+xdim3_accelerate_kernel*ydim3_accelerate_kernel*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_accelerate_kernel*1+n_z*xdim4_accelerate_kernel*ydim4_accelerate_kernel*1+x+xdim4_accelerate_kernel*(y)+xdim4_accelerate_kernel*ydim4_accelerate_kernel*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_accelerate_kernel*1+n_z*xdim5_accelerate_kernel*ydim5_accelerate_kernel*1+x+xdim5_accelerate_kernel*(y)+xdim5_accelerate_kernel*ydim5_accelerate_kernel*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_accelerate_kernel*1+n_z*xdim6_accelerate_kernel*ydim6_accelerate_kernel*1+x+xdim6_accelerate_kernel*(y)+xdim6_accelerate_kernel*ydim6_accelerate_kernel*(z))
-#define OPS_ACC7(x,y,z) (n_x*1+n_y*xdim7_accelerate_kernel*1+n_z*xdim7_accelerate_kernel*ydim7_accelerate_kernel*1+x+xdim7_accelerate_kernel*(y)+xdim7_accelerate_kernel*ydim7_accelerate_kernel*(z))
-#define OPS_ACC8(x,y,z) (n_x*1+n_y*xdim8_accelerate_kernel*1+n_z*xdim8_accelerate_kernel*ydim8_accelerate_kernel*1+x+xdim8_accelerate_kernel*(y)+xdim8_accelerate_kernel*ydim8_accelerate_kernel*(z))
-#define OPS_ACC9(x,y,z) (n_x*1+n_y*xdim9_accelerate_kernel*1+n_z*xdim9_accelerate_kernel*ydim9_accelerate_kernel*1+x+xdim9_accelerate_kernel*(y)+xdim9_accelerate_kernel*ydim9_accelerate_kernel*(z))
-#define OPS_ACC10(x,y,z) (n_x*1+n_y*xdim10_accelerate_kernel*1+n_z*xdim10_accelerate_kernel*ydim10_accelerate_kernel*1+x+xdim10_accelerate_kernel*(y)+xdim10_accelerate_kernel*ydim10_accelerate_kernel*(z))
-#define OPS_ACC11(x,y,z) (n_x*1+n_y*xdim11_accelerate_kernel*1+n_z*xdim11_accelerate_kernel*ydim11_accelerate_kernel*1+x+xdim11_accelerate_kernel*(y)+xdim11_accelerate_kernel*ydim11_accelerate_kernel*(z))
-#define OPS_ACC12(x,y,z) (n_x*1+n_y*xdim12_accelerate_kernel*1+n_z*xdim12_accelerate_kernel*ydim12_accelerate_kernel*1+x+xdim12_accelerate_kernel*(y)+xdim12_accelerate_kernel*ydim12_accelerate_kernel*(z))
-#define OPS_ACC13(x,y,z) (n_x*1+n_y*xdim13_accelerate_kernel*1+n_z*xdim13_accelerate_kernel*ydim13_accelerate_kernel*1+x+xdim13_accelerate_kernel*(y)+xdim13_accelerate_kernel*ydim13_accelerate_kernel*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim0_accelerate_kernel * ydim0_accelerate_kernel)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim1_accelerate_kernel * ydim1_accelerate_kernel)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim2_accelerate_kernel * ydim2_accelerate_kernel)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim3_accelerate_kernel * ydim3_accelerate_kernel)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim4_accelerate_kernel * ydim4_accelerate_kernel)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim5_accelerate_kernel * ydim5_accelerate_kernel)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim6_accelerate_kernel * ydim6_accelerate_kernel)
+#define OPS_ACC7(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim7_accelerate_kernel * ydim7_accelerate_kernel)
+#define OPS_ACC8(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim8_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim8_accelerate_kernel * ydim8_accelerate_kernel)
+#define OPS_ACC9(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_accelerate_kernel +                   \
+   (n_z * 1 + (z)) * xdim9_accelerate_kernel * ydim9_accelerate_kernel)
+#define OPS_ACC10(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_accelerate_kernel +                  \
+   (n_z * 1 + (z)) * xdim10_accelerate_kernel * ydim10_accelerate_kernel)
+#define OPS_ACC11(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim11_accelerate_kernel +                  \
+   (n_z * 1 + (z)) * xdim11_accelerate_kernel * ydim11_accelerate_kernel)
+#define OPS_ACC12(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim12_accelerate_kernel +                  \
+   (n_z * 1 + (z)) * xdim12_accelerate_kernel * ydim12_accelerate_kernel)
+#define OPS_ACC13(x, y, z)                                                     \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim13_accelerate_kernel +                  \
+   (n_z * 1 + (z)) * xdim13_accelerate_kernel * ydim13_accelerate_kernel)
 //user function
 
 

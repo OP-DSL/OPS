@@ -12,12 +12,18 @@ int ydim2_ideal_gas_kernel;
 int xdim3_ideal_gas_kernel;
 int ydim3_ideal_gas_kernel;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_ideal_gas_kernel*1+n_z*xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*1+x+xdim0_ideal_gas_kernel*(y)+xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_ideal_gas_kernel*1+n_z*xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*1+x+xdim1_ideal_gas_kernel*(y)+xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_ideal_gas_kernel*1+n_z*xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*1+x+xdim2_ideal_gas_kernel*(y)+xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_ideal_gas_kernel*1+n_z*xdim3_ideal_gas_kernel*ydim3_ideal_gas_kernel*1+x+xdim3_ideal_gas_kernel*(y)+xdim3_ideal_gas_kernel*ydim3_ideal_gas_kernel*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_ideal_gas_kernel +                    \
+   (n_z * 1 + (z)) * xdim0_ideal_gas_kernel * ydim0_ideal_gas_kernel)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_ideal_gas_kernel +                    \
+   (n_z * 1 + (z)) * xdim1_ideal_gas_kernel * ydim1_ideal_gas_kernel)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_ideal_gas_kernel +                    \
+   (n_z * 1 + (z)) * xdim2_ideal_gas_kernel * ydim2_ideal_gas_kernel)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_ideal_gas_kernel +                    \
+   (n_z * 1 + (z)) * xdim3_ideal_gas_kernel * ydim3_ideal_gas_kernel)
 //user function
 
 

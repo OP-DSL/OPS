@@ -9,18 +9,13 @@ int xdim2_reset_field_kernel2;
 int xdim3_reset_field_kernel2;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_reset_field_kernel2 * 1 + x +                         \
-   xdim0_reset_field_kernel2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_reset_field_kernel2)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_reset_field_kernel2 * 1 + x +                         \
-   xdim1_reset_field_kernel2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_reset_field_kernel2)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_reset_field_kernel2 * 1 + x +                         \
-   xdim2_reset_field_kernel2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_reset_field_kernel2)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_reset_field_kernel2 * 1 + x +                         \
-   xdim3_reset_field_kernel2 * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_reset_field_kernel2)
 // user function
 
 void reset_field_kernel2_c_wrapper(double *restrict xvel0,

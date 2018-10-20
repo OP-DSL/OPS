@@ -111,124 +111,37 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   int end[3];
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<3; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
-  #else
+#endif // OPS_MPI
+
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 14, block, range, start, end, arg_idx) < 0)
+    return;
+#else // OPS_MPI
   for ( int n=0; n<3; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
+    arg_idx[n] = start[n];
   }
-  #endif
-
-  int x_size = MAX(0,end[0]-start[0]);
-  int y_size = MAX(0,end[1]-start[1]);
-  int z_size = MAX(0,end[2]-start[2]);
-
-
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0];
-  ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0];
-  ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0];
-  ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0];
-  ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0];
-  ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0];
-  ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0];
-  ydim11 = args[11].dat->size[1];
-  xdim12 = args[12].dat->size[0];
-  ydim12 = args[12].dat->size[1];
-  xdim13 = args[13].dat->size[0];
-  ydim13 = args[13].dat->size[1];
-  if (xdim0 != xdim0_accelerate_kernel_h || ydim0 != ydim0_accelerate_kernel_h || xdim1 != xdim1_accelerate_kernel_h || ydim1 != ydim1_accelerate_kernel_h || xdim2 != xdim2_accelerate_kernel_h || ydim2 != ydim2_accelerate_kernel_h || xdim3 != xdim3_accelerate_kernel_h || ydim3 != ydim3_accelerate_kernel_h || xdim4 != xdim4_accelerate_kernel_h || ydim4 != ydim4_accelerate_kernel_h || xdim5 != xdim5_accelerate_kernel_h || ydim5 != ydim5_accelerate_kernel_h || xdim6 != xdim6_accelerate_kernel_h || ydim6 != ydim6_accelerate_kernel_h || xdim7 != xdim7_accelerate_kernel_h || ydim7 != ydim7_accelerate_kernel_h || xdim8 != xdim8_accelerate_kernel_h || ydim8 != ydim8_accelerate_kernel_h || xdim9 != xdim9_accelerate_kernel_h || ydim9 != ydim9_accelerate_kernel_h || xdim10 != xdim10_accelerate_kernel_h || ydim10 != ydim10_accelerate_kernel_h || xdim11 != xdim11_accelerate_kernel_h || ydim11 != ydim11_accelerate_kernel_h || xdim12 != xdim12_accelerate_kernel_h || ydim12 != ydim12_accelerate_kernel_h || xdim13 != xdim13_accelerate_kernel_h || ydim13 != ydim13_accelerate_kernel_h) {
-    xdim0_accelerate_kernel = xdim0;
-    xdim0_accelerate_kernel_h = xdim0;
-    ydim0_accelerate_kernel = ydim0;
-    ydim0_accelerate_kernel_h = ydim0;
-    xdim1_accelerate_kernel = xdim1;
-    xdim1_accelerate_kernel_h = xdim1;
-    ydim1_accelerate_kernel = ydim1;
-    ydim1_accelerate_kernel_h = ydim1;
-    xdim2_accelerate_kernel = xdim2;
-    xdim2_accelerate_kernel_h = xdim2;
-    ydim2_accelerate_kernel = ydim2;
-    ydim2_accelerate_kernel_h = ydim2;
-    xdim3_accelerate_kernel = xdim3;
-    xdim3_accelerate_kernel_h = xdim3;
-    ydim3_accelerate_kernel = ydim3;
-    ydim3_accelerate_kernel_h = ydim3;
-    xdim4_accelerate_kernel = xdim4;
-    xdim4_accelerate_kernel_h = xdim4;
-    ydim4_accelerate_kernel = ydim4;
-    ydim4_accelerate_kernel_h = ydim4;
-    xdim5_accelerate_kernel = xdim5;
-    xdim5_accelerate_kernel_h = xdim5;
-    ydim5_accelerate_kernel = ydim5;
-    ydim5_accelerate_kernel_h = ydim5;
-    xdim6_accelerate_kernel = xdim6;
-    xdim6_accelerate_kernel_h = xdim6;
-    ydim6_accelerate_kernel = ydim6;
-    ydim6_accelerate_kernel_h = ydim6;
-    xdim7_accelerate_kernel = xdim7;
-    xdim7_accelerate_kernel_h = xdim7;
-    ydim7_accelerate_kernel = ydim7;
-    ydim7_accelerate_kernel_h = ydim7;
-    xdim8_accelerate_kernel = xdim8;
-    xdim8_accelerate_kernel_h = xdim8;
-    ydim8_accelerate_kernel = ydim8;
-    ydim8_accelerate_kernel_h = ydim8;
-    xdim9_accelerate_kernel = xdim9;
-    xdim9_accelerate_kernel_h = xdim9;
-    ydim9_accelerate_kernel = ydim9;
-    ydim9_accelerate_kernel_h = ydim9;
-    xdim10_accelerate_kernel = xdim10;
-    xdim10_accelerate_kernel_h = xdim10;
-    ydim10_accelerate_kernel = ydim10;
-    ydim10_accelerate_kernel_h = ydim10;
-    xdim11_accelerate_kernel = xdim11;
-    xdim11_accelerate_kernel_h = xdim11;
-    ydim11_accelerate_kernel = ydim11;
-    ydim11_accelerate_kernel_h = ydim11;
-    xdim12_accelerate_kernel = xdim12;
-    xdim12_accelerate_kernel_h = xdim12;
-    ydim12_accelerate_kernel = ydim12;
-    ydim12_accelerate_kernel_h = ydim12;
-    xdim13_accelerate_kernel = xdim13;
-    xdim13_accelerate_kernel_h = xdim13;
-    ydim13_accelerate_kernel = ydim13;
-    ydim13_accelerate_kernel_h = ydim13;
+#endif
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
 
-
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
+  int dat3 = args[3].dat->elem_size;
+  int dat4 = args[4].dat->elem_size;
+  int dat5 = args[5].dat->elem_size;
+  int dat6 = args[6].dat->elem_size;
+  int dat7 = args[7].dat->elem_size;
+  int dat8 = args[8].dat->elem_size;
+  int dat9 = args[9].dat->elem_size;
+  int dat10 = args[10].dat->elem_size;
+  int dat11 = args[11].dat->elem_size;
+  int dat12 = args[12].dat->elem_size;
+  int dat13 = args[13].dat->elem_size;
 
   //set up initial pointers
   int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
@@ -427,8 +340,128 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   double *p_a13 = (double *)((char *)args[13].data + base13);
   #endif
 
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
 
-  #ifdef OPS_GPU
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0];
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0];
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0];
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0];
+  ydim4 = args[4].dat->size[1];
+  xdim5 = args[5].dat->size[0];
+  ydim5 = args[5].dat->size[1];
+  xdim6 = args[6].dat->size[0];
+  ydim6 = args[6].dat->size[1];
+  xdim7 = args[7].dat->size[0];
+  ydim7 = args[7].dat->size[1];
+  xdim8 = args[8].dat->size[0];
+  ydim8 = args[8].dat->size[1];
+  xdim9 = args[9].dat->size[0];
+  ydim9 = args[9].dat->size[1];
+  xdim10 = args[10].dat->size[0];
+  ydim10 = args[10].dat->size[1];
+  xdim11 = args[11].dat->size[0];
+  ydim11 = args[11].dat->size[1];
+  xdim12 = args[12].dat->size[0];
+  ydim12 = args[12].dat->size[1];
+  xdim13 = args[13].dat->size[0];
+  ydim13 = args[13].dat->size[1];
+  if (xdim0 != xdim0_accelerate_kernel_h ||
+      ydim0 != ydim0_accelerate_kernel_h ||
+      xdim1 != xdim1_accelerate_kernel_h ||
+      ydim1 != ydim1_accelerate_kernel_h ||
+      xdim2 != xdim2_accelerate_kernel_h ||
+      ydim2 != ydim2_accelerate_kernel_h ||
+      xdim3 != xdim3_accelerate_kernel_h ||
+      ydim3 != ydim3_accelerate_kernel_h ||
+      xdim4 != xdim4_accelerate_kernel_h ||
+      ydim4 != ydim4_accelerate_kernel_h ||
+      xdim5 != xdim5_accelerate_kernel_h ||
+      ydim5 != ydim5_accelerate_kernel_h ||
+      xdim6 != xdim6_accelerate_kernel_h ||
+      ydim6 != ydim6_accelerate_kernel_h ||
+      xdim7 != xdim7_accelerate_kernel_h ||
+      ydim7 != ydim7_accelerate_kernel_h ||
+      xdim8 != xdim8_accelerate_kernel_h ||
+      ydim8 != ydim8_accelerate_kernel_h ||
+      xdim9 != xdim9_accelerate_kernel_h ||
+      ydim9 != ydim9_accelerate_kernel_h ||
+      xdim10 != xdim10_accelerate_kernel_h ||
+      ydim10 != ydim10_accelerate_kernel_h ||
+      xdim11 != xdim11_accelerate_kernel_h ||
+      ydim11 != ydim11_accelerate_kernel_h ||
+      xdim12 != xdim12_accelerate_kernel_h ||
+      ydim12 != ydim12_accelerate_kernel_h ||
+      xdim13 != xdim13_accelerate_kernel_h ||
+      ydim13 != ydim13_accelerate_kernel_h) {
+    xdim0_accelerate_kernel = xdim0;
+    xdim0_accelerate_kernel_h = xdim0;
+    ydim0_accelerate_kernel = ydim0;
+    ydim0_accelerate_kernel_h = ydim0;
+    xdim1_accelerate_kernel = xdim1;
+    xdim1_accelerate_kernel_h = xdim1;
+    ydim1_accelerate_kernel = ydim1;
+    ydim1_accelerate_kernel_h = ydim1;
+    xdim2_accelerate_kernel = xdim2;
+    xdim2_accelerate_kernel_h = xdim2;
+    ydim2_accelerate_kernel = ydim2;
+    ydim2_accelerate_kernel_h = ydim2;
+    xdim3_accelerate_kernel = xdim3;
+    xdim3_accelerate_kernel_h = xdim3;
+    ydim3_accelerate_kernel = ydim3;
+    ydim3_accelerate_kernel_h = ydim3;
+    xdim4_accelerate_kernel = xdim4;
+    xdim4_accelerate_kernel_h = xdim4;
+    ydim4_accelerate_kernel = ydim4;
+    ydim4_accelerate_kernel_h = ydim4;
+    xdim5_accelerate_kernel = xdim5;
+    xdim5_accelerate_kernel_h = xdim5;
+    ydim5_accelerate_kernel = ydim5;
+    ydim5_accelerate_kernel_h = ydim5;
+    xdim6_accelerate_kernel = xdim6;
+    xdim6_accelerate_kernel_h = xdim6;
+    ydim6_accelerate_kernel = ydim6;
+    ydim6_accelerate_kernel_h = ydim6;
+    xdim7_accelerate_kernel = xdim7;
+    xdim7_accelerate_kernel_h = xdim7;
+    ydim7_accelerate_kernel = ydim7;
+    ydim7_accelerate_kernel_h = ydim7;
+    xdim8_accelerate_kernel = xdim8;
+    xdim8_accelerate_kernel_h = xdim8;
+    ydim8_accelerate_kernel = ydim8;
+    ydim8_accelerate_kernel_h = ydim8;
+    xdim9_accelerate_kernel = xdim9;
+    xdim9_accelerate_kernel_h = xdim9;
+    ydim9_accelerate_kernel = ydim9;
+    ydim9_accelerate_kernel_h = ydim9;
+    xdim10_accelerate_kernel = xdim10;
+    xdim10_accelerate_kernel_h = xdim10;
+    ydim10_accelerate_kernel = ydim10;
+    ydim10_accelerate_kernel_h = ydim10;
+    xdim11_accelerate_kernel = xdim11;
+    xdim11_accelerate_kernel_h = xdim11;
+    ydim11_accelerate_kernel = ydim11;
+    ydim11_accelerate_kernel_h = ydim11;
+    xdim12_accelerate_kernel = xdim12;
+    xdim12_accelerate_kernel_h = xdim12;
+    ydim12_accelerate_kernel = ydim12;
+    ydim12_accelerate_kernel_h = ydim12;
+    xdim13_accelerate_kernel = xdim13;
+    xdim13_accelerate_kernel_h = xdim13;
+    ydim13_accelerate_kernel = ydim13;
+    ydim13_accelerate_kernel_h = ydim13;
+  }
+
+// Halo Exchanges
+
+#ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 14);
   #else
   ops_H_D_exchanges_host(args, 14);

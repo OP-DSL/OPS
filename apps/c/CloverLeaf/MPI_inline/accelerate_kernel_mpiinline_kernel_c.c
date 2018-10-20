@@ -15,40 +15,18 @@ int xdim8_accelerate_kernel;
 int xdim9_accelerate_kernel;
 int xdim10_accelerate_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_accelerate_kernel * 1 + x +                           \
-   xdim0_accelerate_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_accelerate_kernel * 1 + x +                           \
-   xdim1_accelerate_kernel * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_accelerate_kernel * 1 + x +                           \
-   xdim2_accelerate_kernel * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_accelerate_kernel * 1 + x +                           \
-   xdim3_accelerate_kernel * (y))
-#define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_accelerate_kernel * 1 + x +                           \
-   xdim4_accelerate_kernel * (y))
-#define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_accelerate_kernel * 1 + x +                           \
-   xdim5_accelerate_kernel * (y))
-#define OPS_ACC6(x, y)                                                         \
-  (n_x * 1 + n_y * xdim6_accelerate_kernel * 1 + x +                           \
-   xdim6_accelerate_kernel * (y))
-#define OPS_ACC7(x, y)                                                         \
-  (n_x * 1 + n_y * xdim7_accelerate_kernel * 1 + x +                           \
-   xdim7_accelerate_kernel * (y))
-#define OPS_ACC8(x, y)                                                         \
-  (n_x * 1 + n_y * xdim8_accelerate_kernel * 1 + x +                           \
-   xdim8_accelerate_kernel * (y))
-#define OPS_ACC9(x, y)                                                         \
-  (n_x * 1 + n_y * xdim9_accelerate_kernel * 1 + x +                           \
-   xdim9_accelerate_kernel * (y))
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_accelerate_kernel)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_accelerate_kernel)
+#define OPS_ACC2(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_accelerate_kernel)
+#define OPS_ACC3(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_accelerate_kernel)
+#define OPS_ACC4(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_accelerate_kernel)
+#define OPS_ACC5(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_accelerate_kernel)
+#define OPS_ACC6(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_accelerate_kernel)
+#define OPS_ACC7(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_accelerate_kernel)
+#define OPS_ACC8(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim8_accelerate_kernel)
+#define OPS_ACC9(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_accelerate_kernel)
 #define OPS_ACC10(x, y)                                                        \
-  (n_x * 1 + n_y * xdim10_accelerate_kernel * 1 + x +                          \
-   xdim10_accelerate_kernel * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_accelerate_kernel)
 // user function
 
 void accelerate_kernel_c_wrapper(

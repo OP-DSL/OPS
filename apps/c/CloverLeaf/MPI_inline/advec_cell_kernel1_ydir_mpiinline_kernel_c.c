@@ -10,21 +10,15 @@ int xdim3_advec_cell_kernel1_ydir;
 int xdim4_advec_cell_kernel1_ydir;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_advec_cell_kernel1_ydir * 1 + x +                     \
-   xdim0_advec_cell_kernel1_ydir * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_cell_kernel1_ydir)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_advec_cell_kernel1_ydir * 1 + x +                     \
-   xdim1_advec_cell_kernel1_ydir * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_cell_kernel1_ydir)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_advec_cell_kernel1_ydir * 1 + x +                     \
-   xdim2_advec_cell_kernel1_ydir * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_advec_cell_kernel1_ydir)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_advec_cell_kernel1_ydir * 1 + x +                     \
-   xdim3_advec_cell_kernel1_ydir * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_advec_cell_kernel1_ydir)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_advec_cell_kernel1_ydir * 1 + x +                     \
-   xdim4_advec_cell_kernel1_ydir * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_advec_cell_kernel1_ydir)
 // user function
 
 void advec_cell_kernel1_ydir_c_wrapper(double *restrict pre_vol,

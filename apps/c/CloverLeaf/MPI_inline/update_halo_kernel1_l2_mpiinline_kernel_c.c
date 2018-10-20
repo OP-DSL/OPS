@@ -12,27 +12,19 @@ int xdim5_update_halo_kernel1_l2;
 int xdim6_update_halo_kernel1_l2;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim0_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_update_halo_kernel1_l2)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim1_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_update_halo_kernel1_l2)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim2_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_update_halo_kernel1_l2)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim3_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_update_halo_kernel1_l2)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim4_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_update_halo_kernel1_l2)
 #define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim5_update_halo_kernel1_l2 * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_update_halo_kernel1_l2)
 #define OPS_ACC6(x, y)                                                         \
-  (n_x * 1 + n_y * xdim6_update_halo_kernel1_l2 * 1 + x +                      \
-   xdim6_update_halo_kernel1_l2 * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_update_halo_kernel1_l2)
 // user function
 
 void update_halo_kernel1_l2_c_wrapper(

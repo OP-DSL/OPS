@@ -18,15 +18,34 @@ int ydim5_update_halo_kernel1_fr2;
 int xdim6_update_halo_kernel1_fr2;
 int ydim6_update_halo_kernel1_fr2;
 
-
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_update_halo_kernel1_fr2*1+n_z*xdim0_update_halo_kernel1_fr2*ydim0_update_halo_kernel1_fr2*1+x+xdim0_update_halo_kernel1_fr2*(y)+xdim0_update_halo_kernel1_fr2*ydim0_update_halo_kernel1_fr2*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_update_halo_kernel1_fr2*1+n_z*xdim1_update_halo_kernel1_fr2*ydim1_update_halo_kernel1_fr2*1+x+xdim1_update_halo_kernel1_fr2*(y)+xdim1_update_halo_kernel1_fr2*ydim1_update_halo_kernel1_fr2*(z))
-#define OPS_ACC2(x,y,z) (n_x*1+n_y*xdim2_update_halo_kernel1_fr2*1+n_z*xdim2_update_halo_kernel1_fr2*ydim2_update_halo_kernel1_fr2*1+x+xdim2_update_halo_kernel1_fr2*(y)+xdim2_update_halo_kernel1_fr2*ydim2_update_halo_kernel1_fr2*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_update_halo_kernel1_fr2*1+n_z*xdim3_update_halo_kernel1_fr2*ydim3_update_halo_kernel1_fr2*1+x+xdim3_update_halo_kernel1_fr2*(y)+xdim3_update_halo_kernel1_fr2*ydim3_update_halo_kernel1_fr2*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_update_halo_kernel1_fr2*1+n_z*xdim4_update_halo_kernel1_fr2*ydim4_update_halo_kernel1_fr2*1+x+xdim4_update_halo_kernel1_fr2*(y)+xdim4_update_halo_kernel1_fr2*ydim4_update_halo_kernel1_fr2*(z))
-#define OPS_ACC5(x,y,z) (n_x*1+n_y*xdim5_update_halo_kernel1_fr2*1+n_z*xdim5_update_halo_kernel1_fr2*ydim5_update_halo_kernel1_fr2*1+x+xdim5_update_halo_kernel1_fr2*(y)+xdim5_update_halo_kernel1_fr2*ydim5_update_halo_kernel1_fr2*(z))
-#define OPS_ACC6(x,y,z) (n_x*1+n_y*xdim6_update_halo_kernel1_fr2*1+n_z*xdim6_update_halo_kernel1_fr2*ydim6_update_halo_kernel1_fr2*1+x+xdim6_update_halo_kernel1_fr2*(y)+xdim6_update_halo_kernel1_fr2*ydim6_update_halo_kernel1_fr2*(z))
-
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim0_update_halo_kernel1_fr2 *                           \
+       ydim0_update_halo_kernel1_fr2)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim1_update_halo_kernel1_fr2 *                           \
+       ydim1_update_halo_kernel1_fr2)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim2_update_halo_kernel1_fr2 *                           \
+       ydim2_update_halo_kernel1_fr2)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim3_update_halo_kernel1_fr2 *                           \
+       ydim3_update_halo_kernel1_fr2)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim4_update_halo_kernel1_fr2 *                           \
+       ydim4_update_halo_kernel1_fr2)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim5_update_halo_kernel1_fr2 *                           \
+       ydim5_update_halo_kernel1_fr2)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_update_halo_kernel1_fr2 +             \
+   (n_z * 1 + (z)) * xdim6_update_halo_kernel1_fr2 *                           \
+       ydim6_update_halo_kernel1_fr2)
 //user function
 
 
