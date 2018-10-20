@@ -7,9 +7,10 @@ int xdim0_multidim_kernel;
 int ydim0_multidim_kernel;
 int zdim0_multidim_kernel;
 
-
-
-#define OPS_ACC_MD0(d,x,y,z) (n_x*1 + n_y*xdim0_multidim_kernel*1 + n_z*xdim0_multidim_kernel*ydim0_multidim_kernel*1 + (x)+(d)*xdim0_multidim_kernel*ydim0_multidim_kernel*zdim0_multidim_kernel+(xdim0_multidim_kernel*(y))+(xdim0_multidim_kernel*ydim0_multidim_kernel*(z)))
+#define OPS_ACC_MD0(d, x, y, z)                                                \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_multidim_kernel +                     \
+   (n_z * 1 + (z)) * xdim0_multidim_kernel * ydim0_multidim_kernel +           \
+   (d)*xdim0_multidim_kernel * ydim0_multidim_kernel * zdim0_multidim_kernel)
 //user function
 
 

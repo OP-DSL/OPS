@@ -7,9 +7,12 @@ int xdim0_multidim_reduce_kernel;
 int ydim0_multidim_reduce_kernel;
 int zdim0_multidim_reduce_kernel;
 
-
-
-#define OPS_ACC_MD0(d,x,y,z) (n_x*1 + n_y*xdim0_multidim_reduce_kernel*1 + n_z*xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel*1 + (x)+(d)*xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel*zdim0_multidim_reduce_kernel+(xdim0_multidim_reduce_kernel*(y))+(xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel*(z)))
+#define OPS_ACC_MD0(d, x, y, z)                                                \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_multidim_reduce_kernel +              \
+   (n_z * 1 + (z)) * xdim0_multidim_reduce_kernel *                            \
+       ydim0_multidim_reduce_kernel +                                          \
+   (d)*xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel *           \
+       zdim0_multidim_reduce_kernel)
 //user function
 
 
