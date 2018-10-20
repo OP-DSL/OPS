@@ -5,9 +5,9 @@
 
 #include <openacc.h>
 
-// user kernel files
-#include "poisson_kernel_error_openacc_kernel_c.c"
-#include "poisson_kernel_initialguess_openacc_kernel_c.c"
+//user kernel files
 #include "poisson_kernel_populate_openacc_kernel_c.c"
-#include "poisson_kernel_stencil_openacc_kernel_c.c"
 #include "poisson_kernel_update_openacc_kernel_c.c"
+#include "poisson_kernel_initialguess_openacc_kernel_c.c"
+#include "poisson_kernel_stencil_openacc_kernel_c.c"
+#include "poisson_kernel_error_openacc_kernel_c.c"
