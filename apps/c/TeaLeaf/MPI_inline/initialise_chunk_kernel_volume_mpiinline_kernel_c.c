@@ -10,21 +10,15 @@ int xdim3_initialise_chunk_kernel_volume;
 int xdim4_initialise_chunk_kernel_volume;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_initialise_chunk_kernel_volume * 1 + x +              \
-   xdim0_initialise_chunk_kernel_volume * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_initialise_chunk_kernel_volume)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_initialise_chunk_kernel_volume * 1 + x +              \
-   xdim1_initialise_chunk_kernel_volume * (y))
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_initialise_chunk_kernel_volume)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_initialise_chunk_kernel_volume * 1 + x +              \
-   xdim2_initialise_chunk_kernel_volume * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_initialise_chunk_kernel_volume)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_initialise_chunk_kernel_volume * 0 + x +              \
-   xdim3_initialise_chunk_kernel_volume * (y))
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim3_initialise_chunk_kernel_volume)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_initialise_chunk_kernel_volume * 1 + x +              \
-   xdim4_initialise_chunk_kernel_volume * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_initialise_chunk_kernel_volume)
 // user function
 
 void initialise_chunk_kernel_volume_c_wrapper(double *restrict volume,

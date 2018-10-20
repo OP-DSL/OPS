@@ -6,9 +6,7 @@
 int xdim0_initialise_chunk_kernel_zero_y;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 0 + n_y * xdim0_initialise_chunk_kernel_zero_y * 1 + x +              \
-   xdim0_initialise_chunk_kernel_zero_y * (y))
-
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim0_initialise_chunk_kernel_zero_y)
 // user function
 
 void initialise_chunk_kernel_zero_y_c_wrapper(double *restrict var, int x_size,

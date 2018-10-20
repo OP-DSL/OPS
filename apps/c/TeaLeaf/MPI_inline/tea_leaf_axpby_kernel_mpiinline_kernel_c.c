@@ -7,12 +7,9 @@ int xdim0_tea_leaf_axpby_kernel;
 int xdim1_tea_leaf_axpby_kernel;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_tea_leaf_axpby_kernel * 1 + x +                       \
-   xdim0_tea_leaf_axpby_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_tea_leaf_axpby_kernel)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_tea_leaf_axpby_kernel * 1 + x +                       \
-   xdim1_tea_leaf_axpby_kernel * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_tea_leaf_axpby_kernel)
 // user function
 
 void tea_leaf_axpby_kernel_c_wrapper(double *restrict u,

@@ -9,18 +9,13 @@ int xdim2_tea_leaf_common_init_u_u0_kernel;
 int xdim3_tea_leaf_common_init_u_u0_kernel;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_tea_leaf_common_init_u_u0_kernel * 1 + x +            \
-   xdim0_tea_leaf_common_init_u_u0_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_tea_leaf_common_init_u_u0_kernel)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_tea_leaf_common_init_u_u0_kernel * 1 + x +            \
-   xdim1_tea_leaf_common_init_u_u0_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_tea_leaf_common_init_u_u0_kernel)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_tea_leaf_common_init_u_u0_kernel * 1 + x +            \
-   xdim2_tea_leaf_common_init_u_u0_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_tea_leaf_common_init_u_u0_kernel)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_tea_leaf_common_init_u_u0_kernel * 1 + x +            \
-   xdim3_tea_leaf_common_init_u_u0_kernel * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_tea_leaf_common_init_u_u0_kernel)
 // user function
 
 void tea_leaf_common_init_u_u0_kernel_c_wrapper(double *restrict u,
