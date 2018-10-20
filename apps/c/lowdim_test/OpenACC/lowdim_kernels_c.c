@@ -5,6 +5,6 @@
 
 #include <openacc.h>
 
-// user kernel files
-#include "calc_openacc_kernel_c.c"
+//user kernel files
 #include "set_val_openacc_kernel_c.c"
+#include "calc_openacc_kernel_c.c"
