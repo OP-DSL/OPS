@@ -4,16 +4,16 @@
 
 #include "./MPI_inline/lowdim_common.h"
 
+
 void ops_init_backend() {}
 
-void ops_decl_const_char2(int dim, char const *type, int size, char *dat,
-                          char const *name) {
+void ops_decl_const_char2(int dim, char const *type,
+int size, char *dat, char const *name){
   {
-    printf("error: unknown const name\n");
-    exit(1);
+    printf("error: unknown const name\n"); exit(1);
   }
 }
 
-// user kernel files
-#include "calc_mpiinline_kernel.cpp"
+//user kernel files
 #include "set_val_mpiinline_kernel.cpp"
+#include "calc_mpiinline_kernel.cpp"
