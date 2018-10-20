@@ -186,7 +186,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 #          code('int zdim'+str(n)+'_'+name+'_h = -1;')
     num_dims = max(1, NDIM -1)
     if NDIM > 1 and soa_set:
-        nim_dims += 1;
+        num_dims += 1;
     code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
     code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
     code('')
