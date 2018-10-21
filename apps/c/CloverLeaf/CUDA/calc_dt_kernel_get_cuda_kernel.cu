@@ -221,9 +221,10 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   nshared = MAX(nshared * nthread, reduct_size * nthread);
 
   // call kernel wrapper function, passing in pointers to data
-  ops_calc_dt_kernel_get<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)arg2.data_d,
-      (double *)arg3.data_d, x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_calc_dt_kernel_get<<<grid, tblock, nshared>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)arg2.data_d,
+        (double *)arg3.data_d, x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

@@ -725,12 +725,14 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_PdV_kernel_nopredict<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
-      (double *)p_a[8], (double *)p_a[9], (double *)p_a[10], (double *)p_a[11],
-      (double *)p_a[12], (double *)p_a[13], (double *)p_a[14],
-      (double *)p_a[15], (double *)p_a[16], x_size, y_size, z_size);
+  if (x_size > 0 && y_size > 0 && z_size > 0)
+    ops_PdV_kernel_nopredict<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
+        (double *)p_a[8], (double *)p_a[9], (double *)p_a[10],
+        (double *)p_a[11], (double *)p_a[12], (double *)p_a[13],
+        (double *)p_a[14], (double *)p_a[15], (double *)p_a[16], x_size, y_size,
+        z_size);
 
   cutilSafeCall(cudaGetLastError());
 

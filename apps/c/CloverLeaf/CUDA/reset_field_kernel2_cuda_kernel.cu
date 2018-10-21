@@ -189,9 +189,10 @@ void ops_par_loop_reset_field_kernel2_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_reset_field_kernel2<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
-                                            (double *)p_a[2], (double *)p_a[3],
-                                            x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_reset_field_kernel2<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
