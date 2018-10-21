@@ -206,9 +206,10 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_left_execute(
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_update_halo_kernel2_yvel_plus_2_left<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (int *)arg2.data_d, x_size, y_size,
-      z_size);
+  if (x_size > 0 && y_size > 0 && z_size > 0)
+    ops_update_halo_kernel2_yvel_plus_2_left<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (int *)arg2.data_d, x_size, y_size,
+        z_size);
 
   cutilSafeCall(cudaGetLastError());
 

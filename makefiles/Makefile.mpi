@@ -1,6 +1,6 @@
 MPICC ?= $(MPI_INSTALL_PATH)/bin/mpicc
 MPICPP ?= $(MPI_INSTALL_PATH)/bin/mpic++
-MPICXX ?= $(MPI_INSTALL_PATH)/bin/mpic++
+MPICXX ?= $(MPI_INSTALL_PATH)/bin/mpicxx
 MPIFC ?= $(MPI_INSTALL_PATH)/bin/mpif90
 MPIF90 ?= $(MPI_INSTALL_PATH)/bin/mpif90
 MPIFLAGS := $(CCFLAGS)

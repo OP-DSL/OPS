@@ -153,8 +153,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_advec_mom_kernel_mass_flux_x<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_advec_mom_kernel_mass_flux_x<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

@@ -566,11 +566,12 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_viscosity_kernel<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
-      (double *)p_a[8], (double *)p_a[9], (double *)p_a[10], (double *)p_a[11],
-      x_size, y_size, z_size);
+  if (x_size > 0 && y_size > 0 && z_size > 0)
+    ops_viscosity_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
+        (double *)p_a[8], (double *)p_a[9], (double *)p_a[10],
+        (double *)p_a[11], x_size, y_size, z_size);
 
   cutilSafeCall(cudaGetLastError());
 
