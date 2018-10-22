@@ -150,8 +150,9 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_multidim_kernel<<<grid, tblock>>>((double *)p_a[0], arg_idx[0],
-                                        arg_idx[1], x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_multidim_kernel<<<grid, tblock>>>((double *)p_a[0], arg_idx[0],
+                                          arg_idx[1], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

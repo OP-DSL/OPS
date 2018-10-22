@@ -275,10 +275,11 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_updateRK3_kernel<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
-      (double *)p_a[8], *(double *)arg9.data, *(double *)arg10.data, x_size);
+  if (x_size > 0)
+    ops_updateRK3_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
+        (double *)p_a[8], *(double *)arg9.data, *(double *)arg10.data, x_size);
 
   cutilSafeCall(cudaGetLastError());
 

@@ -152,8 +152,9 @@ void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_poisson_kernel_stencil<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_poisson_kernel_stencil<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

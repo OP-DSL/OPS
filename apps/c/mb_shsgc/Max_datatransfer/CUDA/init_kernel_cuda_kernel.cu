@@ -254,10 +254,11 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_init_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
-                                    (double *)p_a[2], (double *)p_a[3],
-                                    (double *)p_a[4], (double *)p_a[5],
-                                    (double *)p_a[6], (double *)p_a[7], x_size);
+  if (x_size > 0)
+    ops_init_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], (double *)p_a[5], (double *)p_a[6], (double *)p_a[7],
+        x_size);
 
   cutilSafeCall(cudaGetLastError());
 
