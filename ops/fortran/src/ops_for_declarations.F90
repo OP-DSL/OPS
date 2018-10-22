@@ -90,7 +90,9 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
     integer(kind=c_int) :: e_dat       ! is this an edge dat?
     integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
-    type(c_ptr)         :: stride      ! multigrid stride
+    integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
+    type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+
   end type ops_dat_core
 
   type :: ops_dat
@@ -634,6 +636,7 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: typ
     integer(4), dimension(5), target :: stride
 
+    integer(4), target :: stride(5)
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
