@@ -195,9 +195,10 @@ void ops_par_loop_drhouupdx_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_drhouupdx_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
-                                         (double *)p_a[2], (double *)p_a[3],
-                                         x_size);
+  if (x_size > 0)
+    ops_drhouupdx_kernel<<<grid, tblock>>>((double *)p_a[0], (double *)p_a[1],
+                                           (double *)p_a[2], (double *)p_a[3],
+                                           x_size);
 
   cutilSafeCall(cudaGetLastError());
 

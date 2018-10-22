@@ -150,8 +150,10 @@ void ops_par_loop_tea_leaf_recip3_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_tea_leaf_recip3_kernel<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], *(double *)arg2.data, x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_tea_leaf_recip3_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], *(double *)arg2.data, x_size,
+        y_size);
 
   cutilSafeCall(cudaGetLastError());
 

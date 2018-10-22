@@ -217,10 +217,11 @@ void ops_par_loop_tea_leaf_common_init_kernel_execute(
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_tea_leaf_common_init_kernel<<<grid, tblock>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], *(double *)arg5.data, *(double *)arg6.data, x_size,
-      y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_tea_leaf_common_init_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], *(double *)arg5.data, *(double *)arg6.data, x_size,
+        y_size);
 
   cutilSafeCall(cudaGetLastError());
 

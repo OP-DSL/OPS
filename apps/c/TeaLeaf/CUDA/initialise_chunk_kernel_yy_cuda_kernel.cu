@@ -146,8 +146,9 @@ void ops_par_loop_initialise_chunk_kernel_yy_execute(
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_initialise_chunk_kernel_yy<<<grid, tblock>>>((int *)p_a[0], arg_idx[0],
-                                                   arg_idx[1], x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_initialise_chunk_kernel_yy<<<grid, tblock>>>(
+        (int *)p_a[0], arg_idx[0], arg_idx[1], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

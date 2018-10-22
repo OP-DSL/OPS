@@ -45,7 +45,7 @@ else
   CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -qopenmp 
+  OMPFLAGS  = -qopenmp
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS  = $(CCFLAGS)
 else
@@ -71,7 +71,7 @@ ifeq ($(OPS_COMPILER),pgi)
 ifdef DEBUG
   CCFLAGS   = -O2 -Minline -Kieee #-Minform=inform -Minfo=all
 else
-  CCFLAGS   = -O3 -Kieee -Minline #-Minform=severe -Minfo=all
+  CCFLAGS   = -O3 -Kieee #-Minline -Minform=severe -Minfo=all
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp

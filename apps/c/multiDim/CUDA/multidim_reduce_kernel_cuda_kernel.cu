@@ -184,8 +184,9 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   nshared = MAX(nshared * nthread, reduct_size * nthread);
 
   // call kernel wrapper function, passing in pointers to data
-  ops_multidim_reduce_kernel<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)arg1.data_d, x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_multidim_reduce_kernel<<<grid, tblock, nshared>>>(
+        (double *)p_a[0], (double *)arg1.data_d, x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

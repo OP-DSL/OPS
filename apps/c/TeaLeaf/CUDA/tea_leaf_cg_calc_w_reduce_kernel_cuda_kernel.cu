@@ -256,10 +256,11 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(
   nshared = MAX(nshared * nthread, reduct_size * nthread);
 
   // call kernel wrapper function, passing in pointers to data
-  ops_tea_leaf_cg_calc_w_reduce_kernel<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      *(double *)arg4.data, *(double *)arg5.data, (double *)arg6.data_d, x_size,
-      y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_tea_leaf_cg_calc_w_reduce_kernel<<<grid, tblock, nshared>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        *(double *)arg4.data, *(double *)arg5.data, (double *)arg6.data_d,
+        x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

@@ -267,10 +267,11 @@ void ops_par_loop_tea_leaf_jacobi_kernel_execute(ops_kernel_descriptor *desc) {
   nshared = MAX(nshared * nthread, reduct_size * nthread);
 
   // call kernel wrapper function, passing in pointers to data
-  ops_tea_leaf_jacobi_kernel<<<grid, tblock, nshared>>>(
-      (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
-      (double *)p_a[4], *(double *)arg5.data, *(double *)arg6.data,
-      (double *)arg7.data_d, x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_tea_leaf_jacobi_kernel<<<grid, tblock, nshared>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], *(double *)arg5.data, *(double *)arg6.data,
+        (double *)arg7.data_d, x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
