@@ -91,7 +91,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     reduction_vars = ''
     reduct_op = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
 
         if accs[n] == OPS_INC:
           reduct_op = 'REDUCTION(+:'
@@ -101,7 +101,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
           reduct_op = 'REDUCTION(MAX:'
 
         reduction_vars = reduction_vars + reduct_op +'opsDat'+str(n+1)+'Local'
-        if n <> nargs-1:
+        if n != nargs-1:
           reduction_vars = reduction_vars + '),'
         else:
           reduction_vars = reduction_vars + ')'
@@ -173,8 +173,8 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     text = remove_trailing_w_space(text)
     i = text.find(name)
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     # need to check accs here - under fortran the
@@ -208,7 +208,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
@@ -228,7 +228,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         code('integer(4) :: idx_local('+str(NDIM)+')' )
 
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('integer :: dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
@@ -457,7 +457,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if int(dims[n]) <> 1:
+        if int(dims[n]) != 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
@@ -491,7 +491,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_gbl':
         code('& opsDat'+str(n+1)+'Local(1), &') ## --- hard coded 1 no multi dim globals/reductions
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
