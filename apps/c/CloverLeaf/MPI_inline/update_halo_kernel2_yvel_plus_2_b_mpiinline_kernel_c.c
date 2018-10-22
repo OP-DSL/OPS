@@ -7,12 +7,9 @@ int xdim0_update_halo_kernel2_yvel_plus_2_b;
 int xdim1_update_halo_kernel2_yvel_plus_2_b;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_update_halo_kernel2_yvel_plus_2_b * 1 + x +           \
-   xdim0_update_halo_kernel2_yvel_plus_2_b * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_update_halo_kernel2_yvel_plus_2_b)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_update_halo_kernel2_yvel_plus_2_b * 1 + x +           \
-   xdim1_update_halo_kernel2_yvel_plus_2_b * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_update_halo_kernel2_yvel_plus_2_b)
 // user function
 
 void update_halo_kernel2_yvel_plus_2_b_c_wrapper(double *restrict yvel0,

@@ -6,9 +6,7 @@
 int xdim0_calc_dt_kernel_min;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_calc_dt_kernel_min * 1 + x +                          \
-   xdim0_calc_dt_kernel_min * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_calc_dt_kernel_min)
 // user function
 
 void calc_dt_kernel_min_c_wrapper(const double *restrict dt_min,

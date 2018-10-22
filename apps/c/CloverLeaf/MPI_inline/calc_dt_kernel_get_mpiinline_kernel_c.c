@@ -7,12 +7,9 @@ int xdim0_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_calc_dt_kernel_get * 0 + x +                          \
-   xdim0_calc_dt_kernel_get * (y))
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_calc_dt_kernel_get)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_calc_dt_kernel_get * 1 + x +                          \
-   xdim1_calc_dt_kernel_get * (y))
-
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_calc_dt_kernel_get)
 // user function
 
 void calc_dt_kernel_get_c_wrapper(const double *restrict cellx,

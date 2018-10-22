@@ -7,12 +7,9 @@ int xdim0_advec_mom_kernel_mass_flux_y;
 int xdim1_advec_mom_kernel_mass_flux_y;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_advec_mom_kernel_mass_flux_y * 1 + x +                \
-   xdim0_advec_mom_kernel_mass_flux_y * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_mom_kernel_mass_flux_y)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_advec_mom_kernel_mass_flux_y * 1 + x +                \
-   xdim1_advec_mom_kernel_mass_flux_y * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_mom_kernel_mass_flux_y)
 // user function
 
 void advec_mom_kernel_mass_flux_y_c_wrapper(double *restrict node_flux,

@@ -8,19 +8,10 @@ int xdim1_flux_calc_kernely;
 int xdim2_flux_calc_kernely;
 int xdim3_flux_calc_kernely;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_flux_calc_kernely * 1 + x +                           \
-   xdim0_flux_calc_kernely * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_flux_calc_kernely * 1 + x +                           \
-   xdim1_flux_calc_kernely * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_flux_calc_kernely * 1 + x +                           \
-   xdim2_flux_calc_kernely * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_flux_calc_kernely * 1 + x +                           \
-   xdim3_flux_calc_kernely * (y))
-
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_flux_calc_kernely)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_flux_calc_kernely)
+#define OPS_ACC2(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_flux_calc_kernely)
+#define OPS_ACC3(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_flux_calc_kernely)
 // user function
 
 void flux_calc_kernely_c_wrapper(double *restrict vol_flux_y,

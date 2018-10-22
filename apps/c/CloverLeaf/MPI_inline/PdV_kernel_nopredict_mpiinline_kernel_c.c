@@ -19,48 +19,33 @@ int xdim12_PdV_kernel_nopredict;
 int xdim13_PdV_kernel_nopredict;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_PdV_kernel_nopredict * 1 + x +                        \
-   xdim0_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_PdV_kernel_nopredict)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_PdV_kernel_nopredict * 1 + x +                        \
-   xdim1_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_PdV_kernel_nopredict)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_PdV_kernel_nopredict * 1 + x +                        \
-   xdim2_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_PdV_kernel_nopredict)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_PdV_kernel_nopredict * 1 + x +                        \
-   xdim3_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_PdV_kernel_nopredict)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_PdV_kernel_nopredict * 1 + x +                        \
-   xdim4_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_PdV_kernel_nopredict)
 #define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_PdV_kernel_nopredict * 1 + x +                        \
-   xdim5_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim5_PdV_kernel_nopredict)
 #define OPS_ACC6(x, y)                                                         \
-  (n_x * 1 + n_y * xdim6_PdV_kernel_nopredict * 1 + x +                        \
-   xdim6_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim6_PdV_kernel_nopredict)
 #define OPS_ACC7(x, y)                                                         \
-  (n_x * 1 + n_y * xdim7_PdV_kernel_nopredict * 1 + x +                        \
-   xdim7_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim7_PdV_kernel_nopredict)
 #define OPS_ACC8(x, y)                                                         \
-  (n_x * 1 + n_y * xdim8_PdV_kernel_nopredict * 1 + x +                        \
-   xdim8_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim8_PdV_kernel_nopredict)
 #define OPS_ACC9(x, y)                                                         \
-  (n_x * 1 + n_y * xdim9_PdV_kernel_nopredict * 1 + x +                        \
-   xdim9_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim9_PdV_kernel_nopredict)
 #define OPS_ACC10(x, y)                                                        \
-  (n_x * 1 + n_y * xdim10_PdV_kernel_nopredict * 1 + x +                       \
-   xdim10_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim10_PdV_kernel_nopredict)
 #define OPS_ACC11(x, y)                                                        \
-  (n_x * 1 + n_y * xdim11_PdV_kernel_nopredict * 1 + x +                       \
-   xdim11_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim11_PdV_kernel_nopredict)
 #define OPS_ACC12(x, y)                                                        \
-  (n_x * 1 + n_y * xdim12_PdV_kernel_nopredict * 1 + x +                       \
-   xdim12_PdV_kernel_nopredict * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim12_PdV_kernel_nopredict)
 #define OPS_ACC13(x, y)                                                        \
-  (n_x * 1 + n_y * xdim13_PdV_kernel_nopredict * 1 + x +                       \
-   xdim13_PdV_kernel_nopredict * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim13_PdV_kernel_nopredict)
 // user function
 
 void PdV_kernel_nopredict_c_wrapper(

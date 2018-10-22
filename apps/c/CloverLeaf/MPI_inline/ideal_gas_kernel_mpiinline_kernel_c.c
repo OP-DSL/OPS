@@ -8,19 +8,10 @@ int xdim1_ideal_gas_kernel;
 int xdim2_ideal_gas_kernel;
 int xdim3_ideal_gas_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_ideal_gas_kernel * 1 + x +                            \
-   xdim0_ideal_gas_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_ideal_gas_kernel * 1 + x +                            \
-   xdim1_ideal_gas_kernel * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_ideal_gas_kernel * 1 + x +                            \
-   xdim2_ideal_gas_kernel * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_ideal_gas_kernel * 1 + x +                            \
-   xdim3_ideal_gas_kernel * (y))
-
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_ideal_gas_kernel)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_ideal_gas_kernel)
+#define OPS_ACC2(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_ideal_gas_kernel)
+#define OPS_ACC3(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_ideal_gas_kernel)
 // user function
 
 void ideal_gas_kernel_c_wrapper(const double *restrict density,

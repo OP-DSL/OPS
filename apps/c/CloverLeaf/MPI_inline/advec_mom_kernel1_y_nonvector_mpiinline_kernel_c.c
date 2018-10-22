@@ -10,21 +10,15 @@ int xdim3_advec_mom_kernel1_y_nonvector;
 int xdim4_advec_mom_kernel1_y_nonvector;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_advec_mom_kernel1_y_nonvector * 1 + x +               \
-   xdim0_advec_mom_kernel1_y_nonvector * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_advec_mom_kernel1_y_nonvector)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_advec_mom_kernel1_y_nonvector * 1 + x +               \
-   xdim1_advec_mom_kernel1_y_nonvector * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_advec_mom_kernel1_y_nonvector)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_advec_mom_kernel1_y_nonvector * 1 + x +               \
-   xdim2_advec_mom_kernel1_y_nonvector * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_advec_mom_kernel1_y_nonvector)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 0 + n_y * xdim3_advec_mom_kernel1_y_nonvector * 1 + x +               \
-   xdim3_advec_mom_kernel1_y_nonvector * (y))
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim3_advec_mom_kernel1_y_nonvector)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_advec_mom_kernel1_y_nonvector * 1 + x +               \
-   xdim4_advec_mom_kernel1_y_nonvector * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_advec_mom_kernel1_y_nonvector)
 // user function
 
 void advec_mom_kernel1_y_nonvector_c_wrapper(
