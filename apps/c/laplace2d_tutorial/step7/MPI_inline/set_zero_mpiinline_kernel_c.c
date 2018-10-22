@@ -5,24 +5,16 @@
 
 int xdim0_set_zero;
 
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_set_zero)
+// user function
 
-#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_set_zero*1+x+xdim0_set_zero*(y))
+void set_zero_c_wrapper(double *restrict A, int x_size, int y_size) {
+#pragma omp parallel for
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
 
-//user function
-
-
-
-void set_zero_c_wrapper(
-  double * restrict A,
-  int x_size, int y_size) {
-  #pragma omp parallel for
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      
-  A[OPS_ACC0(0,0)] = 0.0;
-
+      A[OPS_ACC0(0, 0)] = 0.0;
     }
   }
 }
 #undef OPS_ACC0
-

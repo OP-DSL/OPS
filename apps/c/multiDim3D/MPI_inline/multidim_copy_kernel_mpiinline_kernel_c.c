@@ -10,27 +10,29 @@ int xdim1_multidim_copy_kernel;
 int ydim1_multidim_copy_kernel;
 int zdim1_multidim_copy_kernel;
 
+#define OPS_ACC_MD0(d, x, y, z)                                                \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_multidim_copy_kernel +                \
+   (n_z * 1 + (z)) * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel + \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel *               \
+       zdim1_multidim_copy_kernel)
+#define OPS_ACC_MD1(d, x, y, z)                                                \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_multidim_copy_kernel +                \
+   (n_z * 1 + (z)) * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel + \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel *               \
+       zdim1_multidim_copy_kernel)
+// user function
 
+void multidim_copy_kernel_c_wrapper(const double *restrict src,
+                                    double *restrict dest, int x_size,
+                                    int y_size, int z_size) {
+#pragma omp parallel for
+  for (int n_z = 0; n_z < z_size; n_z++) {
+    for (int n_y = 0; n_y < y_size; n_y++) {
+      for (int n_x = 0; n_x < x_size; n_x++) {
 
-#define OPS_ACC_MD0(d,x,y,z) (n_x*1 + n_y*xdim0_multidim_copy_kernel*1 + n_z*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*1 + (x)+(d)*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*zdim0_multidim_copy_kernel+(xdim0_multidim_copy_kernel*(y))+(xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*(z)))
-#define OPS_ACC_MD1(d,x,y,z) (n_x*1 + n_y*xdim1_multidim_copy_kernel*1 + n_z*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*1 + (x)+(d)*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*zdim1_multidim_copy_kernel+(xdim1_multidim_copy_kernel*(y))+(xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*(z)))
-//user function
-
-
-
-void multidim_copy_kernel_c_wrapper(
-  const double * restrict src,
-  double * restrict dest,
-  int x_size, int y_size, int z_size) {
-  #pragma omp parallel for
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        
-  dest[OPS_ACC_MD1(0,0,0,0)] = src[OPS_ACC_MD0(0,0,0,0)];
-  dest[OPS_ACC_MD1(1,0,0,0)] = src[OPS_ACC_MD0(1,0,0,0)];
-  dest[OPS_ACC_MD1(2,0,0,0)] = src[OPS_ACC_MD0(2,0,0,0)];
-
+        dest[OPS_ACC_MD1(0, 0, 0, 0)] = src[OPS_ACC_MD0(0, 0, 0, 0)];
+        dest[OPS_ACC_MD1(1, 0, 0, 0)] = src[OPS_ACC_MD0(1, 0, 0, 0)];
+        dest[OPS_ACC_MD1(2, 0, 0, 0)] = src[OPS_ACC_MD0(2, 0, 0, 0)];
       }
     }
   }

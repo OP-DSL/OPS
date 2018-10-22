@@ -12,48 +12,51 @@ int xdim1_multidim_copy_kernel;
 int ydim1_multidim_copy_kernel;
 int zdim1_multidim_copy_kernel;
 
-
-
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)+(xdim0_multidim_copy_kernel*(y))+(xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*(z))+(d)*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*zdim0_multidim_copy_kernel)
-#define OPS_ACC_MD1(d,x,y,z) ((x)+(xdim1_multidim_copy_kernel*(y))+(xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*(z))+(d)*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*zdim1_multidim_copy_kernel)
-//user function
-inline 
-void multidim_copy_kernel(const double *src, double *dest){
-  dest[OPS_ACC_MD1(0,0,0,0)] = src[OPS_ACC_MD0(0,0,0,0)];
-  dest[OPS_ACC_MD1(1,0,0,0)] = src[OPS_ACC_MD0(1,0,0,0)];
-  dest[OPS_ACC_MD1(2,0,0,0)] = src[OPS_ACC_MD0(2,0,0,0)];
+#define OPS_ACC_MD0(d, x, y, z)                                                \
+  ((x) + (xdim0_multidim_copy_kernel * (y)) +                                  \
+   (xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel * (z)) +           \
+   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel *               \
+       zdim0_multidim_copy_kernel)
+#define OPS_ACC_MD1(d, x, y, z)                                                \
+  ((x) + (xdim1_multidim_copy_kernel * (y)) +                                  \
+   (xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel * (z)) +           \
+   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel *               \
+       zdim1_multidim_copy_kernel)
+// user function
+inline void multidim_copy_kernel(const double *src, double *dest) {
+  dest[OPS_ACC_MD1(0, 0, 0, 0)] = src[OPS_ACC_MD0(0, 0, 0, 0)];
+  dest[OPS_ACC_MD1(1, 0, 0, 0)] = src[OPS_ACC_MD0(1, 0, 0, 0)];
+  dest[OPS_ACC_MD1(2, 0, 0, 0)] = src[OPS_ACC_MD0(2, 0, 0, 0)];
 }
 
-
-
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
-
-void multidim_copy_kernel_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  int x_size, int y_size, int z_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1)
-  #pragma acc loop
-  #endif
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    #ifdef OPS_GPU
-    #pragma acc loop
-    #endif
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      #ifdef OPS_GPU
-      #pragma acc loop
-      #endif
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        multidim_copy_kernel(  p_a0 + n_x*1 + n_y*xdim0_multidim_copy_kernel*1 + n_z*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*1,
-           p_a1 + n_x*1 + n_y*xdim1_multidim_copy_kernel*1 + n_z*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*1 );
-
+void multidim_copy_kernel_c_wrapper(double *p_a0, double *p_a1, int x_size,
+                                    int y_size, int z_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1)
+#pragma acc loop
+#endif
+  for (int n_z = 0; n_z < z_size; n_z++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+    for (int n_y = 0; n_y < y_size; n_y++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        multidim_copy_kernel(
+            p_a0 + n_x * 1 + n_y * xdim0_multidim_copy_kernel * 1 +
+                n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel *
+                    1,
+            p_a1 + n_x * 1 + n_y * xdim1_multidim_copy_kernel * 1 +
+                n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel *
+                    1);
       }
     }
   }

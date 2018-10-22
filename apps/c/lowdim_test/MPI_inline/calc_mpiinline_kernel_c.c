@@ -18,40 +18,45 @@ int ydim5_calc;
 int xdim6_calc;
 int ydim6_calc;
 
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_calc +                                \
+   (n_z * 1 + (z)) * xdim0_calc * ydim0_calc)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_calc +                                \
+   (n_z * 0 + (z)) * xdim1_calc * ydim1_calc)
+#define OPS_ACC2(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim2_calc +                                \
+   (n_z * 1 + (z)) * xdim2_calc * ydim2_calc)
+#define OPS_ACC3(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim3_calc +                                \
+   (n_z * 1 + (z)) * xdim3_calc * ydim3_calc)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim4_calc +                                \
+   (n_z * 0 + (z)) * xdim4_calc * ydim4_calc)
+#define OPS_ACC5(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim5_calc +                                \
+   (n_z * 0 + (z)) * xdim5_calc * ydim5_calc)
+#define OPS_ACC6(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 0 + (y)) * xdim6_calc +                                \
+   (n_z * 1 + (z)) * xdim6_calc * ydim6_calc)
+// user function
 
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_calc*1+n_z*xdim0_calc*ydim0_calc*1+x+xdim0_calc*(y)+xdim0_calc*ydim0_calc*(z))
-#define OPS_ACC1(x,y,z) (n_x*1+n_y*xdim1_calc*1+n_z*xdim1_calc*ydim1_calc*0+x+xdim1_calc*(y)+xdim1_calc*ydim1_calc*(z))
-#define OPS_ACC2(x,y,z) (n_x*0+n_y*xdim2_calc*1+n_z*xdim2_calc*ydim2_calc*1+x+xdim2_calc*(y)+xdim2_calc*ydim2_calc*(z))
-#define OPS_ACC3(x,y,z) (n_x*1+n_y*xdim3_calc*0+n_z*xdim3_calc*ydim3_calc*1+x+xdim3_calc*(y)+xdim3_calc*ydim3_calc*(z))
-#define OPS_ACC4(x,y,z) (n_x*1+n_y*xdim4_calc*0+n_z*xdim4_calc*ydim4_calc*0+x+xdim4_calc*(y)+xdim4_calc*ydim4_calc*(z))
-#define OPS_ACC5(x,y,z) (n_x*0+n_y*xdim5_calc*1+n_z*xdim5_calc*ydim5_calc*0+x+xdim5_calc*(y)+xdim5_calc*ydim5_calc*(z))
-#define OPS_ACC6(x,y,z) (n_x*0+n_y*xdim6_calc*0+n_z*xdim6_calc*ydim6_calc*1+x+xdim6_calc*(y)+xdim6_calc*ydim6_calc*(z))
+void calc_c_wrapper(double *restrict dat3D, const double *restrict dat2D_xy,
+                    const double *restrict dat2D_yz,
+                    const double *restrict dat2D_xz,
+                    const double *restrict dat1D_x,
+                    const double *restrict dat1D_y,
+                    const double *restrict dat1D_z, int x_size, int y_size,
+                    int z_size) {
+#pragma omp parallel for
+  for (int n_z = 0; n_z < z_size; n_z++) {
+    for (int n_y = 0; n_y < y_size; n_y++) {
+      for (int n_x = 0; n_x < x_size; n_x++) {
 
-//user function
-
-
-
-void calc_c_wrapper(
-  double * restrict dat3D,
-  const double * restrict dat2D_xy,
-  const double * restrict dat2D_yz,
-  const double * restrict dat2D_xz,
-  const double * restrict dat1D_x,
-  const double * restrict dat1D_y,
-  const double * restrict dat1D_z,
-  int x_size, int y_size, int z_size) {
-  #pragma omp parallel for
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        
-  dat3D[OPS_ACC0(0,0,0)] = dat2D_xy[OPS_ACC1(0,0,0)] +
-                           dat2D_yz[OPS_ACC2(0,0,0)] +
-                           dat2D_xz[OPS_ACC3(0,0,0)] +
-                           dat1D_x[OPS_ACC4(0,0,0)] +
-                           dat1D_y[OPS_ACC5(0,0,0)] +
-                           dat1D_z[OPS_ACC6(0,0,0)];
-
+        dat3D[OPS_ACC0(0, 0, 0)] =
+            dat2D_xy[OPS_ACC1(0, 0, 0)] + dat2D_yz[OPS_ACC2(0, 0, 0)] +
+            dat2D_xz[OPS_ACC3(0, 0, 0)] + dat1D_x[OPS_ACC4(0, 0, 0)] +
+            dat1D_y[OPS_ACC5(0, 0, 0)] + dat1D_z[OPS_ACC6(0, 0, 0)];
       }
     }
   }
@@ -63,4 +68,3 @@ void calc_c_wrapper(
 #undef OPS_ACC4
 #undef OPS_ACC5
 #undef OPS_ACC6
-

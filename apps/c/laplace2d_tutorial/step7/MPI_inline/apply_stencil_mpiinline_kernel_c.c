@@ -6,33 +6,27 @@
 int xdim0_apply_stencil;
 int xdim1_apply_stencil;
 
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_apply_stencil)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_apply_stencil)
+// user function
 
-#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_apply_stencil*1+x+xdim0_apply_stencil*(y))
-#define OPS_ACC1(x,y) (n_x*1+n_y*xdim1_apply_stencil*1+x+xdim1_apply_stencil*(y))
+void apply_stencil_c_wrapper(const double *restrict A, double *restrict Anew,
+                             double *restrict error_g, int x_size, int y_size) {
+  double error_0 = error_g[0];
+#pragma omp parallel for reduction(max : error_0)
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      double error[1];
+      error[0] = error_g[0];
 
-//user function
+      Anew[OPS_ACC1(0, 0)] = 0.25f * (A[OPS_ACC0(1, 0)] + A[OPS_ACC0(-1, 0)] +
+                                      A[OPS_ACC0(0, -1)] + A[OPS_ACC0(0, 1)]);
+      *error = fmax(*error, fabs(Anew[OPS_ACC1(0, 0)] - A[OPS_ACC0(0, 0)]));
 
-
-
-void apply_stencil_c_wrapper(
-  const double * restrict A,
-  double * restrict Anew,
-  double * restrict error_g,
-  int x_size, int y_size) {
-  double error_v = *error_g;
-  #pragma omp parallel for reduction(max:error_v)
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      double * restrict error = &error_v;
-      
-  Anew[OPS_ACC1(0,0)] = 0.25f * ( A[OPS_ACC0(1,0)] + A[OPS_ACC0(-1,0)]
-      + A[OPS_ACC0(0,-1)] + A[OPS_ACC0(0,1)]);
-  *error = fmax( *error, fabs(Anew[OPS_ACC1(0,0)]-A[OPS_ACC0(0,0)]));
-
+      error_0 = MAX(error_0, error[0]);
     }
   }
-  *error_g = error_v;
+  error_g[0] = error_0;
 }
 #undef OPS_ACC0
 #undef OPS_ACC1
-

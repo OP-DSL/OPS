@@ -3,25 +3,18 @@
 
 #include "./MPI_inline/laplace2d_common.h"
 
-
 void ops_init_backend() {}
 
-void ops_decl_const_char2(int dim, char const *type,
-int size, char *dat, char const *name){
-  if (!strcmp(name,"imax")) {
-    imax = *(int*)dat;
-  }
-  else
-  if (!strcmp(name,"jmax")) {
-    jmax = *(int*)dat;
-  }
-  else
-  if (!strcmp(name,"pi")) {
-    pi = *(double*)dat;
-  }
-  else
-  {
-    printf("error: unknown const name\n"); exit(1);
+void ops_decl_const_char2(int dim, char const *type, int size, char *dat,
+                          char const *name) {
+  if (!strcmp(name, "imax")) {
+    imax = *(int *)dat;
+  } else if (!strcmp(name, "jmax")) {
+    jmax = *(int *)dat;
+  } else if (!strcmp(name, "pi")) {
+    pi = *(double *)dat;
+  } else {
+    printf("error: unknown const name\n");
+    exit(1);
   }
 }
-

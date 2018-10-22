@@ -6,13 +6,8 @@
 int xdim0_set_field_kernel;
 int xdim1_set_field_kernel;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_set_field_kernel * 1 + x +                            \
-   xdim0_set_field_kernel * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_set_field_kernel * 1 + x +                            \
-   xdim1_set_field_kernel * (y))
-
+#define OPS_ACC0(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_set_field_kernel)
+#define OPS_ACC1(x, y) (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_set_field_kernel)
 // user function
 
 void set_field_kernel_c_wrapper(const double *restrict energy0,

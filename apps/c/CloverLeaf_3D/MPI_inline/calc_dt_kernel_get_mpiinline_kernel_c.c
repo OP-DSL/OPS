@@ -10,46 +10,53 @@ int ydim1_calc_dt_kernel_get;
 int xdim4_calc_dt_kernel_get;
 int ydim4_calc_dt_kernel_get;
 
+#define OPS_ACC0(x, y, z)                                                      \
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_calc_dt_kernel_get +                  \
+   (n_z * 0 + (z)) * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get)
+#define OPS_ACC1(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_calc_dt_kernel_get +                  \
+   (n_z * 0 + (z)) * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get)
+#define OPS_ACC4(x, y, z)                                                      \
+  (n_x * 0 + x + (n_y * 0 + (y)) * xdim4_calc_dt_kernel_get +                  \
+   (n_z * 1 + (z)) * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get)
+// user function
 
-#define OPS_ACC0(x,y,z) (n_x*1+n_y*xdim0_calc_dt_kernel_get*0+n_z*xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get*0+x+xdim0_calc_dt_kernel_get*(y)+xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get*(z))
-#define OPS_ACC1(x,y,z) (n_x*0+n_y*xdim1_calc_dt_kernel_get*1+n_z*xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get*0+x+xdim1_calc_dt_kernel_get*(y)+xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get*(z))
-#define OPS_ACC4(x,y,z) (n_x*0+n_y*xdim4_calc_dt_kernel_get*0+n_z*xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get*1+x+xdim4_calc_dt_kernel_get*(y)+xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get*(z))
+void calc_dt_kernel_get_c_wrapper(const double *restrict cellx,
+                                  const double *restrict celly,
+                                  double *restrict xl_pos_g,
+                                  double *restrict yl_pos_g,
+                                  const double *restrict cellz,
+                                  double *restrict zl_pos_g, int x_size,
+                                  int y_size, int z_size) {
+  double xl_pos_0 = xl_pos_g[0];
+  double yl_pos_0 = yl_pos_g[0];
+  double zl_pos_0 = zl_pos_g[0];
+#pragma omp parallel for reduction(+ : xl_pos_0) reduction(                    \
+    + : yl_pos_0) reduction(+ : zl_pos_0)
+  for (int n_z = 0; n_z < z_size; n_z++) {
+    for (int n_y = 0; n_y < y_size; n_y++) {
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        double xl_pos[1];
+        xl_pos[0] = ZERO_double;
+        double yl_pos[1];
+        yl_pos[0] = ZERO_double;
+        double zl_pos[1];
+        zl_pos[0] = ZERO_double;
 
-//user function
+        *xl_pos = cellx[OPS_ACC0(0, 0, 0)];
+        *yl_pos = celly[OPS_ACC1(0, 0, 0)];
+        *zl_pos = cellz[OPS_ACC4(0, 0, 0)];
 
-
-
-void calc_dt_kernel_get_c_wrapper(
-  const double * restrict cellx,
-  const double * restrict celly,
-  double * restrict xl_pos_g,
-  double * restrict yl_pos_g,
-  const double * restrict cellz,
-  double * restrict zl_pos_g,
-  int x_size, int y_size, int z_size) {
-  double xl_pos_v = *xl_pos_g;
-  double yl_pos_v = *yl_pos_g;
-  double zl_pos_v = *zl_pos_g;
-  #pragma omp parallel for reduction(+:xl_pos_v) reduction(+:yl_pos_v) reduction(+:zl_pos_v)
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        double * restrict xl_pos = &xl_pos_v;
-        double * restrict yl_pos = &yl_pos_v;
-        double * restrict zl_pos = &zl_pos_v;
-        
-  *xl_pos = cellx[OPS_ACC0(0,0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0,0)];
-  *zl_pos = cellz[OPS_ACC4(0,0,0)];
-
+        xl_pos_0 += xl_pos[0];
+        yl_pos_0 += yl_pos[0];
+        zl_pos_0 += zl_pos[0];
       }
     }
   }
-  *xl_pos_g = xl_pos_v;
-  *yl_pos_g = yl_pos_v;
-  *zl_pos_g = zl_pos_v;
+  xl_pos_g[0] = xl_pos_0;
+  yl_pos_g[0] = yl_pos_0;
+  zl_pos_g[0] = zl_pos_0;
 }
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC4
-

@@ -9,18 +9,13 @@ int xdim2_field_summary_kernel;
 int xdim3_field_summary_kernel;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_field_summary_kernel * 1 + x +                        \
-   xdim0_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim0_field_summary_kernel)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_field_summary_kernel * 1 + x +                        \
-   xdim1_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim1_field_summary_kernel)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_field_summary_kernel * 1 + x +                        \
-   xdim2_field_summary_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_field_summary_kernel)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_field_summary_kernel * 1 + x +                        \
-   xdim3_field_summary_kernel * (y))
-
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_field_summary_kernel)
 // user function
 
 void field_summary_kernel_c_wrapper(
@@ -28,18 +23,22 @@ void field_summary_kernel_c_wrapper(
     const double *restrict energy, const double *restrict u,
     double *restrict vol_g, double *restrict mass_g, double *restrict ie_g,
     double *restrict temp_g, int x_size, int y_size) {
-  double vol_v = *vol_g;
-  double mass_v = *mass_g;
-  double ie_v = *ie_g;
-  double temp_v = *temp_g;
-#pragma omp parallel for reduction(+ : vol_v) reduction(+ : mass_v) reduction( \
-    + : ie_v) reduction(+ : temp_v)
+  double vol_0 = vol_g[0];
+  double mass_0 = mass_g[0];
+  double ie_0 = ie_g[0];
+  double temp_0 = temp_g[0];
+#pragma omp parallel for reduction(+ : vol_0) reduction(+ : mass_0) reduction( \
+    + : ie_0) reduction(+ : temp_0)
   for (int n_y = 0; n_y < y_size; n_y++) {
     for (int n_x = 0; n_x < x_size; n_x++) {
-      double *restrict vol = &vol_v;
-      double *restrict mass = &mass_v;
-      double *restrict ie = &ie_v;
-      double *restrict temp = &temp_v;
+      double vol[1];
+      vol[0] = ZERO_double;
+      double mass[1];
+      mass[0] = ZERO_double;
+      double ie[1];
+      ie[0] = ZERO_double;
+      double temp[1];
+      temp[0] = ZERO_double;
 
       double cell_vol, cell_mass;
 
@@ -49,12 +48,17 @@ void field_summary_kernel_c_wrapper(
       *mass = *mass + cell_mass;
       *ie = *ie + cell_mass * energy[OPS_ACC2(0, 0)];
       *temp = *temp + cell_mass * u[OPS_ACC3(0, 0)];
+
+      vol_0 += vol[0];
+      mass_0 += mass[0];
+      ie_0 += ie[0];
+      temp_0 += temp[0];
     }
   }
-  *vol_g = vol_v;
-  *mass_g = mass_v;
-  *ie_g = ie_v;
-  *temp_g = temp_v;
+  vol_g[0] = vol_0;
+  mass_g[0] = mass_0;
+  ie_g[0] = ie_0;
+  temp_g[0] = temp_0;
 }
 #undef OPS_ACC0
 #undef OPS_ACC1

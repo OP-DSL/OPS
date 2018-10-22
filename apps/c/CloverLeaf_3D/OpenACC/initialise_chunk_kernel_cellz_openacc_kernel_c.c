@@ -12,57 +12,65 @@ int ydim1_initialise_chunk_kernel_cellz;
 int xdim2_initialise_chunk_kernel_cellz;
 int ydim2_initialise_chunk_kernel_cellz;
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 
+#define OPS_ACC0(x, y, z)                                                      \
+  (x + xdim0_initialise_chunk_kernel_cellz * (y) +                             \
+   xdim0_initialise_chunk_kernel_cellz * ydim0_initialise_chunk_kernel_cellz * \
+       (z))
+#define OPS_ACC1(x, y, z)                                                      \
+  (x + xdim1_initialise_chunk_kernel_cellz * (y) +                             \
+   xdim1_initialise_chunk_kernel_cellz * ydim1_initialise_chunk_kernel_cellz * \
+       (z))
+#define OPS_ACC2(x, y, z)                                                      \
+  (x + xdim2_initialise_chunk_kernel_cellz * (y) +                             \
+   xdim2_initialise_chunk_kernel_cellz * ydim2_initialise_chunk_kernel_cellz * \
+       (z))
 
-#define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_cellz*(y)+xdim0_initialise_chunk_kernel_cellz*ydim0_initialise_chunk_kernel_cellz*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_initialise_chunk_kernel_cellz*(y)+xdim1_initialise_chunk_kernel_cellz*ydim1_initialise_chunk_kernel_cellz*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_initialise_chunk_kernel_cellz*(y)+xdim2_initialise_chunk_kernel_cellz*ydim2_initialise_chunk_kernel_cellz*(z))
-
-//user function
-inline 
-void initialise_chunk_kernel_cellz(const double *vertexz, double* cellz, double *celldz) {
-  double d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;
-  cellz[OPS_ACC1(0,0,0)]  = 0.5*( vertexz[OPS_ACC0(0,0,0)] + vertexz[OPS_ACC0(0,0,1)] );
-  celldz[OPS_ACC2(0,0,0)]  = d_z;
-
-
-
-
+// user function
+inline void initialise_chunk_kernel_cellz(const double *vertexz, double *cellz,
+                                          double *celldz) {
+  double d_z = (grid.zmax - grid.zmin) / (double)grid.z_cells;
+  cellz[OPS_ACC1(0, 0, 0)] =
+      0.5 * (vertexz[OPS_ACC0(0, 0, 0)] + vertexz[OPS_ACC0(0, 0, 1)]);
+  celldz[OPS_ACC2(0, 0, 0)] = d_z;
 }
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
 
-
-
-void initialise_chunk_kernel_cellz_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  double *p_a2,
-  int x_size, int y_size, int z_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2)
-  #pragma acc loop
-  #endif
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    #ifdef OPS_GPU
-    #pragma acc loop
-    #endif
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      #ifdef OPS_GPU
-      #pragma acc loop
-      #endif
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        initialise_chunk_kernel_cellz(  p_a0 + n_x*0*1 + n_y*xdim0_initialise_chunk_kernel_cellz*0*1 + n_z*xdim0_initialise_chunk_kernel_cellz*ydim0_initialise_chunk_kernel_cellz*1*1,
-           p_a1 + n_x*0*1 + n_y*xdim1_initialise_chunk_kernel_cellz*0*1 + n_z*xdim1_initialise_chunk_kernel_cellz*ydim1_initialise_chunk_kernel_cellz*1*1,
-           p_a2 + n_x*0*1 + n_y*xdim2_initialise_chunk_kernel_cellz*0*1 + n_z*xdim2_initialise_chunk_kernel_cellz*ydim2_initialise_chunk_kernel_cellz*1*1 );
-
+void initialise_chunk_kernel_cellz_c_wrapper(double *p_a0, double *p_a1,
+                                             double *p_a2, int x_size,
+                                             int y_size, int z_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1, p_a2)
+#pragma acc loop
+#endif
+  for (int n_z = 0; n_z < z_size; n_z++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+    for (int n_y = 0; n_y < y_size; n_y++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        initialise_chunk_kernel_cellz(
+            p_a0 + n_x * 0 * 1 +
+                n_y * xdim0_initialise_chunk_kernel_cellz * 0 * 1 +
+                n_z * xdim0_initialise_chunk_kernel_cellz *
+                    ydim0_initialise_chunk_kernel_cellz * 1 * 1,
+            p_a1 + n_x * 0 * 1 +
+                n_y * xdim1_initialise_chunk_kernel_cellz * 0 * 1 +
+                n_z * xdim1_initialise_chunk_kernel_cellz *
+                    ydim1_initialise_chunk_kernel_cellz * 1 * 1,
+            p_a2 + n_x * 0 * 1 +
+                n_y * xdim2_initialise_chunk_kernel_cellz * 0 * 1 +
+                n_z * xdim2_initialise_chunk_kernel_cellz *
+                    ydim2_initialise_chunk_kernel_cellz * 1 * 1);
       }
     }
   }

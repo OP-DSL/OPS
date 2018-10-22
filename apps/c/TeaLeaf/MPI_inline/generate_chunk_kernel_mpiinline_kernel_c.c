@@ -12,27 +12,19 @@ int xdim5_generate_chunk_kernel;
 int xdim6_generate_chunk_kernel;
 
 #define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_generate_chunk_kernel * 0 + x +                       \
-   xdim0_generate_chunk_kernel * (y))
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim0_generate_chunk_kernel)
 #define OPS_ACC1(x, y)                                                         \
-  (n_x * 0 + n_y * xdim1_generate_chunk_kernel * 1 + x +                       \
-   xdim1_generate_chunk_kernel * (y))
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim1_generate_chunk_kernel)
 #define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_generate_chunk_kernel * 1 + x +                       \
-   xdim2_generate_chunk_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim2_generate_chunk_kernel)
 #define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_generate_chunk_kernel * 1 + x +                       \
-   xdim3_generate_chunk_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim3_generate_chunk_kernel)
 #define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_generate_chunk_kernel * 1 + x +                       \
-   xdim4_generate_chunk_kernel * (y))
+  (n_x * 1 + x + (n_y * 1 + (y)) * xdim4_generate_chunk_kernel)
 #define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_generate_chunk_kernel * 0 + x +                       \
-   xdim5_generate_chunk_kernel * (y))
+  (n_x * 1 + x + (n_y * 0 + (y)) * xdim5_generate_chunk_kernel)
 #define OPS_ACC6(x, y)                                                         \
-  (n_x * 0 + n_y * xdim6_generate_chunk_kernel * 1 + x +                       \
-   xdim6_generate_chunk_kernel * (y))
-
+  (n_x * 0 + x + (n_y * 1 + (y)) * xdim6_generate_chunk_kernel)
 // user function
 
 void generate_chunk_kernel_c_wrapper(

@@ -151,17 +151,17 @@ read_dev_mpi: Makefile read.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 # mpi version
 #
 
-SEQ_KERNELS = write_seq_kernels.cpp
+SEQ_KERNELS = write_cpu_kernels.cpp
 
 write_mpi: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o write_mpi
+	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o write_mpi
 read_mpi: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o read_mpi
+	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o read_mpi
 
 #
 # OpenMP version
 #
-OMP_KERNELS = write_omp_kernels.cpp
+OMP_KERNELS = write_cpu_kernels.cpp
 
 write_mpi_openmp: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -lops_hdf5_mpi $(HDF5_LIB) -o write_mpi_openmp
@@ -178,9 +178,9 @@ read_openmp: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
 # Sequential version
 #
 write_seq: Makefile write_ops.cpp write_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq $(HDF5_LIB) -o write_seq
+	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) write_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq $(HDF5_LIB) -o write_seq
 read_seq: Makefile read_ops.cpp $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq $(HDF5_LIB) -o read_seq
+	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) read_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq $(HDF5_LIB) -o read_seq
 
 #
 # CUDA version
