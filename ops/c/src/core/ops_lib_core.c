@@ -892,11 +892,13 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
     exit(2);
   }
 
-  size_t prod[OPS_MAX_DIM];
+  size_t prod[OPS_MAX_DIM+1];
   prod[0] = dat->size[0];
   for (int d = 1; d < OPS_MAX_DIM; d++) {
     prod[d] = prod[d-1] * dat->size[d];
   }
+  for (int d = OPS_MAX_DIM; d <= OPS_MAX_DIM; d++)
+    prod[d] = prod[d-1];
 
 #if OPS_MAX_DIM > 5
   for (int n = 0; n < dat->size[5]; n++) {
@@ -938,8 +940,8 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
               for (int d = 0; d < dat->dim; d++) {
 
                 size_t offset = OPS_soa ?
-                        n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5]
-                      :(n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d;
+                        (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
+                      :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
                     strcmp(dat->type, "double precision") == 0) {
                   if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0) {
