@@ -63,8 +63,8 @@ int main(int argc, char **argv)
   //Mesh
   int logical_size_x = 20;
   int logical_size_y = 20;
-  int ngrid_x = 1;
-  int ngrid_y = 1;
+  int ngrid_x = 5;
+  int ngrid_y = 5;
   int n_iter = 10;
   int itertile = n_iter;
   int non_copy = 0;
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
                  ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
-		
+
 		if (non_copy) {
 			for (int j = 0; j < ngrid_y; j++) {
 				for (int i = 0; i < ngrid_x; i++) {

@@ -135,10 +135,10 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
     OPS_kernels[2].mpi_time += t2-t1;
   }
 
-
-  //call kernel wrapper function, passing in pointers to data
+  // call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
-    ops_poisson_kernel_initialguess<<<grid, tblock >>> (  (double *)p_a[0],x_size, y_size);
+    ops_poisson_kernel_initialguess<<<grid, tblock>>>((double *)p_a[0], x_size,
+                                                      y_size);
 
   cutilSafeCall(cudaGetLastError());
 

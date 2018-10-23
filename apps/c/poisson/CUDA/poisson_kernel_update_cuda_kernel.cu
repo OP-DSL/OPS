@@ -154,10 +154,10 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[1].mpi_time += t2-t1;
   }
 
-
-  //call kernel wrapper function, passing in pointers to data
+  // call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
-    ops_poisson_kernel_update<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],x_size, y_size);
+    ops_poisson_kernel_update<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
