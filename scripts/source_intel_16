@@ -8,7 +8,7 @@ export PATH=/home/mgiles/mudalige/numawrap:$PATH
 
 #OPS specifics
 export OPS_COMPILER=intel
-export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
 
 #CUDA and NVIDIA OpenCL
 export PATH=/usr/local/cuda-6.5.14/bin:$PATH
