@@ -152,7 +152,7 @@ void ops_par_loop_tea_leaf_ppcg_reduce_kernel_execute(
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
                 ((y_size - 1) / OPS_block_size_y + 1);
@@ -210,7 +210,7 @@ void ops_par_loop_tea_leaf_ppcg_reduce_kernel_execute(
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y;
+  int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
 
   nshared = MAX(nshared, sizeof(double) * 1);
 

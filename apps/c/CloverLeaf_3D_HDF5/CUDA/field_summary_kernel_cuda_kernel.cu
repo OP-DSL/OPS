@@ -380,11 +380,13 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 #endif
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, z_size);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+            (y_size - 1) / OPS_block_size_y + 1,
+            (z_size - 1) / OPS_block_size_z + 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
-                ((y_size - 1) / OPS_block_size_y + 1) * z_size;
+                ((y_size - 1) / OPS_block_size_y + 1) *
+                ((z_size - 1) / OPS_block_size_z + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
   int reduct_size = 0;
@@ -524,7 +526,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y;
+  int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
 
   nshared = MAX(nshared, sizeof(double) * 1);
   nshared = MAX(nshared, sizeof(double) * 1);
