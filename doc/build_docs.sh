@@ -16,5 +16,10 @@ pdflatex --shell-escape user.tex
 #bibtex mpidev
 #pdflatex --shell-escape mpidev.tex
 
+doxygen Doxyfile
+pushd latex
+make refman.pdf
+popd
+
 rm -f *.out *.aux *.blg *.pyg.* *.log *.backup *.toc *~ *.bbl
 
