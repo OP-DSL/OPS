@@ -157,7 +157,7 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);

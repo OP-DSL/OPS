@@ -130,7 +130,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_b_execute(
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int consts_bytes = 0;
 

@@ -267,8 +267,9 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
   int *arg7h = (int *)arg7.data;
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
-            (y_size - 1) / OPS_block_size_y + 1, z_size);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+            (y_size - 1) / OPS_block_size_y + 1,
+            (z_size - 1) / OPS_block_size_z + 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int consts_bytes = 0;
 

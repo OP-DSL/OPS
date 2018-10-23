@@ -259,55 +259,58 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim,
     OPS_kernels[0].mpi_time += t2 - t1;
   }
 
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 0, sizeof(cl_mem),
-                            (void *)&arg0.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 1, sizeof(cl_mem),
-                            (void *)&arg1.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 2, sizeof(cl_mem),
-                            (void *)&arg2.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 3, sizeof(cl_mem),
-                            (void *)&arg3.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 4, sizeof(cl_mem),
-                            (void *)&arg4.data_d));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 5, sizeof(cl_double),
-                            (void *)&xmin));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 6, sizeof(cl_double),
-                            (void *)&dx));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 7, sizeof(cl_double),
-                            (void *)&pl));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 8, sizeof(cl_double),
-                            (void *)&pr));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 9, sizeof(cl_double),
-                            (void *)&rhol));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 10, sizeof(cl_double),
-                            (void *)&ul));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 11, sizeof(cl_double),
-                            (void *)&ur));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 12, sizeof(cl_double),
-                            (void *)&gam1));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 13, sizeof(cl_double),
-                            (void *)&eps));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 14, sizeof(cl_double),
-                            (void *)&lambda));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 15, sizeof(cl_int),
-                            (void *)&base0));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 16, sizeof(cl_int),
-                            (void *)&base1));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 17, sizeof(cl_int),
-                            (void *)&base2));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 18, sizeof(cl_int),
-                            (void *)&base3));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 19, sizeof(cl_int),
-                            (void *)&base4));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 20, sizeof(cl_int),
-                            (void *)&arg_idx[0]));
-  clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 21, sizeof(cl_int),
-                            (void *)&x_size));
+  if (globalWorkSize[0] > 0 && globalWorkSize[1] > 0 && globalWorkSize[2] > 0) {
 
-  // call/enque opencl kernel wrapper function
-  clSafeCall(clEnqueueNDRangeKernel(
-      OPS_opencl_core.command_queue, OPS_opencl_core.kernel[0], 3, NULL,
-      globalWorkSize, localWorkSize, 0, NULL, NULL));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 0, sizeof(cl_mem),
+                              (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 1, sizeof(cl_mem),
+                              (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 2, sizeof(cl_mem),
+                              (void *)&arg2.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 3, sizeof(cl_mem),
+                              (void *)&arg3.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 4, sizeof(cl_mem),
+                              (void *)&arg4.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 5, sizeof(cl_double),
+                              (void *)&xmin));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 6, sizeof(cl_double),
+                              (void *)&dx));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 7, sizeof(cl_double),
+                              (void *)&pl));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 8, sizeof(cl_double),
+                              (void *)&pr));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 9, sizeof(cl_double),
+                              (void *)&rhol));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 10, sizeof(cl_double),
+                              (void *)&ul));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 11, sizeof(cl_double),
+                              (void *)&ur));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 12, sizeof(cl_double),
+                              (void *)&gam1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 13, sizeof(cl_double),
+                              (void *)&eps));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 14, sizeof(cl_double),
+                              (void *)&lambda));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 15, sizeof(cl_int),
+                              (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 16, sizeof(cl_int),
+                              (void *)&base1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 17, sizeof(cl_int),
+                              (void *)&base2));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 18, sizeof(cl_int),
+                              (void *)&base3));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 19, sizeof(cl_int),
+                              (void *)&base4));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 20, sizeof(cl_int),
+                              (void *)&arg_idx[0]));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[0], 21, sizeof(cl_int),
+                              (void *)&x_size));
+
+    // call/enque opencl kernel wrapper function
+    clSafeCall(clEnqueueNDRangeKernel(
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[0], 3, NULL,
+        globalWorkSize, localWorkSize, 0, NULL, NULL));
+  }
   if (OPS_diags > 1) {
     clSafeCall(clFinish(OPS_opencl_core.command_queue));
   }

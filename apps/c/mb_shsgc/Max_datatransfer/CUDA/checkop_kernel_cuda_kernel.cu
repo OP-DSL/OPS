@@ -249,7 +249,7 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y;
+  int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
 
   nshared = MAX(nshared, sizeof(double) * 1);
   nshared = MAX(nshared, sizeof(double) * 1);
