@@ -16,8 +16,13 @@ pdflatex --shell-escape user.tex
 #bibtex mpidev
 #pdflatex --shell-escape mpidev.tex
 
-doxygen Doxyfile
-pushd latex
+doxygen ops/Doxyfile
+pushd ops/latex
+make refman.pdf
+popd
+
+doxygen ops_translator/Doxyfile
+pushd ops_translator/latex
 make refman.pdf
 popd
 
