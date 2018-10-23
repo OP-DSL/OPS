@@ -1,8 +1,10 @@
 #!/bin/bash
 #set -e
-#check/install pakages
+#check/install packages
 #sudo apt-get install latex-xcolor texlive-science texlive-latex-extra
 #sudo apt-get install python-pygments (or easy_install Pygments)
+#
+#sudo apt-get install doxygen graphviz
 
 pdflatex --shell-escape user.tex
 pdflatex --shell-escape user.tex
