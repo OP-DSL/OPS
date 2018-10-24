@@ -387,7 +387,7 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     // Allocate datasets
-    if (dat->data == NULL)
+    if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
         dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
         //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
@@ -949,10 +949,10 @@ void ops_mpi_exit() {
   int i;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     i = (item->dat)->index;
-    free(OPS_sub_dat_list[i]->halos);
+    //free(OPS_sub_dat_list[i]->halos);
     /*if (OPS_sub_dat_list[i]->mpidat != NULL) {
       free(OPS_sub_dat_list[i]->halos);
-      for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
         for(int d = 0; d<MAX_DEPTH; d++) {
           MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
         }
@@ -963,10 +963,11 @@ void ops_mpi_exit() {
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
+    //free(OPS_sub_dat_list[i]->halos);
     free(OPS_sub_dat_list[i]);
   }
-  free(OPS_sub_dat_list);
-  OPS_sub_dat_list = NULL;
+  //free(OPS_sub_dat_list);
+  //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
     if (OPS_mpi_halo_list[i].nproc_from > 0 ||
@@ -980,6 +981,8 @@ void ops_mpi_exit() {
   free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_send);
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
       free(OPS_mpi_halo_group_list[i].mpi_halos);
       free(OPS_mpi_halo_group_list[i].neighbors_send);
       free(OPS_mpi_halo_group_list[i].neighbors_recv);

@@ -302,6 +302,7 @@ void ops_exit_core() {
 //#ifdef __INTEL_COMPILER
 //      _mm_free((item->dat)->data);
 //#else
+      printf("in here *****************\n");
       free((item->dat)->data);
 //#endif
     free((char *)(item->dat)->name);
