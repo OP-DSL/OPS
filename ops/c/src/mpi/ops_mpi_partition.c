@@ -366,7 +366,7 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     // Allocate datasets
-    if (dat->data == NULL)
+    if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->hdf5_file = "none";
@@ -376,16 +376,16 @@ void ops_decomp_dats(sub_block *sb) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
-	if (ops_read_dat_hdf5_dynamic == NULL) {
+	      if (ops_read_dat_hdf5_dynamic == NULL) {
           printf("Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked\n");
           exit(-1);
-	}
+        }
         ops_read_dat_hdf5_dynamic(dat);
       }
-    else {
-      dat->user_managed = 1;
-      dat->is_hdf5 = 0;
-      dat->hdf5_file = "none";
+    } else {
+        dat->user_managed = 1;
+        dat->is_hdf5 = 0;
+        dat->hdf5_file = "none";
     }
 
     // Compute offset in bytes to the base index
@@ -903,10 +903,10 @@ void ops_mpi_exit() {
   int i;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     i = (item->dat)->index;
-    free(OPS_sub_dat_list[i]->halos);
+    //free(OPS_sub_dat_list[i]->halos);
     /*if (OPS_sub_dat_list[i]->mpidat != NULL) {
       free(OPS_sub_dat_list[i]->halos);
-      for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
         for(int d = 0; d<MAX_DEPTH; d++) {
           MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
         }
@@ -917,10 +917,11 @@ void ops_mpi_exit() {
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
+    //free(OPS_sub_dat_list[i]->halos);
     free(OPS_sub_dat_list[i]);
   }
-  free(OPS_sub_dat_list);
-  OPS_sub_dat_list = NULL;
+  //free(OPS_sub_dat_list);
+  //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_halo_index; i++) {
     if (OPS_mpi_halo_list[i].nproc_from > 0 ||
@@ -934,6 +935,8 @@ void ops_mpi_exit() {
   free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_send);
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
       free(OPS_mpi_halo_group_list[i].mpi_halos);
       free(OPS_mpi_halo_group_list[i].neighbors_send);
       free(OPS_mpi_halo_group_list[i].neighbors_recv);
