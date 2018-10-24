@@ -80,10 +80,14 @@ hdf5_seq: mklib core $(OBJ)/ops_lib_core.o
 
 trid: mklib core $(OBJ)/ops_lib_core.o
 	$(CC) $(CCFLAGS) -I$(INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag.c -o $(OBJ)/ops_tridiag.o
+ifdef CUDA_INSTALL_PATH
 	$(CC) $(CCFLAGS) -I$(INC) -I$(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c -o $(OBJ)/ops_tridiag_cuda.o
-	$(MPICC) $(CCFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c -o $(OBJ)/ops_tridiag_mpi.o
+endif
+	$(MPICC) $(CCFLAGS) -I$(INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c -o $(OBJ)/ops_tridiag_mpi.o
 	ar -r $(LIB)/libops_trid_seq.a $(OBJ)/ops_tridiag.o
+ifdef CUDA_INSTALL_PATH
 	ar -r $(LIB)/libops_trid_cuda.a $(OBJ)/ops_tridiag_cuda.o
+endif
 	ar -r $(LIB)/libops_trid_mpi.a $(OBJ)/ops_tridiag_mpi.o
 
 seq: mklib core $(OBJ)/ops_lib_core.o
