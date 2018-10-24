@@ -111,7 +111,7 @@ mpiinline_c_obj_list = $(shell find MPI_inline -name "*_c.c" | sed s/\\.c/\\.o/g
 				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
 				-I. MPI_inline/$*.cpp -c -o MPI_inline/$*.o
 
-$(APP)_mpi_inline: .generated $(mpiinline_obj_list) $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
+$(APP)_mpi_inline: .generated $(mpiinline_obj_list) $(mpiinline_c_obj_list) $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
 	        $(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
 		$(OPS_FILES_GEN) -I. $(mpiinline_obj_list) $(mpiinline_c_obj_list) -L$(MPI_LIB) -lops_mpi $(HDF5_LIB_MPI) -o $(APP)_mpi_inline
 
@@ -179,4 +179,4 @@ openacc_error:
 #
 
 clean:
-	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inlined $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
+	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
