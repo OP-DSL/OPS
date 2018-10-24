@@ -14,6 +14,7 @@ user :
 	pdflatex --shell-escape user.tex
 	pdflatex --shell-escape user.tex
 	-bibtex user
+	pdflatex --shell-escape user.tex
 	latex_count=8 ; \
 	while egrep -s 'Rerun (LaTeX|to get cross-references right)' user.log && [ $$latex_count -gt 0 ] ;\
 	    do \
