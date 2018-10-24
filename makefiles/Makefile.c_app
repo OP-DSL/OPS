@@ -96,7 +96,7 @@ $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 				$(NVCC) $(VAR) $(INC) $(NVCCFLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK -I$(MPI_INSTALL_PATH)/include \
 				-c -o ./CUDA/$(APP)_kernels_mpi_tiled_cu.o ./CUDA/$(MAIN_SRC)_kernels.cu
 
-$(APP)_mpi_inline: .generated $(mpiinline_obj_list) $(mpiinline_c_obj_list) $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
+$(APP)_mpi_inline: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
 				$(MPICC) $(CCFLAGS) $(OMPFLAGS) -DOPS_MPI  -I$(C_OPS_INC) $(HDF5_INC) \
 			        -I. MPI_inline/$(MAIN_SRC)_kernels_c.c -c -o MPI_inline/$(MAIN_SRC)_kernels_c.o
 				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
