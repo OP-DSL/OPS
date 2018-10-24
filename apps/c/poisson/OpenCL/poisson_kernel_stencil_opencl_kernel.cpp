@@ -158,11 +158,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
   size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, 1};
   size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z};
 
-
-
-
-
-
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
@@ -194,7 +189,6 @@ void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int 
     ops_timers_core(&c2,&t2);
     OPS_instance::getOPSInstance()->OPS_kernels[3].mpi_time += t2-t1;
   }
-
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
     clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[3], 0, sizeof(cl_mem), (void*) &arg0.data_d ));

@@ -949,16 +949,17 @@ void ops_mpi_exit() {
   int i;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     i = (item->dat)->index;
-    if (OPS_sub_dat_list[i]->mpidat != NULL) {
+    free(OPS_sub_dat_list[i]->halos);
+    /*if (OPS_sub_dat_list[i]->mpidat != NULL) {
       free(OPS_sub_dat_list[i]->halos);
-      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
+      for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
         for(int d = 0; d<MAX_DEPTH; d++) {
           MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
         }
       }
       free(OPS_sub_dat_list[i]->mpidat);
-      */
-    }
+
+    }*/
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);

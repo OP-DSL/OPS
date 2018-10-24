@@ -136,7 +136,6 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
 
 
-
   int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
   int dat5 = (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
