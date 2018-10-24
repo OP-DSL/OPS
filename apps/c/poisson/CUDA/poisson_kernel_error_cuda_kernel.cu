@@ -192,11 +192,10 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
 
   nshared = MAX(nshared*nthread,reduct_size*nthread);
 
-  // call kernel wrapper function, passing in pointers to data
+  //call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
-    ops_poisson_kernel_error<<<grid, tblock, nshared>>>(
-        (double *)p_a[0], (double *)p_a[1], (double *)arg2.data_d, x_size,
-        y_size);
+    ops_poisson_kernel_error<<<grid, tblock, nshared >>> (  (double *)p_a[0], (double *)p_a[1],
+           (double *)arg2.data_d,x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 

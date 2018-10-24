@@ -162,7 +162,6 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
 
 
-
   int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
   int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
@@ -202,11 +201,12 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[0].mpi_time += t2-t1;
   }
 
-  // call kernel wrapper function, passing in pointers to data
+
+  //call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
-    ops_poisson_kernel_populate<<<grid, tblock>>>(
-        *(int *)arg0.data, *(int *)arg1.data, arg_idx[0], arg_idx[1],
-        (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], x_size, y_size);
+    ops_poisson_kernel_populate<<<grid, tblock >>> (  *(int *)arg0.data, *(int *)arg1.data,
+           arg_idx[0], arg_idx[1], (double *)p_a[3],
+           (double *)p_a[4], (double *)p_a[5],x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
