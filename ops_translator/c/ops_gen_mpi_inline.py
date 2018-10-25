@@ -780,7 +780,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   #code('')
   comm('user kernel files')
 
-  kernel_name_list = ['generate_chunk_kernel']
+  kernel_name_list = []
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
@@ -795,7 +795,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   code('#include "./MPI_inline/'+master.split('.')[0]+'_common.h"')
   comm('user kernel files')
 
-  kernel_name_list = ['generate_chunk_kernel']
+  kernel_name_list = []
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
