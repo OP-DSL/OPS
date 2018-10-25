@@ -120,7 +120,6 @@ $(APP)_mpi_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi_cud
 	        $(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) -I$(CUDA_INC) -L$(CUDA_LIB) \
 	        $(OPS_FILES_GEN) -I. OpenACC/$(MAIN_SRC)_kernels_c_mpi.o OpenACC/$(MAIN_SRC)_kernels_mpi.o -lcudart -lops_mpi_cuda $(HDF5_LIB_MPI) -o $(APP)_mpi_openacc
 
-
 CL_SEQ_KERNELS = $(MAIN_SRC)_seq_kernels.cpp
 
 $(APP)_opencl: ./OpenCL/$(MAIN_SRC)_opencl_kernels.o Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_opencl.a

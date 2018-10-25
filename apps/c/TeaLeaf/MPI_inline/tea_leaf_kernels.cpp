@@ -44,7 +44,6 @@ int size, char *dat, char const *name){
 
 //user kernel files
 #include "field_summary_kernel_mpiinline_kernel.cpp"
-#include "generate_chunk_kernel_mpiinline_kernel.cpp"
 #include "initialise_chunk_kernel_zero_mpiinline_kernel.cpp"
 #include "initialise_chunk_kernel_zero_x_mpiinline_kernel.cpp"
 #include "initialise_chunk_kernel_zero_y_mpiinline_kernel.cpp"
