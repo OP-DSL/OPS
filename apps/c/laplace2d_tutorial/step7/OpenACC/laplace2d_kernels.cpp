@@ -22,3 +22,10 @@ void ops_decl_const_char(int dim, char const *type, int size, char *dat,
     exit(1);
   }
 }
+
+//user kernel files
+#include "set_zero_openacc_kernel.cpp"
+#include "left_bndcon_openacc_kernel.cpp"
+#include "right_bndcon_openacc_kernel.cpp"
+#include "apply_stencil_openacc_kernel.cpp"
+#include "copy_openacc_kernel.cpp"
