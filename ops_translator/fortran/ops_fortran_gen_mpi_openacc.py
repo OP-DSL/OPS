@@ -138,6 +138,10 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          if NDIM > 1:
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+          if NDIM > 2:
+            code('INTEGER(KIND=4) zdim'+str(n+1))
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
@@ -151,6 +155,10 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) multi_d'+str(n+1))
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          if NDIM > 1:
+            code('INTEGER(KIND=4) ydim'+str(n+1))
+          if NDIM > 2:
+            code('INTEGER(KIND=4) zdim'+str(n+1))
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
@@ -165,6 +173,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
 ##########################################################################
 #  user kernel subroutine
 ##########################################################################
+    code('!$ACC ROUTINE('+name+') SEQ')
     comm('user function')
     fid = open(name2+'_kernel.inc', 'r')
     text = fid.read()
@@ -221,8 +230,14 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code(typs[n]+' :: opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_gbl':
-        #code(typs[n]+' :: opsDat'+str(n+1)+'Local('+str(dims[n])+')')
-        code(typs[n]+' :: opsDat'+str(n+1)+'Local') # -- no multi dim reductions
+        if int(dims[n]) == 1:
+          code(typs[n]+' :: opsDat'+str(n+1)+'Local') # -- no multi dim reductions
+        else:
+          code(typs[n]+' :: opsDat'+str(n+1)+'Local('+str(dims[n])+')')
+          if accs[n] != OPS_READ:
+            code(typs[n]+' :: opsDat'+str(n+1)+'LocalAcc('+str(dims[n])+')')
+            for i in range(0, int(dims[n])):
+              code(typs[n]+' :: opsDat'+str(n+1)+'Local_'+str(i+1))
       elif arg_typ[n] == 'ops_arg_idx':
         code('integer(4) idx('+str(NDIM)+')' )
         code('integer(4) :: idx_local('+str(NDIM)+')' )
@@ -240,6 +255,14 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       code('integer n_x, n_y, n_z')
     code('')
 
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        code('opsDat'+str(n+1)+'LocalAcc = opsDat'+str(n+1)+'Local')
+        for i in range(0, int(dims[n])):
+          code('opsDat'+str(n+1)+'Local_'+str(i+1)+' = opsDat'+str(n+1)+'Local('+str(i+1)+')')
+    code('')
+    
+
     #
     # Create OpenACC pragma line
     #
@@ -251,29 +274,28 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           line = line + 'opsDat'+str(n+1)+'Local,'
     line = line[:-1]+')'
+    reduction = ' '
+    reduction_acc = ' '
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
-          line = line + ' reduction(min:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_MAX:
-          line = line + ' reduction(max:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_INC:
-          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_WRITE: #this may not be correct
-          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
-    code(line)
+        for i in range (0, int(dims[n])):
+          idx = ''
+          if int(dims[n]) > 1:
+            idx = '_'+str(i+1)
+            if i == 0:
+              reduction_acc = reduction_acc + ' private(opsDat'+str(n+1)+'LocalAcc)'
+          if accs[n] == OPS_MIN:
+            reduction = reduction + ' reduction(min:opsDat'+str(n+1)+'Local'+idx+')'
+          if accs[n] == OPS_MAX:
+            reduction = reduction + ' reduction(max:opsDat'+str(n+1)+'Local'+idx+')'
+          if accs[n] == OPS_INC:
+            reduction = reduction + ' reduction(+:opsDat'+str(n+1)+'Local'+idx+')'
+          if accs[n] == OPS_WRITE: #this may not be correct
+            reduction = reduction + ' reduction(+:opsDat'+str(n+1)+'Local'+idx+')'
+
+    code(line+reduction_acc+reduction)
     line = '!$acc loop'
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
-          line = line + ' reduction(min:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_MAX:
-          line = line + ' reduction(max:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_INC:
-          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
-        if accs[n] == OPS_WRITE: #this may not be correct
-          line = line + ' reduction(+:opsDat'+str(n+1)+'Local)'
-    code(line)
+    code(line+reduction)
 
     if NDIM==1:
       DO('n_x','1','end(1)-start(1)+1')
@@ -314,7 +336,10 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
              ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+' '+\
              ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
       elif arg_typ[n] == 'ops_arg_gbl':
-        line = line + '& opsDat'+str(n+1)+'Local'
+        if accs[n] != OPS_READ and int(dims[n])>1:
+          line = line + '& opsDat'+str(n+1)+'LocalAcc'
+        else:
+          line = line + '& opsDat'+str(n+1)+'Local'
       elif arg_typ[n] == 'ops_arg_idx':
         line = line + '& idx_local'
 
@@ -324,6 +349,10 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         line = line + ', &\n'+indent
 
     code(line)
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        for i in range(0, int(dims[n])):
+          code('opsDat'+str(n+1)+'Local_'+str(i+1)+' = opsDat'+str(n+1)+'LocalAcc('+str(i+1)+')')
 
     if NDIM==1:
       ENDDO()
@@ -335,6 +364,11 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       ENDDO()
       ENDDO()
     code('!$acc end parallel')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+        for i in range(0, int(dims[n])):
+          code('opsDat'+str(n+1)+'Local('+str(i+1)+') = opsDat'+str(n+1)+'Local_'+str(i+1))
+    code('')
     config.depth = config.depth - 2
     code('end subroutine')
 
@@ -373,8 +407,8 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         if NDIM==2:
           code('integer ydim'+str(n+1))
-        elif NDIM==2:
-          code('integer ydim'+str(n+1)+', zdim'+str(n+1))
+        elif NDIM==3:
+          code('integer zdim'+str(n+1))
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
