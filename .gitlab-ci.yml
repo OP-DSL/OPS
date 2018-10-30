@@ -1,0 +1,41 @@
+# Defines stages which are to be executed
+stages:
+  - build
+  - valgrind
+  - test
+  - helgrind
+  - clean
+
+# Stage "build"
+run-build:
+  stage: build
+  script:
+    - test-ops build `git rev-parse HEAD`
+
+# Stage "test"
+run-test:
+  stage: test
+  dependencies: [run-build]
+  script:
+    - test-ops test `git rev-parse HEAD`
+
+# Stage "valgrind"
+run-valgrind:
+  stage: valgrind
+  dependencies: [run-build]
+  script:
+    - test-ops valgrind `git rev-parse HEAD`
+
+# Stage "helgrind"
+run-helgrind:
+  stage: helgrind
+  dependencies: [run-build]
+  script:
+    - test-ops helgrind `git rev-parse HEAD`
+
+# Stage "clean"
+run-clean:
+  stage: clean
+  when: always
+  script:
+    - test-ops clean `git rev-parse HEAD`
