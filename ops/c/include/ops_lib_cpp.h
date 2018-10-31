@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops c++ header file
+  * @brief OPS c++ header file
   * @author Gihan Mudalige
   * @details This header file should be included by all C++ OPS applications
   */

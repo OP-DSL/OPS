@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops mpi+cuda declaration
+  * @brief OPS mpi+cuda declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi+cuda backend
   */

@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops mpi core routines
+  * @brief OPS mpi core routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the core mpi decl routines for the OPS mpi backend
   */

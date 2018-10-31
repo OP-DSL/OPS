@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops cuda backend implementation
+  * @brief OPS cuda backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the cuda backend
   */

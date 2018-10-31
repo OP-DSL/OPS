@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops mpi declaration
+  * @brief OPS mpi declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi backend
   */

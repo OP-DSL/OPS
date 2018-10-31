@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops mpi run-time support routines
+  * @brief OPS mpi run-time support routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the runtime support routines for the OPS mpi backend
   */
