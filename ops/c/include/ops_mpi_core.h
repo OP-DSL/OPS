@@ -32,7 +32,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief core header file for the ops MPI backend
+/** @file
+  * @brief core header file for the ops MPI backend
   * @author Gihan Mudalige, Istvan Reguly
   * @details Header file for OPS MPI backend
   */

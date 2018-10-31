@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief  Header file for the parallel I/O functions
+/** @file
+  * @brief  Header file for the parallel I/O functions
   * @author Gihan Mudalige (started 28-08-2015)
   * @details
   */
