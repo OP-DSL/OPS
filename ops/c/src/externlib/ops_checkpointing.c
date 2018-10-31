@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops checkpointing library function declarations
+  * @brief OPS checkpointing library function declarations
   * @author Istvan Reguly
   * @details function implementations for checkpointing
   */
