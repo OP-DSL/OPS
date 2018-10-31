@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Some utility functions for the OPS
+/** @file
+  * @brief Some utility functions for the OPS
   * @author Gihan Mudalige, Istvan Reguly
   * @details Some utility functions for the OPS
   */

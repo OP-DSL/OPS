@@ -32,7 +32,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief header file declaring the functions for the ops mpi backend
+/** @file
+  * @brief header file declaring the functions for the ops mpi backend
   * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS macros
   */

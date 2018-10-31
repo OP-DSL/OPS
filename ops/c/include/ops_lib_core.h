@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops core library function declarations
+/** @file
+  * @brief OPS core library function declarations
   * @author Gihan Mudalige
   * @details function declarations headder file for the core library functions
   * utilized by all OPS backends
