@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops opencl backend implementation
+  * @brief OPS opencl backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the opencl backend
   */

@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops cuda specific runtime support functions
+  * @brief OPS cuda specific runtime support functions
   * @author Gihan Mudalige
   * @details Implements cuda backend runtime support functions
   */

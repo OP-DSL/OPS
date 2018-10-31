@@ -30,7 +30,7 @@
 !
 
 !> @file
-!! @brief ops fortran back-end library functions declarations
+!! @brief OPS fortran back-end library functions declarations
 !! @author Gihan Mudalige
 !! @details Defines the interoperable data types between OPS-C and OPS-Fortran
 !! and the Fortran interface for OPS declaration functions
