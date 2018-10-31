@@ -131,42 +131,44 @@ typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
 */
 
 typedef struct {
-  int index;        /* index */
-  int dims;         /* dimension of block, 2D,3D .. etc*/
-  char const *name; /* name of block */
+  int index;        /**< index */
+  int dims;         /**< dimension of block, 2D,3D .. etc*/
+  char const *name; /**< name of block */
 } ops_block_core;
 
 typedef ops_block_core *ops_block;
 
 typedef struct {
-  int index;             /* index */
-  ops_block block;       /* block on which data is defined */
-  int dim;               /* number of elements per grid point*/
-  int type_size;         /* bytes per primitive = elem_size/dim */
-  int elem_size;         /* number of bytes per grid point*/
-  int size[OPS_MAX_DIM]; /* size of the array in each block dimension --
-                            including halo*/
-  int base[OPS_MAX_DIM]; /* base offset to 0,0,... from the start of each
-                            dimension*/
-  int d_m[OPS_MAX_DIM];  /* halo depth in each dimension, negative direction (at
-                            0
-                            end)*/
-  int d_p[OPS_MAX_DIM];  /* halo depth in each dimension, positive direction (at
-                            size end)*/
-  char *data;            /* data on host */
-  char *data_d;          /* data on device */
-  char const *name;      /* name of dataset */
-  char const *type;      /* datatype */
-  int dirty_hd;          /* flag to indicate dirty status on host and device */
-  int user_managed;      /* indicates whether the user is managing memory */
-  int is_hdf5; /* indicates whether the data is to read from an hdf5 file*/
-  char const *hdf5_file; /* name of hdf5 file from which this dataset was read*/
-  int e_dat;             /* flag to indicate if this is an edge dat*/
-  long mem; /*memory in bytes allocated to this dat (under MPI, this will be
-               memory held on a single MPI proc)*/
-  long base_offset; /* computed quantity, giving offset in bytes to the base
-                       index */
-  int stride[OPS_MAX_DIM];/* stride[*] > 1 if this dat is a coarse dat under multi-grid*/
+  int index;             /**< index */
+  ops_block block;       /**< block on which data is defined */
+  int dim;               /**< number of elements per grid point */
+  int type_size;         /**< bytes per primitive = elem_size/dim */
+  int elem_size;         /**< number of bytes per grid point */
+  int size[OPS_MAX_DIM]; /**< size of the array in each block dimension --
+                              including halo */
+  int base[OPS_MAX_DIM]; /**< base offset to 0,0,... from the start of each
+                              dimension */
+  int d_m[OPS_MAX_DIM];  /**< halo depth in each dimension, negative direction
+                          *   (at 0 end) */
+  int d_p[OPS_MAX_DIM];  /**< halo depth in each dimension, positive direction
+                          *   (at size end) */
+  char *data;            /**< data on host */
+  char *data_d;          /**< data on device */
+  char const *name;      /**< name of dataset */
+  char const *type;      /**< datatype */
+  int dirty_hd;          /**< flag to indicate dirty status on host and device*/
+  int user_managed;      /**< indicates whether the user is managing memory */
+  int is_hdf5;           /**< indicates whether the data is to read from an
+                          *   hdf5 file */
+  char const *hdf5_file; /**< name of hdf5 file from which this dataset was
+                          *   read */
+  int e_dat;             /**< flag to indicate if this is an edge dat */
+  long mem;              /**< memory in bytes allocated to this dat (under MPI,
+                          *   this will be memory held on a single MPI proc) */
+  long base_offset;      /**< computed quantity, giving offset in bytes to the
+                          *   base index */
+  int stride[OPS_MAX_DIM];/**< stride[*] > 1 if this dat is a coarse dat under
+                           *   multi-grid*/
 } ops_dat_core;
 
 typedef ops_dat_core *ops_dat;
@@ -175,8 +177,7 @@ typedef ops_dat_core *ops_dat;
 struct ops_dat_entry_core {
   ops_dat dat;
   TAILQ_ENTRY(ops_dat_entry_core)
-  entries; /*holds pointers to next and
-             previous entries in the list*/
+  entries; /**< holds pointers to next and previous entries in the list*/
 };
 
 typedef struct ops_dat_entry_core ops_dat_entry;
@@ -191,47 +192,47 @@ typedef struct {
 } ops_block_descriptor;
 
 typedef struct {
-  int index;        /* index */
-  int dims;         /* dimensionality of the stencil */
-  int points;       /* number of stencil elements */
-  char const *name; /* name of pointer */
-  int *stencil;     /* elements in the stencil */
-  int *stride;      /* stride of the stencil */
-  int *mgrid_stride;/* stride of the stencil under multi_grid*/
-  int type;         /* 0 for regular, 1 for prolongate, 2 for restrict */
+  int index;        /**< index */
+  int dims;         /**< dimensionality of the stencil */
+  int points;       /**< number of stencil elements */
+  char const *name; /**< name of pointer */
+  int *stencil;     /**< elements in the stencil */
+  int *stride;      /**< stride of the stencil */
+  int *mgrid_stride;/**< stride of the stencil under multi_grid */
+  int type;         /**< 0 for regular, 1 for prolongate, 2 for restrict */
 } ops_stencil_core;
 
 typedef ops_stencil_core *ops_stencil;
 
 typedef struct {
-  ops_dat dat;          /* dataset */
-  ops_stencil stencil;  /* the stencil */
-  int dim;              /* dimension of data */
-  char *data;           /* data on host */
-  char *data_d;         /* data on device (for CUDA)*/
-  ops_access acc;       /* access type */
-  ops_arg_type argtype; /* arg type */
-  int opt; /*falg to indicate whether this is an optional arg, 0 - optional, 1 -
-              not optional*/
+  ops_dat dat;          /**< dataset */
+  ops_stencil stencil;  /**< the stencil */
+  int dim;              /**< dimension of data */
+  char *data;           /**< data on host */
+  char *data_d;         /**< data on device (for CUDA)*/
+  ops_access acc;       /**< access type */
+  ops_arg_type argtype; /**< arg type */
+  int opt;              /**< falg to indicate whether this is an optional arg,
+                         *   0 - optional, 1 - not optional */
 } ops_arg;
 
 typedef struct {
-  char *data;       /* The data */
-  int size;         /* size of data in bytes */
-  int initialized;  /* flag indicating whether data has been initialized*/
-  int index;        /* unique identifier */
-  ops_access acc;   /* Type of reduction it was used for last time */
-  const char *type; /* Type */
-  const char *name; /* Name */
+  char *data;       /**< The data */
+  int size;         /**< size of data in bytes */
+  int initialized;  /**< flag indicating whether data has been initialized */
+  int index;        /**< unique identifier */
+  ops_access acc;   /**< Type of reduction it was used for last time */
+  const char *type; /**< Type */
+  const char *name; /**< Name */
 } ops_reduction_core;
 typedef ops_reduction_core *ops_reduction;
 
 typedef struct {
-  char *name;      /* name of kernel function */
-  int count;       /* number of times called */
-  double time;     /* total execution time */
-  float transfer;  /* bytes of data transfer (used) */
-  double mpi_time; /* time spent in MPI calls */
+  char *name;      /**< name of kernel function */
+  int count;       /**< number of times called */
+  double time;     /**< total execution time */
+  float transfer;  /**< bytes of data transfer (used) */
+  double mpi_time; /**< time spent in MPI calls */
   //  double       mpi_gather;
   //  double       mpi_scatter;
   //  double       mpi_sendrecv;
@@ -260,18 +261,18 @@ typedef struct {
 typedef ops_halo_group_core *ops_halo_group;
 
 typedef struct ops_kernel_descriptor {
-  const char *name;           /* name of kernel */
-	unsigned long hash;					/* hash of loop */
-  ops_arg *args;              /* list of arguments to pass in */
-  int nargs;                  /* number of arguments */
-  int index;                  /* index of the loop */
-  int dim;                    /* number of dimensions */
-  int device;                 /* flag to indicate if loop runs on device */
-  int range[2 * OPS_MAX_DIM]; /* process local execution range */
-  int orig_range[2 * OPS_MAX_DIM]; /* original execution range */
-  ops_block block;            /* block to execute on */
+  const char *name;           /**< name of kernel */
+  unsigned long hash;         /**< hash of loop */
+  ops_arg *args;              /**< list of arguments to pass in */
+  int nargs;                  /**< number of arguments */
+  int index;                  /**< index of the loop */
+  int dim;                    /**< number of dimensions */
+  int device;                 /**< flag to indicate if loop runs on device */
+  int range[2 * OPS_MAX_DIM]; /**< process local execution range */
+  int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
+  ops_block block;            /**< block to execute on */
   void (*function)(struct ops_kernel_descriptor
-                       *desc); /* Function pointer to a wrapper to be called */
+                      *desc); /**< Function pointer to a wrapper to be called */
 } ops_kernel_descriptor;
 
 /*
