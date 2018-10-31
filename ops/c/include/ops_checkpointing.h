@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops checkpointing library function declarations
+/** @file
+  * @brief OPS checkpointing library function declarations
   * @author Istvan Reguly
   * @details function declarations for checkpointing
   */

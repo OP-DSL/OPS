@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief OPS core library functions
+/** @file
+  * @brief OPS core library functions
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the core library functions utilized by all OPS
  * backends

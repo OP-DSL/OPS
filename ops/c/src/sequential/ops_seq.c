@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops sequential backend implementation
+/** @file
+  * @brief ops sequential backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the sequential backend
   */

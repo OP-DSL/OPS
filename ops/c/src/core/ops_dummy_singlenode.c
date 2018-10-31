@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief dummy function for CPU backend
+/** @file
+  * @brief dummy function for CPU backend
   * @author Gihan Mudalige
   * @details Implements dummy functions from the MPI backend for the sequential
   * cpu backend (OpenMP and Sequential)

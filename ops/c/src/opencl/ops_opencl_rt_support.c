@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops opencl specific runtime support functions
+/** @file
+  * @brief ops opencl specific runtime support functions
   * @author Gihan Mudalige and Istvan Reguly (adapting OP2 OpenCL backend by
  * Endre Lazslo)
   * @details Implements opencl backend runtime support functions
