@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops sequential backend implementation
+  * @brief OPS sequential backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the sequential backend
   */

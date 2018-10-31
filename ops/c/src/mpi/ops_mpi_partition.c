@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief ops mpi partitioning
+  * @brief OPS mpi partitioning
   * @author Gihan Mudalige, adopted from Parallel OCCF routines by Mike Giles
   * @details Implements the single block structured mesh partitioning
   * for distributed memort (MPI) parallelization
