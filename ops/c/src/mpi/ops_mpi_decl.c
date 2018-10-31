@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi declaration
+/** @file
+  * @brief ops mpi declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi backend
   */

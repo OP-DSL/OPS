@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops c++ header file
+/** @file
+  * @brief ops c++ header file
   * @author Gihan Mudalige
   * @details This header file should be included by all C++ OPS applications
   */

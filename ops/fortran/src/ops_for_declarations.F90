@@ -29,11 +29,12 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 
-! @brief ops fortran back-end library functions declarations
-! @author Gihan Mudalige
-! @details Defines the interoperable data types between OPS-C and OPS-Fortran
-! and the Fortran interface for OPS declaration functions
-!
+!> @file
+!! @brief ops fortran back-end library functions declarations
+!! @author Gihan Mudalige
+!! @details Defines the interoperable data types between OPS-C and OPS-Fortran
+!! and the Fortran interface for OPS declaration functions
+!!
 
 
 module OPS_Fortran_Declarations

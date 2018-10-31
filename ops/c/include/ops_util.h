@@ -33,7 +33,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Header file for the utility functions used in op_util.c
+/** @file
+ *  @brief Header file for the utility functions used in op_util.c
  *  @author Gihan R. Mudalige, (Started 23-08-2013)
  */
 

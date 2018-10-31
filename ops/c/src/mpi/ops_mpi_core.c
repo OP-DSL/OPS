@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi core routines
+/** @file
+  * @brief ops mpi core routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the core mpi decl routines for the OPS mpi backend
   */
