@@ -425,7 +425,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         line3 = line3 +arg_list[n]+','
     if NDIM>1:
       code('#pragma loop_count(10000)')
-      code('#pragma omp simd'+line+' aligned('+clean_type(line3[:-1])+')')
+      code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
       code('#elif defined(__clang__)')
       code('#pragma clang loop vectorize(assume_safety)')
       code('#elif defined(__GNUC__)')
