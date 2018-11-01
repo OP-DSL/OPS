@@ -48,7 +48,7 @@ void ops_par_loop_poisson_kernel_error(char const *, ops_block, int , int*,
 #include "user_types.h"
 //#include "poisson_kernel.h"
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 
 
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   int itertile = n_iter;
   int non_copy = 0;
 
-  char* pch;
+  const char* pch;
   for ( int n = 1; n < argc; n++ ) {
     pch = strstr(argv[n], "-sizex=");
     if(pch != NULL) {
