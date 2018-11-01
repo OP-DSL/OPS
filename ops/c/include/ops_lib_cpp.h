@@ -74,6 +74,19 @@ inline int type_error(const bool *a, const char *type) {
   return (strcmp(type, "bool") && strcmp(type, "bool:soa"));
 }
 
+/**
+ * Passes a scalar or small array that is invariant of the iteration space.
+ *
+ * (not to be confused with ::ops_decl_const, which facilitates
+ * global scope variables).
+ *
+ * @tparam T
+ * @param data  data array
+ * @param dim   array dimension
+ * @param type  string representing the type of data held in data
+ * @param acc   access type
+ * @return
+ */
 template <class T>
 ops_arg ops_arg_gbl(T *data, int dim, char const *type, ops_access acc) {
   return ops_arg_gbl_char((char *)data, dim, sizeof(T), acc);
@@ -89,6 +102,14 @@ void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
   ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
 }
 
+/**
+ * This routine returns the reduced value held by a reduction handle.
+ *
+ * @tparam T
+ * @param handle  the ::ops_reduction handle
+ * @param ptr     a pointer to write the results to, memory size has to match
+ *                the declared
+ */
 template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
   if (type_error(ptr, handle->type)) {
     printf(
@@ -98,6 +119,16 @@ template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
   ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
 }
 
+/**
+ * This routine updates/changes the value of a constant.
+ *
+ * @tparam T
+ * @param name  a name used to identify the constant
+ * @param dim   dimension of dataset (number of items per element)
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param data  pointer to new values for constant of type @p T
+ */
 template <class T>
 void ops_update_const(char const *name, int dim, char const *type, T *data) {
   (void)dim;
@@ -109,6 +140,20 @@ void ops_update_const(char const *name, int dim, char const *type, T *data) {
   ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
 }
 
+/**
+ * This routine defines a global constant: a variable in global scope.
+ *
+ * Global constants need to be declared upfront so that they can be correctly
+ * handled for different parallelizations. For e.g. CUDA on GPUs.
+ * Once defined they remain unchanged throughout the program, unless changed
+ * by a call to ops_update_const().
+ * @tparam T
+ * @param name  a name used to identify the constant
+ * @param dim   dimension of dataset (number of items per element)
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param data  pointer to input data of type @p T
+ */
 template <class T>
 void ops_decl_const(char const *name, int dim, char const *type, T *data) {
   (void)dim;
@@ -135,6 +180,30 @@ sizeof(T), type, name );
 
 }*/
 
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param block       structured block
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param stride
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
 template <class T>
 ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                      int *d_m, int *d_p, int *stride, T *data, char const *type,
@@ -149,6 +218,29 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                            stride, (char *)data, sizeof(T), type, name);
 }
 
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param block       structured block
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
 template <class T>
 ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                      int *d_m, int *d_p, T *data, char const *type,
