@@ -150,6 +150,8 @@ def remove_trailing_w_space(text):
 
 def parse_signature(text):
   text2 = text.replace('const','')
+  text2 = text2.replace('ACC<','')
+  text2 = text2.replace('>','')
   text2 = text2.replace('int','')
   text2 = text2.replace('float','')
   text2 = text2.replace('double','')
@@ -186,38 +188,6 @@ def parse_signature_opencl(text2):
   text2 = text2.replace('double','__global double')
   #text2 = re.sub('double','__global double',text2)
   return text2
-
-def parse_signature_openacc(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
-
-def parse_signature_cuda(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
 
 def complex_numbers_cuda(text):
     """ Handle complex numbers, and translate to the relevant CUDA function in cuComplex.h """

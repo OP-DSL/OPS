@@ -60,7 +60,7 @@ import config
 para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
-parse_signature = util.parse_signature_openacc
+parse_signature = util.parse_signature
 check_accs = util.check_accs
 mult = util.mult
 
