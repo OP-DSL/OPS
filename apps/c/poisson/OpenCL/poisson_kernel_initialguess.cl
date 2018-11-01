@@ -48,10 +48,10 @@
 
 
 //user function
-void poisson_kernel_initialguess(__global double * restrict u)
+void poisson_kernel_initialguess(ACC<__global double> u)
 
  {
-  u[OPS_ACC0(0,0)] = 0.0;
+  u(0,0) = 0.0;
 }
 
 

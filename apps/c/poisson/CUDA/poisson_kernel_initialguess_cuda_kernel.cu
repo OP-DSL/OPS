@@ -12,8 +12,8 @@ static int dims_poisson_kernel_initialguess_h [1][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_initialguess_gpu(double *u) {
-  u[OPS_ACC0(0,0)] = 0.0;
+void poisson_kernel_initialguess_gpu(ACC<double> u) {
+  u(0,0) = 0.0;
 }
 
 
