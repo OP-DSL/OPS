@@ -180,4 +180,15 @@ template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
   // printf("should not be here\n");
 }
 
+template<typename T>
+class ACC {
+public:
+  ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
+  T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+private:
+  int sizex;
+  T *__restrict__ ptr;
+};
+
 #endif /* __OPS_LIB_CPP_H */
