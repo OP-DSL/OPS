@@ -50,10 +50,10 @@
 
 
 //user function
-void poisson_kernel_update(const __global double * restrict u2,__global double * restrict u)
+void poisson_kernel_update(const ACC<__global double> u2,ACC<__global double> u)
 
  {
-  u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
+  u(0,0) = u2(0,0);
 }
 
 

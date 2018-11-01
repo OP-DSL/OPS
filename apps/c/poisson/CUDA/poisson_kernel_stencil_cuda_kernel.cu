@@ -14,10 +14,10 @@ static int dims_poisson_kernel_stencil_h [2][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_stencil_gpu(const double *u, double *u2) {
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
-                     + u[OPS_ACC0(0,0)]);
+void poisson_kernel_stencil_gpu(const ACC<double> u, ACC<double> u2) {
+  u2(0,0) = ((u(-1,0)-2.0f*u(0,0)+u(1,0))*0.125f
+                     + (u(0,-1)-2.0f*u(0,0)+u(0,1))*0.125f
+                     + u(0,0));
 }
 
 

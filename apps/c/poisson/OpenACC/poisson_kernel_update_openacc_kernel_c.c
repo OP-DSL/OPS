@@ -17,8 +17,8 @@ int xdim1_poisson_kernel_update;
 
 //user function
 inline 
-void poisson_kernel_update(const double *u2, double *u) {
-  u[OPS_ACC1(0,0)] = u2[OPS_ACC0(0,0)];
+void poisson_kernel_update(const ACC<double> u2, ACC<double> u) {
+  u(0,0) = u2(0,0);
 }
 
 

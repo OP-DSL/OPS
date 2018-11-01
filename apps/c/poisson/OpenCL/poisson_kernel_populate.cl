@@ -53,7 +53,7 @@
 
 //user function
 void poisson_kernel_populate(const  int * restrict dispx,const  int * restrict dispy,const  int * restrict idx,
-__global double * restrict u,__global double * restrict f,__global double * restrict ref,
+ACC<__global double> u,ACC<__global double> f,ACC<__global double> ref,
   const double dx,
 const double dy)
 
@@ -61,9 +61,9 @@ const double dy)
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
-  u[OPS_ACC3(0,0)] = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
-  f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
-  ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
+  u(0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
+  f(0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+  ref(0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
 }
 

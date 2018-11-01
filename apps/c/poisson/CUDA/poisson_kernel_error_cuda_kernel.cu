@@ -14,8 +14,8 @@ static int dims_poisson_kernel_error_h [3][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_error_gpu(const double *u, const double *ref, double *err) {
-  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+void poisson_kernel_error_gpu(const ACC<double> u, const ACC<double> ref, double *err) {
+  *err = *err + (u(0,0)-ref(0,0))*(u(0,0)-ref(0,0));
 }
 
 

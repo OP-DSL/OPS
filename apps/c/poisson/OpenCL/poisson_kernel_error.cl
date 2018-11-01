@@ -50,10 +50,10 @@
 
 
 //user function
-void poisson_kernel_error(const __global double * restrict u,const __global double * restrict ref, double * restrict err)
+void poisson_kernel_error(const ACC<__global double> u,const ACC<__global double> ref, double * restrict err)
 
  {
-  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+  *err = *err + (u(0,0)-ref(0,0))*(u(0,0)-ref(0,0));
 }
 
 
