@@ -458,11 +458,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
             dim = 'arg'+str(n)+'.dim, '
             extradim = 1
         if NDIM > 0:
-          offset = offset + 'n_x'
+          offset = offset + 'n_x*'+str(stride[NDIM*n])
         if NDIM > 1:
-          offset = offset + ' + n_y * xdim'+str(n)+'_'+name
+          offset = offset + ' + n_y * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
         if NDIM > 2:
-          offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name
+          offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
         dimlabels = 'xyzuv'
         for i in range(1,NDIM+extradim):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
