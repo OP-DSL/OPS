@@ -29,6 +29,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS source code transformation tool (for the Fortran API)
+#
+#  This tool parses the user's original source code to produce
+#  target-specific code to execute the user's kernel functions.
+#
+#  This prototype is written in Python
+#
+#  usage: ./ops_fortran.py file1, file2 ,...
+#
+#  This takes as input
+#
+#  file1.F90, file2.F90, ... (can be files with any fortran suffix .f, .f90, .F90, .F95)
+#
+#  and produces as output modified versions
+#
+#  file1_ops.F90, file2_ops.F90, ...
+#
+#  then calls a number of target-specific code generators
+#  to produce individual kernel files of the form
+#
+#  xxx_seq_kernel.F90 -- for single threaded x86 execution (also used for MPI)
+#  xxx_omp_kernel.F90 -- for OpenMP x86 execution
+#  xxx_kernel.CUF -- for CUDA execution with CUDA Fortran
+#  xxx_openacc_kernel.F90 -- for OpenACC execution
+#
+
 """
 OPS source code transformation tool (for the Fortran API)
 
