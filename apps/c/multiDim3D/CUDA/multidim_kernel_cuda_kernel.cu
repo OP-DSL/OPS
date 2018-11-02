@@ -12,10 +12,10 @@ static int dims_multidim_kernel_h [2][3] = {0};
 //user function
 __device__
 
-void multidim_kernel_gpu(double *val, int *idx){
-  val[OPS_ACC_MD0(0,0,0,0)] = (double)(idx[0]);
-  val[OPS_ACC_MD0(1,0,0,0)] = (double)(idx[1]);
-  val[OPS_ACC_MD0(2,0,0,0)] = (double)(idx[2]);
+void multidim_kernel_gpu(ACC<double> &val, int *idx){
+  val(0,0,0,0) = (double)(idx[0]);
+  val(1,0,0,0) = (double)(idx[1]);
+  val(2,0,0,0) = (double)(idx[2]);
 
 
 

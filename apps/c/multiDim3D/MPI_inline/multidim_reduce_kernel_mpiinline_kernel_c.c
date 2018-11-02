@@ -29,9 +29,9 @@ void multidim_reduce_kernel_c_wrapper(
         redu_dat1[2] = ZERO_double;
         
 
-  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0,0,0,0)];
-  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0,0)];
-  redu_dat1[2] = redu_dat1[2] + val[OPS_ACC_MD0(2,0,0,0)];
+  redu_dat1[0] = redu_dat1[0] + val(0,0,0,0);
+  redu_dat1[1] = redu_dat1[1] + val(1,0,0,0);
+  redu_dat1[2] = redu_dat1[2] + val(2,0,0,0);
 
         redu_dat1_0 +=redu_dat1[0];
         redu_dat1_1 +=redu_dat1[1];

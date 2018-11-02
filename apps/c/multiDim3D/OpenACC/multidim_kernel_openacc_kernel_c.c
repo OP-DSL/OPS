@@ -16,10 +16,10 @@ int zdim0_multidim_kernel;
 #define OPS_ACC_MD0(d,x,y,z) ((x)+(xdim0_multidim_kernel*(y))+(xdim0_multidim_kernel*ydim0_multidim_kernel*(z))+(d)*xdim0_multidim_kernel*ydim0_multidim_kernel*zdim0_multidim_kernel)
 //user function
 inline 
-void multidim_kernel(double *val, int *idx){
-  val[OPS_ACC_MD0(0,0,0,0)] = (double)(idx[0]);
-  val[OPS_ACC_MD0(1,0,0,0)] = (double)(idx[1]);
-  val[OPS_ACC_MD0(2,0,0,0)] = (double)(idx[2]);
+void multidim_kernel(ACC<double> &val, int *idx){
+  val(0,0,0,0) = (double)(idx[0]);
+  val(1,0,0,0) = (double)(idx[1]);
+  val(2,0,0,0) = (double)(idx[2]);
 
 
 

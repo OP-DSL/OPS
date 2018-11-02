@@ -14,10 +14,10 @@ static int dims_multidim_copy_kernel_h [2][3] = {0};
 //user function
 __device__
 
-void multidim_copy_kernel_gpu(const double *src, double *dest){
-  dest[OPS_ACC_MD1(0,0,0,0)] = src[OPS_ACC_MD0(0,0,0,0)];
-  dest[OPS_ACC_MD1(1,0,0,0)] = src[OPS_ACC_MD0(1,0,0,0)];
-  dest[OPS_ACC_MD1(2,0,0,0)] = src[OPS_ACC_MD0(2,0,0,0)];
+void multidim_copy_kernel_gpu(const ACC<double> &src, ACC<double> &dest){
+  dest(0,0,0,0) = src(0,0,0,0);
+  dest(1,0,0,0) = src(1,0,0,0);
+  dest(2,0,0,0) = src(2,0,0,0);
 }
 
 

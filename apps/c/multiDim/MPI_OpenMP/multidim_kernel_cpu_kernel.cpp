@@ -40,11 +40,11 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
 
 
   //compute locally allocated range for the sub-block
-  int start[3];
-  int end[3];
-  int arg_idx[3];
+  int start[2];
+  int end[2];
+  int arg_idx[2];
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
-  for ( int n=0; n<3; n++ ){
+  for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #else
@@ -54,17 +54,14 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
   #ifdef OPS_MPI
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
-  arg_idx[2] -= start[2];
   #else
   arg_idx[0] = 0;
   arg_idx[1] = 0;
-  arg_idx[2] = 0;
   #endif //OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_multidim_kernel = args[0].dat->size[0];
   int ydim0_multidim_kernel = args[0].dat->size[1];
-  int zdim0_multidim_kernel = args[0].dat->size[2];
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
@@ -85,31 +82,27 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[0].mpi_time += __t1-__t2;
   }
 
-  #pragma omp parallel for collapse(2)
-  for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
-    for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-      #ifdef __INTEL_COMPILER
-      #pragma loop_count(10000)
-      #pragma omp simd
+  #pragma omp parallel for
+  for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    #ifdef __INTEL_COMPILER
+    #pragma loop_count(10000)
+    #pragma omp simd
+    #else
+    #pragma simd
+    #endif
+    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
+      int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
+      #ifdef OPS_SOA
+      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + n_x + n_y * xdim0_multidim_kernel);
       #else
-      #pragma simd
+      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + 2*(n_x + n_y * xdim0_multidim_kernel));
       #endif
-      for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};
-        #ifdef OPS_SOA
-        ACC<double> val(3, xdim0_multidim_kernel, ydim0_multidim_kernel, zdim0_multidim_kernel, val_p + n_x + n_y * xdim0_multidim_kernel + n_z * xdim0_multidim_kernel * ydim0_multidim_kernel);
-        #else
-        ACC<double> val(3, xdim0_multidim_kernel, ydim0_multidim_kernel, zdim0_multidim_kernel, val_p + 3*(n_x + n_y * xdim0_multidim_kernel + n_z * xdim0_multidim_kernel * ydim0_multidim_kernel));
-        #endif
-        
-  val(0,0,0,0) = (double)(idx[0]);
-  val(1,0,0,0) = (double)(idx[1]);
-  val(2,0,0,0) = (double)(idx[2]);
+      
+  val(0,0,0) = (double)(idx[0]);
+  val(1,0,0) = (double)(idx[1]);
 
 
 
-
-      }
     }
   }
   if (OPS_diags > 1) {
@@ -142,7 +135,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   desc->index = 0;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 0;
-  for ( int i=0; i<6; i++ ){
+  for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];

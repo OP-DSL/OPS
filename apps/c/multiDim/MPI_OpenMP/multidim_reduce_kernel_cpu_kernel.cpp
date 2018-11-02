@@ -40,13 +40,13 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
 
 
   //compute locally allocated range for the sub-block
-  int start[3];
-  int end[3];
+  int start[2];
+  int end[2];
   #ifdef OPS_MPI
-  int arg_idx[3];
+  int arg_idx[2];
   #endif
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
-  for ( int n=0; n<3; n++ ){
+  for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #else
@@ -57,7 +57,6 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   //initialize global variable with the dimension of dats
   int xdim0_multidim_reduce_kernel = args[0].dat->size[0];
   int ydim0_multidim_reduce_kernel = args[0].dat->size[1];
-  int zdim0_multidim_reduce_kernel = args[0].dat->size[2];
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
@@ -86,41 +85,34 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
 
   double p_a1_0 = p_a1[0];
   double p_a1_1 = p_a1[1];
-  double p_a1_2 = p_a1[2];
-  #pragma omp parallel for reduction(+:p_a1_0) reduction(+:p_a1_1) reduction(+:p_a1_2)
-  for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
-    for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-      #ifdef __INTEL_COMPILER
-      #pragma loop_count(10000)
-      #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1) reduction(+:p_a1_2)
+  #pragma omp parallel for reduction(+:p_a1_0) reduction(+:p_a1_1)
+  for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    #ifdef __INTEL_COMPILER
+    #pragma loop_count(10000)
+    #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1)
+    #else
+    #pragma simd
+    #endif
+    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
+      #ifdef OPS_SOA
+      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + n_x + n_y * xdim0_multidim_reduce_kernel);
       #else
-      #pragma simd
+      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + 2*(n_x + n_y * xdim0_multidim_reduce_kernel));
       #endif
-      for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        #ifdef OPS_SOA
-        const ACC<double> val(3, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, zdim0_multidim_reduce_kernel, val_p + n_x + n_y * xdim0_multidim_reduce_kernel + n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel);
-        #else
-        const ACC<double> val(3, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, zdim0_multidim_reduce_kernel, val_p + 3*(n_x + n_y * xdim0_multidim_reduce_kernel + n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel));
-        #endif
-        double redu_dat1[3];
-        redu_dat1[0] = ZERO_double;
-        redu_dat1[1] = ZERO_double;
-        redu_dat1[2] = ZERO_double;
-        
+      double redu_dat1[2];
+      redu_dat1[0] = ZERO_double;
+      redu_dat1[1] = ZERO_double;
+      
 
-  redu_dat1[0] = redu_dat1[0] + val(0,0,0,0);
-  redu_dat1[1] = redu_dat1[1] + val(1,0,0,0);
-  redu_dat1[2] = redu_dat1[2] + val(2,0,0,0);
+  redu_dat1[0] = redu_dat1[0] + val(0,0,0);
+  redu_dat1[1] = redu_dat1[1] + val(1,0,0);
 
-        p_a1_0 +=redu_dat1[0];
-        p_a1_1 +=redu_dat1[1];
-        p_a1_2 +=redu_dat1[2];
-      }
+      p_a1_0 +=redu_dat1[0];
+      p_a1_1 +=redu_dat1[1];
     }
   }
   p_a1[0] = p_a1_0;
   p_a1[1] = p_a1_1;
-  p_a1[2] = p_a1_2;
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
     OPS_kernels[2].time += __t2-__t1;
@@ -150,7 +142,7 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   desc->index = 2;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 2;
-  for ( int i=0; i<6; i++ ){
+  for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
