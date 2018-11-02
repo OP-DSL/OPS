@@ -29,6 +29,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+## @file
+## @brief
+#  OPS MPI_OpenMP code generator
+#
+#  This routine is called by ops.py which parses the input files
+#
+#  It produces a file xxx_omp_kernel.cpp for each kernel,
+#  plus a master kernel file
+#
+
 """
 OPS MPI_OpenMP code generator
 

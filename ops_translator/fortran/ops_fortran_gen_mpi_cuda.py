@@ -29,6 +29,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS MPI_CUDA code generator for Fortran applications
+#
+#  This routine is called by ops_fortran.py which parses the input files
+#
+#  It produces a file xxx_cuda_kernel.CUF for each kernel
+#
+
 """
 OPS MPI_CUDA code generator for Fortran applications
 

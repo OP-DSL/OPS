@@ -29,6 +29,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS source code transformation tool (for the C/C++ API)
+#
+#  This tool parses the user's original source code to produce
+#  target-specific code to execute the user's kernel functions.
+#
+#  This prototype is written in Python
+#
+#  usage: ./ops.py file1, file2 ,...
+#
+#  This takes as input
+#
+#  file1.cpp, file2.cpp, ...
+#
+#  and produces as output modified versions
+#
+#  file1_ops.cpp, file2_ops.cpp, ...
+#
+#  then calls a number of target-specific code generators
+#  to produce individual kernel files of the form
+#
+#  xxx_seq_kernel.cpp -- for single threaded x86 execution (also used for MPI)
+#  xxx_omp_kernel.cpp -- for OpenMP x86 execution
+#  xxx_kernel.cu -- for CUDA execution
+#
+
 """
 OPS source code transformation tool (for the C/C++ API)
 
