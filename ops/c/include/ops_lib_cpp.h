@@ -183,11 +183,84 @@ template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
 template<typename T>
 class ACC {
 public:
+  //////////////////////////////////////////////////
+  // 2D
+  /////////////////////////////////////////////////
+#if defined(OPS_2D)
   ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  ACC(int _mdim, int _sizey, int _sizex, T *_ptr) : sizex(_sizex),
+#ifdef OPS_SOA
+    sizey(_sizey),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
   const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
   T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+  const T& operator()(int d, int xoff, int yoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+  T& operator()(int d, int xoff, int yoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+#endif
+  //////////////////////////////////////////////////
+  // 3D
+  /////////////////////////////////////////////////
+#if defined(OPS_3D)
+  ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
+  ACC(int _mdim, int _sizez, int _sizey, int _sizex, T *_ptr) : sizex(_sizex), sizey(_sizey),
+#ifdef OPS_SOA
+    sizez(_sizez),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  const T& operator()(int xoff, int yoff, int zoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  T& operator()(int xoff, int yoff, int zoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  const T& operator()(int d, int xoff, int yoff, int zoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+  T& operator()(int d, int xoff, int yoff, int zoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+#endif
+
 private:
+#ifndef OPS_SOA
+  int mdim;
+#endif
   int sizex;
+#if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
+  int sizey;
+#endif
+#if defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_3D) && defined(OPS_SOA))
+  int sizez;
+#endif
+#if defined (OPS_5D) || (defined(OPS_4D) && defined(OPS_SOA))
+  int sizeu;
+#endif
+#if defined(OPS_5D) && defined(OPS_SOA)
+  int sizev;
+#endif
   T *__restrict__ ptr;
 };
 

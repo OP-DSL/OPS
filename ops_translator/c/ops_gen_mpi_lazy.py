@@ -435,14 +435,32 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_READ:
           pre = 'const '
         offset = ''
+        dim = ''
+        sizelist = ''
+        extradim = 0
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]+', '
+            extradim = 1
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim, '
+            extradim = 1
         if NDIM > 0:
           offset = offset + 'n_x'
         if NDIM > 1:
           offset = offset + ' + n_y * xdim'+str(n)+'_'+name
         if NDIM > 2:
           offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name
+        dimlabels = 'xyzuv'
+        for i in range(1,NDIM+extradim):
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
 
-        code(pre + 'ACC<'+typs[n]+'> '+arg_list[n]+'(xdim'+str(n)+'_'+name+', '+arg_list[n]+'_p + '+offset+');')
+        if not dims[n].isdigit() or int(dims[n])>1:
+          code('#ifdef OPS_SOA')
+        code(pre + 'ACC<'+typs[n]+'> '+arg_list[n]+'('+dim+sizelist+arg_list[n]+'_p + '+offset+');')
+        if not dims[n].isdigit() or int(dims[n])>1:
+          code('#else')
+          code(pre + 'ACC<'+typs[n]+'> '+arg_list[n]+'('+dim+sizelist+arg_list[n]+'_p + '+dim[:-2]+'*('+offset+'));')
+          code('#endif')
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_MIN:
