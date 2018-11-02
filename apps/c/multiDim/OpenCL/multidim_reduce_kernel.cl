@@ -47,12 +47,12 @@
 #define OPS_ACC_MD0(d,x,y) ((x)+(xdim0_multidim_reduce_kernel*(y))+(d)*xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel)
 
 //user function
-void multidim_reduce_kernel(const __global double * restrict val, double * restrict redu_dat1)
+void multidim_reduce_kernel(const ACC<__global double> &val, double * restrict redu_dat1)
 
  {
 
-  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0,0,0)];
-  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0)];
+  redu_dat1[0] = redu_dat1[0] + val(0,0,0);
+  redu_dat1[1] = redu_dat1[1] + val(1,0,0);
 }
 
 

@@ -23,9 +23,9 @@ void multidim_kernel_c_wrapper(
       for ( int n_x=0; n_x<x_size; n_x++ ){
         int idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};
         
-  val[OPS_ACC_MD0(0,0,0,0)] = (double)(idx[0]);
-  val[OPS_ACC_MD0(1,0,0,0)] = (double)(idx[1]);
-  val[OPS_ACC_MD0(2,0,0,0)] = (double)(idx[2]);
+  val(0,0,0,0) = (double)(idx[0]);
+  val(1,0,0,0) = (double)(idx[1]);
+  val(2,0,0,0) = (double)(idx[2]);
 
 
 
