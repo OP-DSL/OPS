@@ -1,0 +1,55 @@
+# Defines stages which are to be executed
+stages:
+  - build
+  - valgrind
+  - test
+  - helgrind
+  - docs
+  - clean
+
+# Stage "build"
+run-build:
+  stage: build
+  script:
+    - test-ops build `git rev-parse HEAD`
+
+# Stage "test"
+run-test:
+  stage: test
+  dependencies: [run-build]
+  script:
+    - test-ops test `git rev-parse HEAD`
+
+# Stage "valgrind"
+run-valgrind:
+  stage: valgrind
+  dependencies: [run-build]
+  script:
+    - test-ops valgrind `git rev-parse HEAD`
+
+# Stage "helgrind"
+run-helgrind:
+  stage: helgrind
+  dependencies: [run-build]
+  script:
+    - test-ops helgrind `git rev-parse HEAD`
+
+# Stage "docs"
+run-docs:
+  stage: docs
+  script:
+    - cd doc && make all clean
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - doc/user.pdf
+      - doc/ops/html
+      - doc/ops_translator/html
+
+# Stage "clean"
+run-clean:
+  stage: clean
+  when: always
+  script:
+    - test-ops clean `git rev-parse HEAD`
+    - cd doc && make distclean
