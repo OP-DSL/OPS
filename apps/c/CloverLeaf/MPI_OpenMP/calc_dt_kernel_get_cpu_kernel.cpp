@@ -27,12 +27,12 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,4,range,53)) return;
+  if (!ops_checkpointing_before(args,4,range,29)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(53,"calc_dt_kernel_get");
-    OPS_kernels[53].count++;
+    ops_timing_realloc(29,"calc_dt_kernel_get");
+    OPS_kernels[29].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -92,7 +92,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
+    OPS_kernels[29].mpi_time += __t1-__t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -101,7 +101,12 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(+:p_a2_0) reduction(+:p_a3_0)
+    #pragma omp simd reduction(+:p_a2_0) reduction(+:p_a3_0) aligned(cellx,celly)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
@@ -124,7 +129,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   p_a3[0] = p_a3_0;
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[53].time += __t2-__t1;
+    OPS_kernels[29].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -133,9 +138,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[29].mpi_time += __t1-__t2;
+    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -150,9 +155,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 53;
+  desc->index = 29;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 53;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 29;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -168,7 +173,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->args[3] = arg3;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(53,"calc_dt_kernel_get");
+    ops_timing_realloc(29,"calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);
 }

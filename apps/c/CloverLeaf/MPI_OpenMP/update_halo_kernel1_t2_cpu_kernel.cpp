@@ -32,12 +32,12 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,8,range,11)) return;
+  if (!ops_checkpointing_before(args,8,range,45)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(11,"update_halo_kernel1_t2");
-    OPS_kernels[11].count++;
+    ops_timing_realloc(45,"update_halo_kernel1_t2");
+    OPS_kernels[45].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -106,14 +106,19 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1-__t2;
+    OPS_kernels[45].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd
+    #pragma omp simd aligned(density0,density1,energy0,energy1,pressure,viscosity,soundspeed)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
@@ -139,7 +144,7 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[11].time += __t2-__t1;
+    OPS_kernels[45].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 8);
@@ -155,14 +160,14 @@ void ops_par_loop_update_halo_kernel1_t2_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1-__t2;
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[45].mpi_time += __t1-__t2;
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[45].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 #undef OPS_ACC0
@@ -183,9 +188,9 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 11;
+  desc->index = 45;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 11;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 45;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -213,7 +218,7 @@ void ops_par_loop_update_halo_kernel1_t2(char const *name, ops_block block, int 
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_t2_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(11,"update_halo_kernel1_t2");
+    ops_timing_realloc(45,"update_halo_kernel1_t2");
   }
   ops_enqueue_kernel(desc);
 }
