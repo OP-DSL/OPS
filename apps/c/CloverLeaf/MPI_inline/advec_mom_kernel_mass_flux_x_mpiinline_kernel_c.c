@@ -19,12 +19,6 @@ void advec_mom_kernel_mass_flux_x_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       ptr_double node_flux = { node_flux_p + n_x*1 + n_y * xdim0_advec_mom_kernel_mass_flux_x*1, xdim0_advec_mom_kernel_mass_flux_x};
       const ptr_double mass_flux_x = { mass_flux_x_p + n_x*1 + n_y * xdim1_advec_mom_kernel_mass_flux_x*1, xdim1_advec_mom_kernel_mass_flux_x};
-      
-
-
-  OPS_ACC(node_flux, 0,0) = 0.25 * ( OPS_ACC(mass_flux_x, 0,-1) + OPS_ACC(mass_flux_x, 0,0) +
-    OPS_ACC(mass_flux_x, 1,-1) + OPS_ACC(mass_flux_x, 1,0) );
-
     }
   }
 }

@@ -130,7 +130,7 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(density0,volume,stepbymass,xvel0,xvel1,xarea,pressure,yvel0,yvel1,yarea,viscosity)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)

@@ -25,11 +25,6 @@ void advec_mom_kernel2_y_c_wrapper(
       const ptr_double node_mass_post = { node_mass_post_p + n_x*1 + n_y * xdim1_advec_mom_kernel2_y*1, xdim1_advec_mom_kernel2_y};
       const ptr_double node_mass_pre = { node_mass_pre_p + n_x*1 + n_y * xdim2_advec_mom_kernel2_y*1, xdim2_advec_mom_kernel2_y};
       const ptr_double mom_flux = { mom_flux_p + n_x*1 + n_y * xdim3_advec_mom_kernel2_y*1, xdim3_advec_mom_kernel2_y};
-      
-
-  OPS_ACC(vel1, 0,0) = ( OPS_ACC(vel1, 0,0) * OPS_ACC(node_mass_pre, 0,0)  +
-    OPS_ACC(mom_flux, 0,-1) - OPS_ACC(mom_flux, 0,0) ) / OPS_ACC(node_mass_post, 0,0);
-
     }
   }
 }
