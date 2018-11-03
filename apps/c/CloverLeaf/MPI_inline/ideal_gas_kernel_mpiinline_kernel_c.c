@@ -25,17 +25,6 @@ void ideal_gas_kernel_c_wrapper(
       const ptr_double energy = { energy_p + n_x*1 + n_y * xdim1_ideal_gas_kernel*1, xdim1_ideal_gas_kernel};
       ptr_double pressure = { pressure_p + n_x*1 + n_y * xdim2_ideal_gas_kernel*1, xdim2_ideal_gas_kernel};
       ptr_double soundspeed = { soundspeed_p + n_x*1 + n_y * xdim3_ideal_gas_kernel*1, xdim3_ideal_gas_kernel};
-      
-
-  double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
-
-  v = 1.0 / OPS_ACC(density, 0,0);
-  OPS_ACC(pressure, 0,0) = (1.4 - 1.0) * OPS_ACC(density, 0,0) * OPS_ACC(energy, 0,0);
-  pressurebyenergy = (1.4 - 1.0) * OPS_ACC(density, 0,0);
-  pressurebyvolume = -1*OPS_ACC(density, 0,0) * OPS_ACC(pressure, 0,0);
-  sound_speed_squared = v*v*(OPS_ACC(pressure, 0,0) * pressurebyenergy-pressurebyvolume);
-  OPS_ACC(soundspeed, 0,0) = sqrt(sound_speed_squared);
-
     }
   }
 }

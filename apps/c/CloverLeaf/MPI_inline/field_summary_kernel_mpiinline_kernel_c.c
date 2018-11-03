@@ -51,27 +51,6 @@ void field_summary_kernel_c_wrapper(
       const ptr_double pressure = { pressure_p + n_x*1 + n_y * xdim3_field_summary_kernel*1, xdim3_field_summary_kernel};
       const ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim4_field_summary_kernel*1, xdim4_field_summary_kernel};
       const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim5_field_summary_kernel*1, xdim5_field_summary_kernel};
-      
-
-  double vsqrd, cell_vol, cell_mass;
-
-
-
-  vsqrd = 0.0;
-  vsqrd = vsqrd + 0.25 * ( OPS_ACC(xvel0, 0,0) * OPS_ACC(xvel0, 0,0) + OPS_ACC(yvel0, 0,0) * OPS_ACC(yvel0, 0,0));
-  vsqrd = vsqrd + 0.25 * ( OPS_ACC(xvel0, 1,0) * OPS_ACC(xvel0, 1,0) + OPS_ACC(yvel0, 1,0) * OPS_ACC(yvel0, 1,0));
-  vsqrd = vsqrd + 0.25 * ( OPS_ACC(xvel0, 0,1) * OPS_ACC(xvel0, 0,1) + OPS_ACC(yvel0, 0,1) * OPS_ACC(yvel0, 0,1));
-  vsqrd = vsqrd + 0.25 * ( OPS_ACC(xvel0, 1,1) * OPS_ACC(xvel0, 1,1) + OPS_ACC(yvel0, 1,1) * OPS_ACC(yvel0, 1,1));
-
-  cell_vol = OPS_ACC(volume, 0,0);
-  cell_mass = cell_vol * OPS_ACC(density0, 0,0);
-  *vol = *vol + cell_vol;
-  *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * OPS_ACC(energy0, 0,0);
-  *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * OPS_ACC(pressure, 0,0);
-
-
       vol_0 +=vol[0];
       mass_0 +=mass[0];
       ie_0 +=ie[0];

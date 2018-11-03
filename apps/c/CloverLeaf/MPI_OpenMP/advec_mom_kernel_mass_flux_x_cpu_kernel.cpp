@@ -83,7 +83,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(node_flux,mass_flux_x)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)

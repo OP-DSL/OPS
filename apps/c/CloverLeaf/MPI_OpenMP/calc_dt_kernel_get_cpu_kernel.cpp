@@ -101,7 +101,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(+:p_a2_0) reduction(+:p_a3_0) aligned(cellx,celly)
+    #pragma omp simd reduction(+:p_a2_0) reduction(+:p_a3_0)
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)

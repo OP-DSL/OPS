@@ -49,37 +49,6 @@ void PdV_kernel_predict_c_wrapper(
       const ptr_double viscosity = { viscosity_p + n_x*1 + n_y * xdim9_PdV_kernel_predict*1, xdim9_PdV_kernel_predict};
       const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim10_PdV_kernel_predict*1, xdim10_PdV_kernel_predict};
       ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim11_PdV_kernel_predict*1, xdim11_PdV_kernel_predict};
-      
-
-
-  double recip_volume, energy_change;
-  double right_flux, left_flux, top_flux, bottom_flux, total_flux;
-
-  left_flux = ( OPS_ACC(xarea, 0,0) * ( OPS_ACC(xvel0, 0,0) + OPS_ACC(xvel0, 0,1) +
-                                OPS_ACC(xvel0, 0,0) + OPS_ACC(xvel0, 0,1) ) ) * 0.25 * dt * 0.5;
-  right_flux = ( OPS_ACC(xarea, 1,0) * ( OPS_ACC(xvel0, 1,0) + OPS_ACC(xvel0, 1,1) +
-                                 OPS_ACC(xvel0, 1,0) + OPS_ACC(xvel0, 1,1) ) ) * 0.25 * dt * 0.5;
-
-  bottom_flux = ( OPS_ACC(yarea, 0,0) * ( OPS_ACC(yvel0, 0,0) + OPS_ACC(yvel0, 1,0) +
-                                  OPS_ACC(yvel0, 0,0) + OPS_ACC(yvel0, 1,0) ) ) * 0.25* dt * 0.5;
-  top_flux = ( OPS_ACC(yarea, 0,1) * ( OPS_ACC(yvel0, 0,1) + OPS_ACC(yvel0, 1,1) +
-                               OPS_ACC(yvel0, 0,1) + OPS_ACC(yvel0, 1,1) ) ) * 0.25 * dt * 0.5;
-
-  total_flux = right_flux - left_flux + top_flux - bottom_flux;
-
-  OPS_ACC(volume_change, 0,0) = (OPS_ACC(volume, 0,0))/(OPS_ACC(volume, 0,0) + total_flux);
-
-
-
-
-  recip_volume = 1.0/OPS_ACC(volume, 0,0);
-
-  energy_change = ( OPS_ACC(pressure, 0,0)/OPS_ACC(density0, 0,0) +
-                    OPS_ACC(viscosity, 0,0)/OPS_ACC(density0, 0,0) ) * total_flux * recip_volume;
-  OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0) - energy_change;
-  OPS_ACC(density1, 0,0) = OPS_ACC(density0, 0,0) * OPS_ACC(volume_change, 0,0);
-
-
     }
   }
 }

@@ -25,12 +25,6 @@ void flux_calc_kernely_c_wrapper(
       const ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim1_flux_calc_kernely*1, xdim1_flux_calc_kernely};
       const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim2_flux_calc_kernely*1, xdim2_flux_calc_kernely};
       const ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim3_flux_calc_kernely*1, xdim3_flux_calc_kernely};
-      
-
-  OPS_ACC(vol_flux_y, 0,0) = 0.25 * dt * (OPS_ACC(yarea, 0,0)) *
-  ( (OPS_ACC(yvel0, 0,0)) + (OPS_ACC(yvel0, 1,0)) + (OPS_ACC(yvel1, 0,0)) + (OPS_ACC(yvel1, 1,0)) );
-
-
     }
   }
 }

@@ -57,21 +57,6 @@ void calc_dt_kernel_print_c_wrapper(
       const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim3_calc_dt_kernel_print*1, xdim3_calc_dt_kernel_print};
       const ptr_double pressure = { pressure_p + n_x*1 + n_y * xdim4_calc_dt_kernel_print*1, xdim4_calc_dt_kernel_print};
       const ptr_double soundspeed = { soundspeed_p + n_x*1 + n_y * xdim5_calc_dt_kernel_print*1, xdim5_calc_dt_kernel_print};
-      
-  output[0] = OPS_ACC(xvel0, 1,0);
-  output[1] = OPS_ACC(yvel0, 1,0);
-  output[2] = OPS_ACC(xvel0, -1,0);
-  output[3] = OPS_ACC(yvel0, -1,0);
-  output[4] = OPS_ACC(xvel0, 0,1);
-  output[5] = OPS_ACC(yvel0, 0,1);
-  output[6] = OPS_ACC(xvel0, 0,-1);
-  output[7] = OPS_ACC(yvel0, 0,-1);
-  output[8] = OPS_ACC(density0, 0,0);
-  output[9] = OPS_ACC(energy0, 0,0);
-  output[10]= OPS_ACC(pressure, 0,0);
-  output[11]= OPS_ACC(soundspeed, 0,0);
-
-
       output_0 +=output[0];
       output_1 +=output[1];
       output_2 +=output[2];

@@ -99,7 +99,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute(ops_kernel_descripto
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(node_mass_post,post_vol,density1,node_mass_pre,node_flux)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)

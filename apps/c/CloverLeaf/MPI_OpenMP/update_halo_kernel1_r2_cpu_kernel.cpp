@@ -113,7 +113,7 @@ void ops_par_loop_update_halo_kernel1_r2_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(density0,density1,energy0,energy1,pressure,viscosity,soundspeed)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)

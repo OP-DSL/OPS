@@ -22,17 +22,6 @@ void initialise_chunk_kernel_x_c_wrapper(
       ptr_double vertexx = { vertexx_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_x*0, xdim0_initialise_chunk_kernel_x};
       const ptr_int xx = { xx_p + n_x*1 + n_y * xdim1_initialise_chunk_kernel_x*0, xdim1_initialise_chunk_kernel_x};
       ptr_double vertexdx = { vertexdx_p + n_x*1 + n_y * xdim2_initialise_chunk_kernel_x*0, xdim2_initialise_chunk_kernel_x};
-      
-
-  int x_min=field.x_min-2;
-  double min_x, d_x;
-
-  d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
-  min_x=grid.xmin+d_x*field.left;
-
-  OPS_ACC(vertexx, 0,0) = min_x + d_x * (OPS_ACC(xx, 0,0) - x_min);
-  OPS_ACC(vertexdx, 0,0) = (double)d_x;
-
     }
   }
 }

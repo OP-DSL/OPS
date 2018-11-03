@@ -130,7 +130,7 @@ void ops_par_loop_advec_cell_kernel4_ydir_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(density1,energy1,mass_flux_y,vol_flux_y,pre_vol,post_vol,pre_mass,post_mass,advec_vol,post_ener,ener_flux)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
