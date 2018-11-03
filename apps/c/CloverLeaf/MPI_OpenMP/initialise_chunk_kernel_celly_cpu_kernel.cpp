@@ -90,7 +90,7 @@ void ops_par_loop_initialise_chunk_kernel_celly_execute(ops_kernel_descriptor *d
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       const ACC<double> vertexy(xdim0_initialise_chunk_kernel_celly, vertexy_p + n_x*0 + n_y * xdim0_initialise_chunk_kernel_celly*1);

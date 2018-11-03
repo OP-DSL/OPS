@@ -88,7 +88,7 @@ void ops_par_loop_initialise_chunk_kernel_yy_execute(ops_kernel_descriptor *desc
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};

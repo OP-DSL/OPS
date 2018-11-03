@@ -116,7 +116,7 @@ void ops_par_loop_advec_cell_kernel3_xdir_execute(ops_kernel_descriptor *desc) {
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       const ACC<double> vol_flux_x(xdim0_advec_cell_kernel3_xdir, vol_flux_x_p + n_x*1 + n_y * xdim0_advec_cell_kernel3_xdir*1);

@@ -152,7 +152,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
     #pragma loop_count(10000)
     #pragma omp simd reduction(+:p_a6_0) reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0)
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       const ACC<double> volume(xdim0_field_summary_kernel, volume_p + n_x*1 + n_y * xdim0_field_summary_kernel*1);

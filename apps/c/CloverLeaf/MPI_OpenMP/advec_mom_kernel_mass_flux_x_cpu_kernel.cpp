@@ -85,7 +85,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       ACC<double> node_flux(xdim0_advec_mom_kernel_mass_flux_x, node_flux_p + n_x*1 + n_y * xdim0_advec_mom_kernel_mass_flux_x*1);

@@ -101,7 +101,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       ACC<double> volume(xdim0_initialise_chunk_kernel_volume, volume_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_volume*1);

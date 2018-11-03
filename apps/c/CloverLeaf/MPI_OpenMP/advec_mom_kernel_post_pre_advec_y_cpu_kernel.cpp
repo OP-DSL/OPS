@@ -101,7 +101,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y_execute(ops_kernel_descripto
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       ACC<double> node_mass_post(xdim0_advec_mom_kernel_post_pre_advec_y, node_mass_post_p + n_x*1 + n_y * xdim0_advec_mom_kernel_post_pre_advec_y*1);

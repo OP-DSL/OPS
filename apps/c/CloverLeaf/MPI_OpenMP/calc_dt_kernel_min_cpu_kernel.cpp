@@ -89,7 +89,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
     #pragma loop_count(10000)
     #pragma omp simd reduction(min:p_a1_0)
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       const ACC<double> dt_min(xdim0_calc_dt_kernel_min, dt_min_p + n_x*1 + n_y * xdim0_calc_dt_kernel_min*1);

@@ -132,7 +132,7 @@ void ops_par_loop_advec_cell_kernel4_ydir_execute(ops_kernel_descriptor *desc) {
     #pragma loop_count(10000)
     #pragma omp simd
     #else
-    #pragma simd
+    #pragma omp simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       ACC<double> density1(xdim0_advec_cell_kernel4_ydir, density1_p + n_x*1 + n_y * xdim0_advec_cell_kernel4_ydir*1);
