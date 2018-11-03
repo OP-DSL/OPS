@@ -29,12 +29,12 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,5,range,6)) return;
+  if (!ops_checkpointing_before(args,5,range,41)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(6,"initialise_chunk_kernel_volume");
-    OPS_kernels[6].count++;
+    ops_timing_realloc(41,"initialise_chunk_kernel_volume");
+    OPS_kernels[41].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -92,14 +92,14 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1-__t2;
+    OPS_kernels[41].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(volume_p,celldy_p,xarea_p,celldx_p,yarea_p)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
@@ -129,7 +129,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[6].time += __t2-__t1;
+    OPS_kernels[41].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
@@ -141,12 +141,12 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1-__t2;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[41].mpi_time += __t1-__t2;
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 #undef OPS_ACC0
@@ -165,9 +165,9 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 6;
+  desc->index = 41;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 6;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 41;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -187,7 +187,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(6,"initialise_chunk_kernel_volume");
+    ops_timing_realloc(41,"initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);
 }

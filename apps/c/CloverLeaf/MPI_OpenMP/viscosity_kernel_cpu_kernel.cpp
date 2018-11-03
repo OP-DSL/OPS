@@ -31,12 +31,12 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,7,range,50)) return;
+  if (!ops_checkpointing_before(args,7,range,34)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(50,"viscosity_kernel");
-    OPS_kernels[50].count++;
+    ops_timing_realloc(34,"viscosity_kernel");
+    OPS_kernels[34].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -102,14 +102,14 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[50].mpi_time += __t1-__t2;
+    OPS_kernels[34].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(xvel0_p,yvel0_p,celldx_p,celldy_p,pressure_p,density0_p,viscosity_p)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
@@ -178,7 +178,7 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[50].time += __t2-__t1;
+    OPS_kernels[34].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
@@ -188,14 +188,14 @@ void ops_par_loop_viscosity_kernel_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[50].mpi_time += __t1-__t2;
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[50].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[34].mpi_time += __t1-__t2;
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[34].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 #undef OPS_ACC0
@@ -216,9 +216,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 50;
+  desc->index = 34;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 50;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 34;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -242,7 +242,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_viscosity_kernel_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(50,"viscosity_kernel");
+    ops_timing_realloc(34,"viscosity_kernel");
   }
   ops_enqueue_kernel(desc);
 }

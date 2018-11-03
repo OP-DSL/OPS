@@ -31,12 +31,12 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,7,range,54)) return;
+  if (!ops_checkpointing_before(args,7,range,30)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(54,"calc_dt_kernel_print");
-    OPS_kernels[54].count++;
+    ops_timing_realloc(30,"calc_dt_kernel_print");
+    OPS_kernels[30].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -105,7 +105,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[54].mpi_time += __t1-__t2;
+    OPS_kernels[30].mpi_time += __t1-__t2;
   }
 
   double p_a6_0 = p_a6[0];
@@ -124,7 +124,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11) aligned(xvel0_p,yvel0_p,density0_p,energy0_p,pressure_p,soundspeed_p)
+    #pragma omp simd reduction(+:p_a6_0) reduction(+:p_a6_1) reduction(+:p_a6_2) reduction(+:p_a6_3) reduction(+:p_a6_4) reduction(+:p_a6_5) reduction(+:p_a6_6) reduction(+:p_a6_7) reduction(+:p_a6_8) reduction(+:p_a6_9) reduction(+:p_a6_10) reduction(+:p_a6_11)
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
@@ -196,7 +196,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   p_a6[11] = p_a6_11;
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[54].time += __t2-__t1;
+    OPS_kernels[30].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
@@ -205,13 +205,13 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[54].mpi_time += __t1-__t2;
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[30].mpi_time += __t1-__t2;
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 #undef OPS_ACC0
@@ -231,9 +231,9 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 54;
+  desc->index = 30;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 54;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 30;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -256,7 +256,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   desc->args[6] = arg6;
   desc->function = ops_par_loop_calc_dt_kernel_print_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(54,"calc_dt_kernel_print");
+    ops_timing_realloc(30,"calc_dt_kernel_print");
   }
   ops_enqueue_kernel(desc);
 }

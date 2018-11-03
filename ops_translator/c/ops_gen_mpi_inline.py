@@ -152,7 +152,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     reduct = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
     config.file_text = ''

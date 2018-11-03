@@ -26,12 +26,12 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,3,range,44)) return;
+  if (!ops_checkpointing_before(args,3,range,78)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(44,"update_halo_kernel4_minus_2_b");
-    OPS_kernels[44].count++;
+    ops_timing_realloc(78,"update_halo_kernel4_minus_2_b");
+    OPS_kernels[78].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -80,14 +80,14 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[44].mpi_time += __t1-__t2;
+    OPS_kernels[78].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(vol_flux_y_p,mass_flux_y_p)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
@@ -107,7 +107,7 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[44].time += __t2-__t1;
+    OPS_kernels[78].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -118,9 +118,9 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[44].mpi_time += __t1-__t2;
-    OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[78].mpi_time += __t1-__t2;
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[78].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -135,9 +135,9 @@ void ops_par_loop_update_halo_kernel4_minus_2_b(char const *name, ops_block bloc
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 44;
+  desc->index = 78;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 44;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 78;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -155,7 +155,7 @@ void ops_par_loop_update_halo_kernel4_minus_2_b(char const *name, ops_block bloc
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel4_minus_2_b_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(44,"update_halo_kernel4_minus_2_b");
+    ops_timing_realloc(78,"update_halo_kernel4_minus_2_b");
   }
   ops_enqueue_kernel(desc);
 }

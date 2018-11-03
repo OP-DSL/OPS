@@ -29,12 +29,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(ops_kernel_descripto
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,5,range,74)) return;
+  if (!ops_checkpointing_before(args,5,range,20)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(74,"advec_mom_kernel_post_pre_advec_x");
-    OPS_kernels[74].count++;
+    ops_timing_realloc(20,"advec_mom_kernel_post_pre_advec_x");
+    OPS_kernels[20].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -92,14 +92,14 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(ops_kernel_descripto
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[74].mpi_time += __t1-__t2;
+    OPS_kernels[20].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd aligned(node_mass_post_p,post_vol_p,density1_p,node_mass_pre_p,node_flux_p)
+    #pragma omp simd
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
@@ -130,7 +130,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(ops_kernel_descripto
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[74].time += __t2-__t1;
+    OPS_kernels[20].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
@@ -141,12 +141,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(ops_kernel_descripto
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[74].mpi_time += __t1-__t2;
-    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[20].mpi_time += __t1-__t2;
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 #undef OPS_ACC0
@@ -165,9 +165,9 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 74;
+  desc->index = 20;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 74;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 20;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -187,7 +187,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(74,"advec_mom_kernel_post_pre_advec_x");
+    ops_timing_realloc(20,"advec_mom_kernel_post_pre_advec_x");
   }
   ops_enqueue_kernel(desc);
 }

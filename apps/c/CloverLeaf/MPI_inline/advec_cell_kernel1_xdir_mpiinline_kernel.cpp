@@ -36,12 +36,12 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block, int
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,61)) return;
+  if (!ops_checkpointing_before(args,5,range,7)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(61,"advec_cell_kernel1_xdir");
-    OPS_kernels[61].count++;
+    ops_timing_realloc(7,"advec_cell_kernel1_xdir");
+    OPS_kernels[7].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -132,7 +132,7 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block, int
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[61].mpi_time += t1-t2;
+    OPS_kernels[7].mpi_time += t1-t2;
   }
 
   advec_cell_kernel1_xdir_c_wrapper(
@@ -145,7 +145,7 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block, int
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[61].time += t2-t1;
+    OPS_kernels[7].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -153,10 +153,10 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block, int
 
   //Update kernel record
   if (OPS_diags > 1) {
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
