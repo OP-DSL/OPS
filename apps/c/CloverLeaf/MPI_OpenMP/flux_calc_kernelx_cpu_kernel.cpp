@@ -27,12 +27,12 @@ void ops_par_loop_flux_calc_kernelx_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,4,range,59)) return;
+  if (!ops_checkpointing_before(args,4,range,32)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(59,"flux_calc_kernelx");
-    OPS_kernels[59].count++;
+    ops_timing_realloc(32,"flux_calc_kernelx");
+    OPS_kernels[32].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -86,14 +86,19 @@ void ops_par_loop_flux_calc_kernelx_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[59].mpi_time += __t1-__t2;
+    OPS_kernels[32].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd
+    #pragma omp simd aligned(vol_flux_x,xarea,xvel0,xvel1)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
@@ -112,7 +117,7 @@ void ops_par_loop_flux_calc_kernelx_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[59].time += __t2-__t1;
+    OPS_kernels[32].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -122,11 +127,11 @@ void ops_par_loop_flux_calc_kernelx_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[59].mpi_time += __t1-__t2;
-    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[32].mpi_time += __t1-__t2;
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 #undef OPS_ACC0
@@ -143,9 +148,9 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 59;
+  desc->index = 32;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 59;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 32;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -163,7 +168,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_flux_calc_kernelx_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(59,"flux_calc_kernelx");
+    ops_timing_realloc(32,"flux_calc_kernelx");
   }
   ops_enqueue_kernel(desc);
 }
