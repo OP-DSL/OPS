@@ -27,12 +27,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,73)) return;
+  if (!ops_checkpointing_before(args,2,range,19)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(73,"advec_mom_kernel_mass_flux_x");
-    OPS_kernels[73].count++;
+    ops_timing_realloc(19,"advec_mom_kernel_mass_flux_x");
+    OPS_kernels[19].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -93,7 +93,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[73].mpi_time += t1-t2;
+    OPS_kernels[19].mpi_time += t1-t2;
   }
 
   advec_mom_kernel_mass_flux_x_c_wrapper(
@@ -103,14 +103,14 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[73].time += t2-t1;
+    OPS_kernels[19].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
   if (OPS_diags > 1) {
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

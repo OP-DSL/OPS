@@ -29,12 +29,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,53)) return;
+  if (!ops_checkpointing_before(args,4,range,29)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(53,"calc_dt_kernel_get");
-    OPS_kernels[53].count++;
+    ops_timing_realloc(29,"calc_dt_kernel_get");
+    OPS_kernels[29].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -119,7 +119,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[53].mpi_time += t1-t2;
+    OPS_kernels[29].mpi_time += t1-t2;
   }
 
   calc_dt_kernel_get_c_wrapper(
@@ -131,13 +131,13 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[53].time += t2-t1;
+    OPS_kernels[29].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 4);
 
   //Update kernel record
   if (OPS_diags > 1) {
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
