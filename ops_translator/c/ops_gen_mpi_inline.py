@@ -260,7 +260,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     kernel_text = replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs)
 
-
     l = text[i:m].find('inline')
     if(l<0):
       text = text[i:k+2]
