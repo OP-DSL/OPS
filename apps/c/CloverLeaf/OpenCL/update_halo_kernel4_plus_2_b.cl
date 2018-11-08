@@ -50,11 +50,11 @@
 
 
 //user function
-inline void update_halo_kernel4_plus_2_b(__global double * restrict vol_flux_y,__global double * restrict mass_flux_y,const __global int* restrict  fields)
+inline void update_halo_kernel4_plus_2_b(ACC<__global double> &vol_flux_y,ACC<__global double> &mass_flux_y,const __global int* restrict  fields)
 
  {
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(-2,0)];
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(-2,0)];
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y(0,0) = vol_flux_y(-2,0);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y(0,0) = mass_flux_y(-2,0);
 }
 
 

@@ -27,8 +27,8 @@ void flux_calc_kernelx_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
 
-  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
-  ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
+  vol_flux_x(0,0) = 0.25 * dt * (xarea(0,0)) *
+  ( (xvel0(0,0)) + (xvel0(0,1)) + (xvel1(0,0)) + (xvel1(0,1)) );
 
 
     }

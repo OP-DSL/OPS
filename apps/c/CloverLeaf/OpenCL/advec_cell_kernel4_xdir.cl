@@ -68,18 +68,18 @@
 
 
 //user function
-inline void advec_cell_kernel4_xdir( __global double * restrict density1,__global double * restrict energy1,const __global double * restrict mass_flux_x,
-const __global double * restrict vol_flux_x,const __global double * restrict pre_vol,const __global double * restrict post_vol,__global double * restrict pre_mass,
-__global double * restrict post_mass,__global double * restrict advec_vol,__global double * restrict post_ener,const __global double * restrict ener_flux)
+inline void advec_cell_kernel4_xdir( ACC<__global double> &density1,ACC<__global double> &energy1,const ACC<__global double> &mass_flux_x,
+const ACC<__global double> &vol_flux_x,const ACC<__global double> &pre_vol,const ACC<__global double> &post_vol,ACC<__global double> &pre_mass,
+ACC<__global double> &post_mass,ACC<__global double> &advec_vol,ACC<__global double> &post_ener,const ACC<__global double> &ener_flux)
 
  {
 
-  pre_mass[OPS_ACC6(0,0)] = density1[OPS_ACC0(0,0)] * pre_vol[OPS_ACC4(0,0)];
-  post_mass[OPS_ACC7(0,0)] = pre_mass[OPS_ACC6(0,0)] + mass_flux_x[OPS_ACC2(0,0)] - mass_flux_x[OPS_ACC2(1,0)];
-  post_ener[OPS_ACC9(0,0)] = ( energy1[OPS_ACC1(0,0)] * pre_mass[OPS_ACC6(0,0)] + ener_flux[OPS_ACC10(0,0)] - ener_flux[OPS_ACC10(1,0)])/post_mass[OPS_ACC7(0,0)];
-  advec_vol[OPS_ACC8(0,0)] = pre_vol[OPS_ACC4(0,0)] + vol_flux_x[OPS_ACC3(0,0)] - vol_flux_x[OPS_ACC3(1,0)];
-  density1[OPS_ACC0(0,0)] = post_mass[OPS_ACC7(0,0)]/advec_vol[OPS_ACC8(0,0)];
-  energy1[OPS_ACC1(0,0)] = post_ener[OPS_ACC9(0,0)];
+  pre_mass(0,0) = density1(0,0) * pre_vol(0,0);
+  post_mass(0,0) = pre_mass(0,0) + mass_flux_x(0,0) - mass_flux_x(1,0);
+  post_ener(0,0) = ( energy1(0,0) * pre_mass(0,0) + ener_flux(0,0) - ener_flux(1,0))/post_mass(0,0);
+  advec_vol(0,0) = pre_vol(0,0) + vol_flux_x(0,0) - vol_flux_x(1,0);
+  density1(0,0) = post_mass(0,0)/advec_vol(0,0);
+  energy1(0,0) = post_ener(0,0);
 
 }
 

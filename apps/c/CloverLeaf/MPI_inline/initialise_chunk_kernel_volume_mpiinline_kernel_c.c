@@ -35,9 +35,9 @@ void initialise_chunk_kernel_volume_c_wrapper(
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-  volume[OPS_ACC0(0,0)] = d_x*d_y;
-  xarea[OPS_ACC2(0,0)] = celldy[OPS_ACC1(0,0)];
-  yarea[OPS_ACC4(0,0)] = celldx[OPS_ACC3(0,0)];
+  volume(0,0) = d_x*d_y;
+  xarea(0,0) = celldy(0,0);
+  yarea(0,0) = celldx(0,0);
 
     }
   }

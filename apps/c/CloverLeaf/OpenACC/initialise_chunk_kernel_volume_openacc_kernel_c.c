@@ -26,17 +26,17 @@ int xdim4_initialise_chunk_kernel_volume;
 
 //user function
 inline 
-void initialise_chunk_kernel_volume(double *volume, const double *celldy, double *xarea,
-                                         const double *celldx, double *yarea) {
+void initialise_chunk_kernel_volume(ACC<double> &volume, const ACC<double> &celldy, ACC<double> &xarea,
+                                         const ACC<double> &celldx, ACC<double> &yarea) {
 
   double d_x, d_y;
 
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-  volume[OPS_ACC0(0,0)] = d_x*d_y;
-  xarea[OPS_ACC2(0,0)] = celldy[OPS_ACC1(0,0)];
-  yarea[OPS_ACC4(0,0)] = celldx[OPS_ACC3(0,0)];
+  volume(0,0) = d_x*d_y;
+  xarea(0,0) = celldy(0,0);
+  yarea(0,0) = celldx(0,0);
 }
 
 

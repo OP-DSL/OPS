@@ -27,8 +27,8 @@ void reset_field_kernel2_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
 
-  xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;
-  yvel0[OPS_ACC2(0,0)]  = yvel1[OPS_ACC3(0,0)] ;
+  xvel0(0,0)  = xvel1(0,0) ;
+  yvel0(0,0)  = yvel1(0,0) ;
 
 
     }

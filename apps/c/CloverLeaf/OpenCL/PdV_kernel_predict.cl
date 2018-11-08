@@ -70,10 +70,10 @@
 
 
 //user function
-void PdV_kernel_predict(const __global double * restrict xarea,const __global double * restrict xvel0,const __global double * restrict yarea,
-const __global double * restrict yvel0,__global double * restrict volume_change,const __global double * restrict volume,const __global double * restrict pressure,
-const __global double * restrict density0,__global double * restrict density1,const __global double * restrict viscosity,const __global double * restrict energy0,
-__global double * restrict energy1,
+void PdV_kernel_predict(const ACC<__global double> &xarea,const ACC<__global double> &xvel0,const ACC<__global double> &yarea,
+const ACC<__global double> &yvel0,ACC<__global double> &volume_change,const ACC<__global double> &volume,const ACC<__global double> &pressure,
+const ACC<__global double> &density0,ACC<__global double> &density1,const ACC<__global double> &viscosity,const ACC<__global double> &energy0,
+ACC<__global double> &energy1,
   const double dt)
 
  {
@@ -82,29 +82,29 @@ __global double * restrict energy1,
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
-                                xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] ) ) * 0.25 * dt * 0.5;
-  right_flux = ( xarea[OPS_ACC0(1,0)] * ( xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] +
-                                 xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] ) ) * 0.25 * dt * 0.5;
+  left_flux = ( xarea(0,0) * ( xvel0(0,0) + xvel0(0,1) +
+                                xvel0(0,0) + xvel0(0,1) ) ) * 0.25 * dt * 0.5;
+  right_flux = ( xarea(1,0) * ( xvel0(1,0) + xvel0(1,1) +
+                                 xvel0(1,0) + xvel0(1,1) ) ) * 0.25 * dt * 0.5;
 
-  bottom_flux = ( yarea[OPS_ACC2(0,0)] * ( yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] +
-                                  yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] ) ) * 0.25* dt * 0.5;
-  top_flux = ( yarea[OPS_ACC2(0,1)] * ( yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] +
-                               yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] ) ) * 0.25 * dt * 0.5;
+  bottom_flux = ( yarea(0,0) * ( yvel0(0,0) + yvel0(1,0) +
+                                  yvel0(0,0) + yvel0(1,0) ) ) * 0.25* dt * 0.5;
+  top_flux = ( yarea(0,1) * ( yvel0(0,1) + yvel0(1,1) +
+                               yvel0(0,1) + yvel0(1,1) ) ) * 0.25 * dt * 0.5;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  volume_change[OPS_ACC4(0,0)] = (volume[OPS_ACC5(0,0)])/(volume[OPS_ACC5(0,0)] + total_flux);
+  volume_change(0,0) = (volume(0,0))/(volume(0,0) + total_flux);
 
 
 
 
-  recip_volume = 1.0/volume[OPS_ACC5(0,0)];
+  recip_volume = 1.0/volume(0,0);
 
-  energy_change = ( pressure[OPS_ACC6(0,0)]/density0[OPS_ACC7(0,0)] +
-                    viscosity[OPS_ACC9(0,0)]/density0[OPS_ACC7(0,0)] ) * total_flux * recip_volume;
-  energy1[OPS_ACC11(0,0)] = energy0[OPS_ACC10(0,0)] - energy_change;
-  density1[OPS_ACC8(0,0)] = density0[OPS_ACC7(0,0)] * volume_change[OPS_ACC4(0,0)];
+  energy_change = ( pressure(0,0)/density0(0,0) +
+                    viscosity(0,0)/density0(0,0) ) * total_flux * recip_volume;
+  energy1(0,0) = energy0(0,0) - energy_change;
+  density1(0,0) = density0(0,0) * volume_change(0,0);
 
 }
 

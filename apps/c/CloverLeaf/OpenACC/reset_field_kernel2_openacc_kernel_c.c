@@ -23,11 +23,11 @@ int xdim3_reset_field_kernel2;
 
 //user function
 inline 
-void reset_field_kernel2( double *xvel0, const double *xvel1,
-                        double *yvel0, const double *yvel1) {
+void reset_field_kernel2( ACC<double> &xvel0, const ACC<double> &xvel1,
+                        ACC<double> &yvel0, const ACC<double> &yvel1) {
 
-  xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;
-  yvel0[OPS_ACC2(0,0)]  = yvel1[OPS_ACC3(0,0)] ;
+  xvel0(0,0)  = xvel1(0,0) ;
+  yvel0(0,0)  = yvel1(0,0) ;
 
 }
 

@@ -68,9 +68,9 @@
 
 
 //user function
-void accelerate_kernel( const __global double * restrict density0,const __global double * restrict volume,__global double * restrict stepbymass,
-const __global double * restrict xvel0,__global double * restrict xvel1,const __global double * restrict xarea,const __global double * restrict pressure,
-const __global double * restrict yvel0,__global double * restrict yvel1,const __global double * restrict yarea,const __global double * restrict viscosity,
+void accelerate_kernel( const ACC<__global double> &density0,const ACC<__global double> &volume,ACC<__global double> &stepbymass,
+const ACC<__global double> &xvel0,ACC<__global double> &xvel1,const ACC<__global double> &xarea,const ACC<__global double> &pressure,
+const ACC<__global double> &yvel0,ACC<__global double> &yvel1,const ACC<__global double> &yarea,const ACC<__global double> &viscosity,
 
   const double dt)
 
@@ -78,36 +78,36 @@ const __global double * restrict yvel0,__global double * restrict yvel1,const __
 
   double nodal_mass;
 
-  nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
-    + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
-    + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
-    + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+  nodal_mass = ( density0(-1,-1) * volume(-1,-1)
+    + density0(0,-1) * volume(0,-1)
+    + density0(0,0) * volume(0,0)
+    + density0(-1,0) * volume(-1,0) ) * 0.25;
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt/ nodal_mass;
-
-
-
-  xvel1[OPS_ACC4(0,0)] = xvel0[OPS_ACC3(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( xarea[OPS_ACC5(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(-1,0)] ) +
-              xarea[OPS_ACC5(0,-1)] * ( pressure[OPS_ACC6(0,-1)] - pressure[OPS_ACC6(-1,-1)] ) );
+  stepbymass(0,0) = 0.5*dt/ nodal_mass;
 
 
 
-  yvel1[OPS_ACC8(0,0)] = yvel0[OPS_ACC7(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( yarea[OPS_ACC9(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(0,-1)] ) +
-              yarea[OPS_ACC9(-1,0)] * ( pressure[OPS_ACC6(-1,0)] - pressure[OPS_ACC6(-1,-1)] ) );
+  xvel1(0,0) = xvel0(0,0) - stepbymass(0,0) *
+            ( xarea(0,0)  * ( pressure(0,0) - pressure(-1,0) ) +
+              xarea(0,-1) * ( pressure(0,-1) - pressure(-1,-1) ) );
 
 
 
-  xvel1[OPS_ACC4(0,0)] = xvel1[OPS_ACC4(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( xarea[OPS_ACC5(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(-1,0)] ) +
-              xarea[OPS_ACC5(0,-1)] * ( viscosity[OPS_ACC10(0,-1)] - viscosity[OPS_ACC10(-1,-1)] ) );
+  yvel1(0,0) = yvel0(0,0) - stepbymass(0,0) *
+            ( yarea(0,0)  * ( pressure(0,0) - pressure(0,-1) ) +
+              yarea(-1,0) * ( pressure(-1,0) - pressure(-1,-1) ) );
 
 
 
-  yvel1[OPS_ACC8(0,0)] = yvel1[OPS_ACC8(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( yarea[OPS_ACC9(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(0,-1)] ) +
-              yarea[OPS_ACC9(-1,0)] * ( viscosity[OPS_ACC10(-1,0)] - viscosity[OPS_ACC10(-1,-1)] ) );
+  xvel1(0,0) = xvel1(0,0) - stepbymass(0,0) *
+            ( xarea(0,0) * ( viscosity(0,0) - viscosity(-1,0) ) +
+              xarea(0,-1) * ( viscosity(0,-1) - viscosity(-1,-1) ) );
+
+
+
+  yvel1(0,0) = yvel1(0,0) - stepbymass(0,0) *
+            ( yarea(0,0) * ( viscosity(0,0) - viscosity(0,-1) ) +
+              yarea(-1,0) * ( viscosity(-1,0) - viscosity(-1,-1) ) );
 
 }
 

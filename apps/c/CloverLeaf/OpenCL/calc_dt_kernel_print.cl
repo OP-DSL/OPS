@@ -58,22 +58,22 @@
 
 
 //user function
-void calc_dt_kernel_print(const __global double * restrict xvel0,const __global double * restrict yvel0,const __global double * restrict density0,
-const __global double * restrict energy0,const __global double * restrict pressure,const __global double * restrict soundspeed, double * restrict output)
+void calc_dt_kernel_print(const ACC<__global double> &xvel0,const ACC<__global double> &yvel0,const ACC<__global double> &density0,
+const ACC<__global double> &energy0,const ACC<__global double> &pressure,const ACC<__global double> &soundspeed, double * restrict output)
 
  {
-  output[0] = xvel0[OPS_ACC0(1,0)];
-  output[1] = yvel0[OPS_ACC1(1,0)];
-  output[2] = xvel0[OPS_ACC0(-1,0)];
-  output[3] = yvel0[OPS_ACC1(-1,0)];
-  output[4] = xvel0[OPS_ACC0(0,1)];
-  output[5] = yvel0[OPS_ACC1(0,1)];
-  output[6] = xvel0[OPS_ACC0(0,-1)];
-  output[7] = yvel0[OPS_ACC1(0,-1)];
-  output[8] = density0[OPS_ACC2(0,0)];
-  output[9] = energy0[OPS_ACC3(0,0)];
-  output[10]= pressure[OPS_ACC4(0,0)];
-  output[11]= soundspeed[OPS_ACC5(0,0)];
+  output[0] = xvel0(1,0);
+  output[1] = yvel0(1,0);
+  output[2] = xvel0(-1,0);
+  output[3] = yvel0(-1,0);
+  output[4] = xvel0(0,1);
+  output[5] = yvel0(0,1);
+  output[6] = xvel0(0,-1);
+  output[7] = yvel0(0,-1);
+  output[8] = density0(0,0);
+  output[9] = energy0(0,0);
+  output[10]= pressure(0,0);
+  output[11]= soundspeed(0,0);
 
 }
 

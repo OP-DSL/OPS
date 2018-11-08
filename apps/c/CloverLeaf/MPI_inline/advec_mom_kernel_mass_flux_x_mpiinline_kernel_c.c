@@ -22,8 +22,8 @@ void advec_mom_kernel_mass_flux_x_c_wrapper(
       
 
 
-  node_flux[OPS_ACC0(0,0)] = 0.25 * ( mass_flux_x[OPS_ACC1(0,-1)] + mass_flux_x[OPS_ACC1(0,0)] +
-    mass_flux_x[OPS_ACC1(1,-1)] + mass_flux_x[OPS_ACC1(1,0)] );
+  node_flux(0,0) = 0.25 * ( mass_flux_x(0,-1) + mass_flux_x(0,0) +
+    mass_flux_x(1,-1) + mass_flux_x(1,0) );
 
     }
   }

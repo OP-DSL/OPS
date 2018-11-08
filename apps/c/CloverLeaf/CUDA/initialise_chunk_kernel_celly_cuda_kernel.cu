@@ -4,38 +4,24 @@
 __constant__ int dims_initialise_chunk_kernel_celly [3][1];
 static int dims_initialise_chunk_kernel_celly_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+dims_initialise_chunk_kernel_celly[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_initialise_chunk_kernel_celly[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_initialise_chunk_kernel_celly[2][0]*(y))
-
 //user function
 __device__
 
-void initialise_chunk_kernel_celly_gpu(const double *vertexy, double *celly, double *celldy) {
+void initialise_chunk_kernel_celly_gpu(const ACC<double> &vertexy, ACC<double> &celly, ACC<double> &celldy) {
 
   double d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-  celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
-  celldy[OPS_ACC2(0,0)] = d_y;
+  celly(0,0) = 0.5*( vertexy(0,0)+ vertexy(0,1) );
+  celldy(0,0) = d_y;
 
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
 __global__ void ops_initialise_chunk_kernel_celly(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
 int size0,
@@ -50,7 +36,10 @@ int size1 ){
   arg2 += idx_x * 0*1 + idx_y * 1*1 * dims_initialise_chunk_kernel_celly[2][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    initialise_chunk_kernel_celly_gpu(arg0, arg1, arg2);
+    const ACC<double> argp0(dims_initialise_chunk_kernel_celly[0][0], arg0);
+    ACC<double> argp1(dims_initialise_chunk_kernel_celly[1][0], arg1);
+    ACC<double> argp2(dims_initialise_chunk_kernel_celly[2][0], arg2);
+    initialise_chunk_kernel_celly_gpu(argp0, argp1, argp2);
   }
 
 }

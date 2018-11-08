@@ -56,14 +56,14 @@
 
 
 //user function
-inline void advec_cell_kernel1_xdir( __global double * restrict pre_vol,__global double * restrict post_vol,const __global double * restrict volume,
-const __global double * restrict vol_flux_x,const __global double * restrict vol_flux_y)
+inline void advec_cell_kernel1_xdir( ACC<__global double> &pre_vol,ACC<__global double> &post_vol,const ACC<__global double> &volume,
+const ACC<__global double> &vol_flux_x,const ACC<__global double> &vol_flux_y)
 
  {
 
-  pre_vol[OPS_ACC0(0,0)] = volume[OPS_ACC2(0,0)] + ( vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)] +
-                           vol_flux_y[OPS_ACC4(0,1)] - vol_flux_y[OPS_ACC4(0,0)]);
-  post_vol[OPS_ACC1(0,0)] = pre_vol[OPS_ACC0(0,0)] - ( vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)]);
+  pre_vol(0,0) = volume(0,0) + ( vol_flux_x(1,0) - vol_flux_x(0,0) +
+                           vol_flux_y(0,1) - vol_flux_y(0,0));
+  post_vol(0,0) = pre_vol(0,0) - ( vol_flux_x(1,0) - vol_flux_x(0,0));
 
 }
 

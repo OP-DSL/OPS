@@ -30,8 +30,8 @@ void initialise_chunk_kernel_x_c_wrapper(
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   min_x=grid.xmin+d_x*field.left;
 
-  vertexx[OPS_ACC0(0,0)] = min_x + d_x * (xx[OPS_ACC1(0,0)] - x_min);
-  vertexdx[OPS_ACC2(0,0)] = (double)d_x;
+  vertexx(0,0) = min_x + d_x * (xx(0,0) - x_min);
+  vertexdx(0,0) = (double)d_x;
 
     }
   }

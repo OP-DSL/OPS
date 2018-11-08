@@ -62,9 +62,9 @@
 
 
 //user function
-inline void advec_cell_kernel3_xdir( const __global double * restrict vol_flux_x,const __global double * restrict pre_vol,const __global int * restrict xx,
-const __global double * restrict vertexdx,const __global double * restrict density1,const __global double * restrict energy1,__global double * restrict mass_flux_x,
-__global double * restrict ener_flux,
+inline void advec_cell_kernel3_xdir( const ACC<__global double> &vol_flux_x,const ACC<__global double> &pre_vol,const ACC<__global int> &xx,
+const ACC<__global double> &vertexdx,const ACC<__global double> &density1,const ACC<__global double> &energy1,ACC<__global double> &mass_flux_x,
+ACC<__global double> &ener_flux,
   const field_type field)
 
  {
@@ -81,13 +81,13 @@ __global double * restrict ener_flux,
 
 
 
-  if(vol_flux_x[OPS_ACC0(0,0)] > 0.0) {
+  if(vol_flux_x(0,0) > 0.0) {
     upwind   = -2;
     donor    = -1;
     downwind = 0;
     dif      = donor;
   }
-  else if (xx[OPS_ACC2(1,0)] < x_max+2-2) {
+  else if (xx(1,0) < x_max+2-2) {
     upwind   = 1;
     donor    = 0;
     downwind = -1;
@@ -100,14 +100,14 @@ __global double * restrict ener_flux,
   }
 
 
-  sigmat = fabs(vol_flux_x[OPS_ACC0(0,0)])/pre_vol[OPS_ACC1(donor,0)];
-  sigma3 = (1.0 + sigmat)*(vertexdx[OPS_ACC3(0,0)]/vertexdx[OPS_ACC3(dif,0)]);
+  sigmat = fabs(vol_flux_x(0,0))/pre_vol(donor,0);
+  sigma3 = (1.0 + sigmat)*(vertexdx(0,0)/vertexdx(dif,0));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = density1[OPS_ACC4(donor,0)] - density1[OPS_ACC4(upwind,0)];
-  diffdw = density1[OPS_ACC4(downwind,0)] - density1[OPS_ACC4(donor,0)];
+  diffuw = density1(donor,0) - density1(upwind,0);
+  diffdw = density1(downwind,0) - density1(donor,0);
 
   if( (diffuw*diffdw) > 0.0)
     limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
@@ -116,11 +116,11 @@ __global double * restrict ener_flux,
   else
     limiter=0.0;
 
-  mass_flux_x[OPS_ACC6(0,0)] = (vol_flux_x[OPS_ACC0(0,0)]) * ( density1[OPS_ACC4(donor,0)] + limiter );
+  mass_flux_x(0,0) = (vol_flux_x(0,0)) * ( density1(donor,0) + limiter );
 
-  sigmam = fabs(mass_flux_x[OPS_ACC6(0,0)])/( density1[OPS_ACC4(donor,0)] * pre_vol[OPS_ACC1(donor,0)]);
-  diffuw = energy1[OPS_ACC5(donor,0)] - energy1[OPS_ACC5(upwind,0)];
-  diffdw = energy1[OPS_ACC5(downwind,0)] - energy1[OPS_ACC5(donor,0)];
+  sigmam = fabs(mass_flux_x(0,0))/( density1(donor,0) * pre_vol(donor,0));
+  diffuw = energy1(donor,0) - energy1(upwind,0);
+  diffdw = energy1(downwind,0) - energy1(donor,0);
 
   if( (diffuw*diffdw) > 0.0)
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -129,7 +129,7 @@ __global double * restrict ener_flux,
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0)] = mass_flux_x[OPS_ACC6(0,0)] * ( energy1[OPS_ACC5(donor,0)] + limiter );
+  ener_flux(0,0) = mass_flux_x(0,0) * ( energy1(donor,0) + limiter );
 }
 
 

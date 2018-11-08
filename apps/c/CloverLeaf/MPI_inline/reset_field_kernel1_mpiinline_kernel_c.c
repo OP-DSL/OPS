@@ -27,8 +27,8 @@ void reset_field_kernel1_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
 
-  density0[OPS_ACC0(0,0)]  = density1[OPS_ACC1(0,0)] ;
-  energy0[OPS_ACC2(0,0)]  = energy1[OPS_ACC3(0,0)] ;
+  density0(0,0)  = density1(0,0) ;
+  energy0(0,0)  = energy1(0,0) ;
 
 
     }

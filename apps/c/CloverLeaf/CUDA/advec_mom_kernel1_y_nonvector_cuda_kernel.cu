@@ -4,25 +4,12 @@
 __constant__ int dims_advec_mom_kernel1_y_nonvector [5][1];
 static int dims_advec_mom_kernel1_y_nonvector_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+dims_advec_mom_kernel1_y_nonvector[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_advec_mom_kernel1_y_nonvector[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_advec_mom_kernel1_y_nonvector[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_advec_mom_kernel1_y_nonvector[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_advec_mom_kernel1_y_nonvector[4][0]*(y))
-
 //user function
 __device__
 
-inline void advec_mom_kernel1_y_nonvector_gpu( const double *node_flux, const double *node_mass_pre,
-                       double *mom_flux,
-                       const double *celldy, const double *vel1) {
+inline void advec_mom_kernel1_y_nonvector_gpu( const ACC<double> &node_flux, const ACC<double> &node_mass_pre,
+                       ACC<double> &mom_flux,
+                       const ACC<double> &celldy, const ACC<double> &vel1) {
 
 
 
@@ -33,7 +20,7 @@ inline void advec_mom_kernel1_y_nonvector_gpu( const double *node_flux, const do
   int upwind, donor, downwind, dif;
   double advec_vel_temp;
 
-  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
+  if( (node_flux(0,0)) < 0.0) {
     upwind = 2;
     donor = 1;
     downwind = 0;
@@ -45,37 +32,30 @@ inline void advec_mom_kernel1_y_nonvector_gpu( const double *node_flux, const do
     dif = upwind;
   }
 
-  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(0,donor)];
-  width = celldy[OPS_ACC3(0,0)];
-  vdiffuw = vel1[OPS_ACC4(0,donor)] - vel1[OPS_ACC4(0,upwind)];
-  vdiffdw = vel1[OPS_ACC4(0,downwind)] - vel1[OPS_ACC4(0,donor)];
+  sigma = fabs(node_flux(0,0))/node_mass_pre(0,donor);
+  width = celldy(0,0);
+  vdiffuw = vel1(0,donor) - vel1(0,upwind);
+  vdiffdw = vel1(0,downwind) - vel1(0,donor);
   limiter = 0.0;
   if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy[OPS_ACC3(0,dif)])/6.0,MIN(auw,adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy(0,dif))/6.0,MIN(auw,adw));
   }
-  advec_vel_temp= vel1[OPS_ACC4(0,donor)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC2(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
+  advec_vel_temp= vel1(0,donor) + (1.0 - sigma) * limiter;
+  mom_flux(0,0) = advec_vel_temp * node_flux(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_advec_mom_kernel1_y_nonvector(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg3,
+double* __restrict arg4,
 int size0,
 int size1 ){
 
@@ -90,8 +70,13 @@ int size1 ){
   arg4 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel1_y_nonvector[4][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel1_y_nonvector_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    const ACC<double> argp0(dims_advec_mom_kernel1_y_nonvector[0][0], arg0);
+    const ACC<double> argp1(dims_advec_mom_kernel1_y_nonvector[1][0], arg1);
+    ACC<double> argp2(dims_advec_mom_kernel1_y_nonvector[2][0], arg2);
+    const ACC<double> argp3(dims_advec_mom_kernel1_y_nonvector[3][0], arg3);
+    const ACC<double> argp4(dims_advec_mom_kernel1_y_nonvector[4][0], arg4);
+    advec_mom_kernel1_y_nonvector_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

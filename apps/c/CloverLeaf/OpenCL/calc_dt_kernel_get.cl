@@ -50,12 +50,12 @@
 
 
 //user function
-void calc_dt_kernel_get(const __global double* restrict  cellx,const __global double* restrict  celly, double* restrict  xl_pos,
+void calc_dt_kernel_get(const ACC<__global double> &cellx,const ACC<__global double> &celly, double* restrict  xl_pos,
  double* restrict  yl_pos)
 
  {
-  *xl_pos = cellx[OPS_ACC0(0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0)];
+  *xl_pos = cellx(0,0);
+  *yl_pos = celly(0,0);
 }
 
 

@@ -56,8 +56,8 @@
 
 
 //user function
-inline void advec_mom_kernel1_x_nonvector( const __global double * restrict node_flux,const __global double * restrict node_mass_pre,__global double * restrict mom_flux,
-const __global double * restrict celldx,const __global double * restrict vel1)
+inline void advec_mom_kernel1_x_nonvector( const ACC<__global double> &node_flux,const ACC<__global double> &node_mass_pre,ACC<__global double> &mom_flux,
+const ACC<__global double> &celldx,const ACC<__global double> &vel1)
 
  {
 
@@ -71,7 +71,7 @@ const __global double * restrict celldx,const __global double * restrict vel1)
 
   double advec_vel_temp;
 
-  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
+  if( (node_flux(0,0)) < 0.0) {
     upwind = 2;
     donor =1;
     downwind = 0;
@@ -84,11 +84,11 @@ const __global double * restrict celldx,const __global double * restrict vel1)
     dif=upwind;
   }
 
-  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(donor,0)];
+  sigma = fabs(node_flux(0,0))/node_mass_pre(donor,0);
 
-  width = celldx[OPS_ACC3(0,0)];
-  vdiffuw = vel1[OPS_ACC4(donor,0)] - vel1[OPS_ACC4(upwind,0)];
-  vdiffdw = vel1[OPS_ACC4(downwind,0)] - vel1[OPS_ACC4(donor,0)];
+  width = celldx(0,0);
+  vdiffuw = vel1(donor,0) - vel1(upwind,0);
+  vdiffdw = vel1(downwind,0) - vel1(donor,0);
   limiter=0.0;
 
   if(vdiffuw*vdiffdw > 0.0) {
@@ -96,11 +96,11 @@ const __global double * restrict celldx,const __global double * restrict vel1)
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldx[OPS_ACC3(dif,0)])/6.0, MIN(auw, adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldx(dif,0))/6.0, MIN(auw, adw));
   }
 
-  advec_vel_temp = vel1[OPS_ACC4(donor,0)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC2(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
+  advec_vel_temp = vel1(donor,0) + (1.0 - sigma) * limiter;
+  mom_flux(0,0) = advec_vel_temp * node_flux(0,0);
 
 }
 

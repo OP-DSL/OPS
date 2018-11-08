@@ -36,13 +36,13 @@ void update_halo_kernel1_l2_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
-  if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(3,0)];
-  if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0)] = density1[OPS_ACC1(3,0)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0)] = energy0[OPS_ACC2(3,0)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC3(0,0)] = energy1[OPS_ACC3(3,0)];
-  if(fields[FIELD_PRESSURE] == 1) pressure[OPS_ACC4(0,0)] = pressure[OPS_ACC4(3,0)];
-  if(fields[FIELD_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0)] = viscosity[OPS_ACC5(3,0)];
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0)] = soundspeed[OPS_ACC6(3,0)];
+  if(fields[FIELD_DENSITY0] == 1) density0(0,0) = density0(3,0);
+  if(fields[FIELD_DENSITY1] == 1) density1(0,0) = density1(3,0);
+  if(fields[FIELD_ENERGY0] == 1) energy0(0,0) = energy0(3,0);
+  if(fields[FIELD_ENERGY1] == 1) energy1(0,0) = energy1(3,0);
+  if(fields[FIELD_PRESSURE] == 1) pressure(0,0) = pressure(3,0);
+  if(fields[FIELD_VISCOSITY] == 1) viscosity(0,0) = viscosity(3,0);
+  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed(0,0) = soundspeed(3,0);
 
 
     }

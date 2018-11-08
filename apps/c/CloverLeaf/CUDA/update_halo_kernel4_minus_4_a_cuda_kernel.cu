@@ -4,25 +4,14 @@
 __constant__ int dims_update_halo_kernel4_minus_4_a [3][1];
 static int dims_update_halo_kernel4_minus_4_a_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_update_halo_kernel4_minus_4_a[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_update_halo_kernel4_minus_4_a[1][0]*(y))
-
 //user function
 __device__
 
-inline void update_halo_kernel4_minus_4_a_gpu(double *vol_flux_y, double *mass_flux_y, const int* fields) {
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,4)]);
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,4)]);
+inline void update_halo_kernel4_minus_4_a_gpu(ACC<double> &vol_flux_y, ACC<double> &mass_flux_y, const int* fields) {
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y(0,0) = -(vol_flux_y(0,4));
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y(0,0) = -(mass_flux_y(0,4));
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_update_halo_kernel4_minus_4_a(
@@ -40,7 +29,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel4_minus_4_a[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel4_minus_4_a_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(dims_update_halo_kernel4_minus_4_a[0][0], arg0);
+    ACC<double> argp1(dims_update_halo_kernel4_minus_4_a[1][0], arg1);
+    update_halo_kernel4_minus_4_a_gpu(argp0, argp1, arg2);
   }
 
 }

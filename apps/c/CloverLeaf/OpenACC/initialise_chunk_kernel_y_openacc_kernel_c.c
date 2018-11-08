@@ -20,7 +20,7 @@ int xdim2_initialise_chunk_kernel_y;
 
 //user function
 inline 
-void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy) {
+void initialise_chunk_kernel_y(ACC<double> &vertexy, const ACC<int> &yy, ACC<double> &vertexdy) {
 
   int y_min=field.y_min-2;
   double min_y, d_y;
@@ -28,8 +28,8 @@ void initialise_chunk_kernel_y(double *vertexy, const int *yy, double *vertexdy)
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
   min_y=grid.ymin+d_y*field.bottom;
 
-  vertexy[OPS_ACC0(0,0)] = min_y + d_y * (yy[OPS_ACC1(0,0)] - y_min);
-  vertexdy[OPS_ACC2(0,0)] = (double)d_y;
+  vertexy(0,0) = min_y + d_y * (yy(0,0) - y_min);
+  vertexdy(0,0) = (double)d_y;
 }
 
 
