@@ -46,6 +46,7 @@
 #include "initialise_chunk_kernel_cellx_mpiinline_kernel_c.c"
 #include "initialise_chunk_kernel_celly_mpiinline_kernel_c.c"
 #include "initialise_chunk_kernel_volume_mpiinline_kernel_c.c"
+#include "generate_chunk_kernel_mpiinline_kernel_c.c"
 #include "update_halo_kernel1_b2_mpiinline_kernel_c.c"
 #include "update_halo_kernel1_b1_mpiinline_kernel_c.c"
 #include "update_halo_kernel1_t2_mpiinline_kernel_c.c"
