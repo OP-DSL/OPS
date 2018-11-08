@@ -18,72 +18,72 @@ int xdim12_PdV_kernel_nopredict;
 int xdim13_PdV_kernel_nopredict;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_PdV_kernel_nopredict)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_PdV_kernel_nopredict)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_PdV_kernel_nopredict)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_PdV_kernel_nopredict)
-#define OPS_ACC4(x,y) (n_x*1 + x + (n_y*1+(y))*xdim4_PdV_kernel_nopredict)
-#define OPS_ACC5(x,y) (n_x*1 + x + (n_y*1+(y))*xdim5_PdV_kernel_nopredict)
-#define OPS_ACC6(x,y) (n_x*1 + x + (n_y*1+(y))*xdim6_PdV_kernel_nopredict)
-#define OPS_ACC7(x,y) (n_x*1 + x + (n_y*1+(y))*xdim7_PdV_kernel_nopredict)
-#define OPS_ACC8(x,y) (n_x*1 + x + (n_y*1+(y))*xdim8_PdV_kernel_nopredict)
-#define OPS_ACC9(x,y) (n_x*1 + x + (n_y*1+(y))*xdim9_PdV_kernel_nopredict)
-#define OPS_ACC10(x,y) (n_x*1 + x + (n_y*1+(y))*xdim10_PdV_kernel_nopredict)
-#define OPS_ACC11(x,y) (n_x*1 + x + (n_y*1+(y))*xdim11_PdV_kernel_nopredict)
-#define OPS_ACC12(x,y) (n_x*1 + x + (n_y*1+(y))*xdim12_PdV_kernel_nopredict)
-#define OPS_ACC13(x,y) (n_x*1 + x + (n_y*1+(y))*xdim13_PdV_kernel_nopredict)
 //user function
 
 
 
 void PdV_kernel_nopredict_c_wrapper(
-  const double * restrict xarea,
-  const double * restrict xvel0,
-  const double * restrict xvel1,
-  const double * restrict yarea,
-  const double * restrict yvel0,
-  const double * restrict yvel1,
-  double * restrict volume_change,
-  const double * restrict volume,
-  const double * restrict pressure,
-  const double * restrict density0,
-  double * restrict density1,
-  const double * restrict viscosity,
-  const double * restrict energy0,
-  double * restrict energy1,
+  double * restrict xarea_p,
+  double * restrict xvel0_p,
+  double * restrict xvel1_p,
+  double * restrict yarea_p,
+  double * restrict yvel0_p,
+  double * restrict yvel1_p,
+  double * restrict volume_change_p,
+  double * restrict volume_p,
+  double * restrict pressure_p,
+  double * restrict density0_p,
+  double * restrict density1_p,
+  double * restrict viscosity_p,
+  double * restrict energy0_p,
+  double * restrict energy1_p,
   int x_size, int y_size) {
   #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
+      const ptr_double xarea = { xarea_p + n_x*1 + n_y * xdim0_PdV_kernel_nopredict*1, xdim0_PdV_kernel_nopredict};
+      const ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim1_PdV_kernel_nopredict*1, xdim1_PdV_kernel_nopredict};
+      const ptr_double xvel1 = { xvel1_p + n_x*1 + n_y * xdim2_PdV_kernel_nopredict*1, xdim2_PdV_kernel_nopredict};
+      const ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim3_PdV_kernel_nopredict*1, xdim3_PdV_kernel_nopredict};
+      const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim4_PdV_kernel_nopredict*1, xdim4_PdV_kernel_nopredict};
+      const ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim5_PdV_kernel_nopredict*1, xdim5_PdV_kernel_nopredict};
+      ptr_double volume_change = { volume_change_p + n_x*1 + n_y * xdim6_PdV_kernel_nopredict*1, xdim6_PdV_kernel_nopredict};
+      const ptr_double volume = { volume_p + n_x*1 + n_y * xdim7_PdV_kernel_nopredict*1, xdim7_PdV_kernel_nopredict};
+      const ptr_double pressure = { pressure_p + n_x*1 + n_y * xdim8_PdV_kernel_nopredict*1, xdim8_PdV_kernel_nopredict};
+      const ptr_double density0 = { density0_p + n_x*1 + n_y * xdim9_PdV_kernel_nopredict*1, xdim9_PdV_kernel_nopredict};
+      ptr_double density1 = { density1_p + n_x*1 + n_y * xdim10_PdV_kernel_nopredict*1, xdim10_PdV_kernel_nopredict};
+      const ptr_double viscosity = { viscosity_p + n_x*1 + n_y * xdim11_PdV_kernel_nopredict*1, xdim11_PdV_kernel_nopredict};
+      const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim12_PdV_kernel_nopredict*1, xdim12_PdV_kernel_nopredict};
+      ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim13_PdV_kernel_nopredict*1, xdim13_PdV_kernel_nopredict};
       
 
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( xarea(0,0) * ( xvel0(0,0) + xvel0(0,1) +
-                                xvel1(0,0) + xvel1(0,1) ) ) * 0.25 * dt;
-  right_flux = ( xarea(1,0) * ( xvel0(1,0) + xvel0(1,1) +
-                                 xvel1(1,0) + xvel1(1,1) ) ) * 0.25 * dt;
+  left_flux = ( OPS_ACC(xarea, 0,0) * ( OPS_ACC(xvel0, 0,0) + OPS_ACC(xvel0, 0,1) +
+                                OPS_ACC(xvel1, 0,0) + OPS_ACC(xvel1, 0,1) ) ) * 0.25 * dt;
+  right_flux = ( OPS_ACC(xarea, 1,0) * ( OPS_ACC(xvel0, 1,0) + OPS_ACC(xvel0, 1,1) +
+                                 OPS_ACC(xvel1, 1,0) + OPS_ACC(xvel1, 1,1) ) ) * 0.25 * dt;
 
-  bottom_flux = ( yarea(0,0) * ( yvel0(0,0) + yvel0(1,0) +
-                                  yvel1(0,0) + yvel1(1,0) ) ) * 0.25* dt;
-  top_flux = ( yarea(0,1) * ( yvel0(0,1) + yvel0(1,1) +
-                               yvel1(0,1) + yvel1(1,1) ) ) * 0.25 * dt;
+  bottom_flux = ( OPS_ACC(yarea, 0,0) * ( OPS_ACC(yvel0, 0,0) + OPS_ACC(yvel0, 1,0) +
+                                  OPS_ACC(yvel1, 0,0) + OPS_ACC(yvel1, 1,0) ) ) * 0.25* dt;
+  top_flux = ( OPS_ACC(yarea, 0,1) * ( OPS_ACC(yvel0, 0,1) + OPS_ACC(yvel0, 1,1) +
+                               OPS_ACC(yvel1, 0,1) + OPS_ACC(yvel1, 1,1) ) ) * 0.25 * dt;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  volume_change(0,0) = (volume(0,0))/(volume(0,0) + total_flux);
+  OPS_ACC(volume_change, 0,0) = (OPS_ACC(volume, 0,0))/(OPS_ACC(volume, 0,0) + total_flux);
 
 
 
 
-  recip_volume = 1.0/volume(0,0);
+  recip_volume = 1.0/OPS_ACC(volume, 0,0);
 
-  energy_change = ( pressure(0,0)/density0(0,0) +
-                    viscosity(0,0)/density0(0,0) ) * total_flux * recip_volume;
-  energy1(0,0) = energy0(0,0) - energy_change;
-  density1(0,0) = density0(0,0) * volume_change(0,0);
+  energy_change = ( OPS_ACC(pressure, 0,0)/OPS_ACC(density0, 0,0) +
+                    OPS_ACC(viscosity, 0,0)/OPS_ACC(density0, 0,0) ) * total_flux * recip_volume;
+  OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0) - energy_change;
+  OPS_ACC(density1, 0,0) = OPS_ACC(density0, 0,0) * OPS_ACC(volume_change, 0,0);
 
 
     }

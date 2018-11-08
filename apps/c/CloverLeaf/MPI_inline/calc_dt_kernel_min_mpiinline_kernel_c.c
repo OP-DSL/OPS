@@ -5,13 +5,12 @@
 int xdim0_calc_dt_kernel_min;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_calc_dt_kernel_min)
 //user function
 
 
 
 void calc_dt_kernel_min_c_wrapper(
-  const double * restrict dt_min,
+  double * restrict dt_min_p,
   double * restrict dt_min_val_g,
   int x_size, int y_size) {
   double dt_min_val_0 = dt_min_val_g[0];
@@ -20,8 +19,9 @@ void calc_dt_kernel_min_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       double dt_min_val[1];
       dt_min_val[0] = dt_min_val_g[0];
+      const ptr_double dt_min = { dt_min_p + n_x*1 + n_y * xdim0_calc_dt_kernel_min*1, xdim0_calc_dt_kernel_min};
       
-  *dt_min_val = MIN(*dt_min_val, dt_min(0,0));
+  *dt_min_val = MIN(*dt_min_val, OPS_ACC(dt_min, 0,0));
 
 
       dt_min_val_0 = MIN(dt_min_val_0,dt_min_val[0]);

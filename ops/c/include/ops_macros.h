@@ -39,6 +39,24 @@
   * @details Declares the OPS macros
   */
 
+#define OPS_ACC(dat, x, y) (*(dat.ptr + (x) + (y)*dat.xdim))
+
+#ifndef __cplusplus
+//extern "C" {
+//#endif
+typedef struct ptr_double {
+  double *restrict ptr;
+  int xdim;
+} ptr_double;
+
+typedef struct ptr_int {
+  int *restrict ptr;
+  int xdim;
+} ptr_int;
+//#ifdef __cplusplus
+//}
+#endif
+
 /**--------------1-D ops_dats macros (one element per grid point)------------**/
 #ifndef OPS_ACC_MACROS
 #define OPS_ACC_MACROS
