@@ -280,6 +280,11 @@ template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
 #define __device__ 
 #endif
 
+#ifndef __CUDACC__
+#define __host__ 
+#define __device__ 
+#endif
+
 template<typename T>
 class ACC {
 public:
