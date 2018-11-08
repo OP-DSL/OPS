@@ -182,67 +182,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 #  generate constants and MACROS
 ##########################################################################
 
-
-
-
-#    for n in range (0, nargs):
-#      if arg_typ[n] == 'ops_arg_dat':
-#        code('__constant__ int xdim'+str(n)+'_'+name+';')
-#        code('int xdim'+str(n)+'_'+name+'_h = -1;')
-#        if NDIM>2 or (NDIM==2 and soa_set):
-#          code('__constant__ int ydim'+str(n)+'_'+name+';')
-#          code('int ydim'+str(n)+'_'+name+'_h = -1;')
-#        if NDIM>3 or (NDIM==3 and soa_set):
-#          code('__constant__ int zdim'+str(n)+'_'+name+';')
-#          code('int zdim'+str(n)+'_'+name+'_h = -1;')
     num_dims = max(1, NDIM -1)
     if NDIM > 1 and soa_set:
         num_dims += 1;
     code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
     code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
     code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-    code('')
-
-    #code('#define OPS_ACC_MACROS')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) (x)')
-          if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (x+dims_'+name+'['+str(n)+'][0]'+'*(y))')
-          if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+dims_'+name+'['+str(n)+'][0]'+'*(y)+dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))')
-    code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          if NDIM==1:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*dims_'+name+'['+str(n)+'][0]'+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
-          if NDIM==2:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+'))')
-          if NDIM==3:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*dims_'+name+'['+str(n)+'][2]'+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+')+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z)*'+dims[n]+'))')
 
 ##########################################################################
 #  generate header
@@ -296,16 +241,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code(new_code)
     code('')
     code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-    code('')
 
 
 ##########################################################################
@@ -314,9 +249,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     code('__global__ void ops_'+name+'(')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat'and accs[n] == OPS_READ:
-        code('const '+typs[n]+'* __restrict arg'+str(n)+',')
-      elif arg_typ[n] == 'ops_arg_dat'and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC) :
+      if arg_typ[n] == 'ops_arg_dat':
         code(typs[n]+'* __restrict arg'+str(n)+',')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
@@ -436,7 +369,25 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     text = name+'_gpu('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +'arg'+str(n)
+        dim = ''
+        sizelist = ''
+        pre = ''
+        extradim = 0
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]+', '
+            extradim = 1
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim, '
+            extradim = 1
+        for i in range(1,NDIM+extradim):
+          sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
+        if accs[n] == OPS_READ:
+            pre = 'const '
+
+        code(pre+'ACC<'+typs[n]+'> argp'+str(n)+'('+dim+sizelist+'arg'+str(n)+');')
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+          text = text +'argp'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n])==1:
           text = text +'&arg'+str(n)
