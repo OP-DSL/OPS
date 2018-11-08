@@ -10,23 +10,17 @@ int xdim4_calc_dt_kernel_print;
 int xdim5_calc_dt_kernel_print;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_calc_dt_kernel_print)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_calc_dt_kernel_print)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_calc_dt_kernel_print)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_calc_dt_kernel_print)
-#define OPS_ACC4(x,y) (n_x*1 + x + (n_y*1+(y))*xdim4_calc_dt_kernel_print)
-#define OPS_ACC5(x,y) (n_x*1 + x + (n_y*1+(y))*xdim5_calc_dt_kernel_print)
 //user function
 
 
 
 void calc_dt_kernel_print_c_wrapper(
-  const double * restrict xvel0,
-  const double * restrict yvel0,
-  const double * restrict density0,
-  const double * restrict energy0,
-  const double * restrict pressure,
-  const double * restrict soundspeed,
+  double * restrict xvel0_p,
+  double * restrict yvel0_p,
+  double * restrict density0_p,
+  double * restrict energy0_p,
+  double * restrict pressure_p,
+  double * restrict soundspeed_p,
   double * restrict output_g,
   int x_size, int y_size) {
   double output_0 = output_g[0];
@@ -57,19 +51,25 @@ void calc_dt_kernel_print_c_wrapper(
       output[9] = ZERO_double;
       output[10] = ZERO_double;
       output[11] = ZERO_double;
+      const ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim0_calc_dt_kernel_print*1, xdim0_calc_dt_kernel_print};
+      const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim1_calc_dt_kernel_print*1, xdim1_calc_dt_kernel_print};
+      const ptr_double density0 = { density0_p + n_x*1 + n_y * xdim2_calc_dt_kernel_print*1, xdim2_calc_dt_kernel_print};
+      const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim3_calc_dt_kernel_print*1, xdim3_calc_dt_kernel_print};
+      const ptr_double pressure = { pressure_p + n_x*1 + n_y * xdim4_calc_dt_kernel_print*1, xdim4_calc_dt_kernel_print};
+      const ptr_double soundspeed = { soundspeed_p + n_x*1 + n_y * xdim5_calc_dt_kernel_print*1, xdim5_calc_dt_kernel_print};
       
-  output[0] = xvel0(1,0);
-  output[1] = yvel0(1,0);
-  output[2] = xvel0(-1,0);
-  output[3] = yvel0(-1,0);
-  output[4] = xvel0(0,1);
-  output[5] = yvel0(0,1);
-  output[6] = xvel0(0,-1);
-  output[7] = yvel0(0,-1);
-  output[8] = density0(0,0);
-  output[9] = energy0(0,0);
-  output[10]= pressure(0,0);
-  output[11]= soundspeed(0,0);
+  output[0] = OPS_ACC(xvel0, 1,0);
+  output[1] = OPS_ACC(yvel0, 1,0);
+  output[2] = OPS_ACC(xvel0, -1,0);
+  output[3] = OPS_ACC(yvel0, -1,0);
+  output[4] = OPS_ACC(xvel0, 0,1);
+  output[5] = OPS_ACC(yvel0, 0,1);
+  output[6] = OPS_ACC(xvel0, 0,-1);
+  output[7] = OPS_ACC(yvel0, 0,-1);
+  output[8] = OPS_ACC(density0, 0,0);
+  output[9] = OPS_ACC(energy0, 0,0);
+  output[10]= OPS_ACC(pressure, 0,0);
+  output[11]= OPS_ACC(soundspeed, 0,0);
 
 
       output_0 +=output[0];

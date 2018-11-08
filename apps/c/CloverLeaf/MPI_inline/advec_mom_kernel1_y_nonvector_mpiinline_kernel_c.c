@@ -9,25 +9,25 @@ int xdim3_advec_mom_kernel1_y_nonvector;
 int xdim4_advec_mom_kernel1_y_nonvector;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_advec_mom_kernel1_y_nonvector)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_advec_mom_kernel1_y_nonvector)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_advec_mom_kernel1_y_nonvector)
-#define OPS_ACC3(x,y) (n_x*0 + x + (n_y*1+(y))*xdim3_advec_mom_kernel1_y_nonvector)
-#define OPS_ACC4(x,y) (n_x*1 + x + (n_y*1+(y))*xdim4_advec_mom_kernel1_y_nonvector)
 //user function
 
 
 
 void advec_mom_kernel1_y_nonvector_c_wrapper(
-  const double * restrict node_flux,
-  const double * restrict node_mass_pre,
-  double * restrict mom_flux,
-  const double * restrict celldy,
-  const double * restrict vel1,
+  double * restrict node_flux_p,
+  double * restrict node_mass_pre_p,
+  double * restrict mom_flux_p,
+  double * restrict celldy_p,
+  double * restrict vel1_p,
   int x_size, int y_size) {
   #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
+      const ptr_double node_flux = { node_flux_p + n_x*1 + n_y * xdim0_advec_mom_kernel1_y_nonvector*1, xdim0_advec_mom_kernel1_y_nonvector};
+      const ptr_double node_mass_pre = { node_mass_pre_p + n_x*1 + n_y * xdim1_advec_mom_kernel1_y_nonvector*1, xdim1_advec_mom_kernel1_y_nonvector};
+      ptr_double mom_flux = { mom_flux_p + n_x*1 + n_y * xdim2_advec_mom_kernel1_y_nonvector*1, xdim2_advec_mom_kernel1_y_nonvector};
+      const ptr_double celldy = { celldy_p + n_x*0 + n_y * xdim3_advec_mom_kernel1_y_nonvector*1, xdim3_advec_mom_kernel1_y_nonvector};
+      const ptr_double vel1 = { vel1_p + n_x*1 + n_y * xdim4_advec_mom_kernel1_y_nonvector*1, xdim4_advec_mom_kernel1_y_nonvector};
       
 
 
@@ -39,7 +39,7 @@ void advec_mom_kernel1_y_nonvector_c_wrapper(
   int upwind, donor, downwind, dif;
   double advec_vel_temp;
 
-  if( (node_flux(0,0)) < 0.0) {
+  if( (OPS_ACC(node_flux, 0,0)) < 0.0) {
     upwind = 2;
     donor = 1;
     downwind = 0;
@@ -51,20 +51,20 @@ void advec_mom_kernel1_y_nonvector_c_wrapper(
     dif = upwind;
   }
 
-  sigma = fabs(node_flux(0,0))/node_mass_pre(0,donor);
-  width = celldy(0,0);
-  vdiffuw = vel1(0,donor) - vel1(0,upwind);
-  vdiffdw = vel1(0,downwind) - vel1(0,donor);
+  sigma = fabs(OPS_ACC(node_flux, 0,0))/OPS_ACC(node_mass_pre, 0,donor);
+  width = OPS_ACC(celldy, 0,0);
+  vdiffuw = OPS_ACC(vel1, 0,donor) - OPS_ACC(vel1, 0,upwind);
+  vdiffdw = OPS_ACC(vel1, 0,downwind) - OPS_ACC(vel1, 0,donor);
   limiter = 0.0;
   if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy(0,dif))/6.0,MIN(auw,adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/OPS_ACC(celldy, 0,dif))/6.0,MIN(auw,adw));
   }
-  advec_vel_temp= vel1(0,donor) + (1.0 - sigma) * limiter;
-  mom_flux(0,0) = advec_vel_temp * node_flux(0,0);
+  advec_vel_temp= OPS_ACC(vel1, 0,donor) + (1.0 - sigma) * limiter;
+  OPS_ACC(mom_flux, 0,0) = advec_vel_temp * OPS_ACC(node_flux, 0,0);
 
     }
   }
