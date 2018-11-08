@@ -45,7 +45,6 @@
 #define ZERO_bool 0;
 
 //user function
-
 inline void advec_cell_kernel3_xdir( const ptr_double vol_flux_x, const ptr_double pre_vol, const ptr_int xx,
                               const ptr_double vertexdx,
                               const ptr_double density1, const ptr_double energy1 ,
