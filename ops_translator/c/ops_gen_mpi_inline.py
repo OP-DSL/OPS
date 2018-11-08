@@ -898,7 +898,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   #code('')
   comm('user kernel files')
 
-  kernel_name_list = ['generate_chunk_kernel']
+  kernel_name_list = []
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
