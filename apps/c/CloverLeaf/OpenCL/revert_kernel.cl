@@ -54,13 +54,13 @@
 
 
 //user function
-void revert_kernel( const __global double * restrict density0,__global double * restrict density1,const __global double * restrict energy0,
-__global double * restrict energy1)
+void revert_kernel( const ACC<__global double> &density0,ACC<__global double> &density1,const ACC<__global double> &energy0,
+ACC<__global double> &energy1)
 
  {
 
-  density1[OPS_ACC1(0,0)] = density0[OPS_ACC0(0,0)];
-  energy1[OPS_ACC3(0,0)] = energy0[OPS_ACC2(0,0)];
+  density1(0,0) = density0(0,0);
+  energy1(0,0) = energy0(0,0);
 }
 
 

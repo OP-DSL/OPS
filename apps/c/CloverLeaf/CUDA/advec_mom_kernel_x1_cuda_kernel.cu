@@ -4,46 +4,26 @@
 __constant__ int dims_advec_mom_kernel_x1 [5][1];
 static int dims_advec_mom_kernel_x1_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+dims_advec_mom_kernel_x1[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_advec_mom_kernel_x1[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_advec_mom_kernel_x1[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_advec_mom_kernel_x1[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_advec_mom_kernel_x1[4][0]*(y))
-
 //user function
 __device__
 
-inline void advec_mom_kernel_x1_gpu( double *pre_vol, double *post_vol,
-                          const double *volume,
-                          const double *vol_flux_x, const double *vol_flux_y) {
+inline void advec_mom_kernel_x1_gpu( ACC<double> &pre_vol, ACC<double> &post_vol,
+                          const ACC<double> &volume,
+                          const ACC<double> &vol_flux_x, const ACC<double> &vol_flux_y) {
 
-  post_vol[OPS_ACC1(0,0)] = volume[OPS_ACC2(0,0)] + vol_flux_y[OPS_ACC4(0,1)] -  vol_flux_y[OPS_ACC4(0,0)];
-  pre_vol[OPS_ACC0(0,0)] = post_vol[OPS_ACC1(0,0)] + vol_flux_x[OPS_ACC3(1,0)] - vol_flux_x[OPS_ACC3(0,0)];
+  post_vol(0,0) = volume(0,0) + vol_flux_y(0,1) -  vol_flux_y(0,0);
+  pre_vol(0,0) = post_vol(0,0) + vol_flux_x(1,0) - vol_flux_x(0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_advec_mom_kernel_x1(
 double* __restrict arg0,
 double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
 int size0,
 int size1 ){
 
@@ -58,8 +38,13 @@ int size1 ){
   arg4 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel_x1[4][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_x1_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    ACC<double> argp0(dims_advec_mom_kernel_x1[0][0], arg0);
+    ACC<double> argp1(dims_advec_mom_kernel_x1[1][0], arg1);
+    const ACC<double> argp2(dims_advec_mom_kernel_x1[2][0], arg2);
+    const ACC<double> argp3(dims_advec_mom_kernel_x1[3][0], arg3);
+    const ACC<double> argp4(dims_advec_mom_kernel_x1[4][0], arg4);
+    advec_mom_kernel_x1_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

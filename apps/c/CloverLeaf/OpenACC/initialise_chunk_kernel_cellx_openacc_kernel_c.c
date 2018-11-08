@@ -20,13 +20,13 @@ int xdim2_initialise_chunk_kernel_cellx;
 
 //user function
 inline 
-void initialise_chunk_kernel_cellx(const double *vertexx, double* cellx, double *celldx) {
+void initialise_chunk_kernel_cellx(const ACC<double> &vertexx, ACC<double> &cellx, ACC<double> &celldx) {
 
   double d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
 
-  cellx[OPS_ACC1(0,0)]  = 0.5*( vertexx[OPS_ACC0(0,0)] + vertexx[OPS_ACC0(1,0)] );
-  celldx[OPS_ACC2(0,0)]  = d_x;
+  cellx(0,0)  = 0.5*( vertexx(0,0) + vertexx(1,0) );
+  celldx(0,0)  = d_x;
 
 }
 

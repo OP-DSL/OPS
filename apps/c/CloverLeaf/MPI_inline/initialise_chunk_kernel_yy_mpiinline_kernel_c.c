@@ -20,7 +20,7 @@ void initialise_chunk_kernel_yy_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int idx[] = {arg_idx0+n_x, arg_idx1+n_y};
       
-  yy[OPS_ACC0(0,0)] = idx[1]-2;
+  yy(0,0) = idx[1]-2;
 
     }
   }

@@ -4,30 +4,13 @@
 __constant__ int dims_viscosity_kernel [7][1];
 static int dims_viscosity_kernel_h [7][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y) (x+dims_viscosity_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_viscosity_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_viscosity_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_viscosity_kernel[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_viscosity_kernel[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_viscosity_kernel[5][0]*(y))
-#define OPS_ACC6(x,y) (x+dims_viscosity_kernel[6][0]*(y))
-
 //user function
 __device__
 
-void viscosity_kernel_gpu( const double *xvel0, const double *yvel0,
-                       const double *celldx, const double *celldy,
-                       const double *pressure, const double *density0,
-                       double *viscosity) {
+void viscosity_kernel_gpu( const ACC<double> &xvel0, const ACC<double> &yvel0,
+                       const ACC<double> &celldx, const ACC<double> &celldy,
+                       const ACC<double> &pressure, const ACC<double> &density0,
+                       ACC<double> &viscosity) {
 
   double ugrad, vgrad,
          grad2,
@@ -41,59 +24,50 @@ void viscosity_kernel_gpu( const double *xvel0, const double *yvel0,
          pgrad;
 
 
-  ugrad = (xvel0[OPS_ACC0(1,0)] + xvel0[OPS_ACC0(1,1)]) - (xvel0[OPS_ACC0(0,0)] + xvel0[OPS_ACC0(0,1)]);
-  vgrad = (yvel0[OPS_ACC1(0,1)] + yvel0[OPS_ACC1(1,1)]) - (yvel0[OPS_ACC1(0,0)] + yvel0[OPS_ACC1(1,0)]);
+  ugrad = (xvel0(1,0) + xvel0(1,1)) - (xvel0(0,0) + xvel0(0,1));
+  vgrad = (yvel0(0,1) + yvel0(1,1)) - (yvel0(0,0) + yvel0(1,0));
 
-  div = (celldx[OPS_ACC2(0,0)])*(ugrad) + (celldy[OPS_ACC3(0,0)])*(vgrad);
+  div = (celldx(0,0))*(ugrad) + (celldy(0,0))*(vgrad);
 
-  strain2 = 0.5*(xvel0[OPS_ACC0(0,1)] + xvel0[OPS_ACC0(1,1)] - xvel0[OPS_ACC0(0,0)] - xvel0[OPS_ACC0(1,0)])/(celldy[OPS_ACC3(0,0)]) +
-            0.5*(yvel0[OPS_ACC1(1,0)] + yvel0[OPS_ACC1(1,1)] - yvel0[OPS_ACC1(0,0)] - yvel0[OPS_ACC1(0,1)])/(celldx[OPS_ACC2(0,0)]);
+  strain2 = 0.5*(xvel0(0,1) + xvel0(1,1) - xvel0(0,0) - xvel0(1,0))/(celldy(0,0)) +
+            0.5*(yvel0(1,0) + yvel0(1,1) - yvel0(0,0) - yvel0(0,1))/(celldx(0,0));
 
 
-  pgradx  = (pressure[OPS_ACC4(1,0)] - pressure[OPS_ACC4(-1,0)])/(celldx[OPS_ACC2(0,0)]+ celldx[OPS_ACC2(1,0)]);
-  pgrady = (pressure[OPS_ACC4(0,1)] - pressure[OPS_ACC4(0,-1)])/(celldy[OPS_ACC3(0,0)]+ celldy[OPS_ACC3(0,1)]);
+  pgradx  = (pressure(1,0) - pressure(-1,0))/(celldx(0,0)+ celldx(1,0));
+  pgrady = (pressure(0,1) - pressure(0,-1))/(celldy(0,0)+ celldy(0,1));
 
   pgradx2 = pgradx * pgradx;
   pgrady2 = pgrady * pgrady;
 
-  limiter = ((0.5*(ugrad)/celldx[OPS_ACC2(0,0)]) * pgradx2 +
-             (0.5*(vgrad)/celldy[OPS_ACC3(0,0)]) * pgrady2 +
+  limiter = ((0.5*(ugrad)/celldx(0,0)) * pgradx2 +
+             (0.5*(vgrad)/celldy(0,0)) * pgrady2 +
               strain2 * pgradx * pgrady)/ MAX(pgradx2 + pgrady2 , 1.0e-16);
 
   if( (limiter > 0.0) || (div >= 0.0)) {
-        viscosity[OPS_ACC6(0,0)] = 0.0;
+        viscosity(0,0) = 0.0;
   }
   else {
     pgradx = SIGN( MAX(1.0e-16, fabs(pgradx)), pgradx);
     pgrady = SIGN( MAX(1.0e-16, fabs(pgrady)), pgrady);
     pgrad = sqrt(pgradx*pgradx + pgrady*pgrady);
-    xgrad = fabs(celldx[OPS_ACC2(0,0)] * pgrad/pgradx);
-    ygrad = fabs(celldy[OPS_ACC3(0,0)] * pgrad/pgrady);
+    xgrad = fabs(celldx(0,0) * pgrad/pgradx);
+    ygrad = fabs(celldy(0,0) * pgrad/pgrady);
     grad  = MIN(xgrad,ygrad);
     grad2 = grad*grad;
 
-    viscosity[OPS_ACC6(0,0)] = 2.0 * (density0[OPS_ACC5(0,0)]) * grad2 * limiter * limiter;
+    viscosity(0,0) = 2.0 * (density0(0,0)) * grad2 * limiter * limiter;
   }
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
 __global__ void ops_viscosity_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
 int size0,
 int size1 ){
@@ -111,8 +85,15 @@ int size1 ){
   arg6 += idx_x * 1*1 + idx_y * 1*1 * dims_viscosity_kernel[6][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    viscosity_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6);
+    const ACC<double> argp0(dims_viscosity_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_viscosity_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_viscosity_kernel[2][0], arg2);
+    const ACC<double> argp3(dims_viscosity_kernel[3][0], arg3);
+    const ACC<double> argp4(dims_viscosity_kernel[4][0], arg4);
+    const ACC<double> argp5(dims_viscosity_kernel[5][0], arg5);
+    ACC<double> argp6(dims_viscosity_kernel[6][0], arg6);
+    viscosity_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6);
   }
 
 }

@@ -54,14 +54,14 @@
 
 
 //user function
-void flux_calc_kernelx( __global double * restrict vol_flux_x,const __global double * restrict xarea,const __global double * restrict xvel0,
-const __global double * restrict xvel1,
+void flux_calc_kernelx( ACC<__global double> &vol_flux_x,const ACC<__global double> &xarea,const ACC<__global double> &xvel0,
+const ACC<__global double> &xvel1,
   const double dt)
 
  {
 
-  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
-  ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
+  vol_flux_x(0,0) = 0.25 * dt * (xarea(0,0)) *
+  ( (xvel0(0,0)) + (xvel0(0,1)) + (xvel1(0,0)) + (xvel1(0,1)) );
 
 }
 

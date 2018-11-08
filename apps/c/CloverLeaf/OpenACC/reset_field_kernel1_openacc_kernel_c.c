@@ -23,11 +23,11 @@ int xdim3_reset_field_kernel1;
 
 //user function
 inline 
-void reset_field_kernel1( double *density0, const double *density1,
-                        double *energy0, const double *energy1) {
+void reset_field_kernel1( ACC<double> &density0, const ACC<double> &density1,
+                        ACC<double> &energy0, const ACC<double> &energy1) {
 
-  density0[OPS_ACC0(0,0)]  = density1[OPS_ACC1(0,0)] ;
-  energy0[OPS_ACC2(0,0)]  = energy1[OPS_ACC3(0,0)] ;
+  density0(0,0)  = density1(0,0) ;
+  energy0(0,0)  = energy1(0,0) ;
 
 }
 

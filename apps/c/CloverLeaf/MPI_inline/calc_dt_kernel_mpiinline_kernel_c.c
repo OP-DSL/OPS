@@ -50,11 +50,11 @@ void calc_dt_kernel_c_wrapper(
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
 
-  dsx = celldx[OPS_ACC0(0,0)];
-  dsy = celldy[OPS_ACC1(0,0)];
+  dsx = celldx(0,0);
+  dsy = celldy(0,0);
 
-  cc = soundspeed[OPS_ACC2(0,0)] * soundspeed[OPS_ACC2(0,0)];
-  cc = cc + 2.0 * viscosity[OPS_ACC3(0,0)]/density0[OPS_ACC4(0,0)];
+  cc = soundspeed(0,0) * soundspeed(0,0);
+  cc = cc + 2.0 * viscosity(0,0)/density0(0,0);
   cc = MAX(sqrt(cc),g_small);
 
   dtct = dtc_safe * MIN(dsx,dsy)/cc;
@@ -62,28 +62,28 @@ void calc_dt_kernel_c_wrapper(
   div=0.0;
 
 
-  dv1 = (xvel0[OPS_ACC5(0,0)] + xvel0[OPS_ACC5(0,1)]) * xarea[OPS_ACC6(0,0)];
-  dv2 = (xvel0[OPS_ACC5(1,0)] + xvel0[OPS_ACC5(1,1)]) * xarea[OPS_ACC6(1,0)];
+  dv1 = (xvel0(0,0) + xvel0(0,1)) * xarea(0,0);
+  dv2 = (xvel0(1,0) + xvel0(1,1)) * xarea(1,0);
 
   div = div + dv2 - dv1;
 
-  dtut = dtu_safe * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume[OPS_ACC7(0,0)]);
+  dtut = dtu_safe * 2.0 * volume(0,0)/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(0,0));
 
-  dv1 = (yvel0[OPS_ACC8(0,0)] + yvel0[OPS_ACC8(1,0)]) * yarea[OPS_ACC9(0,0)];
-  dv2 = (yvel0[OPS_ACC8(0,1)] + yvel0[OPS_ACC8(1,1)]) * yarea[OPS_ACC9(0,1)];
+  dv1 = (yvel0(0,0) + yvel0(1,0)) * yarea(0,0);
+  dv2 = (yvel0(0,1) + yvel0(1,1)) * yarea(0,1);
 
   div = div + dv2 - dv1;
 
-  dtvt = dtv_safe * 2.0 * volume[OPS_ACC7(0,0)]/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * volume[OPS_ACC7(0,0)]);
+  dtvt = dtv_safe * 2.0 * volume(0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * volume(0,0));
 
-  div = div/(2.0 * volume[OPS_ACC7(0,0)]);
+  div = div/(2.0 * volume(0,0));
 
   if(div < -g_small)
     dtdivt = dtdiv_safe * (-1.0/div);
   else
     dtdivt = g_big;
 
-  dt_min[OPS_ACC10(0,0)] = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
+  dt_min(0,0) = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
 
 
 

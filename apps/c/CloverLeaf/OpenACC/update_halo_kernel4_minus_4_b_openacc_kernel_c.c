@@ -17,9 +17,9 @@ int xdim1_update_halo_kernel4_minus_4_b;
 
 //user function
 
-inline void update_halo_kernel4_minus_4_b(double *vol_flux_y, double *mass_flux_y, const int* fields) {
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = -(vol_flux_y[OPS_ACC0(0,-4)]);
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = -(mass_flux_y[OPS_ACC1(0,-4)]);
+inline void update_halo_kernel4_minus_4_b(ACC<double> &vol_flux_y, ACC<double> &mass_flux_y, const int* fields) {
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y(0,0) = -(vol_flux_y(0,-4));
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y(0,0) = -(mass_flux_y(0,-4));
 }
 
 

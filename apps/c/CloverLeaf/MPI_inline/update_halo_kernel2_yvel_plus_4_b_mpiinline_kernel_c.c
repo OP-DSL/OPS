@@ -21,8 +21,8 @@ void update_halo_kernel2_yvel_plus_4_b_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
-  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = yvel0[OPS_ACC0(-4,0)];
-  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = yvel1[OPS_ACC1(-4,0)];
+  if(fields[FIELD_YVEL0] == 1) yvel0(0,0) = yvel0(-4,0);
+  if(fields[FIELD_YVEL1] == 1) yvel1(0,0) = yvel1(-4,0);
 
     }
   }

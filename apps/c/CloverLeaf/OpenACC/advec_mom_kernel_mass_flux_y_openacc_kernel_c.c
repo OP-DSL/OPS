@@ -17,11 +17,11 @@ int xdim1_advec_mom_kernel_mass_flux_y;
 
 //user function
 
-inline void advec_mom_kernel_mass_flux_y( double *node_flux, const double *mass_flux_y) {
+inline void advec_mom_kernel_mass_flux_y( ACC<double> &node_flux, const ACC<double> &mass_flux_y) {
 
 
-  node_flux[OPS_ACC0(0,0)] = 0.25 * ( mass_flux_y[OPS_ACC1(-1,0)] + mass_flux_y[OPS_ACC1(0,0)] +
-      mass_flux_y[OPS_ACC1(-1,1)] + mass_flux_y[OPS_ACC1(0,1)] );
+  node_flux(0,0) = 0.25 * ( mass_flux_y(-1,0) + mass_flux_y(0,0) +
+      mass_flux_y(-1,1) + mass_flux_y(0,1) );
 }
 
 

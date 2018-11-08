@@ -28,8 +28,8 @@ void calc_dt_kernel_get_c_wrapper(
       double yl_pos[1];
       yl_pos[0] = ZERO_double;
       
-  *xl_pos = cellx[OPS_ACC0(0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0)];
+  *xl_pos = cellx(0,0);
+  *yl_pos = celly(0,0);
 
       xl_pos_0 +=xl_pos[0];
       yl_pos_0 +=yl_pos[0];

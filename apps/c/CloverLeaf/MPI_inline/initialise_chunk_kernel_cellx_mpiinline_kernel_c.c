@@ -27,8 +27,8 @@ void initialise_chunk_kernel_cellx_c_wrapper(
   double d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
 
-  cellx[OPS_ACC1(0,0)]  = 0.5*( vertexx[OPS_ACC0(0,0)] + vertexx[OPS_ACC0(1,0)] );
-  celldx[OPS_ACC2(0,0)]  = d_x;
+  cellx(0,0)  = 0.5*( vertexx(0,0) + vertexx(1,0) );
+  celldx(0,0)  = d_x;
 
 
     }

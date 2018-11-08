@@ -4,39 +4,22 @@
 __constant__ int dims_revert_kernel [4][1];
 static int dims_revert_kernel_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+dims_revert_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_revert_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_revert_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_revert_kernel[3][0]*(y))
-
 //user function
 __device__
 
-void revert_kernel_gpu( const double *density0, double *density1,
-                const double *energy0, double *energy1) {
+void revert_kernel_gpu( const ACC<double> &density0, ACC<double> &density1,
+                const ACC<double> &energy0, ACC<double> &energy1) {
 
-  density1[OPS_ACC1(0,0)] = density0[OPS_ACC0(0,0)];
-  energy1[OPS_ACC3(0,0)] = energy0[OPS_ACC2(0,0)];
+  density1(0,0) = density0(0,0);
+  energy1(0,0) = energy0(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_revert_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg2,
 double* __restrict arg3,
 int size0,
 int size1 ){
@@ -51,7 +34,11 @@ int size1 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_revert_kernel[3][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    revert_kernel_gpu(arg0, arg1, arg2, arg3);
+    const ACC<double> argp0(dims_revert_kernel[0][0], arg0);
+    ACC<double> argp1(dims_revert_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_revert_kernel[2][0], arg2);
+    ACC<double> argp3(dims_revert_kernel[3][0], arg3);
+    revert_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

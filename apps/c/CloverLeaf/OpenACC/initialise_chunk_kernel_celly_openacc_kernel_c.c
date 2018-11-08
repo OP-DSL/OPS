@@ -20,13 +20,13 @@ int xdim2_initialise_chunk_kernel_celly;
 
 //user function
 inline 
-void initialise_chunk_kernel_celly(const double *vertexy, double *celly, double *celldy) {
+void initialise_chunk_kernel_celly(const ACC<double> &vertexy, ACC<double> &celly, ACC<double> &celldy) {
 
   double d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-  celly[OPS_ACC1(0,0)] = 0.5*( vertexy[OPS_ACC0(0,0)]+ vertexy[OPS_ACC0(0,1)] );
-  celldy[OPS_ACC2(0,0)] = d_y;
+  celly(0,0) = 0.5*( vertexy(0,0)+ vertexy(0,1) );
+  celldy(0,0) = d_y;
 
 
 }

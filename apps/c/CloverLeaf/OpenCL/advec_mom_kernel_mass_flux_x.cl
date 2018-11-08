@@ -50,13 +50,13 @@
 
 
 //user function
-inline void advec_mom_kernel_mass_flux_x( __global double * restrict node_flux,const __global double * restrict mass_flux_x)
+inline void advec_mom_kernel_mass_flux_x( ACC<__global double> &node_flux,const ACC<__global double> &mass_flux_x)
 
  {
 
 
-  node_flux[OPS_ACC0(0,0)] = 0.25 * ( mass_flux_x[OPS_ACC1(0,-1)] + mass_flux_x[OPS_ACC1(0,0)] +
-    mass_flux_x[OPS_ACC1(1,-1)] + mass_flux_x[OPS_ACC1(1,0)] );
+  node_flux(0,0) = 0.25 * ( mass_flux_x(0,-1) + mass_flux_x(0,0) +
+    mass_flux_x(1,-1) + mass_flux_x(1,0) );
 }
 
 

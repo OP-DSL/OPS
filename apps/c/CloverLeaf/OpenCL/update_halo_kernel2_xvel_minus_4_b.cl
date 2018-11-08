@@ -50,12 +50,12 @@
 
 
 //user function
-inline void update_halo_kernel2_xvel_minus_4_b(__global double * restrict xvel0,__global double * restrict xvel1,const __global int* restrict  fields)
+inline void update_halo_kernel2_xvel_minus_4_b(ACC<__global double> &xvel0,ACC<__global double> &xvel1,const __global int* restrict  fields)
 
 
 {
-  if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = -xvel0[OPS_ACC0(-4,0)];
-  if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = -xvel1[OPS_ACC1(-4,0)];
+  if(fields[FIELD_XVEL0] == 1) xvel0(0,0) = -xvel0(-4,0);
+  if(fields[FIELD_XVEL1] == 1) xvel1(0,0) = -xvel1(-4,0);
 }
 
 

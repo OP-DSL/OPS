@@ -26,17 +26,17 @@ int xdim4_advec_mom_kernel_post_pre_advec_y;
 
 //user function
 
-inline void advec_mom_kernel_post_pre_advec_y( double *node_mass_post, const double *post_vol,
-                                  const double *density1, double *node_mass_pre, const double *node_flux) {
+inline void advec_mom_kernel_post_pre_advec_y( ACC<double> &node_mass_post, const ACC<double> &post_vol,
+                                  const ACC<double> &density1, ACC<double> &node_mass_pre, const ACC<double> &node_flux) {
 
 
 
-  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC1(0,-1)] +
-                              density1[OPS_ACC2(0,0)]   * post_vol[OPS_ACC1(0,0)]   +
-                              density1[OPS_ACC2(-1,-1)] * post_vol[OPS_ACC1(-1,-1)] +
-                              density1[OPS_ACC2(-1,0)]  * post_vol[OPS_ACC1(-1,0)]  );
+  node_mass_post(0,0) = 0.25 * ( density1(0,-1) * post_vol(0,-1) +
+                              density1(0,0)   * post_vol(0,0)   +
+                              density1(-1,-1) * post_vol(-1,-1) +
+                              density1(-1,0)  * post_vol(-1,0)  );
 
-  node_mass_pre[OPS_ACC3(0,0)] = node_mass_post[OPS_ACC0(0,0)] - node_flux[OPS_ACC4(0,-1)] + node_flux[OPS_ACC4(0,0)];
+  node_mass_pre(0,0) = node_mass_post(0,0) - node_flux(0,-1) + node_flux(0,0);
 
 }
 

@@ -27,8 +27,8 @@ void advec_mom_kernel2_y_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
 
-  vel1[OPS_ACC0(0,0)] = ( vel1[OPS_ACC0(0,0)] * node_mass_pre[OPS_ACC2(0,0)]  +
-    mom_flux[OPS_ACC3(0,-1)] - mom_flux[OPS_ACC3(0,0)] ) / node_mass_post[OPS_ACC1(0,0)];
+  vel1(0,0) = ( vel1(0,0) * node_mass_pre(0,0)  +
+    mom_flux(0,-1) - mom_flux(0,0) ) / node_mass_post(0,0);
 
     }
   }

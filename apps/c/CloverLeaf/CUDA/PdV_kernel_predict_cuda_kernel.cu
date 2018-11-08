@@ -4,102 +4,61 @@
 __constant__ int dims_PdV_kernel_predict [12][1];
 static int dims_PdV_kernel_predict_h [12][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
-
-#define OPS_ACC0(x,y) (x+dims_PdV_kernel_predict[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_PdV_kernel_predict[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_PdV_kernel_predict[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_PdV_kernel_predict[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_PdV_kernel_predict[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_PdV_kernel_predict[5][0]*(y))
-#define OPS_ACC6(x,y) (x+dims_PdV_kernel_predict[6][0]*(y))
-#define OPS_ACC7(x,y) (x+dims_PdV_kernel_predict[7][0]*(y))
-#define OPS_ACC8(x,y) (x+dims_PdV_kernel_predict[8][0]*(y))
-#define OPS_ACC9(x,y) (x+dims_PdV_kernel_predict[9][0]*(y))
-#define OPS_ACC10(x,y) (x+dims_PdV_kernel_predict[10][0]*(y))
-#define OPS_ACC11(x,y) (x+dims_PdV_kernel_predict[11][0]*(y))
-
 //user function
 __device__
 
-void PdV_kernel_predict_gpu(const double *xarea, const double *xvel0,
-                const double *yarea, const double *yvel0,
-                double *volume_change, const double *volume,
-                const double *pressure,
-                const double *density0, double *density1,
-                const double *viscosity,
-                const double *energy0, double *energy1) {
+void PdV_kernel_predict_gpu(const ACC<double> &xarea, const ACC<double> &xvel0,
+                const ACC<double> &yarea, const ACC<double> &yvel0,
+                ACC<double> &volume_change, const ACC<double> &volume,
+                const ACC<double> &pressure,
+                const ACC<double> &density0, ACC<double> &density1,
+                const ACC<double> &viscosity,
+                const ACC<double> &energy0, ACC<double> &energy1) {
 
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
-                                xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] ) ) * 0.25 * dt * 0.5;
-  right_flux = ( xarea[OPS_ACC0(1,0)] * ( xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] +
-                                 xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] ) ) * 0.25 * dt * 0.5;
+  left_flux = ( xarea(0,0) * ( xvel0(0,0) + xvel0(0,1) +
+                                xvel0(0,0) + xvel0(0,1) ) ) * 0.25 * dt * 0.5;
+  right_flux = ( xarea(1,0) * ( xvel0(1,0) + xvel0(1,1) +
+                                 xvel0(1,0) + xvel0(1,1) ) ) * 0.25 * dt * 0.5;
 
-  bottom_flux = ( yarea[OPS_ACC2(0,0)] * ( yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] +
-                                  yvel0[OPS_ACC3(0,0)] + yvel0[OPS_ACC3(1,0)] ) ) * 0.25* dt * 0.5;
-  top_flux = ( yarea[OPS_ACC2(0,1)] * ( yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] +
-                               yvel0[OPS_ACC3(0,1)] + yvel0[OPS_ACC3(1,1)] ) ) * 0.25 * dt * 0.5;
+  bottom_flux = ( yarea(0,0) * ( yvel0(0,0) + yvel0(1,0) +
+                                  yvel0(0,0) + yvel0(1,0) ) ) * 0.25* dt * 0.5;
+  top_flux = ( yarea(0,1) * ( yvel0(0,1) + yvel0(1,1) +
+                               yvel0(0,1) + yvel0(1,1) ) ) * 0.25 * dt * 0.5;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  volume_change[OPS_ACC4(0,0)] = (volume[OPS_ACC5(0,0)])/(volume[OPS_ACC5(0,0)] + total_flux);
+  volume_change(0,0) = (volume(0,0))/(volume(0,0) + total_flux);
 
 
 
 
-  recip_volume = 1.0/volume[OPS_ACC5(0,0)];
+  recip_volume = 1.0/volume(0,0);
 
-  energy_change = ( pressure[OPS_ACC6(0,0)]/density0[OPS_ACC7(0,0)] +
-                    viscosity[OPS_ACC9(0,0)]/density0[OPS_ACC7(0,0)] ) * total_flux * recip_volume;
-  energy1[OPS_ACC11(0,0)] = energy0[OPS_ACC10(0,0)] - energy_change;
-  density1[OPS_ACC8(0,0)] = density0[OPS_ACC7(0,0)] * volume_change[OPS_ACC4(0,0)];
+  energy_change = ( pressure(0,0)/density0(0,0) +
+                    viscosity(0,0)/density0(0,0) ) * total_flux * recip_volume;
+  energy1(0,0) = energy0(0,0) - energy_change;
+  density1(0,0) = density0(0,0) * volume_change(0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
-
 __global__ void ops_PdV_kernel_predict(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
 double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
-const double* __restrict arg7,
+double* __restrict arg5,
+double* __restrict arg6,
+double* __restrict arg7,
 double* __restrict arg8,
-const double* __restrict arg9,
-const double* __restrict arg10,
+double* __restrict arg9,
+double* __restrict arg10,
 double* __restrict arg11,
 int size0,
 int size1 ){
@@ -122,9 +81,21 @@ int size1 ){
   arg11 += idx_x * 1*1 + idx_y * 1*1 * dims_PdV_kernel_predict[11][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    PdV_kernel_predict_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10, arg11);
+    const ACC<double> argp0(dims_PdV_kernel_predict[0][0], arg0);
+    const ACC<double> argp1(dims_PdV_kernel_predict[1][0], arg1);
+    const ACC<double> argp2(dims_PdV_kernel_predict[2][0], arg2);
+    const ACC<double> argp3(dims_PdV_kernel_predict[3][0], arg3);
+    ACC<double> argp4(dims_PdV_kernel_predict[4][0], arg4);
+    const ACC<double> argp5(dims_PdV_kernel_predict[5][0], arg5);
+    const ACC<double> argp6(dims_PdV_kernel_predict[6][0], arg6);
+    const ACC<double> argp7(dims_PdV_kernel_predict[7][0], arg7);
+    ACC<double> argp8(dims_PdV_kernel_predict[8][0], arg8);
+    const ACC<double> argp9(dims_PdV_kernel_predict[9][0], arg9);
+    const ACC<double> argp10(dims_PdV_kernel_predict[10][0], arg10);
+    ACC<double> argp11(dims_PdV_kernel_predict[11][0], arg11);
+    PdV_kernel_predict_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10, argp11);
   }
 
 }

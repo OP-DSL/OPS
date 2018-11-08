@@ -4,51 +4,31 @@
 __constant__ int dims_advec_mom_kernel_post_pre_advec_y [5][1];
 static int dims_advec_mom_kernel_post_pre_advec_y_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+dims_advec_mom_kernel_post_pre_advec_y[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_advec_mom_kernel_post_pre_advec_y[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_advec_mom_kernel_post_pre_advec_y[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_advec_mom_kernel_post_pre_advec_y[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_advec_mom_kernel_post_pre_advec_y[4][0]*(y))
-
 //user function
 __device__
 
-inline void advec_mom_kernel_post_pre_advec_y_gpu( double *node_mass_post, const double *post_vol,
-                                  const double *density1, double *node_mass_pre, const double *node_flux) {
+inline void advec_mom_kernel_post_pre_advec_y_gpu( ACC<double> &node_mass_post, const ACC<double> &post_vol,
+                                  const ACC<double> &density1, ACC<double> &node_mass_pre, const ACC<double> &node_flux) {
 
 
 
-  node_mass_post[OPS_ACC0(0,0)] = 0.25 * ( density1[OPS_ACC2(0,-1)] * post_vol[OPS_ACC1(0,-1)] +
-                              density1[OPS_ACC2(0,0)]   * post_vol[OPS_ACC1(0,0)]   +
-                              density1[OPS_ACC2(-1,-1)] * post_vol[OPS_ACC1(-1,-1)] +
-                              density1[OPS_ACC2(-1,0)]  * post_vol[OPS_ACC1(-1,0)]  );
+  node_mass_post(0,0) = 0.25 * ( density1(0,-1) * post_vol(0,-1) +
+                              density1(0,0)   * post_vol(0,0)   +
+                              density1(-1,-1) * post_vol(-1,-1) +
+                              density1(-1,0)  * post_vol(-1,0)  );
 
-  node_mass_pre[OPS_ACC3(0,0)] = node_mass_post[OPS_ACC0(0,0)] - node_flux[OPS_ACC4(0,-1)] + node_flux[OPS_ACC4(0,0)];
+  node_mass_pre(0,0) = node_mass_post(0,0) - node_flux(0,-1) + node_flux(0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_advec_mom_kernel_post_pre_advec_y(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg4,
 int size0,
 int size1 ){
 
@@ -63,8 +43,13 @@ int size1 ){
   arg4 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel_post_pre_advec_y[4][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_post_pre_advec_y_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    ACC<double> argp0(dims_advec_mom_kernel_post_pre_advec_y[0][0], arg0);
+    const ACC<double> argp1(dims_advec_mom_kernel_post_pre_advec_y[1][0], arg1);
+    const ACC<double> argp2(dims_advec_mom_kernel_post_pre_advec_y[2][0], arg2);
+    ACC<double> argp3(dims_advec_mom_kernel_post_pre_advec_y[3][0], arg3);
+    const ACC<double> argp4(dims_advec_mom_kernel_post_pre_advec_y[4][0], arg4);
+    advec_mom_kernel_post_pre_advec_y_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

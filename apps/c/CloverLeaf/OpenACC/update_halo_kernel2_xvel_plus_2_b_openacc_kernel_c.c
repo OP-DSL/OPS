@@ -17,10 +17,10 @@ int xdim1_update_halo_kernel2_xvel_plus_2_b;
 
 //user function
 
-inline void update_halo_kernel2_xvel_plus_2_b(double *xvel0, double *xvel1, const int* fields)
+inline void update_halo_kernel2_xvel_plus_2_b(ACC<double> &xvel0, ACC<double> &xvel1, const int* fields)
 {
-  if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0)] = xvel0[OPS_ACC0(0,-2)];
-  if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0)] = xvel1[OPS_ACC1(0,-2)];
+  if(fields[FIELD_XVEL0] == 1) xvel0(0,0) = xvel0(0,-2);
+  if(fields[FIELD_XVEL1] == 1) xvel1(0,0) = xvel1(0,-2);
 }
 
 

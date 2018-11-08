@@ -54,13 +54,13 @@
 
 
 //user function
-void reset_field_kernel2( __global double * restrict xvel0,const __global double * restrict xvel1,__global double * restrict yvel0,
-const __global double * restrict yvel1)
+void reset_field_kernel2( ACC<__global double> &xvel0,const ACC<__global double> &xvel1,ACC<__global double> &yvel0,
+const ACC<__global double> &yvel1)
 
  {
 
-  xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;
-  yvel0[OPS_ACC2(0,0)]  = yvel1[OPS_ACC3(0,0)] ;
+  xvel0(0,0)  = xvel1(0,0) ;
+  yvel0(0,0)  = yvel1(0,0) ;
 
 }
 

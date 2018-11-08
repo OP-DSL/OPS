@@ -21,7 +21,7 @@ void calc_dt_kernel_min_c_wrapper(
       double dt_min_val[1];
       dt_min_val[0] = dt_min_val_g[0];
       
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+  *dt_min_val = MIN(*dt_min_val, dt_min(0,0));
 
 
       dt_min_val_0 = MIN(dt_min_val_0,dt_min_val[0]);

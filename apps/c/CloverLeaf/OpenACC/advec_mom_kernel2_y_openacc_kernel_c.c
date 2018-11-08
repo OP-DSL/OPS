@@ -23,11 +23,11 @@ int xdim3_advec_mom_kernel2_y;
 
 //user function
 
-inline void advec_mom_kernel2_y( double *vel1, const double *node_mass_post,
-                        const double *node_mass_pre, const double *mom_flux) {
+inline void advec_mom_kernel2_y( ACC<double> &vel1, const ACC<double> &node_mass_post,
+                        const ACC<double> &node_mass_pre, const ACC<double> &mom_flux) {
 
-  vel1[OPS_ACC0(0,0)] = ( vel1[OPS_ACC0(0,0)] * node_mass_pre[OPS_ACC2(0,0)]  +
-    mom_flux[OPS_ACC3(0,-1)] - mom_flux[OPS_ACC3(0,0)] ) / node_mass_post[OPS_ACC1(0,0)];
+  vel1(0,0) = ( vel1(0,0) * node_mass_pre(0,0)  +
+    mom_flux(0,-1) - mom_flux(0,0) ) / node_mass_post(0,0);
 }
 
 

@@ -21,8 +21,8 @@ void update_halo_kernel4_plus_4_b_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(-4,0)];
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(-4,0)];
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y(0,0) = vol_flux_y(-4,0);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y(0,0) = mass_flux_y(-4,0);
 
     }
   }

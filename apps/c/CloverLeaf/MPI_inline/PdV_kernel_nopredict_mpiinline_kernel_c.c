@@ -61,29 +61,29 @@ void PdV_kernel_nopredict_c_wrapper(
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( xarea[OPS_ACC0(0,0)] * ( xvel0[OPS_ACC1(0,0)] + xvel0[OPS_ACC1(0,1)] +
-                                xvel1[OPS_ACC2(0,0)] + xvel1[OPS_ACC2(0,1)] ) ) * 0.25 * dt;
-  right_flux = ( xarea[OPS_ACC0(1,0)] * ( xvel0[OPS_ACC1(1,0)] + xvel0[OPS_ACC1(1,1)] +
-                                 xvel1[OPS_ACC2(1,0)] + xvel1[OPS_ACC2(1,1)] ) ) * 0.25 * dt;
+  left_flux = ( xarea(0,0) * ( xvel0(0,0) + xvel0(0,1) +
+                                xvel1(0,0) + xvel1(0,1) ) ) * 0.25 * dt;
+  right_flux = ( xarea(1,0) * ( xvel0(1,0) + xvel0(1,1) +
+                                 xvel1(1,0) + xvel1(1,1) ) ) * 0.25 * dt;
 
-  bottom_flux = ( yarea[OPS_ACC3(0,0)] * ( yvel0[OPS_ACC4(0,0)] + yvel0[OPS_ACC4(1,0)] +
-                                  yvel1[OPS_ACC5(0,0)] + yvel1[OPS_ACC5(1,0)] ) ) * 0.25* dt;
-  top_flux = ( yarea[OPS_ACC3(0,1)] * ( yvel0[OPS_ACC4(0,1)] + yvel0[OPS_ACC4(1,1)] +
-                               yvel1[OPS_ACC5(0,1)] + yvel1[OPS_ACC5(1,1)] ) ) * 0.25 * dt;
+  bottom_flux = ( yarea(0,0) * ( yvel0(0,0) + yvel0(1,0) +
+                                  yvel1(0,0) + yvel1(1,0) ) ) * 0.25* dt;
+  top_flux = ( yarea(0,1) * ( yvel0(0,1) + yvel0(1,1) +
+                               yvel1(0,1) + yvel1(1,1) ) ) * 0.25 * dt;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  volume_change[OPS_ACC6(0,0)] = (volume[OPS_ACC7(0,0)])/(volume[OPS_ACC7(0,0)] + total_flux);
+  volume_change(0,0) = (volume(0,0))/(volume(0,0) + total_flux);
 
 
 
 
-  recip_volume = 1.0/volume[OPS_ACC7(0,0)];
+  recip_volume = 1.0/volume(0,0);
 
-  energy_change = ( pressure[OPS_ACC8(0,0)]/density0[OPS_ACC9(0,0)] +
-                    viscosity[OPS_ACC11(0,0)]/density0[OPS_ACC9(0,0)] ) * total_flux * recip_volume;
-  energy1[OPS_ACC13(0,0)] = energy0[OPS_ACC12(0,0)] - energy_change;
-  density1[OPS_ACC10(0,0)] = density0[OPS_ACC9(0,0)] * volume_change[OPS_ACC6(0,0)];
+  energy_change = ( pressure(0,0)/density0(0,0) +
+                    viscosity(0,0)/density0(0,0) ) * total_flux * recip_volume;
+  energy1(0,0) = energy0(0,0) - energy_change;
+  density1(0,0) = density0(0,0) * volume_change(0,0);
 
 
     }

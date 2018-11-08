@@ -23,11 +23,11 @@ int xdim3_flux_calc_kernelx;
 
 //user function
 inline 
-void flux_calc_kernelx( double *vol_flux_x, const double *xarea,
-                        const double *xvel0, const double *xvel1) {
+void flux_calc_kernelx( ACC<double> &vol_flux_x, const ACC<double> &xarea,
+                        const ACC<double> &xvel0, const ACC<double> &xvel1) {
 
-  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
-  ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
+  vol_flux_x(0,0) = 0.25 * dt * (xarea(0,0)) *
+  ( (xvel0(0,0)) + (xvel0(0,1)) + (xvel1(0,0)) + (xvel1(0,1)) );
 
 }
 

@@ -48,10 +48,10 @@
 
 
 //user function
-void calc_dt_kernel_min(const __global double* restrict  dt_min, double* restrict  dt_min_val)
+void calc_dt_kernel_min(const ACC<__global double> &dt_min, double* restrict  dt_min_val)
 
  {
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0)]);
+  *dt_min_val = MIN(*dt_min_val, dt_min(0,0));
 
 }
 
