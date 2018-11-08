@@ -24,7 +24,7 @@ inline void advec_cell_kernel2_xdir( ACC<double> &pre_vol, ACC<double> &post_vol
 }
 
 
-inline void advec_cell_kernel3_xdir( const ACC<double> &vol_flux_x, const ACC<double> &pre_vol, const int *xx,
+inline void advec_cell_kernel3_xdir( const ACC<double> &vol_flux_x, const ACC<double> &pre_vol, const ACC<int> &xx,
                               const ACC<double> &vertexdx,
                               const ACC<double> &density1, const ACC<double> &energy1 ,
                               ACC<double> &mass_flux_x, ACC<double> &ener_flux) {
@@ -129,7 +129,7 @@ inline void advec_cell_kernel2_ydir( ACC<double> &pre_vol, ACC<double> &post_vol
 }
 
 
-inline void advec_cell_kernel3_ydir( const ACC<double> &vol_flux_y, const ACC<double> &pre_vol, const int *yy,
+inline void advec_cell_kernel3_ydir( const ACC<double> &vol_flux_y, const ACC<double> &pre_vol, const ACC<int> &yy,
                               const ACC<double> &vertexdy,
                               const ACC<double> &density1, const ACC<double> &energy1 ,
                               ACC<double> &mass_flux_y, ACC<double> &ener_flux) {
