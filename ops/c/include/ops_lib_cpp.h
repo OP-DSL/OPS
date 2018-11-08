@@ -180,6 +180,11 @@ template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
   // printf("should not be here\n");
 }
 
+#ifndef __CUDACC__
+#define __host__ 
+#define __device__ 
+#endif
+
 template<typename T>
 class ACC {
 public:
@@ -187,7 +192,9 @@ public:
   // 2D
   /////////////////////////////////////////////////
 #if defined(OPS_2D)
+  __host__ __device__
   ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  __host__ __device__
   ACC(int _mdim, int _sizey, int _sizex, T *_ptr) : sizex(_sizex),
 #ifdef OPS_SOA
     sizey(_sizey),
@@ -196,8 +203,11 @@ public:
 #endif
     ptr(_ptr)
   {}
+  __host__ __device__
   const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
   T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
   const T& operator()(int d, int xoff, int yoff) const {
 #ifdef OPS_SOA
     return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
@@ -205,6 +215,7 @@ public:
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
 #endif
   }
+  __host__ __device__
   T& operator()(int d, int xoff, int yoff) {
 #ifdef OPS_SOA
     return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
@@ -217,7 +228,9 @@ public:
   // 3D
   /////////////////////////////////////////////////
 #if defined(OPS_3D)
+  __host__ __device__
   ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
+  __host__ __device__
   ACC(int _mdim, int _sizez, int _sizey, int _sizex, T *_ptr) : sizex(_sizex), sizey(_sizey),
 #ifdef OPS_SOA
     sizez(_sizez),
@@ -226,8 +239,11 @@ public:
 #endif
     ptr(_ptr)
   {}
+  __host__ __device__
   const T& operator()(int xoff, int yoff, int zoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
   T& operator()(int xoff, int yoff, int zoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
   const T& operator()(int d, int xoff, int yoff, int zoff) const {
 #ifdef OPS_SOA
     return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
@@ -235,6 +251,7 @@ public:
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
 #endif
   }
+  __host__ __device__
   T& operator()(int d, int xoff, int yoff, int zoff) {
 #ifdef OPS_SOA
     return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
