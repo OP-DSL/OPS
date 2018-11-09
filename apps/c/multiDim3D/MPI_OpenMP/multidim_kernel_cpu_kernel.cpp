@@ -91,7 +91,7 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
       int idx[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-      #pragma omp simd aligned(val)
+      #pragma omp simd
       #elif defined(__clang__)
       #pragma clang loop vectorize(assume_safety)
       #elif defined(__GNUC__)
