@@ -149,7 +149,6 @@ def remove_trailing_w_space(text):
 
 def arg_parse_list(text, j):
     """Parsing arguments in function to find the correct closing brace"""
-
     depth = 0
     loc2 = j
     arglist = []
