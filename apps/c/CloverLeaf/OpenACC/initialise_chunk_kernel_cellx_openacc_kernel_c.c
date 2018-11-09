@@ -8,33 +8,17 @@ int xdim0_initialise_chunk_kernel_cellx;
 int xdim1_initialise_chunk_kernel_cellx;
 int xdim2_initialise_chunk_kernel_cellx;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_cellx*(y))
-#define OPS_ACC1(x,y) (x+xdim1_initialise_chunk_kernel_cellx*(y))
-#define OPS_ACC2(x,y) (x+xdim2_initialise_chunk_kernel_cellx*(y))
-
 //user function
 inline 
-void initialise_chunk_kernel_cellx(const ACC<double> &vertexx, ACC<double> &cellx, ACC<double> &celldx) {
+void initialise_chunk_kernel_cellx(const ptr_double vertexx, ptr_double cellx, ptr_double celldx) {
 
   double d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
 
-  cellx(0,0)  = 0.5*( vertexx(0,0) + vertexx(1,0) );
-  celldx(0,0)  = d_x;
+  OPS_ACC(cellx, 0,0)  = 0.5*( OPS_ACC(vertexx, 0,0) + OPS_ACC(vertexx, 1,0) );
+  OPS_ACC(celldx, 0,0)  = d_x;
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
 
 
 void initialise_chunk_kernel_cellx_c_wrapper(
@@ -51,8 +35,11 @@ void initialise_chunk_kernel_cellx_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      initialise_chunk_kernel_cellx(  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_cellx*0*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_initialise_chunk_kernel_cellx*0*1, p_a2 + n_x*1*1 + n_y*xdim2_initialise_chunk_kernel_cellx*0*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_cellx*0*1, xdim0_initialise_chunk_kernel_cellx};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_initialise_chunk_kernel_cellx*0*1, xdim1_initialise_chunk_kernel_cellx};
+      ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_initialise_chunk_kernel_cellx*0*1, xdim2_initialise_chunk_kernel_cellx};
+      initialise_chunk_kernel_cellx( ptr0,
+          ptr1,ptr2 );
 
     }
   }

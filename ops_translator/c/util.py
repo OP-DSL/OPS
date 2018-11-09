@@ -147,7 +147,47 @@ def remove_trailing_w_space(text):
     if line_end < 0:
       return striped_test[:-1]
 
+def arg_parse_list(text, j):
+    """Parsing arguments in function to find the correct closing brace"""
 
+    depth = 0
+    loc2 = j
+    arglist = []
+    prev_start = j
+    while 1:
+        if text[loc2] == '(':
+            if depth == 0:
+                prev_start = loc2+1
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                arglist.append(text[prev_start:loc2].strip())
+                return arglist
+
+        elif text[loc2] == ',':
+            if depth == 1:
+                arglist.append(text[prev_start:loc2].strip())
+                prev_start = loc2+1
+        elif text[loc2] == '{':
+            depth = depth + 1
+        elif text[loc2] == '}':
+            depth = depth - 1
+        loc2 = loc2 + 1
+
+def parse_replace_ACC_signature(text, arg_typ, dims):
+  #openb = text.find('(')
+  #closeb = text.rfind(')')
+  #arglist = arg_parse_list(text)
+  for i in range(0,len(dims)):
+    if arg_typ[i] == 'ops_arg_dat':
+      if not dims[i].isdigit() or int(dims[i])>1:
+        text = re.sub(r'ACC<([a-zA-Z0-9]*)>\s*&', r'ptrm_\1 ',text, 1)
+      else:
+        text = re.sub(r'ACC<([a-zA-Z0-9]*)>\s*&', r'ptr_\1 ',text, 1)
+  return text
+  
 def parse_signature(text):
   text2 = text.replace('const','')
   text2 = text2.replace('ACC<','')
@@ -347,3 +387,17 @@ def check_accs(name, arg_list, arg_typ, text):
         #    if num <> n:
         #      print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
         #    pos = pos+10+pos2
+
+def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs):
+    # replace all data args with macros
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        pattern = re.compile(r'\b'+arg_list[n]+r'\b')
+        match = pattern.search(kernel_text,0)
+        while match:
+          closeb = para_parse(kernel_text,match.start(),'(',')')+1
+          openb = kernel_text.find('(',match.start())
+          acc = 'OPS_ACC('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+          kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
+          match = pattern.search(kernel_text,match.start()+10)
+    return kernel_text
