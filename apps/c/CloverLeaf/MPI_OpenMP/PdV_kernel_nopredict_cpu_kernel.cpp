@@ -40,12 +40,12 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,14,range,5)) return;
+  if (!ops_checkpointing_before(args,14,range,56)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(5,"PdV_kernel_nopredict");
-    OPS_kernels[5].count++;
+    ops_timing_realloc(56,"PdV_kernel_nopredict");
+    OPS_kernels[56].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -139,7 +139,7 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[5].mpi_time += __t1-__t2;
+    OPS_kernels[56].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -205,7 +205,7 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[5].time += __t2-__t1;
+    OPS_kernels[56].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 14);
@@ -217,21 +217,21 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[5].mpi_time += __t1-__t2;
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    OPS_kernels[56].mpi_time += __t1-__t2;
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg13);
   }
 }
 #undef OPS_ACC0
@@ -261,9 +261,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 5;
+  desc->index = 56;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 5;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 56;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -301,7 +301,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->hash = ((desc->hash << 5) + desc->hash) + arg13.dat->index;
   desc->function = ops_par_loop_PdV_kernel_nopredict_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(5,"PdV_kernel_nopredict");
+    ops_timing_realloc(56,"PdV_kernel_nopredict");
   }
   ops_enqueue_kernel(desc);
 }

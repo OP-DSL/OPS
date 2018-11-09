@@ -27,12 +27,12 @@ void ops_par_loop_flux_calc_kernely_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,4,range,33)) return;
+  if (!ops_checkpointing_before(args,4,range,60)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(33,"flux_calc_kernely");
-    OPS_kernels[33].count++;
+    ops_timing_realloc(60,"flux_calc_kernely");
+    OPS_kernels[60].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -86,7 +86,7 @@ void ops_par_loop_flux_calc_kernely_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[33].mpi_time += __t1-__t2;
+    OPS_kernels[60].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -117,7 +117,7 @@ void ops_par_loop_flux_calc_kernely_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[33].time += __t2-__t1;
+    OPS_kernels[60].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -127,11 +127,11 @@ void ops_par_loop_flux_calc_kernely_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[33].mpi_time += __t1-__t2;
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[33].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[60].mpi_time += __t1-__t2;
+    OPS_kernels[60].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[60].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[60].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[60].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 #undef OPS_ACC0
@@ -148,9 +148,9 @@ void ops_par_loop_flux_calc_kernely(char const *name, ops_block block, int dim, 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 33;
+  desc->index = 60;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 33;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 60;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -168,7 +168,7 @@ void ops_par_loop_flux_calc_kernely(char const *name, ops_block block, int dim, 
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_flux_calc_kernely_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(33,"flux_calc_kernely");
+    ops_timing_realloc(60,"flux_calc_kernely");
   }
   ops_enqueue_kernel(desc);
 }

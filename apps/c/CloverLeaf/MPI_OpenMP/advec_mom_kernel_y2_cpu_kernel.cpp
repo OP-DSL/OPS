@@ -27,12 +27,12 @@ void ops_par_loop_advec_mom_kernel_y2_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,4,range,18)) return;
+  if (!ops_checkpointing_before(args,4,range,72)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(18,"advec_mom_kernel_y2");
-    OPS_kernels[18].count++;
+    ops_timing_realloc(72,"advec_mom_kernel_y2");
+    OPS_kernels[72].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -86,7 +86,7 @@ void ops_par_loop_advec_mom_kernel_y2_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[18].mpi_time += __t1-__t2;
+    OPS_kernels[72].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -117,7 +117,7 @@ void ops_par_loop_advec_mom_kernel_y2_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[18].time += __t2-__t1;
+    OPS_kernels[72].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -128,11 +128,11 @@ void ops_par_loop_advec_mom_kernel_y2_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[18].mpi_time += __t1-__t2;
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[72].mpi_time += __t1-__t2;
+    OPS_kernels[72].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[72].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[72].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[72].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 #undef OPS_ACC0
@@ -149,9 +149,9 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 18;
+  desc->index = 72;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 18;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 72;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -169,7 +169,7 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_y2_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(18,"advec_mom_kernel_y2");
+    ops_timing_realloc(72,"advec_mom_kernel_y2");
   }
   ops_enqueue_kernel(desc);
 }
