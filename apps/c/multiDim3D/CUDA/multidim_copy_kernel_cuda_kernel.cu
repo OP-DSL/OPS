@@ -4,13 +4,6 @@
 __constant__ int dims_multidim_copy_kernel [2][3];
 static int dims_multidim_copy_kernel_h [2][3] = {0};
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)+(dims_multidim_copy_kernel[0][0]*(y))+(dims_multidim_copy_kernel[0][0]*dims_multidim_copy_kernel[0][1]*(z))+(d)*dims_multidim_copy_kernel[0][0]*dims_multidim_copy_kernel[0][1]*dims_multidim_copy_kernel[0][2])
-#define OPS_ACC_MD1(d,x,y,z) ((x)+(dims_multidim_copy_kernel[1][0]*(y))+(dims_multidim_copy_kernel[1][0]*dims_multidim_copy_kernel[1][1]*(z))+(d)*dims_multidim_copy_kernel[1][0]*dims_multidim_copy_kernel[1][1]*dims_multidim_copy_kernel[1][2])
 //user function
 __device__
 
@@ -22,12 +15,8 @@ void multidim_copy_kernel_gpu(const ACC<double> &src, ACC<double> &dest){
 
 
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
 __global__ void ops_multidim_copy_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0,
 int size1,
@@ -42,7 +31,9 @@ int size2 ){
   arg1 += idx_x * 1+ idx_y * 1* dims_multidim_copy_kernel[1][0] + idx_z * 1 * dims_multidim_copy_kernel[1][0] * dims_multidim_copy_kernel[1][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    multidim_copy_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(3, dims_multidim_copy_kernel[0][0], dims_multidim_copy_kernel[0][1], dims_multidim_copy_kernel[0][2], arg0);
+    ACC<double> argp1(3, dims_multidim_copy_kernel[1][0], dims_multidim_copy_kernel[1][1], dims_multidim_copy_kernel[1][2], arg1);
+    multidim_copy_kernel_gpu(argp0, argp1);
   }
 
 }

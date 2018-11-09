@@ -16,88 +16,48 @@ int xdim8_accelerate_kernel;
 int xdim9_accelerate_kernel;
 int xdim10_accelerate_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
-#define OPS_ACC0(x,y) (x+xdim0_accelerate_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_accelerate_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_accelerate_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_accelerate_kernel*(y))
-#define OPS_ACC4(x,y) (x+xdim4_accelerate_kernel*(y))
-#define OPS_ACC5(x,y) (x+xdim5_accelerate_kernel*(y))
-#define OPS_ACC6(x,y) (x+xdim6_accelerate_kernel*(y))
-#define OPS_ACC7(x,y) (x+xdim7_accelerate_kernel*(y))
-#define OPS_ACC8(x,y) (x+xdim8_accelerate_kernel*(y))
-#define OPS_ACC9(x,y) (x+xdim9_accelerate_kernel*(y))
-#define OPS_ACC10(x,y) (x+xdim10_accelerate_kernel*(y))
-
 //user function
 inline 
-void accelerate_kernel( const ACC<double> &density0, const ACC<double> &volume,
-                ACC<double> &stepbymass, const ACC<double> &xvel0, ACC<double> &xvel1,
-                const ACC<double> &xarea, const ACC<double> &pressure,
-                const ACC<double> &yvel0, ACC<double> &yvel1,
-                const ACC<double> &yarea, const ACC<double> &viscosity) {
+void accelerate_kernel( const ptr_double density0, const ptr_double volume,
+                ptr_double stepbymass, const ptr_double xvel0, ptr_double xvel1,
+                const ptr_double xarea, const ptr_double pressure,
+                const ptr_double yvel0, ptr_double yvel1,
+                const ptr_double yarea, const ptr_double viscosity) {
 
   double nodal_mass;
 
-  nodal_mass = ( density0(-1,-1) * volume(-1,-1)
-    + density0(0,-1) * volume(0,-1)
-    + density0(0,0) * volume(0,0)
-    + density0(-1,0) * volume(-1,0) ) * 0.25;
+  nodal_mass = ( OPS_ACC(density0, -1,-1) * OPS_ACC(volume, -1,-1)
+    + OPS_ACC(density0, 0,-1) * OPS_ACC(volume, 0,-1)
+    + OPS_ACC(density0, 0,0) * OPS_ACC(volume, 0,0)
+    + OPS_ACC(density0, -1,0) * OPS_ACC(volume, -1,0) ) * 0.25;
 
-  stepbymass(0,0) = 0.5*dt/ nodal_mass;
-
-
-
-  xvel1(0,0) = xvel0(0,0) - stepbymass(0,0) *
-            ( xarea(0,0)  * ( pressure(0,0) - pressure(-1,0) ) +
-              xarea(0,-1) * ( pressure(0,-1) - pressure(-1,-1) ) );
+  OPS_ACC(stepbymass, 0,0) = 0.5*dt/ nodal_mass;
 
 
 
-  yvel1(0,0) = yvel0(0,0) - stepbymass(0,0) *
-            ( yarea(0,0)  * ( pressure(0,0) - pressure(0,-1) ) +
-              yarea(-1,0) * ( pressure(-1,0) - pressure(-1,-1) ) );
+  OPS_ACC(xvel1, 0,0) = OPS_ACC(xvel0, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(xarea, 0,0)  * ( OPS_ACC(pressure, 0,0) - OPS_ACC(pressure, -1,0) ) +
+              OPS_ACC(xarea, 0,-1) * ( OPS_ACC(pressure, 0,-1) - OPS_ACC(pressure, -1,-1) ) );
 
 
 
-  xvel1(0,0) = xvel1(0,0) - stepbymass(0,0) *
-            ( xarea(0,0) * ( viscosity(0,0) - viscosity(-1,0) ) +
-              xarea(0,-1) * ( viscosity(0,-1) - viscosity(-1,-1) ) );
+  OPS_ACC(yvel1, 0,0) = OPS_ACC(yvel0, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(yarea, 0,0)  * ( OPS_ACC(pressure, 0,0) - OPS_ACC(pressure, 0,-1) ) +
+              OPS_ACC(yarea, -1,0) * ( OPS_ACC(pressure, -1,0) - OPS_ACC(pressure, -1,-1) ) );
 
 
 
-  yvel1(0,0) = yvel1(0,0) - stepbymass(0,0) *
-            ( yarea(0,0) * ( viscosity(0,0) - viscosity(0,-1) ) +
-              yarea(-1,0) * ( viscosity(-1,0) - viscosity(-1,-1) ) );
+  OPS_ACC(xvel1, 0,0) = OPS_ACC(xvel1, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(xarea, 0,0) * ( OPS_ACC(viscosity, 0,0) - OPS_ACC(viscosity, -1,0) ) +
+              OPS_ACC(xarea, 0,-1) * ( OPS_ACC(viscosity, 0,-1) - OPS_ACC(viscosity, -1,-1) ) );
+
+
+
+  OPS_ACC(yvel1, 0,0) = OPS_ACC(yvel1, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(yarea, 0,0) * ( OPS_ACC(viscosity, 0,0) - OPS_ACC(viscosity, 0,-1) ) +
+              OPS_ACC(yarea, -1,0) * ( OPS_ACC(viscosity, -1,0) - OPS_ACC(viscosity, -1,-1) ) );
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
 
 
 void accelerate_kernel_c_wrapper(
@@ -122,12 +82,23 @@ void accelerate_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      accelerate_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_accelerate_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_accelerate_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_accelerate_kernel*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_accelerate_kernel*1*1, p_a4 + n_x*1*1 + n_y*xdim4_accelerate_kernel*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_accelerate_kernel*1*1, p_a6 + n_x*1*1 + n_y*xdim6_accelerate_kernel*1*1,
-           p_a7 + n_x*1*1 + n_y*xdim7_accelerate_kernel*1*1, p_a8 + n_x*1*1 + n_y*xdim8_accelerate_kernel*1*1,
-           p_a9 + n_x*1*1 + n_y*xdim9_accelerate_kernel*1*1, p_a10 + n_x*1*1 + n_y*xdim10_accelerate_kernel*1*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_accelerate_kernel*1*1, xdim0_accelerate_kernel};
+      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_accelerate_kernel*1*1, xdim1_accelerate_kernel};
+      ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_accelerate_kernel*1*1, xdim2_accelerate_kernel};
+      const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_accelerate_kernel*1*1, xdim3_accelerate_kernel};
+      ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_accelerate_kernel*1*1, xdim4_accelerate_kernel};
+      const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_accelerate_kernel*1*1, xdim5_accelerate_kernel};
+      const ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_accelerate_kernel*1*1, xdim6_accelerate_kernel};
+      const ptr_double ptr7 = {  p_a7 + n_x*1*1 + n_y*xdim7_accelerate_kernel*1*1, xdim7_accelerate_kernel};
+      ptr_double ptr8 = {  p_a8 + n_x*1*1 + n_y*xdim8_accelerate_kernel*1*1, xdim8_accelerate_kernel};
+      const ptr_double ptr9 = {  p_a9 + n_x*1*1 + n_y*xdim9_accelerate_kernel*1*1, xdim9_accelerate_kernel};
+      const ptr_double ptr10 = {  p_a10 + n_x*1*1 + n_y*xdim10_accelerate_kernel*1*1, xdim10_accelerate_kernel};
+      accelerate_kernel( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4,
+          ptr5,ptr6,
+          ptr7,ptr8,
+          ptr9,ptr10 );
 
     }
   }

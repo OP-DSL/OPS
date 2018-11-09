@@ -6,13 +6,12 @@ int xdim0_multidim_reduce_kernel;
 int ydim0_multidim_reduce_kernel;
 
 
-#define OPS_ACC_MD0(d,x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_multidim_reduce_kernel + (d) * xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel)
 //user function
 
 
 
 void multidim_reduce_kernel_c_wrapper(
-  const double * restrict val,
+  double * restrict val_p,
   double * restrict redu_dat1_g,
   int x_size, int y_size) {
   double redu_dat1_0 = redu_dat1_g[0];
@@ -23,11 +22,11 @@ void multidim_reduce_kernel_c_wrapper(
       double redu_dat1[2];
       redu_dat1[0] = ZERO_double;
       redu_dat1[1] = ZERO_double;
-      
-
-  redu_dat1[0] = redu_dat1[0] + val(0,0,0);
-  redu_dat1[1] = redu_dat1[1] + val(1,0,0);
-
+      #ifdef OPS_SOA
+      const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel};
+      #else
+      const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, 2};
+      #endif
       redu_dat1_0 +=redu_dat1[0];
       redu_dat1_1 +=redu_dat1[1];
     }

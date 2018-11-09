@@ -17,88 +17,45 @@ int xdim9_PdV_kernel_predict;
 int xdim10_PdV_kernel_predict;
 int xdim11_PdV_kernel_predict;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
-
-#define OPS_ACC0(x,y) (x+xdim0_PdV_kernel_predict*(y))
-#define OPS_ACC1(x,y) (x+xdim1_PdV_kernel_predict*(y))
-#define OPS_ACC2(x,y) (x+xdim2_PdV_kernel_predict*(y))
-#define OPS_ACC3(x,y) (x+xdim3_PdV_kernel_predict*(y))
-#define OPS_ACC4(x,y) (x+xdim4_PdV_kernel_predict*(y))
-#define OPS_ACC5(x,y) (x+xdim5_PdV_kernel_predict*(y))
-#define OPS_ACC6(x,y) (x+xdim6_PdV_kernel_predict*(y))
-#define OPS_ACC7(x,y) (x+xdim7_PdV_kernel_predict*(y))
-#define OPS_ACC8(x,y) (x+xdim8_PdV_kernel_predict*(y))
-#define OPS_ACC9(x,y) (x+xdim9_PdV_kernel_predict*(y))
-#define OPS_ACC10(x,y) (x+xdim10_PdV_kernel_predict*(y))
-#define OPS_ACC11(x,y) (x+xdim11_PdV_kernel_predict*(y))
-
 //user function
 inline 
-void PdV_kernel_predict(const ACC<double> &xarea, const ACC<double> &xvel0,
-                const ACC<double> &yarea, const ACC<double> &yvel0,
-                ACC<double> &volume_change, const ACC<double> &volume,
-                const ACC<double> &pressure,
-                const ACC<double> &density0, ACC<double> &density1,
-                const ACC<double> &viscosity,
-                const ACC<double> &energy0, ACC<double> &energy1) {
+void PdV_kernel_predict(const ptr_double xarea, const ptr_double xvel0,
+                const ptr_double yarea, const ptr_double yvel0,
+                ptr_double volume_change, const ptr_double volume,
+                const ptr_double pressure,
+                const ptr_double density0, ptr_double density1,
+                const ptr_double viscosity,
+                const ptr_double energy0, ptr_double energy1) {
 
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( xarea(0,0) * ( xvel0(0,0) + xvel0(0,1) +
-                                xvel0(0,0) + xvel0(0,1) ) ) * 0.25 * dt * 0.5;
-  right_flux = ( xarea(1,0) * ( xvel0(1,0) + xvel0(1,1) +
-                                 xvel0(1,0) + xvel0(1,1) ) ) * 0.25 * dt * 0.5;
+  left_flux = ( OPS_ACC(xarea, 0,0) * ( OPS_ACC(xvel0, 0,0) + OPS_ACC(xvel0, 0,1) +
+                                OPS_ACC(xvel0, 0,0) + OPS_ACC(xvel0, 0,1) ) ) * 0.25 * dt * 0.5;
+  right_flux = ( OPS_ACC(xarea, 1,0) * ( OPS_ACC(xvel0, 1,0) + OPS_ACC(xvel0, 1,1) +
+                                 OPS_ACC(xvel0, 1,0) + OPS_ACC(xvel0, 1,1) ) ) * 0.25 * dt * 0.5;
 
-  bottom_flux = ( yarea(0,0) * ( yvel0(0,0) + yvel0(1,0) +
-                                  yvel0(0,0) + yvel0(1,0) ) ) * 0.25* dt * 0.5;
-  top_flux = ( yarea(0,1) * ( yvel0(0,1) + yvel0(1,1) +
-                               yvel0(0,1) + yvel0(1,1) ) ) * 0.25 * dt * 0.5;
+  bottom_flux = ( OPS_ACC(yarea, 0,0) * ( OPS_ACC(yvel0, 0,0) + OPS_ACC(yvel0, 1,0) +
+                                  OPS_ACC(yvel0, 0,0) + OPS_ACC(yvel0, 1,0) ) ) * 0.25* dt * 0.5;
+  top_flux = ( OPS_ACC(yarea, 0,1) * ( OPS_ACC(yvel0, 0,1) + OPS_ACC(yvel0, 1,1) +
+                               OPS_ACC(yvel0, 0,1) + OPS_ACC(yvel0, 1,1) ) ) * 0.25 * dt * 0.5;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  volume_change(0,0) = (volume(0,0))/(volume(0,0) + total_flux);
+  OPS_ACC(volume_change, 0,0) = (OPS_ACC(volume, 0,0))/(OPS_ACC(volume, 0,0) + total_flux);
 
 
 
 
-  recip_volume = 1.0/volume(0,0);
+  recip_volume = 1.0/OPS_ACC(volume, 0,0);
 
-  energy_change = ( pressure(0,0)/density0(0,0) +
-                    viscosity(0,0)/density0(0,0) ) * total_flux * recip_volume;
-  energy1(0,0) = energy0(0,0) - energy_change;
-  density1(0,0) = density0(0,0) * volume_change(0,0);
+  energy_change = ( OPS_ACC(pressure, 0,0)/OPS_ACC(density0, 0,0) +
+                    OPS_ACC(viscosity, 0,0)/OPS_ACC(density0, 0,0) ) * total_flux * recip_volume;
+  OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0) - energy_change;
+  OPS_ACC(density1, 0,0) = OPS_ACC(density0, 0,0) * OPS_ACC(volume_change, 0,0);
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
 
 
 void PdV_kernel_predict_c_wrapper(
@@ -124,13 +81,25 @@ void PdV_kernel_predict_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      PdV_kernel_predict(  p_a0 + n_x*1*1 + n_y*xdim0_PdV_kernel_predict*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_PdV_kernel_predict*1*1, p_a2 + n_x*1*1 + n_y*xdim2_PdV_kernel_predict*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_PdV_kernel_predict*1*1, p_a4 + n_x*1*1 + n_y*xdim4_PdV_kernel_predict*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_PdV_kernel_predict*1*1, p_a6 + n_x*1*1 + n_y*xdim6_PdV_kernel_predict*1*1,
-           p_a7 + n_x*1*1 + n_y*xdim7_PdV_kernel_predict*1*1, p_a8 + n_x*1*1 + n_y*xdim8_PdV_kernel_predict*1*1,
-           p_a9 + n_x*1*1 + n_y*xdim9_PdV_kernel_predict*1*1, p_a10 + n_x*1*1 + n_y*xdim10_PdV_kernel_predict*1*1,
-           p_a11 + n_x*1*1 + n_y*xdim11_PdV_kernel_predict*1*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_PdV_kernel_predict*1*1, xdim0_PdV_kernel_predict};
+      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_PdV_kernel_predict*1*1, xdim1_PdV_kernel_predict};
+      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_PdV_kernel_predict*1*1, xdim2_PdV_kernel_predict};
+      const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_PdV_kernel_predict*1*1, xdim3_PdV_kernel_predict};
+      ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_PdV_kernel_predict*1*1, xdim4_PdV_kernel_predict};
+      const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_PdV_kernel_predict*1*1, xdim5_PdV_kernel_predict};
+      const ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_PdV_kernel_predict*1*1, xdim6_PdV_kernel_predict};
+      const ptr_double ptr7 = {  p_a7 + n_x*1*1 + n_y*xdim7_PdV_kernel_predict*1*1, xdim7_PdV_kernel_predict};
+      ptr_double ptr8 = {  p_a8 + n_x*1*1 + n_y*xdim8_PdV_kernel_predict*1*1, xdim8_PdV_kernel_predict};
+      const ptr_double ptr9 = {  p_a9 + n_x*1*1 + n_y*xdim9_PdV_kernel_predict*1*1, xdim9_PdV_kernel_predict};
+      const ptr_double ptr10 = {  p_a10 + n_x*1*1 + n_y*xdim10_PdV_kernel_predict*1*1, xdim10_PdV_kernel_predict};
+      ptr_double ptr11 = {  p_a11 + n_x*1*1 + n_y*xdim11_PdV_kernel_predict*1*1, xdim11_PdV_kernel_predict};
+      PdV_kernel_predict( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4,
+          ptr5,ptr6,
+          ptr7,ptr8,
+          ptr9,ptr10,
+          ptr11 );
 
     }
   }

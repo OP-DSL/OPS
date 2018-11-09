@@ -89,15 +89,20 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1)
+    #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1) aligned(val)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       #ifdef OPS_SOA
-      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + n_x + n_y * xdim0_multidim_reduce_kernel);
+      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1);
       #else
-      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + 2*(n_x + n_y * xdim0_multidim_reduce_kernel));
+      const ACC<double> val(2, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, val_p + 2*(n_x*1 + n_y * xdim0_multidim_reduce_kernel*1));
       #endif
       double redu_dat1[2];
       redu_dat1[0] = ZERO_double;
