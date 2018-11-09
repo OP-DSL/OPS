@@ -88,20 +88,25 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-      #pragma omp simd
+      #pragma omp simd aligned(src_p,dest_p)
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma simd
+      #pragma GCC ivdep
       #else
       #pragma simd
       #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
         #ifdef OPS_SOA
-        const ACC<double> src(3, xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, zdim0_multidim_copy_kernel, src_p + n_x + n_y * xdim0_multidim_copy_kernel + n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel);
+        const ACC<double> src(3, xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, zdim0_multidim_copy_kernel, src_p + n_x*1 + n_y * xdim0_multidim_copy_kernel*1 + n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel*1);
         #else
-        const ACC<double> src(3, xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, zdim0_multidim_copy_kernel, src_p + 3*(n_x + n_y * xdim0_multidim_copy_kernel + n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel));
+        const ACC<double> src(3, xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, zdim0_multidim_copy_kernel, src_p + 3*(n_x*1 + n_y * xdim0_multidim_copy_kernel*1 + n_z * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel*1));
         #endif
         #ifdef OPS_SOA
-        ACC<double> dest(3, xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, zdim1_multidim_copy_kernel, dest_p + n_x + n_y * xdim1_multidim_copy_kernel + n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel);
+        ACC<double> dest(3, xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, zdim1_multidim_copy_kernel, dest_p + n_x*1 + n_y * xdim1_multidim_copy_kernel*1 + n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel*1);
         #else
-        ACC<double> dest(3, xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, zdim1_multidim_copy_kernel, dest_p + 3*(n_x + n_y * xdim1_multidim_copy_kernel + n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel));
+        ACC<double> dest(3, xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, zdim1_multidim_copy_kernel, dest_p + 3*(n_x*1 + n_y * xdim1_multidim_copy_kernel*1 + n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel*1));
         #endif
         
   dest(0,0,0,0) = src(0,0,0,0);

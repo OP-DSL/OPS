@@ -26,12 +26,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a_execute(ops_kernel_descripto
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,3,range,52)) return;
+  if (!ops_checkpointing_before(args,3,range,18)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(52,"update_halo_kernel2_xvel_plus_2_a");
-    OPS_kernels[52].count++;
+    ops_timing_realloc(18,"update_halo_kernel2_xvel_plus_2_a");
+    OPS_kernels[18].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -80,7 +80,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a_execute(ops_kernel_descripto
 
   if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[52].mpi_time += __t1-__t2;
+    OPS_kernels[18].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -107,7 +107,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a_execute(ops_kernel_descripto
   }
   if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[52].time += __t2-__t1;
+    OPS_kernels[18].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -118,9 +118,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a_execute(ops_kernel_descripto
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[52].mpi_time += __t1-__t2;
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[18].mpi_time += __t1-__t2;
+    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[18].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 #undef OPS_ACC0
@@ -135,9 +135,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a(char const *name, ops_block 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 52;
+  desc->index = 18;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 52;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 18;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -155,7 +155,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_a(char const *name, ops_block 
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_plus_2_a_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(52,"update_halo_kernel2_xvel_plus_2_a");
+    ops_timing_realloc(18,"update_halo_kernel2_xvel_plus_2_a");
   }
   ops_enqueue_kernel(desc);
 }

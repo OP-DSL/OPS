@@ -9,50 +9,25 @@ int xdim3_calc_dt_kernel_print;
 int xdim4_calc_dt_kernel_print;
 int xdim5_calc_dt_kernel_print;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_print*(y))
-#define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_print*(y))
-#define OPS_ACC2(x,y) (x+xdim2_calc_dt_kernel_print*(y))
-#define OPS_ACC3(x,y) (x+xdim3_calc_dt_kernel_print*(y))
-#define OPS_ACC4(x,y) (x+xdim4_calc_dt_kernel_print*(y))
-#define OPS_ACC5(x,y) (x+xdim5_calc_dt_kernel_print*(y))
-
 //user function
 inline 
-void calc_dt_kernel_print(const ACC<double> &xvel0, const ACC<double> &yvel0,
-                        const ACC<double> &density0, const ACC<double> &energy0,
-                        const ACC<double> &pressure, const ACC<double> &soundspeed, double *output) {
-  output[0] = xvel0(1,0);
-  output[1] = yvel0(1,0);
-  output[2] = xvel0(-1,0);
-  output[3] = yvel0(-1,0);
-  output[4] = xvel0(0,1);
-  output[5] = yvel0(0,1);
-  output[6] = xvel0(0,-1);
-  output[7] = yvel0(0,-1);
-  output[8] = density0(0,0);
-  output[9] = energy0(0,0);
-  output[10]= pressure(0,0);
-  output[11]= soundspeed(0,0);
+void calc_dt_kernel_print(const ptr_double xvel0, const ptr_double yvel0,
+                        const ptr_double density0, const ptr_double energy0,
+                        const ptr_double pressure, const ptr_double soundspeed, double *output) {
+  output[0] = OPS_ACC(xvel0, 1,0);
+  output[1] = OPS_ACC(yvel0, 1,0);
+  output[2] = OPS_ACC(xvel0, -1,0);
+  output[3] = OPS_ACC(yvel0, -1,0);
+  output[4] = OPS_ACC(xvel0, 0,1);
+  output[5] = OPS_ACC(yvel0, 0,1);
+  output[6] = OPS_ACC(xvel0, 0,-1);
+  output[7] = OPS_ACC(yvel0, 0,-1);
+  output[8] = OPS_ACC(density0, 0,0);
+  output[9] = OPS_ACC(energy0, 0,0);
+  output[10]= OPS_ACC(pressure, 0,0);
+  output[11]= OPS_ACC(soundspeed, 0,0);
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
 
 
 void calc_dt_kernel_print_c_wrapper(
@@ -98,10 +73,16 @@ void calc_dt_kernel_print_c_wrapper(
       p_a6_local[9] = ZERO_double;
       p_a6_local[10] = ZERO_double;
       p_a6_local[11] = ZERO_double;
-      calc_dt_kernel_print(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1, p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel_print*1*1, p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1, p_a6_local );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1, xdim0_calc_dt_kernel_print};
+      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1, xdim1_calc_dt_kernel_print};
+      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1, xdim2_calc_dt_kernel_print};
+      const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel_print*1*1, xdim3_calc_dt_kernel_print};
+      const ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1, xdim4_calc_dt_kernel_print};
+      const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1, xdim5_calc_dt_kernel_print};
+      calc_dt_kernel_print( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4,
+          ptr5, p_a6_local );
 
       p_a6_0 +=p_a6_local[0];
       p_a6_1 +=p_a6_local[1];

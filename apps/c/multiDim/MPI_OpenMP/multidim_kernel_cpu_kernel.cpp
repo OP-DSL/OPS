@@ -85,18 +85,24 @@ void ops_par_loop_multidim_kernel_execute(ops_kernel_descriptor *desc) {
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    int idx[] = {0, arg_idx[1]+n_y};
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd
+    #pragma omp simd aligned(val_p)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
+      idx[0] = arg_idx[0]+n_x;
       #ifdef OPS_SOA
-      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + n_x + n_y * xdim0_multidim_kernel);
+      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + n_x*1 + n_y * xdim0_multidim_kernel*1);
       #else
-      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + 2*(n_x + n_y * xdim0_multidim_kernel));
+      ACC<double> val(2, xdim0_multidim_kernel, ydim0_multidim_kernel, val_p + 2*(n_x*1 + n_y * xdim0_multidim_kernel*1));
       #endif
       
   val(0,0,0) = (double)(idx[0]);

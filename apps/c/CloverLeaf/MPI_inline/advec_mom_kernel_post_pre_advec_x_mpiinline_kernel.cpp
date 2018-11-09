@@ -36,12 +36,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,20)) return;
+  if (!ops_checkpointing_before(args,5,range,74)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(20,"advec_mom_kernel_post_pre_advec_x");
-    OPS_kernels[20].count++;
+    ops_timing_realloc(74,"advec_mom_kernel_post_pre_advec_x");
+    OPS_kernels[74].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -132,7 +132,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[20].mpi_time += t1-t2;
+    OPS_kernels[74].mpi_time += t1-t2;
   }
 
   advec_mom_kernel_post_pre_advec_x_c_wrapper(
@@ -145,7 +145,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[20].time += t2-t1;
+    OPS_kernels[74].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -153,10 +153,10 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   //Update kernel record
   if (OPS_diags > 1) {
-    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }

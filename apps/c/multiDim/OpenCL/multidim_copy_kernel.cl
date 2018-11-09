@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -40,36 +40,39 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
+
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
-#define OPS_ACC_MD0(d, x, y)                                                   \
-  ((x) + (xdim0_multidim_copy_kernel * (y)) +                                  \
-   (d)*xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel)
-#define OPS_ACC_MD1(d, x, y)                                                   \
-  ((x) + (xdim1_multidim_copy_kernel * (y)) +                                  \
-   (d)*xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel)
 
-// user function
-void multidim_copy_kernel(const __global double *restrict src,
-                          __global double *restrict dest)
+#define OPS_ACC_MD0(d,x,y) ((x)+(xdim0_multidim_copy_kernel*(y))+(d)*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel)
+#define OPS_ACC_MD1(d,x,y) ((x)+(xdim1_multidim_copy_kernel*(y))+(d)*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel)
+
+//user function
+void multidim_copy_kernel(const ACC<__global double> &src,ACC<__global double> &dest)
 
 {
-  dest[OPS_ACC_MD1(0, 0, 0)] = src[OPS_ACC_MD0(0, 0, 0)];
-  dest[OPS_ACC_MD1(1, 0, 0)] = src[OPS_ACC_MD0(1, 0, 0)];
+  dest(0,0,0) = src(0,0,0);
+  dest(1,0,0) = src(1,0,0);
 }
 
-__kernel void ops_multidim_copy_kernel(__global const double *restrict arg0,
-                                       __global double *restrict arg1,
-                                       const int base0, const int base1,
-                                       const int size0, const int size1) {
+
+
+__kernel void ops_multidim_copy_kernel(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+const int base0,
+const int base1,
+const int size0,
+const int size1 ){
+
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_copy_kernel(
-        &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel],
-        &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel]);
+    multidim_copy_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel],
+                         &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel]);
   }
+
 }

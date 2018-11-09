@@ -62,12 +62,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
 
 
   #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,3,range,54)) return;
+  if (!ops_checkpointing_before(args,3,range,20)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(54,"update_halo_kernel2_xvel_plus_2_b");
-    OPS_kernels[54].count++;
+    ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
+    OPS_kernels[20].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -151,7 +151,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[54].mpi_time += t2-t1;
+    OPS_kernels[20].mpi_time += t2-t1;
   }
 
 
@@ -165,7 +165,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[54].time += t1-t2;
+    OPS_kernels[20].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -177,9 +177,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[54].mpi_time += t2-t1;
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[20].mpi_time += t2-t1;
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -191,9 +191,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 54;
+  desc->index = 20;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 54;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 20;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -211,7 +211,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(54,"update_halo_kernel2_xvel_plus_2_b");
+    ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
   }
   ops_enqueue_kernel(desc);
 }

@@ -37,22 +37,113 @@
   * @details Declares the OPS macros
   */
 
-#define OPS_ACC(dat, x, y) (*(dat.ptr + (x) + (y)*dat.xdim))
+#ifdef OPS_2D 
+#define OPS_ACCS(dat, x, y) (*(dat.ptr + (x) + (y)*dat.xdim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) + (y)*dat.xdim + (d) * dat.xdim * dat.ydim))
+#else
+#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim))
+#endif
+#define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+
+#ifdef OPS_3D 
+#define OPS_ACCS(dat, x, y, z) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (d) * dat.xdim * dat.ydim * dat. zdim))
+#else
+#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim))
+#endif
+#define GET_MACRO(_1,_2,_3,_4,_5,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+
+#ifdef OPS_4D 
+#define OPS_ACCS(dat, x, y, z, u) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim))
+#else
+#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim))
+#endif
+#define GET_MACRO(_1,_2,_3,_4,_5,_6,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+
+#ifdef OPS_5D 
+#define OPS_ACCS(dat, x, y, z, u, v) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (v)*dat.xdim*dat.ydim*dat.zdim*dat.udim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (v)*dat.xdim*dat.ydim*dat.zdim*dat.udim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim * dat.vdim))
+#else
+#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (v)*dat.dim*dat.xdim*dat.ydim*dat.zdim*dat.udim))
+#endif
+#define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
 
 #ifndef __cplusplus
-//extern "C" {
-//#endif
 typedef struct ptr_double {
   double *restrict ptr;
   int xdim;
+#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if defined(OPS_5D)
+  int udim;
+#endif
 } ptr_double;
 
 typedef struct ptr_int {
   int *restrict ptr;
   int xdim;
+#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if defined(OPS_5D)
+  int udim;
+#endif
 } ptr_int;
-//#ifdef __cplusplus
-//}
+
+typedef struct ptrm_double {
+  double *restrict ptr;
+  int xdim;
+#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
+  int udim;
+#endif
+#ifndef OPS_SOA
+  int dim;
+#endif
+} ptrm_double;
+
+typedef struct ptrm_int {
+  int *restrict ptr;
+  int xdim;
+#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
+  int udim;
+#endif
+#ifndef OPS_SOA
+  int dim;
+#endif
+} ptrm_int;
+
 #endif
 
 /**--------------1-D ops_dats macros (one element per grid point)------------**/
