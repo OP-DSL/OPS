@@ -92,7 +92,7 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-      #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1) reduction(+:p_a1_2) aligned(val)
+      #pragma omp simd reduction(+:p_a1_0) reduction(+:p_a1_1) reduction(+:p_a1_2)
       #elif defined(__clang__)
       #pragma clang loop vectorize(assume_safety)
       #elif defined(__GNUC__)
