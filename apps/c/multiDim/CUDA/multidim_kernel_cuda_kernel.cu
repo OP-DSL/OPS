@@ -4,11 +4,6 @@
 __constant__ int dims_multidim_kernel [2][2];
 static int dims_multidim_kernel_h [2][2] = {0};
 
-
-#undef OPS_ACC_MD0
-
-
-#define OPS_ACC_MD0(d,x,y) ((x)+(dims_multidim_kernel[0][0]*(y))+(d)*dims_multidim_kernel[0][0]*dims_multidim_kernel[0][1])
 //user function
 __device__
 
@@ -20,9 +15,6 @@ void multidim_kernel_gpu(ACC<double> &val, int *idx){
 }
 
 
-
-
-#undef OPS_ACC_MD0
 
 __global__ void ops_multidim_kernel(
 double* __restrict arg0,
@@ -40,7 +32,8 @@ int size1 ){
   arg0 += idx_x * 1 + idx_y * 1 * dims_multidim_kernel[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_kernel_gpu(arg0, arg_idx);
+    ACC<double> argp0(2, dims_multidim_kernel[0][0], dims_multidim_kernel[0][1], arg0);
+    multidim_kernel_gpu(argp0, arg_idx);
   }
 
 }

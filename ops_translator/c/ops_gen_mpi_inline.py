@@ -61,6 +61,7 @@ para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
 parse_signature = util.parse_signature
+replace_ACC_kernel_body = util.replace_ACC_kernel_body
 check_accs = util.check_accs
 mult = util.mult
 
@@ -257,18 +258,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
+    kernel_text = replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs)
 
-    # replace all data args with macros
-    for n in range(0,nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        pattern = re.compile(r'\b'+arg_list[n]+r'\b')
-        match = pattern.search(kernel_text,0)
-        while match:
-          closeb = para_parse(kernel_text,match.start(),'(',')')+1
-          openb = kernel_text.find('(',match.start())
-          acc = 'OPS_ACC('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
-          kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
-          match = pattern.search(kernel_text,match.start()+10)
 
     l = text[i:m].find('inline')
     if(l<0):
@@ -396,10 +387,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         sizelist = ''
         extradim = 0
         if dims[n].isdigit() and int(dims[n])>1:
-            dim = dims[n]+', '
+            dim = dims[n]
             extradim = 1
         elif not dims[n].isdigit():
-            dim = 'arg'+str(n)+'.dim, '
+            dim = 'arg'+str(n)+'.dim'
             extradim = 1
         if NDIM > 0:
           offset = offset + 'n_x*'+str(stride[NDIM*n])
@@ -408,9 +399,17 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         if NDIM > 2:
           offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
         dimlabels = 'xyzuv'
-        for i in range(1,NDIM+extradim):
+        for i in range(1,NDIM):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
-        code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
+        extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
+        if dim == '':
+          code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
+        else:
+          code('#ifdef OPS_SOA')
+          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist + extradim+'};')
+          code('#else')
+          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+', '+dim+'};')
+          code('#endif')
 
 
     for n in range (0,nargs):

@@ -9,33 +9,14 @@ int xdim1_revert_kernel;
 int xdim2_revert_kernel;
 int xdim3_revert_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+xdim0_revert_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_revert_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_revert_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_revert_kernel*(y))
-
 //user function
 inline 
-void revert_kernel( const ACC<double> &density0, ACC<double> &density1,
-                const ACC<double> &energy0, ACC<double> &energy1) {
+void revert_kernel( const ptr_double density0, ptr_double density1,
+                const ptr_double energy0, ptr_double energy1) {
 
-  density1(0,0) = density0(0,0);
-  energy1(0,0) = energy0(0,0);
+  OPS_ACC(density1, 0,0) = OPS_ACC(density0, 0,0);
+  OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
 
 
 void revert_kernel_c_wrapper(
@@ -53,9 +34,13 @@ void revert_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      revert_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_revert_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_revert_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_revert_kernel*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_revert_kernel*1*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_revert_kernel*1*1, xdim0_revert_kernel};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_revert_kernel*1*1, xdim1_revert_kernel};
+      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_revert_kernel*1*1, xdim2_revert_kernel};
+      ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_revert_kernel*1*1, xdim3_revert_kernel};
+      revert_kernel( ptr0,
+          ptr1,ptr2,
+          ptr3 );
 
     }
   }

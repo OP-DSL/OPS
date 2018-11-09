@@ -12,49 +12,21 @@ int xdim4_update_halo_kernel1_b2;
 int xdim5_update_halo_kernel1_b2;
 int xdim6_update_halo_kernel1_b2;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel1_b2*(y))
-#define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel1_b2*(y))
-#define OPS_ACC2(x,y) (x+xdim2_update_halo_kernel1_b2*(y))
-#define OPS_ACC3(x,y) (x+xdim3_update_halo_kernel1_b2*(y))
-#define OPS_ACC4(x,y) (x+xdim4_update_halo_kernel1_b2*(y))
-#define OPS_ACC5(x,y) (x+xdim5_update_halo_kernel1_b2*(y))
-#define OPS_ACC6(x,y) (x+xdim6_update_halo_kernel1_b2*(y))
-
 //user function
 
-inline void update_halo_kernel1_b2(ACC<double> &density0, ACC<double> &density1,
-                          ACC<double> &energy0, ACC<double> &energy1,
-                          ACC<double> &pressure, ACC<double> &viscosity,
-                          ACC<double> &soundspeed, const int* fields) {
-  if(fields[FIELD_DENSITY0] == 1) density0(0,0) = density0(0,3);
-  if(fields[FIELD_DENSITY1] == 1) density1(0,0) = density1(0,3);
-  if(fields[FIELD_ENERGY0] == 1) energy0(0,0) = energy0(0,3);
-  if(fields[FIELD_ENERGY1] == 1) energy1(0,0) = energy1(0,3);
-  if(fields[FIELD_PRESSURE] == 1) pressure(0,0) = pressure(0,3);
-  if(fields[FIELD_VISCOSITY] == 1) viscosity(0,0) = viscosity(0,3);
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed(0,0) = soundspeed(0,3);
+inline void update_halo_kernel1_b2(ptr_double density0, ptr_double density1,
+                          ptr_double energy0, ptr_double energy1,
+                          ptr_double pressure, ptr_double viscosity,
+                          ptr_double soundspeed, const int* fields) {
+  if(fields[FIELD_DENSITY0] == 1) OPS_ACC(density0, 0,0) = OPS_ACC(density0, 0,3);
+  if(fields[FIELD_DENSITY1] == 1) OPS_ACC(density1, 0,0) = OPS_ACC(density1, 0,3);
+  if(fields[FIELD_ENERGY0] == 1) OPS_ACC(energy0, 0,0) = OPS_ACC(energy0, 0,3);
+  if(fields[FIELD_ENERGY1] == 1) OPS_ACC(energy1, 0,0) = OPS_ACC(energy1, 0,3);
+  if(fields[FIELD_PRESSURE] == 1) OPS_ACC(pressure, 0,0) = OPS_ACC(pressure, 0,3);
+  if(fields[FIELD_VISCOSITY] == 1) OPS_ACC(viscosity, 0,0) = OPS_ACC(viscosity, 0,3);
+  if(fields[FIELD_SOUNDSPEED] == 1) OPS_ACC(soundspeed, 0,0) = OPS_ACC(soundspeed, 0,3);
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
 
 
 void update_halo_kernel1_b2_c_wrapper(
@@ -76,10 +48,17 @@ void update_halo_kernel1_b2_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      update_halo_kernel1_b2(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel1_b2*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel1_b2*1*1, p_a2 + n_x*1*1 + n_y*xdim2_update_halo_kernel1_b2*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_update_halo_kernel1_b2*1*1, p_a4 + n_x*1*1 + n_y*xdim4_update_halo_kernel1_b2*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_update_halo_kernel1_b2*1*1, p_a6 + n_x*1*1 + n_y*xdim6_update_halo_kernel1_b2*1*1,
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel1_b2*1*1, xdim0_update_halo_kernel1_b2};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel1_b2*1*1, xdim1_update_halo_kernel1_b2};
+      ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_update_halo_kernel1_b2*1*1, xdim2_update_halo_kernel1_b2};
+      ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_update_halo_kernel1_b2*1*1, xdim3_update_halo_kernel1_b2};
+      ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_update_halo_kernel1_b2*1*1, xdim4_update_halo_kernel1_b2};
+      ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_update_halo_kernel1_b2*1*1, xdim5_update_halo_kernel1_b2};
+      ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_update_halo_kernel1_b2*1*1, xdim6_update_halo_kernel1_b2};
+      update_halo_kernel1_b2( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4,
+          ptr5,ptr6,
            p_a7 );
 
     }

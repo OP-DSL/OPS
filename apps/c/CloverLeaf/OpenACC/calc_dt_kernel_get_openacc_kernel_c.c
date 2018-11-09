@@ -7,25 +7,12 @@
 int xdim0_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_get*(y))
-#define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_get*(y))
-
 //user function
 inline 
-void calc_dt_kernel_get(const ACC<double> &cellx, const ACC<double> &celly, double* xl_pos, double* yl_pos) {
-  *xl_pos = cellx(0,0);
-  *yl_pos = celly(0,0);
+void calc_dt_kernel_get(const ptr_double cellx, const ptr_double celly, double* xl_pos, double* yl_pos) {
+  *xl_pos = OPS_ACC(cellx, 0,0);
+  *yl_pos = OPS_ACC(celly, 0,0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void calc_dt_kernel_get_c_wrapper(
@@ -45,8 +32,10 @@ void calc_dt_kernel_get_c_wrapper(
     #pragma acc loop reduction(+:p_a2_0) reduction(+:p_a3_0)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      calc_dt_kernel_get(  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_get*0*1,
-           p_a1 + n_x*0*1 + n_y*xdim1_calc_dt_kernel_get*1*1, &p_a2_0,
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_get*0*1, xdim0_calc_dt_kernel_get};
+      const ptr_double ptr1 = {  p_a1 + n_x*0*1 + n_y*xdim1_calc_dt_kernel_get*1*1, xdim1_calc_dt_kernel_get};
+      calc_dt_kernel_get( ptr0,
+          ptr1, &p_a2_0,
            &p_a3_0 );
 
     }
