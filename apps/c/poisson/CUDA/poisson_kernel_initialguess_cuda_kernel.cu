@@ -4,21 +4,13 @@
 __constant__ int dims_poisson_kernel_initialguess [1][1];
 static int dims_poisson_kernel_initialguess_h [1][1] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+dims_poisson_kernel_initialguess[0][0]*(y))
-
 //user function
 __device__
 
-void poisson_kernel_initialguess_gpu(ACC<double> u) {
+void poisson_kernel_initialguess_gpu(ACC<double> &u) {
   u(0,0) = 0.0;
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_poisson_kernel_initialguess(
@@ -33,7 +25,8 @@ int size1 ){
   arg0 += idx_x * 1*1 + idx_y * 1*1 * dims_poisson_kernel_initialguess[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_initialguess_gpu(arg0);
+    ACC<double> argp0(dims_poisson_kernel_initialguess[0][0], arg0);
+    poisson_kernel_initialguess_gpu(argp0);
   }
 
 }

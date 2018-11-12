@@ -139,12 +139,17 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd
+    #pragma omp simd aligned(u_p)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> u(xdim0_poisson_kernel_initialguess, u_p + n_x + n_y * xdim0_poisson_kernel_initialguess);
+      ACC<double> u(xdim0_poisson_kernel_initialguess, u_p + n_x*1 + n_y * xdim0_poisson_kernel_initialguess*1);
       
   u(0,0) = 0.0;
 >>>>>>> 1d8186c... Works on CPU with poisson:apps/c/poisson/MPI_OpenMP/poisson_kernel_initialguess_cpu_kernel.cpp

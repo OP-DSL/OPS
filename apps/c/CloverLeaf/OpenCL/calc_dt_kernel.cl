@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,53 +44,21 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
-#define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_calc_dt_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_calc_dt_kernel*(y))
-#define OPS_ACC4(x,y) (x+xdim4_calc_dt_kernel*(y))
-#define OPS_ACC5(x,y) (x+xdim5_calc_dt_kernel*(y))
-#define OPS_ACC6(x,y) (x+xdim6_calc_dt_kernel*(y))
-#define OPS_ACC7(x,y) (x+xdim7_calc_dt_kernel*(y))
-#define OPS_ACC8(x,y) (x+xdim8_calc_dt_kernel*(y))
-#define OPS_ACC9(x,y) (x+xdim9_calc_dt_kernel*(y))
-#define OPS_ACC10(x,y) (x+xdim10_calc_dt_kernel*(y))
-
-
 //user function
-void calc_dt_kernel(const ACC<__global double> &celldx,const ACC<__global double> &celldy,const ACC<__global double> &soundspeed,
-const ACC<__global double> &viscosity,const ACC<__global double> &density0,const ACC<__global double> &xvel0,const ACC<__global double> &xarea,
-const ACC<__global double> &volume,const ACC<__global double> &yvel0,const ACC<__global double> &yarea,ACC<__global double> &dt_min,
 
-  const double g_small,
-const double g_big,
-const double dtc_safe,
-const double dtu_safe,
-const double dtv_safe,
-const double dtdiv_safe)
-
- {
+void calc_dt_kernel(const ptr_double celldx, const ptr_double celldy, const ptr_double soundspeed,
+                    const ptr_double viscosity, const ptr_double density0, const ptr_double xvel0,
+                    const ptr_double xarea, const ptr_double volume, const ptr_double yvel0,
+                    const ptr_double yarea, ptr_double dt_min , const double g_small, const double g_big, const double dtc_safe, const double dtu_safe, const double dtv_safe, const double dtdiv_safe)
+{
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
 
-  dsx = celldx(0,0);
-  dsy = celldy(0,0);
+  dsx = OPS_ACCS(celldx, 0,0);
+  dsy = OPS_ACCS(celldy, 0,0);
 
-  cc = soundspeed(0,0) * soundspeed(0,0);
-  cc = cc + 2.0 * viscosity(0,0)/density0(0,0);
+  cc = OPS_ACCS(soundspeed, 0,0) * OPS_ACCS(soundspeed, 0,0);
+  cc = cc + 2.0 * OPS_ACCS(viscosity, 0,0)/OPS_ACCS(density0, 0,0);
   cc = MAX(sqrt(cc),g_small);
 
   dtct = dtc_safe * MIN(dsx,dsy)/cc;
@@ -95,32 +66,31 @@ const double dtdiv_safe)
   div=0.0;
 
 
-  dv1 = (xvel0(0,0) + xvel0(0,1)) * xarea(0,0);
-  dv2 = (xvel0(1,0) + xvel0(1,1)) * xarea(1,0);
+  dv1 = (OPS_ACCS(xvel0, 0,0) + OPS_ACCS(xvel0, 0,1)) * OPS_ACCS(xarea, 0,0);
+  dv2 = (OPS_ACCS(xvel0, 1,0) + OPS_ACCS(xvel0, 1,1)) * OPS_ACCS(xarea, 1,0);
 
   div = div + dv2 - dv1;
 
-  dtut = dtu_safe * 2.0 * volume(0,0)/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(0,0));
+  dtut = dtu_safe * 2.0 * OPS_ACCS(volume, 0,0)/MAX(MAX(fabs(dv1), fabs(dv2)), g_small * OPS_ACCS(volume, 0,0));
 
-  dv1 = (yvel0(0,0) + yvel0(1,0)) * yarea(0,0);
-  dv2 = (yvel0(0,1) + yvel0(1,1)) * yarea(0,1);
+  dv1 = (OPS_ACCS(yvel0, 0,0) + OPS_ACCS(yvel0, 1,0)) * OPS_ACCS(yarea, 0,0);
+  dv2 = (OPS_ACCS(yvel0, 0,1) + OPS_ACCS(yvel0, 1,1)) * OPS_ACCS(yarea, 0,1);
 
   div = div + dv2 - dv1;
 
-  dtvt = dtv_safe * 2.0 * volume(0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * volume(0,0));
+  dtvt = dtv_safe * 2.0 * OPS_ACCS(volume, 0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), g_small * OPS_ACCS(volume, 0,0));
 
-  div = div/(2.0 * volume(0,0));
+  div = div/(2.0 * OPS_ACCS(volume, 0,0));
 
   if(div < -g_small)
     dtdivt = dtdiv_safe * (-1.0/div);
   else
     dtdivt = g_big;
 
-  dt_min(0,0) = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
+  OPS_ACCS(dt_min, 0,0) = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
 
 
 }
-
 
 
 __kernel void ops_calc_dt_kernel(
@@ -160,17 +130,28 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel],
-                   &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel],
-                   &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel],
-                   &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel],
-                   &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel],
-                   &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel],
-                   &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel],
-                   &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_calc_dt_kernel],
-                   &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_calc_dt_kernel],
-                   &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_calc_dt_kernel],
-                   &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_calc_dt_kernel],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel], xdim0_calc_dt_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel], xdim1_calc_dt_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel], xdim2_calc_dt_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel], xdim3_calc_dt_kernel};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel], xdim4_calc_dt_kernel};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel], xdim5_calc_dt_kernel};
+    const ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel], xdim6_calc_dt_kernel};
+    const ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_calc_dt_kernel], xdim7_calc_dt_kernel};
+    const ptr_double ptr8 = { &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_calc_dt_kernel], xdim8_calc_dt_kernel};
+    const ptr_double ptr9 = { &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_calc_dt_kernel], xdim9_calc_dt_kernel};
+    ptr_double ptr10 = { &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_calc_dt_kernel], xdim10_calc_dt_kernel};
+    calc_dt_kernel(ptr0,
+                   ptr1,
+                   ptr2,
+                   ptr3,
+                   ptr4,
+                   ptr5,
+                   ptr6,
+                   ptr7,
+                   ptr8,
+                   ptr9,
+                   ptr10,
                    g_small,
                    g_big,
                    dtc_safe,

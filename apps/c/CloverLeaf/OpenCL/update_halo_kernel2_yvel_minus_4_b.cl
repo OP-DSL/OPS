@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,22 +44,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel2_yvel_minus_4_b*(y))
-#define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel2_yvel_minus_4_b*(y))
-
-
 //user function
-inline void update_halo_kernel2_yvel_minus_4_b(ACC<__global double> &yvel0,ACC<__global double> &yvel1,const __global int* restrict  fields)
 
- {
-  if(fields[FIELD_YVEL0] == 1) yvel0(0,0) = -yvel0(0,-4);
-  if(fields[FIELD_YVEL1] == 1) yvel1(0,0) = -yvel1(0,-4);
+inline void update_halo_kernel2_yvel_minus_4_b(ptr_double yvel0,  ptr_double yvel1,  const __global int* restrict  fields) {
+  if(fields[FIELD_YVEL0] == 1) OPS_ACCS(yvel0, 0,0) = -OPS_ACCS(yvel0, 0,-4);
+  if(fields[FIELD_YVEL1] == 1) OPS_ACCS(yvel1, 0,0) = -OPS_ACCS(yvel1, 0,-4);
 }
-
 
 
 __kernel void ops_update_halo_kernel2_yvel_minus_4_b(
@@ -73,8 +66,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel2_yvel_minus_4_b(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_yvel_minus_4_b],
-                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_yvel_minus_4_b],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_yvel_minus_4_b], xdim0_update_halo_kernel2_yvel_minus_4_b};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_yvel_minus_4_b], xdim1_update_halo_kernel2_yvel_minus_4_b};
+    update_halo_kernel2_yvel_minus_4_b(ptr0,
+                       ptr1,
                        arg2);
   }
 

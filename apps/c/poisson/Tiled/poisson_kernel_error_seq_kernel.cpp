@@ -161,13 +161,18 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(+:p_a2_0)
+    #pragma omp simd reduction(+:p_a2_0) aligned(u_p,ref_p)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      const ACC<double> u(xdim0_poisson_kernel_error, u_p + n_x + n_y * xdim0_poisson_kernel_error);
-      const ACC<double> ref(xdim1_poisson_kernel_error, ref_p + n_x + n_y * xdim1_poisson_kernel_error);
+      const ACC<double> u(xdim0_poisson_kernel_error, u_p + n_x*1 + n_y * xdim0_poisson_kernel_error*1);
+      const ACC<double> ref(xdim1_poisson_kernel_error, ref_p + n_x*1 + n_y * xdim1_poisson_kernel_error*1);
       double err[1];
       err[0] = ZERO_double;
       

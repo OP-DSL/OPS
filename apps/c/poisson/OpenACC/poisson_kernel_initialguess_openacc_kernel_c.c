@@ -6,21 +6,11 @@
 
 int xdim0_poisson_kernel_initialguess;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_initialguess*(y))
-
 //user function
 inline 
-void poisson_kernel_initialguess(ACC<double> u) {
-  u(0,0) = 0.0;
+void poisson_kernel_initialguess(ptr_double u) {
+  OPS_ACC(u, 0,0) = 0.0;
 }
-
-
-#undef OPS_ACC0
-
 
 
 void poisson_kernel_initialguess_c_wrapper(
@@ -35,7 +25,8 @@ void poisson_kernel_initialguess_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_initialguess(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_initialguess*1*1 );
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_initialguess*1*1, xdim0_poisson_kernel_initialguess};
+      poisson_kernel_initialguess( ptr0 );
 
     }
   }

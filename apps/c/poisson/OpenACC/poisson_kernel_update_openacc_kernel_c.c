@@ -7,24 +7,11 @@
 int xdim0_poisson_kernel_update;
 int xdim1_poisson_kernel_update;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_update*(y))
-#define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_update*(y))
-
 //user function
 inline 
-void poisson_kernel_update(const ACC<double> u2, ACC<double> u) {
-  u(0,0) = u2(0,0);
+void poisson_kernel_update(const ptr_double u2, ptr_double u) {
+  OPS_ACC(u, 0,0) = OPS_ACC(u2, 0,0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void poisson_kernel_update_c_wrapper(
@@ -40,8 +27,10 @@ void poisson_kernel_update_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_update(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_update*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_update*1*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_update*1*1, xdim0_poisson_kernel_update};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_update*1*1, xdim1_poisson_kernel_update};
+      poisson_kernel_update( ptr0,
+          ptr1 );
 
     }
   }
