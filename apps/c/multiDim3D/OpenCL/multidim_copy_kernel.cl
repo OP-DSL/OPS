@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_3D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,23 +43,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)+(xdim0_multidim_copy_kernel*(y))+(xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*(z))+(d)*xdim0_multidim_copy_kernel*ydim0_multidim_copy_kernel*zdim0_multidim_copy_kernel)
-#define OPS_ACC_MD1(d,x,y,z) ((x)+(xdim1_multidim_copy_kernel*(y))+(xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*(z))+(d)*xdim1_multidim_copy_kernel*ydim1_multidim_copy_kernel*zdim1_multidim_copy_kernel)
-
 //user function
-void multidim_copy_kernel(const ACC<__global double> &src,ACC<__global double> &dest)
 
-{
-  dest(0,0,0,0) = src(0,0,0,0);
-  dest(1,0,0,0) = src(1,0,0,0);
-  dest(2,0,0,0) = src(2,0,0,0);
+void multidim_copy_kernel(const ptrm_double src, ptrm_double dest){
+  OPS_ACCM(dest, 0,0,0,0) = OPS_ACCM(src, 0,0,0,0);
+  OPS_ACCM(dest, 1,0,0,0) = OPS_ACCM(src, 1,0,0,0);
+  OPS_ACCM(dest, 2,0,0,0) = OPS_ACCM(src, 2,0,0,0);
 }
-
 
 
 __kernel void ops_multidim_copy_kernel(
@@ -74,8 +67,18 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    multidim_copy_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel + idx_z * 1 * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel],
-                         &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel + idx_z * 1 * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel]);
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel + idx_z * 1 * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel], xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, zdim0_multidim_copy_kernel};
+    #else
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_copy_kernel + idx_z * 1 * xdim0_multidim_copy_kernel * ydim0_multidim_copy_kernel], xdim0_multidim_copy_kernel, ydim0_multidim_copy_kernel, 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel + idx_z * 1 * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel], xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, zdim1_multidim_copy_kernel};
+    #else
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1 + idx_y * 1 * xdim1_multidim_copy_kernel + idx_z * 1 * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel], xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, 3};
+    #endif
+    multidim_copy_kernel(ptr0,
+                         ptr1);
   }
 
 }
