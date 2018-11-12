@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,37 +44,21 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel_post_pre_advec_x*(y))
-#define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel_post_pre_advec_x*(y))
-#define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel_post_pre_advec_x*(y))
-#define OPS_ACC3(x,y) (x+xdim3_advec_mom_kernel_post_pre_advec_x*(y))
-#define OPS_ACC4(x,y) (x+xdim4_advec_mom_kernel_post_pre_advec_x*(y))
-
-
 //user function
-inline void advec_mom_kernel_post_pre_advec_x( ACC<__global double> &node_mass_post,const ACC<__global double> &post_vol,const ACC<__global double> &density1,
-ACC<__global double> &node_mass_pre,const ACC<__global double> &node_flux)
 
- {
-
+inline void advec_mom_kernel_post_pre_advec_x( ptr_double node_mass_post, const ptr_double post_vol,
+                                  const ptr_double density1, ptr_double node_mass_pre, const ptr_double node_flux) {
 
 
-  node_mass_post(0,0) = 0.25 * ( density1(0,-1) * post_vol(0,-1) +
-                              density1(0,0)   * post_vol(0,0)   +
-                              density1(-1,-1) * post_vol(-1,-1) +
-                              density1(-1,0)  * post_vol(-1,0)  );
 
-  node_mass_pre(0,0) = node_mass_post(0,0) - node_flux(-1,0) + node_flux(0,0);
+  OPS_ACCS(node_mass_post, 0,0) = 0.25 * ( OPS_ACCS(density1, 0,-1) * OPS_ACCS(post_vol, 0,-1) +
+                              OPS_ACCS(density1, 0,0)   * OPS_ACCS(post_vol, 0,0)   +
+                              OPS_ACCS(density1, -1,-1) * OPS_ACCS(post_vol, -1,-1) +
+                              OPS_ACCS(density1, -1,0)  * OPS_ACCS(post_vol, -1,0)  );
+
+  OPS_ACCS(node_mass_pre, 0,0) = OPS_ACCS(node_mass_post, 0,0) - OPS_ACCS(node_flux, -1,0) + OPS_ACCS(node_flux, 0,0);
 
 }
-
 
 
 __kernel void ops_advec_mom_kernel_post_pre_advec_x(
@@ -93,11 +80,16 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_post_pre_advec_x(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_post_pre_advec_x],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_post_pre_advec_x],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_post_pre_advec_x],
-                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_post_pre_advec_x],
-                     &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel_post_pre_advec_x]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_post_pre_advec_x], xdim0_advec_mom_kernel_post_pre_advec_x};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_post_pre_advec_x], xdim1_advec_mom_kernel_post_pre_advec_x};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_post_pre_advec_x], xdim2_advec_mom_kernel_post_pre_advec_x};
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_post_pre_advec_x], xdim3_advec_mom_kernel_post_pre_advec_x};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel_post_pre_advec_x], xdim4_advec_mom_kernel_post_pre_advec_x};
+    advec_mom_kernel_post_pre_advec_x(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
+                     ptr4);
   }
 
 }

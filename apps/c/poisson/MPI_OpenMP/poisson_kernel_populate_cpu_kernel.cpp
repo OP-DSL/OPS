@@ -103,17 +103,23 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
+    int idx[] = {0, arg_idx[1]+n_y};
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd
+    #pragma omp simd aligned(u_p,f_p,ref_p)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma simd
+    #pragma GCC ivdep
     #else
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
-      ACC<double> u(xdim3_poisson_kernel_populate, u_p + n_x + n_y * xdim3_poisson_kernel_populate);
-      ACC<double> f(xdim4_poisson_kernel_populate, f_p + n_x + n_y * xdim4_poisson_kernel_populate);
-      ACC<double> ref(xdim5_poisson_kernel_populate, ref_p + n_x + n_y * xdim5_poisson_kernel_populate);
+      idx[0] = arg_idx[0]+n_x;
+      ACC<double> u(xdim3_poisson_kernel_populate, u_p + n_x*1 + n_y * xdim3_poisson_kernel_populate*1);
+      ACC<double> f(xdim4_poisson_kernel_populate, f_p + n_x*1 + n_y * xdim4_poisson_kernel_populate*1);
+      ACC<double> ref(xdim5_poisson_kernel_populate, ref_p + n_x*1 + n_y * xdim5_poisson_kernel_populate*1);
       
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);

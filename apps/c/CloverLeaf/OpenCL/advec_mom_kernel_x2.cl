@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,29 +44,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel_x2*(y))
-#define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel_x2*(y))
-#define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel_x2*(y))
-#define OPS_ACC3(x,y) (x+xdim3_advec_mom_kernel_x2*(y))
-
-
 //user function
-inline void advec_mom_kernel_x2( ACC<__global double> &pre_vol,ACC<__global double> &post_vol,const ACC<__global double> &volume,
-const ACC<__global double> &vol_flux_y)
 
- {
+inline void advec_mom_kernel_x2( ptr_double pre_vol, ptr_double post_vol,
+                          const ptr_double volume,
+                          const ptr_double vol_flux_y) {
 
-  post_vol(0,0)  = volume(0,0) ;
-  pre_vol(0,0)   = post_vol(0,0)  + vol_flux_y(0,1) - vol_flux_y(0,0);
+  OPS_ACCS(post_vol, 0,0)  = OPS_ACCS(volume, 0,0) ;
+  OPS_ACCS(pre_vol, 0,0)   = OPS_ACCS(post_vol, 0,0)  + OPS_ACCS(vol_flux_y, 0,1) - OPS_ACCS(vol_flux_y, 0,0);
 
 }
-
 
 
 __kernel void ops_advec_mom_kernel_x2(
@@ -83,10 +73,14 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_x2(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_x2],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_x2],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_x2],
-                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_x2]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_x2], xdim0_advec_mom_kernel_x2};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_x2], xdim1_advec_mom_kernel_x2};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel_x2], xdim2_advec_mom_kernel_x2};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_mom_kernel_x2], xdim3_advec_mom_kernel_x2};
+    advec_mom_kernel_x2(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3);
   }
 
 }
