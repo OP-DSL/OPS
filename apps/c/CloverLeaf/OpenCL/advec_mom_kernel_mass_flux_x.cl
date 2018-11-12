@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,24 +44,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel_mass_flux_x*(y))
-#define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel_mass_flux_x*(y))
-
-
 //user function
-inline void advec_mom_kernel_mass_flux_x( ACC<__global double> &node_flux,const ACC<__global double> &mass_flux_x)
 
- {
+inline void advec_mom_kernel_mass_flux_x( ptr_double node_flux, const ptr_double mass_flux_x) {
 
 
-  node_flux(0,0) = 0.25 * ( mass_flux_x(0,-1) + mass_flux_x(0,0) +
-    mass_flux_x(1,-1) + mass_flux_x(1,0) );
+  OPS_ACCS(node_flux, 0,0) = 0.25 * ( OPS_ACCS(mass_flux_x, 0,-1) + OPS_ACCS(mass_flux_x, 0,0) +
+    OPS_ACCS(mass_flux_x, 1,-1) + OPS_ACCS(mass_flux_x, 1,0) );
 }
-
 
 
 __kernel void ops_advec_mom_kernel_mass_flux_x(
@@ -74,8 +67,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel_mass_flux_x(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_x],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_x]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_x], xdim0_advec_mom_kernel_mass_flux_x};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_x], xdim1_advec_mom_kernel_mass_flux_x};
+    advec_mom_kernel_mass_flux_x(ptr0,
+                     ptr1);
   }
 
 }

@@ -48,11 +48,13 @@ import config
 para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
-parse_signature = util.parse_signature_opencl
+parse_signature = util.parse_signature
 check_accs = util.check_accs
 arg_parse = util.arg_parse
 find_consts = util.find_consts
 mult = util.mult
+replace_ACC_kernel_body = util.replace_ACC_kernel_body
+parse_replace_ACC_signature = util.parse_replace_ACC_signature
 
 comm = util.comm
 code = util.code
@@ -170,6 +172,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     code('')
     if os.path.exists('./user_types.h'):
       code('#include "user_types.h"')
+    code('#define OPS_'+str(NDIM)+'D')
+    code('#define OPS_NO_GLOBALS')
+    code('#include "ops_macros.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
     comm('')
@@ -205,49 +210,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     code('#define ZERO_bool 0;')
 
     code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-    code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) (x)')
-          if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-          if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
-    code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          if NDIM==1:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
-          if NDIM==2:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
-          if NDIM==3:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
-
-
-    code('')
     comm('user function')
     found = 0
     for files in glob.glob( "*.h" ):
@@ -280,65 +242,38 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
 
     i = text[0:i].rfind('\n') #reverse find
-    #find function signature
-    loc = arg_parse(text, i + 1)
-    sig = text[i:loc]+','
-    sig_name= sig[0:sig.find('(')]
-    #print sig_name
-    sig_arg = sig[sig.find('(')+1:]
-    #print sig_arg
-    sig = sig_name+'('+parse_signature(sig_arg)
-    sig = sig[:-1]
 
-    # detect global variables and remove __global from the function signature for these
-    sig2 = ''
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] != OPS_READ:
-          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
+    text = text[i:]
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
+    text = text[0:k+1]
+    m = text.find(name)
+    arg_list = parse_signature(text[m+len(name):j])
+    print arg_list
+
+
+    part_name = text[0:m+len(name)]
+    part_args = text[m+len(name):j]
+    part_body = text[j:]
+    found_consts = find_consts(part_body,consts)
+    if len(found_consts) != 0:
+      text = part_args[0:part_args.rfind(')')]
+      for c in range(0, len(found_consts)):
+        if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
+          text = text + ', const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]
         else:
-          if dims[n].isdigit() and int(dims[n]) == 1:
-            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
-          else:
-            sig2 = sig2 + sig.split(',')[n].strip()+','
-      elif arg_typ[n] == 'ops_arg_idx':
-        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
-      else:
-        sig2 = sig2 + sig.split(',')[n].strip()+','
-      if n%4 == 2:
-        sig2 = sig2 + '\n'
+          text = text + ', __constant const'+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]
+        if c == len(found_consts)-1:
+          text = text + ')\n'
+      part_args = text
 
 
-    #find body of function
-    j2 = text[loc+1:].find('{')
-    k2 = para_parse(text, loc+j2, '{', '}')
-
-    body = text[loc+1:k2+2] # body of function
-
-    found_consts = find_consts(body,consts)
-    #print found_consts
-
-    j = sig2.rfind(',')
-    if len(found_consts) == 0:
-      sig2 = sig2[0:j]+')'
-    code(sig2) # function signature
-
-    config.depth = config.depth +2
-    text = ''
-    for c in range(0, len(found_consts)):
-      if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
-        text = text + 'const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]
-      else:
-        text = text + '__constant const'+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]
-      if c < len(found_consts)-1:
-        text = text + ',\n'
-      else:
-        text = text + ')\n'
-
+    text = part_name + \
+            parse_replace_ACC_signature(part_args, arg_typ, dims, 1, accs, typs) + \
+            replace_ACC_kernel_body(part_body, arg_list, arg_typ, nargs, 1, dims)
+ 
 
     code(text)
-    config.depth =config.depth-2
-    code(body)
     code('')
     code('')
 
@@ -440,8 +375,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
-    text = name+'('
     for n in range (0, nargs):
+      text = ''
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
           if soa_set:
@@ -470,7 +405,36 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
                 ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
                 ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+ \
                 ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+']'
+        pre = ''
+        if accs[n] == OPS_READ:
+          pre = 'const '
+        dim = ''
+        sizelist = ''
+        extradim = 0
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]
+            extradim = 1
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim'
+            extradim = 1
+        dimlabels = 'xyzuv'
+        for i in range(1,NDIM):
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
+        extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
+        if dim == '':
+          code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+'};')
+        else:
+          code('#ifdef OPS_SOA')
+          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist + extradim+'};')
+          code('#else')
+          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+', '+dim+'};')
+          code('#endif')
 
+
+    text = name+'('
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+          text = text + 'ptr'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
           text = text +'&arg'+str(n)

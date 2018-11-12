@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,30 +44,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+xdim0_flux_calc_kernelx*(y))
-#define OPS_ACC1(x,y) (x+xdim1_flux_calc_kernelx*(y))
-#define OPS_ACC2(x,y) (x+xdim2_flux_calc_kernelx*(y))
-#define OPS_ACC3(x,y) (x+xdim3_flux_calc_kernelx*(y))
-
-
 //user function
-void flux_calc_kernelx( ACC<__global double> &vol_flux_x,const ACC<__global double> &xarea,const ACC<__global double> &xvel0,
-const ACC<__global double> &xvel1,
-  const double dt)
 
- {
+void flux_calc_kernelx( ptr_double vol_flux_x, const ptr_double xarea,
+                        const ptr_double xvel0, const ptr_double xvel1, const double dt)
+{
 
-  vol_flux_x(0,0) = 0.25 * dt * (xarea(0,0)) *
-  ( (xvel0(0,0)) + (xvel0(0,1)) + (xvel1(0,0)) + (xvel1(0,1)) );
+  OPS_ACCS(vol_flux_x, 0,0) = 0.25 * dt * (OPS_ACCS(xarea, 0,0)) *
+  ( (OPS_ACCS(xvel0, 0,0)) + (OPS_ACCS(xvel0, 0,1)) + (OPS_ACCS(xvel1, 0,0)) + (OPS_ACCS(xvel1, 0,1)) );
 
 }
-
 
 
 __kernel void ops_flux_calc_kernelx(
@@ -85,10 +74,14 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    flux_calc_kernelx(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_flux_calc_kernelx],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_flux_calc_kernelx],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_flux_calc_kernelx],
-                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_flux_calc_kernelx],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_flux_calc_kernelx], xdim0_flux_calc_kernelx};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_flux_calc_kernelx], xdim1_flux_calc_kernelx};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_flux_calc_kernelx], xdim2_flux_calc_kernelx};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_flux_calc_kernelx], xdim3_flux_calc_kernelx};
+    flux_calc_kernelx(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
                      dt);
   }
 
