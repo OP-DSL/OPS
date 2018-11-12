@@ -45,6 +45,7 @@
 #define ZERO_bool 0;
 
 //user function
+
 inline void advec_cell_kernel3_ydir( const ptr_double vol_flux_y, const ptr_double pre_vol, const ptr_int yy,
                               const ptr_double vertexdy,
                               const ptr_double density1, const ptr_double energy1 ,

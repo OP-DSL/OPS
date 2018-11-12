@@ -127,41 +127,6 @@ typedef struct ptr_int {
 } ptr_int;
 
 typedef struct ptrm_double {
-  double *restrict ptr;
-  int xdim;
-#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
-#endif
-#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
-#endif
-#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
-  int udim;
-#endif
-#ifndef OPS_SOA
-  int dim;
-#endif
-} ptrm_double;
-
-typedef struct ptrm_int {
-  int *restrict ptr;
-  int xdim;
-#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
-#endif
-#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
-#endif
-#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
-  int udim;
-#endif
-#ifndef OPS_SOA
-  int dim;
-#endif
-} ptrm_int;
-
-
-typedef struct ptrm_double {
 #ifdef __OPENCL_VERSION__
   __global
 #endif
