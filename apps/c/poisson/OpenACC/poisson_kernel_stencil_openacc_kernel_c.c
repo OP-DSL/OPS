@@ -7,26 +7,13 @@
 int xdim0_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_stencil*(y))
-#define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_stencil*(y))
-
 //user function
 inline 
-void poisson_kernel_stencil(const ACC<double> u, ACC<double> u2) {
-  u2(0,0) = ((u(-1,0)-2.0f*u(0,0)+u(1,0))*0.125f
-                     + (u(0,-1)-2.0f*u(0,0)+u(0,1))*0.125f
-                     + u(0,0));
+void poisson_kernel_stencil(const ptr_double u, ptr_double u2) {
+  OPS_ACC(u2, 0,0) = ((OPS_ACC(u, -1,0)-2.0f*OPS_ACC(u, 0,0)+OPS_ACC(u, 1,0))*0.125f
+                     + (OPS_ACC(u, 0,-1)-2.0f*OPS_ACC(u, 0,0)+OPS_ACC(u, 0,1))*0.125f
+                     + OPS_ACC(u, 0,0));
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void poisson_kernel_stencil_c_wrapper(
@@ -42,8 +29,10 @@ void poisson_kernel_stencil_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_stencil(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_stencil*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_stencil*1*1 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_stencil*1*1, xdim0_poisson_kernel_stencil};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_stencil*1*1, xdim1_poisson_kernel_stencil};
+      poisson_kernel_stencil( ptr0,
+          ptr1 );
 
     }
   }

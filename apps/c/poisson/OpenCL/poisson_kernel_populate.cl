@@ -10,6 +10,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,32 +44,18 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC3(x,y) (x+xdim3_poisson_kernel_populate*(y))
-#define OPS_ACC4(x,y) (x+xdim4_poisson_kernel_populate*(y))
-#define OPS_ACC5(x,y) (x+xdim5_poisson_kernel_populate*(y))
-
-
 //user function
-void poisson_kernel_populate(const  int * restrict dispx,const  int * restrict dispy,const  int * restrict idx,
-ACC<__global double> u,ACC<__global double> f,ACC<__global double> ref,
-  const double dx,
-const double dy)
 
- {
+void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx, ptr_double u, ptr_double f, ptr_double ref, const double dx, const double dy)
+{
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
-  u(0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
-  f(0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
-  ref(0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
+  OPS_ACCS(u, 0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
+  OPS_ACCS(f, 0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+  OPS_ACCS(ref, 0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
 }
-
 
 
 __kernel void ops_poisson_kernel_populate(
@@ -92,12 +81,15 @@ const int size1 ){
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
   if (idx_x < size0 && idx_y < size1) {
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_poisson_kernel_populate], xdim3_poisson_kernel_populate};
+    ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_poisson_kernel_populate], xdim4_poisson_kernel_populate};
+    ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_poisson_kernel_populate], xdim5_poisson_kernel_populate};
     poisson_kernel_populate(&arg0,
                    &arg1,
                    arg_idx,
-                   &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_poisson_kernel_populate],
-                   &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_poisson_kernel_populate],
-                   &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_poisson_kernel_populate],
+                   ptr3,
+                   ptr4,
+                   ptr5,
                    dx,
                    dy);
   }
