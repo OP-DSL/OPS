@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_3D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,24 +43,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
-#undef OPS_ACC_MD0
-
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)+(xdim0_multidim_kernel*(y))+(xdim0_multidim_kernel*ydim0_multidim_kernel*(z))+(d)*xdim0_multidim_kernel*ydim0_multidim_kernel*zdim0_multidim_kernel)
-
 //user function
-void multidim_kernel(ACC<__global double> &val, int * restrict idx)
 
-{
-  val(0,0,0,0) = (double)(idx[0]);
-  val(1,0,0,0) = (double)(idx[1]);
-  val(2,0,0,0) = (double)(idx[2]);
+void multidim_kernel(ptrm_double val, int *idx){
+  OPS_ACCM(val, 0,0,0,0) = (double)(idx[0]);
+  OPS_ACCM(val, 1,0,0,0) = (double)(idx[1]);
+  OPS_ACCM(val, 2,0,0,0) = (double)(idx[2]);
 
 
 
 }
-
 
 
 __kernel void ops_multidim_kernel(
@@ -78,7 +73,12 @@ const int size2 ){
   arg_idx[1] = arg_idx1+idx_y;
   arg_idx[2] = arg_idx2+idx_z;
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    multidim_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_kernel + idx_z * 1 * xdim0_multidim_kernel * ydim0_multidim_kernel],
+    #ifdef OPS_SOA
+    ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_kernel + idx_z * 1 * xdim0_multidim_kernel * ydim0_multidim_kernel], xdim0_multidim_kernel, ydim0_multidim_kernel, zdim0_multidim_kernel};
+    #else
+    ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_kernel + idx_z * 1 * xdim0_multidim_kernel * ydim0_multidim_kernel], xdim0_multidim_kernel, ydim0_multidim_kernel, 3};
+    #endif
+    multidim_kernel(ptr0,
                     arg_idx);
   }
 
