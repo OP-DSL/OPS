@@ -1,5 +1,6 @@
 #ifndef __OPS_OPENCL_RT_SUPPORT_H
 #define __OPS_OPENCL_RT_SUPPORT_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -103,5 +104,5 @@ void ops_download_dat(ops_dat dat);
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_RT_SUPPORT_H */

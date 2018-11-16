@@ -44,7 +44,7 @@
 /*
 * run-time type-checking routines
 */
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 inline int type_error(const double *a, const char *type) {
   (void)a;
   return (strcmp(type, "double") && strcmp(type, "double:soa"));
@@ -73,6 +73,7 @@ inline int type_error(const bool *a, const char *type) {
   (void)a;
   return (strcmp(type, "bool") && strcmp(type, "bool:soa"));
 }
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 /**
  * Passes a scalar or small array that is invariant of the iteration space.
@@ -252,6 +253,7 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                            stride, (char *)data, sizeof(T), type, name);
 }
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 //
 // wrapper functions to handle MPI global reductions
 //
@@ -272,5 +274,5 @@ inline void ops_mpi_reduce(ops_arg *args, int *data) {
 template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
   // printf("should not be here\n");
 }
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_LIB_CPP_H */

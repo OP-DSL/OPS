@@ -1,6 +1,6 @@
 #ifndef __OPS_CUDA_RT_SUPPORT_H
 #define __OPS_CUDA_RT_SUPPORT_H
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -100,5 +100,5 @@ void ops_halo_copy_hd(const char *src, char *dest, int size);
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_RT_SUPPORT_H */
