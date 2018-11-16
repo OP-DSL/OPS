@@ -486,4 +486,5 @@ private:
   T *__restrict__ ptr;
 };
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_LIB_CPP_H */

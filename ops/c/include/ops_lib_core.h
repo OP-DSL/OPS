@@ -73,6 +73,7 @@
  */
 #define OPS_MAX_DIM 5
 
+<<<<<<< HEAD
 /**
  * maximum number of simulataneous OPS instances 
  * in a shared memory environment
@@ -82,6 +83,8 @@
 #endif 
 
 
+=======
+>>>>>>> c65499c... Doxygen comments, removed internal APIs
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /*
@@ -340,6 +343,8 @@ typedef struct ops_kernel_descriptor {
 #define ROUND_UP(bytes) (((bytes) + 15) & ~15)
 #define ROUND_UP_64(bytes) (((bytes) + 63) & ~63)
 
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -863,7 +868,6 @@ void* ops_malloc (size_t size);
 void* ops_realloc (void *ptr, size_t size);
 void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
-
 
 #ifdef __cplusplus
 }
