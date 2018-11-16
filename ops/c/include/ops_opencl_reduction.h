@@ -1,5 +1,6 @@
 #ifndef __OPS_OPENCL_REDUCTION_H
 #define __OPS_OPENCL_REDUCTION_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -146,5 +147,5 @@ void reduce_int(int value, __local int *scratch, __global int *result,
     result[0] = scratch[0];
   }
 }
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_REDUCTION_H */
