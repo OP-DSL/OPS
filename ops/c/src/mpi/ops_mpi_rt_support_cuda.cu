@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi+cuda run-time support routines
+/** @file
+  * @brief OPS mpi+cuda run-time support routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the runtime support routines for the OPS mpi+cuda
  * backend

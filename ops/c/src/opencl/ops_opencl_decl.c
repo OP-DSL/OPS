@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops opencl backend implementation
+/** @file
+  * @brief OPS opencl backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the opencl backend
   */

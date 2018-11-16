@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief HDF5 file I/O backend implementation for MPI
+/** @file
+  * @brief HDF5 file I/O backend implementation for MPI
   * @author Gihan Mudalige (started 28-08-2015)
   * @details Implements the OPS API calls for the HDF5 file I/O functionality
   */

@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops cuda backend implementation
+/** @file
+  * @brief OPS cuda backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the cuda backend
   */

@@ -27,6 +27,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS OpenCL code generator
+#
+#  This routine is called by ops.py which parses the input files
+#
+#  It produces a file xxx_opencl_kernel.cpp and a XX_kernel.cl for each kernel,
+#  plus a master kernel file
+#
+
 """
 OPS OpenCL code generator
 

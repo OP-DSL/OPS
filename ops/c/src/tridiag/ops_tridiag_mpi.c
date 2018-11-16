@@ -30,11 +30,12 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* @brief OPS API calls and wrapper routins for Tridiagonal solvers
-* @author Gihan Mudalige, Istvan Reguly
-* @details Implementations of the OPS API calls, wrapper routines and other
-* functions for interfacing with external Tridiagonal libraries
-*/
+/** @file
+  * @brief OPS API calls and wrapper routins for Tridiagonal solvers
+  * @author Gihan Mudalige, Istvan Reguly
+  * @details Implementations of the OPS API calls, wrapper routines and other
+  * functions for interfacing with external Tridiagonal libraries
+  */
 
 #include <ops_lib_core.h>
 #include <ops_mpi_core.h>
