@@ -1,5 +1,6 @@
 #ifndef __OPS_CUDA_REDUCTION_H
 #define __OPS_CUDA_REDUCTION_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -253,5 +254,5 @@ __inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
     }
   }
 }
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_REDUCTION_H */

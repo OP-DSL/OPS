@@ -37,7 +37,7 @@
   * @author Gihan Mudalige, Istvan Reguly
   * @details Header file for OPS MPI backend
   */
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #include <mpi.h>
 #include <ops_lib_core.h>
 
@@ -192,4 +192,5 @@ char* ops_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 #ifdef __cplusplus
 }
 #endif
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /*__OPS_MPI_CORE_H*/
