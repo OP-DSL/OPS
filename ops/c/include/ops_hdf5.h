@@ -124,7 +124,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 /**
  * Write the details of an ::ops_block to a named HDF5 file.
  *
- * Can be used over MPI (puts the data in an @p ops_dat (ToDo: ::ops_block???) into an HDF5 file
+ * Can be used over MPI (puts the data in an ::ops_block into an HDF5 file
  * using MPI I/O)
  *
  * @param block      ops block to be written
@@ -133,19 +133,36 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
 
 /**
- * ToDo: looks like reoutines got mixed up here.
+ * Write the details of an ::ops_stencil to a named HDF5 file.
  *
- * Write the details of an ::ops_block to a named HDF5 file.
- *
- * Can be used over MPI (puts the data in an ::ops_dat into an HDF5 file
+ * Can be used over MPI (puts the data in an ::ops_stencil into an HDF5 file
  * using MPI I/O)
  *
  * @param stencil    ::ops_stencil to be written
  * @param file_name  HDF5 file to write to
  */
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);
+
+/**
+ * Write the details of an ::ops_halo to a named HDF5 file.
+ *
+ * Can be used over MPI (puts the data in an ::ops_halo into an HDF5 file
+ * using MPI I/O)
+ *
+ * @param halo    ::ops_halo to be written
+ * @param file_name  HDF5 file to write to
+ */
 void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name);
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 void ops_read_dat_hdf5(ops_dat dat);
+#endif /* DOXYGEN_SHOULD_SKIP_THIS*/
+
+/**
+ * Write all state (blocks, datasets, stencils) to a named HDF5 file.
+ *
+ * @param file_name  HDF5 file to write to
+ */
 void ops_dump_to_hdf5(char const *file_name);
 
 #ifdef __cplusplus

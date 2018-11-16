@@ -1,5 +1,6 @@
 #ifndef OPS_MACROS_H
 #define OPS_MACROS_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -268,5 +269,6 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d98, multi_d99;
 #endif
 #endif
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H
 
