@@ -81,7 +81,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
  * @param dims          dimension of loop iteration
  * @param points        number of points in the stencil
  * @param stencil_name  string representing the name of the stencil
- * @param file_name     HDF5 file to write to (ToDo: read from???)
+ * @param file_name     HDF5 file to read from 
  * @return
  */
 ops_stencil ops_decl_stencil_hdf5(int dims, int points,
@@ -93,7 +93,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
  * @param dims          dimension of loop iteration
  * @param points        number of points in the stencil
  * @param stencil_name  string representing the name of the stencil
- * @param file_name     HDF5 file to write to (ToDo: read from???)
+ * @param file_name     HDF5 file to read from
  * @return
  */
 ops_stencil ops_decl_strided_stencil_hdf5(int dims, int points,
