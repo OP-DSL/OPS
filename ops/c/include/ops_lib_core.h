@@ -679,6 +679,29 @@ int ops_dat_get_local_npartitions(ops_dat dat);
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
 
 /**
+ * This routine returns array shape metadata corresponding to the ops_dat.
+ * Any of the arguments may be NULL.
+ *
+ * @param data     the datasets
+ * @param part     the chunk index (has to be 0)
+ * @param disp     an array populated with the displacement of the chunk within the
+ *                 "global" distributed array
+ * @param size     an array populated with the spatial extents
+ * @param stride   an array populated strides in spatial dimensions needed for
+ *                 column-major indexing
+ * @param d_m      an array populated with padding on the left in each dimension
+ *                 note that these are negative values
+ * @param d_p      an array populated with padding on the right in each dimension
+ */
+void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p);
+
+/**
+ * type for memory space flags - 1 for host, 2 for device
+ */
+typedef int ops_memspace;
+#define OPS_HOST 1
+#define OPS_DEVICE 2
+/**
  * This routine returns a pointer to the internally stored data, with MPI halo
  * regions automatically updated as required by the supplied stencil.
  * The strides required to index into the dataset are also given.
@@ -686,11 +709,13 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
  * @param dat      the dataset
  * @param part     the chunk index (has to be 0)
  * @param stencil  a stencil used to determine required MPI halo exchange depths
- * @param stride   an array populated strides in spatial dimensions needed for
- *                 column-major indexing
+ * @param memspace when set to OPS_HOST or OPS_DEVICE, returns a pointer to data in
+ *                 that memory space, otherwise must be set to 0, and returns
+ *                 wheter data is in the host or on the device
+ *
  * @return
  */
-char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride);
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace);
 
 /**
  * Indicates to OPS that a dataset previously accessed with
@@ -846,6 +871,7 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();
 int ops_num_procs();
+void ops_put_data(ops_dat dat);
 
 /*******************************************************************************
 * Memory allocation functions

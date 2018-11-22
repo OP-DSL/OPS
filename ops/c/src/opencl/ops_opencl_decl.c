@@ -151,6 +151,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 
 // routine to fetch data from device
 void ops_get_data(ops_dat dat) { ops_opencl_get_data(dat); }
+void ops_put_data(ops_dat dat) { ops_opencl_put_data(dat); }
 
 void ops_partition(const char *routine) { (void)routine; }
 
