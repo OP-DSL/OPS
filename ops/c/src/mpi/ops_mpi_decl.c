@@ -166,3 +166,7 @@ void ops_get_data(ops_dat dat) {
   // data already on the host .. do nothing
   (void)dat;
 }
+void ops_put_data(ops_dat dat) {
+  // data already on the host .. do nothing
+  (void)dat;
+}
