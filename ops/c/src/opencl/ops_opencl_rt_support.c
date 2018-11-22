@@ -424,6 +424,18 @@ void ops_opencl_get_data(ops_dat dat) {
 }
 
 //
+// routine to put data from CPU to GPU (with transposing SoA to AoS if needed)
+//
+
+void ops_opencl_put_data(ops_dat dat) {
+  // if (!OPS_hybrid_gpu) return;
+  if (dat->dirty_hd == 1)
+    dat->dirty_hd = 0;
+  else
+    return;
+  ops_upload_dat(dat);
+}
+//
 // routines to resize constant/reduct arrays, if necessary
 //
 

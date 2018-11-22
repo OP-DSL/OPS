@@ -1341,23 +1341,45 @@ int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }
 
-char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
-  ops_get_data(dat);
-  ops_force_halo_exchange(dat, stencil);
+void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p) {
+  ops_dat_get_extents(dat, part, disp, size);
   if (stride != NULL)
     for (int d = 0; d < dat->block->dims; d++)
       stride[d] = dat->size[d];
-  return dat->data + dat->base_offset;
+  if (d_m != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      d_m[d] = dat->d_m[d];
+  if (d_p != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      d_p[d] = dat->d_p[d];
+
+}
+
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
+  ops_force_halo_exchange(dat, stencil);
+  if (*memspace == OPS_HOST) if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
+  else if (*memspace == OPS_DEVICE) if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
+  else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
+  else if (dat->dirty_hd == 1) *memspace = OPS_HOST;
+  else if (dat->data_d != NULL) *memspace = OPS_DEVICE;
+  else *memspace = OPS_HOST;
+  return (*memspace == OPS_HOST ? dat->data : dat->data_d) + dat->base_offset;
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  if (acc != OPS_READ)
-  dat->dirty_hd = 1; 
-  sd->dirtybit = 1;
-  for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
-    sd->dirty_dir_send[i] = 1;
-    sd->dirty_dir_recv[i] = 1;
+  if (acc != OPS_READ) {
+    ops_memspace memspace;
+    if (dat->dirty_hd == 2 && dat->data_d != NULL) memspace = OPS_DEVICE;
+    else if (dat->dirty_hd == 1) memspace = OPS_HOST;
+    else if (dat->data_d != NULL) memspace = OPS_DEVICE;
+    else memspace = OPS_HOST;
+    sub_dat_list sd = OPS_sub_dat_list[dat->index];
+    dat->dirty_hd = (memspace == OPS_HOST ? 1 : 2); 
+    sd->dirtybit = 1;
+    for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
+      sd->dirty_dir_send[i] = 1;
+      sd->dirty_dir_recv[i] = 1;
+    }
   }
 }
 
@@ -1365,8 +1387,12 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {1};
-  int ldisp[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    ldisp[d] = 0;
+  }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
@@ -1383,6 +1409,10 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   int ldisp[OPS_MAX_DIM] = {1};
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    ldisp[d] = 0;
+  }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
@@ -1414,11 +1444,11 @@ int ops_dat_get_global_npartitions(ops_dat dat) {
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   //TODO: part?? local or global?
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  for (int d = 0; d < dat->block->dims; d++) {
-    disp[d] = sd->decomp_disp[d] - dat->d_m[d];
-    size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
-  }
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++)
-    size[d] = 1;
+  if (disp != NULL)
+    for (int d = 0; d < dat->block->dims; d++) 
+      disp[d] = sd->decomp_disp[d] - dat->d_m[d];
+  if (size != NULL)
+    for (int d = 0; d < dat->block->dims; d++) 
+      size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
 }
 
