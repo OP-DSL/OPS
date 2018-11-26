@@ -1361,9 +1361,11 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
 
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
   ops_force_halo_exchange(dat, stencil);
-  if (*memspace == OPS_HOST) if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
-  else if (*memspace == OPS_DEVICE) if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
-  else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
+  if (*memspace == OPS_HOST) {
+    if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
+  } else if (*memspace == OPS_DEVICE) {
+    if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
+  } else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
   else if (dat->dirty_hd == 1) *memspace = OPS_HOST;
   else if (dat->data_d != NULL) *memspace = OPS_DEVICE;
   else *memspace = OPS_HOST;
