@@ -96,6 +96,9 @@ int main(int argc, char **argv) {
   ops_fetch_dat_hdf5_file(single, "write_data.h5");
   ops_fetch_dat_hdf5_file(integ, "write_data.h5");
 
+  int my_const = 42;
+  ops_write_const_hdf5("my_const", 1, "int", (char*)&my_const, "write_data.h5");
+
   ops_print_dat_to_txtfile(integ, "integers.txt");
 
   //*******************************************************************
