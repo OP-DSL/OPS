@@ -69,6 +69,10 @@ int main(int argc, char **argv) {
   ops_fetch_dat_hdf5_file(single, "read_data.h5");
   ops_fetch_dat_hdf5_file(integ, "read_data.h5");
 
+  int my_const;
+  ops_get_const_hdf5("my_const", 1, "int", (char*)&my_const, "read_data.h5");
+  printf("Read const: %d\n", my_const);
+
   //*******************************************************************
   // EXIT OPS AND PRINT TIMING INFO
   //---------------------------------------
