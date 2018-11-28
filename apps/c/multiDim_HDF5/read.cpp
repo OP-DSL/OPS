@@ -73,6 +73,10 @@ int main(int argc, char **argv) {
   ops_get_const_hdf5("my_const", 1, "int", (char*)&my_const, "read_data.h5");
   printf("Read const: %d\n", my_const);
 
+  char buffer[50];
+  ops_get_const_hdf5("my_text", 11, "char", buffer, "read_data.h5");
+  printf("Read text: %s\n", buffer);
+
   //*******************************************************************
   // EXIT OPS AND PRINT TIMING INFO
   //---------------------------------------
