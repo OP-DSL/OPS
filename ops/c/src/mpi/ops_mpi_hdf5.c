@@ -1833,6 +1833,9 @@ const char *ops_hdf5_type_to_string(hid_t t) {
   } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
     text = (char *)malloc(7 * sizeof(char));
     strcpy(text, "double");
+  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
+    text = (char *)malloc(5 * sizeof(char));
+    strcpy(text, "char");
   } else {
     text = (char *)malloc(13 * sizeof(char));
     strcpy(text, "UNRECOGNISED");
@@ -1887,6 +1890,8 @@ herr_t get_dataset_properties(hid_t dset_id,
     dset_props->elem_bytes = sizeof(float);
   } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
     dset_props->elem_bytes = sizeof(double);
+  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
+    dset_props->elem_bytes = sizeof(char);
   } else {
     size_t name_len = H5Iget_name(dset_id, NULL, 0);
     char name[name_len];
@@ -2002,6 +2007,10 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
     data = (char *)xmalloc(sizeof(double) * const_dim);
     H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, plist_id, data);
     memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
+  } else if (strcmp(typ, "char") == 0) {
+    data = (char *)xmalloc(sizeof(char) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, plist_id, data);
+    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
   } else {
     ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
     MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
@@ -2103,6 +2112,12 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
              const_data);
     H5Dclose(dset_id);
+  } else if (strcmp(type, "char") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id, const_data);
+    H5Dclose(dset_id);
   } else {
     ops_printf("Unknown type %s for constant %s: cannot write constant to file\n",
               type, name);
@@ -2152,6 +2167,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   else if (strcmp(type, "float") == 0 ||
            strcmp(type, "real(4)") == 0 || strcmp(type, "real") == 0)
     H5Awrite(attribute, atype, "float");
+  else if (strcmp(type, "char") == 0)
+    H5Awrite(attribute, atype, "char");
   else {
     ops_printf("Unknown type %s for constant %s: cannot write constant to file\n",
               type, name);

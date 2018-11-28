@@ -1010,6 +1010,10 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
     data = (char *)xmalloc(sizeof(double) * const_dim);
     H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
     memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
+  } else if (strcmp(typ, "char") == 0) {
+    data = (char *)xmalloc(sizeof(char) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
   } else {
     ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
     exit(2);
@@ -1094,6 +1098,13 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT,
              const_data);
     H5Dclose(dset_id);
+  } else if (strcmp(type, "char") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
   } else {
     ops_printf("Unknown type for write_const\n");
     exit(2);
@@ -1140,6 +1151,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
            strcmp(type, "real") == 0)
     H5Awrite(attribute, atype, "float");
+  else if (strcmp(type, "char") == 0)
+    H5Awrite(attribute, atype, "char");
   else {
     ops_printf("Unknown type %s for constant %s: cannot write constant to file\n",
               type, name);
