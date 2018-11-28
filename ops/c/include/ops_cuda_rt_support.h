@@ -81,6 +81,7 @@ extern int OPS_block_size_z;
 void cutilDeviceInit(const int argc, const char **argv);
 void __cudaSafeCall(cudaError_t err, const char *file, const int line);
 void ops_cuda_get_data(ops_dat dat);
+void ops_cuda_put_data(ops_dat dat);
 void reallocConstArrays(int consts_bytes);
 void reallocReductArrays(int reduct_bytes);
 void mvConstArraysToDevice(int consts_bytes);

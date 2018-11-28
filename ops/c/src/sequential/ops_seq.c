@@ -440,6 +440,11 @@ void ops_get_data(ops_dat dat) {
   (void)dat;
 }
 
+void ops_put_data(ops_dat dat) {
+  // data already on the host .. do nothing
+  (void)dat;
+}
+
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
                          char const *name) {
   (void)dim;
