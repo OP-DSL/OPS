@@ -399,7 +399,7 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
-  ops_memspace memspace;
+  ops_memspace memspace = 0;
   ops_dat_get_raw_pointer(dat, part, NULL, &memspace);
   if (acc != OPS_READ)
     dat->dirty_hd = (memspace == OPS_HOST ? 1 : 2);
