@@ -49,6 +49,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "queue.h" //contains double linked list implementation
+#include <strings.h>
+#include <stdexcept>
+
+#include "ops_macros.h"
+#include "ops_util.h"
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
