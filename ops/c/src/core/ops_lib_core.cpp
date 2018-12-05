@@ -716,7 +716,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   return arg;
 }
 
-ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
+ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[]) {
   if (OPS_halo_group_index == OPS_halo_group_max) {
     OPS_halo_group_max += 10;
     OPS_halo_group_list = (ops_halo_group *)ops_realloc(
