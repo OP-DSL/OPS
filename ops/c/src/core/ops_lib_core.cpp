@@ -37,7 +37,8 @@
   * backends
   */
 
-#include "ops_lib_core.h"
+#include <ops_lib_core.h>
+#include <ops_exceptions.h>
 #include <float.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -348,10 +349,9 @@ void ops_exit_core() {
 
 ops_block ops_decl_block(int dims, const char *name) {
   if (dims < 0) {
-    printf(
-        "Error: ops_decl_block -- negative/zero dimension size for block: %s\n",
-        name);
-    exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error:  ops_decl_block -- negative/zero dimension size for block: " << name;
+      throw ex;
   }
 
   if (OPS_block_index == OPS_block_max) {
@@ -361,8 +361,7 @@ ops_block ops_decl_block(int dims, const char *name) {
         OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
 
     if (OPS_block_list == NULL) {
-      printf("Error: ops_decl_block -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_block -- error reallocating memory");
     }
   }
 
@@ -391,15 +390,15 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
                           int *base, int *d_m, int *d_p, int *stride, char *data,
                           int type_size, char const *type, char const *name) {
   if (block == NULL) {
-    printf("Error: ops_decl_dat -- invalid block for data: %s\n", name);
-    exit(-1);
+    OPSException ex(OPS_INVALID_ARGUMENT);
+    ex << "Error: ops_decl_dat -- invalid block for dataset: " << name;
+    throw ex;
   }
 
   if (dim <= 0) {
-    printf("Error: ops_decl_dat -- negative/zero number of items per grid "
-           "point in data: %s\n",
-           name);
-    exit(-1);
+    OPSException ex(OPS_INVALID_ARGUMENT);
+    ex << "Error: ops_decl_dat -- negative/zero number of items per grid point in dataset: " << name;
+    throw ex;
   }
 
   ops_dat dat = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -431,8 +430,9 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     if (d_m[n] <= 0)
       dat->d_m[n] = d_m[n];
     else {
-      ops_printf("Error: Non negative d_m during declaration of %s\n", name);
-      exit(2);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_decl_dat -- Non negative d_m during declaration of: " << name;
+      throw ex;
     }
   }
 
@@ -440,8 +440,9 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     if (d_p[n] >= 0)
       dat->d_p[n] = d_p[n];
     else {
-      ops_printf("Error: Non positive d_p during declaration of %s\n", name);
-      exit(2);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_decl_dat -- Non positive d_p during declaration of: " << name;
+      throw ex;
     }
   }
   for(int n=0;n<block->dims;n++)
@@ -470,9 +471,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   // add the newly created ops_dat to list
   item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
-    printf("Error: op_decl_dat -- error allocating memory to double linked "
-           "list entry\n");
-    exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, op_decl_dat -- error allocating memory to double linked list entry");
   }
   item->dat = dat;
 
@@ -483,9 +482,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   // Another entry for a different list
   item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
-    printf("Error: op_decl_dat -- error allocating memory to double linked "
-           "list entry\n");
-    exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, op_decl_dat -- error allocating memory to double linked list entry");
   }
   item->dat = dat;
   TAILQ_INSERT_TAIL(&OPS_block_list[block->index].datasets, item, entries);
@@ -501,10 +498,9 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
   // Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, dim, dataset_size, base, type, name);
   if (found_dat != NULL) {
-    printf("Error: ops_dat with name %s already exists, cannot create "
-           "temporary ops_dat\n ",
-           name);
-    exit(2);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_decl_dat_temp an ops_dat with the same name already exists: " << name;
+      throw ex;
   }
   // if not found ...
   return ops_decl_dat_core(block, dim, dataset_size, base, d_m, d_p, stride, data,
@@ -536,8 +532,7 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
-      printf("Error: ops_decl_stencil -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
@@ -570,8 +565,7 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
-      printf("Error: ops_decl_stencil -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
@@ -605,8 +599,7 @@ ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *st
     OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
 
     if ( OPS_stencil_list == NULL ) {
-      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
-      exit ( -1 );
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
@@ -640,8 +633,7 @@ ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *str
     OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
 
     if ( OPS_stencil_list == NULL ) {
-      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
-      exit ( -1 );
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
@@ -704,14 +696,12 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
         for (int i = 0; i < handle->size / 4; i++)
           ((int *)handle->data)[i] = -1 * INT_MAX;
     } else {
-      printf("Warning: reduction type not recognised, please add in "
-             "ops_lib_core.c !\n");
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.c");
     }
   } else if (handle->acc != acc) {
-    printf("Error: ops_reduction handle %s was aleady used with a different "
-           "access type\n",
-           handle->name);
-    exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_reduction handle " << handle->name << " was aleady used with a different access type";
+      throw ex;
   }
   return arg;
 }
@@ -723,8 +713,7 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[]) {
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
-      printf("Error: ops_decl_halo_group -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_group -- error reallocating memory");
     }
   }
 
@@ -751,8 +740,7 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
-      printf("Error: ops_decl_halo_group -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_group -- error reallocating memory");
     }
   }
 
@@ -772,7 +760,6 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
   if (grp == NULL) {
     grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
     grp->nhalos = 0;
-    // printf("null grp, grp->nhalos = %d\n",grp->nhalos);
     if (nhalos != 0) {
       ops_halo *halos_temp = (ops_halo *)ops_malloc(1 * sizeof(ops_halo_core));
       memcpy(halos_temp, halos, 1 * sizeof(ops_halo_core));
@@ -782,7 +769,6 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
     grp->index = OPS_halo_group_index;
     OPS_halo_group_list[OPS_halo_group_index++] = grp;
   } else {
-    // printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
     grp->halos = (ops_halo *)ops_realloc(grp->halos, (grp->nhalos + 1) *
                                                          sizeof(ops_halo_core));
     memcpy(&grp->halos[grp->nhalos], &halos[0], 1 * sizeof(ops_halo_core));
@@ -800,8 +786,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
         (ops_halo *)ops_realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
 
     if (OPS_halo_list == NULL) {
-      printf("Error: ops_decl_halo_core -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_core -- error reallocating memory");
     }
   }
 
@@ -834,9 +819,7 @@ ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc) {
   arg.dat = dat;
   arg.stencil = stencil;
   if (acc == OPS_WRITE && stencil->points != 1) {
-    printf("Error: OPS does not support OPS_WRITE arguments with a non (0,0,0) "
-           "stencil due to potential race conditions\n");
-    exit(-1);
+      throw OPSException(OPS_INVALID_ARGUMENT, "Error: OPS does not support OPS_WRITE arguments with a non (0,0,0) stencil due to potential race conditions");
   }
   if (dat != NULL) {
     arg.data = dat->data;
@@ -882,8 +865,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
         OPS_reduction_list, OPS_reduction_max * sizeof(ops_reduction));
 
     if (OPS_reduction_list == NULL) {
-      printf("Error: ops_decl_reduction_handle -- error reallocating memory\n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_reduction_handle -- error reallocating memory");
     }
   }
 
@@ -989,35 +971,41 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
   //TODO: this has to be backend-specific
   FILE *fp;
   if ((fp = fopen(file_name, "a")) == NULL) {
-    printf("Error: can't open file %s\n", file_name);
-    exit(2);
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: can't open file " << file_name;
+    throw ex;
   }
 
   if (fprintf(fp, "ops_dat:  %s \n", dat->name) < 0) {
-    printf("Error: error writing to %s\n", file_name);
-    exit(2);
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: error writing to file " << file_name;
+    throw ex;
   }
   if (fprintf(fp, "ops_dat dim:  %d \n", dat->dim) < 0) {
-    printf("error writing to %s\n", file_name);
-    exit(2);
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: error writing to file " << file_name;
+    throw ex;
   }
 
   if (fprintf(fp, "block Dims : %d ", dat->block->dims) < 0) {
-    printf("error writing to %s\n", file_name);
-    exit(2);
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: error writing to file " << file_name;
+    throw ex;
   }
 
   for (int i = 0; i < dat->block->dims; i++) {
     if (fprintf(fp, "[%d]", dat->size[i]) < 0) {
-      printf("Error: error writing to %s\n", file_name);
-      exit(2);
+      OPSException ex(OPS_RUNTIME_ERROR);
+      ex << "Error: error writing to file " << file_name;
+      throw ex;
     }
   }
   fprintf(fp, "\n");
 
   if (fprintf(fp, "elem size %d \n", dat->elem_size) < 0) {
-    printf("Error: error writing to %s\n", file_name);
-    exit(2);
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: error writing to file " << file_name;
+    throw ex;
   }
 
   size_t prod[OPS_MAX_DIM+1];
@@ -1073,41 +1061,56 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
                     strcmp(dat->type, "double precision") == 0) {
                   if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0) {
-                    printf("Error: error writing to %s\n", file_name);
-                    exit(2);
+                    OPSException ex(OPS_RUNTIME_ERROR);
+                    ex << "Error: error writing to file " << file_name;
+                    throw ex;
                   }
                 } else if (strcmp(dat->type, "float") == 0 ||
                            strcmp(dat->type, "real") == 0) {
                   if (fprintf(fp, "%e ", ((float *)dat->data)[offset]) < 0) {
-                    printf("Error: error writing to %s\n", file_name);
-                    exit(2);
+                    OPSException ex(OPS_RUNTIME_ERROR);
+                    ex << "Error: error writing to file " << file_name;
+                    throw ex;
                   }
                 } else if (strcmp(dat->type, "int") == 0 ||
                            strcmp(dat->type, "integer") == 0 ||
                            strcmp(dat->type, "integer(4)") == 0 ||
                           strcmp(dat->type, "int(4)") == 0) {
                   if (fprintf(fp, "%d ", ((int *)dat->data)[offset]) < 0) {
-                    printf("Error: error writing to %s\n", file_name);
-                    exit(2);
+                    OPSException ex(OPS_RUNTIME_ERROR);
+                    ex << "Error: error writing to file " << file_name;
+                    throw ex;
                   }
                 } else {
-                  printf("Error: Unknown type %s, cannot be written to file %s\n",
-                         dat->type, file_name);
-                  exit(2);
+                    OPSException ex(OPS_NOT_IMPLEMENTED);
+                    ex << "Error: Unknown type " << dat->type << " cannot be written to file " << file_name;
+                    throw ex;
                 }
               } //d
             } //i
+#if OPS_MAX_DIM > 0
             if (dat->size[0] > 1) fprintf(fp, "\n");
+#endif
           }//j
+#if OPS_MAX_DIM > 1
           if (dat->size[1] > 1) fprintf(fp, "\n");
+#endif
         }//k
+#if OPS_MAX_DIM > 2
         if (dat->size[2] > 1) fprintf(fp, "\n");
+#endif
       }//l
+#if OPS_MAX_DIM > 3
       if (dat->size[3] > 1) fprintf(fp, "\n");
+#endif
     }//m
+#if OPS_MAX_DIM > 4
     if (dat->size[4] > 1) fprintf(fp, "\n");
+#endif
   }//n
+#if OPS_MAX_DIM > 5
   if (dat->size[5] > 1) fprintf(fp, "\n");
+#endif
 
   fclose(fp);
 }
@@ -1123,7 +1126,7 @@ void ops_timing_output(FILE *stream) {
       ops_printf("\nTotal time spent in checkpointing: %g seconds\n",
                  OPS_checkpointing_time);
   if (OPS_diags > 1) {
-    int maxlen = 0;
+    unsigned int maxlen = 0;
     for (int i = 0; i < OPS_kern_max; i++) {
       if (OPS_kernels[i].count > 0)
         maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
@@ -1134,13 +1137,12 @@ void ops_timing_output(FILE *stream) {
     char *buf = (char *)ops_malloc((maxlen + 180) * sizeof(char));
     char buf2[180];
     sprintf(buf, "Name");
-    for (int i = 4; i < maxlen; i++)
+    for (unsigned int i = 4; i < maxlen; i++)
       strcat(buf, " ");
     ops_fprintf(stream, "\n\n%s  Count Time     MPI-time     Bandwidth(GB/s)\n",
                 buf);
 
-    sprintf(buf, "");
-    for (int i = 0; i < maxlen + 31; i++)
+    for (unsigned int i = 0; i < maxlen + 31; i++)
       strcat(buf, "-");
     ops_fprintf(stream, "%s\n", buf);
     double sumtime = 0.0f;
@@ -1156,7 +1158,7 @@ void ops_timing_output(FILE *stream) {
       if (OPS_kernels[k].count < 1)
         continue;
       sprintf(buf, "%s", OPS_kernels[k].name);
-      for (int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
+      for (unsigned int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
         strcat(buf, " ");
 
       sprintf(
@@ -1206,8 +1208,7 @@ void ops_timing_realloc(int kernel, const char *name) {
     OPS_kernels = (ops_kernel *)ops_realloc(
         OPS_kernels, OPS_kern_max_new * sizeof(ops_kernel));
     if (OPS_kernels == NULL) {
-      printf("Error: ops_timing_realloc error \n");
-      exit(-1);
+      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_timing_realloc -- error reallocating memory");
     }
 
     for (int n = OPS_kern_max; n < OPS_kern_max_new; n++) {
@@ -1259,11 +1260,10 @@ int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d) not found in declaration %s in loop %s "
-             "arg %d : %s\n",
-             idx0, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx,
-             OPS_curr_args[arg_idx].dat->name);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx << " : " << OPS_curr_args[arg_idx].dat->name;
+      throw ex;
     }
   }
   return idx0;
@@ -1279,11 +1279,10 @@ int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d) not found in declaration %s in loop %s "
-             "arg %d : %s\n",
-             idx0, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name, arg_idx,
-             OPS_curr_args[arg_idx].dat->name);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx << " : " << OPS_curr_args[arg_idx].dat->name;
+      throw ex;
     }
   }
   return idx0 * mult_d + d;
@@ -1300,11 +1299,10 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d,%d) not found in declaration %s in loop "
-             "%s arg %d\n",
-             idx0, idx1, OPS_curr_args[arg_idx].stencil->name, OPS_curr_name,
-             arg_idx);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      throw ex;
     }
   }
   return idx0 + dim0 * (idx1);
@@ -1322,11 +1320,10 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d,%d,%d) not found in declaration %s in "
-             "loop %s arg %d\n",
-             idx0, idx1, idx2, OPS_curr_args[arg_idx].stencil->name,
-             OPS_curr_name, arg_idx);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      throw ex;
     }
   }
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2);
@@ -1346,11 +1343,10 @@ int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d,%d,%d,%d) not found in declaration %s in "
-             "loop %s arg %d\n",
-             idx0, idx1, idx2, idx3, OPS_curr_args[arg_idx].stencil->name,
-             OPS_curr_name, arg_idx);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      throw ex;
     }
   }
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3;
@@ -1371,11 +1367,10 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
       }
     }
     if (match == 0) {
-      printf("Error: stencil point (%d,%d,%d,%d,%d) not found in declaration %s in "
-             "loop %s arg %d\n",
-             idx0, idx1, idx2, idx3, idx4, OPS_curr_args[arg_idx].stencil->name,
-             OPS_curr_name, arg_idx);
-      exit(-1);
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      throw ex;
     }
   }
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
@@ -1414,21 +1409,15 @@ void setKernelTime(int id, char name[], double kernelTime, double mpiTime,
 }
 
 void *ops_malloc(size_t size) {
-//#ifdef __INTEL_COMPILER
-  // return _mm_malloc(size, OPS_ALIGNMENT);
-  void *ptr;
+  void *ptr = NULL;
   posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size);
   return ptr;
-//memalign(OPS_ALIGNMENT, size);
-//#else
-//  return xmalloc(size);
-//#endif
 }
 
 void *ops_calloc(size_t num, size_t size) {
 //#ifdef __INTEL_COMPILER
   // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
-  void *ptr;
+  void *ptr=NULL;
   posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size);
   memset(ptr, 0, num * size);
   return ptr;
@@ -1441,7 +1430,7 @@ void *ops_realloc(void *ptr, size_t size) {
 //#ifdef __INTEL_COMPILER
   void *newptr = xrealloc(ptr, size);
   if (((unsigned long)newptr & (OPS_ALIGNMENT - 1)) != 0) {
-    void *newptr2;
+    void *newptr2=NULL;
     posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size);
     // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);

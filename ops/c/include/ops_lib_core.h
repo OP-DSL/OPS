@@ -50,7 +50,6 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/queue.h> //contains double linked list implementation
-#include <stdexcept>
 
 #include "ops_macros.h"
 #include "ops_util.h"

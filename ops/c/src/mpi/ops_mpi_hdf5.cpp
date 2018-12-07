@@ -40,6 +40,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_util.h>
+#include <ops_exceptions.h>
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
 #define H5Dopen_vers 2
@@ -647,11 +648,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     H5Pclose(plist_id);
 
     if (H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      ops_printf("Error: ops_fetch_dat_hdf5_file: ops_block on which this "
-                 "ops_dat %s is declared does not exists in the file ... "
-                 "Aborting\n",
-                 dat->name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: Error: ops_fetch_dat_hdf5_file: ops_block on which this ops_dat" << dat->name << " is declared does not exist in the file";
+      throw ex;
     } else {
 
       // open existing group -- an ops_block is a group
@@ -710,8 +709,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LLONG, filespace,
                               H5P_DEFAULT, plist_id, H5P_DEFAULT);
         else {
-          printf("Error: Unknown type in ops_fetch_dat_hdf5_file()\n");
-          MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
+          throw ex;
         }
         H5Pclose(plist_id);
         H5Sclose(filespace);
@@ -747,16 +747,15 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       char read_ops_type[10];
       if (H5LTget_attribute_string(group_id, dat->name, "ops_type",
                                    read_ops_type) < 0) {
-        ops_printf("Error: ops_fetch_dat_hdf5_file: Attribute \"ops_type\" not "
-                   "found in data set %s .. Aborting\n",
-                   dat->name);
-        MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_fetch_dat_hdf5_file: Attribute \"ops_type\" not found in data set" << dat->name;
+        throw ex;
       } else {
         if (strcmp("ops_dat", read_ops_type) != 0) {
-          ops_printf("Error: ops_fetch_dat_hdf5_file: ops_type of dat %s is "
-                     "defined are not equal to ops_dat.. Aborting\n",
-                     dat->name);
-          MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_fetch_dat_hdf5_file: ops_type of dat " << dat->name << " is not ops_dat";
+          throw ex;
         }
       }
 
@@ -952,8 +951,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id,
                  data);
       else {
-        printf("Error: Unknown type in ops_fetch_dat_hdf5_file()\n");
-        MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
+        throw ex;
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -1015,16 +1015,14 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) <
       0) {
-    ops_printf("Error: ops_decl_block_hdf5: Attribute \"ops_type\" not found "
-               "in block %s .. Aborting\n",
-               block_name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: ops_decl_block_hdf5: Attribute \"ops_type\" not found in block " << block_name;
+    throw ex;
   } else {
     if (strcmp("ops_block", read_ops_type) != 0) {
-      ops_printf("Error: ops_decl_block_hdf5: ops_type of block %s is defined "
-                 "are not equal to ops_block.. Aborting\n",
-                 block_name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: ops_decl_block_hdf5: ops_type of block " << block_name << " is not ops_block";
+      throw ex;
     }
   }
   int read_dims;
@@ -1102,16 +1100,14 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type",
                                read_ops_type) < 0) {
-    ops_printf("Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found "
-               "in stencil %s .. Aborting\n",
-               stencil_name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in stencil " << stencil_name;
+    throw ex;
   } else {
     if (strcmp("ops_stencil", read_ops_type) != 0) {
-      ops_printf("Error: ops_decl_stencil_hdf5: ops_type of stencil %s is "
-                 "defined are not equal to ops_stencil.. Aborting\n",
-                 stencil_name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: ops_decl_stencil_hdf5: ops_type of stencil " << stencil_name << " is not ops_stencil";
+      throw ex;
     }
   }
   int read_dims;
@@ -1208,16 +1204,14 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, halo_name, "ops_type", read_ops_type) <
       0) {
-    ops_printf("Error: ops_decl_halo_hdf5: Attribute \"ops_type\" not found in "
-               "halo %s .. Aborting\n",
-               halo_name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: ops_decl_halo_hdf5: Attribute \"ops_type\" not found in halo " << halo_name;
+    throw ex;
   } else {
     if (strcmp("ops_halo", read_ops_type) != 0) {
-      ops_printf("Error: ops_decl_halo_hdf5: ops_type of halo %s defined are "
-                 "not equal to ops_halo.. Aborting\n",
-                 halo_name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: ops_decl_halo_hdf5: ops_type of halo " << halo_name << " is not ops_halo";
+      throw ex;
     }
   }
 
@@ -1347,16 +1341,14 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   char read_ops_type[10];
   if (H5LTget_attribute_string(group_id, dat_name, "ops_type", read_ops_type) <
       0) {
-    ops_printf("Error: ops_decl_dat_hdf5: Attribute \"ops_type\" not found in "
-               "data set %s .. Aborting\n",
-               dat_name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: ops_decl_dat_hdf5: Attribute \"ops_type\" not found in data set " << dat_name;
+    throw ex;
   } else {
     if (strcmp("ops_dat", read_ops_type) != 0) {
-      ops_printf("Error: ops_decl_dat_hdf5: ops_type of dat %s is defined are "
-                 "not equal to ops_dat.. Aborting\n",
-                 dat_name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: ops_decl_dat_hdf5: ops_type of dat " << dat_name << " is not ops_dat";
+      throw ex;
     }
   }
   int read_block_index;
@@ -1451,8 +1443,9 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   else if (strcmp(read_type, "long long") == 0)
     type_size = sizeof(long long);
   else {
-    printf("Error: Unknown type %s in ops_decl_dat_hdf5()\n", read_type);
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << read_type;
+    throw ex;
   }
 
   char *data = NULL;
@@ -1679,8 +1672,9 @@ void ops_read_dat_hdf5(ops_dat dat) {
     else if (strcmp(dat->type, "long long") == 0)
       H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
     else {
-      printf("Error: Unknown type in ops_read_dat_hdf5()\n");
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: Unknown type in ops_read_dat_hdf5(): " << dat->type;
+      throw ex;
     }
 
     // add MPI halos

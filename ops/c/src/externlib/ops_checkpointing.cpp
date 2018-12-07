@@ -45,6 +45,8 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ops_exceptions.h>
+
 
 ops_backup_state backup_state = OPS_NONE;
 char *OPS_dat_ever_written = NULL;
@@ -125,9 +127,9 @@ char *params;
 #define check_hdf5_error(err) __check_hdf5_error(err, __FILE__, __LINE__)
 void __check_hdf5_error(herr_t err, const char *file, const int line) {
   if (err < 0) {
-    printf("Error: %s(%i) : OPS_HDF5_error() Runtime API error %d.%s\n", file,
-           line, (int)err, params);
-    exit(-1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: " << file << ":" << line << " OPS_HDF5_error() Runtime API error " << err << " " << params;
+    throw ex;
   }
 }
 
@@ -246,14 +248,12 @@ void *ops_saver_thread(void *payload) {
         if (ops_ramdisk_tail < ops_ramdisk_head &&
             ops_ramdisk_tail + ROUND64L(ops_ramdisk_item_queue[tail].size) >
                 ops_ramdisk_head) {
-          printf("Tail error\n");
-          exit(-1);
+          throw OPSException(OPS_INTERNAL_ERROR, "Internal error: tail error");
         }
         ops_ramdisk_tail += ROUND64L(ops_ramdisk_item_queue[tail].size);
       } else {
         if (ops_ramdisk_head < ROUND64L(ops_ramdisk_item_queue[tail].size)) {
-          printf("Tail error 2\n");
-          exit(-1);
+          throw OPSException(OPS_INTERNAL_ERROR, "Internal error: tail error 2");
         }
         ops_ramdisk_tail = ROUND64L(ops_ramdisk_item_queue[tail].size);
       }
@@ -310,8 +310,7 @@ void ops_ramdisk_init(long size) {
   ops_ramdisk_initialised = 1;
   int rc = pthread_create(&thread, NULL, ops_saver_thread, NULL);
   if (rc) {
-    printf("Error: return code from pthread_create() is %d\n", rc);
-    exit(-1);
+    throw OPSException(OPS_INTERNAL_ERROR, "Internal error: failed pthread_create in checkpointing");
   }
 }
 
@@ -430,8 +429,7 @@ void save_to_hdf5_full(ops_dat dat, hid_t outfile, int size, char *data) {
     check_hdf5_error(
         H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
   } else {
-    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-    exit(-1);
+    throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Unsupported data type during checkpointing, please add in ops_checkpointing.cpp");
   }
   ops_timers_core(&c1, &t2);
   ops_chk_write += t2 - t1;
@@ -455,8 +453,7 @@ void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size,
     check_hdf5_error(
         H5LTmake_dataset(outfile, dat->name, 1, dims, H5T_NATIVE_DOUBLE, data));
   } else {
-    printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-    exit(-1);
+    throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Unsupported data type during checkpointing, please add in ops_checkpointing.cpp");
   }
 
   char buf[50];
@@ -626,8 +623,7 @@ void ops_restore_dataset(ops_dat dat) {
       check_hdf5_error(
           H5LTread_dataset(file, dat->name, H5T_NATIVE_DOUBLE, dat->data));
     } else {
-      printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-      exit(-1);
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Unsupported data type during checkpointing, please add in ops_checkpointing.cpp");
     }
     dat->dirty_hd = 1;
     if (OPS_diags > 4)
@@ -676,8 +672,7 @@ void ops_restore_dataset(ops_dat dat) {
       check_hdf5_error(H5LTread_dataset(file, dat->name, H5T_NATIVE_DOUBLE,
                                         OPS_partial_buffer));
     } else {
-      printf("Error: Unsupported data type in ops_arg_dat() %s\n", dat->name);
-      exit(-1);
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Unsupported data type during checkpointing, please add in ops_checkpointing.cpp");
     }
 
     // Unpack
@@ -907,9 +902,7 @@ bool ops_checkpointing_init(const char *file_name, double interval,
     return false;
   if ((options & OPS_CHECKPOINT_MANUAL) &&
       !(options & (OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW))) {
-    ops_printf("Error: cannot have manual checkpoint triggering without manual "
-               "datlist and fast-forward!\n");
-    exit(-1);
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: cannot have manual checkpoint triggering without manual datlist and fast-forward!");
   }
 
   // Control structures initialized
@@ -932,9 +925,7 @@ bool ops_checkpointing_init(const char *file_name, double interval,
     }
 #endif
     if (signal(SIGINT, ops_chkp_sig_handler) == SIG_ERR) {
-      printf("\nError: OPS can't catch SIGINT - disable in-memory "
-             "checkpointing\n");
-      MPI_Abort(MPI_COMM_WORLD, -1);
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS can't catch SIGINT - disable in-memory checkpointing");
     }
     ops_ramdisk_item_queue = (ops_ramdisk_item *)ops_malloc(
         3 * OPS_dat_index * sizeof(ops_ramdisk_item));
