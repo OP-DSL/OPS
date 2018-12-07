@@ -53,6 +53,7 @@
 
 #include <ops_cuda_rt_support.h>
 #include <ops_lib_core.h>
+#include <ops_exceptions.h>
 
 // Small re-declaration to avoid using struct in the C version.
 // This is due to the different way in which C and C++ see structs
@@ -74,8 +75,8 @@ void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
   if (cudaSuccess != err) {
     fprintf(stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
             line, cudaGetErrorString(err));
-    if (err == cudaErrorNoKernelImageForDevice) fprintf(stderr, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU\n");
-    exit(-1);
+    if (err == cudaErrorNoKernelImageForDevice) 
+    throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU");
   }
 }
 
@@ -85,8 +86,7 @@ void cutilDeviceInit(const int argc, const char **argv) {
   int deviceCount;
   cutilSafeCall(cudaGetDeviceCount(&deviceCount));
   if (deviceCount == 0) {
-    printf("Error: cutil error: no devices supporting CUDA\n");
-    exit(-1);
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
   }
 
   // Test we have access to a device

@@ -38,6 +38,7 @@
   */
 
 #include "ops_lib_core.h"
+#include <ops_exceptions.h>
 
 #ifndef __XDIMS__ // perhaps put this into a separate headder file
 #define __XDIMS__
@@ -415,8 +416,8 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
     ldisp[d] = 0;
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
-  if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
-  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
+  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>3");
+  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
@@ -433,8 +434,8 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     ldisp[d] = 0;
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
-  if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
-  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
+  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
+  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)

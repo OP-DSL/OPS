@@ -42,6 +42,7 @@
 #endif
 
 #include <ops_lib_core.h>
+#include <ops_exceptions.h>
 #include <stdio.h>
 
 #ifdef CHECKPOINTING
@@ -271,7 +272,7 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
       if (MAX(ops_strat_maxcalled[idx],
               ops_call_counter - ops_strat_lastcalled[idx]) <
           ops_call_counter / 10) {
-        if (OPS_diags > 2)
+        if (OPS_diags > 3)
           ops_printf(
               "Using kernel %d (%s) as backup point, will save ~%d kBytes\n",
               idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx] / 1024);
@@ -285,15 +286,14 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
         kern = idx;
         break;
       } else {
-        if (OPS_diags > 2)
+        if (OPS_diags > 3)
           ops_printf("Discarding candidate %d (%s) as backup point %d kBytes\n",
                      idx, OPS_kernels[idx].name,
                      ops_strat_avg_saved[idx] / 1024);
       }
       kern++;
       if (kern == OPS_kern_max) {
-        ops_printf("Error: No suitable backup point found!\n");
-        exit(-1);
+        throw OPSException(OPS_RUNTIME_ERROR, "Error: No suitable backup point found!");
       }
     }
     ops_best_backup_point = kern;

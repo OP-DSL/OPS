@@ -40,6 +40,7 @@
 
 #include <mpi.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 #ifndef __XDIMS__ // perhaps put this into a separate headder file
 #define __XDIMS__
@@ -243,11 +244,10 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
     type = "int";
 
   ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
-  if (OPS_block_index < 1) {
-    printf("Error: ops_decl_reduction_handle() should only be called after \
-      declaring at least one ops_block\n -- Aborting\n");
-    MPI_Abort(OPS_MPI_GLOBAL, 2);
-  }
+  if (OPS_block_index < 1)
+    throw OPSException(OPS_RUNTIME_ERROR, "Error: ops_decl_reduction_handle() should only be called after \
+                                           declaring at least one ops_block");
+  
   red->data = (char *)ops_realloc(red->data,
                                   red->size * (OPS_block_index) * sizeof(char));
   return red;

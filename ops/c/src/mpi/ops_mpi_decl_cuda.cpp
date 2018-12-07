@@ -43,6 +43,8 @@
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
 #include <ops_cuda_rt_support.h>
+#include <ops_exceptions.h>
+
 extern char *halo_buffer_d;
 extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
@@ -53,9 +55,7 @@ void ops_init_cuda(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
-           "-- error OPS_block_size_*\n");
-    exit(-1);
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
 
 #if CUDART_VERSION < 3020

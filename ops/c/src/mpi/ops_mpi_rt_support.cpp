@@ -41,6 +41,7 @@
 
 #include <mpi.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 extern int OPS_diags;
 
@@ -201,12 +202,14 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
       actual_depth_recv = d;
 
   if (actual_depth_recv > abs(d_m[dim])) {
-    printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, abs(d_m[dim]));
-    MPI_Abort(sb->comm, -1);
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: trying to exchange a " << actual_depth_recv << "-deep halo for " << dat->name << ", but halo is only " << abs(d_m[dim]) << " deep. Please set d_m and d_p accordingly";
+    throw ex;
   }
   if (actual_depth_send > sd->decomp_size[dim]) {
-    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
-    MPI_Abort(sb->comm, -1);
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: overpartitioning! Trying to exchange a " << actual_depth_send << "-deep halo for " << dat->name << ", but dataset is only " << sd->decomp_size[dim] << " wide on this process.";
+    throw ex;
   }
 
   // set up initial pointers
@@ -221,8 +224,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
                  1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
-      printf("Error: Right recv mismatch\n");
-      MPI_Abort(sb->comm, -1);
+      throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
 
@@ -278,13 +280,16 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
       actual_depth_recv = d;
 
+
   if (actual_depth_recv > d_p[dim]) {
-    printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, d_p[dim]);
-    MPI_Abort(sb->comm, -1);
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: trying to exchange a " << actual_depth_recv << "-deep halo for " << dat->name << ", but halo is only " << d_p[dim] << " deep. Please set d_m and d_p accordingly";
+    throw ex;
   }
   if (actual_depth_send > sd->decomp_size[dim]) {
-    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
-    MPI_Abort(sb->comm, -1);
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: overpartitioning! Trying to exchange a " << actual_depth_send << "-deep halo for " << dat->name << ", but dataset is only " << sd->decomp_size[dim] << " wide on this process.";
+    throw ex;
   }
 
       
@@ -299,8 +304,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
     if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
-      printf("Error: Left recv mismatch\n");
-      MPI_Abort(sb->comm, -1);
+      throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
 
@@ -358,22 +362,27 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   }
 
   if (sb->id_m[dim] != MPI_PROC_NULL && sd->d_im[dim] > -left_recv_depth) {
-    printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", left_recv_depth, -sd->d_im[dim]);
-    MPI_Abort(sb->comm,-1);
-  }
-  if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
-    printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", right_recv_depth, sd->d_ip[dim]);
-    MPI_Abort(sb->comm,-1);
-  }
-  if (right_send_depth > sd->decomp_size[dim]) {
-    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",right_send_depth, dat->name, sd->decomp_size[dim]);
-    MPI_Abort(sb->comm, -1);
-  }
-  if (left_send_depth > sd->decomp_size[dim]) {
-    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",left_send_depth, dat->name, sd->decomp_size[dim]);
-    MPI_Abort(sb->comm, -1);
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: trying to exchange a " << left_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << -sd->d_im[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    throw ex;
   }
 
+  if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: trying to exchange a " << right_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << sd->d_ip[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    throw ex;
+  }
+
+  if (left_send_depth > sd->decomp_size[dim]) {
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: overpartitioning! Trying to exchange a " << left_send_depth << "-deep halo for " << dat->name << ", but dataset is only " << sd->decomp_size[dim] << " wide on this process.";
+    throw ex;
+  }
+  if (right_send_depth > sd->decomp_size[dim]) {
+    OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+    ex << "Error: overpartitioning! Trying to exchange a " << right_send_depth << "-deep halo for " << dat->name << ", but dataset is only " << sd->decomp_size[dim] << " wide on this process.";
+    throw ex;
+  }
 
   int *prod = sd->prod;
 
@@ -411,8 +420,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
                  1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
-      printf("Error: Proc %d dat %s dim %d: Right recv mismatch %d sends %d, I receive %d, originally asked to receive %d\n",ops_get_proc(), dat->name, dim, sb->id_p[dim], they_send, actual_depth_recv, right_recv_depth);
-      MPI_Abort(sb->comm, -1);
+      throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
 
@@ -483,8 +491,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
     if (sb->id_m[dim] != MPI_PROC_NULL && actual_depth_recv != they_send) {
-      printf("Error: Proc %d dat %s dim %d Left recv mismatch %d sends %d, I receive %d originally asked to recv %d\n",ops_get_proc(), dat->name, dim, sb->id_m[dim], they_send, actual_depth_recv, left_recv_depth);
-      MPI_Abort(sb->comm, -1);
+      throw OPSException(OPS_INTERNAL_ERROR, "Error: Left recv mismatch");
     }
   }
 
@@ -527,7 +534,6 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
 void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
                                 int *iter_range, int dim,
                                 int *send_recv_offsets) {
-  sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int left_recv_depth = 0;
   int right_recv_depth = 0;
@@ -604,9 +610,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  int left_send_depth = depths[0];
   int left_recv_depth = depths[1];
-  int right_send_depth = depths[2];
   int right_recv_depth = depths[3];
 
   int *prod = sd->prod;
@@ -1001,18 +1005,18 @@ void ops_execute_reduction(ops_reduction handle) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
-        for (int d = 0; d < handle->size / sizeof(int); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
           ((int *)local)[d] = MAX(
               ((int *)local)[d], ((int *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_MIN)
-        for (int d = 0; d < handle->size / sizeof(int); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
           ((int *)local)[d] = MIN(
               ((int *)local)[d], ((int *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_INC)
-        for (int d = 0; d < handle->size / sizeof(int); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
           ((int *)local)[d] += ((int *)(handle->data + i * handle->size))[d];
       if (handle->acc == OPS_WRITE)
-        for (int d = 0; d < handle->size / sizeof(int); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
           ((int *)local)[d] =
               ((int *)(handle->data + i * handle->size))[d] != 0
                   ? ((int *)(handle->data + i * handle->size))[d]
@@ -1029,21 +1033,21 @@ void ops_execute_reduction(ops_reduction handle) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
-        for (int d = 0; d < handle->size / sizeof(float); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
           ((float *)local)[d] =
               MAX(((float *)local)[d],
                   ((float *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_MIN)
-        for (int d = 0; d < handle->size / sizeof(float); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
           ((float *)local)[d] =
               MIN(((float *)local)[d],
                   ((float *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_INC)
-        for (int d = 0; d < handle->size / sizeof(float); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
           ((float *)local)[d] +=
               ((float *)(handle->data + i * handle->size))[d];
       if (handle->acc == OPS_WRITE)
-        for (int d = 0; d < handle->size / sizeof(float); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
           ((float *)local)[d] =
               ((float *)(handle->data + i * handle->size))[d] != 0.0f
                   ? ((float *)(handle->data + i * handle->size))[d]
@@ -1062,21 +1066,21 @@ void ops_execute_reduction(ops_reduction handle) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
-        for (int d = 0; d < handle->size / sizeof(double); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
           ((double *)local)[d] =
               MAX(((double *)local)[d],
                   ((double *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_MIN)
-        for (int d = 0; d < handle->size / sizeof(double); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
           ((double *)local)[d] =
               MIN(((double *)local)[d],
                   ((double *)(handle->data + i * handle->size))[d]);
       if (handle->acc == OPS_INC)
-        for (int d = 0; d < handle->size / sizeof(double); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
           ((double *)local)[d] +=
               ((double *)(handle->data + i * handle->size))[d];
       if (handle->acc == OPS_WRITE)
-        for (int d = 0; d < handle->size / sizeof(double); d++)
+        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
           ((double *)local)[d] =
               ((double *)(handle->data + i * handle->size))[d] != 0.0
                   ? ((double *)(handle->data + i * handle->size))[d]
@@ -1397,8 +1401,8 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
     ldisp[d] = 0;
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
-  if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
-  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
+  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>3");
+  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
@@ -1417,8 +1421,8 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     ldisp[d] = 0;
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
-  if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
-  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
+  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
+  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
