@@ -20,6 +20,7 @@ INTEGER(KIND=4) xdim4
 
 contains
 
+!$ACC ROUTINE(drhouupdx_kernel) SEQ
 !user function
 subroutine drhouupdx_kernel(rhou_new, rho_new, rhoE_new, rhou_res)
 
@@ -79,8 +80,9 @@ subroutine drhouupdx_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call drhouupdx_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -89,6 +91,7 @@ subroutine drhouupdx_kernel_wrap( &
     & opsDat4Local(dat4_base+(n_x-1)*1) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

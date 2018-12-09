@@ -21,6 +21,7 @@ INTEGER(KIND=4) xdim4
 
 contains
 
+!$ACC ROUTINE(update_kernel) SEQ
 !user function
 subroutine update_kernel(rho_new, rhou_new, rhoE_new, s)
 
@@ -64,8 +65,9 @@ subroutine update_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call update_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -74,6 +76,7 @@ subroutine update_kernel_wrap( &
     & opsDat4Local(dat4_base+(n_x-1)*3) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine
