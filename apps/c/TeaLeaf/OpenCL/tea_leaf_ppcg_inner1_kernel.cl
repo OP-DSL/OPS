@@ -7,19 +7,19 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -46,50 +46,54 @@
 #undef OPS_ACC2
 #undef OPS_ACC3
 
-#define OPS_ACC0(x, y) (x + xdim0_tea_leaf_ppcg_inner1_kernel * (y))
-#define OPS_ACC1(x, y) (x + xdim1_tea_leaf_ppcg_inner1_kernel * (y))
-#define OPS_ACC2(x, y) (x + xdim2_tea_leaf_ppcg_inner1_kernel * (y))
-#define OPS_ACC3(x, y) (x + xdim3_tea_leaf_ppcg_inner1_kernel * (y))
 
-// user function
-void tea_leaf_ppcg_inner1_kernel(__global double *restrict rtemp,
-                                 const __global double *restrict Kx,
-                                 const __global double *restrict Ky,
-                                 const __global double *restrict sd,
-                                 const double *restrict rx,
-                                 const double *restrict ry)
+#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_ppcg_inner1_kernel*(y))
+#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_ppcg_inner1_kernel*(y))
+#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_ppcg_inner1_kernel*(y))
+#define OPS_ACC3(x,y) (x+xdim3_tea_leaf_ppcg_inner1_kernel*(y))
 
-{
-  double smvp = 0.0;
-  smvp = (1.0 + (*ry) * (Ky[OPS_ACC2(0, 1)] + Ky[OPS_ACC2(0, 0)]) +
-          (*rx) * (Kx[OPS_ACC1(1, 0)] + Kx[OPS_ACC1(0, 0)])) *
-             sd[OPS_ACC3(0, 0)] -
-         (*ry) * (Ky[OPS_ACC2(0, 1)] * sd[OPS_ACC3(0, 1)] +
-                  Ky[OPS_ACC2(0, 0)] * sd[OPS_ACC3(0, -1)]) -
-         (*rx) * (Kx[OPS_ACC1(1, 0)] * sd[OPS_ACC3(1, 0)] +
-                  Kx[OPS_ACC1(0, 0)] * sd[OPS_ACC3(-1, 0)]);
-  rtemp[OPS_ACC0(0, 0)] = rtemp[OPS_ACC0(0, 0)] - smvp;
+
+//user function
+void tea_leaf_ppcg_inner1_kernel(__global double * restrict rtemp,const __global double * restrict Kx,const __global double * restrict Ky,
+const __global double * restrict sd,const  double * restrict rx,const  double * restrict ry)
+
+ {
+	double smvp = 0.0;
+  smvp = (1.0
+    + (*ry)*(Ky[OPS_ACC2(0, 1)] + Ky[OPS_ACC2(0,0)])
+    + (*rx)*(Kx[OPS_ACC1(1, 0)] + Kx[OPS_ACC1(0,0)]))*sd[OPS_ACC3(0,0)]
+    - (*ry)*(Ky[OPS_ACC2(0, 1)] *sd[OPS_ACC3(0, 1)] + Ky[OPS_ACC2(0,0)]*sd[OPS_ACC3(0, -1)])
+    - (*rx)*(Kx[OPS_ACC1(1, 0)] *sd[OPS_ACC3(1, 0)] + Kx[OPS_ACC1(0,0)]*sd[OPS_ACC3(-1, 0)]);
+  rtemp[OPS_ACC0(0,0)] = rtemp[OPS_ACC0(0,0)] - smvp;
 }
 
+
+
 __kernel void ops_tea_leaf_ppcg_inner1_kernel(
-    __global double *restrict arg0, __global const double *restrict arg1,
-    __global const double *restrict arg2, __global const double *restrict arg3,
-    const double arg4, const double arg5, const int base0, const int base1,
-    const int base2, const int base3, const int size0, const int size1) {
+__global double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+const double arg4,
+const double arg5,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1 ){
+
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_ppcg_inner1_kernel(
-        &arg0[base0 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim0_tea_leaf_ppcg_inner1_kernel],
-        &arg1[base1 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim1_tea_leaf_ppcg_inner1_kernel],
-        &arg2[base2 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim2_tea_leaf_ppcg_inner1_kernel],
-        &arg3[base3 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim3_tea_leaf_ppcg_inner1_kernel],
-        &arg4, &arg5);
+    tea_leaf_ppcg_inner1_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_ppcg_inner1_kernel],
+                                &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_ppcg_inner1_kernel],
+                                &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_ppcg_inner1_kernel],
+                                &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_tea_leaf_ppcg_inner1_kernel],
+                                &arg4,
+                                &arg5);
   }
+
 }

@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -43,29 +43,38 @@
 #undef OPS_ACC0
 #undef OPS_ACC1
 
+
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 
-// user function
-void xder1_kernel(const __global double *restrict inp,
-                  __global double *restrict out, const double dx)
 
-{
-  double dix = 1 / (12.00 * dx);
-  out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)] +
-                      8.0 * (inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)])) *
-                     dix;
+//user function
+void xder1_kernel(const __global double * restrict inp,__global double * restrict out,
+  const double dx)
+
+ {
+  double dix = 1/(12.00*dx);
+  out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)]  + 8.0 *(
+  inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)] )) * dix;
 }
 
-__kernel void ops_xder1_kernel(__global const double *restrict arg0,
-                               __global double *restrict arg1, const double dx,
-                               const int base0, const int base1,
-                               const int size0) {
+
+
+__kernel void ops_xder1_kernel(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+const double dx,
+const int base0,
+const int base1,
+const int size0 ){
+
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    xder1_kernel(&arg0[base0 + idx_x * 1 * 1], &arg1[base1 + idx_x * 1 * 1],
+    xder1_kernel(&arg0[base0 + idx_x * 1*1],
+                 &arg1[base1 + idx_x * 1*1],
                  dx);
   }
+
 }
