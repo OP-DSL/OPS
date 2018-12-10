@@ -119,6 +119,24 @@ template <typename ParamT> struct param_handler {
     }
   }
   static ParamT get(char *data) { return (ParamT)data; } 
+
+#ifdef OPS_MPI 
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
+               const sub_block_list &sb)
+#else //OPS_MPI
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start)
+#endif
+{
+  if (arg.argtype == OPS_ARG_IDX) {
+    arg_idx[m]++;
+#ifdef OPS_MPI
+    for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+#else //OPS_MPI
+    for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+#endif //OPS_MPI
+  }
+}
+
   static void free(char *data) {}
 };
 
@@ -131,20 +149,34 @@ template <typename T> struct param_handler<ACC<T>> {
   #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d];
   #endif //OPS_MPI
-      return (char *) new ACC<T>(arg.dat->size[0], arg.data //base of 2D array
+      return (char *) new ACC<T>(arg.dat->size[0], (T*)arg.data //base of 2D array
       + address(ndim, OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m)); //TODO
     } 
   }
   static ACC<T>& get(char *data) { return *((ACC<T> *)data); }
+
+#ifdef OPS_MPI 
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
+               const sub_block_list &sb)
+#else //OPS_MPI
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start)
+#endif
+{
+  if (arg.argtype == OPS_ARG_DAT) {
+    //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
+    ((ACC<T>*)p)->next(); // T must be ACC<type> we need to set to the next element
+  } 
+}
+
+
+
   static void free(char *data) { delete (ACC<T> *)data;}
 };
 
-
-
 template <typename... ParamType, typename... OPSARG, size_t... I>
-void op_par_loop_impl(indices<I...>, void (*kernel)(ParamType...), 
+void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...), 
                       char const *name, ops_block block, int dim, int *range,
                       OPSARG... arguments) {
   constexpr int N = sizeof...(OPSARG);
@@ -185,11 +217,8 @@ void op_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   ops_register_args(args, name);
   #endif
 
-  (void) std::initializer_list<int>{
-  /*TODO offs*/ 0 };
-
   char *p_a[N] = 
-    {param_handler<param_remove_cvref_t<ParamType>>::create(arguments, dim, ndim, start)...};
+    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start)...};
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
@@ -198,7 +227,7 @@ void op_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     total_range *= (count[n]<0?0:1);
   }
   count[dim-1]++;     // extra in last to ensure correct termination
-///xdim0s resz.. TODO
+
   ops_H_D_exchanges_host(args, 1);
   ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges_host(args, 1);
@@ -217,18 +246,13 @@ void op_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     }
 
     // shift pointers to data
-    for (int i=0; i< N; i++) { //TODO template expansion??
-      if (args[i].argtype == OPS_ARG_DAT)
-        p_a[i] = p_a[i] + ((OPS_soa ? args[i].dat->type_size : args[i].dat->elem_size) * offs[i][m]);
-      else if (args[i].argtype == OPS_ARG_IDX) {
-        arg_idx[m]++;
   #ifdef OPS_MPI
-        for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+    (void) std::initializer_list<int>{(
+      shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, sb),0)...};
   #else //OPS_MPI
-        for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+    (void) std::initializer_list<int>{(
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start),0)...};
   #endif //OPS_MPI
-      }
-    }
   }
 
   #ifdef OPS_DEBUG_DUMP
