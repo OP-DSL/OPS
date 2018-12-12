@@ -122,9 +122,10 @@ template <typename ParamT> struct param_handler {
 
 #ifdef OPS_MPI 
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
-               const sub_block_list &sb)
+                      const int offs[], const sub_block_list &sb)
 #else //OPS_MPI
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start)
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
+                      const int offs[])
 #endif
 {
   if (arg.argtype == OPS_ARG_IDX) {
@@ -137,7 +138,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start)
   }
 }
 
-  static void free(char *data) {}
+  static void free(char *) {}
 };
 
 template <typename T> struct param_handler<ACC<T>> {
@@ -159,21 +160,30 @@ template <typename T> struct param_handler<ACC<T>> {
 
 #ifdef OPS_MPI 
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
-               const sub_block_list &sb)
+                      const int offs[], const sub_block_list &sb)
 #else //OPS_MPI
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start)
+static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
+                      const int offs[])
 #endif
 {
   if (arg.argtype == OPS_ARG_DAT) {
+    int offset = (OPS_soa ? 1 : arg.dat->elem_size/sizeof(T)) * offs[m]/sizeof(T);
     //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
-    ((ACC<T>*)p)->next(); // T must be ACC<type> we need to set to the next element
+    ((ACC<T>*)p)->next(offset); // T must be ACC<type> we need to set to the next element
   } 
 }
 
-
-
   static void free(char *data) { delete (ACC<T> *)data;}
 };
+
+void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start, int *end) {
+  if(arg.stencil != nullptr) {
+    offs[0] = arg.stencil->stride[0]*1;
+    for(int n=1; n<ndim; ++n){
+      offs[n] = off(ndim, n, start, end, arg.dat->size, arg.stencil->stride);
+    }
+  }
+}
 
 template <typename... ParamType, typename... OPSARG, size_t... I>
 void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...), 
@@ -219,6 +229,9 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
 
   char *p_a[N] = 
     {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start)...};
+  //Offs decl
+  int offs[N][OPS_MAX_DIM];
+  (void) std::initializer_list<int>{(initoffs(arguments, offs[I], ndim, start, end), 0)...};
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
@@ -248,10 +261,10 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     // shift pointers to data
   #ifdef OPS_MPI
     (void) std::initializer_list<int>{(
-      shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, sb),0)...};
+      shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, offs[I], sb),0)...};
   #else //OPS_MPI
     (void) std::initializer_list<int>{(
-      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I]),0)...};
   #endif //OPS_MPI
   }
 
