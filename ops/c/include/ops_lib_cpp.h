@@ -319,12 +319,8 @@ public:
 #endif
   }
   __host__ __device__
-  void next() {
-#ifdef OPS_SOA
-    ptr += 1;
-#else
-    ptr += mdim;
-#endif
+  void next(int offset) {
+    ptr += offset;
   }
 #endif
   //////////////////////////////////////////////////
