@@ -150,10 +150,10 @@ template <typename T> struct param_handler<ACC<T>> {
   #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d];
   #endif //OPS_MPI
-      return (char *) new ACC<T>(arg.dat->size[0], (T*)arg.data //base of 2D array
+      return (char *) new ACC<T>(arg.dim, arg.dat->size[1], arg.dat->size[0], (T*)(arg.data //base of 2D array
       + address(ndim, OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
-        d_m)); //TODO
+        d_m))); //TODO
     } 
   }
   static ACC<T>& get(char *data) { return *((ACC<T> *)data); }
@@ -167,7 +167,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 #endif
 {
   if (arg.argtype == OPS_ARG_DAT) {
-    int offset = (OPS_soa ? 1 : arg.dat->elem_size/sizeof(T)) * offs[m]/sizeof(T);
+    int offset = (OPS_soa ? 1 : arg.dat->elem_size/sizeof(T)) * offs[m];
     //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
     ((ACC<T>*)p)->next(offset); // T must be ACC<type> we need to set to the next element
   } 
