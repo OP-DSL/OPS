@@ -266,9 +266,6 @@ public:
 #endif
 
 private:
-#ifndef OPS_SOA
-  int mdim;
-#endif
   int sizex;
 #if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
   int sizey;
@@ -281,6 +278,9 @@ private:
 #endif
 #if defined(OPS_5D) && defined(OPS_SOA)
   int sizev;
+#endif
+#ifndef OPS_SOA
+  int mdim;
 #endif
   T *__restrict__ ptr;
 };
