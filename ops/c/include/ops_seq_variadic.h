@@ -67,8 +67,8 @@ inline void stencil_depth(ops_stencil sten, int* d_pos, int* d_neg)
 
 #if __cplusplus >= 201103L
 // ops_par_loop implementation with variadic template arguments
-#if __cplusplus >= 201402L
 #include <utility>
+#if __cplusplus >= 201402L
 // after c++14 use built in types.
 template <size_t... I> using indices = std::index_sequence<I...>;
 template <size_t Num> using build_indices = std::make_index_sequence<Num>;
