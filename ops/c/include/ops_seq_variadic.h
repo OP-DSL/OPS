@@ -117,6 +117,8 @@ template <typename ParamT> struct param_handler {
   #endif //OPS_MPI
       return (char *)arg_idx;
     }
+    //assert(false && "Arg should be one of OPS_ARG_GBL or OPS_ARG_IDX");
+    return nullptr;
   }
   static ParamT get(char *data) { return (ParamT)data; } 
 
@@ -155,6 +157,8 @@ template <typename T> struct param_handler<ACC<T>> {
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO
     } 
+    //assert(false && "Arg must be OPS_ARG_DAT if accessed by ACC");
+    return nullptr;
   }
   static ACC<T>& get(char *data) { return *((ACC<T> *)data); }
 
