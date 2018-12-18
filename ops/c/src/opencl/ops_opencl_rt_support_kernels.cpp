@@ -152,7 +152,6 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -176,8 +175,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -186,7 +185,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_copy_tobuf_kernel = true;
-    printf("in copy_tobuf_kernel build\n");
+    if (OPS_diags>5) ops_printf("in copy_tobuf_kernel build\n");
   }
 
   dest += dest_offset;
@@ -280,7 +279,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -304,8 +302,8 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -314,7 +312,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_copy_frombuf_kernel = true;
-    printf("in copy_frombuf_kernel build\n");
+    if (OPS_diags>5) ops_printf("in copy_frombuf_kernel build\n");
   }
 
   src += src_offset;

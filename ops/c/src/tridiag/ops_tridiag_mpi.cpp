@@ -105,8 +105,7 @@ void ops_tridMultiDimBatch(
   for (int i = 0; i < 3; i++) {
     if (a_size[i] != b_size[i] || b_size[i] != c_size[i] ||
         c_size[i] != d_size[i] || u_size[i] != u_size[i]) {
-      ops_printf("Size Mistmatch: Abort\n");
-      exit(-2);
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
 
