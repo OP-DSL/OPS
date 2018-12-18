@@ -40,6 +40,7 @@
 #include <math.h>
 #include <mpi.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 extern int ops_buffer_size;
 extern char *ops_buffer_send_1;
@@ -312,9 +313,9 @@ void ops_decomp_dats(sub_block *sb) {
       // special treatment if it's an edge dataset in this direction
       if (dat->e_dat && (dat->size[d] == 1)) {
         if (dat->base[d] != 0) {
-          printf("Dataset %s is an edge dataset, but has a non-0 base\n",
-                 dat->name);
-          exit(-1);
+          OPSException ex(OPS_RUNTIME_ERROR);
+          ex << "Error: dataset " << dat->name << " is an edge dataset, but has a non-0 base";
+          throw ex;
         }
         prod[d] = prod[d - 1];
         sd->decomp_disp[d] = 0;
@@ -401,8 +402,9 @@ void ops_decomp_dats(sub_block *sb) {
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
 	if (ops_read_dat_hdf5_dynamic == NULL) {
-          printf("Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked\n");
-          exit(-1);
+      OPSException ex(OPS_RUNTIME_ERROR);
+      ex << "Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked";
+      throw ex;
 	}
         ops_read_dat_hdf5_dynamic(dat);
      }
@@ -1008,11 +1010,9 @@ static inline int intersection2(int range1_beg, int range1_end, int range2_beg,
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
   //determine the correct range to iterate over, based on the dats that are written to
   int fine_grid_dat_idx = -1;
-  ops_dat dat;
   for(int i = 0; i<nargs; i++){
     if (args[i].argtype == OPS_ARG_DAT) {
       fine_grid_dat_idx = args[i].dat->index;
-      dat = args[i].dat;
       if(args[i].acc != OPS_READ)
         break;
     }

@@ -189,18 +189,17 @@ char *clGetErrorString(cl_int err) {
 
 void __clSafeCall(cl_int ret, const char *file, const int line) {
   if (CL_SUCCESS != ret) {
-    ops_fprintf(stderr,
-                "Error: %s(%i) : clSafeCall() Runtime API error : %s.\n", file,
-                line, clGetErrorString(ret));
-    exit(-1);
+    OPSException ex(OPS_OPENCL_ERROR);
+    ex << "Error: " << file << "(" << line << "): clSafeCall() Runtime API error : " << clGetErrorString(ret);
+    throw ex;
   }
 }
 
 void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
                 void *user_data) {
-  fprintf(stderr, "OpenCL Error (via pfn_notify) errinfo : %s\n", errinfo);
-  fprintf(stderr, "OpenCL Error (via pfn_notify) private info: %s\n",
-          (const char *)private_info);
+  OPSException ex(OPS_OPENCL_ERROR);
+  ex << "OpenCL Error (via pfn_notify) errinfo : " << errinfo << " private info: " << (const char *)private_info;
+  throw ex;
 }
 
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
@@ -373,7 +372,6 @@ void ops_upload_dat(ops_dat dat) {
   int bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
-  printf("uploading to device from host %d bytes\n", bytes);
 
   clSafeCall(clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
                                   (cl_mem)dat->data_d, CL_TRUE, 0, bytes,

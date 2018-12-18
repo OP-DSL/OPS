@@ -191,7 +191,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
+      
       clSafeCall(ret);
       return;
     }
@@ -215,8 +215,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -225,7 +225,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_packer1_kernel = true;
-    printf("in packer1 build\n");
+    if (OPS_diags>5) ops_printf("in packer1 build\n");
   }
 
   if (!isbuilt_packer1_soa_kernel && OPS_soa) {
@@ -245,7 +245,6 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -269,8 +268,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -279,7 +278,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_packer1_soa_kernel = true;
-    printf("in packer1 soa build\n");
+    if (OPS_diags>5) ops_printf("in packer1 soa build\n");
   }
 
 
@@ -299,7 +298,6 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
         OPS_opencl_core.context, 1, (const char **)&source_str,
         (const size_t *)&source_size, &ret);
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -323,8 +321,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
     // Create the OpenCL kernel
     *packer4_kernel =
@@ -332,7 +330,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_packer4_kernel = true;
-    printf("in packer4 build\n");
+    if (OPS_diags>5) ops_printf("in packer4 build\n");
   }
 
   // const char * __restrict src = dat->data_d+src_offset*dat->elem_size;
@@ -469,7 +467,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -493,8 +490,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -522,7 +519,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -546,8 +542,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -574,7 +570,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         OPS_opencl_core.context, 1, (const char **)&source_str,
         (const size_t *)&source_size, &ret);
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -598,8 +593,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -860,7 +855,6 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -884,8 +878,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -894,7 +888,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_copy_tobuf_kernel = true;
-    printf("in mpi copy_tobuf_kernel build\n");
+    if (OPS_diags>5) ops_printf("in mpi copy_tobuf_kernel build\n");
   }
 
   dest += dest_offset;
@@ -1012,7 +1006,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
         (const size_t *)&source_size, &ret);
 
     if (ret != CL_SUCCESS) {
-      fprintf(stderr, "Error: Unable to create program from source.\n");
       clSafeCall(ret);
       return;
     }
@@ -1036,8 +1029,8 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
       free(build_log);
-      exit(EXIT_FAILURE);
     }
 
     // Create the OpenCL kernel
@@ -1046,7 +1039,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     clSafeCall(ret);
     free(source_str[0]);
     isbuilt_copy_frombuf_kernel = true;
-    printf("in mpi copy_frombuf_kernel build\n");
+    if (OPS_diags>5) ops_printf("in mpi copy_frombuf_kernel build\n");
   }
 
   src += src_offset;
