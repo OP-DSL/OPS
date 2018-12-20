@@ -157,6 +157,8 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->from_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
+    int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+    char *ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
@@ -208,7 +210,7 @@ void ops_halo_transfer(ops_halo_group group) {
             for (int i = MIN(ranges[0], ranges[1] + 1);
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->from->dim; d++) {
-                memcpy(OPS_instance::getOPSInstance()->ops_halo_buffer +
+                memcpy(ops_halo_buffer +
                          (
                         #if OPS_MAX_DIM > 4
                           (m - ranges[8]) * step[4] * buf_strides[4] +
@@ -225,7 +227,7 @@ void ops_halo_transfer(ops_halo_group group) {
                           (i - ranges[0]) * step[0] * buf_strides[0]) *
                              halo->from->elem_size + d * halo->from->type_size,
                      halo->from->data +
-                         (OPS_instance::getOPSInstance()->OPS_soa ? 
+                         (OPS_soa ? 
                            ((
                             #if OPS_MAX_DIM > 4
                             m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
@@ -296,6 +298,8 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->to_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
+    OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+    ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
@@ -348,7 +352,7 @@ void ops_halo_transfer(ops_halo_group group) {
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->to->dim; d++) {
                 memcpy(halo->to->data +
-                       (OPS_instance::getOPSInstance()->OPS_soa ?
+                       (OPS_soa ?
                          (
                           #if OPS_MAX_DIM > 4
                           m * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] * halo->to->size[3] +
@@ -392,7 +396,7 @@ void ops_halo_transfer(ops_halo_group group) {
                           #endif
                           i) *
                              halo->to->elem_size + d * halo->to->type_size),
-                     OPS_instance::getOPSInstance()->ops_halo_buffer +
+                     ops_halo_buffer +
                          (
                         #if OPS_MAX_DIM > 4
                           (m - ranges[8]) * step[4] * buf_strides[4] +

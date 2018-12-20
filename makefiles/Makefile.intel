@@ -18,4 +18,8 @@ ifdef FAST
 endif
 FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
 OMPFLAGS := -qopenmp
+ifdef OPENMP
+	CXXFLAGS += $(OMPFLAGS)
+	CCFLAGS += $(OMPFLAGS)
+endif
 CXXLINK := -lstdc++

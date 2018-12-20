@@ -49,7 +49,7 @@ void buildOpenCLKernels_multidim_reduce_kernel(int xdim0, int ydim0) {
     printf("Compiling multidim_reduce_kernel %d source -- start \n",OCL_FMA);
 
       // Create a program from the source
-      OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
       clSafeCall( ret );
 
       // Build the program
@@ -66,14 +66,14 @@ void buildOpenCLKernels_multidim_reduce_kernel(int xdim0, int ydim0) {
         exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+      ret = clBuildProgram(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, 1, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\0';
         fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
         fprintf(stderr, "\n========================================================= \n");
@@ -83,7 +83,7 @@ void buildOpenCLKernels_multidim_reduce_kernel(int xdim0, int ydim0) {
       printf("compiling multidim_reduce_kernel -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[2] = clCreateKernel(OPS_opencl_core.program, "ops_multidim_reduce_kernel", &ret);
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2] = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_multidim_reduce_kernel", &ret);
     clSafeCall( ret );
 
     isbuilt_multidim_reduce_kernel = true;
@@ -106,9 +106,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(2,"multidim_reduce_kernel");
-    OPS_kernels[2].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -155,8 +155,8 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   xdim0,ydim0);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};
+  size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, 1};
+  size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z};
 
 
   #ifdef OPS_MPI
@@ -165,7 +165,7 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
   #endif
 
-  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
+  int nblocks = ((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
 
@@ -175,8 +175,8 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   reduct_bytes = 0;
 
   int r_bytes1 = reduct_bytes/sizeof(double);
-  arg1.data = OPS_reduct_h + reduct_bytes;
-  arg1.data_d = OPS_reduct_d;// + reduct_bytes;
+  arg1.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;
+  arg1.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d;// + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<2; d++) ((double *)arg1.data)[d+b*2] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*2*sizeof(double));
@@ -201,33 +201,33 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_device(args, 2);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += t2-t1;
   }
 
-  int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;
+  int nthread = OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z;
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 2, nthread*sizeof(double), NULL));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 3, sizeof(cl_int), (void*) &r_bytes1 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 4, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 5, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[2], 6, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 2, nthread*sizeof(double), NULL));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 3, sizeof(cl_int), (void*) &r_bytes1 ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 4, sizeof(cl_int), (void*) &base0 ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 5, sizeof(cl_int), (void*) &x_size ));
+    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 6, sizeof(cl_int), (void*) &y_size ));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[2], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall( clEnqueueNDRangeKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
-  if (OPS_diags>1) {
-    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
+    clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
   }
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[2].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].time += t1-t2;
   }
 
   mvReductArraysToHost(reduct_bytes);
@@ -240,10 +240,10 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
 
   ops_set_dirtybit_device(args, 2);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
