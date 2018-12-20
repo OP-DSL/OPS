@@ -46,15 +46,13 @@
 #include <ops_lib_core.h>
 #include <ops_exceptions.h>
 
-char *ops_halo_buffer = NULL;
-char *ops_halo_buffer_d = NULL;
-int ops_halo_buffer_size = 0;
-
 void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * 
+       OPS_instance::getOPSInstance()->OPS_block_size_y * 
+       OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024");
   }
 
 #if CUDART_VERSION < 3020
@@ -122,7 +120,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   long cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        (OPS_soa ? dat->type_size : dat->elem_size)
+        (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
@@ -193,10 +191,10 @@ void ops_halo_transfer(ops_halo_group group) {
     int size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
-    if (size > ops_halo_buffer_size) {
-      cutilSafeCall(cudaFree(ops_halo_buffer_d));
-      cutilSafeCall(cudaMalloc((void **)&ops_halo_buffer_d, size));
-      ops_halo_buffer_size = size;
+    if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
+      cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->ops_halo_buffer_d));
+      cutilSafeCall(cudaMalloc((void **)&OPS_instance::getOPSInstance()->ops_halo_buffer_d, size));
+      OPS_instance::getOPSInstance()->ops_halo_buffer_size = size;
       cutilSafeCall(cudaDeviceSynchronize());
     }
 
@@ -229,7 +227,7 @@ void ops_halo_transfer(ops_halo_group group) {
     step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i
     += step[0]) {
-          ops_cuda_halo_copy(ops_halo_buffer_d +
+          ops_cuda_halo_copy(OPS_instance::getOPSInstance()->ops_halo_buffer_d +
     ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1]
     + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
                  halo->from->data_d +
@@ -242,7 +240,7 @@ void ops_halo_transfer(ops_halo_group group) {
       ops_upload_dat(halo->from);
       halo->from->dirty_hd = 0;
     }
-    ops_halo_copy_tobuf(ops_halo_buffer_d, 0, halo->from, ranges[0], ranges[1],
+    ops_halo_copy_tobuf(OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, halo->from, ranges[0], ranges[1],
                         ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                         step[1], step[2], buf_strides[0], buf_strides[1],
                         buf_strides[2]);
@@ -276,7 +274,7 @@ void ops_halo_transfer(ops_halo_group group) {
     += step[0]) {
           ops_cuda_halo_copy(halo->to->data_d +
     (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-               ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
+               OPS_instance::getOPSInstance()->ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
     (j-ranges[2])*step[1]*buf_strides[1] +
     (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size,
     halo->to->elem_size);
@@ -288,7 +286,7 @@ void ops_halo_transfer(ops_halo_group group) {
       ops_upload_dat(halo->to);
       halo->to->dirty_hd = 0;
     }
-    ops_halo_copy_frombuf(halo->to, ops_halo_buffer_d, 0, ranges[0], ranges[1],
+    ops_halo_copy_frombuf(halo->to, OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, ranges[0], ranges[1],
                           ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                           step[1], step[2], buf_strides[0], buf_strides[1],
                           buf_strides[2]);
@@ -300,6 +298,6 @@ void ops_halo_transfer(ops_halo_group group) {
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getOPS_block_size_x() { return OPS_block_size_x; }
-int getOPS_block_size_y() { return OPS_block_size_y; }
-int getOPS_block_size_z() { return OPS_block_size_z; }
+int getOPS_instance::getOPSInstance()->OPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+int getOPS_instance::getOPSInstance()->OPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+int getOPS_instance::getOPSInstance()->OPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }

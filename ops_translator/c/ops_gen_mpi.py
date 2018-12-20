@@ -301,9 +301,9 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     code('#endif')
     code('')
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].count++;')
     code('ops_timers_core(&c2,&t2);')
     ENDIF()
     code('')
@@ -467,9 +467,9 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     ENDIF()
     code('')
 
@@ -715,9 +715,9 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
       #   ENDFOR()
 
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].time += t2-t1;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += t2-t1;')
     ENDIF()
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');')
@@ -727,13 +727,13 @@ def ops_gen_mpi(master, date, consts, kernels, soa_set):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+        code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
     ENDIF()
     config.depth = config.depth - 2
     code('}')

@@ -91,7 +91,7 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
   if (H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-    if (OPS_diags > 2) ops_printf(
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2) ops_printf(
       "ops_block %s does not exists in file %s ... creating ops_block\n",
       block->name, file_name);
     // create group - ops_block
@@ -134,7 +134,7 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
   if (file_exist(file_name) == 0) {
-    if (OPS_diags > 2) ops_printf("File %s does not exist .... creating file\n", file_name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2) ops_printf("File %s does not exist .... creating file\n", file_name);
     FILE *fp;
     fp = fopen(file_name, "w");
     fclose(fp);
@@ -195,7 +195,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
   if (file_exist(file_name) == 0) {
-    if (OPS_diags > 2)  ops_printf("File %s does not exist .... creating file\n", file_name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("File %s does not exist .... creating file\n", file_name);
     FILE *fp;
     fp = fopen(file_name, "w");
     fclose(fp);
@@ -212,7 +212,7 @@ sprintf(halo_name, "from_%s_to_%s", halo->from->name, halo->to->name);
 
   /* create and write the a group that holds the halo information */
 if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
-  if (OPS_diags > 2) ops_printf("ops_halo %s does not exists in the file ... creating group to "
+  if (OPS_instance::getOPSInstance()->OPS_diags > 2) ops_printf("ops_halo %s does not exists in the file ... creating group to "
    "hold halo\n",
    halo_name);
     group_id =
@@ -318,7 +318,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
       if (file_exist(file_name) == 0) {
-        if (OPS_diags>3) ops_printf("File %s does not exist .... creating file\n", file_name);
+        if (OPS_instance::getOPSInstance()->OPS_diags>3) ops_printf("File %s does not exist .... creating file\n", file_name);
         FILE *fp;
         fp = fopen(file_name, "w");
         fclose(fp);
@@ -341,7 +341,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
         if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
-          if (OPS_diags>2) ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the "
+          if (OPS_instance::getOPSInstance()->OPS_diags>2) ops_printf("ops_fetch_dat_hdf5_file: ops_dat %s does not exists in the "
            "ops_block %s ... creating ops_dat\n",
            dat->name, block->name);
 
@@ -838,29 +838,29 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 void ops_dump_to_hdf5(char const *file_name) {
 
   ops_dat_entry *item;
-  for (int n = 0; n < OPS_block_index; n++) {
-    if (OPS_diags>2) ops_printf("Dumping block %15s to HDF5 file %s\n",
-     OPS_block_list[n].block->name, file_name);
-      ops_fetch_block_hdf5_file(OPS_block_list[n].block, file_name);
+  for (int n = 0; n < OPS_instance::getOPSInstance()->OPS_block_index; n++) {
+    if (OPS_instance::getOPSInstance()->OPS_diags>2) ops_printf("Dumping block %15s to HDF5 file %s\n",
+     OPS_instance::getOPSInstance()->OPS_block_list[n].block->name, file_name);
+      ops_fetch_block_hdf5_file(OPS_instance::getOPSInstance()->OPS_block_list[n].block, file_name);
   }
 
-  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
-    if (OPS_diags>2)  ops_printf("Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+  TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
+    if (OPS_instance::getOPSInstance()->OPS_diags>2)  ops_printf("Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
     if (item->dat->e_dat !=
         1) // currently cannot write edge dats .. need to fix this
       ops_fetch_dat_hdf5_file(item->dat, file_name);
   }
 
-  for (int i = 0; i < OPS_stencil_index; i++) {
-    if (OPS_diags>2) ops_printf("Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name,
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
+    if (OPS_instance::getOPSInstance()->OPS_diags>2) ops_printf("Dumping stencil %15s to HDF5 file %s\n", OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name,
      file_name);
-      ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
+      ops_fetch_stencil_hdf5_file(OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
   }
 
-  for (int i = 0; i < OPS_halo_index; i++) {
-    if (OPS_diags>2) ops_printf("Dumping halo %15s--%15s to HDF5 file %s\n",
-     OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name, file_name);
-      ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
+    if (OPS_instance::getOPSInstance()->OPS_diags>2) ops_printf("Dumping halo %15s--%15s to HDF5 file %s\n",
+     OPS_instance::getOPSInstance()->OPS_halo_list[i]->from->name, OPS_instance::getOPSInstance()->OPS_halo_list[i]->to->name, file_name);
+      ops_fetch_halo_hdf5_file(OPS_instance::getOPSInstance()->OPS_halo_list[i], file_name);
   }
 }
 

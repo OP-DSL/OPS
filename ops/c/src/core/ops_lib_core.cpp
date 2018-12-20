@@ -45,48 +45,10 @@
 #include <sys/time.h>
 #include <sys/time.h>
 
-int OPS_diags = 0;
+OPS_instance *ops_instances[OPS_MAX_INSTANCES] = {NULL};
 
-int OPS_block_index = 0, OPS_block_max = 0;
-int OPS_stencil_index = 0, OPS_stencil_max = 0;
-int OPS_dat_index = 0;
-int OPS_kern_max = 0, OPS_kern_curr = 0;
-ops_kernel *OPS_kernels = NULL;
-ops_arg *OPS_curr_args = NULL;
-const char *OPS_curr_name = NULL;
-int OPS_hybrid_gpu = 0, OPS_gpu_direct = 0;
-int OPS_halo_group_index = 0, OPS_halo_group_max = 0, OPS_halo_index = 0,
-    OPS_halo_max = 0, OPS_reduction_index = 0, OPS_reduction_max = 0;
-ops_reduction *OPS_reduction_list = NULL;
-int OPS_enable_checkpointing = 0;
-int ops_thread_offload = 0;
-int ops_checkpoint_inmemory = 0;
-int ops_lock_file = 0;
-int ops_enable_tiling = 0;
-int ops_cache_size = 0;
-int OPS_soa = 0;
-int ops_tiling_mpidepth = -1;
-extern double ops_tiled_halo_exchange_time;
-int ops_force_decomp[OPS_MAX_DIM] = {0};
-int OPS_realloc = 0;
 
-/*
-* Lists of blocks and dats declared in an OPS programs
-*/
 
-ops_block_descriptor *OPS_block_list = NULL;
-ops_halo *OPS_halo_list = NULL;
-ops_halo_group *OPS_halo_group_list = NULL;
-ops_stencil *OPS_stencil_list = NULL;
-Double_linked_list OPS_dat_list; // Head of the double linked list
-
-int OPS_block_size_x = 32;
-int OPS_block_size_y = 4;
-int OPS_block_size_z = 1;
-
-double ops_gather_time = 0.0;
-double ops_scatter_time = 0.0;
-double ops_sendrecv_time = 0.0;
 /*
 * Utility functions
 */
@@ -108,7 +70,7 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int *offset,
                    char const *type, char const *name) {
   ops_dat_entry *item;
   ops_dat_entry *tmp_item;
-  for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+  for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
     tmp_item = TAILQ_NEXT(item, entries);
     ops_dat item_dat = item->dat;
 
@@ -132,96 +94,96 @@ void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
   char *pch;
-  pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_x=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
-    OPS_block_size_x = atoi(temp + 17);
-    ops_printf("\n OPS_block_size_x = %d \n", OPS_block_size_x);
+    OPS_instance::getOPSInstance()->OPS_block_size_x = atoi(temp + 17);
+    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x);
   }
-  pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_y=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
-    OPS_block_size_y = atoi(temp + 17);
-    ops_printf("\n OPS_block_size_y = %d \n", OPS_block_size_y);
+    OPS_instance::getOPSInstance()->OPS_block_size_y = atoi(temp + 17);
+    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y);
   }
-  pch = strstr(argv, "OPS_BLOCK_SIZE_Z=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_z=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
-    OPS_block_size_z = atoi(temp + 17);
-    ops_printf("\n OPS_block_size_z = %d \n", OPS_block_size_z);
+    OPS_instance::getOPSInstance()->OPS_block_size_z = atoi(temp + 17);
+    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_z = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_z);
   }
   pch = strstr(argv, "-gpudirect");
   if (pch != NULL) {
-    OPS_gpu_direct = 1;
+    OPS_instance::getOPSInstance()->OPS_gpu_direct = 1;
     ops_printf("\n GPU Direct enabled\n");
   }
-  pch = strstr(argv, "-OPS_DIAGS=");
+  pch = strstr(argv, "-OPS_instance::getOPSInstance()->OPS_diags=");
   if (pch != NULL) {
     strncpy(temp, pch, 12);
-    OPS_diags = atoi(temp + 11);
-    ops_printf("\n OPS_diags = %d \n", OPS_diags);
+    OPS_instance::getOPSInstance()->OPS_diags = atoi(temp + 11);
+    ops_printf("\n OPS_instance::getOPSInstance()->OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags);
   }
-  pch = strstr(argv, "OPS_CACHE_SIZE=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_cache_size=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
-    ops_cache_size = atoi(temp + 15);
-    ops_printf("\n Cache size per process = %d \n", ops_cache_size);
+    OPS_instance::getOPSInstance()->ops_cache_size = atoi(temp + 15);
+    ops_printf("\n Cache size per process = %d \n", OPS_instance::getOPSInstance()->ops_cache_size);
   }
-  pch = strstr(argv, "OPS_REALLOC=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_realloc=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
-    OPS_realloc = atoi(temp + 12);
-    ops_printf("\n Reallocating = %d \n", OPS_realloc);
+    OPS_instance::getOPSInstance()->OPS_realloc = atoi(temp + 12);
+    ops_printf("\n Reallocating = %d \n", OPS_instance::getOPSInstance()->OPS_realloc);
   }
 
   pch = strstr(argv, "OPS_TILING");
   if (pch != NULL) {
-    ops_enable_tiling = 1;
+    OPS_instance::getOPSInstance()->ops_enable_tiling = 1;
     ops_printf("\n Tiling enabled\n");
   }
 	pch = strstr(argv, "OPS_TILING_MAXDEPTH=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
-    ops_tiling_mpidepth = atoi(temp + 20);
-    ops_printf("\n Max tiling depth across processes = %d \n", ops_tiling_mpidepth);
+    OPS_instance::getOPSInstance()->ops_tiling_mpidepth = atoi(temp + 20);
+    ops_printf("\n Max tiling depth across processes = %d \n", OPS_instance::getOPSInstance()->ops_tiling_mpidepth);
   }
-  pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_X=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
-    ops_force_decomp[0] = atoi(temp + 19);
-    ops_printf("\n Forced decomposition in x direction = %d \n", ops_force_decomp[0]);
+    OPS_instance::getOPSInstance()->ops_force_decomp[0] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in x direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[0]);
   }
-  pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_Y=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
-    ops_force_decomp[1] = atoi(temp + 19);
-    ops_printf("\n Forced decomposition in y direction = %d \n", ops_force_decomp[1]);
+    OPS_instance::getOPSInstance()->ops_force_decomp[1] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in y direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[1]);
   }
-  pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
+  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_Z=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
-    ops_force_decomp[2] = atoi(temp + 19);
-    ops_printf("\n Forced decomposition in z direction = %d \n", ops_force_decomp[2]);
+    OPS_instance::getOPSInstance()->ops_force_decomp[2] = atoi(temp + 19);
+    ops_printf("\n Forced decomposition in z direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[2]);
   }
 
-  if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
-    ops_checkpoint_inmemory = 1;
+  if (strstr(argv, "OPS_instance::getOPSInstance()->ops_checkpoint_inmemory") != NULL) {
+    OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 1;
     ops_printf("\n OPS Checkpointing in memory\n");
   } else if (strstr(argv, "OPS_CHECKPOINT_LOCKFILE") != NULL) {
-    ops_lock_file = 1;
+    OPS_instance::getOPSInstance()->ops_lock_file = 1;
     ops_printf("\n OPS Checkpointing creating lockfiles\n");
   } else if (strstr(argv, "OPS_CHECKPOINT_THREAD") != NULL) {
-    ops_thread_offload = 1;
+    OPS_instance::getOPSInstance()->ops_thread_offload = 1;
     ops_printf("\n OPS Checkpointing on a separate thread\n");
   } else if (strstr(argv, "OPS_CHECKPOINT=") != NULL) {
     pch = strstr(argv, "OPS_CHECKPOINT=");
-    OPS_enable_checkpointing = 2;
+    OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 2;
     strncpy(temp, pch, 20);
-    OPS_ranks_per_node = atoi(temp + 15);
+    OPS_instance::getOPSInstance()->OPS_ranks_per_node = atoi(temp + 15);
     ops_printf("\n OPS Checkpointing with mirroring offset %d\n",
-               OPS_ranks_per_node);
+               OPS_instance::getOPSInstance()->OPS_ranks_per_node);
   } else if (strstr(argv, "OPS_CHECKPOINT") != NULL) {
-    OPS_enable_checkpointing = 1;
+    OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");
   }
 }
@@ -230,85 +192,85 @@ void ops_set_args(const int argc, const char *argv) {
 * OPS core functions
 */
 void ops_init_core(const int argc, const char **argv, const int diags) {
-  OPS_diags = diags;
-  for (int d = 0; d < OPS_MAX_DIM; d++) ops_force_decomp[d] = 0;
+  OPS_instance::getOPSInstance()->OPS_diags = diags;
+  for (int d = 0; d < OPS_MAX_DIM; d++) OPS_instance::getOPSInstance()->ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
 
     ops_set_args(argc, argv[n]);
 
-    /*if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_X=", 17 ) == 0 )
+    /*if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_block_size_x=", 17 ) == 0 )
     {
-      OPS_block_size_x = atoi ( argv[n] + 17 );
-      ops_printf ( "\n OPS_block_size_x = %d \n", OPS_block_size_x );
+      OPS_instance::getOPSInstance()->OPS_block_size_x = atoi ( argv[n] + 17 );
+      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x );
     }
 
-    if ( strncmp ( argv[n], "OPS_BLOCK_SIZE_Y=", 17 ) == 0 )
+    if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_block_size_y=", 17 ) == 0 )
     {
-      OPS_block_size_y = atoi ( argv[n] + 17 );
-      ops_printf ( "\n OPS_block_size_y = %d \n", OPS_block_size_y );
+      OPS_instance::getOPSInstance()->OPS_block_size_y = atoi ( argv[n] + 17 );
+      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y );
     }
 
     if ( strncmp ( argv[n], "-gpudirect", 10 ) == 0 )
     {
-      OPS_gpu_direct = 1;
+      OPS_instance::getOPSInstance()->OPS_gpu_direct = 1;
       ops_printf ( "\n GPU Direct enabled\n" );
     }
-    if ( strncmp ( argv[n], "OPS_DIAGS=", 10 ) == 0 )
+    if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_diags=", 10 ) == 0 )
     {
-      OPS_diags = atoi ( argv[n] + 10 );
-      ops_printf ( "\n OPS_diags = %d \n", OPS_diags );
+      OPS_instance::getOPSInstance()->OPS_diags = atoi ( argv[n] + 10 );
+      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags );
     }
     if ( strncmp ( argv[n], "OPS_CHECKPOINT=", 15 ) == 0 )
     {
-      OPS_enable_checkpointing = 2;
-      OPS_ranks_per_node = atoi ( argv[n] + 15 );
+      OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 2;
+      OPS_instance::getOPSInstance()->OPS_ranks_per_node = atoi ( argv[n] + 15 );
       ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n",
-    OPS_ranks_per_node);
+    OPS_instance::getOPSInstance()->OPS_ranks_per_node);
     }
     else if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
     {
-      ops_thread_offload = 1;
+      OPS_instance::getOPSInstance()->ops_thread_offload = 1;
       ops_printf ( "\n OPS Checkpointing on a separate thread\n");
     }
-    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_INMEMORY", 23 ) == 0 )
+    else if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->ops_checkpoint_inmemory", 23 ) == 0 )
     {
-      ops_checkpoint_inmemory = 1;
+      OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 1;
       ops_printf ( "\n OPS Checkpointing in memory\n");
     }
     else if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
     {
-      ops_lock_file = 1;
+      OPS_instance::getOPSInstance()->ops_lock_file = 1;
       ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
     }
     else if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
     {
-      OPS_enable_checkpointing = 1;
+      OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 1;
       ops_printf ( "\n OPS Checkpointing enabled\n");
     }*/
   }
 
   /*Initialize the double linked list to hold ops_dats*/
-  TAILQ_INIT(&OPS_dat_list);
+  TAILQ_INIT(&OPS_instance::getOPSInstance()->OPS_dat_list);
 }
 
 void ops_exit_core() {
   ops_checkpointing_exit();
   ops_dat_entry *item;
   // free storage and pointers for blocks
-  for (int i = 0; i < OPS_block_index; i++) {
-    free((char *)(OPS_block_list[i].block->name));
-    while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
-      TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
+    free((char *)(OPS_instance::getOPSInstance()->OPS_block_list[i].block->name));
+    while ((item = TAILQ_FIRST(&(OPS_instance::getOPSInstance()->OPS_block_list[i].datasets)))) {
+      TAILQ_REMOVE(&(OPS_instance::getOPSInstance()->OPS_block_list[i].datasets), item, entries);
       free(item);
     }
-    free(OPS_block_list[i].block);
+    free(OPS_instance::getOPSInstance()->OPS_block_list[i].block);
   }
-  free(OPS_block_list);
-  OPS_block_list = NULL;
+  free(OPS_instance::getOPSInstance()->OPS_block_list);
+  OPS_instance::getOPSInstance()->OPS_block_list = NULL;
 
   /*free doubly linked list holding the ops_dats */
 
-  while ((item = TAILQ_FIRST(&OPS_dat_list))) {
+  while ((item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list))) {
     if ((item->dat)->user_managed == 0)
 //#ifdef __INTEL_COMPILER
 //      _mm_free((item->dat)->data);
@@ -317,34 +279,34 @@ void ops_exit_core() {
 //#endif
     free((char *)(item->dat)->name);
     free((char *)(item->dat)->type);
-    TAILQ_REMOVE(&OPS_dat_list, item, entries);
+    TAILQ_REMOVE(&OPS_instance::getOPSInstance()->OPS_dat_list, item, entries);
     free(item->dat);
     free(item);
   }
 
   // free stencills
-  for (int i = 0; i < OPS_stencil_index; i++) {
-    free((char *)OPS_stencil_list[i]->name);
-    free(OPS_stencil_list[i]->stencil);
-    free(OPS_stencil_list[i]->stride);
-    free(OPS_stencil_list[i]);
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
+    free((char *)OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name);
+    free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]->stencil);
+    free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]->stride);
+    free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]);
   }
-  free(OPS_stencil_list);
-  OPS_stencil_list = NULL;
+  free(OPS_instance::getOPSInstance()->OPS_stencil_list);
+  OPS_instance::getOPSInstance()->OPS_stencil_list = NULL;
 
-  for (int i = 0; i < OPS_halo_index; i++) {
-    free(OPS_halo_list[i]);
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
+    free(OPS_instance::getOPSInstance()->OPS_halo_list[i]);
   }
 
-  for (int i = 0; i < OPS_halo_group_index; i++) {
-    // free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
-    free(OPS_halo_group_list[i]);
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_group_index; i++) {
+    // free(OPS_instance::getOPSInstance()->OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_instance::getOPSInstance()->OPS_halo_group_list[i]);
   }
 
   // reset initial values
-  OPS_block_index = 0;
-  OPS_dat_index = 0;
-  OPS_block_max = 0;
+  OPS_instance::getOPSInstance()->OPS_block_index = 0;
+  OPS_instance::getOPSInstance()->OPS_dat_index = 0;
+  OPS_instance::getOPSInstance()->OPS_block_max = 0;
 }
 
 ops_block ops_decl_block(int dims, const char *name) {
@@ -354,25 +316,26 @@ ops_block ops_decl_block(int dims, const char *name) {
       throw ex;
   }
 
-  if (OPS_block_index == OPS_block_max) {
-    if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-    OPS_block_max += 30;
-    OPS_block_list = (ops_block_descriptor *)ops_realloc(
-        OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
+  if (OPS_instance::getOPSInstance()->OPS_block_index == OPS_instance::getOPSInstance()->OPS_block_max) {
+    if (OPS_instance::getOPSInstance()->OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
+    OPS_instance::getOPSInstance()->OPS_block_max += 30;
+    OPS_instance::getOPSInstance()->OPS_block_list = (ops_block_descriptor *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_block_list, 
+        OPS_instance::getOPSInstance()->OPS_block_max * sizeof(ops_block_descriptor));
 
-    if (OPS_block_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_block_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_block -- error reallocating memory");
     }
   }
 
   ops_block block = (ops_block)ops_malloc(sizeof(ops_block_core));
-  block->index = OPS_block_index;
+  block->index = OPS_instance::getOPSInstance()->OPS_block_index;
   block->dims = dims;
   block->name = copy_str(name);
-  OPS_block_list[OPS_block_index].block = block;
-  OPS_block_list[OPS_block_index].num_datasets = 0;
-  TAILQ_INIT(&(OPS_block_list[OPS_block_index].datasets));
-  OPS_block_index++;
+  OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].block = block;
+  OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].num_datasets = 0;
+  TAILQ_INIT(&(OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].datasets));
+  OPS_instance::getOPSInstance()->OPS_block_index++;
 
   return block;
 }
@@ -402,7 +365,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   }
 
   ops_dat dat = (ops_dat)ops_malloc(sizeof(ops_dat_core));
-  dat->index = OPS_dat_index;
+  dat->index = OPS_instance::getOPSInstance()->OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
 
@@ -476,8 +439,8 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   item->dat = dat;
 
   // add item to the end of the list
-  TAILQ_INSERT_TAIL(&OPS_dat_list, item, entries);
-  OPS_dat_index++;
+  TAILQ_INSERT_TAIL(&OPS_instance::getOPSInstance()->OPS_dat_list, item, entries);
+  OPS_instance::getOPSInstance()->OPS_dat_index++;
 
   // Another entry for a different list
   item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
@@ -485,8 +448,8 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
       throw OPSException(OPS_RUNTIME_ERROR, "Error, op_decl_dat -- error allocating memory to double linked list entry");
   }
   item->dat = dat;
-  TAILQ_INSERT_TAIL(&OPS_block_list[block->index].datasets, item, entries);
-  OPS_block_list[block->index].num_datasets++;
+  TAILQ_INSERT_TAIL(&OPS_instance::getOPSInstance()->OPS_block_list[block->index].datasets, item, entries);
+  OPS_instance::getOPSInstance()->OPS_block_list[block->index].num_datasets++;
 
   return dat;
 }
@@ -509,15 +472,15 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
 
 void ops_free_dat(ops_dat dat) {
   ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+  TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
-      TAILQ_REMOVE(&OPS_dat_list, item, entries);
+      TAILQ_REMOVE(&OPS_instance::getOPSInstance()->OPS_dat_list, item, entries);
       break;
     }
   }
-  TAILQ_FOREACH(item, &(OPS_block_list[dat->block->index].datasets), entries) {
+  TAILQ_FOREACH(item, &(OPS_instance::getOPSInstance()->OPS_block_list[dat->block->index].datasets), entries) {
     if (item->dat->index == dat->index) {
-      TAILQ_REMOVE(&(OPS_block_list[dat->block->index].datasets), item, entries);
+      TAILQ_REMOVE(&(OPS_instance::getOPSInstance()->OPS_block_list[dat->block->index].datasets), item, entries);
       break;
     }
   }
@@ -526,18 +489,18 @@ void ops_free_dat(ops_dat dat) {
 ops_stencil ops_decl_stencil(int dims, int points, int *sten,
                              char const *name) {
 
-  if (OPS_stencil_index == OPS_stencil_max) {
-    OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)ops_realloc(
-        OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
+  if (OPS_instance::getOPSInstance()->OPS_stencil_index == OPS_instance::getOPSInstance()->OPS_stencil_max) {
+    OPS_instance::getOPSInstance()->OPS_stencil_max += 10;
+    OPS_instance::getOPSInstance()->OPS_stencil_list = (ops_stencil *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_stencil_list, OPS_instance::getOPSInstance()->OPS_stencil_max * sizeof(ops_stencil));
 
-    if (OPS_stencil_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_stencil_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
   ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
-  stencil->index = OPS_stencil_index;
+  stencil->index = OPS_instance::getOPSInstance()->OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
@@ -551,7 +514,7 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
 
   stencil->type = 0;
 
-  OPS_stencil_list[OPS_stencil_index++] = stencil;
+  OPS_instance::getOPSInstance()->OPS_stencil_list[OPS_instance::getOPSInstance()->OPS_stencil_index++] = stencil;
 
   return stencil;
 }
@@ -559,18 +522,18 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
 ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
                                      int *stride, char const *name) {
 
-  if (OPS_stencil_index == OPS_stencil_max) {
-    OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)ops_realloc(
-        OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
+  if (OPS_instance::getOPSInstance()->OPS_stencil_index == OPS_instance::getOPSInstance()->OPS_stencil_max) {
+    OPS_instance::getOPSInstance()->OPS_stencil_max += 10;
+    OPS_instance::getOPSInstance()->OPS_stencil_list = (ops_stencil *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_stencil_list, OPS_instance::getOPSInstance()->OPS_stencil_max * sizeof(ops_stencil));
 
-    if (OPS_stencil_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_stencil_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
   ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
-  stencil->index = OPS_stencil_index;
+  stencil->index = OPS_instance::getOPSInstance()->OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
@@ -584,7 +547,7 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
   stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
   for (int i = 0; i < dims; i++) stencil->mgrid_stride[i] = 1;
 
-  OPS_stencil_list[OPS_stencil_index++] = stencil;
+  OPS_instance::getOPSInstance()->OPS_stencil_list[OPS_instance::getOPSInstance()->OPS_stencil_index++] = stencil;
 
   stencil->type = 0;
 
@@ -594,17 +557,17 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
 ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *stride, char const * name)
 {
 
-  if ( OPS_stencil_index == OPS_stencil_max ) {
-    OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+  if ( OPS_instance::getOPSInstance()->OPS_stencil_index == OPS_instance::getOPSInstance()->OPS_stencil_max ) {
+    OPS_instance::getOPSInstance()->OPS_stencil_max += 10;
+    OPS_instance::getOPSInstance()->OPS_stencil_list = (ops_stencil *) realloc(OPS_instance::getOPSInstance()->OPS_stencil_list,OPS_instance::getOPSInstance()->OPS_stencil_max * sizeof(ops_stencil));
 
-    if ( OPS_stencil_list == NULL ) {
+    if ( OPS_instance::getOPSInstance()->OPS_stencil_list == NULL ) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
   ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
-  stencil->index = OPS_stencil_index;
+  stencil->index = OPS_instance::getOPSInstance()->OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
@@ -620,7 +583,7 @@ ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *st
 
   stencil->type = 2;
 
-  OPS_stencil_list[OPS_stencil_index++] = stencil;
+  OPS_instance::getOPSInstance()->OPS_stencil_list[OPS_instance::getOPSInstance()->OPS_stencil_index++] = stencil;
 
   return stencil;
 }
@@ -628,17 +591,17 @@ ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *st
 ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *stride, char const * name)
 {
 
-  if ( OPS_stencil_index == OPS_stencil_max ) {
-    OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+  if ( OPS_instance::getOPSInstance()->OPS_stencil_index == OPS_instance::getOPSInstance()->OPS_stencil_max ) {
+    OPS_instance::getOPSInstance()->OPS_stencil_max += 10;
+    OPS_instance::getOPSInstance()->OPS_stencil_list = (ops_stencil *) realloc(OPS_instance::getOPSInstance()->OPS_stencil_list,OPS_instance::getOPSInstance()->OPS_stencil_max * sizeof(ops_stencil));
 
-    if ( OPS_stencil_list == NULL ) {
+    if ( OPS_instance::getOPSInstance()->OPS_stencil_list == NULL ) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_stencil -- error reallocating memory");
     }
   }
 
   ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
-  stencil->index = OPS_stencil_index;
+  stencil->index = OPS_instance::getOPSInstance()->OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
@@ -654,7 +617,7 @@ ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *str
 
   stencil->type = 1;
 
-  OPS_stencil_list[OPS_stencil_index++] = stencil;
+  OPS_instance::getOPSInstance()->OPS_stencil_list[OPS_instance::getOPSInstance()->OPS_stencil_index++] = stencil;
   return stencil;
 }
 
@@ -707,12 +670,12 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
 }
 
 ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[]) {
-  if (OPS_halo_group_index == OPS_halo_group_max) {
-    OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
-        OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
+  if (OPS_instance::getOPSInstance()->OPS_halo_group_index == OPS_instance::getOPSInstance()->OPS_halo_group_max) {
+    OPS_instance::getOPSInstance()->OPS_halo_group_max += 10;
+    OPS_instance::getOPSInstance()->OPS_halo_group_list = (ops_halo_group *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_halo_group_list, OPS_instance::getOPSInstance()->OPS_halo_group_max * sizeof(ops_halo_group));
 
-    if (OPS_halo_group_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_halo_group_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_group -- error reallocating memory");
     }
   }
@@ -725,8 +688,8 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[]) {
   memcpy(halos_temp, &halos[0], nhalos*sizeof(ops_halo));
   grp->halos = halos_temp;
 
-  grp->index = OPS_halo_group_index;
-  OPS_halo_group_list[OPS_halo_group_index++] = grp;
+  grp->index = OPS_instance::getOPSInstance()->OPS_halo_group_index;
+  OPS_instance::getOPSInstance()->OPS_halo_group_list[OPS_instance::getOPSInstance()->OPS_halo_group_index++] = grp;
 
   return grp;
 }
@@ -734,12 +697,12 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[]) {
 ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
                                         ops_halo_group grp) {
 
-  if (OPS_halo_group_index == OPS_halo_group_max) {
-    OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
-        OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
+  if (OPS_instance::getOPSInstance()->OPS_halo_group_index == OPS_instance::getOPSInstance()->OPS_halo_group_max) {
+    OPS_instance::getOPSInstance()->OPS_halo_group_max += 10;
+    OPS_instance::getOPSInstance()->OPS_halo_group_list = (ops_halo_group *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_halo_group_list, OPS_instance::getOPSInstance()->OPS_halo_group_max * sizeof(ops_halo_group));
 
-    if (OPS_halo_group_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_halo_group_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_group -- error reallocating memory");
     }
   }
@@ -766,8 +729,8 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
       grp->halos = halos_temp;
       grp->nhalos++;
     }
-    grp->index = OPS_halo_group_index;
-    OPS_halo_group_list[OPS_halo_group_index++] = grp;
+    grp->index = OPS_instance::getOPSInstance()->OPS_halo_group_index;
+    OPS_instance::getOPSInstance()->OPS_halo_group_list[OPS_instance::getOPSInstance()->OPS_halo_group_index++] = grp;
   } else {
     grp->halos = (ops_halo *)ops_realloc(grp->halos, (grp->nhalos + 1) *
                                                          sizeof(ops_halo_core));
@@ -780,18 +743,18 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
                             int *from_base, int *to_base, int *from_dir,
                             int *to_dir) {
-  if (OPS_halo_index == OPS_halo_max) {
-    OPS_halo_max += 10;
-    OPS_halo_list =
-        (ops_halo *)ops_realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
+  if (OPS_instance::getOPSInstance()->OPS_halo_index == OPS_instance::getOPSInstance()->OPS_halo_max) {
+    OPS_instance::getOPSInstance()->OPS_halo_max += 10;
+    OPS_instance::getOPSInstance()->OPS_halo_list =
+        (ops_halo *)ops_realloc(OPS_instance::getOPSInstance()->OPS_halo_list, OPS_instance::getOPSInstance()->OPS_halo_max * sizeof(ops_halo));
 
-    if (OPS_halo_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_halo_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_core -- error reallocating memory");
     }
   }
 
   ops_halo halo = (ops_halo)ops_malloc(sizeof(ops_halo_core));
-  halo->index = OPS_halo_index;
+  halo->index = OPS_instance::getOPSInstance()->OPS_halo_index;
   halo->from = from;
   halo->to = to;
   for (int i = 0; i < from->block->dims; i++) {
@@ -809,7 +772,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
     halo->to_dir[i] = i + 1;
   }
 
-  OPS_halo_list[OPS_halo_index++] = halo;
+  OPS_instance::getOPSInstance()->OPS_halo_list[OPS_instance::getOPSInstance()->OPS_halo_index++] = halo;
   return halo;
 }
 
@@ -859,12 +822,12 @@ ops_arg ops_arg_idx() {
 
 ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
                                              const char *name) {
-  if (OPS_reduction_index == OPS_reduction_max) {
-    OPS_reduction_max += 10;
-    OPS_reduction_list = (ops_reduction *)ops_realloc(
-        OPS_reduction_list, OPS_reduction_max * sizeof(ops_reduction));
+  if (OPS_instance::getOPSInstance()->OPS_reduction_index == OPS_instance::getOPSInstance()->OPS_reduction_max) {
+    OPS_instance::getOPSInstance()->OPS_reduction_max += 10;
+    OPS_instance::getOPSInstance()->OPS_reduction_list = (ops_reduction *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_reduction_list, OPS_instance::getOPSInstance()->OPS_reduction_max * sizeof(ops_reduction));
 
-    if (OPS_reduction_list == NULL) {
+    if (OPS_instance::getOPSInstance()->OPS_reduction_list == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_reduction_handle -- error reallocating memory");
     }
   }
@@ -875,21 +838,21 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
   red->data = (char *)ops_malloc(size * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
-  OPS_reduction_list[OPS_reduction_index] = red;
-  red->index = OPS_reduction_index++;
+  OPS_instance::getOPSInstance()->OPS_reduction_list[OPS_instance::getOPSInstance()->OPS_reduction_index] = red;
+  red->index = OPS_instance::getOPSInstance()->OPS_reduction_index++;
   return red;
 }
 
 void ops_diagnostic_output() {
-  if (OPS_diags > 2) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 2) {
     printf("\n OPS diagnostic output\n");
     printf(" --------------------\n");
 
     printf("\n block dimension\n");
     printf(" -------------------\n");
-    for (int n = 0; n < OPS_block_index; n++) {
-      printf(" %15s %15dD ", OPS_block_list[n].block->name,
-             OPS_block_list[n].block->dims);
+    for (int n = 0; n < OPS_instance::getOPSInstance()->OPS_block_index; n++) {
+      printf(" %15s %15dD ", OPS_instance::getOPSInstance()->OPS_block_list[n].block->name,
+             OPS_instance::getOPSInstance()->OPS_block_list[n].block->dims);
       printf("\n");
     }
 
@@ -903,7 +866,7 @@ void ops_diagnostic_output() {
            "-------\n");
     ops_dat_entry *item;
     double tot_memory = 0.0;
-    TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
       printf(" %15s %15d ", (item->dat)->name, (item->dat)->dim);
       for (int i = 0; i < (item->dat)->block->dims; i++)
         printf("[%d]", (item->dat)->size[i]);
@@ -1026,7 +989,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
 
               for (int d = 0; d < dat->dim; d++) {
 
-                size_t offset = OPS_soa ?
+                size_t offset = OPS_instance::getOPSInstance()->OPS_soa ?
                         (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
                       :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
@@ -1092,16 +1055,16 @@ void ops_timing_output(FILE *stream) {
   if (stream == NULL)
     stream = stdout;
 
-  if (OPS_diags > 1)
-    if (OPS_enable_checkpointing)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1)
+    if (OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
       ops_printf("\nTotal time spent in checkpointing: %g seconds\n",
-                 OPS_checkpointing_time);
-  if (OPS_diags > 1) {
+                 OPS_instance::getOPSInstance()->OPS_checkpointing_time);
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     unsigned int maxlen = 0;
-    for (int i = 0; i < OPS_kern_max; i++) {
-      if (OPS_kernels[i].count > 0)
-        maxlen = MAX(maxlen, strlen(OPS_kernels[i].name));
-      if (OPS_kernels[i].count > 0 && strlen(OPS_kernels[i].name) > 50) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_kern_max; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_kernels[i].count > 0)
+        maxlen = MAX(maxlen, strlen(OPS_instance::getOPSInstance()->OPS_kernels[i].name));
+      if (OPS_instance::getOPSInstance()->OPS_kernels[i].count > 0 && strlen(OPS_instance::getOPSInstance()->OPS_kernels[i].name) > 50) {
         printf("Too long\n");
       }
     }
@@ -1118,40 +1081,40 @@ void ops_timing_output(FILE *stream) {
     ops_fprintf(stream, "%s\n", buf);
     double sumtime = 0.0f;
     double sumtime_mpi = 0.0f;
-    for (int k = 0; k < OPS_kern_max; k++) {
+    for (int k = 0; k < OPS_instance::getOPSInstance()->OPS_kern_max; k++) {
       double moments_mpi_time[2] = {0.0};
       double moments_time[2] = {0.0};
-      ops_compute_moment(OPS_kernels[k].time, &moments_time[0],
+      ops_compute_moment(OPS_instance::getOPSInstance()->OPS_kernels[k].time, &moments_time[0],
                          &moments_time[1]);
-      ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
+      ops_compute_moment(OPS_instance::getOPSInstance()->OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
                              
-      if (OPS_kernels[k].count < 1)
+      if (OPS_instance::getOPSInstance()->OPS_kernels[k].count < 1)
         continue;
-      sprintf(buf, "%s", OPS_kernels[k].name);
-      for (unsigned int i = strlen(OPS_kernels[k].name); i < maxlen + 2; i++)
+      sprintf(buf, "%s", OPS_instance::getOPSInstance()->OPS_kernels[k].name);
+      for (unsigned int i = strlen(OPS_instance::getOPSInstance()->OPS_kernels[k].name); i < maxlen + 2; i++)
         strcat(buf, " ");
 
       sprintf(
-          buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_kernels[k].count,
+          buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", OPS_instance::getOPSInstance()->OPS_kernels[k].count,
           moments_time[0],
           sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
           moments_mpi_time[0],
           sqrt(moments_mpi_time[1] - moments_mpi_time[0] * moments_mpi_time[0]),
-          OPS_kernels[k].transfer / ((moments_time[0]) * 1024 * 1024 * 1024));
+          OPS_instance::getOPSInstance()->OPS_kernels[k].transfer / ((moments_time[0]) * 1024 * 1024 * 1024));
 
-      // sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_kernels[k].count,
-      // OPS_kernels[k].time,
-      //  OPS_kernels[k].mpi_time,
-      //  OPS_kernels[k].transfer/OPS_kernels[k].time/1000/1000/1000);
+      // sprintf(buf2,"%-5d %-6f  %-6f  %-13.2f", OPS_instance::getOPSInstance()->OPS_kernels[k].count,
+      // OPS_instance::getOPSInstance()->OPS_kernels[k].time,
+      //  OPS_instance::getOPSInstance()->OPS_kernels[k].mpi_time,
+      //  OPS_instance::getOPSInstance()->OPS_kernels[k].transfer/OPS_instance::getOPSInstance()->OPS_kernels[k].time/1000/1000/1000);
       ops_fprintf(stream, "%s%s\n", buf, buf2);
       sumtime += moments_time[0];
       sumtime_mpi += moments_mpi_time[0];
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
-    if (ops_tiled_halo_exchange_time > 0.0) {
+    if (OPS_instance::getOPSInstance()->ops_tiled_halo_exchange_time > 0.0) {
       double moments_time[2] = {0.0};
-      ops_compute_moment(ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+      ops_compute_moment(OPS_instance::getOPSInstance()->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
       ops_fprintf(stream, "Total tiled halo exchange time: %g\n", moments_time[0]);
     } else if (sumtime_mpi > 0) {
       ops_fprintf(stream, "Total halo exchange time: %g\n", sumtime_mpi);
@@ -1172,30 +1135,30 @@ void ops_timers_core(double *cpu, double *et) {
 
 void ops_timing_realloc(int kernel, const char *name) {
   int OPS_kern_max_new;
-  OPS_kern_curr = kernel;
+  OPS_instance::getOPSInstance()->OPS_kern_curr = kernel;
 
-  if (kernel >= OPS_kern_max) {
+  if (kernel >= OPS_instance::getOPSInstance()->OPS_kern_max) {
     OPS_kern_max_new = kernel + 10;
-    OPS_kernels = (ops_kernel *)ops_realloc(
-        OPS_kernels, OPS_kern_max_new * sizeof(ops_kernel));
-    if (OPS_kernels == NULL) {
+    OPS_instance::getOPSInstance()->OPS_kernels = (ops_kernel *)ops_realloc(
+        OPS_instance::getOPSInstance()->OPS_kernels, OPS_kern_max_new * sizeof(ops_kernel));
+    if (OPS_instance::getOPSInstance()->OPS_kernels == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_timing_realloc -- error reallocating memory");
     }
 
-    for (int n = OPS_kern_max; n < OPS_kern_max_new; n++) {
-      OPS_kernels[n].count = -1;
-      OPS_kernels[n].time = 0.0f;
-      OPS_kernels[n].transfer = 0.0f;
-      OPS_kernels[n].mpi_time = 0.0f;
+    for (int n = OPS_instance::getOPSInstance()->OPS_kern_max; n < OPS_kern_max_new; n++) {
+      OPS_instance::getOPSInstance()->OPS_kernels[n].count = -1;
+      OPS_instance::getOPSInstance()->OPS_kernels[n].time = 0.0f;
+      OPS_instance::getOPSInstance()->OPS_kernels[n].transfer = 0.0f;
+      OPS_instance::getOPSInstance()->OPS_kernels[n].mpi_time = 0.0f;
     }
-    OPS_kern_max = OPS_kern_max_new;
+    OPS_instance::getOPSInstance()->OPS_kern_max = OPS_kern_max_new;
   }
 
-  if (OPS_kernels[kernel].count == -1) {
-    OPS_kernels[kernel].name =
+  if (OPS_instance::getOPSInstance()->OPS_kernels[kernel].count == -1) {
+    OPS_instance::getOPSInstance()->OPS_kernels[kernel].name =
         (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
-    strcpy(OPS_kernels[kernel].name, name);
-    OPS_kernels[kernel].count = 0;
+    strcpy(OPS_instance::getOPSInstance()->OPS_kernels[kernel].name, name);
+    OPS_instance::getOPSInstance()->OPS_kernels[kernel].count = 0;
   }
 }
 
@@ -1217,23 +1180,23 @@ void ops_compute_transfer_f(int dims, int *start, int *end, ops_arg *arg,
 }
 
 void ops_register_args(ops_arg *args, const char *name) {
-  OPS_curr_args = args;
-  OPS_curr_name = name;
+  OPS_instance::getOPSInstance()->OPS_curr_args = args;
+  OPS_instance::getOPSInstance()->OPS_curr_name = name;
 }
 
 int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[1 * i] == idx0) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[1 * i] == idx0) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx << " : " << OPS_curr_args[arg_idx].dat->name;
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx << " : " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].dat->name;
       throw ex;
     }
   }
@@ -1241,18 +1204,18 @@ int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
 }
 
 int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[1 * i] == idx0) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[1 * i] == idx0) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx << " : " << OPS_curr_args[arg_idx].dat->name;
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx << " : " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].dat->name;
       throw ex;
     }
   }
@@ -1260,19 +1223,19 @@ int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
 }
 
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[2 * i] == idx0 &&
-          OPS_curr_args[arg_idx].stencil->stencil[2 * i + 1] == idx1) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[2 * i] == idx0 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[2 * i + 1] == idx1) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
   }
@@ -1280,20 +1243,20 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
 }
 int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
                          int dim1) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[3 * i] == idx0 &&
-          OPS_curr_args[arg_idx].stencil->stencil[3 * i + 1] == idx1 &&
-          OPS_curr_args[arg_idx].stencil->stencil[3 * i + 2] == idx2) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[3 * i] == idx0 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[3 * i + 1] == idx1 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[3 * i + 2] == idx2) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
   }
@@ -1302,21 +1265,21 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
 
 int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int dim0,
                          int dim1, int dim2) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[4 * i] == idx0 &&
-          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 1] == idx1 &&
-          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 2] == idx2 &&
-          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 3] == idx3) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[4 * i] == idx0 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[4 * i + 1] == idx1 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[4 * i + 2] == idx2 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[4 * i + 3] == idx3) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
   }
@@ -1325,22 +1288,22 @@ int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
 
 int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int idx4, int dim0,
                          int dim1, int dim2, int dim3) {
-  if (OPS_curr_args) {
+  if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
-    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
-      if (OPS_curr_args[arg_idx].stencil->stencil[5 * i] == idx0 &&
-          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 1] == idx1 &&
-          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 2] == idx2 &&
-          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 3] == idx3 &&
-          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 4] == idx4) {
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[5 * i] == idx0 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[5 * i + 1] == idx1 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[5 * i + 2] == idx2 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[5 * i + 3] == idx3 &&
+          OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->stencil[5 * i + 4] == idx4) {
         match = 1;
         break;
       }
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 << ") not found in declaration " << OPS_curr_args[arg_idx].stencil->name 
-         << " in loop " << OPS_curr_name << " arg " << arg_idx;
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+         << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
   }
@@ -1373,10 +1336,10 @@ void setKernelTime(int id, char name[], double kernelTime, double mpiTime,
                    float transfer, int count) {
   ops_timing_realloc(id, name);
 
-  OPS_kernels[id].count += count;
-  OPS_kernels[id].time += (float)kernelTime;
-  OPS_kernels[id].mpi_time += (float)mpiTime;
-  OPS_kernels[id].transfer += transfer;
+  OPS_instance::getOPSInstance()->OPS_kernels[id].count += count;
+  OPS_instance::getOPSInstance()->OPS_kernels[id].time += (float)kernelTime;
+  OPS_instance::getOPSInstance()->OPS_kernels[id].mpi_time += (float)mpiTime;
+  OPS_instance::getOPSInstance()->OPS_kernels[id].transfer += transfer;
 }
 
 void *ops_malloc(size_t size) {

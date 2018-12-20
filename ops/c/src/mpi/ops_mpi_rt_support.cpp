@@ -43,8 +43,6 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 
-extern int OPS_diags;
-
 // Timing
 double t1, t2, c1, c2;
 
@@ -218,7 +216,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
@@ -235,16 +233,16 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_send_1\n");
-    ops_buffer_send_1 = (char *)ops_realloc_fast(ops_buffer_send_1, send_recv_offsets[0],
+    ops_buffer_send_1 = (char *)OPS_realloc_fast(ops_buffer_send_1, send_recv_offsets[0],
                                         send_recv_offsets[0] + 4 * send_size);
     ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
   }
   if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_recv_1\n");
-    ops_buffer_recv_1 = (char *)ops_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
+    ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
  }
@@ -298,7 +296,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
@@ -315,16 +313,16 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
               sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_send_2\n");
-    ops_buffer_send_2 = (char *)ops_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
+    ops_buffer_send_2 = (char *)OPS_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
                                         send_recv_offsets[2] + 4 * send_size);
     ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
   }
   if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_recv_2\n");
-    ops_buffer_recv_2 = (char *)ops_realloc_fast(ops_buffer_recv_2,  send_recv_offsets[3],
+    ops_buffer_recv_2 = (char *)OPS_realloc_fast(ops_buffer_recv_2,  send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
  }
@@ -414,7 +412,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
@@ -431,16 +429,16 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_send_1\n");
-    ops_buffer_send_1 = (char *)ops_realloc_fast(ops_buffer_send_1,  send_recv_offsets[0],
+    ops_buffer_send_1 = (char *)OPS_realloc_fast(ops_buffer_send_1,  send_recv_offsets[0],
                                         send_recv_offsets[0] + 4 * send_size);
     ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
   }
   if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_recv_1\n");
-    ops_buffer_recv_1 = (char *)ops_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
+    ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
   }
@@ -485,7 +483,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
-  if (OPS_diags > 5) { // Consistency checking
+  if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
@@ -502,16 +500,16 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
               sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_send_2\n");
-    ops_buffer_send_2 = (char *)ops_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
+    ops_buffer_send_2 = (char *)OPS_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
                                         send_recv_offsets[2] + 4 * send_size);
     ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
   }
   if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Realloc ops_buffer_recv_2\n");
-    ops_buffer_recv_2 = (char *)ops_realloc_fast(ops_buffer_recv_2, send_recv_offsets[3],
+    ops_buffer_recv_2 = (char *)OPS_realloc_fast(ops_buffer_recv_2, send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
   }
@@ -1001,7 +999,7 @@ void ops_execute_reduction(ops_reduction handle) {
   if (strcmp(handle->type, "int") == 0 || strcmp(handle->type, "int(4)") == 0 ||
       strcmp(handle->type, "integer(4)") == 0 ||
       strcmp(handle->type, "integer") == 0) {
-    for (int i = 1; i < OPS_block_index; i++) {
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
@@ -1029,7 +1027,7 @@ void ops_execute_reduction(ops_reduction handle) {
     ops_mpi_reduce_int(&arg, (int *)local);
   }
   if (strcmp(handle->type, "float") == 0 || strcmp(handle->type, "real") == 0) {
-    for (int i = 1; i < OPS_block_index; i++) {
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
@@ -1062,7 +1060,7 @@ void ops_execute_reduction(ops_reduction handle) {
   if (strcmp(handle->type, "double") == 0 ||
       strcmp(handle->type, "real(8)") == 0 ||
       strcmp(handle->type, "double precision") == 0) {
-    for (int i = 1; i < OPS_block_index; i++) {
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
       if (!OPS_sub_block_list[i]->owned)
         continue;
       if (handle->acc == OPS_MAX)
@@ -1402,7 +1400,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>3");
-  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
+  if (OPS_instance::getOPSInstance()->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
@@ -1422,7 +1420,7 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
-  if (OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
+  if (OPS_instance::getOPSInstance()->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
