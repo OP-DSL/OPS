@@ -30,9 +30,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(2,"multidim_reduce_kernel");
-    OPS_kernels[2].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -58,7 +58,7 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -96,9 +96,9 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[2].mpi_time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += t1-t2;
   }
 
   multidim_reduce_kernel_c_wrapper(
@@ -106,14 +106,14 @@ void ops_par_loop_multidim_reduce_kernel(char const *name, ops_block block, int 
     p_a1,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[2].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

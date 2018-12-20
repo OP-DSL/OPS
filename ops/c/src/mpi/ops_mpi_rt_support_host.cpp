@@ -118,6 +118,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
                          int buf_strides_y, int buf_strides_z) {
+  int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3)
 #endif
@@ -131,7 +132,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                     (i - rx_s) * x_step * buf_strides_x) *
                        src->elem_size + d*src->type_size,
                src->data +
-                   (OPS_instance::getOPSInstance()->OPS_soa ? ((k * src->size[0] * src->size[1] + j * src->size[0] + i) 
+                   (OPS_soa ? ((k * src->size[0] * src->size[1] + j * src->size[0] + i) 
                             + d * src->size[0] * src->size[1] * src->size[2]) * src->type_size
                           : ((k * src->size[0] * src->size[1] + j * src->size[0] + i) *
                             src->elem_size + d*src->type_size)),
@@ -146,6 +147,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
                            int buf_strides_z) {
+  int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3)
 #endif
@@ -154,7 +156,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
       for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         for (int d = 0; d < dest->dim; d++) 
         memcpy(dest->data +
-                   (OPS_instance::getOPSInstance()->OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
+                   (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
                         + d * dest->size[0] * dest->size[1] * dest->size[2]) * dest->type_size
                        : ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
                        dest->elem_size + d*dest->type_size)),

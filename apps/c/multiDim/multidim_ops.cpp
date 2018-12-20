@@ -39,6 +39,8 @@ void ops_par_loop_multidim_reduce_kernel(char const *, ops_block, int , int*,
 
 int main(int argc, const char **argv)
 {
+#pragma omp parallel
+{
 
   int x_cells = 4;
   int y_cells = 4;
@@ -46,7 +48,7 @@ int main(int argc, const char **argv)
 
   ops_init(argc,argv,1);
   ops_init_backend();
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
 
   ops_block grid2D = ops_decl_block(2, "grid2D");
@@ -124,5 +126,7 @@ int main(int argc, const char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
+}
   ops_exit();
+  exit(0);
 }

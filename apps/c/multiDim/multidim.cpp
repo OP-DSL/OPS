@@ -52,6 +52,8 @@
 
 int main(int argc, const char **argv)
 {
+#pragma omp parallel
+{
   //initialize sizes using global values
   int x_cells = 4;
   int y_cells = 4;
@@ -60,7 +62,7 @@ int main(int argc, const char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 
@@ -148,6 +150,7 @@ int main(int argc, const char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
-
+}
   ops_exit();
+  exit(0);
 }
