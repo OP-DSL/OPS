@@ -44,12 +44,13 @@
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
+#include <ops_exceptions.h>
 
 void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   for (int n = 1; n < argc; n++) {
     if (strncmp(argv[n], "OPS_instance::getOPSInstance()->OPS_cl_device=", 14) == 0) {
@@ -158,8 +159,8 @@ void ops_halo_transfer(ops_halo_group group) {
       size *= halo->iter_size[i];
     if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
       if (OPS_instance::getOPSInstance()->ops_halo_buffer_d != NULL)
-        clSafeCall(clReleaseMemObject(OPS_instance::getOPSInstance()->ops_halo_buffer_d));
-      OPS_instance::getOPSInstance()->ops_halo_buffer_d = clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context,
+        clSafeCall(clReleaseMemObject((cl_mem)OPS_instance::getOPSInstance()->ops_halo_buffer_d));
+      OPS_instance::getOPSInstance()->ops_halo_buffer_d = (char*)clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context,
                                          CL_MEM_READ_WRITE, size, NULL, &ret);
       clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
       clSafeCall(ret);

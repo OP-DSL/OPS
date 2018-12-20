@@ -100,7 +100,7 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[1];
 
