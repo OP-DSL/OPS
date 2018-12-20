@@ -188,9 +188,9 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getOPS_instance::getOPSInstance()->OPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
-int getOPS_instance::getOPSInstance()->OPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
-int getOPS_instance::getOPSInstance()->OPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
 
 void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
               const int halo_blocklength, const int halo_stride, const int halo_count);

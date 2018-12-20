@@ -93,7 +93,7 @@ frotran to C
 void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
-  char *pch;
+  const char *pch;
   pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_x=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);

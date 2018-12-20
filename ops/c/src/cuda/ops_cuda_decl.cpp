@@ -298,6 +298,6 @@ void ops_halo_transfer(ops_halo_group group) {
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getOPS_instance::getOPSInstance()->OPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
-int getOPS_instance::getOPSInstance()->OPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
-int getOPS_instance::getOPSInstance()->OPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }

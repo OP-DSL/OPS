@@ -122,7 +122,7 @@ class OPS_instance {
 	int OPS_block_size_x = 32;
 	int OPS_block_size_y = 4;
 	int OPS_block_size_z = 1;
-	char *OPS_consts=NULL, *OPS_consts_d=NULL, *OPS_reduct_h=NULL, *OPS_reduct_d=NULL;
+	char *OPS_consts_h=NULL, *OPS_consts_d=NULL, *OPS_reduct_h=NULL, *OPS_reduct_d=NULL;
 	int OPS_consts_bytes = 0, OPS_reduct_bytes = 0;
 	int OPS_cl_device=0;
 	char *ops_halo_buffer = NULL;

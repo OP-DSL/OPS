@@ -39,6 +39,7 @@
 
 #include <ops_lib_core.h>
 #include <ops_mpi_core.h>
+#include <ops_exceptions.h>
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024

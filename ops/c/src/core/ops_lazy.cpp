@@ -796,7 +796,7 @@ int ops_construct_tile_plan() {
 // Execute tiling plan
 ////////////////////////////////////////////////////////////////////
 void ops_execute() {
-  if (ops_kernel_list.size() == 0)
+  if (!OPS_instance::getOPSInstance()->ops_enable_tiling || ops_kernel_list.size() == 0)
     return;
 
   // Try to find an existing tiling plan for this sequence of loops

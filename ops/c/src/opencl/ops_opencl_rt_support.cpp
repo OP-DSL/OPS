@@ -57,6 +57,7 @@
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
+#include <ops_exceptions.h>
 
 //
 // Get return (error) messages from OpenCL run-time

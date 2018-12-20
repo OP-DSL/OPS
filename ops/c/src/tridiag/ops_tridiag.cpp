@@ -39,6 +39,7 @@
 
 #include <ops_lib_core.h>
 #include "trid_cpu.h"
+#include <ops_exceptions.h>
 
 #ifdef __cplusplus
 extern "C" {

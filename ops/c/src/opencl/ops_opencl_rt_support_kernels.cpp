@@ -56,6 +56,7 @@
 
 #include <ops_lib_core.h>
 #include <ops_opencl_rt_support.h>
+#include <ops_exceptions.h>
 
 const char copy_tobuf_kernel_src[] =
     "__kernel void ops_opencl_copy_tobuf("
@@ -66,7 +67,7 @@ const char copy_tobuf_kernel_src[] =
     "const int x_step, const int y_step, const int z_step,"
     "const int size_x, const int size_y, const int size_z,"
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
-    "const int type_size, const int dim, const int OPS_instance::getOPSInstance()->OPS_soa"
+    "const int type_size, const int dim, const int OPS_soa"
     ") {"
 
     "  int idx_z = rz_s + z_step*get_global_id(2);"
@@ -76,7 +77,7 @@ const char copy_tobuf_kernel_src[] =
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
     "    (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-    "    if (OPS_instance::getOPSInstance()->OPS_soa) src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
+    "    if (OPS_soa) src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
     "    else         src   += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size * dim;"
     "    dest  += ((idx_z-rz_s)*z_step*buf_strides_z+ "
     "(idx_y-ry_s)*y_step*buf_strides_y + "
@@ -84,7 +85,7 @@ const char copy_tobuf_kernel_src[] =
     "    for(int d=0;d<dim;d++) {"
     "      for(int i=0;i<type_size;i++)"
     "        dest[d*type_size+i] = src[i];"
-    "      if (OPS_instance::getOPSInstance()->OPS_soa) src += size_x * size_y * size_z * type_size;"
+    "      if (OPS_soa) src += size_x * size_y * size_z * type_size;"
     "      else src += type_size;"
     "    }"
     "  }"
@@ -99,7 +100,7 @@ const char copy_frombuf_kernel_src[] =
     "const int x_step, const int y_step, const int z_step,"
     "const int size_x, const int size_y, const int size_z,"
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
-    "const int type_size, const int dim, const int OPS_instance::getOPSInstance()->OPS_soa"
+    "const int type_size, const int dim, const int OPS_soa"
     "){"
     "  int idx_z = rz_s + z_step*get_global_id(2);"
     "  int idx_y = ry_s + y_step*get_global_id(1);"
@@ -108,7 +109,7 @@ const char copy_frombuf_kernel_src[] =
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
     "    (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-    "    if (OPS_instance::getOPSInstance()->OPS_soa) dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
+    "    if (OPS_soa) dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
     "    else         dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size * dim;"
     "    src  += ((idx_z-rz_s)*z_step*buf_strides_z+ "
     "(idx_y-ry_s)*y_step*buf_strides_y + "
@@ -116,7 +117,7 @@ const char copy_frombuf_kernel_src[] =
     "    for(int d=0;d<dim;d++) {"
     "      for(int i=0;i<type_size;i++)"
     "        dest[i] = src[d*type_size+i];"
-    "      if (OPS_instance::getOPSInstance()->OPS_soa) dest += size_x * size_y * size_z * type_size;"
+    "      if (OPS_soa) dest += size_x * size_y * size_z * type_size;"
     "      else dest += type_size;"
     "    }"
     "  }"

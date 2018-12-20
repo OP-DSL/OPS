@@ -61,7 +61,15 @@ struct OPSException : public std::exception
     int ridx;
     std::stringstream msg;
 
+    virtual ~OPSException() throw() {}
     OPSException(int code) : code(code), cursize(0), ridx(0) { }
+    OPSException(const OPSException &ex2) {
+      code = ex2.code;
+      memcpy(_data, ex2._data, maxsize*sizeof(unsigned char));
+      cursize = ex2.cursize;
+      ridx = ex2.ridx;
+      msg << ex2.msg;
+    }
 
     template<class T>
     OPSException& operator<< (const T& val)
