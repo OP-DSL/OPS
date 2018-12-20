@@ -179,12 +179,12 @@ module OPS_Fortran_RT_Support
   end subroutine getIdx_c
 
 !#ifdef OPS_WITH_CUDAFOR
-  integer function getOPS_block_size_x ( ) BIND(C,name='getOPS_block_size_x')
+  integer function getOPS_instance::getOPSInstance()->OPS_block_size_x ( ) BIND(C,name='getOPS_instance::getOPSInstance()->OPS_block_size_x')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
   end function
 
-  integer function getOPS_block_size_y ( ) BIND(C,name='getOPS_block_size_y')
+  integer function getOPS_instance::getOPSInstance()->OPS_block_size_y ( ) BIND(C,name='getOPS_instance::getOPSInstance()->OPS_block_size_y')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
   end function

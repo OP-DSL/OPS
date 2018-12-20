@@ -47,15 +47,6 @@
 #include <unistd.h>
 #include <ops_exceptions.h>
 
-
-ops_backup_state backup_state = OPS_NONE;
-char *OPS_dat_ever_written = NULL;
-ops_checkpoint_types *OPS_dat_status = NULL;
-double OPS_checkpointing_time = 0.0;
-int OPS_ranks_per_node = 0;
-extern int ops_thread_offload;
-extern int ops_checkpoint_inmemory;
-extern int ops_lock_file;
 #ifdef CHECKPOINTING
 
 #ifndef defaultTimeout
@@ -80,6 +71,8 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
                                       int *rm_type, int *rm_elems,
                                       char **rm_data, int **rm_range);
 
+class OPS_instance_checkpointing {
+public:
 // checkpoint and execution progress information
 int ops_call_counter = 0;
 int ops_backup_point = -1;
@@ -124,6 +117,56 @@ int diagnostics = 0;
 
 char *params;
 
+//Strategy
+int   ops_strat_max_loop_counter = 0;
+long *ops_strat_min_saved        = NULL;
+long *ops_strat_max_saved        = NULL;
+long *ops_strat_avg_saved        = NULL;
+long *ops_strat_saved_counter    = NULL;
+int * ops_strat_timescalled      = NULL;
+int * ops_strat_maxcalled        = NULL;
+int * ops_strat_lastcalled       = NULL;
+int * *ops_strat_dat_status      = NULL;
+int * ops_strat_in_progress      = NULL;
+
+
+};
+
+#define ops_call_counter OPS_instance::getOPSInstance()->checkpointing_instance->ops_call_counter
+#define ops_backup_point OPS_instance::getOPSInstance()->checkpointing_instance->ops_backup_point
+#define ops_best_backup_point OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point
+#define ops_best_backup_point_size OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point_size
+#define ops_checkpoint_interval OPS_instance::getOPSInstance()->checkpointing_instance->ops_checkpoint_interval
+#define ops_last_checkpoint OPS_instance::getOPSInstance()->checkpointing_instance->ops_last_checkpoint
+#define ops_pre_backup_phase OPS_instance::getOPSInstance()->checkpointing_instance->ops_pre_backup_phase
+#define ops_duplicate_backup OPS_instance::getOPSInstance()->checkpointing_instance->ops_duplicate_backup
+#define ops_loop_max OPS_instance::getOPSInstance()->checkpointing_instance->ops_loop_max
+#define ops_loops_hashmap OPS_instance::getOPSInstance()->checkpointing_instance->ops_loops_hashmap
+#define OPS_chk_red_size OPS_instance::getOPSInstance()->checkpointing_instance->OPS_chk_red_size
+#define OPS_chk_red_offset OPS_instance::getOPSInstance()->checkpointing_instance->OPS_chk_red_offset
+#define OPS_chk_red_storage OPS_instance::getOPSInstance()->checkpointing_instance->OPS_chk_red_storage
+#define OPS_partial_buffer_size OPS_instance::getOPSInstance()->checkpointing_instance->OPS_partial_buffer_size
+#define OPS_partial_buffer OPS_instance::getOPSInstance()->checkpointing_instance->OPS_partial_buffer
+#define OPS_checkpointing_payload_nbytes OPS_instance::getOPSInstance()->checkpointing_instance->OPS_checkpointing_payload_nbytes
+#define OPS_checkpointing_payload OPS_instance::getOPSInstance()->checkpointing_instance->OPS_checkpointing_payload
+#define ops_reduction_counter OPS_instance::getOPSInstance()->checkpointing_instance->ops_reduction_counter
+#define ops_sync_frequency OPS_instance::getOPSInstance()->checkpointing_instance->ops_sync_frequency
+#define ops_reduction_avg_time OPS_instance::getOPSInstance()->checkpointing_instance->ops_reduction_avg_time
+#define ops_checkpointing_options OPS_instance::getOPSInstance()->checkpointing_instance->ops_checkpointing_options
+#define ops_chk_write OPS_instance::getOPSInstance()->checkpointing_instance->ops_chk_write
+#define ops_chk_dup OPS_instance::getOPSInstance()->checkpointing_instance->ops_chk_dup
+#define ops_chk_save OPS_instance::getOPSInstance()->checkpointing_instance->ops_chk_save
+#define managment OPS_instance::getOPSInstance()->checkpointing_instance->managment
+#define filename OPS_instance::getOPSInstance()->checkpointing_instance->filename
+#define filename_dup OPS_instance::getOPSInstance()->checkpointing_instance->filename_dup
+#define file OPS_instance::getOPSInstance()->checkpointing_instance->file
+#define file_dup OPS_instance::getOPSInstance()->checkpointing_instance->file_dup
+#define status OPS_instance::getOPSInstance()->checkpointing_instance->status
+#define diagf OPS_instance::getOPSInstance()->checkpointing_instance->diagf
+#define diagnostics OPS_instance::getOPSInstance()->checkpointing_instance->diagnostics
+#define params OPS_instance::getOPSInstance()->checkpointing_instance->params
+
+
 #define check_hdf5_error(err) __check_hdf5_error(err, __FILE__, __LINE__)
 void __check_hdf5_error(herr_t err, const char *file, const int line) {
   if (err < 0) {
@@ -147,7 +190,7 @@ void ops_create_lock(char *fname) {
   if (FILE *lock = fopen(buffer, "w+")) {
     fclose(lock);
   } else {
-    if (OPS_diags > 2)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       printf("Warning: lock file already exists\n");
   }
 }
@@ -158,7 +201,7 @@ void ops_create_lock_done(char *fname) {
   if (FILE *lock = fopen(buffer, "w+")) {
     fclose(lock);
   } else {
-    if (OPS_diags > 2)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       printf("Warning: lock done file already exists\n");
   }
 }
@@ -222,7 +265,7 @@ void *ops_saver_thread(void *payload) {
     if (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail) {
       int tail = ops_ramdisk_item_queue_tail;
       if (ops_ramdisk_item_queue[tail].partial) {
-        if (OPS_diags > 5)
+        if (OPS_instance::getOPSInstance()->OPS_diags > 5)
           printf("Thread saving partial %s\n",
                  ops_ramdisk_item_queue[tail].dat->name);
         save_to_hdf5_partial(ops_ramdisk_item_queue[tail].dat,
@@ -233,7 +276,7 @@ void *ops_saver_thread(void *payload) {
                              ops_ramdisk_item_queue[tail].saved_range,
                              ops_ramdisk_item_queue[tail].data);
       } else {
-        if (OPS_diags > 5)
+        if (OPS_instance::getOPSInstance()->OPS_diags > 5)
           printf("Thread saving full %s\n",
                  ops_ramdisk_item_queue[tail].dat->name);
         save_to_hdf5_full(ops_ramdisk_item_queue[tail].dat,
@@ -265,11 +308,11 @@ void *ops_saver_thread(void *payload) {
     if (ops_ramdisk_item_queue_head == ops_ramdisk_item_queue_tail) {
       if (ops_ramdisk_ctrl_finish) {
         check_hdf5_error(H5Fclose(file));
-        if (ops_lock_file)
+        if (OPS_instance::getOPSInstance()->ops_lock_file)
           ops_create_lock(filename);
         if (ops_duplicate_backup)
           check_hdf5_error(H5Fclose(file_dup));
-        if (ops_duplicate_backup && ops_lock_file)
+        if (ops_duplicate_backup && OPS_instance::getOPSInstance()->ops_lock_file)
           ops_create_lock(filename_dup);
         ops_ramdisk_ctrl_finish = 0;
         usleep((long)(ops_checkpoint_interval * 300000.0));
@@ -280,9 +323,9 @@ void *ops_saver_thread(void *payload) {
   pthread_exit(NULL); // Perhaps return whether everything was properly saved
 }
 
-void ops_reallocate_ramdisk(long size) {
+void OPS_instance::getOPSInstance()->OPS_reallocate_ramdisk(long size) {
   // Wait for the queue to drain
-  if (OPS_diags > 2 &&
+  if (OPS_instance::getOPSInstance()->OPS_diags > 2 &&
       (ops_ramdisk_item_queue_head != ops_ramdisk_item_queue_tail))
     printf("Main thread waiting for ramdisk reallocation head %d tail %d\n",
            ops_ramdisk_item_queue_head, ops_ramdisk_item_queue_tail);
@@ -303,10 +346,10 @@ void ops_ramdisk_init(long size) {
   ops_ramdisk_tail = 0;
   ops_ramdisk_head = 0;
   ops_ramdisk_item_queue = (ops_ramdisk_item *)ops_malloc(
-      3 * OPS_dat_index * sizeof(ops_ramdisk_item));
+      3 * OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(ops_ramdisk_item));
   ops_ramdisk_item_queue_head = 0;
   ops_ramdisk_item_queue_tail = 0;
-  ops_ramdisk_item_queue_size = 3 * OPS_dat_index;
+  ops_ramdisk_item_queue_size = 3 * OPS_instance::getOPSInstance()->OPS_dat_index;
   ops_ramdisk_initialised = 1;
   int rc = pthread_create(&thread, NULL, ops_saver_thread, NULL);
   if (rc) {
@@ -321,14 +364,14 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range,
   size = size * dat->elem_size / dat->dim;
   long sizeround64 = ROUND64L(size);
   if (ops_ramdisk_size < sizeround64)
-    ops_reallocate_ramdisk(
+    OPS_instance::getOPSInstance()->OPS_reallocate_ramdisk(
         ROUND64L(3l * (long)sizeround64 + (long)sizeround64 / 5l + 64));
   // Copy data to ramdisk
   long tail = ops_ramdisk_tail;
   long head = ops_ramdisk_head;
   while ((head < tail && head + sizeround64 >= tail) ||
          (head + sizeround64 >= ops_ramdisk_size && sizeround64 >= tail)) {
-    if (OPS_diags > 2)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       printf("Main thread waiting for ramdisk room %ld < %ld && %ld + %d >= "
              "%ld or %ld + %d  >= %ld && %d >= %ld\n",
              head, tail, head, sizeround64, tail, head, sizeround64,
@@ -349,7 +392,7 @@ void ops_ramdisk_queue(ops_dat dat, hid_t outfile, int size, int *saved_range,
       (ops_ramdisk_item_queue_head + 1) % ops_ramdisk_item_queue_size;
 
   // wait if we are about to bite our tails
-  if ((OPS_diags > 2) && (item_idx_next == ops_ramdisk_item_queue_tail))
+  if ((OPS_instance::getOPSInstance()->OPS_diags > 2) && (item_idx_next == ops_ramdisk_item_queue_tail))
     printf("Main thread waiting for ramdisk item queue room %d == %d\n",
            item_idx_next, ops_ramdisk_item_queue_tail);
   while (item_idx_next == ops_ramdisk_item_queue_tail)
@@ -395,11 +438,11 @@ void ops_inmemory_save(ops_dat dat, hid_t outfile, int size, int *saved_range,
 void save_data_handler(ops_dat dat, hid_t outfile, int size, int *saved_range,
                        char *data, int partial, int dup) {
 #ifdef OPS_CHK_THREAD
-  if (ops_thread_offload)
+  if (OPS_instance::getOPSInstance()->ops_thread_offload)
     ops_ramdisk_queue(dat, outfile, size, saved_range, data, partial);
   else {
 #endif
-    if (ops_checkpoint_inmemory)
+    if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory)
       ops_inmemory_save(dat, outfile, size, saved_range, data, partial, dup);
     else {
       if (partial)
@@ -472,7 +515,7 @@ void save_to_hdf5_partial(ops_dat dat, hid_t outfile, int size,
 void save_dat(ops_dat dat) {
   double c1, t1, t2;
   ops_timers_core(&c1, &t1);
-  OPS_dat_status[dat->index] = OPS_SAVED;
+  OPS_instance::getOPSInstance()->OPS_dat_status[dat->index] = OPS_SAVED;
   hsize_t dims[1];
   if (dat->dirty_hd == 2)
     ops_download_dat(dat);
@@ -500,7 +543,7 @@ void save_dat(ops_dat dat) {
     else
       save_data_handler(dat, file_dup, rm_nelems, rm_range, rm_data, 1, 1);
   }
-  if (OPS_diags > 4)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 4)
     printf("Backed up %s\n", dat->name);
   ops_timers_core(&c1, &t2);
   ops_chk_save += t2 - t1;
@@ -509,7 +552,7 @@ void save_dat(ops_dat dat) {
 void save_dat_partial(ops_dat dat, int *range) {
   double c1, t1, t2;
   ops_timers_core(&c1, &t1);
-  OPS_dat_status[dat->index] = OPS_SAVED;
+  OPS_instance::getOPSInstance()->OPS_dat_status[dat->index] = OPS_SAVED;
   if (dat->dirty_hd == 2)
     ops_download_dat(dat);
   int saved_range[2 * OPS_MAX_DIM] = {0};
@@ -595,7 +638,7 @@ void save_dat_partial(ops_dat dat, int *range) {
       save_data_handler(dat, file_dup, rm_nelems, rm_range, rm_data, 1, 1);
   }
 
-  if (OPS_diags > 4)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 4)
     printf("Backed up %s (partial)\n", dat->name);
   ops_timers_core(&c1, &t2);
   ops_chk_save += t2 - t1;
@@ -626,7 +669,7 @@ void ops_restore_dataset(ops_dat dat) {
       throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Unsupported data type during checkpointing, please add in ops_checkpointing.cpp");
     }
     dat->dirty_hd = 1;
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Restored %s\n", dat->name);
   } else { // if a range is specified,
     int saved_range[OPS_MAX_DIM * 2];
@@ -693,14 +736,14 @@ void ops_restore_dataset(ops_dat dat) {
     }
 
     dat->dirty_hd = 1;
-    if (OPS_diags > 4)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
       printf("Restored %s (partial)\n", dat->name);
   }
 }
 
 void ops_checkpoint_prepare_files() {
-  if (ops_checkpoint_inmemory) {
-    if (OPS_diags > 5)
+  if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory) {
+    if (OPS_instance::getOPSInstance()->OPS_diags > 5)
       ops_printf("New inmemory checkpoint, purging previous\n");
     for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head;
          i++) {
@@ -718,7 +761,7 @@ void ops_checkpoint_prepare_files() {
     if (ops_duplicate_backup && file_exists(filename_dup))
       remove(filename_dup);
     ops_timers_core(&cpu, &t4);
-    if (OPS_diags > 5)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 5)
       printf("Removed previous file %g\n", t4 - t3);
 
     // where we start backing up stuff
@@ -728,25 +771,25 @@ void ops_checkpoint_prepare_files() {
       file_dup =
           H5Fcreate(filename_dup, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     ops_timers_core(&cpu, &t4);
-    if (OPS_diags > 5)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 5)
       printf("Opened new file %g\n", t4 - t3);
   }
 }
 
 void ops_checkpoint_complete() {
-  if (ops_checkpoint_inmemory)
+  if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory)
     return;
 #ifdef OPS_CHK_THREAD
-  if (ops_thread_offload)
+  if (OPS_instance::getOPSInstance()->ops_thread_offload)
     ops_ramdisk_ctrl_finish = 1;
   else {
 #endif
     check_hdf5_error(H5Fclose(file));
-    if (ops_lock_file)
+    if (OPS_instance::getOPSInstance()->ops_lock_file)
       ops_create_lock(filename);
     if (ops_duplicate_backup)
       check_hdf5_error(H5Fclose(file_dup));
-    if (ops_duplicate_backup && ops_lock_file)
+    if (ops_duplicate_backup && OPS_instance::getOPSInstance()->ops_lock_file)
       ops_create_lock(filename_dup);
 #ifdef OPS_CHK_THREAD
   }
@@ -762,12 +805,12 @@ typedef struct {
   int OPS_checkpointing_payload_nbytes;
   int OPS_chk_red_offset;
   char *OPS_chk_red_storage;
-} ops_checkpoint_inmemory_control;
+} OPS_instance::getOPSInstance()->ops_checkpoint_inmemory_control;
 
-ops_checkpoint_inmemory_control ops_inm_ctrl;
+OPS_instance::getOPSInstance()->ops_checkpoint_inmemory_control ops_inm_ctrl;
 
 void ops_ctrldump(hid_t file_out) {
-  if (ops_checkpoint_inmemory)
+  if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory)
     return;
   hsize_t dims[1];
   dims[0] = 1;
@@ -804,11 +847,11 @@ void ops_chkp_sig_handler(int signo) {
     printf("Error: OPS received unknown signal %d\n", signo);
     return;
   }
-  if (backup_state == OPS_BACKUP_IN_PROCESS) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS) {
     printf("Error: failed in checkpointing region, aborting checkpoint\n");
     return;
   }
-  if (OPS_diags > 1)
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1)
     printf("Process received SIGINT, dumping checkpoint from memory...\n");
 
   // No checkpoint yet
@@ -817,7 +860,7 @@ void ops_chkp_sig_handler(int signo) {
   }
 
   // Things now all do go to disk
-  ops_checkpoint_inmemory = 0;
+  OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 0;
 
   // Open files
   ops_checkpoint_prepare_files();
@@ -849,17 +892,17 @@ void ops_chkp_sig_handler(int signo) {
 }
 
 bool ops_checkpointing_initstate() {
-  for (int i = 0; i < OPS_dat_index; i++) {
-    OPS_dat_status[i] = OPS_UNDECIDED;
-    OPS_dat_ever_written[i] = 0;
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_dat_index; i++) {
+    OPS_instance::getOPSInstance()->OPS_dat_status[i] = OPS_UNDECIDED;
+    OPS_instance::getOPSInstance()->OPS_dat_ever_written[i] = 0;
   }
   if (!file_exists(filename)) {
-    backup_state = OPS_BACKUP_GATHER;
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_GATHER;
     ops_printf("//\n// OPS Checkpointing -- Backup mode\n//\n");
     return false;
   } else {
     file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
-    backup_state = OPS_BACKUP_LEADIN;
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_LEADIN;
     ops_printf("//\n// OPS Checkpointing -- Restore mode\n//\n");
 
     if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
@@ -887,7 +930,7 @@ bool ops_checkpointing_initstate() {
       check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_storage",
                                         H5T_NATIVE_CHAR, OPS_chk_red_storage));
       ops_timers_core(&cpu, &t2);
-      OPS_checkpointing_time += t2 - t1;
+      OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
     }
     return true;
   }
@@ -898,7 +941,7 @@ bool ops_checkpointing_initstate() {
 */
 bool ops_checkpointing_init(const char *file_name, double interval,
                             int options) {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return false;
   if ((options & OPS_CHECKPOINT_MANUAL) &&
       !(options & (OPS_CHECKPOINT_MANUAL_DATLIST | OPS_CHECKPOINT_FASTFW))) {
@@ -915,23 +958,23 @@ bool ops_checkpointing_init(const char *file_name, double interval,
   ops_inm_ctrl.OPS_chk_red_offset = -1;
   ops_inm_ctrl.OPS_chk_red_storage = NULL;
 
-  if (ops_checkpoint_inmemory) {
+  if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory) {
 #ifdef OPS_CHK_THREAD
-    if (ops_thread_offload) {
+    if (OPS_instance::getOPSInstance()->ops_thread_offload) {
       ops_printf("Warning: in-memory checkpointing and thread-offload "
                  "checkpointing are mutually exclusive. Thread-offload will be "
                  "switched off\n");
-      ops_thread_offload = 0;
+      OPS_instance::getOPSInstance()->ops_thread_offload = 0;
     }
 #endif
     if (signal(SIGINT, ops_chkp_sig_handler) == SIG_ERR) {
       throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS can't catch SIGINT - disable in-memory checkpointing");
     }
     ops_ramdisk_item_queue = (ops_ramdisk_item *)ops_malloc(
-        3 * OPS_dat_index * sizeof(ops_ramdisk_item));
+        3 * OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(ops_ramdisk_item));
     ops_ramdisk_item_queue_head = 0;
     ops_ramdisk_item_queue_tail = 0;
-    ops_ramdisk_item_queue_size = 3 * OPS_dat_index;
+    ops_ramdisk_item_queue_size = 3 * OPS_instance::getOPSInstance()->OPS_dat_index;
   }
 
   ops_checkpoint_interval = interval;
@@ -944,14 +987,14 @@ bool ops_checkpointing_init(const char *file_name, double interval,
   ops_duplicate_backup =
       ops_checkpointing_filename(file_name, filename, filename_dup);
 
-  OPS_dat_ever_written = (char *)ops_malloc(OPS_dat_index * sizeof(char));
-  OPS_dat_status = (ops_checkpoint_types *)ops_malloc(
-      OPS_dat_index * sizeof(ops_checkpoint_types));
+  OPS_instance::getOPSInstance()->OPS_dat_ever_written = (char *)ops_malloc(OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(char));
+  OPS_instance::getOPSInstance()->OPS_dat_status = (ops_checkpoint_types *)ops_malloc(
+      OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(ops_checkpoint_types));
 
   if (diagnostics) {
     diagf = fopen("checkp_diags.txt", "w");
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
       ops_dat dat = item->dat;
       fprintf(diagf, "%s;%d;%d;%s\n", dat->name, dat->size[0], dat->size[1],
@@ -973,9 +1016,9 @@ bool ops_checkpointing_init(const char *file_name, double interval,
 }
 
 void ops_checkpointing_initphase_done() {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return;
-  if (backup_state == OPS_NONE) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_NONE) {
     ops_checkpointing_initstate();
   }
 }
@@ -988,16 +1031,16 @@ void ops_checkpointing_save_control(hid_t file_out) {
 
   // Save the state of all ongoing reductions
   int total_size = 0;
-  for (int i = 0; i < OPS_reduction_index; i++)
-    if (OPS_reduction_list[i]->initialized == 1)
-      total_size += OPS_reduction_list[i]->size;
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_reduction_index; i++)
+    if (OPS_instance::getOPSInstance()->OPS_reduction_list[i]->initialized == 1)
+      total_size += OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size;
   char *reduction_state = (char *)ops_malloc(total_size * sizeof(char));
   total_size = 0;
-  for (int i = 0; i < OPS_reduction_index; i++) {
-    if (OPS_reduction_list[i]->initialized == 1) {
-      memcpy(&reduction_state[total_size], OPS_reduction_list[i]->data,
-             OPS_reduction_list[i]->size);
-      total_size += OPS_reduction_list[i]->size;
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_reduction_index; i++) {
+    if (OPS_instance::getOPSInstance()->OPS_reduction_list[i]->initialized == 1) {
+      memcpy(&reduction_state[total_size], OPS_instance::getOPSInstance()->OPS_reduction_list[i]->data,
+             OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size);
+      total_size += OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size;
     }
   }
 
@@ -1029,16 +1072,16 @@ void ops_checkpointing_save_control(hid_t file_out) {
 }
 
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return;
   //  if (!((ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST) &&
   //  !(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW ||
   //  ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
-  //    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_manual_datlist
+  //    if (OPS_instance::getOPSInstance()->OPS_diags>1) ops_printf("Warning: ops_checkpointing_manual_datlist
   //    called, but checkpointing options do not match\n");
   //    return;
   //  }
-  if (backup_state == OPS_BACKUP_GATHER) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
       double cpu, t1, t2, t3, t4;
       ops_timers_core(&cpu, &t1);
@@ -1050,8 +1093,8 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
 #ifdef OPS_CHK_THREAD
       // if spin-off thread, and it is still working, we need to wait for it to
       // finish
-      if (ops_thread_offload) {
-        if (OPS_diags > 2 && ops_ramdisk_ctrl_finish)
+      if (OPS_instance::getOPSInstance()->ops_thread_offload) {
+        if (OPS_instance::getOPSInstance()->OPS_diags > 2 && ops_ramdisk_ctrl_finish)
           printf("Main thread waiting for previous checkpoint completion\n");
         while (ops_ramdisk_ctrl_finish)
           usleep(10000);
@@ -1068,7 +1111,7 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       }
 
 #ifdef OPS_CHK_THREAD
-      if (ops_thread_offload && !ops_ramdisk_initialised) {
+      if (OPS_instance::getOPSInstance()->ops_thread_offload && !ops_ramdisk_initialised) {
         long cum_size = 0;
         for (int i = 0; i < ndats; i++) {
           long size = datlist[i]->elem_size;
@@ -1087,7 +1130,7 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
       for (int i = 0; i < ndats; i++)
         save_dat(datlist[i]);
       ops_timers_core(&cpu, &t4);
-      if (OPS_diags > 5)
+      if (OPS_instance::getOPSInstance()->OPS_diags > 5)
         printf("Written new file %g\n", t4 - t3);
 
       // Close files
@@ -1095,54 +1138,54 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {
 
       // finished backing up, reset everything, prepare to be backed up at a
       // later point
-      backup_state = OPS_BACKUP_GATHER;
+      OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_GATHER;
       ops_pre_backup_phase = false;
       ops_call_counter--;
       ops_timers_core(&cpu, &t2);
-      OPS_checkpointing_time += t2 - t1;
-      if (OPS_diags > 1)
+      OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
+      if (OPS_instance::getOPSInstance()->OPS_diags > 1)
         ops_printf("\nCheckpoint created (manual datlist) in %g seconds\n",
                    t2 - t1);
     }
-  } else if (backup_state == OPS_BACKUP_LEADIN) {
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
     // do nothing, will get triggered anyway
   }
 }
 
 bool ops_checkpointing_fastfw(int nbytes, char *payload) {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return false;
   //  if (!((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW) &&
   //  !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST ||
   //  ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
-  //    if (OPS_diags>1) ops_printf("Warning: ops_checkpointing_fastfw called,
+  //    if (OPS_instance::getOPSInstance()->OPS_diags>1) ops_printf("Warning: ops_checkpointing_fastfw called,
   //    but checkpointing options do not match\n");
   //    return false;
   //  }
-  if (backup_state == OPS_BACKUP_GATHER) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
-      backup_state = OPS_BACKUP_BEGIN;
+      OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_BEGIN;
       ops_pre_backup_phase = false;
       OPS_checkpointing_payload_nbytes = nbytes;
       OPS_checkpointing_payload = payload;
     }
-  } else if (backup_state == OPS_BACKUP_LEADIN) {
-    backup_state = OPS_BACKUP_GATHER;
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_GATHER;
     double cpu, now, t2;
     ops_timers_core(&cpu, &now);
     ops_last_checkpoint = now;
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
       ops_restore_dataset(item->dat);
-      OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
+      OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
     }
     check_hdf5_error(H5LTread_dataset(file, "OPS_checkpointing_payload",
                                       H5T_NATIVE_CHAR, payload));
     check_hdf5_error(H5Fclose(file));
     ops_timers_core(&cpu, &t2);
-    OPS_checkpointing_time += t2 - now;
-    if (OPS_diags > 1)
+    OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - now;
+    if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_printf("\nRestored at fast-forward point (in %g seconds), continuing "
                  "normal execution...\n",
                  t2 - now);
@@ -1153,23 +1196,23 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload) {
 
 bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist,
                                              int nbytes, char *payload) {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return false;
   //  if (!((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW &&
   //  ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST) &&
   //  !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL))) {
-  //    if (OPS_diags>1) ops_printf("Warning:
+  //    if (OPS_instance::getOPSInstance()->OPS_diags>1) ops_printf("Warning:
   //    ops_checkpointing_manual_datlist_fastfw called, but checkpointing
   //    options do not match\n");
   //    return false;
   //  }
-  if (backup_state == OPS_BACKUP_GATHER) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
     if (ops_pre_backup_phase) {
       OPS_checkpointing_payload_nbytes = nbytes;
       OPS_checkpointing_payload = payload;
       ops_checkpointing_manual_datlist(ndats, datlist);
     }
-  } else if (backup_state == OPS_BACKUP_LEADIN) {
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
     ops_checkpointing_fastfw(nbytes, payload);
     return true;
   }
@@ -1180,23 +1223,23 @@ bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats,
                                                      ops_dat *datlist,
                                                      int nbytes,
                                                      char *payload) {
-  if (!OPS_enable_checkpointing)
+  if (!OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     return false;
   if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW &&
         ops_checkpointing_options & OPS_CHECKPOINT_MANUAL_DATLIST &&
         ops_checkpointing_options & OPS_CHECKPOINT_MANUAL)) {
-    if (OPS_diags > 1)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_printf("Warning: ops_checkpointing_manual_datlist_fastfw_trigger "
                  "called, but checkpointing options do not match\n");
     return false;
   }
-  if (backup_state == OPS_BACKUP_GATHER) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
     ops_pre_backup_phase = true;
     OPS_checkpointing_payload_nbytes = nbytes;
     OPS_checkpointing_payload = payload;
     ops_checkpointing_manual_datlist(ndats, datlist);
     ops_pre_backup_phase = false;
-  } else if (backup_state == OPS_BACKUP_LEADIN) {
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
     ops_checkpointing_fastfw(nbytes, payload);
     return true;
   }
@@ -1206,7 +1249,7 @@ bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats,
 void ops_checkpointing_reduction(ops_reduction red) {
   double t1, t2, cpu;
   ops_timers_core(&cpu, &t1);
-  if (diagnostics && OPS_enable_checkpointing) {
+  if (diagnostics && OPS_instance::getOPSInstance()->OPS_enable_checkpointing) {
     fprintf(diagf, "reduction;red->name\n");
   }
   if (OPS_chk_red_offset + red->size > OPS_chk_red_size &&
@@ -1216,24 +1259,24 @@ void ops_checkpointing_reduction(ops_reduction red) {
     OPS_chk_red_storage = (char *)ops_realloc(OPS_chk_red_storage,
                                               OPS_chk_red_size * sizeof(char));
   }
-  if (backup_state == OPS_BACKUP_LEADIN) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
     if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
       memcpy(red->data, &OPS_chk_red_storage[OPS_chk_red_offset], red->size);
       OPS_chk_red_offset += red->size;
     }
     ops_timers_core(&cpu, &t2);
-    OPS_checkpointing_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
     return;
   }
   ops_timers_core(&cpu, &t2);
-  OPS_checkpointing_time += t2 - t1;
+  OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
 
   ops_execute_reduction(red);
 
   ops_timers_core(&cpu, &t1);
-  if ((backup_state == OPS_BACKUP_GATHER ||
-       backup_state == OPS_BACKUP_IN_PROCESS ||
-       backup_state == OPS_BACKUP_BEGIN) &&
+  if ((OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER ||
+       OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS ||
+       OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_BEGIN) &&
       !(ops_checkpointing_options & OPS_CHECKPOINT_MANUAL)) {
     if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
       memcpy(&OPS_chk_red_storage[OPS_chk_red_offset], red->data, red->size);
@@ -1244,12 +1287,12 @@ void ops_checkpointing_reduction(ops_reduction red) {
     // If we are in the checkpointing region, check on every reduction, whether
     // timeout occurred
     if (ops_reduction_counter % ops_sync_frequency == 0 ||
-        backup_state == OPS_BACKUP_IN_PROCESS) {
+        OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS) {
       double cpu, now;
       ops_timers_core(&cpu, &now);
       double timing[2] = {now - ops_last_checkpoint,
                           (double)(now - ops_last_checkpoint >
-                                   (backup_state == OPS_BACKUP_IN_PROCESS
+                                   (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS
                                         ? defaultTimeout
                                         : ops_checkpoint_interval))};
       ops_arg temp;
@@ -1264,34 +1307,34 @@ void ops_checkpointing_reduction(ops_reduction red) {
       if (ops_reduction_avg_time > 0.3 * ops_checkpoint_interval)
         ops_sync_frequency = ops_sync_frequency - ops_sync_frequency / 2;
       ops_sync_frequency = MAX(ops_sync_frequency, 1);
-      if (OPS_diags > 4)
+      if (OPS_instance::getOPSInstance()->OPS_diags > 4)
         ops_printf("ops_sync_frequency %d\n", ops_sync_frequency);
       if (timing[1] == 1.0) {
         ops_reduction_counter = 0;
-        if (backup_state == OPS_BACKUP_GATHER) {
-          if (OPS_diags > 4)
+        if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
+          if (OPS_instance::getOPSInstance()->OPS_diags > 4)
             ops_printf("\nIt's time to checkpoint... %s\n", red->name);
           ops_last_checkpoint = now;
           if (ops_pre_backup_phase == true &&
               !(ops_checkpointing_options &
                 (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST))) {
-            if (OPS_diags > 1)
+            if (OPS_instance::getOPSInstance()->OPS_diags > 1)
               ops_printf(
                   "Double timeout for checkpointing forcing immediate begin\n");
-            backup_state = OPS_BACKUP_BEGIN;
+            OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_BEGIN;
             ops_pre_backup_phase = false;
           } else
             ops_pre_backup_phase = true;
         } else {
-          if (OPS_diags > 4)
+          if (OPS_instance::getOPSInstance()->OPS_diags > 4)
             ops_printf("\nTimeout for checkpoint region...\n");
-          backup_state = OPS_BACKUP_END;
+          OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_END;
         }
       }
     }
   }
   ops_timers_core(&cpu, &t2);
-  OPS_checkpointing_time += t2 - t1;
+  OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
 }
 
 #define HASHSIZE 5000
@@ -1304,7 +1347,7 @@ unsigned op2_hash(const char *s) {
 
 bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range,
                                    const char *s) {
-  if (backup_state == OPS_NONE)
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_NONE)
     return true;
   int loop_id = 0;
   int hash = (int)op2_hash(s);
@@ -1362,7 +1405,7 @@ args[i].dat->e_dat == 0) break;
 */
 bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
                               int loop_id) {
-  if (backup_state == OPS_NONE)
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_NONE)
     return true;
   if (diagnostics) {
     fprintf(diagf, "loop %d;%d;%d;%d;%d;%d\n", loop_id, nargs, range[0],
@@ -1390,16 +1433,16 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
               // filter
     if (args[i].argtype == OPS_ARG_DAT && args[i].acc != OPS_READ &&
         args[i].opt == 1) {
-      OPS_dat_ever_written[args[i].dat->index] = true;
+      OPS_instance::getOPSInstance()->OPS_dat_ever_written[args[i].dat->index] = true;
     }
   }
 
   if (ops_call_counter == ops_backup_point &&
-      backup_state == OPS_BACKUP_LEADIN &&
+      OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN &&
       !(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW))
-    backup_state = OPS_BACKUP_RESTORE;
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_RESTORE;
 
-  if (backup_state == OPS_BACKUP_GATHER) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_GATHER) {
     if (!(ops_checkpointing_options &
           (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST)))
       ops_strat_gather_statistics(args, nargs, loop_id, range);
@@ -1408,55 +1451,55 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
         !(ops_checkpointing_options &
           (OPS_CHECKPOINT_FASTFW | OPS_CHECKPOINT_MANUAL_DATLIST)) &&
         ops_strat_should_backup(args, nargs, loop_id, range)) {
-      backup_state = OPS_BACKUP_BEGIN;
+      OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_BEGIN;
       ops_pre_backup_phase = false;
     }
-  } else if (backup_state == OPS_BACKUP_LEADIN) {
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_LEADIN) {
     return false;
-  } else if (backup_state == OPS_BACKUP_RESTORE) {
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_RESTORE) {
     // this is the point where we do the switch from restore mode to computation
     // mode
-    backup_state = OPS_BACKUP_GATHER;
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_GATHER;
     double cpu, now;
     ops_timers_core(&cpu, &now);
     ops_last_checkpoint = now;
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
       ops_restore_dataset(item->dat);
-      OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
+      OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
     }
 
     int total_size = 0;
-    for (int i = 0; i < OPS_reduction_index; i++)
-      if (OPS_reduction_list[i]->initialized == 1)
-        total_size += OPS_reduction_list[i]->size;
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_reduction_index; i++)
+      if (OPS_instance::getOPSInstance()->OPS_reduction_list[i]->initialized == 1)
+        total_size += OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size;
     char *reduction_state = (char *)ops_malloc(total_size * sizeof(char));
     check_hdf5_error(H5LTread_dataset(file, "reduction_state", H5T_NATIVE_CHAR,
                                       reduction_state));
     total_size = 0;
-    for (int i = 0; i < OPS_reduction_index; i++) {
-      if (OPS_reduction_list[i]->initialized == 1) {
-        memcpy(OPS_reduction_list[i]->data, &reduction_state[total_size],
-               OPS_reduction_list[i]->size);
-        total_size += OPS_reduction_list[i]->size;
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_reduction_index; i++) {
+      if (OPS_instance::getOPSInstance()->OPS_reduction_list[i]->initialized == 1) {
+        memcpy(OPS_instance::getOPSInstance()->OPS_reduction_list[i]->data, &reduction_state[total_size],
+               OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size);
+        total_size += OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size;
       }
     }
     free(reduction_state);
     check_hdf5_error(H5Fclose(file));
     ops_timers_core(&cpu, &t2);
-    if (OPS_diags > 1)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_printf("\nRestored in %g seconds, continuing normal execution...\n",
                  t2 - t1);
   }
 
-  if (backup_state == OPS_BACKUP_BEGIN) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_BEGIN) {
     ops_backup_point = ops_call_counter;
 #ifdef OPS_CHK_THREAD
     // if spin-off thread, and it is still working, we need to wait for it to
     // finish
-    if (ops_thread_offload) {
-      if (OPS_diags > 2 && ops_ramdisk_ctrl_finish)
+    if (OPS_instance::getOPSInstance()->ops_thread_offload) {
+      if (OPS_instance::getOPSInstance()->OPS_diags > 2 && ops_ramdisk_ctrl_finish)
         printf("Main thread waiting for previous checkpoint completion\n");
       while (ops_ramdisk_ctrl_finish)
         usleep(10000);
@@ -1473,13 +1516,13 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
     }
 
 #ifdef OPS_CHK_THREAD
-    if (ops_thread_offload) {
+    if (OPS_instance::getOPSInstance()->ops_thread_offload) {
       if (ops_best_backup_point_size == 0) {
         ops_dat_entry *item, *tmp_item;
         int dat_count = 0;
-        for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+        for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
           tmp_item = TAILQ_NEXT(item, entries);
-          if (OPS_dat_ever_written[item->dat->index]) {
+          if (OPS_instance::getOPSInstance()->OPS_dat_ever_written[item->dat->index]) {
             long size = item->dat->elem_size;
             for (int d = 0; d < item->dat->block->dims; d++)
               size *= item->dat->size[d];
@@ -1488,7 +1531,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
           }
         }
         ops_best_backup_point_size = ops_best_backup_point_size / 5l;
-        if (OPS_diags > 5)
+        if (OPS_instance::getOPSInstance()->OPS_diags > 5)
           printf("Approximated ramdisk size %ld\n", ops_best_backup_point_size);
       }
       if (ops_duplicate_backup)
@@ -1503,69 +1546,69 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
     // write datasets
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype == OPS_ARG_DAT &&
-          OPS_dat_ever_written[args[i].dat->index] &&
-          OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[args[i].dat->index] &&
+          OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
           args[i].acc != OPS_WRITE && args[i].opt == 1) {
         // write it to disk
         save_dat(args[i].dat);
       } else if (args[i].argtype == OPS_ARG_DAT &&
-                 OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+                 OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
                  args[i].acc == OPS_WRITE && args[i].opt == 1) {
         save_dat_partial(args[i].dat, range);
       }
     }
 
     // Check if we are done
-    backup_state = OPS_BACKUP_IN_PROCESS;
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_IN_PROCESS;
     bool done = true;
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
-      if (OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
-          OPS_dat_ever_written[item->dat->index]) {
+      if (OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[item->dat->index]) {
         done = false;
       }
     }
     if (done)
-      backup_state = OPS_BACKUP_END;
-  } else if (backup_state == OPS_BACKUP_IN_PROCESS) {
+      OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_END;
+  } else if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS) {
     // when we have already begun backing up, but there are a few datasets that
     // are undecided (whether or not they should be backed up)
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype == OPS_ARG_DAT &&
-          OPS_dat_ever_written[args[i].dat->index] &&
-          OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[args[i].dat->index] &&
+          OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
           args[i].acc != OPS_WRITE && args[i].opt == 1) {
         save_dat(args[i].dat);
       } else if (args[i].argtype == OPS_ARG_DAT &&
-                 OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+                 OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
                  args[i].acc == OPS_WRITE && args[i].opt == 1) {
         save_dat_partial(args[i].dat, range);
       }
     }
     bool done = true;
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
-      if (OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
-          OPS_dat_ever_written[item->dat->index]) {
+      if (OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[item->dat->index]) {
         done = false;
       }
     }
     // if there are no undecided datasets left
     if (done)
-      backup_state = OPS_BACKUP_END;
+      OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_END;
   }
 
-  if (backup_state == OPS_BACKUP_END) {
+  if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_END) {
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype == OPS_ARG_DAT &&
-          OPS_dat_ever_written[args[i].dat->index] &&
-          OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[args[i].dat->index] &&
+          OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
           args[i].acc != OPS_WRITE && args[i].opt == 1) {
         save_dat(args[i].dat);
       } else if (args[i].argtype == OPS_ARG_DAT &&
-                 OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
+                 OPS_instance::getOPSInstance()->OPS_dat_status[args[i].dat->index] == OPS_UNDECIDED &&
                  args[i].acc == OPS_WRITE && args[i].opt == 1) {
         save_dat_partial(args[i].dat, range);
       }
@@ -1573,48 +1616,48 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
 
     // either timed out or ended, if it's the former, back up everything left
     ops_dat_entry *item, *tmp_item;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
-      if (OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
-          OPS_dat_ever_written[item->dat->index]) {
+      if (OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] == OPS_UNDECIDED &&
+          OPS_instance::getOPSInstance()->OPS_dat_ever_written[item->dat->index]) {
         save_dat(item->dat);
-        if (OPS_diags > 4)
+        if (OPS_instance::getOPSInstance()->OPS_diags > 4)
           printf("Timeout, force saving %s\n", item->dat->name);
       }
     }
 
-    if (OPS_diags > 6) {
-      for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    if (OPS_instance::getOPSInstance()->OPS_diags > 6) {
+      for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
         tmp_item = TAILQ_NEXT(item, entries);
         ops_printf("Ever written %s %d\n", item->dat->name,
-                   OPS_dat_ever_written[item->dat->index]);
+                   OPS_instance::getOPSInstance()->OPS_dat_ever_written[item->dat->index]);
       }
     }
 
     ops_checkpoint_complete();
 
-    if (OPS_diags > 1)
+    if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_printf("\nCheckpoint created %d bytes reduction data\n",
                  OPS_chk_red_offset);
     // finished backing up, reset everything, prepare to be backed up at a later
     // point
-    backup_state = OPS_BACKUP_GATHER;
-    for (item = TAILQ_FIRST(&OPS_dat_list); item != NULL; item = tmp_item) {
+    OPS_instance::getOPSInstance()->backup_state = OPS_BACKUP_GATHER;
+    for (item = TAILQ_FIRST(&OPS_instance::getOPSInstance()->OPS_dat_list); item != NULL; item = tmp_item) {
       tmp_item = TAILQ_NEXT(item, entries);
-      OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
+      OPS_instance::getOPSInstance()->OPS_dat_status[item->dat->index] = OPS_UNDECIDED;
     }
   }
   ops_timers_core(&cpu, &t2);
-  OPS_checkpointing_time += t2 - t1;
+  OPS_instance::getOPSInstance()->OPS_checkpointing_time += t2 - t1;
   return true;
 }
 
 void ops_checkpointing_exit() {
-  if (backup_state != OPS_NONE) {
+  if (OPS_instance::getOPSInstance()->backup_state != OPS_NONE) {
     ops_statistics_exit();
 
 #ifdef OPS_CHK_THREAD
-    if (ops_thread_offload && ops_ramdisk_initialised) {
+    if (OPS_instance::getOPSInstance()->ops_thread_offload && ops_ramdisk_initialised) {
       ops_ramdisk_ctrl_exit = 1;
       pthread_join(thread, NULL);
       free(ops_ramdisk_buffer);
@@ -1622,14 +1665,14 @@ void ops_checkpointing_exit() {
     }
 #endif
 
-    if (ops_checkpoint_inmemory) {
+    if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory) {
       for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head;
            i++)
         free(ops_ramdisk_item_queue[i].data);
       free(ops_ramdisk_item_queue);
     }
 
-    if (backup_state == OPS_BACKUP_IN_PROCESS) {
+    if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS) {
       check_hdf5_error(H5Fclose(file));
       if (ops_duplicate_backup)
         check_hdf5_error(H5Fclose(file_dup));
@@ -1639,7 +1682,7 @@ void ops_checkpointing_exit() {
     if (ops_duplicate_backup)
       remove(filename_dup);
 
-    if (ops_lock_file)
+    if (OPS_instance::getOPSInstance()->ops_lock_file)
       ops_create_lock_done(filename);
 
     if (diagnostics) {
@@ -1647,7 +1690,7 @@ void ops_checkpointing_exit() {
       fclose(diagf);
     }
 
-    if (OPS_diags > 2) {
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2) {
       double moments_time[2] = {0.0};
       ops_compute_moment(ops_chk_save, &moments_time[0], &moments_time[1]);
       moments_time[1] =
@@ -1665,7 +1708,7 @@ void ops_checkpointing_exit() {
           moments_time[0], moments_time[1], moments_time1[0], moments_time1[1],
           moments_time2[0], moments_time2[1]);
 #ifdef OPS_CHK_THREAD
-      if (ops_thread_offload && ops_ramdisk_initialised) {
+      if (OPS_instance::getOPSInstance()->ops_thread_offload && ops_ramdisk_initialised) {
         double moments_time[2] = {0.0};
         ops_compute_moment(ops_chk_thr_queue, &moments_time[0],
                            &moments_time[1]);
@@ -1681,14 +1724,14 @@ void ops_checkpointing_exit() {
     ops_checkpoint_interval = -1;
     ops_last_checkpoint = -1;
     ops_pre_backup_phase = false;
-    backup_state = OPS_NONE;
+    OPS_instance::getOPSInstance()->backup_state = OPS_NONE;
     ops_loop_max = 0;
     free(ops_loops_hashmap);
     ops_loops_hashmap = NULL;
-    free(OPS_dat_ever_written);
-    OPS_dat_ever_written = NULL;
-    free(OPS_dat_status);
-    OPS_dat_status = NULL;
+    free(OPS_instance::getOPSInstance()->OPS_dat_ever_written);
+    OPS_instance::getOPSInstance()->OPS_dat_ever_written = NULL;
+    free(OPS_instance::getOPSInstance()->OPS_dat_status);
+    OPS_instance::getOPSInstance()->OPS_dat_status = NULL;
     OPS_partial_buffer_size = 0;
     free(OPS_partial_buffer);
     OPS_partial_buffer = NULL;
@@ -1705,6 +1748,8 @@ void ops_checkpointing_exit() {
 #endif
 
 #else
+
+class OPS_instance_checkpointing {};
 
 #ifdef __cplusplus
 extern "C" {

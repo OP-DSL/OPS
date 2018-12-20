@@ -84,7 +84,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
-      OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
+      OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));

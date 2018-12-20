@@ -52,13 +52,13 @@ extern char *ops_buffer_recv_2;
 void ops_init_opencl(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   for (int n = 1; n < argc; n++) {
-    if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
-      OPS_cl_device = atoi(argv[n] + 14);
-      printf("\n OPS_cl_device = %d \n", OPS_cl_device);
+    if (strncmp(argv[n], "OPS_instance::getOPSInstance()->OPS_cl_device=", 14) == 0) {
+      OPS_instance::getOPSInstance()->OPS_cl_device = atoi(argv[n] + 14);
+      printf("\n OPS_instance::getOPSInstance()->OPS_cl_device = %d \n", OPS_instance::getOPSInstance()->OPS_cl_device);
     }
   }
 
@@ -116,7 +116,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
-      OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
+      OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));

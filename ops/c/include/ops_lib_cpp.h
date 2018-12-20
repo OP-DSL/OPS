@@ -116,7 +116,7 @@ void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
 template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
   if (type_error(ptr, handle->type)) {
     OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: incorrect type specified for constant " << name << " in ops_reduction_result";
+    ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
     throw ex;
   }
   ops_reduction_result_char(handle, sizeof(T), (char *)ptr);

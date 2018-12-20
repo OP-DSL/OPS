@@ -65,27 +65,24 @@ typedef struct {
   // cl_mem *data_d; // cl_mem struct corresponding to ops_core_dat char* data_d
 } ops_opencl_core;
 
-extern int OPS_cl_device;
-
-//#include <ops_lib_cpp.h>
 #include <ops_lib_core.h>
 
-/* define CUDA warpsize for OPS */
-
 #define OPS_WARPSIZE 32
+
+class OPS_instance_opencl  {
+public:
+  ops_opencl_core OPS_opencl_core;
+
+  cl_kernel *copy_tobuf_kernel = NULL;
+  cl_kernel *copy_frombuf_kernel = NULL;
+
+  bool isbuilt_copy_tobuf_kernel = false;
+  bool isbuilt_copy_frombuf_kernel = false;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*
-* Global variables actually defined in the corresponding c file
-*/
-extern char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
-
-extern int OPS_block_size_x;
-extern int OPS_block_size_y;
-extern int OPS_block_size_z;
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
 
