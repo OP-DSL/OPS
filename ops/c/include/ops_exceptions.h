@@ -68,7 +68,7 @@ struct OPSException : public std::exception
       memcpy(_data, ex2._data, maxsize*sizeof(unsigned char));
       cursize = ex2.cursize;
       ridx = ex2.ridx;
-      msg << ex2.msg;
+      msg << ex2.msg.rdbuf();
     }
 
     template<class T>
