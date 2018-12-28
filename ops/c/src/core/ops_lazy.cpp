@@ -74,6 +74,7 @@ struct tiling_plan {
 
 class OPS_instance_tiling {
 public:
+  OPS_instance_tiling() : TILE1D(-1), TILE2D(-1), TILE3D(-1), ops_dims_tiling_internal(1) {}
   std::vector<ops_kernel_descriptor *> ops_kernel_list;
 
   // Tiling
@@ -88,12 +89,12 @@ public:
   std::vector<tiling_plan> tiling_plans;
 
   // tile sizes
-  int TILE1D = -1;
-  int TILE2D = -1;
-  int TILE3D = -1;
+  int TILE1D;
+  int TILE2D;
+  int TILE3D;
 
   // dimensionality of blocks used throughout
-  int ops_dims_tiling_internal = 1;
+  int ops_dims_tiling_internal;
 
 };
 #define TILE4D -1
