@@ -94,42 +94,42 @@ void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
   const char *pch;
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_x=");
+  pch = strstr(argv, "OPS_block_size_x=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_x = atoi(temp + 17);
-    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x);
+    ops_printf("\n OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_y=");
+  pch = strstr(argv, "OPS_block_size_y=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_y = atoi(temp + 17);
-    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y);
+    ops_printf("\n OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_block_size_z=");
+  pch = strstr(argv, "OPS_block_size_z=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_z = atoi(temp + 17);
-    ops_printf("\n OPS_instance::getOPSInstance()->OPS_block_size_z = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_z);
+    ops_printf("\n OPS_block_size_z = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_z);
   }
   pch = strstr(argv, "-gpudirect");
   if (pch != NULL) {
     OPS_instance::getOPSInstance()->OPS_gpu_direct = 1;
     ops_printf("\n GPU Direct enabled\n");
   }
-  pch = strstr(argv, "-OPS_instance::getOPSInstance()->OPS_diags=");
+  pch = strstr(argv, "-OPS_DIAGS=");
   if (pch != NULL) {
     strncpy(temp, pch, 12);
     OPS_instance::getOPSInstance()->OPS_diags = atoi(temp + 11);
-    ops_printf("\n OPS_instance::getOPSInstance()->OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags);
+    ops_printf("\n OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_cache_size=");
+  pch = strstr(argv, "ops_cache_size=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->ops_cache_size = atoi(temp + 15);
     ops_printf("\n Cache size per process = %d \n", OPS_instance::getOPSInstance()->ops_cache_size);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->OPS_realloc=");
+  pch = strstr(argv, "OPS_realloc=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_realloc = atoi(temp + 12);
@@ -147,26 +147,26 @@ void ops_set_args(const int argc, const char *argv) {
     OPS_instance::getOPSInstance()->ops_tiling_mpidepth = atoi(temp + 20);
     ops_printf("\n Max tiling depth across processes = %d \n", OPS_instance::getOPSInstance()->ops_tiling_mpidepth);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_X=");
+  pch = strstr(argv, "ops_force_decomp_X=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[0] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in x direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[0]);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_Y=");
+  pch = strstr(argv, "ops_force_decomp_Y=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[1] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in y direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[1]);
   }
-  pch = strstr(argv, "OPS_instance::getOPSInstance()->ops_force_decomp_Z=");
+  pch = strstr(argv, "ops_force_decomp_Z=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[2] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in z direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[2]);
   }
 
-  if (strstr(argv, "OPS_instance::getOPSInstance()->ops_checkpoint_inmemory") != NULL) {
+  if (strstr(argv, "ops_checkpoint_inmemory") != NULL) {
     OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 1;
     ops_printf("\n OPS Checkpointing in memory\n");
   } else if (strstr(argv, "OPS_CHECKPOINT_LOCKFILE") != NULL) {
@@ -195,58 +195,7 @@ void ops_init_core(const int argc, const char **argv, const int diags) {
   OPS_instance::getOPSInstance()->OPS_diags = diags;
   for (int d = 0; d < OPS_MAX_DIM; d++) OPS_instance::getOPSInstance()->ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
-
     ops_set_args(argc, argv[n]);
-
-    /*if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_block_size_x=", 17 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_block_size_x = atoi ( argv[n] + 17 );
-      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x );
-    }
-
-    if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_block_size_y=", 17 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_block_size_y = atoi ( argv[n] + 17 );
-      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y );
-    }
-
-    if ( strncmp ( argv[n], "-gpudirect", 10 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_gpu_direct = 1;
-      ops_printf ( "\n GPU Direct enabled\n" );
-    }
-    if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->OPS_diags=", 10 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_diags = atoi ( argv[n] + 10 );
-      ops_printf ( "\n OPS_instance::getOPSInstance()->OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags );
-    }
-    if ( strncmp ( argv[n], "OPS_CHECKPOINT=", 15 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 2;
-      OPS_instance::getOPSInstance()->OPS_ranks_per_node = atoi ( argv[n] + 15 );
-      ops_printf ( "\n OPS Checkpointing with mirroring offset %d\n",
-    OPS_instance::getOPSInstance()->OPS_ranks_per_node);
-    }
-    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_THREAD", 21 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->ops_thread_offload = 1;
-      ops_printf ( "\n OPS Checkpointing on a separate thread\n");
-    }
-    else if ( strncmp ( argv[n], "OPS_instance::getOPSInstance()->ops_checkpoint_inmemory", 23 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 1;
-      ops_printf ( "\n OPS Checkpointing in memory\n");
-    }
-    else if ( strncmp ( argv[n], "OPS_CHECKPOINT_LOCKFILE", 23 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->ops_lock_file = 1;
-      ops_printf ( "\n OPS Checkpointing creating lockfiles\n");
-    }
-    else if ( strncmp ( argv[n], "OPS_CHECKPOINT", 14 ) == 0 )
-    {
-      OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 1;
-      ops_printf ( "\n OPS Checkpointing enabled\n");
-    }*/
   }
 
   /*Initialize the double linked list to hold ops_dats*/
