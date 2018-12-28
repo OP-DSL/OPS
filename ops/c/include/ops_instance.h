@@ -46,7 +46,6 @@
   #include <omp.h>
 #endif
 
-class OPS_instace_mpi;
 class OPS_instance_tiling;
 class OPS_instance_checkpointing;
 class OPS_instance_opencl;
@@ -132,15 +131,6 @@ class OPS_instance {
 	char *OPS_gbl_prev;
 	OPS_instance_opencl *opencl_instance;
 
-
-	//MPI
-	OPS_instace_mpi *mpi_instance;
-
 };
-
-#ifndef MPI_VERSION
-class OPS_instace_mpi {
-};
-#endif
 
 #endif //__OPS_INSTANCE_H
