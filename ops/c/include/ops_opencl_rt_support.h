@@ -73,11 +73,11 @@ class OPS_instance_opencl  {
 public:
   ops_opencl_core OPS_opencl_core;
 
-  cl_kernel *copy_tobuf_kernel = NULL;
-  cl_kernel *copy_frombuf_kernel = NULL;
+  cl_kernel *copy_tobuf_kernel;
+  cl_kernel *copy_frombuf_kernel;
 
-  bool isbuilt_copy_tobuf_kernel = false;
-  bool isbuilt_copy_frombuf_kernel = false;
+  bool isbuilt_copy_tobuf_kernel;
+  bool isbuilt_copy_frombuf_kernel;
 };
 
 #ifdef __cplusplus
