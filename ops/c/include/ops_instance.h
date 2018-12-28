@@ -53,7 +53,8 @@ class OPS_instance_opencl;
 
 class OPS_instance {
   private:
-  	OPS_instance() {}
+  	OPS_instance() {
+    }
   public:
   	static OPS_instance* getOPSInstance() {
   		OPS_instance **ptr;
