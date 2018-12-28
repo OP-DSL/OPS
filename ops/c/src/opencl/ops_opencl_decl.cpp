@@ -53,17 +53,24 @@ void ops_init(const int argc, const char **argv, const int diags) {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   for (int n = 1; n < argc; n++) {
-    if (strncmp(argv[n], "OPS_instance::getOPSInstance()->OPS_cl_device=", 14) == 0) {
+    if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
       OPS_instance::getOPSInstance()->OPS_cl_device = atoi(argv[n] + 14);
-      printf("\n OPS_instance::getOPSInstance()->OPS_cl_device = %d \n", OPS_instance::getOPSInstance()->OPS_cl_device);
+      printf("\n OPS_cl_device = %d \n", OPS_instance::getOPSInstance()->OPS_cl_device);
     }
   }
+
+  OPS_instance::getOPSInstance()->opencl_instance = new OPS_instance_opencl();
+  OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel = NULL;
+  OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = NULL;
+  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_tobuf_kernel = false;
+  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_frombuf_kernel = false;
 
   openclDeviceInit(argc, argv);
 }
 
 void ops_exit() {
   ops_opencl_exit(); // frees dat_d memory
+  delete OPS_instance::getOPSInstance()->opencl_instance;
   ops_exit_core();   // frees lib core variables
 }
 
