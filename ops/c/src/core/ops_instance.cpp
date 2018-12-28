@@ -62,10 +62,6 @@ OPS_instance::OPS_instance() {
 	OPS_gbl_prev = NULL;
 	opencl_instance = NULL;
 
-
-	//MPI
-	mpi_instance = NULL;
-
 }
 
 OPS_instance* OPS_instance::getOPSInstance() {
