@@ -72,62 +72,107 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
                                       char **rm_data, int **rm_range);
 
 class OPS_instance_checkpointing {
-public:
-// checkpoint and execution progress information
-int ops_call_counter = 0;
-int ops_backup_point = -1;
-int ops_best_backup_point = -1;
-int ops_best_backup_point_size = 0;
-double ops_checkpoint_interval = -1;
-double ops_last_checkpoint = -1;
-bool ops_pre_backup_phase = false;
-bool ops_duplicate_backup = false;
-int ops_loop_max = 0;
-int *ops_loops_hashmap = NULL;
-int OPS_chk_red_size = 0;
-int OPS_chk_red_offset = 0;
-char *OPS_chk_red_storage = NULL;
+  OPS_instance_checkpointing() {
+    ops_call_counter = 0;
+    ops_backup_point = -1;
+    ops_best_backup_point = -1;
+    ops_best_backup_point_size = 0;
+    ops_checkpoint_interval = -1;
+    ops_last_checkpoint = -1;
+    ops_pre_backup_phase = false;
+    ops_duplicate_backup = false;
+    ops_loop_max = 0;
+    ops_loops_hashmap = NULL;
+    OPS_chk_red_size = 0;
+    OPS_chk_red_offset = 0;
+    OPS_chk_red_storage = NULL;
 
-int OPS_partial_buffer_size = 0;
-char *OPS_partial_buffer = NULL;
+    OPS_partial_buffer_size = 0;
+    OPS_partial_buffer = NULL;
 
-int OPS_checkpointing_payload_nbytes = 0;
-char *OPS_checkpointing_payload = NULL;
+    OPS_checkpointing_payload_nbytes = 0;
+    OPS_checkpointing_payload = NULL;
 
-int ops_reduction_counter = 0;
-int ops_sync_frequency = 50;
-double ops_reduction_avg_time = 0.0;
+    ops_reduction_counter = 0;
+    ops_sync_frequency = 50;
+    ops_reduction_avg_time = 0.0;
 
-int ops_checkpointing_options = 0;
+    ops_checkpointing_options = 0;
+    ops_chk_write = 0.0;
+    ops_chk_dup = 0.0;
+    ops_chk_save = 0.0;
 
-// Timing
-double ops_chk_write = 0.0;
-double ops_chk_dup = 0.0;
-double ops_chk_save = 0.0;
-
-// file managment
-char filename[100];
-char filename_dup[100];
-hid_t file;
-hid_t file_dup;
-herr_t status;
-
-FILE *diagf;
-int diagnostics = 0;
-
-char *params;
+    diagnostics = 0;
 
 //Strategy
-int   ops_strat_max_loop_counter = 0;
-long *ops_strat_min_saved        = NULL;
-long *ops_strat_max_saved        = NULL;
-long *ops_strat_avg_saved        = NULL;
-long *ops_strat_saved_counter    = NULL;
-int * ops_strat_timescalled      = NULL;
-int * ops_strat_maxcalled        = NULL;
-int * ops_strat_lastcalled       = NULL;
-int * *ops_strat_dat_status      = NULL;
-int * ops_strat_in_progress      = NULL;
+    ops_strat_max_loop_counter = 0;
+    ops_strat_min_saved        = NULL;
+    ops_strat_max_saved        = NULL;
+    ops_strat_avg_saved        = NULL;
+    ops_strat_saved_counter    = NULL;
+    ops_strat_timescalled      = NULL;
+    ops_strat_maxcalled        = NULL;
+    ops_strat_lastcalled       = NULL;
+    ops_strat_dat_status      = NULL;
+    ops_strat_in_progress      = NULL;
+
+  }
+public:
+// checkpoint and execution progress information
+  int ops_call_counter ;
+  int ops_backup_point ;
+  int ops_best_backup_point ;
+  int ops_best_backup_point_size ;
+  double ops_checkpoint_interval ;
+  double ops_last_checkpoint ;
+  bool ops_pre_backup_phase ;
+  bool ops_duplicate_backup ;
+  int ops_loop_max ;
+  int *ops_loops_hashmap ;
+  int OPS_chk_red_size ;
+  int OPS_chk_red_offset ;
+  char *OPS_chk_red_storage ;
+
+  int OPS_partial_buffer_size ;
+  char *OPS_partial_buffer ;
+
+  int OPS_checkpointing_payload_nbytes ;
+  char *OPS_checkpointing_payload ;
+
+  int ops_reduction_counter ;
+  int ops_sync_frequency ;
+  double ops_reduction_avg_time ;
+
+  int ops_checkpointing_options ;
+
+// Timing
+  double ops_chk_write ;
+  double ops_chk_dup ;
+  double ops_chk_save ;
+
+// file managment
+  char filename[100];
+  char filename_dup[100];
+  hid_t file;
+  hid_t file_dup;
+  herr_t status;
+
+  FILE *diagf;
+  int diagnostics ;
+
+  char *params;
+
+//Strategy
+  int   ops_strat_max_loop_counter;
+  long *ops_strat_min_saved;
+  long *ops_strat_max_saved;
+  long *ops_strat_avg_saved;
+  long *ops_strat_saved_counter;
+  int * ops_strat_timescalled;
+  int * ops_strat_maxcalled;
+  int * ops_strat_lastcalled;
+  int * *ops_strat_dat_status;
+  int * ops_strat_in_progress;
 
 
 };
