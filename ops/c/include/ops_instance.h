@@ -51,86 +51,85 @@ class OPS_instance_tiling;
 class OPS_instance_checkpointing;
 class OPS_instance_opencl;
 
+/**
+ * This class encapsulates "global" scope data required for OPS instances.
+ * To support multiple instances of OPS in a shared memory environment,
+ * you need to add support for your own threading library in the implementation
+ * of getOPSInstance() in src/core/ops_instance.cpp
+ *
+ * Currently supported threading libraries: OpenMP
+ */
+
 class OPS_instance {
   private:
-  	OPS_instance() {
-    }
+  	OPS_instance();
   public:
-  	static OPS_instance* getOPSInstance() {
-  		OPS_instance **ptr;
-		#if defined(_OPENMP)
-  		ptr = &ops_instances[omp_get_thread_num()];
-		#else
-  		ptr = &ops_instances[0];
-		#endif
+  	static OPS_instance* getOPSInstance();
 
-  		if (*ptr == 0) *ptr = new OPS_instance();
-  		return *ptr;
-  	}
 	/*******************************************************************************
 	* Global constants
 	*******************************************************************************/
 
 
 	//Blocks, Dats, Stencils Halos, Reductions
-	int OPS_block_index=0, OPS_block_max=0, OPS_dat_index=0, OPS_dat_max=0,
-	OPS_halo_group_index=0, OPS_halo_group_max=0, OPS_halo_index=0, OPS_halo_max=0,
-	OPS_reduction_index=0, OPS_reduction_max=0, OPS_stencil_index=0, OPS_stencil_max=0;
-	ops_block_descriptor *OPS_block_list=NULL;
-	ops_stencil *OPS_stencil_list=NULL;
-	ops_halo *OPS_halo_list=NULL;
-	ops_halo_group *OPS_halo_group_list=NULL;
+	int OPS_block_index, OPS_block_max, OPS_dat_index, OPS_dat_max,
+	OPS_halo_group_index, OPS_halo_group_max, OPS_halo_index, OPS_halo_max,
+	OPS_reduction_index, OPS_reduction_max, OPS_stencil_index, OPS_stencil_max;
+	ops_block_descriptor *OPS_block_list;
+	ops_stencil *OPS_stencil_list;
+	ops_halo *OPS_halo_list;
+	ops_halo_group *OPS_halo_group_list;
 	Double_linked_list OPS_dat_list;
-	ops_reduction *OPS_reduction_list = NULL;
+	ops_reduction *OPS_reduction_list;
 	
 
 	// Checkpointing
- 	int OPS_enable_checkpointing=0;
-	double OPS_checkpointing_time=0.0;
-	int ops_thread_offload = 0;
-	int ops_checkpoint_inmemory = 0;
-	int ops_lock_file = 0;
-	ops_backup_state backup_state=OPS_NONE;
+ 	int OPS_enable_checkpointing;
+	double OPS_checkpointing_time;
+	int ops_thread_offload;
+	int ops_checkpoint_inmemory;
+	int ops_lock_file;
+	ops_backup_state backup_state;
 	char *OPS_dat_ever_written;
-	ops_checkpoint_types *OPS_dat_status=NULL;
+	ops_checkpoint_types *OPS_dat_status;
 	int OPS_ranks_per_node;
 
 
 	// Debugging
-	ops_arg *OPS_curr_args = NULL;
-	const char *OPS_curr_name = NULL;
+	ops_arg *OPS_curr_args;
+	const char *OPS_curr_name;
 
 	//Diagnostics
-	int OPS_kern_max=0, OPS_kern_curr=0;
-	ops_kernel *OPS_kernels=NULL;
+	int OPS_kern_max, OPS_kern_curr;
+	ops_kernel *OPS_kernels;
 	
 	//Tiling
-	int ops_enable_tiling = 0;
-	int ops_cache_size = 0;
-	int ops_tiling_mpidepth = -1;
-	double ops_tiled_halo_exchange_time=0.0;
+	int ops_enable_tiling;
+	int ops_cache_size;
+	int ops_tiling_mpidepth;
+	double ops_tiled_halo_exchange_time;
 	OPS_instance_tiling *tiling_instance;
 	OPS_instance_checkpointing *checkpointing_instance;
 
 	//Other runtime configuration args
-	int ops_force_decomp[OPS_MAX_DIM] = {0};
-	int OPS_realloc = 0;
-	int OPS_soa=0;
-	int OPS_diags=0;
+	int ops_force_decomp[OPS_MAX_DIM];
+	int OPS_realloc;
+	int OPS_soa;
+	int OPS_diags;
 
 	// CUDA & OpenCL
-	int OPS_hybrid_gpu=0, OPS_gpu_direct=0;
-	int OPS_block_size_x = 32;
-	int OPS_block_size_y = 4;
-	int OPS_block_size_z = 1;
-	char *OPS_consts_h=NULL, *OPS_consts_d=NULL, *OPS_reduct_h=NULL, *OPS_reduct_d=NULL;
-	int OPS_consts_bytes = 0, OPS_reduct_bytes = 0;
-	int OPS_cl_device=0;
-	char *ops_halo_buffer = NULL;
-	char *ops_halo_buffer_d = NULL;
-	int ops_halo_buffer_size = 0;
-	int OPS_gbl_changed = 1;
-	char *OPS_gbl_prev = NULL;
+	int OPS_hybrid_gpu, OPS_gpu_direct;
+	int OPS_block_size_x;
+	int OPS_block_size_y;
+	int OPS_block_size_z;
+	char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
+	int OPS_consts_bytes, OPS_reduct_bytes;
+	int OPS_cl_device;
+	char *ops_halo_buffer;
+	char *ops_halo_buffer_d;
+	int ops_halo_buffer_size;
+	int OPS_gbl_changed;
+	char *OPS_gbl_prev;
 	OPS_instance_opencl *opencl_instance;
 
 

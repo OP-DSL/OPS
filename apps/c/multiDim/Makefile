@@ -21,6 +21,7 @@ OPS_GENERATED=multidim_ops.cpp
 
 OTHER_FILES=
 
+THREADED=1
 
 APP=multidim
 MAIN_SRC=multidim

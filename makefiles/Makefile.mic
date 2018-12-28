@@ -6,3 +6,4 @@ else
 endif
 CXX     := icpc
 CXXFLAGS  := $(CCFLAGS)
+THREADING_FLAGS ?= -qopenmp

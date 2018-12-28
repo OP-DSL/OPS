@@ -8,3 +8,4 @@ else
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g
 endif
 OMPFLAGS=-fopenmp
+THREADING_FLAGS ?= -fopenmp
