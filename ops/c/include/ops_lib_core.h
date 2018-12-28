@@ -864,11 +864,6 @@ void* ops_realloc (void *ptr, size_t size);
 void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 
-<<<<<<< HEAD
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-=======
-
->>>>>>> fde2ab153... WIP: thread safety
 
 #ifdef __cplusplus
 }
@@ -882,4 +877,5 @@ extern OPS_instance *ops_instances[];
 #include "ops_tridiag.h"
 #include "ops_instance.h"
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_LIB_CORE_H */
