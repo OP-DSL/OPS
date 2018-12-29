@@ -43,7 +43,7 @@
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024
-
+#include <trid_mpi_cpu.hpp>
 #ifdef __cplusplus
 extern "C" {
 #endif
