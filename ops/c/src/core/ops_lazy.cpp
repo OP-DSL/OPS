@@ -773,7 +773,7 @@ int ops_construct_tile_plan() {
 
   ops_timers_core(&c2, &t2);
   if (OPS_diags > 2)
-    printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+    printf("Created tiling plan for %zu loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan
   return tiling_plans.size() - 1;
