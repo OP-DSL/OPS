@@ -2,6 +2,10 @@
 #define __OPS_SEQ_VARIADIC_H
 #include "ops_lib_cpp.h"
 
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
+
 static int arg_idx[OPS_MAX_DIM];
 
 inline int mult(int* size, int dim)
@@ -100,7 +104,7 @@ using param_remove_cvref_t = typename param_remove_cvref<T>::type;
 
 // helper struct to create, pass and free parameters to the kernel
 template <typename ParamT> struct param_handler {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[]) { 
+  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_GBL) {
       if (arg.acc == OPS_READ) return arg.data;
       else
@@ -111,6 +115,7 @@ template <typename ParamT> struct param_handler {
   #endif //OPS_MPI
     } else if (arg.argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
+      sub_block_list sb = OPS_sub_block_list[block->index]; //TODO: Multigrid
       for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
       for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
@@ -144,7 +149,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 };
 
 template <typename T> struct param_handler<ACC<T>> {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[]) { 
+  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
@@ -180,7 +185,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
   static void free(char *data) { delete (ACC<T> *)data;}
 };
 
-void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start, int *end) {
+static void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start, int *end) {
   if(arg.stencil != nullptr) {
     offs[0] = arg.stencil->stride[0]*1;
     for(int n=1; n<ndim; ++n){
@@ -232,7 +237,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   #endif
 
   char *p_a[N] = 
-    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start)...};
+    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block)...};
   //Offs decl
   int offs[N][OPS_MAX_DIM];
   (void) std::initializer_list<int>{(initoffs(arguments, offs[I], ndim, start, end), 0)...};
@@ -265,7 +270,8 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     // shift pointers to data
   #ifdef OPS_MPI
     (void) std::initializer_list<int>{(
-      shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, offs[I], sb),0)...};
+      //shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, offs[I], sb),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I], sb),0)...};
   #else //OPS_MPI
     (void) std::initializer_list<int>{(
       param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I]),0)...};

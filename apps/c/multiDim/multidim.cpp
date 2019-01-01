@@ -43,7 +43,7 @@
 // OPS header file
 #define OPS_2D
 #define OPS_SOA
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 
 #include "multidim_kernel.h"
 #include "multidim_print_kernel.h"
