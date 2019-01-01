@@ -18,5 +18,7 @@ ifdef FAST
 endif
 FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
 OMPFLAGS := -qopenmp
-THREADING_FLAGS ?= -qopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -qopenmp
+endif
 CXXLINK := -lstdc++

@@ -14,7 +14,9 @@ FMODS := -module $(F_INC_MOD)
 FMODS_CUDA := -module $(F_INC_MOD)/cuda
 FFLAGS = $(CCFLAGS)
 OMPFLAGS := -mp
-THREADING_FLAGS ?= -mp
+ifdef THREADED
+	THREADING_FLAGS ?= -mp
+endif
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OpenACCFLAGS = -acc #-Minline
 CXXLINK := -pgc++libs

@@ -11,4 +11,6 @@ endif
 FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
 CXXLINK := -lstdc++
 OMPFLAGS := -fopenmp
-THREADING_FLAGS ?= -fopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -fopenmp
+endif
