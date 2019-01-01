@@ -1,6 +1,6 @@
 CC       = g++
 MPICC    = mpic++
-OMPFLAGS = -Ofast -lm
+OMPFLAGS = -Ofast -lm -std=c++11
 
 BIN =  laplace2d laplace2d_mpi
 
