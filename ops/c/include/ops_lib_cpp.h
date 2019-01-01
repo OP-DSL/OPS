@@ -284,13 +284,50 @@ template<typename T>
 class ACC {
 public:
   //////////////////////////////////////////////////
+  // 1D
+  /////////////////////////////////////////////////
+#if defined(OPS_1D)
+  __host__ __device__
+  ACC(T *_ptr) : ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, T *_ptr) : 
+#ifdef OPS_SOA
+    sizex(_sizex),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff) const {return *(ptr + xoff);}
+  __host__ __device__
+  T& operator()(int xoff) {return *(ptr + xoff);}
+  __host__ __device__
+  const T& operator()(int d, int xoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+#endif
+
+  //////////////////////////////////////////////////
   // 2D
   /////////////////////////////////////////////////
 #if defined(OPS_2D)
   __host__ __device__
   ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
   __host__ __device__
-  ACC(int _mdim, int _sizey, int _sizex, T *_ptr) : sizex(_sizex),
+  ACC(int _mdim, int _sizex, int _sizey, T *_ptr) : sizex(_sizex),
 #ifdef OPS_SOA
     sizey(_sizey),
 #else
@@ -318,10 +355,6 @@ public:
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
 #endif
   }
-  __host__ __device__
-  void next(int offset) {
-    ptr += offset;
-  }
 #endif
   //////////////////////////////////////////////////
   // 3D
@@ -330,7 +363,7 @@ public:
   __host__ __device__
   ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
   __host__ __device__
-  ACC(int _mdim, int _sizez, int _sizey, int _sizex, T *_ptr) : sizex(_sizex), sizey(_sizey),
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey),
 #ifdef OPS_SOA
     sizez(_sizez),
 #else
@@ -360,8 +393,55 @@ public:
   }
 #endif
 
+  //////////////////////////////////////////////////
+  // 4D
+  /////////////////////////////////////////////////
+#if defined(OPS_4D)
+  __host__ __device__
+  ACC(int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, int _sizeu, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez),
+#ifdef OPS_SOA
+    sizeu(_sizeu),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff, int zoff, int uoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff, int zoff, int uoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff, int zoff, int uoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff, int zoff, int uoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+#endif
+
+
+
+  __host__ __device__
+  void next(int offset) {
+    ptr += offset;
+  }
+
+
 private:
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_1D) && defined(OPS_SOA))
   int sizex;
+#endif
 #if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
   int sizey;
 #endif

@@ -157,7 +157,15 @@ template <typename T> struct param_handler<ACC<T>> {
   #else //OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d];
   #endif //OPS_MPI
-      return (char *) new ACC<T>(arg.dim, arg.dat->size[1], arg.dat->size[0], (T*)(arg.data //base of 2D array
+#ifdef OPS_1D
+      return (char *) new ACC<T>(arg.dim, arg.dat->size[0], (T*)(arg.data //base of 2D array
+#elif defined(OPS_2D)
+      return (char *) new ACC<T>(arg.dim, arg.dat->size[0], arg.dat->size[1], (T*)(arg.data //base of 2D array
+#elif defined(OPS_3D)
+      return (char *) new ACC<T>(arg.dim, arg.dat->size[0], arg.dat->size[1], arg.dat->size[2], (T*)(arg.data //base of 3D array
+#elif defined(OPS_4D)
+      return (char *) new ACC<T>(arg.dim, arg.dat->size[0], arg.dat->size[1], arg.dat->size[2], arg.dat->size[3], (T*)(arg.data //base of 3D array
+#endif
       + address(ndim, OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO

@@ -50,7 +50,7 @@
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   //initialize sizes using global values
   int x_cells = 4;
