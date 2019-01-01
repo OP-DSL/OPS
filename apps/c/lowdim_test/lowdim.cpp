@@ -11,7 +11,7 @@
 #include <string.h> 
 #include <math.h>
 #define OPS_3D
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 #include "lowdim_kernels.h"
 
 int main(int argc, const char **argv) {

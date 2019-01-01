@@ -42,14 +42,14 @@
 
 // OPS header file
 #define OPS_4D
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 
 #include "mblock_populate_kernel.h"
 
 /******************************************************************************
 * Main program
 *******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
 
