@@ -18,8 +18,8 @@ extern double pi;
 void ops_init_backend() {}
 
 //user kernel files
-#include "set_zero_seq_kernel.cpp"
-#include "left_bndcon_seq_kernel.cpp"
-#include "right_bndcon_seq_kernel.cpp"
-#include "apply_stencil_seq_kernel.cpp"
-#include "copy_seq_kernel.cpp"
+#include "set_zero_cpu_kernel.cpp"
+#include "left_bndcon_cpu_kernel.cpp"
+#include "right_bndcon_cpu_kernel.cpp"
+#include "apply_stencil_cpu_kernel.cpp"
+#include "copy_cpu_kernel.cpp"
