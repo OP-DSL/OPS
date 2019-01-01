@@ -4,11 +4,11 @@
 #include "vars.h"
 
 
-void fact_kernel(const double* eff, double *s) {
+void fact_kernel(const ACC<double>& eff, ACC<double>& s) {
   double fact;
   for (int m=0; m < 3 ;m++) {
     fact  = 0.50 * dt / dx ;
-    s[OPS_ACC_MD1(m,0)] = -fact * (eff[OPS_ACC_MD0(m,0)] - eff[OPS_ACC_MD0(m,-1)]);
+    s(m,0) = -fact * (eff(m,0) - eff(m,-1));
   }
 }
 #endif
