@@ -234,7 +234,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
       print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
       exit(2)
 
-    i = text[0:i].rfind('\n') #reverse find
+    i = max(0,text[0:i].rfind('\n')) #reverse find
     text = text[i:]
     j = text.find('{')
     k = para_parse(text, j, '{', '}')

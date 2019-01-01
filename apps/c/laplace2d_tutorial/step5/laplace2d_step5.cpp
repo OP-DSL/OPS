@@ -8,11 +8,11 @@ double pi  = 2.0 * asin(1.0);
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
-#include <ops_seq.h>
+#include <ops_seq_variadic.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h" 
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
   //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
   ops_init(argc, argv,1);
