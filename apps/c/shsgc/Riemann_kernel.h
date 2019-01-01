@@ -4,59 +4,59 @@
 #include "vars.h"
 
 
-void Riemann_kernel(const double* rho_new, const double *rhou_new, const double* rhoE_new,
-                    double* alam, double* r, double* al) {
+void Riemann_kernel(const ACC<double>& rho_new, const ACC<double> &rhou_new, const ACC<double>& rhoE_new,
+                    ACC<double>& alam, ACC<double>& r, ACC<double>& al) {
 
   double rl, rr, rho, u, hl, hr, h, Vsq, csq, c;
   double dw1, dw2, dw3, delpc2, rdeluc;
 
 
-  rl = sqrt(rho_new[OPS_ACC0(0)]);
-  rr = sqrt(rho_new[OPS_ACC0(1)]);
+  rl = sqrt(rho_new(0));
+  rr = sqrt(rho_new(1));
   rho = rl + rr;
-  u = ((rhou_new[OPS_ACC1(0)] / rl) + (rhou_new[OPS_ACC1(1)] / rr)) / rho ;
-  double fni = rhou_new[OPS_ACC1(0)] * rhou_new[OPS_ACC1(0)] / rho_new[OPS_ACC0(0)] ;
-  double p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * fni);
-  hl = (rhoE_new[OPS_ACC2(0)] + p)  / rl ;
-  fni = rhou_new[OPS_ACC1(1)] * rhou_new[OPS_ACC1(1)] / rho_new[OPS_ACC0(1)] ;
-  p = gam1 * (rhoE_new[OPS_ACC2(1)] - 0.5 * fni);
-  hr = (rhoE_new[OPS_ACC2(1)] + p)  / rr ;
+  u = ((rhou_new(0) / rl) + (rhou_new(1) / rr)) / rho ;
+  double fni = rhou_new(0) * rhou_new(0) / rho_new(0) ;
+  double p = gam1 * (rhoE_new(0) - 0.5 * fni);
+  hl = (rhoE_new(0) + p)  / rl ;
+  fni = rhou_new(1) * rhou_new(1) / rho_new(1) ;
+  p = gam1 * (rhoE_new(1) - 0.5 * fni);
+  hr = (rhoE_new(1) + p)  / rr ;
   h = (hl + hr)/rho;
   Vsq = u*u;
   csq = gam1 * (h - 0.5 * Vsq);
   c = sqrt(csq);
 
-  alam[OPS_ACC_MD3(0,0)] = u - c;
-  alam[OPS_ACC_MD3(1,0)] = u;
-  alam[OPS_ACC_MD3(2,0)] = u + c;
+  alam(0,0) = u - c;
+  alam(1,0) = u;
+  alam(2,0) = u + c;
 
-  r[OPS_ACC_MD4(0,0)] = 1.0;
-  r[OPS_ACC_MD4(1,0)] = 1.0;
-  r[OPS_ACC_MD4(2,0)] = 1.0;
+  r(0,0) = 1.0;
+  r(1,0) = 1.0;
+  r(2,0) = 1.0;
 
-  r[OPS_ACC_MD4(3,0)] = u - c;
-  r[OPS_ACC_MD4(4,0)] = u;
-  r[OPS_ACC_MD4(5,0)] = u + c;
+  r(3,0) = u - c;
+  r(4,0) = u;
+  r(5,0) = u + c;
 
-  r[OPS_ACC_MD4(6,0)] = h - u * c;
-  r[OPS_ACC_MD4(7,0)] = 0.5 * Vsq;
-  r[OPS_ACC_MD4(8,0)] = h + u * c;
+  r(6,0) = h - u * c;
+  r(7,0) = 0.5 * Vsq;
+  r(8,0) = h + u * c;
 
   for (int m=0; m<9; m++)
-    r[OPS_ACC_MD4(m,0)] = r[OPS_ACC_MD4(m,0)] / csq;
+    r(m,0) = r(m,0) / csq;
 
-  dw1 = rho_new[OPS_ACC0(1)] - rho_new[OPS_ACC0(0)];
-  dw2 = rhou_new[OPS_ACC1(1)] - rhou_new[OPS_ACC1(0)];
-  dw3 = rhoE_new[OPS_ACC2(1)] - rhoE_new[OPS_ACC2(0)];
+  dw1 = rho_new(1) - rho_new(0);
+  dw2 = rhou_new(1) - rhou_new(0);
+  dw3 = rhoE_new(1) - rhoE_new(0);
 
   delpc2 = gam1 * ( dw3 + 0.50 * Vsq * dw1  - u * dw2) / csq;
   rdeluc = ( dw2 - u * dw1) / c ;
 
-  al[OPS_ACC_MD5(0,0)] = 0.5 * (delpc2 - rdeluc);
-  al[OPS_ACC_MD5(1,0)] = dw1 - delpc2 ;
-  al[OPS_ACC_MD5(2,0)] = 0.5 * ( delpc2 + rdeluc );
+  al(0,0) = 0.5 * (delpc2 - rdeluc);
+  al(1,0) = dw1 - delpc2 ;
+  al(2,0) = 0.5 * ( delpc2 + rdeluc );
 
   for (int m=0; m<3; m++)
-    al[OPS_ACC_MD5(m,0)] = al[OPS_ACC_MD5(m,0)] * csq;
+    al(m,0) = al(m,0) * csq;
 }
 #endif

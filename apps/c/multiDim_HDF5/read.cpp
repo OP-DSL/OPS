@@ -35,7 +35,7 @@
   */
 
 #define OPS_3D
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   //*******************************************************************
   // INITIALISE OPS

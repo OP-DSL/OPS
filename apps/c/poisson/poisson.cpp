@@ -52,7 +52,7 @@ double dx,dy;
 /******************************************************************************
 * Main program
 *******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
 
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
   int itertile = n_iter;
   int non_copy = 0;
 
-  char* pch;
+  const char* pch;
   for ( int n = 1; n < argc; n++ ) {
     pch = strstr(argv[n], "-sizex=");
     if(pch != NULL) {

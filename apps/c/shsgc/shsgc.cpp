@@ -13,7 +13,8 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
+#define OPS_1D
+#include "ops_seq_variadic.h"
 
 
 /******************************************************************************
@@ -102,7 +103,7 @@ FILE *fp;
 * Main program
 *******************************************************************************/
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   double totaltime =0.0f;
   // Initialize rk3 co-efficient's
