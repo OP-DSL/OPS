@@ -26,12 +26,11 @@ endif
 all: $(TARGETS)
 
 $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib/libops_seq.a
-		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_dev_seq
-
+		$(MPICPP) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_dev_seq
 
 $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
-	        $(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_dev_mpi
+	        $(MPICPP) $(CXXFLAGS) -DOPS_MPI -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_dev_mpi
 
 #
 # mpi version
