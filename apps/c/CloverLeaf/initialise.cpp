@@ -29,7 +29,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 
 
 #include "data.h"

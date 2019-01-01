@@ -29,7 +29,7 @@
 
 // OPS header file
 #define OPS_2D
-#include "ops_seq.h"
+#include "ops_seq_variadic.h"
 
 #include "data.h"
 #include "definitions.h"
