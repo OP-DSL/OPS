@@ -480,6 +480,10 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 int ops_get_proc();
 int ops_num_procs();
 
+/* dag traversal */
+void ops_add_to_dag(ops_kernel_descriptor *desc);
+void ops_traverse_dag();
+
 /*******************************************************************************
 * External access support
 *******************************************************************************/
