@@ -201,6 +201,10 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   sb->block = block;
   sb->ndim = g_ndim;
   sb->owned = 0;
+  sb->comm = MPI_COMM_NULL;
+  sb->comm1 = MPI_COMM_NULL;
+  sb->grp = MPI_GROUP_NULL;
+
   int my_local_rank = -1;
   for (int i = 0; i < num_proc; i++) {
     if (processes[i] == ops_my_global_rank) {
@@ -964,13 +968,20 @@ void ops_mpi_exit() {
   if (OPS_enable_checkpointing)
     free(OPS_checkpoiting_dup_buffer);
 
+  //printf("OPS_block_index = %d\n",OPS_block_index);
   for (int b = 0; b < OPS_block_index; b++) { // for each block
-    ops_block block = OPS_block_list[b].block;
-    sub_block *sb = OPS_sub_block_list[block->index];
-    //MPI_Comm_free(&(sb->comm1));
-    if (sb->owned)
-      MPI_Comm_free(&(sb->comm));
-    MPI_Group_free(&(sb->grp));
+    sub_block *sb = OPS_sub_block_list[b];
 
+    if (sb->owned) {
+      printf("Owned OPS_block_index = %d\n",OPS_block_index);
+      MPI_Comm_free(&(sb->comm));
+      MPI_Comm_free(&(sb->comm1));
+    }
+
+    MPI_Group_free(&(sb->grp));
+    free(OPS_sub_block_list[b]);
   }
+  free(OPS_sub_block_list);
+  MPI_Comm_free(&OPS_MPI_GLOBAL);
+
 }
