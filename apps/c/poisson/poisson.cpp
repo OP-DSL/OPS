@@ -314,6 +314,19 @@ int main(int argc, char **argv)
 
   ops_printf("%lf\n",it1-it0);
 
+
+  free(coordx);
+  free(coordy);
+  free(u);
+  free(u2);
+  free(f);
+  free(ref);
+  free(sizes);
+  free(disps);
+
+  free(blocks);
+  free(halos);
+
   ops_exit();
   return 0;
 }
