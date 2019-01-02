@@ -296,6 +296,7 @@ void ops_decomp_dats(sub_block *sb) {
     int *prod = &prod_t[1];
     prod[-1] = 1;
     sd->prod = prod;
+    sd->halos = NULL;
 
     for (int d = 0; d < block->dims; d++) {
       // first store away the details of the dat (i.e global dat details)
@@ -945,28 +946,38 @@ void ops_partition(const char *routine) {
 // and perhaps will need to be allocated on-the-fly.
 
 void ops_mpi_exit() {
-  ops_dat_entry *item;
+
+  /*for (int b = 0; b < OPS_block_index; b++) { // for each block
+    ops_block block = OPS_block_list[b].block;
+
+    int i;
+    ops_dat_entry *item, *tmp_item;
+    for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets));
+         item != NULL; item = tmp_item) {
+      tmp_item = TAILQ_NEXT(item, entries);
+      ops_dat dat = item->dat;
+      sub_dat *sd = OPS_sub_dat_list[dat->index];
+
+      free(sd->halos);
+      free(&sd->prod[-1]);
+      free(sd->dirty_dir_send);
+      free(sd->dirty_dir_recv);
+      free(OPS_sub_dat_list[dat->index]);
+    }
+  }*/
+
   int i;
+  ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     i = (item->dat)->index;
-    //free(OPS_sub_dat_list[i]->halos);
-    /*if (OPS_sub_dat_list[i]->mpidat != NULL) {
-      free(OPS_sub_dat_list[i]->halos);
-      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
-        for(int d = 0; d<MAX_DEPTH; d++) {
-          MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
-        }
-      }
-      free(OPS_sub_dat_list[i]->mpidat);
-
-    }*/
+    free(OPS_sub_dat_list[i]->halos);
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
-    //free(OPS_sub_dat_list[i]->halos);
     free(OPS_sub_dat_list[i]);
   }
-  //free(OPS_sub_dat_list);
+
+  free(OPS_sub_dat_list);
   //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
