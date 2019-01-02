@@ -70,6 +70,7 @@ mklib:
 core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.c $(SRC)/externlib/ops_util.c
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_lib_core.c -o $(OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lazy.cpp -o $(OBJ)/ops_lazy.o
+	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_dag.cpp -o $(OBJ)/ops_dag.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.c -o $(OBJ)/ops_util.o
 	$(CHKCC) $(CCFLAGS) -I$(INC) $(HDF5_INC) -c $(SRC)/externlib/ops_checkpointing.c -o $(OBJ)/ops_checkpointing.o
 	$(CHKCC) $(CCFLAGS) -I$(INC) $(HDF5_INC) -c $(SRC)/externlib/ops_checkpointing_strategy.c -o $(OBJ)/ops_checkpointing_strategy.o
@@ -86,10 +87,10 @@ trid: mklib core $(OBJ)/ops_lib_core.o
 	ar -r $(LIB)/libops_trid_cuda.a $(OBJ)/ops_tridiag_cuda.o
 	ar -r $(LIB)/libops_trid_mpi.a $(OBJ)/ops_tridiag_mpi.o
 
-seq: mklib core $(OBJ)/ops_lib_core.o
+seq: mklib core $(OBJ)/ops_lib_core.o $(OBJ)/ops_dag.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
-	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
+	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_dag.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o 
 
 cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o

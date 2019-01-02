@@ -283,20 +283,20 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   (void) std::initializer_list<int>{
     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
 }
+
 //
 // ops_par_loop routine wrapper to create index sequence
 //
 template <typename... ParamType, typename... OPSARG>
 void ops_par_loop(void (*kernel)(ParamType...), char const *name,
-                  ops_block block, int dim, int *range,
-                  OPSARG... arguments) {
-  static_assert(sizeof...(ParamType) == sizeof...(OPSARG), 
+                  ops_block block, int dim, int *range, OPSARG... arguments) {
+  static_assert(
+      sizeof...(ParamType) == sizeof...(OPSARG),
       "number of parameters of the kernel shoud match the number of ops_arg");
-  ops_par_loop_impl(build_indices<sizeof...(ParamType)>{}, kernel, name,
-                    block, dim, range, arguments...);
+  ops_par_loop_impl(build_indices<sizeof...(ParamType)>{}, kernel, name, block,
+                    dim, range, arguments...);
 }
 
-
-#endif
+#endif /* if __cplusplus >= 201103L */
 
 #endif /* ifndef __OPS_SEQ_VARIADIC_H */
