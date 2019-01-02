@@ -410,13 +410,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
 
-      if arg_idx <> -1:
-        if NDIM==1:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
-        elif NDIM==2:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
-        elif NDIM==3:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+    if arg_idx <> -1:
+      if NDIM==1:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
+      elif NDIM==2:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
+      elif NDIM==3:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+    if NDIM>1:
       code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):

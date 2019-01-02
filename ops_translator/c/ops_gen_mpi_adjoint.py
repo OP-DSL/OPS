@@ -385,54 +385,25 @@ def ops_gen_mpi_adjoint(master, date, consts, kernels, soa_set):
           for d in range(0,int(dims[n])):
             code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
 
-    line = '' #todo from here
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_MIN:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(min:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_MAX:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(max:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_INC:
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
-        if accs[n] == OPS_WRITE: #this may not be correct ..
-          for d in range(0,int(dims[n])):
-            line = line + ' reduction(+:p_a'+str(n)+'_'+str(d)+')'
-    if NDIM==3 and reduction==0:
-      line2 = ' collapse(2)'
-    else:
-      line2 = line
-    #code(line2) to here
     if NDIM>2:
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
 
-      if arg_idx <> -1:
-        if NDIM==1:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
-        elif NDIM==2:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
-        elif NDIM==3:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+    if arg_idx <> -1:
+      if NDIM==1:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
+      elif NDIM==2:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
+      elif NDIM==3:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
+    if NDIM>1:
       code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         line3 = line3 +arg_list[n]+'_p,'
-    if NDIM>1:
-      code('#pragma loop_count(10000)')
-      code('#pragma omp simd'+line+' aligned('+clean_type(line3[:-1])+')')
-      code('#elif defined(__clang__)')
-      code('#pragma clang loop vectorize(assume_safety)')
-      code('#elif defined(__GNUC__)')
-      code('#pragma simd')
-      code('#pragma GCC ivdep')
-      code('#else')
-      code('#pragma simd')
-      code('#endif')
+
     FOR('n_x','start[0]','end[0]')
     if arg_idx <> -1:
       code(clean_type(arg_list[arg_idx])+'[0] = arg_idx[0]+n_x;')
