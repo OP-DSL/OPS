@@ -326,8 +326,9 @@ void ops_exit_core() {
     free(OPS_halo_list[i]);
   }
 
+  // free block halos
   for (int i = 0; i < OPS_halo_group_index; i++) {
-    // free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_halo_group_list[i]->halos);
     free(OPS_halo_group_list[i]);
   }
 
