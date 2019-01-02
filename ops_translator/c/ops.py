@@ -66,6 +66,7 @@ from ops_gen_mpi_lazy import ops_gen_mpi_lazy
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_mpi_adjoint import ops_gen_mpi_adjoint
 
 import util
 
@@ -653,10 +654,6 @@ def main(source_files):
         header_len = 13
         loc_header = [text.find("ops_lib_cpp.h")]
 
-      if loc_header[0] == -1:
-        header_len = 18
-        loc_header = [text.find("ops_seq_variadic.h")]
-
       # get locations of all op_decl_consts
       n_consts = len(const_args)
       loc_consts = [0] * n_consts
@@ -798,11 +795,11 @@ def main(source_files):
   #
 
 
-  ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
+  #  ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_gen_mpi_adjoint(str(source_files[0]), date, consts, kernels, soa_set)
+  #  ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
+  #  ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+  #  ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
 
   import subprocess
   retcode = subprocess.call("which clang-format > /dev/null", shell=True)

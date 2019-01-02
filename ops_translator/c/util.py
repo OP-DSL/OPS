@@ -207,7 +207,7 @@ def parse_signature(text):
   arg_list = []
   args = text2.split(',')
   for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
+    arg_list.append(args[n].strip().split(' ')[-1])
   return arg_list
 
 def find_consts(text, consts):
