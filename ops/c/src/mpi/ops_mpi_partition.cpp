@@ -864,6 +864,8 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
 		       total_size * sizeof(char));
   }
   mpi_neigh_size = (int *)ops_malloc(max_neigh * sizeof(int));
+  free(neighbor_array_recv);
+  free(neighbor_array_send);
 }
 
 void ops_partition(const char *routine) {
@@ -1007,6 +1009,16 @@ void ops_mpi_exit() {
   free(mpi_neigh_size);
   if (OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     free(OPS_checkpoiting_dup_buffer);
+
+  for (int b = 0; b < OPS_block_index; b++) { // for each block
+    ops_block block = OPS_block_list[b].block;
+    sub_block *sb = OPS_sub_block_list[block->index];
+    //MPI_Comm_free(&(sb->comm1));
+    if (sb->owned)
+      MPI_Comm_free(&(sb->comm));
+    MPI_Group_free(&(sb->grp));
+
+  }
 }
 
 static inline int intersection2(int range1_beg, int range1_end, int range2_beg,
