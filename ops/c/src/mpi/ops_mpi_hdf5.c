@@ -1716,6 +1716,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     H5Sclose(memspace);
     H5Gclose(group_id);
     H5Fclose(file_id);
+
     MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
   }
   return;
