@@ -29,22 +29,13 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 110))
-=======
   if (!ops_checkpointing_before(args, 3, range, 65))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(110, "update_halo_kernel3_minus_2_a");
-    OPS_kernels[110].count++;
-=======
     ops_timing_realloc(65, "update_halo_kernel3_minus_2_a");
     OPS_kernels[65].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -124,11 +115,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[110].mpi_time += t2 - t1;
-=======
     OPS_kernels[65].mpi_time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -220,11 +207,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[110].time += t1 - t2;
-=======
     OPS_kernels[65].time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -235,14 +218,8 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[110].mpi_time += t2 - t1;
-    OPS_kernels[110].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[110].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[65].mpi_time += t2 - t1;
     OPS_kernels[65].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[65].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

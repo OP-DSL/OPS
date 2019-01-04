@@ -32,21 +32,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 70))
-    return;
-  #endif
-
-  ops_timing_realloc(70, "update_halo_kernel2_xvel_plus_2_bot");
-  OPS_kernels[70].count++;
-=======
   if (!ops_checkpointing_before(args, 3, range, 25))
     return;
   #endif
 
   ops_timing_realloc(25, "update_halo_kernel2_xvel_plus_2_bot");
   OPS_kernels[25].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -148,11 +139,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-  OPS_kernels[70].mpi_time += t1 - t2;
-=======
   OPS_kernels[25].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   update_halo_kernel2_xvel_plus_2_bot_c_wrapper(
     p_a0,
@@ -161,11 +148,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_bot(char const *name, ops_bloc
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-  OPS_kernels[70].time += t2 - t1;
-=======
   OPS_kernels[25].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);

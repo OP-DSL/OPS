@@ -43,12 +43,12 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 12, range, 4))
+  if (!ops_checkpointing_before(args, 12, range, 55))
     return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[4].count++;
+    OPS_kernels[55].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -120,7 +120,7 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[4].mpi_time += t1 - t2;
+    OPS_kernels[55].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -167,25 +167,25 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[4].time += t2 - t1;
+    OPS_kernels[55].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[4].mpi_time += t1 - t2;
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    OPS_kernels[55].mpi_time += t1 - t2;
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg11);
   }
 }
 #undef OPS_ACC0
@@ -211,9 +211,9 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 4;
+  desc->index = 55;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 4;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 55;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -247,7 +247,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg11.dat->index;
   desc->function = ops_par_loop_PdV_kernel_predict_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(4, "PdV_kernel_predict");
+    ops_timing_realloc(55, "PdV_kernel_predict");
   }
   ops_enqueue_kernel(desc);
   }

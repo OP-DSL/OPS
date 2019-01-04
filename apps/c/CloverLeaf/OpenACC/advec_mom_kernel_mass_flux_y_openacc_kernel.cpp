@@ -31,13 +31,13 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 23))
+  if (!ops_checkpointing_before(args, 2, range, 77))
     return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(23, "advec_mom_kernel_mass_flux_y");
-    OPS_kernels[23].count++;
+    ops_timing_realloc(77, "advec_mom_kernel_mass_flux_y");
+    OPS_kernels[77].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -123,7 +123,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[23].mpi_time += t2 - t1;
+    OPS_kernels[77].mpi_time += t2 - t1;
   }
 
   advec_mom_kernel_mass_flux_y_c_wrapper(
@@ -133,7 +133,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[23].time += t1 - t2;
+    OPS_kernels[77].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -145,8 +145,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[23].mpi_time += t2 - t1;
-    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[77].mpi_time += t2 - t1;
+    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

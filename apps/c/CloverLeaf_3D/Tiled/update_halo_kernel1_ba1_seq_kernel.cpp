@@ -34,11 +34,7 @@ void ops_par_loop_update_halo_kernel1_ba1_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 8, range, 66))
-=======
   if (!ops_checkpointing_before(args, 8, range, 21))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
@@ -105,11 +101,7 @@ void ops_par_loop_update_halo_kernel1_ba1_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[66].mpi_time += t1 - t2;
-=======
     OPS_kernels[21].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   #pragma omp parallel for collapse(2)
@@ -138,26 +130,12 @@ void ops_par_loop_update_halo_kernel1_ba1_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[66].time += t2 - t1;
-=======
     OPS_kernels[21].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[66].mpi_time += t1 - t2;
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[66].transfer += ops_compute_transfer(dim, start, end, &arg6);
-=======
     OPS_kernels[21].mpi_time += t1 - t2;
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg1);
@@ -166,7 +144,6 @@ void ops_par_loop_update_halo_kernel1_ba1_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg4);
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg5);
     OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg6);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -216,11 +193,7 @@ void ops_par_loop_update_halo_kernel1_ba1(char const *name, ops_block block, int
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_ba1_execute;
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(66, "update_halo_kernel1_ba1");
-=======
     ops_timing_realloc(21, "update_halo_kernel1_ba1");
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

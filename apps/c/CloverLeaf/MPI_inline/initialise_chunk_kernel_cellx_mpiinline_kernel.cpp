@@ -30,12 +30,12 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 39))
+  if (!ops_checkpointing_before(args, 3, range, 4))
     return;
   #endif
 
-  ops_timing_realloc(39, "initialise_chunk_kernel_cellx");
-  OPS_kernels[39].count++;
+  ops_timing_realloc(4, "initialise_chunk_kernel_cellx");
+  OPS_kernels[4].count++;
 
   //compute localy allocated range for the sub-block
   int start[2];
@@ -136,7 +136,7 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[39].mpi_time += t1 - t2;
+  OPS_kernels[4].mpi_time += t1 - t2;
 
   initialise_chunk_kernel_cellx_c_wrapper(
     p_a0,
@@ -145,13 +145,13 @@ void ops_par_loop_initialise_chunk_kernel_cellx(char const *name, ops_block bloc
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[39].time += t2 - t1;
+  OPS_kernels[4].time += t2 - t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg1);
-  OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg2);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg2);
 }

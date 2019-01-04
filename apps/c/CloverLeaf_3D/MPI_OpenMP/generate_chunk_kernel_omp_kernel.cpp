@@ -123,22 +123,13 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 11, range, 56))
-=======
   if (!ops_checkpointing_before(args, 11, range, 10))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(56, "generate_chunk_kernel");
-    OPS_kernels[56].count++;
-=======
     ops_timing_realloc(10, "generate_chunk_kernel");
     OPS_kernels[10].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -326,11 +317,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[56].mpi_time += t2 - t1;
-=======
     OPS_kernels[10].mpi_time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -604,11 +591,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[56].time += t1 - t2;
-=======
     OPS_kernels[10].time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 11);
@@ -622,20 +605,6 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[56].mpi_time += t2 - t1;
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg10);
-=======
     OPS_kernels[10].mpi_time += t2 - t1;
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg1);
@@ -648,6 +617,5 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg8);
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg9);
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg10);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

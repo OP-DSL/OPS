@@ -76,21 +76,12 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 11, range, 56))
-    return;
-  #endif
-
-  ops_timing_realloc(56, "generate_chunk_kernel");
-  OPS_kernels[56].count++;
-=======
   if (!ops_checkpointing_before(args, 11, range, 10))
     return;
   #endif
 
   ops_timing_realloc(10, "generate_chunk_kernel");
   OPS_kernels[10].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -397,11 +388,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   ops_halo_exchanges(args,11,range);
 
   ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-  OPS_kernels[56].mpi_time += t1 - t2;
-=======
   OPS_kernels[10].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   generate_chunk_kernel_c_wrapper(
     p_a0,
@@ -418,11 +405,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-  OPS_kernels[56].time += t2 - t1;
-=======
   OPS_kernels[10].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 11);
   ops_set_halo_dirtybit3(&args[3],range);
   ops_set_halo_dirtybit3(&args[4],range);

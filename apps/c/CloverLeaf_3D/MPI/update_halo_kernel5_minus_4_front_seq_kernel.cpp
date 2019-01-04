@@ -26,22 +26,13 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 139))
-=======
   if (!ops_checkpointing_before(args, 3, range, 94))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(139, "update_halo_kernel5_minus_4_front");
-    OPS_kernels[139].count++;
-=======
     ops_timing_realloc(94, "update_halo_kernel5_minus_4_front");
     OPS_kernels[94].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c2,&t2);
   }
 
@@ -140,11 +131,7 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[139].mpi_time += t1 - t2;
-=======
     OPS_kernels[94].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   int n_x;
@@ -184,11 +171,7 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[139].time += t2 - t1;
-=======
     OPS_kernels[94].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -197,14 +180,8 @@ void ops_par_loop_update_halo_kernel5_minus_4_front(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[139].mpi_time += t1 - t2;
-    OPS_kernels[139].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[139].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[94].mpi_time += t1 - t2;
     OPS_kernels[94].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[94].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

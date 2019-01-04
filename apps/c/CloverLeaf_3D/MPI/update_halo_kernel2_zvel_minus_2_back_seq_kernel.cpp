@@ -27,22 +27,13 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(char const *name, ops_bl
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 102))
-=======
   if (!ops_checkpointing_before(args, 3, range, 57))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(102, "update_halo_kernel2_zvel_minus_2_back");
-    OPS_kernels[102].count++;
-=======
     ops_timing_realloc(57, "update_halo_kernel2_zvel_minus_2_back");
     OPS_kernels[57].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c2,&t2);
   }
 
@@ -141,11 +132,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(char const *name, ops_bl
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[102].mpi_time += t1 - t2;
-=======
     OPS_kernels[57].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   int n_x;
@@ -185,11 +172,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(char const *name, ops_bl
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[102].time += t2 - t1;
-=======
     OPS_kernels[57].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -198,14 +181,8 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_back(char const *name, ops_bl
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[102].mpi_time += t1 - t2;
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[57].mpi_time += t1 - t2;
     OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

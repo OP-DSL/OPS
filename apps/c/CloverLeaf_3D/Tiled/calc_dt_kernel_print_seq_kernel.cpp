@@ -34,11 +34,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 8, range, 40))
-=======
   if (!ops_checkpointing_before(args, 8, range, 101))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
@@ -109,11 +105,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[40].mpi_time += t1 - t2;
-=======
     OPS_kernels[101].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   double p_a7_0 = p_a7[0];
@@ -275,26 +267,12 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   p_a7[27] = p_a7_27;
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[40].time += t2 - t1;
-=======
     OPS_kernels[101].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[40].mpi_time += t1 - t2;
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg6);
-=======
     OPS_kernels[101].mpi_time += t1 - t2;
     OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg1);
@@ -303,7 +281,6 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg4);
     OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg5);
     OPS_kernels[101].transfer += ops_compute_transfer(dim, start, end, &arg6);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -350,11 +327,7 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   desc->args[7] = arg7;
   desc->function = ops_par_loop_calc_dt_kernel_print_execute;
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(40, "calc_dt_kernel_print");
-=======
     ops_timing_realloc(101, "calc_dt_kernel_print");
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

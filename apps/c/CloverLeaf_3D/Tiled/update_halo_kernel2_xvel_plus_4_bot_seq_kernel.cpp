@@ -24,11 +24,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_bot_execute(ops_kernel_descrip
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 69))
-=======
   if (!ops_checkpointing_before(args, 3, range, 24))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
@@ -70,11 +66,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_bot_execute(ops_kernel_descrip
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[69].mpi_time += t1 - t2;
-=======
     OPS_kernels[24].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   #pragma omp parallel for collapse(2)
@@ -96,25 +88,15 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_bot_execute(ops_kernel_descrip
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[69].time += t2 - t1;
-=======
     OPS_kernels[24].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[69].mpi_time += t1 - t2;
-    OPS_kernels[69].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[69].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[24].mpi_time += t1 - t2;
     OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[24].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -148,11 +130,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_bot(char const *name, ops_bloc
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_plus_4_bot_execute;
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(69, "update_halo_kernel2_xvel_plus_4_bot");
-=======
     ops_timing_realloc(24, "update_halo_kernel2_xvel_plus_4_bot");
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

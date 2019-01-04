@@ -22,12 +22,12 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 35))
+  if (!ops_checkpointing_before(args, 2, range, 0))
     return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[35].count++;
+    OPS_kernels[0].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -65,7 +65,7 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[35].mpi_time += t1 - t2;
+    OPS_kernels[0].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -85,14 +85,14 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[35].time += t2 - t1;
+    OPS_kernels[0].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[35].mpi_time += t1 - t2;
-    OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[0].mpi_time += t1 - t2;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 #undef OPS_ACC0
@@ -105,9 +105,9 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 35;
+  desc->index = 0;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 35;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 0;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -120,7 +120,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   desc->args[1] = arg1;
   desc->function = ops_par_loop_initialise_chunk_kernel_xx_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(35, "initialise_chunk_kernel_xx");
+    ops_timing_realloc(0, "initialise_chunk_kernel_xx");
   }
   ops_enqueue_kernel(desc);
   }

@@ -30,22 +30,13 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 104))
-=======
   if (!ops_checkpointing_before(args, 3, range, 59))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(104, "update_halo_kernel2_zvel_minus_2_front");
-    OPS_kernels[104].count++;
-=======
     ops_timing_realloc(59, "update_halo_kernel2_zvel_minus_2_front");
     OPS_kernels[59].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -125,11 +116,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[104].mpi_time += t2 - t1;
-=======
     OPS_kernels[59].mpi_time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -221,11 +208,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[104].time += t1 - t2;
-=======
     OPS_kernels[59].time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -236,14 +219,8 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_2_front(char const *name, ops_b
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[104].mpi_time += t2 - t1;
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[59].mpi_time += t2 - t1;
     OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[59].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

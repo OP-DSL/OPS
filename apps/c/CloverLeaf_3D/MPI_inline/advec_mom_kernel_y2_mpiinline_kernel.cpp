@@ -46,21 +46,12 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 5, range, 22))
-    return;
-  #endif
-
-  ops_timing_realloc(22, "advec_mom_kernel_y2");
-  OPS_kernels[22].count++;
-=======
   if (!ops_checkpointing_before(args, 5, range, 124))
     return;
   #endif
 
   ops_timing_realloc(124, "advec_mom_kernel_y2");
   OPS_kernels[124].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -229,11 +220,7 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-  OPS_kernels[22].mpi_time += t1 - t2;
-=======
   OPS_kernels[124].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   advec_mom_kernel_y2_c_wrapper(
     p_a0,
@@ -244,11 +231,7 @@ void ops_par_loop_advec_mom_kernel_y2(char const *name, ops_block block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-  OPS_kernels[22].time += t2 - t1;
-=======
   OPS_kernels[124].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);

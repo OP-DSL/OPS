@@ -99,12 +99,12 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
 
   #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,5,range,41)) return;
+  if (!ops_checkpointing_before(args,5,range,6)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(41,"initialise_chunk_kernel_volume");
-    OPS_kernels[41].count++;
+    ops_timing_realloc(6,"initialise_chunk_kernel_volume");
+    OPS_kernels[6].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -219,7 +219,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[41].mpi_time += t2-t1;
+    OPS_kernels[6].mpi_time += t2-t1;
   }
 
 
@@ -234,7 +234,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[41].time += t1-t2;
+    OPS_kernels[6].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -247,12 +247,12 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[41].mpi_time += t2-t1;
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[6].mpi_time += t2-t1;
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -264,9 +264,9 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 41;
+  desc->index = 6;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 41;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 6;
   for ( int i=0; i<4; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -286,7 +286,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(41,"initialise_chunk_kernel_volume");
+    ops_timing_realloc(6,"initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);
 }

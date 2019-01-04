@@ -31,21 +31,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 2, range, 25))
-    return;
-  #endif
-
-  ops_timing_realloc(25, "advec_mom_kernel_mass_flux_x");
-  OPS_kernels[25].count++;
-=======
   if (!ops_checkpointing_before(args, 2, range, 127))
     return;
   #endif
 
   ops_timing_realloc(127, "advec_mom_kernel_mass_flux_x");
   OPS_kernels[127].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -145,11 +136,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-  OPS_kernels[25].mpi_time += t1 - t2;
-=======
   OPS_kernels[127].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   advec_mom_kernel_mass_flux_x_c_wrapper(
     p_a0,
@@ -157,11 +144,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-  OPS_kernels[25].time += t2 - t1;
-=======
   OPS_kernels[127].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 

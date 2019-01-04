@@ -41,21 +41,12 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 4, range, 42))
-    return;
-  #endif
-
-  ops_timing_realloc(42, "flux_calc_kernelx");
-  OPS_kernels[42].count++;
-=======
   if (!ops_checkpointing_before(args, 4, range, 106))
     return;
   #endif
 
   ops_timing_realloc(106, "flux_calc_kernelx");
   OPS_kernels[106].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -201,11 +192,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-  OPS_kernels[42].mpi_time += t1 - t2;
-=======
   OPS_kernels[106].mpi_time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   flux_calc_kernelx_c_wrapper(
     p_a0,
@@ -215,11 +202,7 @@ void ops_par_loop_flux_calc_kernelx(char const *name, ops_block block, int dim, 
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-  OPS_kernels[42].time += t2 - t1;
-=======
   OPS_kernels[106].time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
 

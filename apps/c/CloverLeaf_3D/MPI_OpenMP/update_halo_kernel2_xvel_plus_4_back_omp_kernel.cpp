@@ -30,22 +30,13 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 3, range, 77))
-=======
   if (!ops_checkpointing_before(args, 3, range, 32))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(77, "update_halo_kernel2_xvel_plus_4_back");
-    OPS_kernels[77].count++;
-=======
     ops_timing_realloc(32, "update_halo_kernel2_xvel_plus_4_back");
     OPS_kernels[32].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -125,11 +116,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[77].mpi_time += t2 - t1;
-=======
     OPS_kernels[32].mpi_time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -221,11 +208,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[77].time += t1 - t2;
-=======
     OPS_kernels[32].time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -236,14 +219,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_4_back(char const *name, ops_blo
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[77].mpi_time += t2 - t1;
-    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[77].transfer += ops_compute_transfer(dim, start, end, &arg1);
-=======
     OPS_kernels[32].mpi_time += t2 - t1;
     OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[32].transfer += ops_compute_transfer(dim, start, end, &arg1);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

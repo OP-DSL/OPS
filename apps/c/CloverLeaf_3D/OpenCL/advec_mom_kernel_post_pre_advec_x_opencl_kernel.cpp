@@ -83,11 +83,7 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_x(int xdim0, int ydim0, 
       printf("compiling advec_mom_kernel_post_pre_advec_x -- done\n");
 
     // Create the OpenCL kernel
-<<<<<<< HEAD
-      OPS_opencl_core.kernel[26] =
-=======
       OPS_opencl_core.kernel[128] =
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
           clCreateKernel(OPS_opencl_core.program,
                          "ops_advec_mom_kernel_post_pre_advec_x", &ret);
       clSafeCall(ret);
@@ -110,22 +106,13 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
-<<<<<<< HEAD
-  if (!ops_checkpointing_before(args, 5, range, 26))
-=======
   if (!ops_checkpointing_before(args, 5, range, 128))
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-<<<<<<< HEAD
-    ops_timing_realloc(26, "advec_mom_kernel_post_pre_advec_x");
-    OPS_kernels[26].count++;
-=======
     ops_timing_realloc(128, "advec_mom_kernel_post_pre_advec_x");
     OPS_kernels[128].count++;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -258,42 +245,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[26].mpi_time += t2 - t1;
-=======
     OPS_kernels[128].mpi_time += t2 - t1;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-<<<<<<< HEAD
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 0, sizeof(cl_mem),
-                              (void *)&arg0.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 1, sizeof(cl_mem),
-                              (void *)&arg1.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 2, sizeof(cl_mem),
-                              (void *)&arg2.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 3, sizeof(cl_mem),
-                              (void *)&arg3.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 4, sizeof(cl_mem),
-                              (void *)&arg4.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 5, sizeof(cl_int),
-                              (void *)&base0));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 6, sizeof(cl_int),
-                              (void *)&base1));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 7, sizeof(cl_int),
-                              (void *)&base2));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 8, sizeof(cl_int),
-                              (void *)&base3));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 9, sizeof(cl_int),
-                              (void *)&base4));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 10, sizeof(cl_int),
-                              (void *)&x_size));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 11, sizeof(cl_int),
-                              (void *)&y_size));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[26], 12, sizeof(cl_int),
-=======
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[128], 0, sizeof(cl_mem),
                               (void *)&arg0.data_d));
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[128], 1, sizeof(cl_mem),
@@ -319,16 +275,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[128], 11, sizeof(cl_int),
                               (void *)&y_size));
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[128], 12, sizeof(cl_int),
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
                               (void *)&z_size));
 
     //call/enque opencl kernel wrapper function
     clSafeCall(clEnqueueNDRangeKernel(
-<<<<<<< HEAD
-        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[26], 3, NULL,
-=======
         OPS_opencl_core.command_queue, OPS_opencl_core.kernel[128], 3, NULL,
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
         globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
   if (OPS_diags>1) {
@@ -337,11 +288,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-<<<<<<< HEAD
-    OPS_kernels[26].time += t1 - t2;
-=======
     OPS_kernels[128].time += t1 - t2;
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_device(args, 5);
@@ -351,20 +298,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-<<<<<<< HEAD
-    OPS_kernels[26].mpi_time += t2 - t1;
-    OPS_kernels[26].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[26].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[26].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[26].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[26].transfer += ops_compute_transfer(dim, start, end, &arg4);
-=======
     OPS_kernels[128].mpi_time += t2 - t1;
     OPS_kernels[128].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[128].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[128].transfer += ops_compute_transfer(dim, start, end, &arg2);
     OPS_kernels[128].transfer += ops_compute_transfer(dim, start, end, &arg3);
     OPS_kernels[128].transfer += ops_compute_transfer(dim, start, end, &arg4);
->>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
