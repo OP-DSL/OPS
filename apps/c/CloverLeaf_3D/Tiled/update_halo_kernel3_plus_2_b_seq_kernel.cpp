@@ -24,12 +24,16 @@ void ops_par_loop_update_halo_kernel3_plus_2_b_execute(ops_kernel_descriptor *de
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 3, range, 108))
+=======
+  if (!ops_checkpointing_before(args, 3, range, 63))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[108].count++;
+    OPS_kernels[63].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -66,7 +70,11 @@ void ops_par_loop_update_halo_kernel3_plus_2_b_execute(ops_kernel_descriptor *de
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[108].mpi_time += t1 - t2;
+=======
+    OPS_kernels[63].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   #pragma omp parallel for collapse(2)
@@ -88,15 +96,25 @@ void ops_par_loop_update_halo_kernel3_plus_2_b_execute(ops_kernel_descriptor *de
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[108].time += t2 - t1;
+=======
+    OPS_kernels[63].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[108].mpi_time += t1 - t2;
     OPS_kernels[108].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[108].transfer += ops_compute_transfer(dim, start, end, &arg1);
+=======
+    OPS_kernels[63].mpi_time += t1 - t2;
+    OPS_kernels[63].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[63].transfer += ops_compute_transfer(dim, start, end, &arg1);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -110,9 +128,9 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 108;
+  desc->index = 63;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 108;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 63;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -130,7 +148,11 @@ void ops_par_loop_update_halo_kernel3_plus_2_b(char const *name, ops_block block
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel3_plus_2_b_execute;
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(108, "update_halo_kernel3_plus_2_b");
+=======
+    ops_timing_realloc(63, "update_halo_kernel3_plus_2_b");
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

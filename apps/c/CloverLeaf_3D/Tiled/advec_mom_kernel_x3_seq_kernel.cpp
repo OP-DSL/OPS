@@ -27,12 +27,16 @@ void ops_par_loop_advec_mom_kernel_x3_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 4, range, 23))
+=======
+  if (!ops_checkpointing_before(args, 4, range, 125))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[23].count++;
+    OPS_kernels[125].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -76,7 +80,11 @@ void ops_par_loop_advec_mom_kernel_x3_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[23].mpi_time += t1 - t2;
+=======
+    OPS_kernels[125].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   #pragma omp parallel for collapse(2)
@@ -100,17 +108,29 @@ void ops_par_loop_advec_mom_kernel_x3_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[23].time += t2 - t1;
+=======
+    OPS_kernels[125].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[23].mpi_time += t1 - t2;
     OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg2);
     OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg3);
+=======
+    OPS_kernels[125].mpi_time += t1 - t2;
+    OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg3);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -126,9 +146,9 @@ void ops_par_loop_advec_mom_kernel_x3(char const *name, ops_block block, int dim
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 23;
+  desc->index = 125;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 23;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 125;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -146,7 +166,11 @@ void ops_par_loop_advec_mom_kernel_x3(char const *name, ops_block block, int dim
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_x3_execute;
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(23, "advec_mom_kernel_x3");
+=======
+    ops_timing_realloc(125, "advec_mom_kernel_x3");
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

@@ -83,7 +83,11 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0, int ydim0) {
       printf("compiling calc_dt_kernel_min -- done\n");
 
     // Create the OpenCL kernel
+<<<<<<< HEAD
       OPS_opencl_core.kernel[38] = clCreateKernel(
+=======
+      OPS_opencl_core.kernel[99] = clCreateKernel(
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
           OPS_opencl_core.program, "ops_calc_dt_kernel_min", &ret);
       clSafeCall(ret);
 
@@ -104,13 +108,22 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 2, range, 38))
+=======
+  if (!ops_checkpointing_before(args, 2, range, 99))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(38, "calc_dt_kernel_min");
     OPS_kernels[38].count++;
+=======
+    ops_timing_realloc(99, "calc_dt_kernel_min");
+    OPS_kernels[99].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -208,13 +221,18 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[38].mpi_time += t2 - t1;
+=======
+    OPS_kernels[99].mpi_time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
+<<<<<<< HEAD
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[38], 0, sizeof(cl_mem),
                               (void *)&arg0.data_d));
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[38], 1, sizeof(cl_mem),
@@ -230,11 +248,32 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[38], 6, sizeof(cl_int),
                               (void *)&y_size));
     clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[38], 7, sizeof(cl_int),
+=======
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 0, sizeof(cl_mem),
+                              (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 1, sizeof(cl_mem),
+                              (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 2,
+                              nthread * sizeof(double), NULL));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 3, sizeof(cl_int),
+                              (void *)&r_bytes1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 4, sizeof(cl_int),
+                              (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 5, sizeof(cl_int),
+                              (void *)&x_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 6, sizeof(cl_int),
+                              (void *)&y_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[99], 7, sizeof(cl_int),
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
                               (void *)&z_size));
 
     //call/enque opencl kernel wrapper function
     clSafeCall(clEnqueueNDRangeKernel(
+<<<<<<< HEAD
         OPS_opencl_core.command_queue, OPS_opencl_core.kernel[38], 3, NULL,
+=======
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[99], 3, NULL,
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
         globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
   if (OPS_diags>1) {
@@ -243,7 +282,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[38].time += t1 - t2;
+=======
+    OPS_kernels[99].time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   mvReductArraysToHost(reduct_bytes);
@@ -259,7 +302,12 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[38].mpi_time += t2 - t1;
     OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
+=======
+    OPS_kernels[99].mpi_time += t2 - t1;
+    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

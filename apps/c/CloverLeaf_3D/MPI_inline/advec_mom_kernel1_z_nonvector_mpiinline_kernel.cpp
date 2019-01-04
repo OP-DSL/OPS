@@ -46,12 +46,21 @@ void ops_par_loop_advec_mom_kernel1_z_nonvector(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 5, range, 35))
     return;
   #endif
 
   ops_timing_realloc(35, "advec_mom_kernel1_z_nonvector");
   OPS_kernels[35].count++;
+=======
+  if (!ops_checkpointing_before(args, 5, range, 137))
+    return;
+  #endif
+
+  ops_timing_realloc(137, "advec_mom_kernel1_z_nonvector");
+  OPS_kernels[137].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -220,7 +229,11 @@ void ops_par_loop_advec_mom_kernel1_z_nonvector(char const *name, ops_block bloc
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
   OPS_kernels[35].mpi_time += t1 - t2;
+=======
+  OPS_kernels[137].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   advec_mom_kernel1_z_nonvector_c_wrapper(
     p_a0,
@@ -231,14 +244,18 @@ void ops_par_loop_advec_mom_kernel1_z_nonvector(char const *name, ops_block bloc
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
   OPS_kernels[35].time += t2 - t1;
+=======
+  OPS_kernels[137].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[2],range);
 
   //Update kernel record
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg1);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg2);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg3);
-  OPS_kernels[35].transfer += ops_compute_transfer(dim, start, end, &arg4);
+  OPS_kernels[137].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[137].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[137].transfer += ops_compute_transfer(dim, start, end, &arg2);
+  OPS_kernels[137].transfer += ops_compute_transfer(dim, start, end, &arg3);
+  OPS_kernels[137].transfer += ops_compute_transfer(dim, start, end, &arg4);
 }

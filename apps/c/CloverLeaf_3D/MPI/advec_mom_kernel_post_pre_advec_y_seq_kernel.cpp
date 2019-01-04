@@ -37,13 +37,22 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 5, range, 30))
+=======
+  if (!ops_checkpointing_before(args, 5, range, 132))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(30, "advec_mom_kernel_post_pre_advec_y");
     OPS_kernels[30].count++;
+=======
+    ops_timing_realloc(132, "advec_mom_kernel_post_pre_advec_y");
+    OPS_kernels[132].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c2,&t2);
   }
 
@@ -205,7 +214,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[30].mpi_time += t1 - t2;
+=======
+    OPS_kernels[132].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   int n_x;
@@ -259,7 +272,11 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[30].time += t2 - t1;
+=======
+    OPS_kernels[132].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -268,11 +285,20 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[30].mpi_time += t1 - t2;
     OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg2);
     OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg3);
     OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg4);
+=======
+    OPS_kernels[132].mpi_time += t1 - t2;
+    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg4);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

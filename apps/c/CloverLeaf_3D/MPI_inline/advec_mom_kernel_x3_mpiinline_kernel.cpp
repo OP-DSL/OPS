@@ -41,12 +41,21 @@ void ops_par_loop_advec_mom_kernel_x3(char const *name, ops_block block, int dim
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 4, range, 23))
     return;
   #endif
 
   ops_timing_realloc(23, "advec_mom_kernel_x3");
   OPS_kernels[23].count++;
+=======
+  if (!ops_checkpointing_before(args, 4, range, 125))
+    return;
+  #endif
+
+  ops_timing_realloc(125, "advec_mom_kernel_x3");
+  OPS_kernels[125].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -192,7 +201,11 @@ void ops_par_loop_advec_mom_kernel_x3(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
   OPS_kernels[23].mpi_time += t1 - t2;
+=======
+  OPS_kernels[125].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   advec_mom_kernel_x3_c_wrapper(
     p_a0,
@@ -202,14 +215,18 @@ void ops_par_loop_advec_mom_kernel_x3(char const *name, ops_block block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
   OPS_kernels[23].time += t2 - t1;
+=======
+  OPS_kernels[125].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg0);
-  OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg1);
-  OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg2);
-  OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg3);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg2);
+  OPS_kernels[125].transfer += ops_compute_transfer(dim, start, end, &arg3);
 }

@@ -22,12 +22,16 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 2, range, 38))
+=======
+  if (!ops_checkpointing_before(args, 2, range, 99))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[38].count++;
+    OPS_kernels[99].count++;
     ops_timers_core(&c2,&t2);
   }
 
@@ -63,7 +67,11 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[38].mpi_time += t1 - t2;
+=======
+    OPS_kernels[99].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   double p_a1_0 = p_a1[0];
@@ -88,14 +96,23 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   p_a1[0] = p_a1_0;
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[38].time += t2 - t1;
+=======
+    OPS_kernels[99].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[38].mpi_time += t1 - t2;
     OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
+=======
+    OPS_kernels[99].mpi_time += t1 - t2;
+    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }
 #undef OPS_ACC0
@@ -108,9 +125,9 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 38;
+  desc->index = 99;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 38;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 99;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -123,7 +140,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->args[1] = arg1;
   desc->function = ops_par_loop_calc_dt_kernel_min_execute;
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(38, "calc_dt_kernel_min");
+=======
+    ops_timing_realloc(99, "calc_dt_kernel_min");
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
   ops_enqueue_kernel(desc);
   }

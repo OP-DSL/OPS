@@ -34,13 +34,22 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 3, range, 53))
+=======
+  if (!ops_checkpointing_before(args, 3, range, 7))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(53, "initialise_chunk_kernel_celly");
     OPS_kernels[53].count++;
+=======
+    ops_timing_realloc(7, "initialise_chunk_kernel_celly");
+    OPS_kernels[7].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -132,7 +141,11 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[53].mpi_time += t2 - t1;
+=======
+    OPS_kernels[7].mpi_time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -242,7 +255,11 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[53].time += t1 - t2;
+=======
+    OPS_kernels[7].time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 3);
@@ -253,9 +270,16 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[53].mpi_time += t2 - t1;
     OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg2);
+=======
+    OPS_kernels[7].mpi_time += t2 - t1;
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

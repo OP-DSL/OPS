@@ -27,12 +27,21 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 2, range, 38))
     return;
   #endif
 
   ops_timing_realloc(38, "calc_dt_kernel_min");
   OPS_kernels[38].count++;
+=======
+  if (!ops_checkpointing_before(args, 2, range, 99))
+    return;
+  #endif
+
+  ops_timing_realloc(99, "calc_dt_kernel_min");
+  OPS_kernels[99].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -115,7 +124,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
   OPS_kernels[38].mpi_time += t1 - t2;
+=======
+  OPS_kernels[99].mpi_time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
 
   calc_dt_kernel_min_c_wrapper(
     p_a0,
@@ -123,9 +136,13 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
   OPS_kernels[38].time += t2 - t1;
+=======
+  OPS_kernels[99].time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   ops_set_dirtybit_host(args, 2);
 
   //Update kernel record
-  OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
 }

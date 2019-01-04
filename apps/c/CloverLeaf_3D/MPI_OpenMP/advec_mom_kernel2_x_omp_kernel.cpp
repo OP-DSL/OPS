@@ -32,13 +32,22 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block, int dim
 
 
   #ifdef CHECKPOINTING
+<<<<<<< HEAD
   if (!ops_checkpointing_before(args, 4, range, 28))
+=======
+  if (!ops_checkpointing_before(args, 4, range, 130))
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     return;
   #endif
 
   if (OPS_diags > 1) {
+<<<<<<< HEAD
     ops_timing_realloc(28, "advec_mom_kernel2_x");
     OPS_kernels[28].count++;
+=======
+    ops_timing_realloc(130, "advec_mom_kernel2_x");
+    OPS_kernels[130].count++;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
     ops_timers_core(&c1,&t1);
   }
 
@@ -142,7 +151,11 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block, int dim
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[28].mpi_time += t2 - t1;
+=======
+    OPS_kernels[130].mpi_time += t2 - t1;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
 
@@ -274,7 +287,11 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block, int dim
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
+<<<<<<< HEAD
     OPS_kernels[28].time += t1 - t2;
+=======
+    OPS_kernels[130].time += t1 - t2;
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 
   ops_set_dirtybit_host(args, 4);
@@ -284,10 +301,18 @@ void ops_par_loop_advec_mom_kernel2_x(char const *name, ops_block block, int dim
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
+<<<<<<< HEAD
     OPS_kernels[28].mpi_time += t2 - t1;
     OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg2);
     OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg3);
+=======
+    OPS_kernels[130].mpi_time += t2 - t1;
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[130].transfer += ops_compute_transfer(dim, start, end, &arg3);
+>>>>>>> 3f8b285... Regenerating files to resolve conflicts
   }
 }

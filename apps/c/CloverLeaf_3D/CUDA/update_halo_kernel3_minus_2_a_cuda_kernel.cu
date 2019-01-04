@@ -73,12 +73,12 @@ void ops_par_loop_update_halo_kernel3_minus_2_a_execute(ops_kernel_descriptor *d
 
 
   #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,3,range,110)) return;
+  if (!ops_checkpointing_before(args,3,range,65)) return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(110,"update_halo_kernel3_minus_2_a");
-    OPS_kernels[110].count++;
+    ops_timing_realloc(65,"update_halo_kernel3_minus_2_a");
+    OPS_kernels[65].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -186,7 +186,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a_execute(ops_kernel_descriptor *d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[110].mpi_time += t2-t1;
+    OPS_kernels[65].mpi_time += t2-t1;
   }
 
 
@@ -200,7 +200,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a_execute(ops_kernel_descriptor *d
   if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[110].time += t1-t2;
+    OPS_kernels[65].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -212,9 +212,9 @@ void ops_par_loop_update_halo_kernel3_minus_2_a_execute(ops_kernel_descriptor *d
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[110].mpi_time += t2-t1;
-    OPS_kernels[110].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[110].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[65].mpi_time += t2-t1;
+    OPS_kernels[65].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[65].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -226,9 +226,9 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 110;
+  desc->index = 65;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 110;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 65;
   for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -246,7 +246,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel3_minus_2_a_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(110,"update_halo_kernel3_minus_2_a");
+    ops_timing_realloc(65,"update_halo_kernel3_minus_2_a");
   }
   ops_enqueue_kernel(desc);
 }
