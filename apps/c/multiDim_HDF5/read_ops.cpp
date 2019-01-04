@@ -52,9 +52,6 @@ int main(int argc, char **argv) {
   ops_write_const_hdf5("my_const", 1, "int", (char*)&my_const, "read_data.h5");
   ops_write_const_hdf5("my_text", 11, "char", (char*)buffer, "read_data.h5");
 
-
-
-
   ops_timing_output(stdout);
   ops_printf("\nSucessful exit from OPS!\n");
   ops_exit();
