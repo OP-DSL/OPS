@@ -38,13 +38,30 @@
 #include "ops_lib_core.h"
 #include <stdlib.h>
 
+#include <algorithm>
+#include <cassert>
+#include <map>
+#include <set>
 #include <vector>
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
 
-std::vector<ops_kernel_descriptor *> ops_kernel_dag;
+// TODO add get_reduction_result calls to this.
+std::vector<ops_kernel_descriptor *>
+    ops_kernel_dag; /**< Contains all called kernels in order. */
+
+// Data structures to follow data changes
+
+/* TODO(bgd54): not only indexes but the states of the data, and consider that
+ * we write only a part of the data */
+std::map<std::string, std::vector<int>>
+    ops_dat_states; /**< For each ops_dat and reduction_handle contains all
+                       kernel index where the data is changed. TODO update*/
+
+std::map<std::string, char *>
+    name2data; /**< just for checking if the names are unique as we hope */
 
 /////////////////////////////////////////////////////////////////////////
 // Enqueueing loops
@@ -52,17 +69,118 @@ std::vector<ops_kernel_descriptor *> ops_kernel_dag;
 /////////////////////////////////////////////////////////////////////////
 
 void ops_add_to_dag(ops_kernel_descriptor *desc) {
+
+  // register parameters to ops_dat_states
+  for (int param_idx = 0; param_idx < desc->nargs; param_idx++) {
+    ops_arg arg = desc->args[param_idx];
+    if (arg.argtype == OPS_ARG_GBL) {
+      continue; // TODO arg_gbl saves, reduction handle
+    } else if (arg.argtype == OPS_ARG_DAT) {
+      ops_dat dat = arg.dat;
+      std::string name = dat->name;
+
+      if (0 == name2data.count(name)) {
+        name2data[name] = dat->data;
+      } else {
+        assert(name2data[name] == dat->data &&
+               "name of an ops_dat must be unique\n");
+      }
+
+      if (arg.acc == OPS_READ && 0 == ops_dat_states.count(name)) {
+        continue; // TODO ops_dat_states[dat].push_back(ops_kernel_dag.size());
+                  // checkpointing
+      } else if (arg.acc == OPS_WRITE) {
+        ops_dat_states[name].push_back(ops_kernel_dag.size());
+        // TODO firs appearence if we consider not whole ranges we need
+        // checkpoint before and after
+      } else if (arg.acc == OPS_INC) {
+        ops_dat_states[name].push_back(ops_kernel_dag.size());
+        // TODO we need checkpoint before and after
+      } else if (arg.acc == OPS_RW) {
+        ops_dat_states[name].push_back(ops_kernel_dag.size());
+        // TODO we need checkpoint before and after
+      }
+    }
+  }
+
+  // Add desc to DAG
   ops_kernel_dag.push_back(desc);
-  
   // Run the kernel
-  //desc->function(desc);
+  desc->function(
+      desc); // TODO we need to prepare it like in ops_enqueue_kernel for MPI
+}
+
+/**
+ * @brief For the kernel given by idx generate the set of kernel indices that
+ * must be executed before kernel idx.
+ *
+ * @param idx the index of the kernel
+ *
+ * @return set of indices of kernels the kenerl_idx depends on.
+ */
+std::set<int> get_dependencies(unsigned idx) {
+  std::set<int> dependencies;
+  ops_kernel_descriptor *desc = ops_kernel_dag[idx];
+  // check loop dependencies
+  for (int param_idx = 0; param_idx < desc->nargs; param_idx++) {
+    ops_arg arg = desc->args[param_idx];
+    if (arg.argtype == OPS_ARG_GBL) {
+      continue;
+    } else if (arg.argtype == OPS_ARG_DAT) {
+      ops_dat dat = arg.dat;
+      std::string name = dat->name;
+
+      if ((arg.acc == OPS_READ && 0 != ops_dat_states.count(name)) ||
+          arg.acc == OPS_INC || arg.acc == OPS_RW) {
+        // get an iterator to the first greater or equal element to the idx of
+        // the kernel
+        auto it = std::lower_bound(ops_dat_states[name].begin(),
+                                   ops_dat_states[name].end(), idx);
+        if (it != ops_dat_states[name]
+                      .begin()) { // TODO make sure we dont need the if.. ie
+                                  // store the initial version properly
+          it--; // but we need the last smaller so decrease the iterator
+          dependencies.insert(*it);
+        } else {
+          ops_printf("para\n");
+        }
+      }
+    }
+  }
+  return dependencies;
+}
+
+void ops_run_kernel(unsigned idx) {
+  // we will use flood fill or some variant to get the set of all kernels that I
+  // want to execute..
+  std::set<int> loops;
+  std::set<int> visited;
+  std::set<int> to_be_visit = get_dependencies(idx);
+  while (!to_be_visit.empty()) {
+    int cur = *to_be_visit.begin();
+    to_be_visit.erase(to_be_visit.begin());
+    if (visited.count(cur)) {
+      continue;
+    }
+    loops.insert(cur);
+    visited.insert(cur);
+    std::set<int> children = get_dependencies(cur);
+    to_be_visit.insert(children.begin(), children.end());
+  }
+  // TODO reset memory..
+  for (const int &dep_idx : loops) {
+    ops_printf("rerun kernel %u: %s\n", dep_idx, ops_kernel_dag[dep_idx]->name);
+    ops_kernel_dag[dep_idx]->function(ops_kernel_dag[dep_idx]);
+  }
+  ops_printf("rerun kernel %u: %s\n", idx, ops_kernel_dag[idx]->name);
+  ops_kernel_dag[idx]->function(ops_kernel_dag[idx]);
 }
 
 void ops_traverse_dag() {
-  for(unsigned i = 0; i < ops_kernel_dag.size(); ++i){
-    ops_printf("rerun %s\n", ops_kernel_dag[i]->name);
-    ops_kernel_dag[i]->function(ops_kernel_dag[i]); 
+  // TODO reset memory!
+  for (unsigned i = 0; i < ops_kernel_dag.size(); ++i) {
+    ops_printf("rerun kernel %u: %s\n", i, ops_kernel_dag[i]->name);
+    ops_kernel_dag[i]->function(ops_kernel_dag[i]);
   }
 }
-
 

@@ -482,6 +482,7 @@ int ops_num_procs();
 
 /* dag traversal */
 void ops_add_to_dag(ops_kernel_descriptor *desc);
+void ops_run_kernel(unsigned idx);
 void ops_traverse_dag();
 
 /*******************************************************************************
