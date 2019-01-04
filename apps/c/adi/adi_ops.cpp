@@ -93,9 +93,9 @@ double lambda;
 
 int main(int argc, char **argv) {
 
-  nx = 16;
-  ny = 16;
-  nz = 16;
+  nx = 256;
+  ny = 256;
+  nz = 256;
   opts[0] = 0;
   opts[1] = 0;
   opts[2] = 0;

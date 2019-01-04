@@ -11,6 +11,7 @@ export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
 
 #CUDA and NVIDIA OpenCL
+export NV_ARCH=Kepler
 export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 export CUDA_INSTALL_PATH=/usr/local/cuda/
@@ -42,4 +43,5 @@ export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel
 export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel/lib:$LD_LIBRARY_PATH
 
-export NV_ARCH=Kepler
+#Tridiagonal LIB
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/TriDiagonal/Tridiag-Git/tridsolver/scalar/build/lib/
