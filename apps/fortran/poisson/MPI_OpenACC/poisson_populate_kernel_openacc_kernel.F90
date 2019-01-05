@@ -9,15 +9,19 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim4
+INTEGER(KIND=4) ydim4
 #define OPS_ACC4(x,y) (x+xdim4*(y)+1)
 INTEGER(KIND=4) xdim5
+INTEGER(KIND=4) ydim5
 #define OPS_ACC5(x,y) (x+xdim5*(y)+1)
 INTEGER(KIND=4) xdim6
+INTEGER(KIND=4) ydim6
 #define OPS_ACC6(x,y) (x+xdim6*(y)+1)
 
 
 contains
 
+!$ACC ROUTINE(poisson_populate_kernel) SEQ
 !user function
 subroutine poisson_populate_kernel(dispx, dispy, idx, u, f, ref)
   implicit none
@@ -73,8 +77,9 @@ subroutine poisson_populate_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
-  !$acc parallel deviceptr(opsDat4Local,opsDat5Local,opsDat6Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat4Local,opsDat5Local,opsDat6Local)  
+  !$acc loop 
   DO n_y = 1, end(2)-start(2)+1
     !$acc loop
     DO n_x = 1, end(1)-start(1)+1
@@ -90,6 +95,7 @@ subroutine poisson_populate_kernel_wrap( &
     END DO
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine
