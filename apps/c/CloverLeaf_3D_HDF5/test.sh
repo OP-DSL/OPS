@@ -24,9 +24,10 @@ then
 else
      echo "Seq and MPI files match"
 fi
-rm cloverdata_seq.h5
+rm cloverdata_seq.h5 cloverdata.h5
+./generate_file
 
-exit
+
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 echo '============> Running OpenMP'
