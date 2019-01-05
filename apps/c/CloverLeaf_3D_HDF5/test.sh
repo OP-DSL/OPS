@@ -5,7 +5,8 @@ source ../../scripts/source_intel
 make
 cd -
 make clean
-rm -f .generated
+rm -rf .generated
+rm -rf generate_file generate_file_mpi
 make IEEE=1
 make generate_file generate_file_mpi
 
@@ -24,6 +25,8 @@ else
      echo "Seq and MPI files match"
 fi
 rm cloverdata_seq.h5
+
+exit
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 echo '============> Running OpenMP'

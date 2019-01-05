@@ -380,8 +380,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
                             block->dims); // size
       H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
                             block->dims); // d_m
-      H5LTset_attribute_int(group_id, dat->name, "d_p", dat->d_p,
+
+      // need to substract x_pad from d_p before writing attribute to file
+      int orig_d_p[block->dims];
+      for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+      orig_d_p[0] = dat->d_p[0] - dat->x_pad;
+
+      H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
                             block->dims); // d_p
+
+
       H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
                             block->dims);                               // base
       H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
@@ -1047,7 +1055,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     H5Fclose(file_id);
   }
 
-  
+
   ops_printf("Writing constant to %s\n", file_name);
 
   /* Open the existing file. */

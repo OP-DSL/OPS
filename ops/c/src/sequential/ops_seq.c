@@ -57,7 +57,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                                        data, type_size, type, name);
 
   if (data != NULL && !OPS_realloc) {
-    // printf("Data read in from HDF5 file or is allocated by the user\n");
+    //printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
@@ -72,7 +72,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
     dat->d_p[0] += x_pad;
-    //printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
+    dat->x_pad = x_pad;
+    printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
 
 
     for (int i = 0; i < block->dims; i++)
@@ -86,7 +87,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_realloc) {
-      int sizeprod = 1; 
+      int sizeprod = 1;
       for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
       int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
       for (int i = 0; i < sizeprod; i++) {
@@ -224,7 +225,7 @@ void ops_halo_transfer(ops_halo_group group) {
                           (i - ranges[0]) * step[0] * buf_strides[0]) *
                              halo->from->elem_size + d * halo->from->type_size,
                      halo->from->data +
-                         (OPS_soa ? 
+                         (OPS_soa ?
                            ((
                             #if OPS_MAX_DIM > 4
                             m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
