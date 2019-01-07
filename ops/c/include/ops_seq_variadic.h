@@ -165,6 +165,8 @@ template <typename T> struct param_handler<ACC<T>> {
       return (char *) new ACC<T>(arg.dim, arg.dat->size[0], arg.dat->size[1], arg.dat->size[2], (T*)(arg.data //base of 3D array
 #elif defined(OPS_4D)
       return (char *) new ACC<T>(arg.dim, arg.dat->size[0], arg.dat->size[1], arg.dat->size[2], arg.dat->size[3], (T*)(arg.data //base of 3D array
+#else
+      return (char *) ((arg.dat->data //TODO
 #endif
       + address(ndim, OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
@@ -212,7 +214,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   ops_arg args[N] = {arguments...};
   
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_name_before(args,1,range,name)) return;
+  if (!ops_checkpointing_name_before(args,N,range,name)) return;
   #endif
 
   int start[OPS_MAX_DIM];
@@ -258,9 +260,9 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  ops_H_D_exchanges_host(args, 1);
-  ops_halo_exchanges(args,1,range);
-  ops_H_D_exchanges_host(args, 1);
+  ops_H_D_exchanges_host(args, N);
+  ops_halo_exchanges(args,N,range);
+  ops_H_D_exchanges_host(args, N);
 
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -292,7 +294,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   #endif
   (void) std::initializer_list<int>{(
   (arguments.argtype == OPS_ARG_DAT && arguments.acc != OPS_READ)?  ops_set_halo_dirtybit3(&arguments,range),0:0)...};
-  ops_set_dirtybit_host(args, 1);
+  ops_set_dirtybit_host(args, N);
 
   (void) std::initializer_list<int>{
     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
