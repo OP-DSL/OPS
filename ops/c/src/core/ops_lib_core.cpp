@@ -94,19 +94,19 @@ void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
   const char *pch;
-  pch = strstr(argv, "OPS_block_size_x=");
+  pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_x = atoi(temp + 17);
     ops_printf("\n OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x);
   }
-  pch = strstr(argv, "OPS_block_size_y=");
+  pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_y = atoi(temp + 17);
     ops_printf("\n OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y);
   }
-  pch = strstr(argv, "OPS_block_size_z=");
+  pch = strstr(argv, "OPS_BLOCK_SIZE_Z=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_block_size_z = atoi(temp + 17);
@@ -123,13 +123,13 @@ void ops_set_args(const int argc, const char *argv) {
     OPS_instance::getOPSInstance()->OPS_diags = atoi(temp + 11);
     ops_printf("\n OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags);
   }
-  pch = strstr(argv, "ops_cache_size=");
+  pch = strstr(argv, "OPS_CACHE_SIZE=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->ops_cache_size = atoi(temp + 15);
     ops_printf("\n Cache size per process = %d \n", OPS_instance::getOPSInstance()->ops_cache_size);
   }
-  pch = strstr(argv, "OPS_realloc=");
+  pch = strstr(argv, "OPS_REALLOC=");
   if (pch != NULL) {
     strncpy(temp, pch, 20);
     OPS_instance::getOPSInstance()->OPS_realloc = atoi(temp + 12);
@@ -147,26 +147,26 @@ void ops_set_args(const int argc, const char *argv) {
     OPS_instance::getOPSInstance()->ops_tiling_mpidepth = atoi(temp + 20);
     ops_printf("\n Max tiling depth across processes = %d \n", OPS_instance::getOPSInstance()->ops_tiling_mpidepth);
   }
-  pch = strstr(argv, "ops_force_decomp_X=");
+  pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[0] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in x direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[0]);
   }
-  pch = strstr(argv, "ops_force_decomp_Y=");
+  pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[1] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in y direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[1]);
   }
-  pch = strstr(argv, "ops_force_decomp_Z=");
+  pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
     OPS_instance::getOPSInstance()->ops_force_decomp[2] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in z direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[2]);
   }
 
-  if (strstr(argv, "ops_checkpoint_inmemory") != NULL) {
+  if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     OPS_instance::getOPSInstance()->ops_checkpoint_inmemory = 1;
     ops_printf("\n OPS Checkpointing in memory\n");
   } else if (strstr(argv, "OPS_CHECKPOINT_LOCKFILE") != NULL) {
