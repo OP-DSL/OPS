@@ -61,6 +61,10 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->is_hdf5 = 0;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
                              // ops_decl_dat_hdf5()
+    int bytes = size * type_size;
+    for (int i = 0; i < block->dims; i++)
+      bytes = bytes * dat->size[i];
+    dat->mem = bytes;
   } else {
     // Allocate memory immediately
     int bytes = size * type_size;
