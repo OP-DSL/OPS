@@ -63,6 +63,7 @@ char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
 
+int ops_device_initialised_externally = 0;
 //
 // CUDA utility functions
 //
@@ -293,5 +294,5 @@ void ops_cuda_exit() {
     free(OPS_reduct_h);
     cutilSafeCall(cudaFree(OPS_reduct_d));
   }
-  cudaDeviceReset();
+  if (!ops_device_initialised_externally) cudaDeviceReset();
 }
