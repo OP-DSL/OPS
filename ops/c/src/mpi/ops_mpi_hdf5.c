@@ -624,6 +624,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     hid_t attr;      // attribute identifier
     herr_t err;      // error code
 
+    hsize_t CHUNK_SIZE[block->dims];
+
     // Set up file access property list with parallel I/O access
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
@@ -678,43 +680,29 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         filespace =
             H5Screate_simple(block->dims, GBL_SIZE, NULL); // space in file
 
-        // Create a reasonable chunk size - Istvan's code
+        // Create a reasonable chunk size
         /*int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
             cart_coords[OPS_MAX_DIM];
         MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods,
-        cart_coords);
-        hsize_t CHUNK_SIZE[OPS_MAX_DIM];
-        for (int i = 0; i < block->dims; i++)
-          CHUNK_SIZE[i] = MAX(GBL_SIZE[i] / (cart_dims[i] * 2), 1);*/
-
-        // Create a reasonable chunk size
-        int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
-            cart_coords[OPS_MAX_DIM];
-        MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods,
                      cart_coords);
-        hsize_t CHUNK_SIZE[block->dims];
-
-        // CHUNK_SIZE[0] = MAX(ceil(GBL_SIZE[0] / (double)cart_dims[0]), 1);
-        // CHUNK_SIZE[1] = MAX(ceil(GBL_SIZE[1] / (double)cart_dims[1]), 1);
-        // CHUNK_SIZE[2] = MAX(ceil(GBL_SIZE[2] / (double)cart_dims[2]), 1);
 
         for (int i = 0; i < block->dims; i++) {
-          MPI_Allreduce(&size[i], &CHUNK_SIZE[i], 1, MPI_INT, MPI_MAX,
-                        OPS_MPI_HDF5_WORLD);
-          // CHUNK_SIZE[i] = MAX(ceil(GBL_SIZE[i] / (double)cart_dims[i]), 1);
+          CHUNK_SIZE[i] = MAX((GBL_SIZE[i] / 10), 1); // need to have a constant chinksize
+                                                      // regardless of the number of mpi procs
 
           printf("%s GBL_SIZE[%d] = %d, size[%d] = %d, cart_dims[%d] = %d, "
                  "CHUNK_SIZE[%d] = %d, value[%d] = %lf\n",
                  dat->name, i, GBL_SIZE[i], i, size[i], i, cart_dims[i], i,
                  CHUNK_SIZE[i], i, GBL_SIZE[i] / (double)cart_dims[i]);
-        }
-        CHUNK_SIZE[0] = CHUNK_SIZE[0] + 2;
+        }*/
+
 
         // Create chunked dataset
         plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
+        //H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
                                                          // to be the same size
                                                          // on each proc
+
 
         // Create the dataset with default properties and close filespace.
         if (strcmp(dat->type, "double") == 0 ||
