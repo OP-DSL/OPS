@@ -171,6 +171,12 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     }
     if (OPS_diags > 1)
       OPS_kernels[desc->index].mpi_time += t2-t1;
+
+    for (int i = 0; i < desc->nargs; i++)
+      if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ)
+        free(desc->args[i].data);
+    free(desc->args);
+    free(desc);
   }
 //ops_execute();
 }
@@ -868,8 +874,12 @@ void ops_execute() {
   }
 
   for (int i = 0; i < ops_kernel_list.size(); i++) {
-    // free(ops_kernel_list[i]->args);
-    // free(ops_kernel_list[i]);
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
+          ops_kernel_list[i]->args[j].acc == OPS_READ)
+        free(ops_kernel_list[i]->args[j].data);
+    free(ops_kernel_list[i]->args);
+    free(ops_kernel_list[i]);
   }
   ops_kernel_list.clear();
 }

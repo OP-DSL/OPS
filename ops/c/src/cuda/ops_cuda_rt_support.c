@@ -63,6 +63,7 @@ char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
 
+int ops_device_initialised_externally = 0;
 //
 // CUDA utility functions
 //
@@ -284,6 +285,14 @@ void ops_cuda_exit() {
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
-
-//  cudaDeviceReset();
+  if (OPS_consts_bytes > 0) {
+    free(OPS_consts_h);
+    cudaFreeHost(OPS_gbl_prev);
+    cutilSafeCall(cudaFree(OPS_consts_d));
+  }
+  if (OPS_reduct_bytes > 0) {
+    free(OPS_reduct_h);
+    cutilSafeCall(cudaFree(OPS_reduct_d));
+  }
+  if (!ops_device_initialised_externally) cudaDeviceReset();
 }

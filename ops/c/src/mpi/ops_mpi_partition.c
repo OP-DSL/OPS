@@ -201,6 +201,10 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   sb->block = block;
   sb->ndim = g_ndim;
   sb->owned = 0;
+  sb->comm = MPI_COMM_NULL;
+  sb->comm1 = MPI_COMM_NULL;
+  sb->grp = MPI_GROUP_NULL;
+
   int my_local_rank = -1;
   for (int i = 0; i < num_proc; i++) {
     if (processes[i] == ops_my_global_rank) {
@@ -288,6 +292,7 @@ void ops_decomp_dats(sub_block *sb) {
     int *prod = &prod_t[1];
     prod[-1] = 1;
     sd->prod = prod;
+    sd->halos = NULL;
 
     for (int d = 0; d < block->dims; d++) {
       // first store away the details of the dat (i.e global dat details)
@@ -345,7 +350,7 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_ip[d] = dat->d_p[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
- 
+
         if (ops_enable_tiling && ops_tiling_mpidepth>0)
 					sd->d_ip[d] = ops_tiling_mpidepth;
 
@@ -366,7 +371,7 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     // Allocate datasets
-    if (dat->data == NULL)
+    if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->hdf5_file = "none";
@@ -376,16 +381,16 @@ void ops_decomp_dats(sub_block *sb) {
         dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
-	if (ops_read_dat_hdf5_dynamic == NULL) {
+	      if (ops_read_dat_hdf5_dynamic == NULL) {
           printf("Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked\n");
           exit(-1);
-	}
+        }
         ops_read_dat_hdf5_dynamic(dat);
       }
-    else {
-      dat->user_managed = 1;
-      dat->is_hdf5 = 0;
-      dat->hdf5_file = "none";
+    } else {
+        dat->user_managed = 1;
+        dat->is_hdf5 = 0;
+        dat->hdf5_file = "none";
     }
 
     // Compute offset in bytes to the base index
@@ -817,6 +822,8 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
 		       total_size * sizeof(char));
   }
   mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
+  free(neighbor_array_recv);
+  free(neighbor_array_send);
 }
 
 void ops_partition(const char *routine) {
@@ -899,27 +906,39 @@ void ops_partition(const char *routine) {
 // and perhaps will need to be allocated on-the-fly.
 
 void ops_mpi_exit() {
-  ops_dat_entry *item;
+
+  /*for (int b = 0; b < OPS_block_index; b++) { // for each block
+    ops_block block = OPS_block_list[b].block;
+
+    int i;
+    ops_dat_entry *item, *tmp_item;
+    for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets));
+         item != NULL; item = tmp_item) {
+      tmp_item = TAILQ_NEXT(item, entries);
+      ops_dat dat = item->dat;
+      sub_dat *sd = OPS_sub_dat_list[dat->index];
+
+      free(sd->halos);
+      free(&sd->prod[-1]);
+      free(sd->dirty_dir_send);
+      free(sd->dirty_dir_recv);
+      free(OPS_sub_dat_list[dat->index]);
+    }
+  }*/
+
   int i;
+  ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     i = (item->dat)->index;
-    if (OPS_sub_dat_list[i]->mpidat != NULL) {
-      free(OPS_sub_dat_list[i]->halos);
-      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
-        for(int d = 0; d<MAX_DEPTH; d++) {
-          MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
-        }
-      }
-      free(OPS_sub_dat_list[i]->mpidat);
-      */
-    }
+    free(OPS_sub_dat_list[i]->halos);
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
     free(OPS_sub_dat_list[i]);
   }
+
   free(OPS_sub_dat_list);
-  OPS_sub_dat_list = NULL;
+  //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_halo_index; i++) {
     if (OPS_mpi_halo_list[i].nproc_from > 0 ||
@@ -933,6 +952,8 @@ void ops_mpi_exit() {
   free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_send);
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
       free(OPS_mpi_halo_group_list[i].mpi_halos);
       free(OPS_mpi_halo_group_list[i].neighbors_send);
       free(OPS_mpi_halo_group_list[i].neighbors_recv);
@@ -946,4 +967,21 @@ void ops_mpi_exit() {
   free(mpi_neigh_size);
   if (OPS_enable_checkpointing)
     free(OPS_checkpoiting_dup_buffer);
+
+  //printf("OPS_block_index = %d\n",OPS_block_index);
+  for (int b = 0; b < OPS_block_index; b++) { // for each block
+    sub_block *sb = OPS_sub_block_list[b];
+
+    if (sb->owned) {
+      printf("Owned OPS_block_index = %d\n",OPS_block_index);
+      MPI_Comm_free(&(sb->comm));
+      MPI_Comm_free(&(sb->comm1));
+    }
+
+    MPI_Group_free(&(sb->grp));
+    free(OPS_sub_block_list[b]);
+  }
+  free(OPS_sub_block_list);
+  MPI_Comm_free(&OPS_MPI_GLOBAL);
+
 }
