@@ -1006,7 +1006,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   code('')
   code('#include <openacc.h>')
   code('')
-  code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia);}')
+  code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia); ops_device_initialised_externally = 1;}')
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')

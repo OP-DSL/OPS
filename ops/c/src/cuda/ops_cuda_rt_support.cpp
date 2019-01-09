@@ -60,6 +60,7 @@
 
 typedef struct cudaDeviceProp cudaDeviceProp_t;
 
+int ops_device_initialised_externally = 0;
 //
 // CUDA utility functions
 //
@@ -341,5 +342,5 @@ void ops_cuda_exit() {
     free(OPS_reduct_h);
     cutilSafeCall(cudaFree(OPS_reduct_d));
   }
-  cudaDeviceReset();
+  if (!ops_device_initialised_externally) cudaDeviceReset();
 }
