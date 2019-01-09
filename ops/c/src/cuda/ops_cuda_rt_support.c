@@ -284,6 +284,14 @@ void ops_cuda_exit() {
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
-
-//  cudaDeviceReset();
+  if (OPS_consts_bytes > 0) {
+    free(OPS_consts_h);
+    cudaFreeHost(OPS_gbl_prev);
+    cutilSafeCall(cudaFree(OPS_consts_d));
+  }
+  if (OPS_reduct_bytes > 0) {
+    free(OPS_reduct_h);
+    cutilSafeCall(cudaFree(OPS_reduct_d));
+  }
+  cudaDeviceReset();
 }
