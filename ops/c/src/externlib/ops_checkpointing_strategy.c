@@ -269,25 +269,26 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
       int idx = kv[kern].value;
       if (MAX(ops_strat_maxcalled[idx],
               ops_call_counter - ops_strat_lastcalled[idx]) <
-          ops_call_counter / 10) {
+          ops_call_counter / 5) {
         if (OPS_diags > 2)
           ops_printf(
               "Using kernel %d (%s) as backup point, will save ~%d kBytes\n",
               idx, OPS_kernels[idx].name, ops_strat_avg_saved[idx] / 1024);
-        // ops_best_backup_point_size = ops_strat_avg_saved[idx];
-        // for (int m = kern; m < OPS_kern_max; m++) {
-        //   idx = kv[m].value;
-        //   if (OPS_diags>2) ops_printf("Other candidates were %d (%s) as
-        //   backup point, will save ~%d kBytes\n", idx, OPS_kernels[idx].name,
-        //   ops_strat_avg_saved[idx]/1024);
-        // }
+         ops_best_backup_point_size = ops_strat_avg_saved[idx];
+         for (int m = kern; m < ops_strat_max_loop_counter; m++) {
+           int idx2 = kv[m].value;
+           if (idx2 == -1) continue;
+           if (OPS_diags>2) ops_printf("Other candidates were %d (%s) as backup point, will save ~%d kBytes\n", idx2, OPS_kernels[idx2].name,
+               ops_strat_avg_saved[idx2]/1024);
+         }
         kern = idx;
         break;
       } else {
         if (OPS_diags > 2)
-          ops_printf("Discarding candidate %d (%s) as backup point %d kBytes\n",
+          ops_printf("Discarding candidate %d (%s) as backup point %d kBytes: MAX(%d, %d-%d) < %d / 10 \n",
                      idx, OPS_kernels[idx].name,
-                     ops_strat_avg_saved[idx] / 1024);
+                     ops_strat_avg_saved[idx] / 1024, ops_strat_maxcalled[idx],
+               ops_call_counter, ops_strat_lastcalled[idx], ops_call_counter);
       }
       kern++;
       if (kern == OPS_kern_max) {

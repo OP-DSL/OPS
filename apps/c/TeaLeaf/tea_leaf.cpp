@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 {
   ops_init(argc,argv,1);
   initialise();
+  ops_checkpointing_initphase_done();
   diffuse();
   ops_exit();
   return 0;
