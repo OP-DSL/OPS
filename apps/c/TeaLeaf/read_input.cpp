@@ -80,6 +80,7 @@ void read_input()
   visit_frequency=10;
   summary_frequency=10;
   tiling_frequency=1147483647;
+  checkpoint_frequency=1147483647;
 
   dtinit = 0.1;
   //dtmax = 1.0;
@@ -176,6 +177,11 @@ void read_input()
                 token = strtok(NULL, " =");
                 tiling_frequency = atoi(token);
                 ops_fprintf(g_out," %20s: %d\n", "tiling_frequency",tiling_frequency);
+              }
+							else if(strcmp(trimwhitespace(token),"checkpoint_frequency") == 0) {
+                token = strtok(NULL, " =");
+                checkpoint_frequency = atoi(token);
+                ops_fprintf(g_out," %20s: %d\n", "checkpoint_frequency",checkpoint_frequency);
               }
 
               else if(strcmp(trimwhitespace(token),"tl_ch_cg_presteps") == 0) {
