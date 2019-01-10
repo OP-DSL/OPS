@@ -339,6 +339,7 @@ void ops_decomp_dats(sub_block *sb) {
         sd->decomp_size[d] -= (dat->base[d] + dat->d_m[d]); // extend size
         sd->d_im[d] = 0; // no intra-block halo
       }
+      printf("dat %s dim %d decomp_disp %d decomp_size %d\n", dat->name, d, sd->decomp_disp[d], sd->decomp_size[d]);
 
       if (sb->id_p[d] != MPI_PROC_NULL) {
         // if not positive end

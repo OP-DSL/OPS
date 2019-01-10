@@ -106,7 +106,7 @@ void diffuse()
     //if(ops_checkpointing_fastfw(3*sizeof(double), (char*)tosave)) {
     //if(ops_checkpointing_manual_datlist_fastfw(1, list, 3*sizeof(double), (char*)tosave)) {
     if (step%checkpoint_frequency==0) {
-      if(ops_checkpointing_manual_datlist_fastfw_trigger(1, list, 3*sizeof(double), (char*)to    save)) {
+      if(ops_checkpointing_manual_datlist_fastfw_trigger(1, list, 3*sizeof(double), (char*)tosave)) {
         step = (int)tosave[0];
         currtime = tosave[1];
         dt = tosave[2];

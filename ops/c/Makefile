@@ -39,7 +39,7 @@ else
   CCFLAGS 	:= -O3 -std=c99 -fPIC -DUNIX -Wall -ffloat-store#-g
 endif
   CXX 	  	:= g++
-  CXXFLAGS	:= -std=c99 -fPIC -DUNIX -Wall -ffloat-store
+  CXXFLAGS	:= $(CCFLAGS) # -std=c99 -fPIC -DUNIX -Wall -ffloat-store
   MPICXX  	:= $(MPI_INSTALL_PATH)/bin/mpic++
   MPICC   	:= $(MPI_INSTALL_PATH)/bin/mpicc
   MPIFLAGS	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
