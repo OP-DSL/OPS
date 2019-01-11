@@ -1745,7 +1745,7 @@ void ops_dump_to_hdf5(char const *file_name) {
     ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
   }
 
-  printf("halo index = %d \n", OPS_halo_index);
+  // printf("halo index = %d \n", OPS_halo_index);
   for (int i = 0; i < OPS_halo_index; i++) {
     printf("Dumping halo %15s--%15s to HDF5 file %s\n",
            OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name, file_name);
