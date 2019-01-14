@@ -973,7 +973,7 @@ void ops_mpi_exit() {
     sub_block *sb = OPS_sub_block_list[b];
 
     if (sb->owned) {
-      printf("Owned OPS_block_index = %d\n",OPS_block_index);
+      // printf("Owned OPS_block_index = %d\n",OPS_block_index);
       MPI_Comm_free(&(sb->comm));
       MPI_Comm_free(&(sb->comm1));
     }

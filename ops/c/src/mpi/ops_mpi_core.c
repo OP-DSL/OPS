@@ -361,7 +361,6 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
       end[n] = range[2 * n + 1];
 
     disp[n] = sb->decomp_disp[n];
-  
   }
   return true;
 }

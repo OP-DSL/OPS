@@ -65,6 +65,7 @@ int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
+int ops_hdf5_chunk_size[OPS_MAX_DIM] = {0};
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -213,6 +214,17 @@ void ops_set_args(int argc, char *argv) {
     OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");
   }
+
+  /*pch = strstr(argv, "OPS_HDF5_CHUNK_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    for (int i = 0; i < OPS_MAX_DIM; i++)
+      ops_hdf5_chunk_size[i] = MAX(atoi(temp + 20),1);
+    ops_printf("\n HDF5 write chunck size = (%d)^%s \n",
+      ops_hdf5_chunk_size[0],OPS_MAX_DIM);
+  }*/
+
+
 }
 
 /*
