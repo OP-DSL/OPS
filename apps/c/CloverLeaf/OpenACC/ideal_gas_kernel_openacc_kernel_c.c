@@ -11,8 +11,10 @@ int xdim3_ideal_gas_kernel;
 
 //user function
 inline 
-void ideal_gas_kernel( const ptr_double density, const ptr_double energy,
-                     ptr_double pressure, ptr_double soundspeed) {
+void ideal_gas_kernel(const ptr_double density,
+  const ptr_double energy,
+  ptr_double pressure,
+  ptr_double soundspeed) {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 

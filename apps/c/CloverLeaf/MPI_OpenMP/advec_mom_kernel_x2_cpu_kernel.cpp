@@ -30,9 +30,9 @@ void ops_par_loop_advec_mom_kernel_x2_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,4,range,71)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(71,"advec_mom_kernel_x2");
-    OPS_kernels[71].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[71].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -84,9 +84,9 @@ void ops_par_loop_advec_mom_kernel_x2_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[71].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[71].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -115,9 +115,9 @@ void ops_par_loop_advec_mom_kernel_x2_execute(ops_kernel_descriptor *desc) {
 
     }
   }
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[71].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[71].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -125,20 +125,16 @@ void ops_par_loop_advec_mom_kernel_x2_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[71].mpi_time += __t1-__t2;
-    OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[71].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[71].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 #ifdef OPS_LAZY
@@ -168,7 +164,7 @@ void ops_par_loop_advec_mom_kernel_x2(char const *name, ops_block block, int dim
   desc->args[3] = arg3;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_x2_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(71,"advec_mom_kernel_x2");
   }
   ops_enqueue_kernel(desc);

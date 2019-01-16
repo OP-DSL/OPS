@@ -11,8 +11,10 @@ int xdim3_reset_field_kernel2;
 
 //user function
 inline 
-void reset_field_kernel2( ptr_double xvel0, const ptr_double xvel1,
-                        ptr_double yvel0, const ptr_double yvel1) {
+void reset_field_kernel2(ptr_double xvel0,
+  const ptr_double xvel1,
+  ptr_double yvel0,
+  const ptr_double yvel1) {
 
   OPS_ACC(xvel0, 0,0)  = OPS_ACC(xvel1, 0,0) ;
   OPS_ACC(yvel0, 0,0)  = OPS_ACC(yvel1, 0,0) ;

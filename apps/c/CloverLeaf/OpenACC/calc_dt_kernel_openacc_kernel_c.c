@@ -18,10 +18,17 @@ int xdim10_calc_dt_kernel;
 
 //user function
 inline 
-void calc_dt_kernel(const ptr_double celldx, const ptr_double celldy, const ptr_double soundspeed,
-                    const ptr_double viscosity, const ptr_double density0, const ptr_double xvel0,
-                    const ptr_double xarea, const ptr_double volume, const ptr_double yvel0,
-                    const ptr_double yarea, ptr_double dt_min ) {
+void calc_dt_kernel(const ptr_double celldx,
+  const ptr_double celldy,
+  const ptr_double soundspeed,
+  const ptr_double viscosity,
+  const ptr_double density0,
+  const ptr_double xvel0,
+  const ptr_double xarea,
+  const ptr_double volume,
+  const ptr_double yvel0,
+  const ptr_double yarea,
+  ptr_double dt_min) {
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
 

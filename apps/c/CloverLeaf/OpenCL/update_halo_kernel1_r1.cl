@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,10 +47,14 @@
 
 //user function
 
-inline void update_halo_kernel1_r1(ptr_double density0,  ptr_double density1, 
-                          ptr_double energy0,  ptr_double energy1, 
-                          ptr_double pressure,  ptr_double viscosity, 
-                          ptr_double soundspeed ,  const __global int* restrict  fields) {
+inline void update_halo_kernel1_r1(ptr_double density0, 
+  ptr_double density1, 
+  ptr_double energy0, 
+  ptr_double energy1, 
+  ptr_double pressure, 
+  ptr_double viscosity, 
+  ptr_double soundspeed, 
+  const __global int* restrict  fields) {
   if(fields[FIELD_DENSITY0] == 1) OPS_ACCS(density0, 0,0) = OPS_ACCS(density0, -1,0);
   if(fields[FIELD_DENSITY1] == 1) OPS_ACCS(density1, 0,0) = OPS_ACCS(density1, -1,0);
   if(fields[FIELD_ENERGY0] == 1) OPS_ACCS(energy0, 0,0) = OPS_ACCS(energy0, -1,0);

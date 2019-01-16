@@ -1,5 +1,10 @@
-#ifndef __OPS_SEQ_VARIADIC_H
-#define __OPS_SEQ_VARIADIC_H
+#ifndef __OPS_SEQ_V2_H
+#define __OPS_SEQ_V2_H
+
+#ifndef OPS_API
+#define OPS_API 2
+#endif
+
 #include "ops_lib_cpp.h"
 
 #ifdef OPS_MPI
@@ -315,4 +320,4 @@ void ops_par_loop(void (*kernel)(ParamType...), char const *name,
 
 #endif
 
-#endif /* ifndef __OPS_SEQ_VARIADIC_H */
+#endif /* ifndef __OPS_SEQ_V2_H */

@@ -30,9 +30,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,4,range,53)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(53,"calc_dt_kernel_get");
-    OPS_kernels[53].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[53].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -90,9 +90,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[53].mpi_time += __t1-__t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -127,24 +127,22 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   }
   p_a2[0] = p_a2_0;
   p_a3[0] = p_a3_0;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[53].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[53].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[53].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 #ifdef OPS_LAZY
@@ -172,7 +170,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->args[2] = arg2;
   desc->args[3] = arg3;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(53,"calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);

@@ -25,5 +25,3 @@ void initialise_chunk_kernel_yy_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-

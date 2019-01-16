@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,9 +47,13 @@
 
 //user function
 
-void calc_dt_kernel_print(const ptr_double xvel0, const ptr_double yvel0,
-                        const ptr_double density0, const ptr_double energy0,
-                        const ptr_double pressure, const ptr_double soundspeed, double *output) {
+void calc_dt_kernel_print(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double soundspeed,
+  double *output) {
   output[0] = OPS_ACCS(xvel0, 1,0);
   output[1] = OPS_ACCS(yvel0, 1,0);
   output[2] = OPS_ACCS(xvel0, -1,0);

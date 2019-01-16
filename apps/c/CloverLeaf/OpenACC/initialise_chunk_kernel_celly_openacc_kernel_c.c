@@ -10,7 +10,9 @@ int xdim2_initialise_chunk_kernel_celly;
 
 //user function
 inline 
-void initialise_chunk_kernel_celly(const ptr_double vertexy, ptr_double celly, ptr_double celldy) {
+void initialise_chunk_kernel_celly(const ptr_double vertexy,
+  ptr_double celly,
+  ptr_double celldy) {
 
   double d_y;
   d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;

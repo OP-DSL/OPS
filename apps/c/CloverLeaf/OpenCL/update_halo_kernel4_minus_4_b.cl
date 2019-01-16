@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,7 +47,9 @@
 
 //user function
 
-inline void update_halo_kernel4_minus_4_b(ptr_double vol_flux_y,  ptr_double mass_flux_y,  const __global int* restrict  fields) {
+inline void update_halo_kernel4_minus_4_b(ptr_double vol_flux_y, 
+  ptr_double mass_flux_y, 
+  const __global int* restrict  fields) {
   if(fields[FIELD_VOL_FLUX_Y] == 1) OPS_ACCS(vol_flux_y, 0,0) = -(OPS_ACCS(vol_flux_y, 0,-4));
   if(fields[FIELD_MASS_FLUX_Y] == 1) OPS_ACCS(mass_flux_y, 0,0) = -(OPS_ACCS(mass_flux_y, 0,-4));
 }

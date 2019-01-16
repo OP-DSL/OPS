@@ -28,9 +28,9 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,52)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(52,"calc_dt_kernel_min");
-    OPS_kernels[52].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[52].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -77,9 +77,9 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[52].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[52].mpi_time += __t1-__t2;
   }
 
   double p_a1_0 = p_a1[0];
@@ -108,22 +108,21 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a1[0] = p_a1_0;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[52].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[52].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[52].mpi_time += __t1-__t2;
-    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[52].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
-#undef OPS_ACC0
 
 
 #ifdef OPS_LAZY
@@ -148,7 +147,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_calc_dt_kernel_min_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(52,"calc_dt_kernel_min");
   }
   ops_enqueue_kernel(desc);

@@ -34,8 +34,3 @@ void reset_field_kernel2_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

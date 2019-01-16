@@ -9,7 +9,10 @@ int xdim1_calc_dt_kernel_get;
 
 //user function
 inline 
-void calc_dt_kernel_get(const ptr_double cellx, const ptr_double celly, double* xl_pos, double* yl_pos) {
+void calc_dt_kernel_get(const ptr_double cellx,
+  const ptr_double celly,
+  double* xl_pos,
+  double* yl_pos) {
   *xl_pos = OPS_ACC(cellx, 0,0);
   *yl_pos = OPS_ACC(celly, 0,0);
 }

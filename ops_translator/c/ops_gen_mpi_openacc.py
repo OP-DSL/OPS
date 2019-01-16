@@ -239,6 +239,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     j = text.find('{')
     k = para_parse(text, j, '{', '}')
     text = text[0:k+1]
+    #convert to new API if in old
+    text = util.convert_ACC(text,arg_typ)
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
+
     m = text.find(name)
     arg_list = parse_signature(text[m+len(name):j])
 
@@ -953,7 +958,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

@@ -62,6 +62,7 @@ parse_signature = util.parse_signature
 complex_numbers_cuda = util.complex_numbers_cuda
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC = util.convert_ACC
 
 comm = util.comm
 code = util.code
@@ -234,11 +235,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     arg_list = parse_signature(text[i2+len(name):i+j])
-    check_accs(name, arg_list, arg_typ, text[i+j:k])
     code('__device__')
 
     new_code = complex_numbers_cuda(text[i:k+2])  # Handle complex numbers with the cuComplex.h CUDA library.
-    code(new_code)
+    code(convert_ACC(new_code, arg_typ))
     code('')
     code('')
 
@@ -689,8 +689,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
-          code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+          code('arg'+str(n)+'.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
@@ -975,7 +975,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

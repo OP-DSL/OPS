@@ -30,9 +30,9 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,4,range,57)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(57,"revert_kernel");
-    OPS_kernels[57].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -84,9 +84,9 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[57].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -114,9 +114,9 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
 
     }
   }
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[57].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -124,20 +124,16 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[3],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[57].mpi_time += __t1-__t2;
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 #ifdef OPS_LAZY
@@ -167,7 +163,7 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   desc->args[3] = arg3;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_revert_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(57,"revert_kernel");
   }
   ops_enqueue_kernel(desc);

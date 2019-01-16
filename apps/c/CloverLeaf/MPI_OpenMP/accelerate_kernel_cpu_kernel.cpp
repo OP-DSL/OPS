@@ -39,9 +39,9 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,11,range,58)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(58,"accelerate_kernel");
-    OPS_kernels[58].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[58].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -121,9 +121,9 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 11);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[58].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[58].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -189,9 +189,9 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
 
     }
   }
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[58].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[58].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 11);
@@ -200,34 +200,23 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[8],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[58].mpi_time += __t1-__t2;
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_instance::getOPSInstance()->OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg10);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
 
 
 #ifdef OPS_LAZY
@@ -273,7 +262,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   desc->args[10] = arg10;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg10.dat->index;
   desc->function = ops_par_loop_accelerate_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(58,"accelerate_kernel");
   }
   ops_enqueue_kernel(desc);

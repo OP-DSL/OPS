@@ -40,9 +40,9 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   if (!ops_checkpointing_before(args,4,range,57)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(57,"revert_kernel");
-    OPS_kernels[57].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -149,9 +149,9 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   #else
   ops_H_D_exchanges_host(args, 4);
   #endif
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[57].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].mpi_time += t2-t1;
   }
 
   revert_kernel_c_wrapper(
@@ -161,9 +161,9 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
     p_a3,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[57].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
@@ -173,13 +173,13 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[3],range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[57].mpi_time += t2-t1;
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }

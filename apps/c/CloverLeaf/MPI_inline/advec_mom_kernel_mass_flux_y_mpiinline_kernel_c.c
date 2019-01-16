@@ -28,6 +28,3 @@ void advec_mom_kernel_mass_flux_y_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

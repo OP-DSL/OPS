@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,15 +47,17 @@
 
 //user function
 
-void field_summary_kernel( const ptr_double volume, const ptr_double density0,
-                     const ptr_double energy0, const ptr_double pressure,
-                     const ptr_double xvel0,
-                     const ptr_double yvel0,
-                     double *vol,
-                     double *mass,
-                     double *ie,
-                     double *ke,
-                     double *press) {
+void field_summary_kernel(const ptr_double volume,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double xvel0,
+  const ptr_double yvel0,
+  double *vol,
+  double *mass,
+  double *ie,
+  double *ke,
+  double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 

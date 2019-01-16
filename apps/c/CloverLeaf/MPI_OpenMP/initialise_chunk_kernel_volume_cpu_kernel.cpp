@@ -32,9 +32,9 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (!ops_checkpointing_before(args,5,range,6)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(6,"initialise_chunk_kernel_volume");
-    OPS_kernels[6].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -90,9 +90,9 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_H_D_exchanges_host(args, 5);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -127,9 +127,9 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
     }
   }
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[6].time += __t2-__t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
@@ -138,22 +138,17 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_set_halo_dirtybit3(&args[4],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1-__t2;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].mpi_time += __t1-__t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
 
 
 #ifdef OPS_LAZY
@@ -186,7 +181,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->args[4] = arg4;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(6,"initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);

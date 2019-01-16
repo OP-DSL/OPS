@@ -685,8 +685,8 @@ def main(source_files):
         loc_header = [text.find("ops_lib_cpp.h")]
 
       if loc_header[0] == -1:
-        header_len = 18
-        loc_header = [text.find("ops_seq_variadic.h")]
+        header_len = 12
+        loc_header = [text.find("ops_seq_v2.h")]
 
       # get locations of all op_decl_consts
       n_consts = len(const_args)
