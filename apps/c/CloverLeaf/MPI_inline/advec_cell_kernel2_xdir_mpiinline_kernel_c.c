@@ -28,8 +28,3 @@ void advec_cell_kernel2_xdir_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,13 +47,20 @@
 
 //user function
 
-void PdV_kernel_nopredict(const ptr_double xarea, const ptr_double xvel0, const ptr_double xvel1,
-                const ptr_double yarea, const ptr_double yvel0, const ptr_double yvel1,
-                ptr_double volume_change, const ptr_double volume,
-                const ptr_double pressure,
-                const ptr_double density0, ptr_double density1,
-                const ptr_double viscosity,
-                const ptr_double energy0, ptr_double energy1, const double dt)
+void PdV_kernel_nopredict(const ptr_double xarea,
+  const ptr_double xvel0,
+  const ptr_double xvel1,
+  const ptr_double yarea,
+  const ptr_double yvel0,
+  const ptr_double yvel1,
+  ptr_double volume_change,
+  const ptr_double volume,
+  const ptr_double pressure,
+  const ptr_double density0,
+  ptr_double density1,
+  const ptr_double viscosity,
+  const ptr_double energy0,
+  ptr_double energy1, const double dt)
 {
 
 

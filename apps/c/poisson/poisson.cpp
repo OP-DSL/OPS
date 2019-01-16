@@ -45,7 +45,7 @@ double dx,dy;
 
 // OPS header file
 #define OPS_2D
-#include "ops_seq_variadic.h"
+#include "ops_seq_v2.h"
 #include "user_types.h"
 #include "poisson_kernel.h"
 

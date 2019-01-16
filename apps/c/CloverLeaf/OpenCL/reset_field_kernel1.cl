@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,8 +47,10 @@
 
 //user function
 
-void reset_field_kernel1( ptr_double density0, const ptr_double density1,
-                        ptr_double energy0, const ptr_double energy1) {
+void reset_field_kernel1(ptr_double density0,
+  const ptr_double density1,
+  ptr_double energy0,
+  const ptr_double energy1) {
 
   OPS_ACCS(density0, 0,0)  = OPS_ACCS(density1, 0,0) ;
   OPS_ACCS(energy0, 0,0)  = OPS_ACCS(energy1, 0,0) ;

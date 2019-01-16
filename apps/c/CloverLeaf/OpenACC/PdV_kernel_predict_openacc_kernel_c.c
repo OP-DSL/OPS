@@ -19,13 +19,18 @@ int xdim11_PdV_kernel_predict;
 
 //user function
 inline 
-void PdV_kernel_predict(const ptr_double xarea, const ptr_double xvel0,
-                const ptr_double yarea, const ptr_double yvel0,
-                ptr_double volume_change, const ptr_double volume,
-                const ptr_double pressure,
-                const ptr_double density0, ptr_double density1,
-                const ptr_double viscosity,
-                const ptr_double energy0, ptr_double energy1) {
+void PdV_kernel_predict(const ptr_double xarea,
+  const ptr_double xvel0,
+  const ptr_double yarea,
+  const ptr_double yvel0,
+  ptr_double volume_change,
+  const ptr_double volume,
+  const ptr_double pressure,
+  const ptr_double density0,
+  ptr_double density1,
+  const ptr_double viscosity,
+  const ptr_double energy0,
+  ptr_double energy1) {
 
 
   double recip_volume, energy_change;

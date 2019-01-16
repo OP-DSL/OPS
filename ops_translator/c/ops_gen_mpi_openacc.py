@@ -239,6 +239,11 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     j = text.find('{')
     k = para_parse(text, j, '{', '}')
     text = text[0:k+1]
+    #convert to new API if in old
+    text = util.convert_ACC(text,arg_typ)
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
+
     m = text.find(name)
     arg_list = parse_signature(text[m+len(name):j])
 

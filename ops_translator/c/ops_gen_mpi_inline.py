@@ -64,6 +64,7 @@ parse_signature = util.parse_signature
 replace_ACC_kernel_body = util.replace_ACC_kernel_body
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC_body = util.convert_ACC_body
 
 comm = util.comm
 code = util.code
@@ -255,6 +256,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     kernel_text = text[i+j+1:k]
+    kernel_text = convert_ACC_body(kernel_text)
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
@@ -446,15 +448,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth-2
     code('}')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
 
 ##########################################################################
 #  output individual kernel file

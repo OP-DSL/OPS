@@ -8,7 +8,8 @@ int xdim0_initialise_chunk_kernel_xx;
 
 //user function
 inline 
-void initialise_chunk_kernel_xx(ptr_int xx, int *idx) {
+void initialise_chunk_kernel_xx(ptr_int xx,
+  int *idx) {
   OPS_ACC(xx, 0,0) = idx[0]-2;
 }
 

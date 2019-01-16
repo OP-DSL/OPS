@@ -9,7 +9,8 @@ int xdim1_advec_mom_kernel_mass_flux_x;
 
 //user function
 
-inline void advec_mom_kernel_mass_flux_x( ptr_double node_flux, const ptr_double mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x(ptr_double node_flux,
+  const ptr_double mass_flux_x) {
 
 
   OPS_ACC(node_flux, 0,0) = 0.25 * ( OPS_ACC(mass_flux_x, 0,-1) + OPS_ACC(mass_flux_x, 0,0) +

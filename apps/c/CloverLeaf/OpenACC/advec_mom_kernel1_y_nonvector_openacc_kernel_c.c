@@ -12,9 +12,11 @@ int xdim4_advec_mom_kernel1_y_nonvector;
 
 //user function
 
-inline void advec_mom_kernel1_y_nonvector( const ptr_double node_flux, const ptr_double node_mass_pre,
-                       ptr_double mom_flux,
-                       const ptr_double celldy, const ptr_double vel1) {
+inline void advec_mom_kernel1_y_nonvector(const ptr_double node_flux,
+  const ptr_double node_mass_pre,
+  ptr_double mom_flux,
+  const ptr_double celldy,
+  const ptr_double vel1) {
 
 
 

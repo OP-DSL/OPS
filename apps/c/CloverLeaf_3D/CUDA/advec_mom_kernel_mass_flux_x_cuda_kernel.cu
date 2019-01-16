@@ -4,34 +4,24 @@
 __constant__ int dims_advec_mom_kernel_mass_flux_x [2][2];
 static int dims_advec_mom_kernel_mass_flux_x_h [2][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+dims_advec_mom_kernel_mass_flux_x[0][0]*(y)+dims_advec_mom_kernel_mass_flux_x[0][0]*dims_advec_mom_kernel_mass_flux_x[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_advec_mom_kernel_mass_flux_x[1][0]*(y)+dims_advec_mom_kernel_mass_flux_x[1][0]*dims_advec_mom_kernel_mass_flux_x[1][1]*(z))
-
 //user function
 __device__
 
-inline void advec_mom_kernel_mass_flux_x_gpu( double *node_flux, const double *mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x_gpu(ACC<double> &node_flux,
+  const ACC<double> &mass_flux_x) {
 
 
-  node_flux[OPS_ACC0(0,0,0)] = 0.125 * ( mass_flux_x[OPS_ACC1(0,-1,0)] + mass_flux_x[OPS_ACC1(0,0,0)] +
-                                         mass_flux_x[OPS_ACC1(1,-1,0)] + mass_flux_x[OPS_ACC1(1,0,0)] +
-                                         mass_flux_x[OPS_ACC1(0,-1,-1)] + mass_flux_x[OPS_ACC1(0,0,-1)] +
-                                         mass_flux_x[OPS_ACC1(1,-1,-1)] + mass_flux_x[OPS_ACC1(1,0,-1)] );
+  node_flux(0,0,0) = 0.125 * ( mass_flux_x(0,-1,0) + mass_flux_x(0,0,0) +
+                                         mass_flux_x(1,-1,0) + mass_flux_x(1,0,0) +
+                                         mass_flux_x(0,-1,-1) + mass_flux_x(0,0,-1) +
+                                         mass_flux_x(1,-1,-1) + mass_flux_x(1,0,-1) );
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_advec_mom_kernel_mass_flux_x(
 double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg1,
 int size0,
 int size1,
 int size2 ){
@@ -45,7 +35,9 @@ int size2 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel_mass_flux_x[1][0] + idx_z * 1*1 * dims_advec_mom_kernel_mass_flux_x[1][0] * dims_advec_mom_kernel_mass_flux_x[1][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel_mass_flux_x_gpu(arg0, arg1);
+    ACC<double> argp0(dims_advec_mom_kernel_mass_flux_x[0][0], dims_advec_mom_kernel_mass_flux_x[0][1], arg0);
+    const ACC<double> argp1(dims_advec_mom_kernel_mass_flux_x[1][0], dims_advec_mom_kernel_mass_flux_x[1][1], arg1);
+    advec_mom_kernel_mass_flux_x_gpu(argp0, argp1);
   }
 
 }

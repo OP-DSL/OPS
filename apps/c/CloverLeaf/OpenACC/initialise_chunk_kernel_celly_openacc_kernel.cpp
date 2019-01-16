@@ -37,9 +37,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   if (!ops_checkpointing_before(args,3,range,5)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(5,"initialise_chunk_kernel_celly");
-    OPS_kernels[5].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -132,9 +132,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   #else
   ops_H_D_exchanges_host(args, 3);
   #endif
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[5].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].mpi_time += t2-t1;
   }
 
   initialise_chunk_kernel_celly_c_wrapper(
@@ -143,9 +143,9 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
     p_a2,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[5].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -155,12 +155,12 @@ void ops_par_loop_initialise_chunk_kernel_celly(char const *name, ops_block bloc
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[5].mpi_time += t2-t1;
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

@@ -14,10 +14,14 @@ int xdim6_update_halo_kernel1_b1;
 
 //user function
 
-inline void update_halo_kernel1_b1(ptr_double density0, ptr_double density1,
-                          ptr_double energy0, ptr_double energy1,
-                          ptr_double pressure, ptr_double viscosity,
-                          ptr_double soundspeed , const int* fields) {
+inline void update_halo_kernel1_b1(ptr_double density0,
+  ptr_double density1,
+  ptr_double energy0,
+  ptr_double energy1,
+  ptr_double pressure,
+  ptr_double viscosity,
+  ptr_double soundspeed,
+  const int* fields) {
 
   if(fields[FIELD_DENSITY0] == 1) OPS_ACC(density0, 0,0) = OPS_ACC(density0, 0,1);
   if(fields[FIELD_DENSITY1] == 1) OPS_ACC(density1, 0,0) = OPS_ACC(density1, 0,1);

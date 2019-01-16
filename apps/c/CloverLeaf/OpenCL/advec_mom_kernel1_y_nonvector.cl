@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,9 +47,11 @@
 
 //user function
 
-inline void advec_mom_kernel1_y_nonvector( const ptr_double node_flux, const ptr_double node_mass_pre,
-                       ptr_double mom_flux,
-                       const ptr_double celldy, const ptr_double vel1) {
+inline void advec_mom_kernel1_y_nonvector(const ptr_double node_flux,
+  const ptr_double node_mass_pre,
+  ptr_double mom_flux,
+  const ptr_double celldy,
+  const ptr_double vel1) {
 
 
 

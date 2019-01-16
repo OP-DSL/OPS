@@ -13,15 +13,17 @@ int xdim5_field_summary_kernel;
 
 //user function
 inline 
-void field_summary_kernel( const ptr_double volume, const ptr_double density0,
-                     const ptr_double energy0, const ptr_double pressure,
-                     const ptr_double xvel0,
-                     const ptr_double yvel0,
-                     double *vol,
-                     double *mass,
-                     double *ie,
-                     double *ke,
-                     double *press) {
+void field_summary_kernel(const ptr_double volume,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double xvel0,
+  const ptr_double yvel0,
+  double *vol,
+  double *mass,
+  double *ie,
+  double *ke,
+  double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 

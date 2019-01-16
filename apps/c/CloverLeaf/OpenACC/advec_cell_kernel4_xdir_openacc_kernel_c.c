@@ -18,12 +18,17 @@ int xdim10_advec_cell_kernel4_xdir;
 
 //user function
 
-inline void advec_cell_kernel4_xdir( ptr_double density1, ptr_double energy1,
-                         const ptr_double mass_flux_x, const ptr_double vol_flux_x,
-                         const ptr_double pre_vol, const ptr_double post_vol,
-                         ptr_double pre_mass, ptr_double post_mass,
-                         ptr_double advec_vol, ptr_double post_ener,
-                         const ptr_double ener_flux) {
+inline void advec_cell_kernel4_xdir(ptr_double density1,
+  ptr_double energy1,
+  const ptr_double mass_flux_x,
+  const ptr_double vol_flux_x,
+  const ptr_double pre_vol,
+  const ptr_double post_vol,
+  ptr_double pre_mass,
+  ptr_double post_mass,
+  ptr_double advec_vol,
+  ptr_double post_ener,
+  const ptr_double ener_flux) {
 
   OPS_ACC(pre_mass, 0,0) = OPS_ACC(density1, 0,0) * OPS_ACC(pre_vol, 0,0);
   OPS_ACC(post_mass, 0,0) = OPS_ACC(pre_mass, 0,0) + OPS_ACC(mass_flux_x, 0,0) - OPS_ACC(mass_flux_x, 1,0);
