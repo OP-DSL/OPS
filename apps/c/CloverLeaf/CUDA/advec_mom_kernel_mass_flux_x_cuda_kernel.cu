@@ -7,7 +7,8 @@ static int dims_advec_mom_kernel_mass_flux_x_h [2][1] = {0};
 //user function
 __device__
 
-inline void advec_mom_kernel_mass_flux_x_gpu( ACC<double> &node_flux, const ACC<double> &mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x_gpu(ACC<double> &node_flux,
+  const ACC<double> &mass_flux_x) {
 
 
   node_flux(0,0) = 0.25 * ( mass_flux_x(0,-1) + mass_flux_x(0,0) +
@@ -63,9 +64,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   if (!ops_checkpointing_before(args,2,range,73)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(73,"advec_mom_kernel_mass_flux_x");
-    OPS_kernels[73].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[73].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -105,13 +106,13 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[2];
 
@@ -136,9 +137,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   ops_halo_exchanges(args,2,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[73].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[73].mpi_time += t2-t1;
   }
 
 
@@ -148,10 +149,10 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[73].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[73].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -159,12 +160,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[73].mpi_time += t2-t1;
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[73].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -191,7 +192,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel_mass_flux_x_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(73,"advec_mom_kernel_mass_flux_x");
   }
   ops_enqueue_kernel(desc);

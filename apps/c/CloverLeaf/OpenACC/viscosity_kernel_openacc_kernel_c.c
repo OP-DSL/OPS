@@ -14,10 +14,13 @@ int xdim6_viscosity_kernel;
 
 //user function
 inline 
-void viscosity_kernel( const ptr_double xvel0, const ptr_double yvel0,
-                       const ptr_double celldx, const ptr_double celldy,
-                       const ptr_double pressure, const ptr_double density0,
-                       ptr_double viscosity) {
+void viscosity_kernel(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double celldx,
+  const ptr_double celldy,
+  const ptr_double pressure,
+  const ptr_double density0,
+  ptr_double viscosity) {
 
   double ugrad, vgrad,
          grad2,

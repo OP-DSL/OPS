@@ -10,7 +10,9 @@ int xdim2_initialise_chunk_kernel_y;
 
 //user function
 inline 
-void initialise_chunk_kernel_y(ptr_double vertexy, const ptr_int yy, ptr_double vertexdy) {
+void initialise_chunk_kernel_y(ptr_double vertexy,
+  const ptr_int yy,
+  ptr_double vertexdy) {
 
   int y_min=field.y_min-2;
   double min_y, d_y;

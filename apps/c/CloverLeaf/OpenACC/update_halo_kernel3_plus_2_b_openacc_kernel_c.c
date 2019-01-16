@@ -9,7 +9,9 @@ int xdim1_update_halo_kernel3_plus_2_b;
 
 //user function
 
-inline void update_halo_kernel3_plus_2_b(ptr_double vol_flux_x, ptr_double mass_flux_x, const int* fields) {
+inline void update_halo_kernel3_plus_2_b(ptr_double vol_flux_x,
+  ptr_double mass_flux_x,
+  const int* fields) {
   if(fields[FIELD_VOL_FLUX_X] == 1)  OPS_ACC(vol_flux_x, 0,0)  = OPS_ACC(vol_flux_x, 0,-2);
   if(fields[FIELD_MASS_FLUX_X] == 1) OPS_ACC(mass_flux_x, 0,0) = OPS_ACC(mass_flux_x, 0,-2);
 }

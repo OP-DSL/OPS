@@ -29,5 +29,3 @@ void calc_dt_kernel_min_c_wrapper(
   }
   dt_min_val_g[0] = dt_min_val_0;
 }
-#undef OPS_ACC0
-

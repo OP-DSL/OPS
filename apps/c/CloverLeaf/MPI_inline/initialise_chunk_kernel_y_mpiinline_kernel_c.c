@@ -36,7 +36,3 @@ void initialise_chunk_kernel_y_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-

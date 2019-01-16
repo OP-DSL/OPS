@@ -11,8 +11,10 @@ int xdim3_advec_cell_kernel2_xdir;
 
 //user function
 
-inline void advec_cell_kernel2_xdir( ptr_double pre_vol, ptr_double post_vol, const ptr_double volume,
-                        const ptr_double vol_flux_x) {
+inline void advec_cell_kernel2_xdir(ptr_double pre_vol,
+  ptr_double post_vol,
+  const ptr_double volume,
+  const ptr_double vol_flux_x) {
 
   OPS_ACC(pre_vol, 0,0) = OPS_ACC(volume, 0,0) + OPS_ACC(vol_flux_x, 1,0) - OPS_ACC(vol_flux_x, 0,0);
   OPS_ACC(post_vol, 0,0) = OPS_ACC(volume, 0,0);

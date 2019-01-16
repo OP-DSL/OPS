@@ -64,6 +64,7 @@ parse_signature = util.parse_signature
 replace_ACC_kernel_body = util.replace_ACC_kernel_body
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC_body = util.convert_ACC_body
 
 comm = util.comm
 code = util.code
@@ -255,6 +256,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     kernel_text = text[i+j+1:k]
+    kernel_text = convert_ACC_body(kernel_text)
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
@@ -443,15 +445,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth-2
     code('}')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
 
 ##########################################################################
 #  output individual kernel file
@@ -655,7 +648,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int dat'+str(n)+' = (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
+        code('int dat'+str(n)+' = (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
@@ -704,10 +697,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
 
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+'+ (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
+          line = 'base'+str(n)+' = base'+str(n)+'+ (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
@@ -824,7 +817,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

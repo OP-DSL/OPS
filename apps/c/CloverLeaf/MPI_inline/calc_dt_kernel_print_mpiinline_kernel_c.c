@@ -99,10 +99,3 @@ void calc_dt_kernel_print_c_wrapper(
   output_g[10] = output_10;
   output_g[11] = output_11;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-

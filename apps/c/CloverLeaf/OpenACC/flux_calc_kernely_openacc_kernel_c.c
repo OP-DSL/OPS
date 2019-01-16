@@ -11,8 +11,10 @@ int xdim3_flux_calc_kernely;
 
 //user function
 inline 
-void flux_calc_kernely( ptr_double vol_flux_y, const ptr_double yarea,
-                        const ptr_double yvel0, const ptr_double yvel1) {
+void flux_calc_kernely(ptr_double vol_flux_y,
+  const ptr_double yarea,
+  const ptr_double yvel0,
+  const ptr_double yvel1) {
 
   OPS_ACC(vol_flux_y, 0,0) = 0.25 * dt * (OPS_ACC(yarea, 0,0)) *
   ( (OPS_ACC(yvel0, 0,0)) + (OPS_ACC(yvel0, 1,0)) + (OPS_ACC(yvel1, 0,0)) + (OPS_ACC(yvel1, 1,0)) );

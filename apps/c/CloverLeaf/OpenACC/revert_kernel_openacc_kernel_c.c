@@ -11,8 +11,10 @@ int xdim3_revert_kernel;
 
 //user function
 inline 
-void revert_kernel( const ptr_double density0, ptr_double density1,
-                const ptr_double energy0, ptr_double energy1) {
+void revert_kernel(const ptr_double density0,
+  ptr_double density1,
+  const ptr_double energy0,
+  ptr_double energy1) {
 
   OPS_ACC(density1, 0,0) = OPS_ACC(density0, 0,0);
   OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0);

@@ -18,11 +18,17 @@ int xdim10_accelerate_kernel;
 
 //user function
 inline 
-void accelerate_kernel( const ptr_double density0, const ptr_double volume,
-                ptr_double stepbymass, const ptr_double xvel0, ptr_double xvel1,
-                const ptr_double xarea, const ptr_double pressure,
-                const ptr_double yvel0, ptr_double yvel1,
-                const ptr_double yarea, const ptr_double viscosity) {
+void accelerate_kernel(const ptr_double density0,
+  const ptr_double volume,
+  ptr_double stepbymass,
+  const ptr_double xvel0,
+  ptr_double xvel1,
+  const ptr_double xarea,
+  const ptr_double pressure,
+  const ptr_double yvel0,
+  ptr_double yvel1,
+  const ptr_double yarea,
+  const ptr_double viscosity) {
 
   double nodal_mass;
 

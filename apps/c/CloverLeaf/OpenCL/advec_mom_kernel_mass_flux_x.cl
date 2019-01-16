@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,7 +47,8 @@
 
 //user function
 
-inline void advec_mom_kernel_mass_flux_x( ptr_double node_flux, const ptr_double mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x(ptr_double node_flux,
+  const ptr_double mass_flux_x) {
 
 
   OPS_ACCS(node_flux, 0,0) = 0.25 * ( OPS_ACCS(mass_flux_x, 0,-1) + OPS_ACCS(mass_flux_x, 0,0) +

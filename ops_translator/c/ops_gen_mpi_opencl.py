@@ -187,6 +187,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     if os.path.exists(os.path.join(src_dir,'user_types.h')):
       code('#include "user_types.h"')
     code('#define OPS_'+str(NDIM)+'D')
+    code('#define OPS_API 2')
     code('#define OPS_NO_GLOBALS')
     code('#include "ops_macros.h"')
     code('#include "ops_opencl_reduction.h"')
@@ -261,9 +262,12 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     j = text.find('{')
     k = para_parse(text, j, '{', '}')
     text = text[0:k+1]
+    #convert to new API if in old
+    text = util.convert_ACC(text,arg_typ)
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[m+len(name):j])
-    print arg_list
 
 
     part_name = text[0:m+len(name)]
@@ -874,8 +878,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
-          code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+          code('arg'+str(n)+'.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
@@ -1081,7 +1085,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
   config.depth = 0
   config.file_text =''
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

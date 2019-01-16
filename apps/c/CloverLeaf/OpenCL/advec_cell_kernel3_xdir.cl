@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,10 +47,14 @@
 
 //user function
 
-inline void advec_cell_kernel3_xdir( const ptr_double vol_flux_x, const ptr_double pre_vol, const ptr_int xx,
-                              const ptr_double vertexdx,
-                              const ptr_double density1, const ptr_double energy1 ,
-                              ptr_double mass_flux_x, ptr_double ener_flux, const field_type field)
+inline void advec_cell_kernel3_xdir(const ptr_double vol_flux_x,
+  const ptr_double pre_vol,
+  const ptr_int xx,
+  const ptr_double vertexdx,
+  const ptr_double density1,
+  const ptr_double energy1,
+  ptr_double mass_flux_x,
+  ptr_double ener_flux, const field_type field)
 {
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;

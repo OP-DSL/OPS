@@ -8,8 +8,8 @@ int xdim0_calc_dt_kernel_min;
 
 //user function
 inline 
-void calc_dt_kernel_min(const ptr_double dt_min ,
-                    double* dt_min_val) {
+void calc_dt_kernel_min(const ptr_double dt_min,
+  double* dt_min_val) {
   *dt_min_val = MIN(*dt_min_val, OPS_ACC(dt_min, 0,0));
 
 }

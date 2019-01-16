@@ -869,13 +869,17 @@ void* ops_calloc (size_t num, size_t size);
 }
 #endif
 
+#ifdef __cplusplus
 class OPS_instance;
 extern OPS_instance *ops_instances[];
+#endif
 
 #include "ops_checkpointing.h"
 #include "ops_hdf5.h"
 #include "ops_tridiag.h"
+#ifdef __cplusplus
 #include "ops_instance.h"
+#endif
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_LIB_CORE_H */

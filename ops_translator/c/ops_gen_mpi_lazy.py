@@ -61,6 +61,7 @@ remove_trailing_w_space = util.remove_trailing_w_space
 parse_signature = util.parse_signature
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC_body = util.convert_ACC_body
 
 comm = util.comm
 code = util.code
@@ -218,6 +219,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     kernel_text = text[i+j+1:k]
+    kernel_text = convert_ACC_body(kernel_text)
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
@@ -556,12 +558,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       ENDIF()
     config.depth = config.depth - 2
     code('}')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-        else:
-          code('#undef OPS_ACC'+str(n))
     code('')
 
     code('')
@@ -644,8 +640,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#define OPS_3D')
   if soa_set:
     code('#define OPS_SOA')
-  code('#define OPS_ACC_MACROS')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
   code('#include "ops_lib_cpp.h"')
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')

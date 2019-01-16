@@ -15,10 +15,14 @@ int xdim7_generate_chunk_kernel;
 
 //user function
 inline 
-void generate_chunk_kernel( const ptr_double vertexx, const ptr_double vertexy,
-                     ptr_double energy0, ptr_double density0,
-                     ptr_double xvel0,  ptr_double yvel0,
-                     const ptr_double cellx, const ptr_double celly) {
+void generate_chunk_kernel(const ptr_double vertexx,
+  const ptr_double vertexy,
+  ptr_double energy0,
+  ptr_double density0,
+  ptr_double xvel0,
+  ptr_double yvel0,
+  const ptr_double cellx,
+  const ptr_double celly) {
 
   double radius, x_cent, y_cent;
   int is_in = 0;

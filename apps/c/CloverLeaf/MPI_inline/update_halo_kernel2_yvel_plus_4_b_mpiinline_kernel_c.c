@@ -27,6 +27,3 @@ void update_halo_kernel2_yvel_plus_4_b_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-
