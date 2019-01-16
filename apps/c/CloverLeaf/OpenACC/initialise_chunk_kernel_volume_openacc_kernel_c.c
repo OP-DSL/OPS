@@ -12,8 +12,11 @@ int xdim4_initialise_chunk_kernel_volume;
 
 //user function
 inline 
-void initialise_chunk_kernel_volume(ptr_double volume, const ptr_double celldy, ptr_double xarea,
-                                         const ptr_double celldx, ptr_double yarea) {
+void initialise_chunk_kernel_volume(ptr_double volume,
+  const ptr_double celldy,
+  ptr_double xarea,
+  const ptr_double celldx,
+  ptr_double yarea) {
 
   double d_x, d_y;
 

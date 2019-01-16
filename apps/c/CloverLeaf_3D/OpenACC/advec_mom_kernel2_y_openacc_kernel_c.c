@@ -13,33 +13,16 @@ int ydim2_advec_mom_kernel2_y;
 int xdim3_advec_mom_kernel2_y;
 int ydim3_advec_mom_kernel2_y;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel2_y*(y)+xdim0_advec_mom_kernel2_y*ydim0_advec_mom_kernel2_y*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel2_y*(y)+xdim1_advec_mom_kernel2_y*ydim1_advec_mom_kernel2_y*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_advec_mom_kernel2_y*(y)+xdim2_advec_mom_kernel2_y*ydim2_advec_mom_kernel2_y*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_advec_mom_kernel2_y*(y)+xdim3_advec_mom_kernel2_y*ydim3_advec_mom_kernel2_y*(z))
-
 //user function
 
-inline void advec_mom_kernel2_y( double *vel1, const double *node_mass_post,
-                        const double *node_mass_pre, const double *mom_flux) {
+inline void advec_mom_kernel2_y(ptr_double vel1,
+  const ptr_double node_mass_post,
+  const ptr_double node_mass_pre,
+  const ptr_double mom_flux) {
 
-  vel1[OPS_ACC0(0,0,0)] = ( vel1[OPS_ACC0(0,0,0)] * node_mass_pre[OPS_ACC2(0,0,0)]  +
-    mom_flux[OPS_ACC3(0,-1,0)] - mom_flux[OPS_ACC3(0,0,0)] ) / node_mass_post[OPS_ACC1(0,0,0)];
+  OPS_ACC(vel1, 0,0,0) = ( OPS_ACC(vel1, 0,0,0) * OPS_ACC(node_mass_pre, 0,0,0)  +
+    OPS_ACC(mom_flux, 0,-1,0) - OPS_ACC(mom_flux, 0,0,0) ) / OPS_ACC(node_mass_post, 0,0,0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
 
 
 void advec_mom_kernel2_y_c_wrapper(
@@ -61,10 +44,14 @@ void advec_mom_kernel2_y_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel2_y(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel2_y*1*1 + n_z*xdim0_advec_mom_kernel2_y*ydim0_advec_mom_kernel2_y*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel2_y*1*1 + n_z*xdim1_advec_mom_kernel2_y*ydim1_advec_mom_kernel2_y*1*1,
-           p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel2_y*1*1 + n_z*xdim2_advec_mom_kernel2_y*ydim2_advec_mom_kernel2_y*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel2_y*1*1 + n_z*xdim3_advec_mom_kernel2_y*ydim3_advec_mom_kernel2_y*1*1 );
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel2_y*1*1 + n_z*xdim0_advec_mom_kernel2_y*ydim0_advec_mom_kernel2_y*1*1, xdim0_advec_mom_kernel2_y, ydim0_advec_mom_kernel2_y};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel2_y*1*1 + n_z*xdim1_advec_mom_kernel2_y*ydim1_advec_mom_kernel2_y*1*1, xdim1_advec_mom_kernel2_y, ydim1_advec_mom_kernel2_y};
+        const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_advec_mom_kernel2_y*1*1 + n_z*xdim2_advec_mom_kernel2_y*ydim2_advec_mom_kernel2_y*1*1, xdim2_advec_mom_kernel2_y, ydim2_advec_mom_kernel2_y};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_advec_mom_kernel2_y*1*1 + n_z*xdim3_advec_mom_kernel2_y*ydim3_advec_mom_kernel2_y*1*1, xdim3_advec_mom_kernel2_y, ydim3_advec_mom_kernel2_y};
+        advec_mom_kernel2_y( ptr0,
+          ptr1,
+          ptr2,
+          ptr3 );
 
       }
     }

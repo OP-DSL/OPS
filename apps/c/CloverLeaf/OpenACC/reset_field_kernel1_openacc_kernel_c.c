@@ -11,8 +11,10 @@ int xdim3_reset_field_kernel1;
 
 //user function
 inline 
-void reset_field_kernel1( ptr_double density0, const ptr_double density1,
-                        ptr_double energy0, const ptr_double energy1) {
+void reset_field_kernel1(ptr_double density0,
+  const ptr_double density1,
+  ptr_double energy0,
+  const ptr_double energy1) {
 
   OPS_ACC(density0, 0,0)  = OPS_ACC(density1, 0,0) ;
   OPS_ACC(energy0, 0,0)  = OPS_ACC(energy1, 0,0) ;

@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,10 +47,17 @@
 
 //user function
 
-void calc_dt_kernel(const ptr_double celldx, const ptr_double celldy, const ptr_double soundspeed,
-                    const ptr_double viscosity, const ptr_double density0, const ptr_double xvel0,
-                    const ptr_double xarea, const ptr_double volume, const ptr_double yvel0,
-                    const ptr_double yarea, ptr_double dt_min , const double g_small, const double g_big, const double dtc_safe, const double dtu_safe, const double dtv_safe, const double dtdiv_safe)
+void calc_dt_kernel(const ptr_double celldx,
+  const ptr_double celldy,
+  const ptr_double soundspeed,
+  const ptr_double viscosity,
+  const ptr_double density0,
+  const ptr_double xvel0,
+  const ptr_double xarea,
+  const ptr_double volume,
+  const ptr_double yvel0,
+  const ptr_double yarea,
+  ptr_double dt_min, const double g_small, const double g_big, const double dtc_safe, const double dtu_safe, const double dtv_safe, const double dtdiv_safe)
 {
 
   double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;

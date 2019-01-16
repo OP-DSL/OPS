@@ -45,7 +45,7 @@
 
 
 // OPS header file
-#include "ops_seq_variadic.h"
+#include "ops_seq_v2.h"
 
 // Cloverleaf constants
 #include "data.h"

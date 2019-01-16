@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,8 +47,10 @@
 
 //user function
 
-void flux_calc_kernely( ptr_double vol_flux_y, const ptr_double yarea,
-                        const ptr_double yvel0, const ptr_double yvel1, const double dt)
+void flux_calc_kernely(ptr_double vol_flux_y,
+  const ptr_double yarea,
+  const ptr_double yvel0,
+  const ptr_double yvel1, const double dt)
 {
 
   OPS_ACCS(vol_flux_y, 0,0) = 0.25 * dt * (OPS_ACCS(yarea, 0,0)) *

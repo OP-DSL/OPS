@@ -4,22 +4,15 @@
 __constant__ int dims_initialise_chunk_kernel_cellz [3][2];
 static int dims_initialise_chunk_kernel_cellz_h [3][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y,z) (x+dims_initialise_chunk_kernel_cellz[0][0]*(y)+dims_initialise_chunk_kernel_cellz[0][0]*dims_initialise_chunk_kernel_cellz[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_initialise_chunk_kernel_cellz[1][0]*(y)+dims_initialise_chunk_kernel_cellz[1][0]*dims_initialise_chunk_kernel_cellz[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_initialise_chunk_kernel_cellz[2][0]*(y)+dims_initialise_chunk_kernel_cellz[2][0]*dims_initialise_chunk_kernel_cellz[2][1]*(z))
-
 //user function
 __device__
 
-void initialise_chunk_kernel_cellz_gpu(const double *vertexz, double* cellz, double *celldz) {
+void initialise_chunk_kernel_cellz_gpu(const ACC<double> &vertexz,
+  ACC<double>& cellz,
+  ACC<double> &celldz) {
   double d_z = (grid.zmax - grid.zmin)/(double)grid.z_cells;
-  cellz[OPS_ACC1(0,0,0)]  = 0.5*( vertexz[OPS_ACC0(0,0,0)] + vertexz[OPS_ACC0(0,0,1)] );
-  celldz[OPS_ACC2(0,0,0)]  = d_z;
+  cellz(0,0,0)  = 0.5*( vertexz(0,0,0) + vertexz(0,0,1) );
+  celldz(0,0,0)  = d_z;
 
 
 
@@ -28,13 +21,8 @@ void initialise_chunk_kernel_cellz_gpu(const double *vertexz, double* cellz, dou
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
 __global__ void ops_initialise_chunk_kernel_cellz(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
 int size0,
@@ -51,7 +39,10 @@ int size2 ){
   arg2 += idx_x * 0*1 + idx_y * 0*1 * dims_initialise_chunk_kernel_cellz[2][0] + idx_z * 1*1 * dims_initialise_chunk_kernel_cellz[2][0] * dims_initialise_chunk_kernel_cellz[2][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    initialise_chunk_kernel_cellz_gpu(arg0, arg1, arg2);
+    const ACC<double> argp0(dims_initialise_chunk_kernel_cellz[0][0], dims_initialise_chunk_kernel_cellz[0][1], arg0);
+    ACC<double> argp1(dims_initialise_chunk_kernel_cellz[1][0], dims_initialise_chunk_kernel_cellz[1][1], arg1);
+    ACC<double> argp2(dims_initialise_chunk_kernel_cellz[2][0], dims_initialise_chunk_kernel_cellz[2][1], arg2);
+    initialise_chunk_kernel_cellz_gpu(argp0, argp1, argp2);
   }
 
 }

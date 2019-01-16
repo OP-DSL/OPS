@@ -23,6 +23,3 @@ void update_halo_kernel4_plus_2_b_c_wrapper(
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

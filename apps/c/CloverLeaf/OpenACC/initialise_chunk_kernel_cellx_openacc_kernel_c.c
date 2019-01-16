@@ -10,7 +10,9 @@ int xdim2_initialise_chunk_kernel_cellx;
 
 //user function
 inline 
-void initialise_chunk_kernel_cellx(const ptr_double vertexx, ptr_double cellx, ptr_double celldx) {
+void initialise_chunk_kernel_cellx(const ptr_double vertexx,
+  ptr_double cellx,
+  ptr_double celldx) {
 
   double d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;

@@ -9,7 +9,9 @@ int xdim1_update_halo_kernel2_xvel_plus_2_a;
 
 //user function
 
-inline void update_halo_kernel2_xvel_plus_2_a(ptr_double xvel0, ptr_double xvel1, const int* fields)
+inline void update_halo_kernel2_xvel_plus_2_a(ptr_double xvel0,
+  ptr_double xvel1,
+  const int* fields)
 {
   if(fields[FIELD_XVEL0] == 1) OPS_ACC(xvel0, 0,0) = OPS_ACC(xvel0, 0,2);
   if(fields[FIELD_XVEL1] == 1) OPS_ACC(xvel1, 0,0) = OPS_ACC(xvel1, 0,2);

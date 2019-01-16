@@ -7,13 +7,18 @@ static int dims_PdV_kernel_predict_h [12][1] = {0};
 //user function
 __device__
 
-void PdV_kernel_predict_gpu(const ACC<double> &xarea, const ACC<double> &xvel0,
-                const ACC<double> &yarea, const ACC<double> &yvel0,
-                ACC<double> &volume_change, const ACC<double> &volume,
-                const ACC<double> &pressure,
-                const ACC<double> &density0, ACC<double> &density1,
-                const ACC<double> &viscosity,
-                const ACC<double> &energy0, ACC<double> &energy1) {
+void PdV_kernel_predict_gpu(const ACC<double> &xarea,
+  const ACC<double> &xvel0,
+  const ACC<double> &yarea,
+  const ACC<double> &yvel0,
+  ACC<double> &volume_change,
+  const ACC<double> &volume,
+  const ACC<double> &pressure,
+  const ACC<double> &density0,
+  ACC<double> &density1,
+  const ACC<double> &viscosity,
+  const ACC<double> &energy0,
+  ACC<double> &energy1) {
 
 
   double recip_volume, energy_change;
@@ -137,9 +142,9 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,12,range,55)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(55,"PdV_kernel_predict");
-    OPS_kernels[55].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[55].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -194,23 +199,23 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
-  int dat7 = (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
-  int dat8 = (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
-  int dat9 = (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size);
-  int dat10 = (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size);
-  int dat11 = (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  int dat6 = (OPS_instance::getOPSInstance()->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  int dat7 = (OPS_instance::getOPSInstance()->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
+  int dat8 = (OPS_instance::getOPSInstance()->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
+  int dat9 = (OPS_instance::getOPSInstance()->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size);
+  int dat10 = (OPS_instance::getOPSInstance()->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size);
+  int dat11 = (OPS_instance::getOPSInstance()->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size);
 
   char *p_a[12];
 
@@ -305,9 +310,9 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,12,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[55].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[55].mpi_time += t2-t1;
   }
 
 
@@ -322,10 +327,10 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[55].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[55].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -335,22 +340,22 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[11],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[55].mpi_time += t2-t1;
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    OPS_instance::getOPSInstance()->OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg11);
   }
 }
 
@@ -397,7 +402,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   desc->args[11] = arg11;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg11.dat->index;
   desc->function = ops_par_loop_PdV_kernel_predict_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(55,"PdV_kernel_predict");
   }
   ops_enqueue_kernel(desc);

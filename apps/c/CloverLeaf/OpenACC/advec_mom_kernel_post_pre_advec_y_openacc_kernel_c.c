@@ -12,8 +12,11 @@ int xdim4_advec_mom_kernel_post_pre_advec_y;
 
 //user function
 
-inline void advec_mom_kernel_post_pre_advec_y( ptr_double node_mass_post, const ptr_double post_vol,
-                                  const ptr_double density1, ptr_double node_mass_pre, const ptr_double node_flux) {
+inline void advec_mom_kernel_post_pre_advec_y(ptr_double node_mass_post,
+  const ptr_double post_vol,
+  const ptr_double density1,
+  ptr_double node_mass_pre,
+  const ptr_double node_flux) {
 
 
 

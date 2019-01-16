@@ -62,6 +62,7 @@ parse_signature = util.parse_signature
 complex_numbers_cuda = util.complex_numbers_cuda
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC = util.convert_ACC
 
 comm = util.comm
 code = util.code
@@ -234,11 +235,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     arg_list = parse_signature(text[i2+len(name):i+j])
-    check_accs(name, arg_list, arg_typ, text[i+j:k])
     code('__device__')
 
     new_code = complex_numbers_cuda(text[i:k+2])  # Handle complex numbers with the cuComplex.h CUDA library.
-    code(new_code)
+    code(convert_ACC(new_code, arg_typ))
     code('')
     code('')
 

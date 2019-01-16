@@ -11,9 +11,13 @@ int xdim5_calc_dt_kernel_print;
 
 //user function
 inline 
-void calc_dt_kernel_print(const ptr_double xvel0, const ptr_double yvel0,
-                        const ptr_double density0, const ptr_double energy0,
-                        const ptr_double pressure, const ptr_double soundspeed, double *output) {
+void calc_dt_kernel_print(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double soundspeed,
+  double *output) {
   output[0] = OPS_ACC(xvel0, 1,0);
   output[1] = OPS_ACC(yvel0, 1,0);
   output[2] = OPS_ACC(xvel0, -1,0);

@@ -15,10 +15,14 @@ int xdim7_advec_cell_kernel3_xdir;
 
 //user function
 
-inline void advec_cell_kernel3_xdir( const ptr_double vol_flux_x, const ptr_double pre_vol, const ptr_int xx,
-                              const ptr_double vertexdx,
-                              const ptr_double density1, const ptr_double energy1 ,
-                              ptr_double mass_flux_x, ptr_double ener_flux) {
+inline void advec_cell_kernel3_xdir(const ptr_double vol_flux_x,
+  const ptr_double pre_vol,
+  const ptr_int xx,
+  const ptr_double vertexdx,
+  const ptr_double density1,
+  const ptr_double energy1,
+  ptr_double mass_flux_x,
+  ptr_double ener_flux) {
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;

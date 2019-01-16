@@ -34,6 +34,3 @@ void calc_dt_kernel_get_c_wrapper(
   xl_pos_g[0] = xl_pos_0;
   yl_pos_g[0] = yl_pos_0;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

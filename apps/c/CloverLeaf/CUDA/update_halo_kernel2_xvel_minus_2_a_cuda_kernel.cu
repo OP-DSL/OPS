@@ -7,7 +7,9 @@ static int dims_update_halo_kernel2_xvel_minus_2_a_h [3][1] = {0};
 //user function
 __device__
 
-inline void update_halo_kernel2_xvel_minus_2_a_gpu(ACC<double> &xvel0, ACC<double> &xvel1, const int* fields)
+inline void update_halo_kernel2_xvel_minus_2_a_gpu(ACC<double> &xvel0,
+  ACC<double> &xvel1,
+  const int* fields)
 {
   if(fields[FIELD_XVEL0] == 1) xvel0(0,0) = -xvel0(2,0);
   if(fields[FIELD_XVEL1] == 1) xvel1(0,0) = -xvel1(2,0);
@@ -63,9 +65,9 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   if (!ops_checkpointing_before(args,3,range,22)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(22,"update_halo_kernel2_xvel_minus_2_a");
-    OPS_kernels[22].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[22].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -101,8 +103,8 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
 
   int consts_bytes = 0;
 
@@ -111,13 +113,13 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   reallocConstArrays(consts_bytes);
 
   consts_bytes = 0;
-  arg2.data = OPS_consts_h + consts_bytes;
-  arg2.data_d = OPS_consts_d + consts_bytes;
+  arg2.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;
+  arg2.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
 
@@ -142,9 +144,9 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   ops_halo_exchanges(args,3,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[22].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[22].mpi_time += t2-t1;
   }
 
 
@@ -155,10 +157,10 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[22].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[22].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -167,12 +169,12 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute(ops_kernel_descript
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[22].mpi_time += t2-t1;
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[22].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[22].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -203,7 +205,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_a(char const *name, ops_block
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_minus_2_a_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(22,"update_halo_kernel2_xvel_minus_2_a");
   }
   ops_enqueue_kernel(desc);

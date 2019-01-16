@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,9 +47,10 @@
 
 //user function
 
-inline void advec_mom_kernel_y2( ptr_double pre_vol, ptr_double post_vol,
-                          const ptr_double volume,
-                          const ptr_double vol_flux_x) {
+inline void advec_mom_kernel_y2(ptr_double pre_vol,
+  ptr_double post_vol,
+  const ptr_double volume,
+  const ptr_double vol_flux_x) {
 
   OPS_ACCS(post_vol, 0,0)  = OPS_ACCS(volume, 0,0) ;
   OPS_ACCS(pre_vol, 0,0)   = OPS_ACCS(post_vol, 0,0)  + OPS_ACCS(vol_flux_x, 1,0) - OPS_ACCS(vol_flux_x, 0,0);

@@ -4,41 +4,26 @@
 __constant__ int dims_flux_calc_kernelz [4][2];
 static int dims_flux_calc_kernelz_h [4][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+dims_flux_calc_kernelz[0][0]*(y)+dims_flux_calc_kernelz[0][0]*dims_flux_calc_kernelz[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_flux_calc_kernelz[1][0]*(y)+dims_flux_calc_kernelz[1][0]*dims_flux_calc_kernelz[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_flux_calc_kernelz[2][0]*(y)+dims_flux_calc_kernelz[2][0]*dims_flux_calc_kernelz[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_flux_calc_kernelz[3][0]*(y)+dims_flux_calc_kernelz[3][0]*dims_flux_calc_kernelz[3][1]*(z))
-
 //user function
 __device__
 
-void flux_calc_kernelz_gpu( double *vol_flux_z, const double *zarea,
-                        const double *zvel0, const double *zvel1) {
+void flux_calc_kernelz_gpu(ACC<double> &vol_flux_z,
+  const ACC<double> &zarea,
+  const ACC<double> &zvel0,
+  const ACC<double> &zvel1) {
 
-  vol_flux_z[OPS_ACC0(0,0,0)] = 0.125 * dt * (zarea[OPS_ACC1(0,0,0)]) *
-  ( zvel0[OPS_ACC2(0,0,0)] + zvel0[OPS_ACC2(1,0,0)] + zvel0[OPS_ACC2(1,0,0)] + zvel0[OPS_ACC2(1,1,0)] +
-    zvel1[OPS_ACC3(0,0,0)] + zvel1[OPS_ACC3(1,0,0)] + zvel1[OPS_ACC3(0,1,0)] + zvel1[OPS_ACC3(1,1,0)]);
+  vol_flux_z(0,0,0) = 0.125 * dt * (zarea(0,0,0)) *
+  ( zvel0(0,0,0) + zvel0(1,0,0) + zvel0(1,0,0) + zvel0(1,1,0) +
+    zvel1(0,0,0) + zvel1(1,0,0) + zvel1(0,1,0) + zvel1(1,1,0));
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_flux_calc_kernelz(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
 int size0,
 int size1,
 int size2 ){
@@ -54,7 +39,11 @@ int size2 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_flux_calc_kernelz[3][0] + idx_z * 1*1 * dims_flux_calc_kernelz[3][0] * dims_flux_calc_kernelz[3][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    flux_calc_kernelz_gpu(arg0, arg1, arg2, arg3);
+    ACC<double> argp0(dims_flux_calc_kernelz[0][0], dims_flux_calc_kernelz[0][1], arg0);
+    const ACC<double> argp1(dims_flux_calc_kernelz[1][0], dims_flux_calc_kernelz[1][1], arg1);
+    const ACC<double> argp2(dims_flux_calc_kernelz[2][0], dims_flux_calc_kernelz[2][1], arg2);
+    const ACC<double> argp3(dims_flux_calc_kernelz[3][0], dims_flux_calc_kernelz[3][1], arg3);
+    flux_calc_kernelz_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

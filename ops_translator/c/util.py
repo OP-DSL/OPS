@@ -195,7 +195,33 @@ def parse_replace_ACC_signature(text, arg_typ, dims, opencl=0, accs=[], typs=[])
         text = text[:-2]
 
   return text
-  
+
+def convert_ACC_signature(text, arg_typ):
+  arg_list = arg_parse_list(text,0)
+  for i in range(0,len(arg_list)):
+      if arg_typ[i] == 'ops_arg_dat' and not ('ACC' in arg_list[i]):
+          arg_list[i] = arg_list[i].replace('int','ACC<int>')
+          arg_list[i] = arg_list[i].replace('float','ACC<float>')
+          arg_list[i] = arg_list[i].replace('double','ACC<double>')
+          arg_list[i] = arg_list[i].replace('*','&')
+  signature = ''
+  for i in range(0,len(arg_list)):
+      signature = signature + arg_list[i] + ',\n  '
+  return signature[:-4]
+
+def convert_ACC_body(text):
+  text = re.sub('\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  text = re.sub('\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  return text
+
+def convert_ACC(text, arg_typ):
+  openb = text.find('(')
+  closeb = text[0:text.find('{')].rfind(')')+1
+  text = text[0:openb]+'('+convert_ACC_signature(text[openb:closeb], arg_typ)+')'+text[closeb:]
+  body_start = text.find('{')
+  text = text[0:body_start]+convert_ACC_body(text[body_start:])
+  return text
+
 def parse_signature(text):
   text2 = text.replace('const','')
   text2 = text2.replace('ACC<','')
