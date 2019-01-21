@@ -54,6 +54,7 @@ int main(int argc, const char **argv)
 {
 #pragma omp parallel
 {
+  try {
   //initialize sizes using global values
   int x_cells = 4;
   int y_cells = 4;
@@ -150,7 +151,14 @@ int main(int argc, const char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
-}
   ops_exit();
+  }
+  catch (OPSException &e) {
+    std::cout << e.what() << std::endl;
+    ops_printf("This test is considered FAILED\n");
+    ops_exit();
+    exit(-1);
+  }
+}
   exit(0);
 }

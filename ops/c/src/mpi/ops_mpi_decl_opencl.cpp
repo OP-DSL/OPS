@@ -53,7 +53,11 @@ void ops_init_opencl(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+      OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
+      ex <<  "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_* ";
+      ex << " Current settings: " << OPS_instance::getOPSInstance()->OPS_block_size_x << " " << OPS_instance::getOPSInstance()->OPS_block_size_y << " " << OPS_instance::getOPSInstance()->OPS_block_size_z;
+      throw ex;
   }
   for (int n = 1; n < argc; n++) {
     if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
