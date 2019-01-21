@@ -54,7 +54,7 @@
 struct OPSException : public std::exception
 {
     int code;
-    const static int maxsize = 512;
+    const static int maxsize = 2048;
     unsigned char _data[maxsize];
 
     int cursize;

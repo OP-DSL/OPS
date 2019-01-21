@@ -215,8 +215,10 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -268,8 +270,10 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -321,8 +325,10 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
     // Create the OpenCL kernel
     *packer4_kernel =
@@ -490,8 +496,10 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -542,8 +550,10 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -593,8 +603,10 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -813,7 +825,7 @@ const char copy_frombuf_kernel_src[] =
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "     (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
     "     (z_step ==1 ? idx_z < rz_e : idx_z > rz_e)) {"
-    "    if (OPS_instance::getOPSInstance()->OPS_soa) dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
+    "    if (OPS_soa) dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size;"
     "    else         dest += (idx_z*size_x*size_y + idx_y*size_x + idx_x) * type_size * dim;"
     "    src  += ((idx_z-rz_s)*z_step*buf_strides_z+ "
     "             (idx_y-ry_s)*y_step*buf_strides_y + "
@@ -872,8 +884,10 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel
@@ -1023,8 +1037,10 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
           build_log);
       fprintf(stderr,
               "\n========================================================= \n");
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      OPSException ex(OPS_OPENCL_BUILD_ERROR);
+      ex << build_log;
       free(build_log);
+      throw ex;
     }
 
     // Create the OpenCL kernel

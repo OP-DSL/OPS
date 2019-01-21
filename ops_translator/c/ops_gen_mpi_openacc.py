@@ -252,6 +252,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     l = text[0:m].find('inline')
     if(l<0):
       text = 'inline '+text
+    code('#pragma acc routine')
     code(text)
     code('')
 
@@ -770,9 +771,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+' + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
+          line = 'base'+str(n)+' = base'+str(n)+' + (OPS_instance::getOPSInstance()->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
