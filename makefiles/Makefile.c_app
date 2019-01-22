@@ -115,7 +115,7 @@ $(APP)_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_cuda.a
 		$(OPS_FILES_GEN) -I. OpenACC/$(MAIN_SRC)_kernels_c.o OpenACC/$(MAIN_SRC)_kernels.o -lcudart -lops_cuda $(HDF5_LIB_SEQ) -o $(APP)_openacc
 
 $(APP)_mpi_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi_cuda.a
-	$(MPICC) $(OpenACCFLAGS) $(CCLAGS) -DOPS_MPI $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) \
+	$(MPICC) $(OpenACCFLAGS) -Minline $(CCLAGS) -DOPS_MPI $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) \
 	-I. OpenACC/$(MAIN_SRC)_kernels_c.c -c -o OpenACC/$(MAIN_SRC)_kernels_c_mpi.o
 	$(MPICPP) $(OpenACCFLAGS)  $(CXXFLAGS) -DOPS_MPI $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) \
 	-I. OpenACC/$(MAIN_SRC)_kernels.cpp -c -o OpenACC/$(MAIN_SRC)_kernels_mpi.o
