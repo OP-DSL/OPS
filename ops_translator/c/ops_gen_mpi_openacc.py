@@ -725,8 +725,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('args['+str(n)+'].data = OPS_consts_h + consts_bytes;')
-          code('args['+str(n)+'].data_d = OPS_consts_d + consts_bytes;')
+          code('args['+str(n)+'].data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;')
+          code('args['+str(n)+'].data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
