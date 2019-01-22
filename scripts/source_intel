@@ -3,7 +3,7 @@
 #unset and set defaults
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 unset LD_LIBRARY_PATH
-export PATH=/home/mgiles/mudalige/numawrap:$PATH
+export PATH=/home/mudalige/numawrap:$PATH
 .  ~/.bashrc
 
 #OPS specifics
@@ -27,7 +27,7 @@ module load intel-compilers
 module load intel-mpi
 export MPI_INSTALL_PATH=/opt/compilers/intel/intelPS-2015/impi/5.0.3.048/intel64/
 export MPICPP=mpicxx
-#export MPI_INSTALL_PATH=/home/mgiles/mudalige/mvapich2/intel-15
+#export MPI_INSTALL_PATH=/home/mudalige/mvapich2/intel-15
 source /opt/compilers/intel/intelPS-2015/composerxe/bin/compilervars.sh intel64
 source /opt/compilers/intel/intelPS-2015/impi_latest/intel64/bin/mpivars.sh intel64
 
@@ -40,8 +40,8 @@ export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 #unset HDF5_INSTALL_PATH
 #export HDF5_INSTALL_PATH=/opt/hdf5-intel/
 #export HDF5_INSTALL_PATH=/opt/hdf5-intel/
-export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel
-export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-1.8.19-intel/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/home/mudalige/hdf5-1.8.19-intel
+export LD_LIBRARY_PATH=/home/mudalige/hdf5-1.8.19-intel/lib:$LD_LIBRARY_PATH
 
 #Tridiagonal LIB
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/TriDiagonal/Tridiag-Git/tridsolver/scalar/build/lib/

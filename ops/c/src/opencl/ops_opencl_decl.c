@@ -109,6 +109,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   }
 
   ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data), bytes);
+  dat->x_pad = 0; // no padding for data alignment
 
   return dat;
 }
