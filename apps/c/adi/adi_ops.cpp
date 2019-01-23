@@ -218,13 +218,6 @@ int main(int argc, const char **argv) {
   ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
-
-
-
-
-
-
-
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();
 }

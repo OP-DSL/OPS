@@ -37,7 +37,7 @@ then
 else
     echo "PASSED"
 fi
-rm -rf perf_out diff_out
+rm -rf perf_out diff_out adi_dev_seq.h5
 
 
 echo '============> Running OpenMP'
@@ -51,7 +51,7 @@ then
 else
     echo "PASSED"
 fi
-rm -rf perf_out diff_out
+rm -rf perf_out diff_out adi_omp.h5
 
 echo '============> Running CUDA'
 ./adi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -64,7 +64,7 @@ then
 else
     echo "PASSED"
 fi
-rm -rf perf_out diff_out
+rm -rf perf_out diff_out adi_cuda.h5
 
 rm -rf *.h5
 echo "All Intel complied applications PASSED : Exiting Test Script"
