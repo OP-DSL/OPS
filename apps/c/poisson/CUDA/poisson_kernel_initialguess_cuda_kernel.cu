@@ -36,13 +36,13 @@ int size1 ){
 void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
 #else
-void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *desc) {
+void ops_par_loop_poisson_kernel_initialguess_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
   int dim = desc->dim;
   int *range = desc->range;
   #ifdef OPS_MPI
   ops_block block = desc->block;
   #endif
-  ops_arg arg0 = desc->args[0];
+  ops_arg arg0 = args[0];
   #endif
 
   //Timing

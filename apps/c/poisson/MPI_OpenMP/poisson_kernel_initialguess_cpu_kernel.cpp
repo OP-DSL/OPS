@@ -9,19 +9,18 @@
 void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
 #else
-void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
-  int dim = desc->dim;
-  int *range = desc->range;
-  ops_arg arg0 = desc->args[0];
+void ops_par_loop_poisson_kernel_initialguess_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
+  ops_arg arg0 = args[0];
   #endif
 
   //Timing
   double __t1,__t2,__c1,__c2;
 
+  #ifndef OPS_LAZY
   ops_arg args[1] = { arg0};
 
 
+  #endif
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
   if (!ops_checkpointing_before(args,1,range,2)) return;
@@ -110,7 +109,6 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
     OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
-#undef OPS_ACC0
 
 
 #ifdef OPS_LAZY

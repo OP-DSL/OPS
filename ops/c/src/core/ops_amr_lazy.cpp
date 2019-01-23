@@ -55,18 +55,52 @@ inline int omp_get_max_threads() {
 #include <vector>
 using namespace std;
 
+struct tiling_plan {
+  int nloops;
+  std::vector<unsigned long> loop_sequence;
+  int ntiles;
+  std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
+  std::vector<ops_dat> dats_to_exchange;
+  std::vector<int> depths_to_exchange;
+};
+class OPS_instance_tiling {
+public:
+  OPS_instance_tiling() : TILE1D(-1), TILE2D(-1), TILE3D(-1), ops_dims_tiling_internal(1) {}
+  std::vector<ops_kernel_descriptor *> ops_kernel_list;
+
+  // Tiling
+  std::vector<std::vector<int> >
+      data_read_deps; // latest data dependencies for each dataset
+  std::vector<std::vector<int> >
+      data_write_deps; // latest data dependencies for each dataset
+
+  std::vector<std::vector<int> >
+      data_read_deps_edge; // latest data dependencies for each dataset around the edges
+
+  std::vector<tiling_plan> tiling_plans;
+
+  // tile sizes
+  int TILE1D;
+  int TILE2D;
+  int TILE3D;
+
+  // dimensionality of blocks used throughout
+  int ops_dims_tiling_internal;
+
+};
+
 int ops_loop_over_blocks = 0;
 int *ops_loop_over_blocks_predicate = NULL;
 int ops_loop_over_blocks_condition = 0;
-extern std::vector<ops_kernel_descriptor *> ops_kernel_list;
+#define ops_kernel_list OPS_instance::getOPSInstance()->tiling_instance->ops_kernel_list
 std::vector<int> replicated;
 std::vector<char *> orig_ptrs;
 std::vector<char *> new_ptrs;
 std::vector<ops_dat> free_queue;
 
 void replicate_dats() {
-  replicated.resize(MAX((int)replicated.size(), OPS_dat_index));
-  orig_ptrs.resize(MAX((int)replicated.size(), OPS_dat_index));
+  replicated.resize(MAX((int)replicated.size(),  OPS_instance::getOPSInstance()->OPS_dat_index));
+  orig_ptrs.resize(MAX((int)replicated.size(),  OPS_instance::getOPSInstance()->OPS_dat_index));
   fill(replicated.begin(), replicated.end(), 0);
 
   //Go through all kernels, and all their arguments, see if a dataset is modified
@@ -84,10 +118,10 @@ void replicate_dats() {
 
   //Go through all datasets, create replicas if flagged
   ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+  TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     ops_dat dat = item->dat;
     if (replicated[dat->index] == 1) {
-      if (OPS_diags>5) printf("replicating %s\n",dat->name);
+      if ( OPS_instance::getOPSInstance()->OPS_diags>5) printf("replicating %s\n",dat->name);
       char *tmp = (char*)malloc(dat->mem*omp_get_max_threads());
       #pragma omp parallel for
       for (int t = 0; t < omp_get_max_threads(); t++)
@@ -112,7 +146,7 @@ void replicate_dats() {
 
 void restore_dat_ptrs() {
  ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+  TAILQ_FOREACH(item, & OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     ops_dat dat = item->dat;
     if (replicated[dat->index] == 1) {
       free(dat->data);

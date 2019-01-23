@@ -239,52 +239,29 @@ typedef ops_stencil_core *ops_stencil;
 
 /** Storage for OPS parallel loop arguments */
 typedef struct {
-<<<<<<< HEAD
   ops_dat dat;          /**< dataset */
   ops_stencil stencil;  /**< the stencil */
   int idx;              /**< for AMR, idx of other block */
   int dim;              /**< dimension of data */
+  int typesize;         /**< size of the type in bytes for arg_gbl */
   char *data;           /**< data on host */
   char *data_d;         /**< data on device (for CUDA)*/
   ops_access acc;       /**< access type */
   ops_arg_type argtype; /**< arg type */
   int opt;              /**< falg to indicate whether this is an optional arg,
                          *   0 - optional, 1 - not optional */
-=======
-  ops_dat dat;          /* dataset */
-  ops_stencil stencil;  /* the stencil */
-  int idx;              /* for AMR (dat2,restrict,prolong), idx of other block, for arg_block used as a flag */
-  int dim;              /* dimension of data */
-  int typesize;         /* size of the type in bytes for arg_gbl */
-  char *data;           /* data on host */
-  char *data_d;         /* data on device (for CUDA)*/
-  ops_access acc;       /* access type */
-  ops_arg_type argtype; /* arg type */
-  int opt; /*flag to indicate whether this is an optional arg, 0 - optional, 1 -
-              not optional*/
->>>>>>> 27b18f6... Loop over blocks
 } ops_arg;
 
 /** Storage for OPS reduction handles */
 typedef struct {
-<<<<<<< HEAD
   char *data;       /**< The data */
   int size;         /**< size of data in bytes */
   int initialized;  /**< flag indicating whether data has been initialized */
   int index;        /**< unique identifier */
+  int multithreaded;/**< flag to indicate whether multiple threads use the same handle */
   ops_access acc;   /**< Type of reduction it was used for last time */
   const char *type; /**< Type */
   const char *name; /**< Name */
-=======
-  char *data;       /* The data */
-  int size;         /* size of data in bytes */
-  int initialized;  /* flag indicating whether data has been initialized*/
-  int index;        /* unique identifier */
-  int multithreaded;/* flag to indicate whether multiple threads use the same handle */
-  ops_access acc;   /* Type of reduction it was used for last time */
-  const char *type; /* Type */
-  const char *name; /* Name */
->>>>>>> 27b18f6... Loop over blocks
 } ops_reduction_core;
 typedef ops_reduction_core *ops_reduction;
 
@@ -337,8 +314,8 @@ typedef struct ops_kernel_descriptor {
   int range[2 * OPS_MAX_DIM]; /**< process local execution range */
   int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
   ops_block block;            /**< block to execute on */
-  void (*function)(struct ops_kernel_descriptor
-                      *desc); /**< Function pointer to a wrapper to be called */
+  void (*function)(const char *, ops_block, int, int, int *, int, ops_arg*);
+                              /**< Function pointer to a wrapper to be called */
 } ops_kernel_descriptor;
 
 /*
@@ -910,7 +887,6 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();
 int ops_num_procs();
-<<<<<<< HEAD
 void ops_put_data(ops_dat dat);
 
 /*******************************************************************************
@@ -921,12 +897,9 @@ void* ops_realloc (void *ptr, size_t size);
 void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 
-=======
-extern int ops_loop_over_blocks;
 void ops_amr_reduction_size(int *count, int *stride, int size);
 void ops_amr_reduction_result(ops_reduction handle);
 int ops_amr_lazy_offset_idx();
->>>>>>> 27b18f6... Loop over blocks
 
 #ifdef __cplusplus
 }

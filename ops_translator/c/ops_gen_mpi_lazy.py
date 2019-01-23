@@ -238,14 +238,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     code('#else')
-    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    #code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
-    code('ops_block block = desc->block;')
-    code('int dim = desc->dim;')
-    code('int *range = desc->range;')
+    #code('ops_block block = desc->block;')
+    #code('int dim = desc->dim;')
+    #code('int *range = desc->range;')
     
-    #code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
     for n in range (0, nargs):
       code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
 
@@ -258,7 +258,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     #code('ops_printf("In loop \%s\\n","'+name+'");')
 
-    
+    code('#ifndef OPS_LAZY')
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
@@ -269,6 +269,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if n%n_per_line == 5 and n <> nargs-1:
         text = text +'\n                    '
     code(text);
+    code('#endif')
     code('')
     code('#if defined(CHECKPOINTING) && !defined(OPS_LAZY)')
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')

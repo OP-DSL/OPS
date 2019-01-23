@@ -475,7 +475,7 @@ int getDatBaseFromOpsArg(ops_arg *arg, int *start, int datdim, int dim, int amr,
   for (int d = 0; d < dim; d++)
     start[d] -= 1;
 
-  int dat = OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
+  int dat = OPS_instance::getOPSInstance()->OPS_soa ? arg->dat->type_size : arg->dat->elem_size;
   int block_dim = arg->dat->block->dims;
 
   // set up initial pointers

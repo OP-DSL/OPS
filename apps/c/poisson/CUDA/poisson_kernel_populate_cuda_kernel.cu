@@ -7,7 +7,12 @@ static int dims_poisson_kernel_populate_h [6][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_populate_gpu(const int *dispx, const int *dispy, const int *idx, ACC<double> &u, ACC<double> &f, ACC<double> &ref) {
+void poisson_kernel_populate_gpu(const int *dispx,
+  const int *dispy,
+  const int *idx,
+  ACC<double> &u,
+  ACC<double> &f,
+  ACC<double> &ref) {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
@@ -60,18 +65,18 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
 #else
-void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
+void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
   int dim = desc->dim;
   int *range = desc->range;
   #ifdef OPS_MPI
   ops_block block = desc->block;
   #endif
-  ops_arg arg0 = desc->args[0];
-  ops_arg arg1 = desc->args[1];
-  ops_arg arg2 = desc->args[2];
-  ops_arg arg3 = desc->args[3];
-  ops_arg arg4 = desc->args[4];
-  ops_arg arg5 = desc->args[5];
+  ops_arg arg0 = args[0];
+  ops_arg arg1 = args[1];
+  ops_arg arg2 = args[2];
+  ops_arg arg3 = args[3];
+  ops_arg arg4 = args[4];
+  ops_arg arg5 = args[5];
   #endif
 
   //Timing
