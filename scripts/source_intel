@@ -43,6 +43,7 @@ export MPICH_F90=/opt/compilers/intel/intelPS-2015/composerxe/bin/ifort
 export HDF5_INSTALL_PATH=/home/mudalige/hdf5-1.8.19-intel
 export LD_LIBRARY_PATH=/home/mudalige/hdf5-1.8.19-intel/lib:$LD_LIBRARY_PATH
 
+
 #Tridiagonal LIB
 export TDMA_INSTALL_PATH=~/TriDiagonal/Tridiag-Git/tridsolver/scalar/build/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/TriDiagonal/Tridiag-Git/tridsolver/scalar/build/lib/

@@ -624,6 +624,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     hid_t attr;      // attribute identifier
     herr_t err;      // error code
 
+    hsize_t CHUNK_SIZE[block->dims];
+
     // Set up file access property list with parallel I/O access
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
@@ -679,19 +681,28 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
             H5Screate_simple(block->dims, GBL_SIZE, NULL); // space in file
 
         // Create a reasonable chunk size
-        int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
+        /*int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
             cart_coords[OPS_MAX_DIM];
         MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods,
                      cart_coords);
-        hsize_t CHUNK_SIZE[OPS_MAX_DIM];
-        for (int i = 0; i < block->dims; i++)
-          CHUNK_SIZE[i] = MAX(GBL_SIZE[i] / (cart_dims[i] * 2), 1);
+
+        for (int i = 0; i < block->dims; i++) {
+          CHUNK_SIZE[i] = MAX((GBL_SIZE[i] / 10), 1); // need to have a constant chinksize
+                                                      // regardless of the number of mpi procs
+
+          printf("%s GBL_SIZE[%d] = %d, size[%d] = %d, cart_dims[%d] = %d, "
+                 "CHUNK_SIZE[%d] = %d, value[%d] = %lf\n",
+                 dat->name, i, GBL_SIZE[i], i, size[i], i, cart_dims[i], i,
+                 CHUNK_SIZE[i], i, GBL_SIZE[i] / (double)cart_dims[i]);
+        }*/
+
 
         // Create chunked dataset
         plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
+        //H5Pset_chunk(plist_id, block->dims, CHUNK_SIZE); // chunk data set need
                                                          // to be the same size
                                                          // on each proc
+
 
         // Create the dataset with default properties and close filespace.
         if (strcmp(dat->type, "double") == 0 ||
@@ -1637,21 +1648,6 @@ void ops_read_dat_hdf5(ops_dat dat) {
       GBL_SIZE[2] = gbl_size[0];
     }
 
-    // Create a reasonable chunk size
-    int cart_dims[OPS_MAX_DIM], cart_periods[OPS_MAX_DIM],
-        cart_coords[OPS_MAX_DIM];
-    MPI_Cart_get(sb->comm, block->dims, cart_dims, cart_periods, cart_coords);
-    hsize_t CHUNK_SIZE[OPS_MAX_DIM];
-    for (int i = 0; i < block->dims; i++)
-      CHUNK_SIZE[i] = MAX(GBL_SIZE[i] / (cart_dims[i] * 2), 1);
-
-    // Create chunked dataset
-    plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(
-        plist_id, block->dims,
-        CHUNK_SIZE); // chunk data set need to be the same size on each proc
-    H5Pclose(plist_id);
-
     // Need to flip the dimensions to accurately read from HDF5 chunk
     // decomposition
     hsize_t DISP[block->dims];
@@ -1715,6 +1711,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     H5Sclose(memspace);
     H5Gclose(group_id);
     H5Fclose(file_id);
+
     MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
   }
   return;
@@ -1747,7 +1744,7 @@ void ops_dump_to_hdf5(char const *file_name) {
     ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
   }
 
-  printf("halo index = %d \n", OPS_halo_index);
+  // printf("halo index = %d \n", OPS_halo_index);
   for (int i = 0; i < OPS_halo_index; i++) {
     printf("Dumping halo %15s--%15s to HDF5 file %s\n",
            OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name, file_name);

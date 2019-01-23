@@ -5,6 +5,7 @@ source ../../scripts/source_intel
 make
 cd -
 make clean
+
 rm -rf .generated
 rm -rf generate_file generate_file_mpi
 make IEEE=1
@@ -176,6 +177,14 @@ rm -f clover.out
 
 echo '============> Running DEV_MPI'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_dev_mpi > perf_out
+grep "Total Wall time" clover.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+grep "PASSED" clover.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f clover.out
+
+echo '============> Running MPI_Tiled'
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./cloverleaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 grep "PASSED" clover.out

@@ -46,7 +46,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-#include <device_functions.h>
 #include <device_launch_parameters.h>
 
 #include <ops_lib_core.h>
@@ -69,6 +68,8 @@ extern void __syncthreads();
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
 extern int OPS_block_size_z;
+
+extern int ops_device_initialised_externally;
 
 /*
 * personal stripped-down version of cutil_inline.h

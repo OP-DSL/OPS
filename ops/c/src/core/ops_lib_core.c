@@ -68,6 +68,8 @@ extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
 int OPS_realloc = 0;
 
+//int ops_hdf5_chunk_size[OPS_MAX_DIM] = {0};
+
 /*
 * Lists of blocks and dats declared in an OPS programs
 */
@@ -222,6 +224,17 @@ void ops_set_args(const int argc, const char *argv) {
     OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");
   }
+
+  /*pch = strstr(argv, "OPS_HDF5_CHUNK_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    for (int i = 0; i < OPS_MAX_DIM; i++)
+      ops_hdf5_chunk_size[i] = MAX(atoi(temp + 20),1);
+    ops_printf("\n HDF5 write chunck size = (%d)^%s \n",
+      ops_hdf5_chunk_size[0],OPS_MAX_DIM);
+  }*/
+
+
 }
 
 /*
@@ -334,8 +347,9 @@ void ops_exit_core() {
     free(OPS_halo_list[i]);
   }
 
+  // free block halos
   for (int i = 0; i < OPS_halo_group_index; i++) {
-    // free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_halo_group_list[i]->halos);
     free(OPS_halo_group_list[i]);
   }
 
@@ -345,7 +359,7 @@ void ops_exit_core() {
   OPS_block_max = 0;
 }
 
-ops_block ops_decl_block(int dims, const char *name) {
+/*ops_block ops_decl_block(int dims, const char *name) {
   if (dims < 0) {
     printf(
         "Error: ops_decl_block -- negative/zero dimension size for block: %s\n",
@@ -355,8 +369,8 @@ ops_block ops_decl_block(int dims, const char *name) {
 
   if (OPS_block_index == OPS_block_max) {
     if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-    OPS_block_max += 30;
-    OPS_block_list = (ops_block_descriptor *)ops_realloc(
+    OPS_block_max += 15;
+    OPS_block_list = (ops_block_descriptor *)realloc(
         OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
 
     if (OPS_block_list == NULL) {
@@ -375,7 +389,59 @@ ops_block ops_decl_block(int dims, const char *name) {
   OPS_block_index++;
 
   return block;
+}*/
+
+ops_block ops_decl_block(int dims, const char *name) {
+  if (dims < 0) {
+    printf(
+        "Error: ops_decl_block -- negative/zero dimension size for block: %s\n",
+        name);
+    exit(-1);
+  }
+
+  if (OPS_block_index == OPS_block_max) {
+    if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
+
+    OPS_block_max += 20;
+    ops_block_descriptor *OPS_block_list_new = (ops_block_descriptor *)xmalloc(
+        OPS_block_max * sizeof(ops_block_descriptor));
+    if (OPS_block_list_new == NULL) {
+      printf("Error: ops_decl_block -- error reallocating memory\n");
+      exit(-1);
+    }
+
+    //copy old blocks
+    for (int i = 0; i < OPS_block_index; i++) {
+      OPS_block_list_new[i].block = OPS_block_list[i].block;
+
+      TAILQ_INIT(&(OPS_block_list_new[i].datasets));
+      //remove ops_dats from old queue and add to new queue
+      ops_dat_entry *item;
+      while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
+        TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
+        TAILQ_INSERT_TAIL(&OPS_block_list_new[i].datasets, item, entries);
+      }
+
+      OPS_block_list_new[i].num_datasets = OPS_block_list[i].num_datasets;
+
+    }
+    free(OPS_block_list);
+    OPS_block_list = OPS_block_list_new;
+
+  }
+
+  ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
+  block->index = OPS_block_index;
+  block->dims = dims;
+  block->name = copy_str(name);
+  OPS_block_list[OPS_block_index].block = block;
+  OPS_block_list[OPS_block_index].num_datasets = 0;
+  TAILQ_INIT(&(OPS_block_list[OPS_block_index].datasets));
+  OPS_block_index++;
+
+  return block;
 }
+
 
 void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
                          char const *name) {
@@ -1069,7 +1135,7 @@ void ops_timing_output(FILE *stream) {
                          &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
-                             
+
       if (OPS_kernels[k].count < 1)
         continue;
       sprintf(buf, "%s", OPS_kernels[k].name);
