@@ -91,7 +91,7 @@ int opts[3], pads[3], synch;
 
 double lambda;
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   nx = 256;
   ny = 256;
@@ -215,15 +215,15 @@ int main(int argc, char **argv) {
 
   ops_timers(&ct1, &et1);
 
+  ops_fetch_block_hdf5_file(heat3D, "adi.h5");
+  ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
-  ops_print_dat_to_txtfile(h_u, "h_u.dat");
-#ifdef OPS_GPU
-  ops_cuda_get_data(h_u);
-#endif
 
-  ldim = nx;
 
-  dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+
+
+
+
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();

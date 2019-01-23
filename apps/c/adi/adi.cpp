@@ -103,7 +103,7 @@ int opts[3], pads[3], synch;
 // declare constants
 double lambda;
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   // Set defaults options
   nx = 256;
   ny = 256;
@@ -241,17 +241,19 @@ int main(int argc, char **argv) {
 
   ops_timers(&ct1, &et1);
 
-  /**---- print solution with OPS-**/
+  /**---- dump solution to HDF5 file with OPS-**/
+  ops_fetch_block_hdf5_file(heat3D, "adi.h5");
+  ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
-  ops_print_dat_to_txtfile(h_u, "h_u.dat");
-#ifdef OPS_GPU
-  ops_cuda_get_data(h_u);
-#endif
+  //ops_print_dat_to_txtfile(h_u, "h_u.dat");
+  //#ifdef OPS_GPU
+  //  ops_cuda_get_data(h_u);
+  //#endif
 
-  ldim = nx;  // non padded size along x.
+  //ldim = nx;  // non padded size along x.
               //#include "print_array.c"
   // dump the whole raw matrix
-  dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+  //dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();
