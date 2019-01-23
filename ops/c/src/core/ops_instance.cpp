@@ -40,6 +40,7 @@ OPS_instance::OPS_instance() {
 	ops_tiled_halo_exchange_time=0.0;
 	tiling_instance=NULL;
 	checkpointing_instance=NULL;
+  ops_loop_over_blocks = 0;
 
 	//Other runtime configuration args
 	for (int i = 0; i < OPS_MAX_DIM; i++) ops_force_decomp[i] = 0;

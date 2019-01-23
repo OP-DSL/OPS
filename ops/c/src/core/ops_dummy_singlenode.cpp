@@ -291,7 +291,7 @@ int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
 int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
-int ops_amr_lazy_offset(ops_dat dat);
+extern "C" int ops_amr_lazy_offset(ops_dat dat);
 
 int getDatBaseFromOpsArg(ops_arg *arg, int *start2, int datdim, int dim, int amr, int amrblock) {
   /*convert to C indexing*/
@@ -348,7 +348,7 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
 }
 
 char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
-  if (ops_loop_over_blocks) {
+  if (OPS_instance::getOPSInstance()->ops_loop_over_blocks) {
     int count, stride;
     ops_amr_reduction_size(&count, &stride, ((ops_reduction)arg->data)->size);
     return (char *)((ops_reduction)arg->data)->data + stride * ops_amr_lazy_offset_idx();  

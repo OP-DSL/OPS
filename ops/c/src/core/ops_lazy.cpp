@@ -58,9 +58,6 @@ inline int omp_get_max_threads() {
 using namespace std;
 
 
-extern int ops_loop_over_blocks;
-double ops_tiled_halo_exchange_time = 0.0;
-
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -153,7 +150,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (OPS_instance::getOPSInstance()->ops_enable_tiling && OPS_instance::getOPSInstance()->tiling_instance == NULL)
     OPS_instance::getOPSInstance()->tiling_instance = new OPS_instance_tiling();
 
-  if (OPS_instance::getOPSInstance()->ops_enable_tiling || ops_loop_over_blocks)
+  if (OPS_instance::getOPSInstance()->ops_enable_tiling || OPS_instance::getOPSInstance()->ops_loop_over_blocks)
     ops_kernel_list.push_back(desc);
   else {
     //Prepare the local execution ranges

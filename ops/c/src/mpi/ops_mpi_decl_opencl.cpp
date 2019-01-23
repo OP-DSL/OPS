@@ -106,14 +106,8 @@ void ops_exit() {
   ops_exit_core();
 }
 
-<<<<<<< HEAD:ops/c/src/mpi/ops_mpi_decl_opencl.cpp
 ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, char *data, int type_size,
-=======
-ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
-                          int *d_m, int *d_p, int *stride, char *data, int type_size,
->>>>>>> ae0514c... tart converting other versions to be compatible with mgrid:ops/c/src/mpi/ops_mpi_decl_opencl.c
-                          char const *type, char const *name) {
   int stride[OPS_MAX_DIM];
   for (int i =0; i < OPS_MAX_DIM; i++) stride[i] = 1;
   ops_dat dat = ops_decl_dat_char(block, size, dat_size, base, d_m, d_p,

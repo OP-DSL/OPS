@@ -43,14 +43,14 @@ int size1 ){
 void ops_par_loop_poisson_kernel_stencil(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 #else
-void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
+void ops_par_loop_poisson_kernel_stencil_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
   int dim = desc->dim;
   int *range = desc->range;
   #ifdef OPS_MPI
   ops_block block = desc->block;
   #endif
-  ops_arg arg0 = desc->args[0];
-  ops_arg arg1 = desc->args[1];
+  ops_arg arg0 = args[0];
+  ops_arg arg1 = args[1];
   #endif
 
   //Timing

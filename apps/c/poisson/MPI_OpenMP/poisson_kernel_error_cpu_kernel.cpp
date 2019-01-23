@@ -9,21 +9,20 @@
 void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 #else
-void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
-  int dim = desc->dim;
-  int *range = desc->range;
-  ops_arg arg0 = desc->args[0];
-  ops_arg arg1 = desc->args[1];
-  ops_arg arg2 = desc->args[2];
+void ops_par_loop_poisson_kernel_error_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
+  ops_arg arg0 = args[0];
+  ops_arg arg1 = args[1];
+  ops_arg arg2 = args[2];
   #endif
 
   //Timing
   double __t1,__t2,__c1,__c2;
 
+  #ifndef OPS_LAZY
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
+  #endif
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
   if (!ops_checkpointing_before(args,3,range,4)) return;

@@ -10,24 +10,23 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
 #else
-void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
-  ops_block block = desc->block;
-  int dim = desc->dim;
-  int *range = desc->range;
-  ops_arg arg0 = desc->args[0];
-  ops_arg arg1 = desc->args[1];
-  ops_arg arg2 = desc->args[2];
-  ops_arg arg3 = desc->args[3];
-  ops_arg arg4 = desc->args[4];
-  ops_arg arg5 = desc->args[5];
+void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
+  ops_arg arg0 = args[0];
+  ops_arg arg1 = args[1];
+  ops_arg arg2 = args[2];
+  ops_arg arg3 = args[3];
+  ops_arg arg4 = args[4];
+  ops_arg arg5 = args[5];
   #endif
 
   //Timing
   double __t1,__t2,__c1,__c2;
 
+  #ifndef OPS_LAZY
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
+  #endif
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
   if (!ops_checkpointing_before(args,6,range,0)) return;

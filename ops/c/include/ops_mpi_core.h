@@ -172,11 +172,6 @@ char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 * Other External functions
 *******************************************************************************/
 
-
-#ifdef __cplusplus
-}
-#endif
-
 //
 // MPI Communicator for halo creation and exchange
 //

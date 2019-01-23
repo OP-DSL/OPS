@@ -538,9 +538,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
-    FOR('n','0',str(NDIM))
-    code('arg_idx_base[n] = arg_idx[n];')
-    ENDFOR()
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
