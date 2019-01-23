@@ -74,10 +74,11 @@ void dump_data(FP *data, const int nx, const int ny, const int nz,
         for (int i = 0; i < nx; i++) {
           int ind = i + j * ldim + k * ldim * ny;
           // data[ind] = i + j*nx + k*nx*ny;
-          fprintf(fout, "%.10f ", data[ind]);
-          // fwrite(&data[ind],sizeof(FP),1,fout); //binary dump
+          // fprintf(fout, "%.10f ", data[ind]);
+          // printf("%.10f ", data[ind]);
+          fwrite(&data[ind], sizeof(FP), 1, fout); // binary dump
         }
-        fprintf(fout, "\n");
+        // fprintf(fout, "\n");
       }
     }
     // fwrite(h_u,sizeof(float),nx*ny*nz,fout);
@@ -245,15 +246,9 @@ int main(int argc, const char **argv) {
   ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
-  //ops_print_dat_to_txtfile(h_u, "h_u.dat");
-  //#ifdef OPS_GPU
-  //  ops_cuda_get_data(h_u);
-  //#endif
-
-  //ldim = nx;  // non padded size along x.
-              //#include "print_array.c"
+  ldim = nx; // non padded size along x
   // dump the whole raw matrix
-  //dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+  dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();
