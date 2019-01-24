@@ -18,6 +18,7 @@ int xdim5_advec_cell_kernel1_xdir;
 int ydim5_advec_cell_kernel1_xdir;
 
 //user function
+#pragma acc routine
 
 inline void advec_cell_kernel1_xdir(ptr_double pre_vol,
   ptr_double post_vol,

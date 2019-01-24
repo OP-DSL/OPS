@@ -16,6 +16,7 @@ int xdim4_advec_mom_kernel1_y_nonvector;
 int ydim4_advec_mom_kernel1_y_nonvector;
 
 //user function
+#pragma acc routine
 
 inline void advec_mom_kernel1_y_nonvector(const ptr_double node_flux,
   const ptr_double node_mass_pre,

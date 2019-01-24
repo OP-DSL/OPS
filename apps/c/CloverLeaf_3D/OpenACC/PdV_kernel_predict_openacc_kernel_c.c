@@ -34,6 +34,7 @@ int xdim13_PdV_kernel_predict;
 int ydim13_PdV_kernel_predict;
 
 //user function
+#pragma acc routine
 inline 
 void PdV_kernel_predict(const ptr_double xarea,
   const ptr_double xvel0,
