@@ -12,6 +12,7 @@ int xdim2_initialise_chunk_kernel_z;
 int ydim2_initialise_chunk_kernel_z;
 
 //user function
+#pragma acc routine
 inline 
 void initialise_chunk_kernel_z(ptr_double vertexz,
   const ptr_int zz,

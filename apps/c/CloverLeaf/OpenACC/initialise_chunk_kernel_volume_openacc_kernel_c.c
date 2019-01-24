@@ -11,6 +11,7 @@ int xdim3_initialise_chunk_kernel_volume;
 int xdim4_initialise_chunk_kernel_volume;
 
 //user function
+#pragma acc routine
 inline 
 void initialise_chunk_kernel_volume(ptr_double volume,
   const ptr_double celldy,

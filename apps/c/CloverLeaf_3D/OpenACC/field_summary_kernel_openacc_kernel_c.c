@@ -18,6 +18,7 @@ int xdim6_field_summary_kernel;
 int ydim6_field_summary_kernel;
 
 //user function
+#pragma acc routine
 inline 
 void field_summary_kernel(const ptr_double volume,
   const ptr_double density0,

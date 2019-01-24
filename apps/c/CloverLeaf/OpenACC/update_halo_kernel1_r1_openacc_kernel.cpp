@@ -93,16 +93,16 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   reallocConstArrays(consts_bytes);
   consts_bytes = 0;
-  args[7].data = OPS_consts_h + consts_bytes;
-  args[7].data_d = OPS_consts_d + consts_bytes;
+  args[7].data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;
+  args[7].data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;
   for (int d=0; d<NUM_FIELDS; d++) ((int *)args[7].data)[d] = arg7h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
   #endif //OPS_GPU
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -111,8 +111,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -121,8 +121,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
   #ifdef OPS_GPU
@@ -131,8 +131,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
   #ifdef OPS_GPU
@@ -141,8 +141,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  int base4 = args[4].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     start[1] * args[4].stencil->stride[1];
   #ifdef OPS_GPU
@@ -151,8 +151,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  int base5 = args[5].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  base5 = base5 + (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     start[1] * args[5].stencil->stride[1];
   #ifdef OPS_GPU
@@ -161,8 +161,8 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   double *p_a5 = (double *)((char *)args[5].data + base5);
   #endif
 
-  int base6 = args[6].dat->base_offset + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  int base6 = args[6].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
+  base6 = base6 + (OPS_instance::getOPSInstance()->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     start[1] * args[6].stencil->stride[1];
   #ifdef OPS_GPU

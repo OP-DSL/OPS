@@ -14,6 +14,7 @@ int xdim3_flux_calc_kernelz;
 int ydim3_flux_calc_kernelz;
 
 //user function
+#pragma acc routine
 inline 
 void flux_calc_kernelz(ptr_double vol_flux_z,
   const ptr_double zarea,
