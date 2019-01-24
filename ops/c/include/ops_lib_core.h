@@ -263,6 +263,7 @@ typedef struct {
   ops_access acc;   /**< Type of reduction it was used for last time */
   const char *type; /**< Type */
   const char *name; /**< Name */
+  int batchsize;      /**< batched size */
 } ops_reduction_core;
 typedef ops_reduction_core *ops_reduction;
 
@@ -492,6 +493,19 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
 ops_reduction ops_decl_reduction_handle(int size, const char *type,
                                         const char *name);
 
+
+/**
+ * This routine defines a reduction handle to be used in a parallel loop over a batched block.
+ *
+ * @param size  size of data in bytes
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param name  name of the dat used for output diagnostics
+ * @para batchsize number of batches
+ * @return
+ */
+ops_reduction ops_decl_reduction_handle_batch(int size, const char *type,
+                                        const char *name, int batchsize);
 
 /**
  * This routine defines a stencil.
@@ -910,6 +924,9 @@ void* ops_calloc (size_t num, size_t size);
 void ops_amr_reduction_size(int *count, int *stride, int size);
 void ops_amr_reduction_result(ops_reduction handle);
 int ops_amr_lazy_offset_idx();
+void ops_par_loop_blocks_all(int nblocks);
+void ops_par_loop_blocks_int_1cond(int *arr, int nblocks, int pred);
+void ops_par_loop_blocks_end();
 
 #ifdef __cplusplus
 }

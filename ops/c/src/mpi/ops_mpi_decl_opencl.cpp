@@ -108,6 +108,7 @@ void ops_exit() {
 
 ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, char *data, int type_size,
+                          char const *type, char const *name) {
   int stride[OPS_MAX_DIM];
   for (int i =0; i < OPS_MAX_DIM; i++) stride[i] = 1;
   ops_dat dat = ops_decl_dat_char(block, size, dat_size, base, d_m, d_p,
@@ -163,7 +164,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
   ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
+  memcpy(ptr, handle->data, handle->size * handle->batchsize);
   handle->initialized = 0;
 }
 
